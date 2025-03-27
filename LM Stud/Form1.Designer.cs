@@ -78,6 +78,8 @@
 			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
 			this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelTokens = new System.Windows.Forms.ToolStripStatusLabel();
+			this.groupBox1 = new System.Windows.Forms.GroupBox();
+			this.groupBox2 = new System.Windows.Forms.GroupBox();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -100,6 +102,8 @@
 			this.splitContainer2.Panel2.SuspendLayout();
 			this.splitContainer2.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
+			this.groupBox1.SuspendLayout();
+			this.groupBox2.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// textInput
@@ -220,31 +224,12 @@
 			// 
 			// tabPage2
 			// 
-			this.tabPage2.Controls.Add(this.label12);
-			this.tabPage2.Controls.Add(this.comboNUMAStrat);
-			this.tabPage2.Controls.Add(this.label11);
-			this.tabPage2.Controls.Add(this.numBatchSize);
-			this.tabPage2.Controls.Add(this.checkStrictCPU);
-			this.tabPage2.Controls.Add(this.label10);
-			this.tabPage2.Controls.Add(this.numGPULayers);
-			this.tabPage2.Controls.Add(this.label5);
-			this.tabPage2.Controls.Add(this.numCtxSize);
-			this.tabPage2.Controls.Add(this.numNGen);
-			this.tabPage2.Controls.Add(this.label4);
+			this.tabPage2.Controls.Add(this.groupBox2);
+			this.tabPage2.Controls.Add(this.groupBox1);
 			this.tabPage2.Controls.Add(this.label3);
-			this.tabPage2.Controls.Add(this.numTopP);
-			this.tabPage2.Controls.Add(this.label9);
-			this.tabPage2.Controls.Add(this.numTopK);
-			this.tabPage2.Controls.Add(this.label8);
-			this.tabPage2.Controls.Add(this.numTemp);
-			this.tabPage2.Controls.Add(this.label7);
-			this.tabPage2.Controls.Add(this.numRepPen);
-			this.tabPage2.Controls.Add(this.label6);
 			this.tabPage2.Controls.Add(this.butBrowse);
 			this.tabPage2.Controls.Add(this.textModelsPath);
 			this.tabPage2.Controls.Add(this.butApply);
-			this.tabPage2.Controls.Add(this.numThreads);
-			this.tabPage2.Controls.Add(this.label2);
 			this.tabPage2.Controls.Add(this.label1);
 			this.tabPage2.Controls.Add(this.textInstruction);
 			this.tabPage2.Location = new System.Drawing.Point(4, 22);
@@ -259,7 +244,7 @@
 			// 
 			this.label12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label12.AutoSize = true;
-			this.label12.Location = new System.Drawing.Point(840, 160);
+			this.label12.Location = new System.Drawing.Point(29, 22);
 			this.label12.Name = "label12";
 			this.label12.Size = new System.Drawing.Size(84, 13);
 			this.label12.TabIndex = 32;
@@ -277,7 +262,7 @@
             "Numactl",
             "Mirror",
             "Count"});
-			this.comboNUMAStrat.Location = new System.Drawing.Point(930, 157);
+			this.comboNUMAStrat.Location = new System.Drawing.Point(119, 19);
 			this.comboNUMAStrat.Name = "comboNUMAStrat";
 			this.comboNUMAStrat.Size = new System.Drawing.Size(75, 21);
 			this.comboNUMAStrat.TabIndex = 31;
@@ -286,7 +271,7 @@
 			// 
 			this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label11.AutoSize = true;
-			this.label11.Location = new System.Drawing.Point(865, 394);
+			this.label11.Location = new System.Drawing.Point(54, 152);
 			this.label11.Name = "label11";
 			this.label11.Size = new System.Drawing.Size(59, 13);
 			this.label11.TabIndex = 30;
@@ -295,7 +280,7 @@
 			// numBatchSize
 			// 
 			this.numBatchSize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numBatchSize.Location = new System.Drawing.Point(930, 392);
+			this.numBatchSize.Location = new System.Drawing.Point(119, 150);
 			this.numBatchSize.Maximum = new decimal(new int[] {
             1048576,
             0,
@@ -315,7 +300,7 @@
 			this.checkStrictCPU.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.checkStrictCPU.AutoSize = true;
 			this.checkStrictCPU.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkStrictCPU.Location = new System.Drawing.Point(828, 418);
+			this.checkStrictCPU.Location = new System.Drawing.Point(17, 176);
 			this.checkStrictCPU.Name = "checkStrictCPU";
 			this.checkStrictCPU.Size = new System.Drawing.Size(177, 17);
 			this.checkStrictCPU.TabIndex = 28;
@@ -326,7 +311,7 @@
 			// 
 			this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label10.AutoSize = true;
-			this.label10.Location = new System.Drawing.Point(861, 368);
+			this.label10.Location = new System.Drawing.Point(50, 73);
 			this.label10.Name = "label10";
 			this.label10.Size = new System.Drawing.Size(63, 13);
 			this.label10.TabIndex = 27;
@@ -335,7 +320,7 @@
 			// numGPULayers
 			// 
 			this.numGPULayers.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numGPULayers.Location = new System.Drawing.Point(930, 366);
+			this.numGPULayers.Location = new System.Drawing.Point(119, 71);
 			this.numGPULayers.Maximum = new decimal(new int[] {
             1024,
             0,
@@ -354,7 +339,7 @@
 			// 
 			this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label5.AutoSize = true;
-			this.label5.Location = new System.Drawing.Point(857, 342);
+			this.label5.Location = new System.Drawing.Point(46, 47);
 			this.label5.Name = "label5";
 			this.label5.Size = new System.Drawing.Size(67, 13);
 			this.label5.TabIndex = 25;
@@ -363,7 +348,7 @@
 			// numCtxSize
 			// 
 			this.numCtxSize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numCtxSize.Location = new System.Drawing.Point(930, 340);
+			this.numCtxSize.Location = new System.Drawing.Point(119, 45);
 			this.numCtxSize.Maximum = new decimal(new int[] {
             1048576,
             0,
@@ -381,7 +366,7 @@
 			// numNGen
 			// 
 			this.numNGen.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numNGen.Location = new System.Drawing.Point(930, 314);
+			this.numNGen.Location = new System.Drawing.Point(119, 97);
 			this.numNGen.Maximum = new decimal(new int[] {
             131072,
             0,
@@ -405,7 +390,7 @@
 			// 
 			this.label4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label4.AutoSize = true;
-			this.label4.Location = new System.Drawing.Point(821, 316);
+			this.label4.Location = new System.Drawing.Point(10, 99);
 			this.label4.Name = "label4";
 			this.label4.Size = new System.Drawing.Size(103, 13);
 			this.label4.TabIndex = 22;
@@ -429,7 +414,7 @@
             0,
             0,
             131072});
-			this.numTopP.Location = new System.Drawing.Point(930, 288);
+			this.numTopP.Location = new System.Drawing.Point(119, 124);
 			this.numTopP.Maximum = new decimal(new int[] {
             1,
             0,
@@ -448,7 +433,7 @@
 			// 
 			this.label9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label9.AutoSize = true;
-			this.label9.Location = new System.Drawing.Point(885, 290);
+			this.label9.Location = new System.Drawing.Point(74, 126);
 			this.label9.Name = "label9";
 			this.label9.Size = new System.Drawing.Size(39, 13);
 			this.label9.TabIndex = 19;
@@ -457,7 +442,7 @@
 			// numTopK
 			// 
 			this.numTopK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numTopK.Location = new System.Drawing.Point(930, 262);
+			this.numTopK.Location = new System.Drawing.Point(119, 98);
 			this.numTopK.Maximum = new decimal(new int[] {
             100000,
             0,
@@ -476,7 +461,7 @@
 			// 
 			this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label8.AutoSize = true;
-			this.label8.Location = new System.Drawing.Point(885, 264);
+			this.label8.Location = new System.Drawing.Point(74, 100);
 			this.label8.Name = "label8";
 			this.label8.Size = new System.Drawing.Size(39, 13);
 			this.label8.TabIndex = 17;
@@ -491,7 +476,7 @@
             0,
             0,
             65536});
-			this.numTemp.Location = new System.Drawing.Point(930, 236);
+			this.numTemp.Location = new System.Drawing.Point(119, 72);
 			this.numTemp.Maximum = new decimal(new int[] {
             1,
             0,
@@ -510,7 +495,7 @@
 			// 
 			this.label7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label7.AutoSize = true;
-			this.label7.Location = new System.Drawing.Point(854, 238);
+			this.label7.Location = new System.Drawing.Point(43, 74);
 			this.label7.Name = "label7";
 			this.label7.Size = new System.Drawing.Size(70, 13);
 			this.label7.TabIndex = 15;
@@ -525,7 +510,7 @@
             0,
             0,
             131072});
-			this.numRepPen.Location = new System.Drawing.Point(930, 210);
+			this.numRepPen.Location = new System.Drawing.Point(119, 46);
 			this.numRepPen.Maximum = new decimal(new int[] {
             10,
             0,
@@ -544,7 +529,7 @@
 			// 
 			this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label6.AutoSize = true;
-			this.label6.Location = new System.Drawing.Point(842, 212);
+			this.label6.Location = new System.Drawing.Point(31, 48);
 			this.label6.Name = "label6";
 			this.label6.Size = new System.Drawing.Size(82, 13);
 			this.label6.TabIndex = 13;
@@ -575,8 +560,7 @@
 			// 
 			// butApply
 			// 
-			this.butApply.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.butApply.Location = new System.Drawing.Point(930, 440);
+			this.butApply.Location = new System.Drawing.Point(6, 498);
 			this.butApply.Name = "butApply";
 			this.butApply.Size = new System.Drawing.Size(75, 23);
 			this.butApply.TabIndex = 4;
@@ -587,7 +571,7 @@
 			// numThreads
 			// 
 			this.numThreads.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numThreads.Location = new System.Drawing.Point(930, 184);
+			this.numThreads.Location = new System.Drawing.Point(119, 19);
 			this.numThreads.Maximum = new decimal(new int[] {
             512,
             0,
@@ -606,7 +590,7 @@
 			// 
 			this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label2.AutoSize = true;
-			this.label2.Location = new System.Drawing.Point(875, 186);
+			this.label2.Location = new System.Drawing.Point(64, 21);
 			this.label2.Name = "label2";
 			this.label2.Size = new System.Drawing.Size(49, 13);
 			this.label2.TabIndex = 2;
@@ -784,6 +768,45 @@
 			this.labelTokens.Size = new System.Drawing.Size(54, 17);
 			this.labelTokens.Text = "0 Tokens";
 			// 
+			// groupBox1
+			// 
+			this.groupBox1.Controls.Add(this.numThreads);
+			this.groupBox1.Controls.Add(this.label2);
+			this.groupBox1.Controls.Add(this.numCtxSize);
+			this.groupBox1.Controls.Add(this.label5);
+			this.groupBox1.Controls.Add(this.numGPULayers);
+			this.groupBox1.Controls.Add(this.label10);
+			this.groupBox1.Controls.Add(this.numNGen);
+			this.groupBox1.Controls.Add(this.label4);
+			this.groupBox1.Location = new System.Drawing.Point(6, 156);
+			this.groupBox1.Name = "groupBox1";
+			this.groupBox1.Size = new System.Drawing.Size(200, 131);
+			this.groupBox1.TabIndex = 33;
+			this.groupBox1.TabStop = false;
+			this.groupBox1.Text = "Common";
+			// 
+			// groupBox2
+			// 
+			this.groupBox2.Controls.Add(this.comboNUMAStrat);
+			this.groupBox2.Controls.Add(this.label6);
+			this.groupBox2.Controls.Add(this.checkStrictCPU);
+			this.groupBox2.Controls.Add(this.label12);
+			this.groupBox2.Controls.Add(this.numRepPen);
+			this.groupBox2.Controls.Add(this.label7);
+			this.groupBox2.Controls.Add(this.label11);
+			this.groupBox2.Controls.Add(this.numTemp);
+			this.groupBox2.Controls.Add(this.numBatchSize);
+			this.groupBox2.Controls.Add(this.label8);
+			this.groupBox2.Controls.Add(this.numTopK);
+			this.groupBox2.Controls.Add(this.label9);
+			this.groupBox2.Controls.Add(this.numTopP);
+			this.groupBox2.Location = new System.Drawing.Point(6, 293);
+			this.groupBox2.Name = "groupBox2";
+			this.groupBox2.Size = new System.Drawing.Size(200, 199);
+			this.groupBox2.TabIndex = 34;
+			this.groupBox2.TabStop = false;
+			this.groupBox2.Text = "Advanced";
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -823,6 +846,10 @@
 			this.splitContainer2.ResumeLayout(false);
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();
+			this.groupBox1.ResumeLayout(false);
+			this.groupBox1.PerformLayout();
+			this.groupBox2.ResumeLayout(false);
+			this.groupBox2.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -881,6 +908,8 @@
 		private System.Windows.Forms.ListView listViewMeta;
 		private System.Windows.Forms.ColumnHeader columnHeader3;
 		private System.Windows.Forms.ColumnHeader columnHeader4;
+		private System.Windows.Forms.GroupBox groupBox2;
+		private System.Windows.Forms.GroupBox groupBox1;
 	}
 }
 

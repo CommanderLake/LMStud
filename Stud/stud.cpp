@@ -33,48 +33,29 @@ void FreeModel(){
 	}
 	llama_backend_free();
 }
-void LoadGGUFMetadata(const char* filename){
-	metadata.clear();
-	std::ifstream fin(filename, std::ios::binary);
-	if(!fin){ return; }
-	uint32_t magic = 0;
-	fin.read(reinterpret_cast<char*>(&magic), sizeof magic);
-	if(magic!=0x46554747){
-		return;
-	}
-	uint32_t version = 0;
-	fin.read(reinterpret_cast<char*>(&version), sizeof version);
-	uint64_t tensorCount = 0, metadataCount = 0;
-	fin.read(reinterpret_cast<char*>(&tensorCount), sizeof tensorCount);
-	fin.read(reinterpret_cast<char*>(&metadataCount), sizeof metadataCount);
-	metadata.reserve(metadataCount);
-	for(uint64_t i = 0; i<metadataCount; ++i){
-		GGUFMetadataEntry entry = readMetadataEntry(fin);
-		metadata.push_back(std::move(entry));
-	}
-	fin.close();
-}
-int GetGGUFCtxMax(const char* filename){
-	LoadGGUFMetadata(filename);
-	for(const auto& entry : metadata){
-		if(entry.key=="llama.context_length"){
-			if(std::holds_alternative<uint32_t>(entry.val.value)){
-				const uint32_t contextLength = std::get<uint32_t>(entry.val.value);
-				return contextLength;
-			}
-			if(std::holds_alternative<int32_t>(entry.val.value)){
-				const int32_t contextLength = std::get<int32_t>(entry.val.value);
-				return contextLength;
-			}
-			return -1;
-		}
-	}
-	return -1;
-}
+//void LoadGGUFMetadata(const char* filename){
+//	metadata.clear();
+//	std::ifstream fin(filename, std::ios::binary);
+//	if(!fin){ return; }
+//	uint32_t magic = 0;
+//	fin.read(reinterpret_cast<char*>(&magic), sizeof magic);
+//	if(magic!=0x46554747){
+//		return;
+//	}
+//	uint32_t version = 0;
+//	fin.read(reinterpret_cast<char*>(&version), sizeof version);
+//	uint64_t tensorCount = 0, metadataCount = 0;
+//	fin.read(reinterpret_cast<char*>(&tensorCount), sizeof tensorCount);
+//	fin.read(reinterpret_cast<char*>(&metadataCount), sizeof metadataCount);
+//	metadata.reserve(metadataCount);
+//	for(uint64_t i = 0; i<metadataCount; ++i){
+//		GGUFMetadataEntry entry = readMetadataEntry(fin);
+//		metadata.push_back(std::move(entry));
+//	}
+//	fin.close();
+//}
 bool LoadModel(const char* filename, const char* system, int contextSize, const float temp, const float repeatPenalty, const int topK, const int topP, const int nThreads, const bool strictCPU, const int nGPULayers, const int nBatch, const ggml_numa_strategy numaStrategy){
 	FreeModel();
-	//const auto ctxMax = GetGGUFCtxMax(filename);
-	//if(ctxMax>0&&contextSize>ctxMax) contextSize = ctxMax;
 	llama_backend_init();
 	params.numa = numaStrategy;
 	llama_numa_init(params.numa);

@@ -1,5 +1,5 @@
 #pragma once
-#include "GGUFMeta.h"
+//#include "GGUFMeta.h"
 #include <llama.h>
 #include <chat.h>
 #include <sampling.h>
@@ -22,7 +22,7 @@ static bool stop = false;
 static common_chat_templates_ptr chatTemplates;
 using TokenCallbackFn = void(*)(const char* token, int tokenCount);
 static TokenCallbackFn tokenCb = nullptr;
-static std::vector<GGUFMetadataEntry> metadata;
+//static std::vector<GGUFMetadataEntry> metadata;
 static const char* DEFAULT_SYSTEM_MESSAGE = "You are a helpful AI assistant";
 int gaI;
 int gaN;
