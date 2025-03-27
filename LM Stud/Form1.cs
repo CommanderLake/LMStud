@@ -101,7 +101,6 @@ namespace LMStud{
 				_generating = true;
 				butGen.Text = "Stop";
 				butReset.Enabled = false;
-				toolStripStatusLabel1.Text = "Generating...";
 				if(!regenerating){
 					var msg = textInput.Text.Trim();
 					AddMessage(true, msg);
@@ -116,7 +115,7 @@ namespace LMStud{
 						var elapsed = _sw.Elapsed.TotalSeconds;
 						if(_callbackCount > 0 && elapsed > 0.0){
 							var callsPerSecond = _callbackCount/elapsed;
-							toolStripStatusLabel1.Text = $"Tokens per second: {callsPerSecond:F2}";
+							labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
 							_callbackCount = 0;
 							_sw.Reset();
 						}
@@ -139,7 +138,7 @@ namespace LMStud{
 				var elapsed = _sw.Elapsed.TotalSeconds;
 				if(elapsed >= 1.0){
 					var callsPerSecond = _callbackCount/elapsed;
-					_this.toolStripStatusLabel1.Text = $"Tokens per second: {callsPerSecond:F2}";
+					_this.labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
 					_callbackCount = 0;
 					_sw.Restart();
 				}

@@ -196,9 +196,8 @@ namespace LMStud{
 						sb.Append(@"\tab ");
 						break;
 					default:
-						//if(c > 127) sb.Append(@"\u" + (int)c + "?");
-						//else
-						sb.Append(c);
+						if(c > 127) sb.Append(@"\u" + (int)c + "?");
+						else sb.Append(c);
 						break;
 				}
 			return sb.ToString();
