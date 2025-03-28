@@ -13,6 +13,7 @@ This project was born out of frustration with slow bloated embedded web-based GU
 - Seperate display of the thinking process for thinking models
 - Native integration using llama.cpp
 - Minimal resource usage compared to embedded web GUIs
+- NEW! Huggingface model search and download!
 
 ## Getting Started
 
