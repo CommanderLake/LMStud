@@ -6,6 +6,9 @@ using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
 	internal partial class Form1{
+		private volatile bool _loaded;
+		private volatile bool _populating;
+		private int _cntCtxMax;
 		private struct ModelInfo{
 			public readonly string FilePath;
 			public readonly List<GGUFMetadataManager.GGUFMetadataEntry> Meta;
@@ -15,7 +18,6 @@ namespace LMStud{
 			}
 		}
 		private readonly List<ModelInfo> _models = new List<ModelInfo>();
-		private int _cntCtxMax;
 		private void CheckLoadAuto_CheckedChanged(object sender, EventArgs e){
 			if(checkLoadAuto.Checked && File.Exists(Settings.Default.LastModel)){
 				Settings.Default.LoadAuto = true;
@@ -24,6 +26,10 @@ namespace LMStud{
 				Settings.Default.LoadAuto = false;
 				Settings.Default.Save();
 			}
+		}
+		private void ListViewModels_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e){
+			if(listViewModels.SelectedItems.Count < 1) return;
+			PopulateMeta(listViewModels.SelectedIndices[0]);
 		}
 		private void ListViewModels_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.F5) return;
@@ -34,39 +40,43 @@ namespace LMStud{
 			LoadModel(listViewModels.SelectedIndices[0], false);
 		}
 		private void ButUnload_Click(object sender, EventArgs e){
-			ThreadPool.QueueUserWorkItem(o => {
-				if(_generating){
-					NativeMethods.StopGeneration();
-					while(_generating) Thread.Sleep(10);
-				}
-				NativeMethods.FreeModel();
-				Invoke(new MethodInvoker(() => {
-					butUnload.Enabled = false;
-					toolStripStatusLabel1.Text = "Unloaded model";
-				}));
-			});
+			butUnload.Enabled = false;
+			UnloadModel();
 		}
 		private void ListViewModels_DoubleClick(object sender, EventArgs e){
 			if(listViewModels.SelectedIndices.Count == 0) return;
 			LoadModel(listViewModels.SelectedIndices[0], false);
 		}
 		private void PopulateModels(){
-			var modelsPath = textModelsPath.Text;
-			if(Directory.Exists(modelsPath)){
-				listViewModels.Items.Clear();
-				for(var i = _models.Count - 1; i >= 0; i--) _models[i].Meta.Clear();
-				_models.Clear();
-				try{
-					var files = Directory.GetFiles(modelsPath, "*.gguf", SearchOption.AllDirectories);
-					foreach(var file in files){
+			if(_populating) return;
+			if(!Directory.Exists(_modelsPath)) { 
+				MessageBox.Show(this, "Models folder not found", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				return;
+			}
+			_populating = true;
+			listViewModels.BeginUpdate();
+			listViewModels.Items.Clear();
+			for(var i = _models.Count - 1; i >= 0; i--) _models[i].Meta.Clear();
+			_models.Clear();
+			ThreadPool.QueueUserWorkItem(_ => {
+				try {
+					var files = Directory.GetFiles(_modelsPath, "*.gguf", SearchOption.AllDirectories);
+					foreach(var file in files) {
 						var meta = GGUFMetadataManager.LoadGGUFMetadata(file);
 						_models.Add(new ModelInfo(file, meta));
-						var lvi = new ListViewItem(Path.GetFileName(file));
-						lvi.SubItems.Add(file);
-						listViewModels.Items.Add(lvi);
+						Invoke(new MethodInvoker(() => {
+							var lvi = new ListViewItem(Path.GetFileName(file));
+							lvi.SubItems.Add(file);
+							listViewModels.Items.Add(lvi);
+						}));
 					}
-				} catch(Exception ex){ MessageBox.Show(this, ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
-			} else{ MessageBox.Show(this, "Models folder does not exist.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+				} catch(Exception ex) { MessageBox.Show(this, ex.ToString(), "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error); } finally {
+					Invoke(new MethodInvoker(() => {
+						listViewModels.EndUpdate();
+					}));
+					_populating = false;
+				}
+			});
 		}
 		private void LoadModel(int modelIndex, bool autoLoad){
 			butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = false;
@@ -83,9 +93,10 @@ namespace LMStud{
 				if(!success){
 					Settings.Default.LoadAuto = false;
 					Settings.Default.Save();
-					Invoke(new MethodInvoker(() => {MessageBox.Show(this, "Error loading model", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+					Invoke(new MethodInvoker(() => {MessageBox.Show(this, "Error loading model", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 					return;
 				}
+				_loaded = true;
 				_tokenCallback = TokenCallback;
 				NativeMethods.SetTokenCallback(_tokenCallback);
 				Invoke(new MethodInvoker(() => {
@@ -96,6 +107,19 @@ namespace LMStud{
 					}
 					toolStripStatusLabel1.Text = "Loaded model: " + Path.GetFileName(modelPath);
 					butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = true;
+				}));
+			});
+		}
+		private void UnloadModel(){
+			ThreadPool.QueueUserWorkItem(o => {
+				if(_generating) {
+					NativeMethods.StopGeneration();
+					while(_generating) Thread.Sleep(10);
+				}
+				NativeMethods.FreeModel();
+				_loaded = false;
+				Invoke(new MethodInvoker(() => {
+					toolStripStatusLabel1.Text = "Model unloaded";
 				}));
 			});
 		}
@@ -119,10 +143,6 @@ namespace LMStud{
 				lvi.SubItems.Add(valueStr);
 				listViewMeta.Items.Add(lvi);
 			}
-		}
-		private void ListViewModels_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e){
-			if(listViewModels.SelectedItems.Count < 1) return;
-			PopulateMeta(listViewModels.SelectedIndices[0]);
 		}
 	}
 }

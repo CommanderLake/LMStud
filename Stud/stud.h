@@ -38,6 +38,7 @@ extern "C"{
 	EXPORT void SetTokenCallback(TokenCallbackFn cb);
 	EXPORT void SetThreadCount(int n);
 	EXPORT int AddMessage(bool user, const char* message);
+	EXPORT void RetokenizeChat();
 	EXPORT void RemoveMessageAt(int index);
 	EXPORT void RemoveMessagesStartingAt(int index);
 	EXPORT void Generate(unsigned int nPredict);

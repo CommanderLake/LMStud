@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
@@ -11,7 +10,7 @@ namespace LMStud{
 		private static NativeMethods.TokenCallback _tokenCallback;
 		private static int _callbackCount;
 		private static Stopwatch _sw = new Stopwatch();
-		private bool _generating;
+		private volatile bool _generating;
 		private readonly List<ChatMessage> _chatMessages = new List<ChatMessage>();
 		private ChatMessage _cntAssMsg;
 		private int _tokenCount;
@@ -19,27 +18,21 @@ namespace LMStud{
 			_this = this;
 			NativeMethods.SetOMPEnv();
 			InitializeComponent();
-			textInstruction.Text = Settings.Default.Instruction;
-			textModelsPath.Text = Settings.Default.ModelsDir;
-			comboNUMAStrat.SelectedIndex = Settings.Default.NUMAStrat;
-			numThreads.Value = Settings.Default.Threads;
-			numTemp.Value = Settings.Default.Temp;
-			numTopK.Value = Settings.Default.TopK;
-			numTopP.Value = Settings.Default.TopP;
-			numRepPen.Value = Settings.Default.RepPen;
-			numNGen.Value = Settings.Default.NGen;
-			numCtxSize.Value = Settings.Default.CtxSize;
-			numGPULayers.Value = Settings.Default.GPULayers;
-			numBatchSize.Value = Settings.Default.BatchSize;
-			checkStrictCPU.Checked = Settings.Default.strictCPU;
+			LoadConfig();
 			SetConfig();
 			PopulateModels();
+		}
+		private void Form1_Load(object sender, EventArgs e) {
 			if(!Settings.Default.LoadAuto) return;
 			checkLoadAuto.Checked = true;
-			for(var i = 0; i < _models.Count; i++){
-				var model = _models[i];
-				if(model.FilePath == Settings.Default.LastModel) LoadModel(i, true);
-			}
+			ThreadPool.QueueUserWorkItem(o => {
+				while(_populating) Thread.Sleep(10);
+				for(var i = 0; i < _models.Count; i++) {
+					var model = _models[i];
+					if(model.FilePath == Settings.Default.LastModel)
+						LoadModel(i, true);
+				}
+			});
 		}
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e){NativeMethods.StopGeneration();}
 		private void Form1_KeyDown(object sender, KeyEventArgs e){
@@ -48,6 +41,9 @@ namespace LMStud{
 		}
 		private void CheckMarkdown_CheckedChanged(object sender, EventArgs e){
 			foreach(var message in _chatMessages) message.Markdown = checkMarkdown.Checked;
+		}
+		private void ButCodeBlock_Click(object sender, EventArgs e) {
+			textInput.Paste("```\r\n\r\n```");
 		}
 		private void ButGen_Click(object sender, EventArgs e){Generate(false);}
 		private void ButReset_Click(object sender, EventArgs e){
@@ -66,7 +62,7 @@ namespace LMStud{
 			panelChat.SuspendLayout();
 			try{
 				for(var i = 0; i < panelChat.Controls.Count; ++i) panelChat.Controls[i].Width = panelChat.ClientSize.Width;
-			} finally{ panelChat.ResumeLayout(); }
+			} finally{ panelChat.ResumeLayout(false); }
 		}
 		private void MsgButDeleteOnClick(ChatMessage cm){
 			if(_generating) return;
@@ -76,7 +72,7 @@ namespace LMStud{
 			_chatMessages.RemoveAt(id);
 		}
 		private void MsgButRegenOnClick(ChatMessage cm){
-			if(_generating) return;
+			if(!_loaded || _generating) return;
 			var id = _chatMessages.IndexOf(cm);
 			if(_chatMessages[id].User) ++id;
 			if(id < _chatMessages.Count){
@@ -97,6 +93,7 @@ namespace LMStud{
 			return cm;
 		}
 		private void Generate(bool regenerating){
+			if(!_loaded) return;
 			if(!_generating){
 				_generating = true;
 				butGen.Text = "Stop";
@@ -105,6 +102,7 @@ namespace LMStud{
 					var msg = textInput.Text.Trim();
 					AddMessage(true, msg);
 					NativeMethods.AddMessage(true, msg);
+					NativeMethods.SendMessage(panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
 				}
 				_cntAssMsg = AddMessage(false, "");
 				ThreadPool.QueueUserWorkItem(o => {

@@ -39,6 +39,7 @@
 			this.richTextMsg.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+			this.richTextMsg.CausesValidation = false;
 			this.richTextMsg.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.richTextMsg.Location = new System.Drawing.Point(0, 24);
 			this.richTextMsg.Margin = new System.Windows.Forms.Padding(0);
@@ -88,12 +89,13 @@
 			this.label1.Font = new System.Drawing.Font("Segoe UI Semibold", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.label1.Location = new System.Drawing.Point(3, 0);
 			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(54, 21);
+			this.label1.Size = new System.Drawing.Size(51, 21);
 			this.label1.TabIndex = 4;
 			this.label1.Text = "label1";
 			// 
 			// panel1
 			// 
+			this.panel1.CausesValidation = false;
 			this.panel1.Controls.Add(this.checkThink);
 			this.panel1.Controls.Add(this.richTextMsg);
 			this.panel1.Controls.Add(this.butRegen);
@@ -123,8 +125,11 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.AutoValidate = System.Windows.Forms.AutoValidate.Disable;
 			this.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+			this.CausesValidation = false;
 			this.Controls.Add(this.panel1);
+			this.DoubleBuffered = true;
 			this.Margin = new System.Windows.Forms.Padding(0);
 			this.Name = "ChatMessage";
 			this.Size = new System.Drawing.Size(200, 64);

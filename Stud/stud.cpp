@@ -89,21 +89,23 @@ bool LoadModel(const char* filename, const char* system, int contextSize, const 
 		embdInp = common_tokenize(ctx, systemPrompt, true, true);
 		params.n_keep = embdInp.size();
 	}
-	const bool addBos = llama_vocab_get_add_bos(vocab)&&!params.use_jinja;
-	if(embdInp.empty()){
-		if(addBos){
-			embdInp.push_back(llama_vocab_bos(vocab));
-			params.n_keep = 1;
-		} else{ return false; }
+	const auto addBos = llama_vocab_get_add_bos(vocab)&&!params.use_jinja;
+	if(embdInp.empty() && addBos){
+		embdInp.push_back(llama_vocab_bos(vocab));
+		params.n_keep = 1;
 	}
 	if(static_cast<int>(embdInp.size())>contextSize-4) return false;
-	if(params.n_keep<0 || params.n_keep>embdInp.size()){ params.n_keep = embdInp.size(); } else{ params.n_keep += addBos; }
+	if(params.n_keep<=0 || params.n_keep>embdInp.size()) params.n_keep = embdInp.size();
 	smpl = common_sampler_init(llModel, params.sampling);
 	if(!smpl) return false;
 	gaI = 0;
 	gaN = params.grp_attn_n;
 	gaW = params.grp_attn_w;
 	if(gaN!=1&&(gaN<0||gaW%gaN!=0)) return false;
+	if(!chatMsgs.empty()){
+		ResetChat(false);
+		RetokenizeChat();
+	}
 	return true;
 }
 void SetTokenCallback(const TokenCallbackFn cb){
