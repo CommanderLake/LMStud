@@ -4,7 +4,7 @@ LM Stud is a lightweight chat application for interacting with LLMs (Large Langu
 
 ## Motivation
 
-This project was born out of frustration with slow bloated embedded web-based GUIs that unnecessarily consume excessive resources. LM Stud offers a clean, efficient alternative, leveraging the power of native Windows Forms, a native DLL and llama.cpp to minimize memory usage and maximize performance.
+This project was born out of frustration with slow bloated embedded web-based GUIs that unnecessarily consume excessive resources. LM Stud offers a clean, efficient alternative, leveraging the power of Windows Forms in C# to minimize memory usage and maximize performance.
 
 ## Features
 
