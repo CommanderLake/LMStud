@@ -46,13 +46,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>I:\llama.cpp-b4743\include;I:\llama.cpp-b4743\common;I:\llama.cpp-b4743\ggml\include;I:\llama.cpp-b4743\src;$(IncludePath)</IncludePath>
+    <IncludePath>I:\llama.cpp-b4988\include;I:\llama.cpp-b4988\common;I:\llama.cpp-b4988\ggml\include;I:\llama.cpp-b4988\src;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\Administrator\Documents\Visual Studio 2017\Projects\LMStud\lib\debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>I:\llama.cpp-b4743\include;I:\llama.cpp-b4743\common;I:\llama.cpp-b4743\ggml\include;I:\llama.cpp-b4743\src;$(IncludePath)</IncludePath>
+    <IncludePath>I:\llama.cpp-b4988\include;I:\llama.cpp-b4988\common;I:\llama.cpp-b4988\ggml\include;I:\llama.cpp-b4988\src;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\Administrator\Documents\Visual Studio 2017\Projects\LMStud\lib\release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

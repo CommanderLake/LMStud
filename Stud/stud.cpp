@@ -11,7 +11,7 @@ void SetOMPEnv(){
 }
 void ResetChat(const bool msgs){
 	std::lock_guard<std::mutex> lock(tokensMutex);
-	if(ctx) llama_kv_cache_clear(ctx);
+	if(ctx) llama_kv_self_clear(ctx);
 	embdInp.erase(embdInp.begin() + params.n_keep, embdInp.end());
 	if(msgs) chatMsgs.clear();
 	nPast = 0;
@@ -159,8 +159,8 @@ void Generate(const unsigned int nPredict){
 				}
 				const int nLeft = nPast-params.n_keep;
 				const int nDiscard = nLeft/2;
-				llama_kv_cache_seq_rm(ctx, 0, params.n_keep, params.n_keep+nDiscard);
-				llama_kv_cache_seq_add(ctx, 0, params.n_keep+nDiscard, nPast, -nDiscard);
+				llama_kv_self_seq_rm(ctx, 0, params.n_keep, params.n_keep+nDiscard);
+				llama_kv_self_seq_add(ctx, 0, params.n_keep+nDiscard, nPast, -nDiscard);
 				nPast -= nDiscard;
 			}
 		} else{
@@ -168,9 +168,9 @@ void Generate(const unsigned int nPredict){
 				const int ib = (gaN*gaI)/gaW;
 				const int bd = (gaW/gaN)*(gaN-1);
 				const int dd = (gaW/gaN)-ib*bd-gaW;
-				llama_kv_cache_seq_add(ctx, 0, gaI, nPast, ib*bd);
-				llama_kv_cache_seq_div(ctx, 0, gaI+ib*bd, gaI+ib*bd+gaW, gaN);
-				llama_kv_cache_seq_add(ctx, 0, gaI+ib*bd+gaW, nPast+ib*bd, dd);
+				llama_kv_self_seq_add(ctx, 0, gaI, nPast, ib*bd);
+				llama_kv_self_seq_div(ctx, 0, gaI+ib*bd, gaI+ib*bd+gaW, gaN);
+				llama_kv_self_seq_add(ctx, 0, gaI+ib*bd+gaW, nPast+ib*bd, dd);
 				nPast -= bd;
 				gaI += gaW/gaN;
 			}
