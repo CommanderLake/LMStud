@@ -23,5 +23,8 @@
     <ClCompile Include="stud.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MarkdownRTFConverter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

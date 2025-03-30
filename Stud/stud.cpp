@@ -1,5 +1,4 @@
 #include "stud.h"
-#include <fstream>
 #pragma comment(lib, "llama.lib")
 #pragma comment(lib, "common.lib")
 #pragma comment(lib, "ggml-base.lib")
