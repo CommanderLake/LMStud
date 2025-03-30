@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using LMStud.Properties;
@@ -124,8 +126,9 @@ namespace LMStud{
 				});
 			} else{ NativeMethods.StopGeneration(); }
 		}
-		private static void TokenCallback(string token, int tokenCount){
+		private static unsafe void TokenCallback(byte* tokenPtr, int strLen, int tokenCount){
 			if(_this.IsDisposed) return;
+			var token = Encoding.UTF8.GetString(tokenPtr, strLen);
 			var control = _this;
 			_this.BeginInvoke((MethodInvoker)(() => {
 				if(control.IsDisposed) return;

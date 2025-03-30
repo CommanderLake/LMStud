@@ -44,11 +44,21 @@ namespace LMStud{
 			Height = p.Y + richTextMsg.Font.Height + 32;
 			_adjusting = false;
 		}
+		private unsafe string MarkdownToRtf(string markdown){
+			var rtfOut = (byte*)0;
+			var rtfLen = 0;
+			NativeMethods.ConvertMarkdownToRtf(markdown, ref rtfOut, ref rtfLen);
+			return Encoding.UTF8.GetString(rtfOut, rtfLen);
+		}
 		private void SetText(){
 			if(checkThink.Checked){
-				if(Markdown) richTextMsg.Rtf = MarkdownToRtfConverter.ConvertMarkdownToRtf(_think);
-				else richTextMsg.Text = _think;
-			} else if(Markdown){ richTextMsg.Rtf = MarkdownToRtfConverter.ConvertMarkdownToRtf(_message); } else{ richTextMsg.Text = _message; }
+				if(Markdown){
+					richTextMsg.Rtf = MarkdownToRtf(_think);
+				} else richTextMsg.Text = _think;
+			} else if(Markdown){
+				var newRtf = MarkdownToRtf(_message);
+				richTextMsg.Rtf = newRtf;
+			} else{ richTextMsg.Text = _message; }
 		}
 		private static bool ExtractThink(ref string message, out string think){
 			var inCodeBlock = false;

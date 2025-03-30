@@ -48,6 +48,10 @@ namespace LMStud{
 			_strictCPU = checkStrictCPU.Checked;
 		}
 		private void ButApply_Click(object sender, EventArgs e){
+			if(Settings.Default.Instruction != textInstruction.Text) {
+				NativeMethods.SetSystemPrompt(textInstruction.Text);
+				NativeMethods.RetokenizeChat();
+			}
 			if(Settings.Default.ModelsDir != textModelsPath.Text) PopulateModels();
 			if(Settings.Default.Threads != numThreads.Value) NativeMethods.SetThreadCount((int)numThreads.Value);
 			Settings.Default.Instruction = textInstruction.Text;

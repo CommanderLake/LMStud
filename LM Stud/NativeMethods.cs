@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 namespace LMStud{
 	internal static class NativeMethods{
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-		public delegate void TokenCallback(string token, int tokenCount);
+		public unsafe delegate void TokenCallback(byte* tokenPtr, int strLen, int tokenCount);
 		private const string DLLName = "stud";
 		public const int WM_USER = 0x400;
 		public const int EM_SETSCROLLPOS = WM_USER + 222;
@@ -26,6 +26,10 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int AddMessage(bool user, string text);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void RetokenizeChat();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void SetSystemPrompt(string prompt);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void RemoveMessageAt(int index);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void RemoveMessagesStartingAt(int index);
@@ -33,6 +37,8 @@ namespace LMStud{
 		public static extern void Generate(int nPredict);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopGeneration();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public unsafe static extern void ConvertMarkdownToRtf(string markdown, ref byte* rtfOut, ref int rtfLen);
 		[DllImport("user32.dll")]
 		public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wp, IntPtr lp);
 		public enum GgmlNumaStrategy{

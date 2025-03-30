@@ -80,34 +80,37 @@ namespace LMStud{
 		}
 		private void LoadModel(int modelIndex, bool autoLoad){
 			butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = false;
-			toolStripStatusLabel1.Text = "Loading model...";
+			var modelPath = _models[modelIndex].FilePath;
+			var fileName = Path.GetFileName(modelPath);
+			toolStripStatusLabel1.Text = "Loading: " + fileName;
 			ThreadPool.QueueUserWorkItem(o => {
-				if(_generating){
-					NativeMethods.StopGeneration();
-					while(_generating) Thread.Sleep(10);
-				}
-				var modelPath = _models[modelIndex].FilePath;
-				var modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
-				_cntCtxMax = _ctxSize > modelCtxMax ? modelCtxMax : _ctxSize;
-				var success = NativeMethods.LoadModel(modelPath, _instruction, _cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _strictCPU, _gpuLayers, _batchSize, _numaStrat);
-				if(!success){
-					Settings.Default.LoadAuto = false;
-					Settings.Default.Save();
-					Invoke(new MethodInvoker(() => {MessageBox.Show(this, "Error loading model", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
-					return;
-				}
-				_loaded = true;
-				_tokenCallback = TokenCallback;
-				NativeMethods.SetTokenCallback(_tokenCallback);
-				Invoke(new MethodInvoker(() => {
-					Settings.Default.LastModel = modelPath;
-					if(checkLoadAuto.Checked && !autoLoad){
-						Settings.Default.LoadAuto = true;
-						Settings.Default.Save();
+				unsafe{
+					if(_generating){
+						NativeMethods.StopGeneration();
+						while(_generating) Thread.Sleep(10);
 					}
-					toolStripStatusLabel1.Text = "Loaded model: " + Path.GetFileName(modelPath);
-					butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = true;
-				}));
+					var modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
+					_cntCtxMax = _ctxSize > modelCtxMax ? modelCtxMax : _ctxSize;
+					var success = NativeMethods.LoadModel(modelPath, _instruction, _cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _strictCPU, _gpuLayers, _batchSize, _numaStrat);
+					if(!success){
+						Settings.Default.LoadAuto = false;
+						Settings.Default.Save();
+						Invoke(new MethodInvoker(() => {MessageBox.Show(this, "Error loading model", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+						return;
+					}
+					_loaded = true;
+					_tokenCallback = TokenCallback;
+					NativeMethods.SetTokenCallback(_tokenCallback);
+					Invoke(new MethodInvoker(() => {
+						Settings.Default.LastModel = modelPath;
+						if(checkLoadAuto.Checked && !autoLoad){
+							Settings.Default.LoadAuto = true;
+							Settings.Default.Save();
+						}
+						toolStripStatusLabel1.Text = "Loaded model: " + fileName;
+						butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = true;
+					}));
+				}
 			});
 		}
 		private void UnloadModel(){

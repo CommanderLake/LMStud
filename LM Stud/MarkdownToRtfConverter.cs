@@ -4,7 +4,7 @@ using System.Windows.Forms;
 namespace LMStud{
 	internal static class MarkdownToRtfConverter{
 		internal static string ConvertMarkdownToRtf(string markdown){
-			const string RtfHeader = @"{\rtf1\ansi\ansicpg1252\deff0\nouicompat{\fonttbl{\f0\fnil\fcharset0 Segoe UI;}}\viewkind4\uc1\pard\sa0\sl0\slmult1\f0\fs20 ";
+			const string RtfHeader = @"{\rtf1\ansi\ansicpg1252\uc1\deff0{\fonttbl{\f0\fnil Segoe UI;}}\viewkind4\pard\sa0\sl0\slmult1\f0\fs20 ";
 			var rtf = new StringBuilder(RtfHeader);
 			var lines = markdown.Replace("\r\n", "\n").Split('\n');
 			var state = new MarkdownState();
@@ -84,8 +84,7 @@ namespace LMStud{
 					var validRight = position + 1 < text.Length && !char.IsWhiteSpace(text[position + 1]);
 					return validLeft && validRight;
 				}
-				if(pos + 2 < text.Length && ((text[pos] == '*' && text[pos + 1] == '*' && text[pos + 2] == '*') || (text[pos] == '_' && text[pos + 1] == '_' && text[pos + 2] == '_')) &&
-					IsValidEmphasisDelimiter(pos, text[pos])){
+				if(pos + 2 < text.Length && ((text[pos] == '*' && text[pos + 1] == '*' && text[pos + 2] == '*') || (text[pos] == '_' && text[pos + 1] == '_' && text[pos + 2] == '_')) && IsValidEmphasisDelimiter(pos, text[pos])){
 					var marker = text[pos];
 					pos += 3;
 					var endPos = text.IndexOf(marker + marker.ToString() + marker, pos, StringComparison.Ordinal);
@@ -146,28 +145,21 @@ namespace LMStud{
 			}
 			return result.ToString();
 		}
-		private static string EscapeRtf(string text){
-			if(string.IsNullOrEmpty(text)) return string.Empty;
+		private static string EscapeRtf(string source) {
+			if(string.IsNullOrEmpty(source)) return string.Empty;
 			var sb = new StringBuilder();
-			foreach(var c in text)
-				switch(c){
-					case '\\':
-						sb.Append(@"\\");
-						break;
-					case '{':
-						sb.Append(@"\{");
-						break;
-					case '}':
-						sb.Append(@"\}");
-						break;
-					case '\t':
-						sb.Append(@"\tab ");
-						break;
-					default:
-						if(c > 127) sb.Append(@"\u" + (int)c + "?");
-						else sb.Append(c);
-						break;
+			foreach(char c in source) {
+				if(c >= 0x20 && c < 0x80) {
+					if(c == '\\' || c == '{' || c == '}') {
+						sb.Append('\\');
+					}
+					sb.Append(c);
+				} else if(c < 0x20 || (c >= 0x80 && c <= 0xFF)) {
+					sb.Append($"\\'{(byte)c:X2}");
+				} else {
+					sb.Append($"\\u{(int)c}?");
 				}
+			}
 			return sb.ToString();
 		}
 		internal static void UpdateRichTextWithMarkdown(RichTextBox rtb, string markdownText){
