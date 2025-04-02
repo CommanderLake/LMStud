@@ -106,7 +106,12 @@ void RetokenizeChat(){
 	}
 }
 void SetSystemPrompt(const char* prompt){
-	_params.prompt = prompt;
+	_params.prompt = std::string(prompt);
+	RetokenizeChat();
+}
+void SetMessageAt(int index, const char* message){
+	if(index < 0 || index >= static_cast<int>(_chatMsgs.size())) return;
+	_chatMsgs[index].content = std::string(message);
 	RetokenizeChat();
 }
 void RemoveMessageAt(const int index){

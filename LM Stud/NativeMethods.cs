@@ -30,6 +30,8 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetSystemPrompt(string prompt);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void SetMessageAt(int index, string message);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void RemoveMessageAt(int index);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void RemoveMessagesStartingAt(int index);

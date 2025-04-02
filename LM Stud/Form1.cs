@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -11,7 +11,9 @@ namespace LMStud{
 		private static Form1 _this;
 		private static NativeMethods.TokenCallback _tokenCallback;
 		private static int _callbackCount;
-		private static Stopwatch _sw = new Stopwatch();
+		private static int _callbackTot;
+		private static readonly Stopwatch Sw = new Stopwatch();
+		private static readonly Stopwatch SwTot = new Stopwatch();
 		private volatile bool _generating;
 		private readonly List<ChatMessage> _chatMessages = new List<ChatMessage>();
 		private ChatMessage _cntAssMsg;
@@ -85,11 +87,33 @@ namespace LMStud{
 			}
 			Generate(true);
 		}
+		private void MsgButEditOnClick(ChatMessage cm){
+			if(_generating || cm.Editing) return;
+			foreach(var msg in _chatMessages.Where(msg => msg != cm && msg.Editing)) MsgButEditCancelOnClick(msg);
+			cm.Editing = true;
+			cm.richTextMsg.Focus();
+		}
+		private void MsgButEditCancelOnClick(ChatMessage cm){
+			if(_generating || !cm.Editing) return;
+			cm.Editing = false;
+			cm.Markdown = checkMarkdown.Checked;
+		}
+		private void MsgButEditApplyOnClick(ChatMessage cm){
+			if(_generating || !cm.Editing) return;
+			if(cm.checkThink.Checked) cm.Think = cm.richTextMsg.Text;
+			else cm.Message = cm.richTextMsg.Text;
+			NativeMethods.SetMessageAt(_chatMessages.IndexOf(cm), cm.Content);
+			cm.Editing = false;
+			cm.Markdown = checkMarkdown.Checked;
+		}
 		private ChatMessage AddMessage(bool user, string message){
 			var cm = new ChatMessage(user, message, checkMarkdown.Checked);
 			cm.Width = panelChat.ClientSize.Width;
 			cm.butDelete.Click += (o, args) => MsgButDeleteOnClick(cm);
 			cm.butRegen.Click += (o, args) => MsgButRegenOnClick(cm);
+			cm.butEdit.Click += (o, args) => MsgButEditOnClick(cm);
+			cm.butCancelEdit.Click += (o, args) => MsgButEditCancelOnClick(cm);
+			cm.butApplyEdit.Click += (o, args) => MsgButEditApplyOnClick(cm);
 			panelChat.Controls.Add(cm);
 			_chatMessages.Add(cm);
 			return cm;
@@ -98,6 +122,7 @@ namespace LMStud{
 			if(!_loaded) return;
 			if(!_generating){
 				_generating = true;
+				foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
 				butGen.Text = "Stop";
 				butReset.Enabled = false;
 				if(!regenerating){
@@ -108,16 +133,19 @@ namespace LMStud{
 				}
 				_cntAssMsg = AddMessage(false, "");
 				ThreadPool.QueueUserWorkItem(o => {
-					_sw.Restart();
+					SwTot.Restart();
+					Sw.Restart();
 					NativeMethods.Generate(_nGen);
-					_sw.Stop();
+					SwTot.Stop();
+					Sw.Stop();
 					Invoke(new MethodInvoker(() => {
-						var elapsed = _sw.Elapsed.TotalSeconds;
-						if(_callbackCount > 0 && elapsed > 0.0){
-							var callsPerSecond = _callbackCount/elapsed;
+						var elapsed = SwTot.Elapsed.TotalSeconds;
+						if(_callbackTot > 0 && elapsed > 0.0){
+							var callsPerSecond = _callbackTot/elapsed;
 							labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
-							_callbackCount = 0;
-							_sw.Reset();
+							_callbackTot = 0;
+							SwTot.Reset();
+							Sw.Reset();
 						}
 						butGen.Text = "Generate";
 						butReset.Enabled = true;
@@ -129,20 +157,21 @@ namespace LMStud{
 		private static unsafe void TokenCallback(byte* tokenPtr, int strLen, int tokenCount){
 			if(_this.IsDisposed) return;
 			var token = Encoding.UTF8.GetString(tokenPtr, strLen);
-			var control = _this;
+			var thisform = _this;
 			_this.BeginInvoke((MethodInvoker)(() => {
-				if(control.IsDisposed) return;
-				_this._cntAssMsg.AppendText(token);
-				_this.labelTokens.Text = tokenCount + "/" + _this._cntCtxMax + " Tokens";
-				_this._tokenCount = tokenCount;
-				_callbackCount++;
-				var elapsed = _sw.Elapsed.TotalSeconds;
+				if(thisform.IsDisposed) return;
+				++_callbackCount;
+				++_callbackTot;
+				var elapsed = Sw.Elapsed.TotalSeconds;
 				if(elapsed >= 1.0){
 					var callsPerSecond = _callbackCount/elapsed;
 					_this.labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
 					_callbackCount = 0;
-					_sw.Restart();
+					Sw.Restart();
 				}
+				_this._cntAssMsg.AppendText(token);
+				_this.labelTokens.Text = tokenCount + "/" + _this._cntCtxMax + " Tokens";
+				_this._tokenCount = tokenCount;
 				NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
 			}));
 		}

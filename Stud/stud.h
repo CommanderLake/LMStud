@@ -35,6 +35,7 @@ extern "C"{
 	EXPORT int AddMessage(bool user, const char* message);
 	EXPORT void RetokenizeChat();
 	EXPORT void SetSystemPrompt(const char* prompt);
+	EXPORT void SetMessageAt(int index, const char* message);
 	EXPORT void RemoveMessageAt(int index);
 	EXPORT void RemoveMessagesStartingAt(int index);
 	EXPORT void Generate(unsigned int nPredict);

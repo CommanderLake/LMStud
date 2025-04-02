@@ -1141,7 +1141,7 @@
 		private System.Windows.Forms.Button butUnload;
 		private System.Windows.Forms.ToolStripStatusLabel labelTokens;
 		private System.Windows.Forms.CheckBox checkMarkdown;
-		private MyFlowLayoutPanel panelChat;
+		internal MyFlowLayoutPanel panelChat;
 		private System.Windows.Forms.CheckBox checkLoadAuto;
 		private System.Windows.Forms.SplitContainer splitContainer2;
 		private System.Windows.Forms.ListView listViewMeta;
