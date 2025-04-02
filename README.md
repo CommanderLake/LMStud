@@ -15,6 +15,8 @@ This project was born out of frustration with slow bloated embedded web-based GU
 - Minimal resource usage compared to embedded web GUIs
 - NEW! Huggingface model search and download!
 
+![LM Stud Chat Interface](./screenshots/LMStud_Chat.png)
+
 ## Getting Started
 
 ### Prerequisites
