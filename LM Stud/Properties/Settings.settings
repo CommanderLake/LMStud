@@ -30,9 +30,9 @@
       <Value Profile="(Default)">4096</Value>
     </Setting>
     <Setting Name="GPULayers" Type="System.Decimal" Scope="User">
-      <Value Profile="(Default)">32</Value>
+      <Value Profile="(Default)">-1</Value>
     </Setting>
-    <Setting Name="strictCPU" Type="System.Boolean" Scope="User">
+    <Setting Name="StrictCPU" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="BatchSize" Type="System.Decimal" Scope="User">
@@ -46,6 +46,12 @@
     </Setting>
     <Setting Name="LastModel" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="ThreadsBatch" Type="System.Decimal" Scope="User">
+      <Value Profile="(Default)">8</Value>
+    </Setting>
+    <Setting Name="StrictCPUBatch" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
     </Setting>
   </Settings>
 </SettingsFile>

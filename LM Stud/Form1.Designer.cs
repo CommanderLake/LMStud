@@ -27,6 +27,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+			this.components = new System.ComponentModel.Container();
 			this.textInput = new System.Windows.Forms.TextBox();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
 			this.panelChat = new LMStud.MyFlowLayoutPanel();
@@ -37,10 +38,17 @@
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabPage1 = new System.Windows.Forms.TabPage();
 			this.tabPage2 = new System.Windows.Forms.TabPage();
-			this.groupBox2 = new System.Windows.Forms.GroupBox();
+			this.groupCPUParamsBatch = new System.Windows.Forms.GroupBox();
+			this.numThreadsBatch = new System.Windows.Forms.NumericUpDown();
+			this.label14 = new System.Windows.Forms.Label();
+			this.checkStrictCPUBatch = new System.Windows.Forms.CheckBox();
+			this.groupCPUParams = new System.Windows.Forms.GroupBox();
+			this.numThreads = new System.Windows.Forms.NumericUpDown();
+			this.label2 = new System.Windows.Forms.Label();
+			this.checkStrictCPU = new System.Windows.Forms.CheckBox();
+			this.groupAdvanced = new System.Windows.Forms.GroupBox();
 			this.comboNUMAStrat = new System.Windows.Forms.ComboBox();
 			this.label6 = new System.Windows.Forms.Label();
-			this.checkStrictCPU = new System.Windows.Forms.CheckBox();
 			this.label12 = new System.Windows.Forms.Label();
 			this.numRepPen = new System.Windows.Forms.NumericUpDown();
 			this.label11 = new System.Windows.Forms.Label();
@@ -49,9 +57,7 @@
 			this.numTopK = new System.Windows.Forms.NumericUpDown();
 			this.label9 = new System.Windows.Forms.Label();
 			this.numTopP = new System.Windows.Forms.NumericUpDown();
-			this.groupBox1 = new System.Windows.Forms.GroupBox();
-			this.numThreads = new System.Windows.Forms.NumericUpDown();
-			this.label2 = new System.Windows.Forms.Label();
+			this.groupCommon = new System.Windows.Forms.GroupBox();
 			this.numCtxSize = new System.Windows.Forms.NumericUpDown();
 			this.label5 = new System.Windows.Forms.Label();
 			this.numGPULayers = new System.Windows.Forms.NumericUpDown();
@@ -101,6 +107,8 @@
 			this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelTokens = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelTPS = new System.Windows.Forms.ToolStripStatusLabel();
+			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
+			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -108,13 +116,16 @@
 			this.tabControl1.SuspendLayout();
 			this.tabPage1.SuspendLayout();
 			this.tabPage2.SuspendLayout();
-			this.groupBox2.SuspendLayout();
+			this.groupCPUParamsBatch.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numThreadsBatch)).BeginInit();
+			this.groupCPUParams.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numThreads)).BeginInit();
+			this.groupAdvanced.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numRepPen)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numBatchSize)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTopK)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTopP)).BeginInit();
-			this.groupBox1.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.numThreads)).BeginInit();
+			this.groupCommon.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numCtxSize)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numGPULayers)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numNGen)).BeginInit();
@@ -265,8 +276,10 @@
 			// 
 			// tabPage2
 			// 
-			this.tabPage2.Controls.Add(this.groupBox2);
-			this.tabPage2.Controls.Add(this.groupBox1);
+			this.tabPage2.Controls.Add(this.groupCPUParamsBatch);
+			this.tabPage2.Controls.Add(this.groupCPUParams);
+			this.tabPage2.Controls.Add(this.groupAdvanced);
+			this.tabPage2.Controls.Add(this.groupCommon);
 			this.tabPage2.Controls.Add(this.label3);
 			this.tabPage2.Controls.Add(this.butBrowse);
 			this.tabPage2.Controls.Add(this.textModelsPath);
@@ -281,25 +294,128 @@
 			this.tabPage2.Text = "Settings";
 			this.tabPage2.UseVisualStyleBackColor = true;
 			// 
-			// groupBox2
+			// groupCPUParamsBatch
 			// 
-			this.groupBox2.Controls.Add(this.comboNUMAStrat);
-			this.groupBox2.Controls.Add(this.label6);
-			this.groupBox2.Controls.Add(this.checkStrictCPU);
-			this.groupBox2.Controls.Add(this.label12);
-			this.groupBox2.Controls.Add(this.numRepPen);
-			this.groupBox2.Controls.Add(this.label11);
-			this.groupBox2.Controls.Add(this.numBatchSize);
-			this.groupBox2.Controls.Add(this.label8);
-			this.groupBox2.Controls.Add(this.numTopK);
-			this.groupBox2.Controls.Add(this.label9);
-			this.groupBox2.Controls.Add(this.numTopP);
-			this.groupBox2.Location = new System.Drawing.Point(6, 320);
-			this.groupBox2.Name = "groupBox2";
-			this.groupBox2.Size = new System.Drawing.Size(200, 174);
-			this.groupBox2.TabIndex = 34;
-			this.groupBox2.TabStop = false;
-			this.groupBox2.Text = "Advanced";
+			this.groupCPUParamsBatch.Controls.Add(this.numThreadsBatch);
+			this.groupCPUParamsBatch.Controls.Add(this.label14);
+			this.groupCPUParamsBatch.Controls.Add(this.checkStrictCPUBatch);
+			this.groupCPUParamsBatch.Location = new System.Drawing.Point(212, 230);
+			this.groupCPUParamsBatch.Name = "groupCPUParamsBatch";
+			this.groupCPUParamsBatch.Size = new System.Drawing.Size(200, 68);
+			this.groupCPUParamsBatch.TabIndex = 36;
+			this.groupCPUParamsBatch.TabStop = false;
+			this.groupCPUParamsBatch.Text = "CPU Params Batch";
+			// 
+			// numThreadsBatch
+			// 
+			this.numThreadsBatch.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.numThreadsBatch.Location = new System.Drawing.Point(119, 19);
+			this.numThreadsBatch.Maximum = new decimal(new int[] {
+            512,
+            0,
+            0,
+            0});
+			this.numThreadsBatch.Name = "numThreadsBatch";
+			this.numThreadsBatch.Size = new System.Drawing.Size(75, 20);
+			this.numThreadsBatch.TabIndex = 30;
+			this.numThreadsBatch.Value = new decimal(new int[] {
+            8,
+            0,
+            0,
+            0});
+			// 
+			// label14
+			// 
+			this.label14.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.label14.AutoSize = true;
+			this.label14.Location = new System.Drawing.Point(64, 21);
+			this.label14.Name = "label14";
+			this.label14.Size = new System.Drawing.Size(49, 13);
+			this.label14.TabIndex = 29;
+			this.label14.Text = "Threads:";
+			// 
+			// checkStrictCPUBatch
+			// 
+			this.checkStrictCPUBatch.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.checkStrictCPUBatch.AutoSize = true;
+			this.checkStrictCPUBatch.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkStrictCPUBatch.Location = new System.Drawing.Point(17, 45);
+			this.checkStrictCPUBatch.Name = "checkStrictCPUBatch";
+			this.checkStrictCPUBatch.Size = new System.Drawing.Size(177, 17);
+			this.checkStrictCPUBatch.TabIndex = 31;
+			this.checkStrictCPUBatch.Text = "Strict CPU placement of threads";
+			this.checkStrictCPUBatch.UseVisualStyleBackColor = true;
+			// 
+			// groupCPUParams
+			// 
+			this.groupCPUParams.Controls.Add(this.numThreads);
+			this.groupCPUParams.Controls.Add(this.label2);
+			this.groupCPUParams.Controls.Add(this.checkStrictCPU);
+			this.groupCPUParams.Location = new System.Drawing.Point(212, 156);
+			this.groupCPUParams.Name = "groupCPUParams";
+			this.groupCPUParams.Size = new System.Drawing.Size(200, 68);
+			this.groupCPUParams.TabIndex = 35;
+			this.groupCPUParams.TabStop = false;
+			this.groupCPUParams.Text = "CPU Params";
+			// 
+			// numThreads
+			// 
+			this.numThreads.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.numThreads.Location = new System.Drawing.Point(119, 19);
+			this.numThreads.Maximum = new decimal(new int[] {
+            512,
+            0,
+            0,
+            0});
+			this.numThreads.Name = "numThreads";
+			this.numThreads.Size = new System.Drawing.Size(75, 20);
+			this.numThreads.TabIndex = 3;
+			this.numThreads.Value = new decimal(new int[] {
+            8,
+            0,
+            0,
+            0});
+			// 
+			// label2
+			// 
+			this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.label2.AutoSize = true;
+			this.label2.Location = new System.Drawing.Point(64, 21);
+			this.label2.Name = "label2";
+			this.label2.Size = new System.Drawing.Size(49, 13);
+			this.label2.TabIndex = 2;
+			this.label2.Text = "Threads:";
+			// 
+			// checkStrictCPU
+			// 
+			this.checkStrictCPU.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.checkStrictCPU.AutoSize = true;
+			this.checkStrictCPU.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkStrictCPU.Location = new System.Drawing.Point(17, 46);
+			this.checkStrictCPU.Name = "checkStrictCPU";
+			this.checkStrictCPU.Size = new System.Drawing.Size(177, 17);
+			this.checkStrictCPU.TabIndex = 28;
+			this.checkStrictCPU.Text = "Strict CPU placement of threads";
+			this.checkStrictCPU.UseVisualStyleBackColor = true;
+			// 
+			// groupAdvanced
+			// 
+			this.groupAdvanced.Controls.Add(this.comboNUMAStrat);
+			this.groupAdvanced.Controls.Add(this.label6);
+			this.groupAdvanced.Controls.Add(this.label12);
+			this.groupAdvanced.Controls.Add(this.numRepPen);
+			this.groupAdvanced.Controls.Add(this.label11);
+			this.groupAdvanced.Controls.Add(this.numBatchSize);
+			this.groupAdvanced.Controls.Add(this.label8);
+			this.groupAdvanced.Controls.Add(this.numTopK);
+			this.groupAdvanced.Controls.Add(this.label9);
+			this.groupAdvanced.Controls.Add(this.numTopP);
+			this.groupAdvanced.Location = new System.Drawing.Point(6, 286);
+			this.groupAdvanced.Name = "groupAdvanced";
+			this.groupAdvanced.Size = new System.Drawing.Size(200, 151);
+			this.groupAdvanced.TabIndex = 34;
+			this.groupAdvanced.TabStop = false;
+			this.groupAdvanced.Text = "Advanced";
 			// 
 			// comboNUMAStrat
 			// 
@@ -327,18 +443,6 @@
 			this.label6.Size = new System.Drawing.Size(82, 13);
 			this.label6.TabIndex = 13;
 			this.label6.Text = "Repeat penalty:";
-			// 
-			// checkStrictCPU
-			// 
-			this.checkStrictCPU.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.checkStrictCPU.AutoSize = true;
-			this.checkStrictCPU.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkStrictCPU.Location = new System.Drawing.Point(17, 150);
-			this.checkStrictCPU.Name = "checkStrictCPU";
-			this.checkStrictCPU.Size = new System.Drawing.Size(177, 17);
-			this.checkStrictCPU.TabIndex = 28;
-			this.checkStrictCPU.Text = "Strict CPU placement of threads";
-			this.checkStrictCPU.UseVisualStyleBackColor = true;
 			// 
 			// label12
 			// 
@@ -464,57 +568,27 @@
             0,
             131072});
 			// 
-			// groupBox1
+			// groupCommon
 			// 
-			this.groupBox1.Controls.Add(this.numThreads);
-			this.groupBox1.Controls.Add(this.label2);
-			this.groupBox1.Controls.Add(this.numCtxSize);
-			this.groupBox1.Controls.Add(this.label5);
-			this.groupBox1.Controls.Add(this.numGPULayers);
-			this.groupBox1.Controls.Add(this.label7);
-			this.groupBox1.Controls.Add(this.label10);
-			this.groupBox1.Controls.Add(this.numNGen);
-			this.groupBox1.Controls.Add(this.numTemp);
-			this.groupBox1.Controls.Add(this.label4);
-			this.groupBox1.Location = new System.Drawing.Point(6, 156);
-			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(200, 158);
-			this.groupBox1.TabIndex = 33;
-			this.groupBox1.TabStop = false;
-			this.groupBox1.Text = "Common";
-			// 
-			// numThreads
-			// 
-			this.numThreads.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numThreads.Location = new System.Drawing.Point(119, 19);
-			this.numThreads.Maximum = new decimal(new int[] {
-            512,
-            0,
-            0,
-            0});
-			this.numThreads.Name = "numThreads";
-			this.numThreads.Size = new System.Drawing.Size(75, 20);
-			this.numThreads.TabIndex = 3;
-			this.numThreads.Value = new decimal(new int[] {
-            8,
-            0,
-            0,
-            0});
-			// 
-			// label2
-			// 
-			this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label2.AutoSize = true;
-			this.label2.Location = new System.Drawing.Point(64, 21);
-			this.label2.Name = "label2";
-			this.label2.Size = new System.Drawing.Size(49, 13);
-			this.label2.TabIndex = 2;
-			this.label2.Text = "Threads:";
+			this.groupCommon.Controls.Add(this.numCtxSize);
+			this.groupCommon.Controls.Add(this.label5);
+			this.groupCommon.Controls.Add(this.numGPULayers);
+			this.groupCommon.Controls.Add(this.label7);
+			this.groupCommon.Controls.Add(this.label10);
+			this.groupCommon.Controls.Add(this.numNGen);
+			this.groupCommon.Controls.Add(this.numTemp);
+			this.groupCommon.Controls.Add(this.label4);
+			this.groupCommon.Location = new System.Drawing.Point(6, 156);
+			this.groupCommon.Name = "groupCommon";
+			this.groupCommon.Size = new System.Drawing.Size(200, 124);
+			this.groupCommon.TabIndex = 33;
+			this.groupCommon.TabStop = false;
+			this.groupCommon.Text = "Common";
 			// 
 			// numCtxSize
 			// 
 			this.numCtxSize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numCtxSize.Location = new System.Drawing.Point(119, 45);
+			this.numCtxSize.Location = new System.Drawing.Point(119, 19);
 			this.numCtxSize.Maximum = new decimal(new int[] {
             1048576,
             0,
@@ -533,7 +607,7 @@
 			// 
 			this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label5.AutoSize = true;
-			this.label5.Location = new System.Drawing.Point(46, 47);
+			this.label5.Location = new System.Drawing.Point(46, 21);
 			this.label5.Name = "label5";
 			this.label5.Size = new System.Drawing.Size(67, 13);
 			this.label5.TabIndex = 25;
@@ -542,26 +616,31 @@
 			// numGPULayers
 			// 
 			this.numGPULayers.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numGPULayers.Location = new System.Drawing.Point(119, 71);
+			this.numGPULayers.Location = new System.Drawing.Point(119, 45);
 			this.numGPULayers.Maximum = new decimal(new int[] {
             1024,
             0,
             0,
             0});
+			this.numGPULayers.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            -2147483648});
 			this.numGPULayers.Name = "numGPULayers";
 			this.numGPULayers.Size = new System.Drawing.Size(75, 20);
 			this.numGPULayers.TabIndex = 26;
 			this.numGPULayers.Value = new decimal(new int[] {
-            32,
+            1,
             0,
             0,
-            0});
+            -2147483648});
 			// 
 			// label7
 			// 
 			this.label7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label7.AutoSize = true;
-			this.label7.Location = new System.Drawing.Point(43, 99);
+			this.label7.Location = new System.Drawing.Point(43, 73);
 			this.label7.Name = "label7";
 			this.label7.Size = new System.Drawing.Size(70, 13);
 			this.label7.TabIndex = 15;
@@ -571,7 +650,7 @@
 			// 
 			this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label10.AutoSize = true;
-			this.label10.Location = new System.Drawing.Point(50, 73);
+			this.label10.Location = new System.Drawing.Point(50, 47);
 			this.label10.Name = "label10";
 			this.label10.Size = new System.Drawing.Size(63, 13);
 			this.label10.TabIndex = 27;
@@ -580,7 +659,7 @@
 			// numNGen
 			// 
 			this.numNGen.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numNGen.Location = new System.Drawing.Point(119, 123);
+			this.numNGen.Location = new System.Drawing.Point(119, 97);
 			this.numNGen.Maximum = new decimal(new int[] {
             131072,
             0,
@@ -609,7 +688,7 @@
             0,
             0,
             65536});
-			this.numTemp.Location = new System.Drawing.Point(119, 97);
+			this.numTemp.Location = new System.Drawing.Point(119, 71);
 			this.numTemp.Maximum = new decimal(new int[] {
             1,
             0,
@@ -628,7 +707,7 @@
 			// 
 			this.label4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label4.AutoSize = true;
-			this.label4.Location = new System.Drawing.Point(10, 125);
+			this.label4.Location = new System.Drawing.Point(10, 99);
 			this.label4.Name = "label4";
 			this.label4.Size = new System.Drawing.Size(103, 13);
 			this.label4.TabIndex = 22;
@@ -668,7 +747,7 @@
 			// 
 			// butApply
 			// 
-			this.butApply.Location = new System.Drawing.Point(6, 500);
+			this.butApply.Location = new System.Drawing.Point(6, 443);
 			this.butApply.Name = "butApply";
 			this.butApply.Size = new System.Drawing.Size(75, 23);
 			this.butApply.TabIndex = 4;
@@ -1008,18 +1087,19 @@
 			this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1,
             this.labelTokens,
-            this.labelTPS});
+            this.labelTPS,
+            this.labelPreGen});
 			this.statusStrip1.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.HorizontalStackWithOverflow;
-			this.statusStrip1.Location = new System.Drawing.Point(0, 973);
+			this.statusStrip1.Location = new System.Drawing.Point(0, 975);
 			this.statusStrip1.Name = "statusStrip1";
-			this.statusStrip1.Size = new System.Drawing.Size(1016, 24);
+			this.statusStrip1.Size = new System.Drawing.Size(1016, 22);
 			this.statusStrip1.TabIndex = 4;
 			this.statusStrip1.Text = "statusStrip1";
 			// 
 			// toolStripStatusLabel1
 			// 
 			this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-			this.toolStripStatusLabel1.Size = new System.Drawing.Size(99, 19);
+			this.toolStripStatusLabel1.Size = new System.Drawing.Size(86, 17);
 			this.toolStripStatusLabel1.Text = "No model loaded";
 			// 
 			// labelTokens
@@ -1027,7 +1107,7 @@
 			this.labelTokens.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
 			this.labelTokens.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
 			this.labelTokens.Name = "labelTokens";
-			this.labelTokens.Size = new System.Drawing.Size(56, 19);
+			this.labelTokens.Size = new System.Drawing.Size(54, 17);
 			this.labelTokens.Text = "0 Tokens";
 			// 
 			// labelTPS
@@ -1035,8 +1115,24 @@
 			this.labelTPS.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
 			this.labelTPS.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
 			this.labelTPS.Name = "labelTPS";
-			this.labelTPS.Size = new System.Drawing.Size(48, 19);
+			this.labelTPS.Size = new System.Drawing.Size(46, 17);
 			this.labelTPS.Text = "0 Tok/s";
+			// 
+			// labelPreGen
+			// 
+			this.labelPreGen.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
+			this.labelPreGen.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
+			this.labelPreGen.Name = "labelPreGen";
+			this.labelPreGen.Size = new System.Drawing.Size(110, 17);
+			this.labelPreGen.Text = "Pre-generation time:";
+			// 
+			// toolTip1
+			// 
+			this.toolTip1.AutoPopDelay = 10000;
+			this.toolTip1.InitialDelay = 500;
+			this.toolTip1.ReshowDelay = 0;
+			this.toolTip1.UseAnimation = false;
+			this.toolTip1.UseFading = false;
 			// 
 			// Form1
 			// 
@@ -1062,15 +1158,20 @@
 			this.tabPage1.ResumeLayout(false);
 			this.tabPage2.ResumeLayout(false);
 			this.tabPage2.PerformLayout();
-			this.groupBox2.ResumeLayout(false);
-			this.groupBox2.PerformLayout();
+			this.groupCPUParamsBatch.ResumeLayout(false);
+			this.groupCPUParamsBatch.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numThreadsBatch)).EndInit();
+			this.groupCPUParams.ResumeLayout(false);
+			this.groupCPUParams.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numThreads)).EndInit();
+			this.groupAdvanced.ResumeLayout(false);
+			this.groupAdvanced.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numRepPen)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numBatchSize)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTopK)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTopP)).EndInit();
-			this.groupBox1.ResumeLayout(false);
-			this.groupBox1.PerformLayout();
-			((System.ComponentModel.ISupportInitialize)(this.numThreads)).EndInit();
+			this.groupCommon.ResumeLayout(false);
+			this.groupCommon.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numCtxSize)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numGPULayers)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numNGen)).EndInit();
@@ -1147,8 +1248,8 @@
 		private System.Windows.Forms.ListView listViewMeta;
 		private System.Windows.Forms.ColumnHeader columnHeader3;
 		private System.Windows.Forms.ColumnHeader columnHeader4;
-		private System.Windows.Forms.GroupBox groupBox2;
-		private System.Windows.Forms.GroupBox groupBox1;
+		private System.Windows.Forms.GroupBox groupAdvanced;
+		private System.Windows.Forms.GroupBox groupCommon;
 		private System.Windows.Forms.ToolStripStatusLabel labelTPS;
 		private System.Windows.Forms.Button butCodeBlock;
 		private System.Windows.Forms.TabPage tabPage4;
@@ -1170,6 +1271,13 @@
 		private System.Windows.Forms.ColumnHeader columnHeader13;
 		private System.Windows.Forms.ColumnHeader columnHeader14;
 		private System.Windows.Forms.ProgressBar progressBar1;
+		private System.Windows.Forms.GroupBox groupCPUParamsBatch;
+		private System.Windows.Forms.NumericUpDown numThreadsBatch;
+		private System.Windows.Forms.Label label14;
+		private System.Windows.Forms.CheckBox checkStrictCPUBatch;
+		private System.Windows.Forms.GroupBox groupCPUParams;
+		private System.Windows.Forms.ToolTip toolTip1;
+		private System.Windows.Forms.ToolStripStatusLabel labelPreGen;
 	}
 }
 

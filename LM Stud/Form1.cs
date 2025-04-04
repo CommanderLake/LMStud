@@ -13,6 +13,7 @@ namespace LMStud{
 		private static int _callbackCount;
 		private static int _callbackTot;
 		private static readonly Stopwatch Sw = new Stopwatch();
+		private static readonly Stopwatch SwInit = new Stopwatch();
 		private static readonly Stopwatch SwTot = new Stopwatch();
 		private volatile bool _generating;
 		private readonly List<ChatMessage> _chatMessages = new List<ChatMessage>();
@@ -22,9 +23,29 @@ namespace LMStud{
 			_this = this;
 			NativeMethods.SetOMPEnv();
 			InitializeComponent();
+			SetToolTips();
 			LoadConfig();
 			SetConfig();
 			PopulateModels();
+		}
+		private void SetToolTips(){
+			toolTip1.SetToolTip(textInstruction, "Tell the AI who or what to be, how to respond, or provide initial context.");
+			toolTip1.SetToolTip(textModelsPath, "Path to the folder containing your .gguf model files.");
+			toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.");
+			toolTip1.SetToolTip(numGPULayers, "Number of layers to offload to GPU. More layers improve performance but increase GPU memory usage.");
+			toolTip1.SetToolTip(numTemp, "Temperature controls randomness. Lower values make responses more deterministic; higher values produce more creative outputs.");
+			toolTip1.SetToolTip(numNGen, "Number of tokens to generate per response (max length of the AI's reply).");
+			toolTip1.SetToolTip(comboNUMAStrat, "NUMA (Non-Uniform Memory Access) strategy. Adjust if using multi-socket CPUs or specific memory configurations.");
+			toolTip1.SetToolTip(numRepPen, "Repetition penalty reduces repetitive outputs. Higher values strongly discourage repeated phrases.");
+			toolTip1.SetToolTip(numTopK, "Top-K sampling: limits token choice to the K most probable tokens, improving coherency.");
+			toolTip1.SetToolTip(numTopP, "Top-P sampling: controls diversity by choosing from the smallest possible set of tokens whose cumulative probability exceeds this threshold.");
+			toolTip1.SetToolTip(numBatchSize, "Batch size for processing tokens during generation. Higher values can improve performance at the cost of higher RAM usage.");
+			toolTip1.SetToolTip(groupCPUParams, "Parameters controlling text generation on CPU.");
+			toolTip1.SetToolTip(numThreads, "CPU threads for token generation. Typically, around 75% of your physical cores is optimal to prevent oversaturating the memory controller.");
+			toolTip1.SetToolTip(checkStrictCPU, "Sets thread affinities on supported backends to isolate threads to specific logical cores.");
+			toolTip1.SetToolTip(groupCPUParamsBatch, "Parameters for the pre-generation step (initial preparation before generation starts).");
+			toolTip1.SetToolTip(numThreadsBatch, "CPU threads used in pre-generation.");
+			toolTip1.SetToolTip(checkStrictCPUBatch, "Sets thread affinities on supported backends to isolate threads to specific logical cores pre-generation.");
 		}
 		private void Form1_Load(object sender, EventArgs e) {
 			if(!Settings.Default.LoadAuto) return;
@@ -134,6 +155,7 @@ namespace LMStud{
 				_cntAssMsg = AddMessage(false, "");
 				ThreadPool.QueueUserWorkItem(o => {
 					SwTot.Restart();
+					SwInit.Restart();
 					Sw.Restart();
 					NativeMethods.Generate(_nGen);
 					SwTot.Stop();
@@ -156,18 +178,21 @@ namespace LMStud{
 		}
 		private static unsafe void TokenCallback(byte* tokenPtr, int strLen, int tokenCount){
 			if(_this.IsDisposed) return;
+			SwInit.Stop();
+			++_callbackCount;
+			++_callbackTot;
+			var elapsed = Sw.Elapsed.TotalSeconds;
+			Sw.Restart();
+			var initElapsed = SwInit.Elapsed.TotalSeconds;
 			var token = Encoding.UTF8.GetString(tokenPtr, strLen);
 			var thisform = _this;
 			_this.BeginInvoke((MethodInvoker)(() => {
 				if(thisform.IsDisposed) return;
-				++_callbackCount;
-				++_callbackTot;
-				var elapsed = Sw.Elapsed.TotalSeconds;
+				_this.labelPreGen.Text = "Pre-generation time: " + initElapsed + " s";
 				if(elapsed >= 1.0){
 					var callsPerSecond = _callbackCount/elapsed;
 					_this.labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
 					_callbackCount = 0;
-					Sw.Restart();
 				}
 				_this._cntAssMsg.AppendText(token);
 				_this.labelTokens.Text = tokenCount + "/" + _this._cntCtxMax + " Tokens";

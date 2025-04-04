@@ -133,7 +133,7 @@ namespace LMStud.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("32")]
+        [global::System.Configuration.DefaultSettingValueAttribute("-1")]
         public decimal GPULayers {
             get {
                 return ((decimal)(this["GPULayers"]));
@@ -146,12 +146,12 @@ namespace LMStud.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool strictCPU {
+        public bool StrictCPU {
             get {
-                return ((bool)(this["strictCPU"]));
+                return ((bool)(this["StrictCPU"]));
             }
             set {
-                this["strictCPU"] = value;
+                this["StrictCPU"] = value;
             }
         }
         
@@ -200,6 +200,30 @@ namespace LMStud.Properties {
             }
             set {
                 this["LastModel"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("8")]
+        public decimal ThreadsBatch {
+            get {
+                return ((decimal)(this["ThreadsBatch"]));
+            }
+            set {
+                this["ThreadsBatch"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool StrictCPUBatch {
+            get {
+                return ((bool)(this["StrictCPUBatch"]));
+            }
+            set {
+                this["StrictCPUBatch"] = value;
             }
         }
     }

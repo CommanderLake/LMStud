@@ -13,8 +13,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetOMPEnv();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern bool LoadModel(string filename, string system, int nCtx, float temp, float repeatPenalty, int topK, float topP, int nThreads, bool strictCPU, int nGPULayers,
-			int batchSize, GgmlNumaStrategy numaStrategy);
+		public static extern bool LoadModel(string filename, string systemPrompt, int nCtx, float temp, float repeatPenalty, int topK, float topP, int nThreads, bool strictCPU, int nThreadsBatch, bool strictCPUBatch, int nGPULayers, int nBatch, GgmlNumaStrategy numaStrategy);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void FreeModel();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -22,7 +21,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetTokenCallback(TokenCallback cb);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void SetThreadCount(int n);
+		public static extern void SetThreadCount(int n, int nBatch);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int AddMessage(bool user, string text);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -40,7 +39,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopGeneration();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public unsafe static extern void ConvertMarkdownToRtf(string markdown, ref byte* rtfOut, ref int rtfLen);
+		public static extern unsafe void ConvertMarkdownToRtf(string markdown, ref byte* rtfOut, ref int rtfLen);
 		[DllImport("user32.dll")]
 		public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wp, IntPtr lp);
 		public enum GgmlNumaStrategy{

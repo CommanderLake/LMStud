@@ -91,7 +91,7 @@ namespace LMStud{
 					}
 					var modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
 					_cntCtxMax = _ctxSize > modelCtxMax ? modelCtxMax : _ctxSize;
-					var success = NativeMethods.LoadModel(modelPath, _instruction, _cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _strictCPU, _gpuLayers, _batchSize, _numaStrat);
+					var success = NativeMethods.LoadModel(modelPath, _instruction, _cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _strictCPU, _nThreadsBatch, _strictCPUBatch, _gpuLayers, _batchSize, _numaStrat);
 					if(!success){
 						Settings.Default.LoadAuto = false;
 						Settings.Default.Save();
@@ -114,6 +114,7 @@ namespace LMStud{
 			});
 		}
 		private void UnloadModel(){
+			butGen.Enabled = butReset.Enabled = butUnload.Enabled = false;
 			ThreadPool.QueueUserWorkItem(o => {
 				if(_generating) {
 					NativeMethods.StopGeneration();

@@ -43,23 +43,23 @@ void FreeModel(){
 	}
 	llama_backend_free();
 }
-bool LoadModel(const char* filename, const char* system, int contextSize, const float temp, const float repeatPenalty, const int topK, const int topP, const int nThreads, const bool strictCPU, const int nGPULayers, const int nBatch, const ggml_numa_strategy numaStrategy){
+bool LoadModel(const char* filename, const char* systemPrompt, int nCtx, const float temp, const float repeatPenalty, const int topK, const int topP, const int nThreads, const bool strictCPU, const int nThreadsBatch, const bool strictCPUBatch, const int nGPULayers, const int nBatch, const ggml_numa_strategy numaStrategy){
 	FreeModel();
 	llama_backend_init();
 	_params.numa = numaStrategy;
 	llama_numa_init(_params.numa);
 	_params.warmup = false;
 	_params.model = filename;
-	_params.prompt = system;
-	_params.n_ctx = contextSize;
+	_params.prompt = systemPrompt;
+	_params.n_ctx = nCtx;
 	_params.sampling.temp = temp;
 	_params.sampling.penalty_repeat = repeatPenalty;
 	_params.sampling.top_k = topK;
 	_params.sampling.top_p = topP;
 	_params.cpuparams.n_threads = nThreads;
 	_params.cpuparams.strict_cpu = strictCPU;
-	_params.cpuparams_batch.n_threads = nThreads;
-	_params.cpuparams_batch.strict_cpu = strictCPU;
+	_params.cpuparams_batch.n_threads = nThreadsBatch;
+	_params.cpuparams_batch.strict_cpu = strictCPUBatch;
 	_params.n_gpu_layers = nGPULayers;
 	_params.n_ubatch = nBatch;
 	_params.enable_chat_template = true;
@@ -82,8 +82,8 @@ bool LoadModel(const char* filename, const char* system, int contextSize, const 
 void SetTokenCallback(const TokenCallbackFn cb){
 	_tokenCb = cb;
 }
-void SetThreadCount(int n){
-	if(_ctx) llama_set_n_threads(_ctx, n, n);
+void SetThreadCount(int n, int nBatch){
+	if(_ctx) llama_set_n_threads(_ctx, n, nBatch);
 }
 int AddMessage(const bool user, const char* message){
 	if(!_vocab) return 0;
