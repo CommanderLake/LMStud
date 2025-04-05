@@ -70,7 +70,7 @@ namespace LMStud{
 							listViewModels.Items.Add(lvi);
 						}));
 					}
-				} catch(Exception ex) { MessageBox.Show(this, ex.ToString(), "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error); } finally {
+				} catch(Exception ex) { Invoke(new MethodInvoker(() => {MessageBox.Show(this, ex.ToString(), "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);})); } finally {
 					Invoke(new MethodInvoker(() => {
 						listViewModels.EndUpdate();
 					}));

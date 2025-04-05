@@ -13,7 +13,7 @@ namespace LMStud{
 		private int _callbackCount;
 		private int _callbackTot;
 		private readonly Stopwatch SwRate = new Stopwatch();
-		private readonly Stopwatch SwInit = new Stopwatch();
+		private readonly Stopwatch SwPreGen = new Stopwatch();
 		private readonly Stopwatch SwTot = new Stopwatch();
 		private volatile bool _generating;
 		private readonly List<ChatMessage> _chatMessages = new List<ChatMessage>();
@@ -155,7 +155,7 @@ namespace LMStud{
 				_cntAssMsg = AddMessage(false, "");
 				ThreadPool.QueueUserWorkItem(o => {
 					SwTot.Restart();
-					SwInit.Restart();
+					SwPreGen.Restart();
 					SwRate.Restart();
 					NativeMethods.Generate(_nGen);
 					SwTot.Stop();
@@ -177,15 +177,15 @@ namespace LMStud{
 			} else{ NativeMethods.StopGeneration(); }
 		}
 		private static unsafe void TokenCallback(byte* tokenPtr, int strLen, int tokenCount){
-			if(_this.IsDisposed) return;
-			_this.SwInit.Stop();
+			_this.SwPreGen.Stop();
 			++_this._callbackCount;
 			++_this._callbackTot;
 			var elapsed = _this.SwRate.Elapsed.TotalSeconds;
 			if(elapsed >= 1.0) _this.SwRate.Restart();
-			var initElapsed = _this.SwInit.Elapsed.TotalSeconds;
+			var initElapsed = _this.SwPreGen.Elapsed.TotalSeconds;
 			var token = Encoding.UTF8.GetString(tokenPtr, strLen);
 			var thisform = _this;
+			if(_this.IsDisposed) return;
 			_this.BeginInvoke((MethodInvoker)(() => {
 				if(thisform.IsDisposed) return;
 				_this.labelPreGen.Text = "Pre-generation time: " + initElapsed + " s";

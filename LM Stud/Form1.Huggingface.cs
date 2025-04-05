@@ -92,7 +92,7 @@ namespace LMStud{
 					response.EnsureSuccessStatusCode();
 					var infoJson = response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
 					var info = JObject.Parse(infoJson);
-					if(info.TryGetValue("siblings", out JToken siblings) && siblings is JArray siblingsArray) {
+					if(info.TryGetValue("siblings", out var siblings) && siblings is JArray siblingsArray) {
 						foreach(var file in siblingsArray) {
 							if(file is JObject fileObject) {
 								var fileName = fileObject.Value<string>("rfilename") ?? fileObject.Value<string>("filename");
@@ -159,16 +159,18 @@ namespace LMStud{
 						response.EnsureSuccessStatusCode();
 						using(var httpStream = response.Content.ReadAsStreamAsync().ConfigureAwait(false).GetAwaiter().GetResult()) {
 							using(var fileStream = File.Create(targetPath)) {
-								long contentLength = response.Content.Headers.ContentLength ?? 0;
-								byte[] buffer = new byte[10485760];
-								Invoke(new MethodInvoker(() => progressBar1.Maximum = (int)contentLength/buffer.Length));
+								var contentLength = response.Content.Headers.ContentLength ?? 0;
+								var buffer = new byte[10485760];
+								Invoke(new MethodInvoker(() => progressBar1.Maximum = (int)(contentLength/buffer.Length)));
 								long totalBytesRead = 0;
 								while(true) {
-									int bytesRead = httpStream.Read(buffer, 0, buffer.Length);
+									var bytesRead = httpStream.Read(buffer, 0, buffer.Length);
 									if(bytesRead == 0) break;
 									fileStream.Write(buffer, 0, bytesRead);
 									totalBytesRead += bytesRead;
-									if(contentLength > 0) BeginInvoke(new MethodInvoker(() => progressBar1.Value = (int)totalBytesRead/buffer.Length));
+									if(contentLength <= 0) continue;
+									var read = totalBytesRead;
+									BeginInvoke(new MethodInvoker(() => progressBar1.Value = (int)(read/buffer.Length)));
 								}
 								if(contentLength > 0 && totalBytesRead != contentLength) throw new IOException($"Download incomplete - Expected {contentLength} bytes, received {totalBytesRead}");
 							}
