@@ -10,11 +10,11 @@ namespace LMStud{
 	internal partial class Form1 : Form{
 		private static Form1 _this;
 		private static NativeMethods.TokenCallback _tokenCallback;
-		private static int _callbackCount;
-		private static int _callbackTot;
-		private static readonly Stopwatch Sw = new Stopwatch();
-		private static readonly Stopwatch SwInit = new Stopwatch();
-		private static readonly Stopwatch SwTot = new Stopwatch();
+		private int _callbackCount;
+		private int _callbackTot;
+		private readonly Stopwatch SwRate = new Stopwatch();
+		private readonly Stopwatch SwInit = new Stopwatch();
+		private readonly Stopwatch SwTot = new Stopwatch();
 		private volatile bool _generating;
 		private readonly List<ChatMessage> _chatMessages = new List<ChatMessage>();
 		private ChatMessage _cntAssMsg;
@@ -156,10 +156,10 @@ namespace LMStud{
 				ThreadPool.QueueUserWorkItem(o => {
 					SwTot.Restart();
 					SwInit.Restart();
-					Sw.Restart();
+					SwRate.Restart();
 					NativeMethods.Generate(_nGen);
 					SwTot.Stop();
-					Sw.Stop();
+					SwRate.Stop();
 					Invoke(new MethodInvoker(() => {
 						var elapsed = SwTot.Elapsed.TotalSeconds;
 						if(_callbackTot > 0 && elapsed > 0.0){
@@ -167,7 +167,7 @@ namespace LMStud{
 							labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
 							_callbackTot = 0;
 							SwTot.Reset();
-							Sw.Reset();
+							SwRate.Reset();
 						}
 						butGen.Text = "Generate";
 						butReset.Enabled = true;
@@ -178,21 +178,21 @@ namespace LMStud{
 		}
 		private static unsafe void TokenCallback(byte* tokenPtr, int strLen, int tokenCount){
 			if(_this.IsDisposed) return;
-			SwInit.Stop();
-			++_callbackCount;
-			++_callbackTot;
-			var elapsed = Sw.Elapsed.TotalSeconds;
-			Sw.Restart();
-			var initElapsed = SwInit.Elapsed.TotalSeconds;
+			_this.SwInit.Stop();
+			++_this._callbackCount;
+			++_this._callbackTot;
+			var elapsed = _this.SwRate.Elapsed.TotalSeconds;
+			if(elapsed >= 1.0) _this.SwRate.Restart();
+			var initElapsed = _this.SwInit.Elapsed.TotalSeconds;
 			var token = Encoding.UTF8.GetString(tokenPtr, strLen);
 			var thisform = _this;
 			_this.BeginInvoke((MethodInvoker)(() => {
 				if(thisform.IsDisposed) return;
 				_this.labelPreGen.Text = "Pre-generation time: " + initElapsed + " s";
 				if(elapsed >= 1.0){
-					var callsPerSecond = _callbackCount/elapsed;
+					var callsPerSecond = _this._callbackCount/elapsed;
 					_this.labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
-					_callbackCount = 0;
+					_this._callbackCount = 0;
 				}
 				_this._cntAssMsg.AppendText(token);
 				_this.labelTokens.Text = tokenCount + "/" + _this._cntCtxMax + " Tokens";

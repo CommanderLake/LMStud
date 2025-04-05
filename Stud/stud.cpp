@@ -167,10 +167,10 @@ void Generate(const unsigned int nPredict){
 				}
 			}
 		}
-		for(int i = 0; i<static_cast<int>(embd.size()); i += _params.n_batch){
-			int nEval = static_cast<int>(embd.size())-i;
+		for(int j = 0; j<static_cast<int>(embd.size()); j += _params.n_batch){
+			int nEval = static_cast<int>(embd.size())-j;
 			if(nEval>_params.n_batch) nEval = _params.n_batch;
-			if(llama_decode(_ctx, llama_batch_get_one(&embd[i], nEval))){
+			if(llama_decode(_ctx, llama_batch_get_one(&embd[j], nEval))){
 				return;
 			}
 			_nPast += nEval;
