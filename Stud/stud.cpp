@@ -43,7 +43,7 @@ void FreeModel(){
 	}
 	llama_backend_free();
 }
-bool LoadModel(const char* filename, const char* systemPrompt, int nCtx, const float temp, const float repeatPenalty, const int topK, const int topP, const int nThreads, const bool strictCPU, const int nThreadsBatch, const bool strictCPUBatch, const int nGPULayers, const int nBatch, const ggml_numa_strategy numaStrategy){
+bool LoadModel(const char* filename, const char* systemPrompt, int nCtx, const float temp, const float repeatPenalty, const int topK, const int topP, const int nThreads, const bool strictCPU, const int nThreadsBatch, const bool strictCPUBatch, const int nGPULayers, const int nBatch, bool mMap, bool mLock, const ggml_numa_strategy numaStrategy){
 	FreeModel();
 	llama_backend_init();
 	_params.numa = numaStrategy;
@@ -56,6 +56,8 @@ bool LoadModel(const char* filename, const char* systemPrompt, int nCtx, const f
 	_params.sampling.penalty_repeat = repeatPenalty;
 	_params.sampling.top_k = topK;
 	_params.sampling.top_p = topP;
+	_params.use_mmap = mMap;
+	_params.use_mlock = mLock;
 	_params.cpuparams.n_threads = nThreads;
 	_params.cpuparams.strict_cpu = strictCPU;
 	_params.cpuparams_batch.n_threads = nThreadsBatch;

@@ -12,21 +12,23 @@ namespace LMStud{
 		private const string Filter = "text-generation";
 		private const int Limit = 50;
 		private const string SearchAppend = " gguf"; // Extracted constant
+		private bool _downloading;
 		private void TextSearchTerm_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.Enter) return;
 			Search(textSearchTerm.Text);
 		}
 		private void ButSearch_Click(object sender, EventArgs e){Search(textSearchTerm.Text);}
-		private void ButDownload_Click(object sender, EventArgs e) {
-			DownloadQuant();
+		private void ButDownload_Click(object sender, EventArgs e){
+			if(!_downloading) DownloadQuant();
+			else _downloading = false;
 		}
-		public class HuggingFaceModel {
-			public string id { get; set; }
-			public string likes { get; set; }
-			public string downloads { get; set; }
-			public string trendingScore { get; set; }
-			public string createdAt { get; set; }
-			public string lastModified { get; set; }
+		public class HuggingFaceModel{
+			public string ID = null;
+			public string Likes = null;
+			public string Downloads = null;
+			public string TrendingScore = null;
+			public string CreatedAt = null;
+			public string LastModified = null;
 		}
 		private void Search(string term) {
 			if(string.IsNullOrWhiteSpace(term)) return;
@@ -47,12 +49,11 @@ namespace LMStud{
 					foreach(var modelToken in models) {
 						var model = (JObject)modelToken;
 						var hfModel = model.ToObject<HuggingFaceModel>();
-						if(hfModel?.id != null) {
-							var parts = hfModel.id.Split('/');
-							var uploader = parts.Length > 1 ? parts[0] : "";
-							var modelName = parts.Length > 1 ? parts[1] : hfModel.id;
-							Invoke(new MethodInvoker(() => { listViewModelSearch.Items.Add(new ListViewItem(new[] { modelName, uploader, hfModel.likes, hfModel.downloads, hfModel.trendingScore, hfModel.createdAt, hfModel.lastModified })); }));
-						}
+						if(hfModel?.ID == null) continue;
+						var parts = hfModel.ID.Split('/');
+						var uploader = parts.Length > 1 ? parts[0] : "";
+						var modelName = parts.Length > 1 ? parts[1] : hfModel.ID;
+						Invoke(new MethodInvoker(() => { listViewModelSearch.Items.Add(new ListViewItem(new[] { modelName, uploader, hfModel.Likes, hfModel.Downloads, hfModel.TrendingScore, hfModel.CreatedAt, hfModel.LastModified })); }));
 					}
 				} catch(Exception ex) {
 					Invoke(new MethodInvoker(() => {
@@ -74,14 +75,6 @@ namespace LMStud{
 			var repoId = $"{uploader}/{modelName}";
 			LoadQuants(repoId);
 		}
-		public class HuggingFaceFileInfo {
-			public string FileName { get; set; }
-			public string Format { get; set; }
-			public string SizeDisplay { get; set; }
-			public ListViewItem ToListViewItem() {
-				return new ListViewItem(new[] { FileName, Format, SizeDisplay });
-			}
-		}
 		private void LoadQuants(string repoId) {
 			listViewQuants.BeginUpdate();
 			listViewQuants.Items.Clear();
@@ -92,26 +85,17 @@ namespace LMStud{
 					response.EnsureSuccessStatusCode();
 					var infoJson = response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
 					var info = JObject.Parse(infoJson);
-					if(info.TryGetValue("siblings", out var siblings) && siblings is JArray siblingsArray) {
-						foreach(var file in siblingsArray) {
-							if(file is JObject fileObject) {
-								var fileName = fileObject.Value<string>("rfilename") ?? fileObject.Value<string>("filename");
-								var fileSize = fileObject.Value<long?>("size");
-								if(!string.IsNullOrEmpty(fileName)) {
-									var format = fileName.EndsWith(".gguf", StringComparison.OrdinalIgnoreCase) ? "GGUF" : null;
-									if(format != null) {
-										var sizeDisplay = fileSize.HasValue ? $"{fileSize.Value / 1048576:F2} MB" : "";
-										var item = new ListViewItem(new[] { fileName, format, sizeDisplay });
-										var fileInfo = new HuggingFaceFileInfo {
-											FileName = fileName,
-											Format = format,
-											SizeDisplay = sizeDisplay
-										};
-										Invoke(new MethodInvoker(() => { listViewQuants.Items.Add(fileInfo.ToListViewItem()); }));
-									}
-								}
-							}
-						}
+					if(!info.TryGetValue("siblings", out var siblings) || !(siblings is JArray siblingsArray)) return;
+					foreach(var file in siblingsArray){
+						if(!(file is JObject fileObject)) continue;
+						var fileName = fileObject.Value<string>("rfilename") ?? fileObject.Value<string>("filename");
+						var fileSize = fileObject.Value<long?>("size");
+						if(string.IsNullOrEmpty(fileName)) continue;
+						var format = fileName.EndsWith(".gguf", StringComparison.OrdinalIgnoreCase) ? "GGUF" : null;
+						if(format == null) continue;
+						var sizeDisplay = fileSize.HasValue ? $"{fileSize.Value / 1048576:F2} MB" : "";
+						var item = new ListViewItem(new[] { fileName, sizeDisplay });
+						Invoke(new MethodInvoker(() => { listViewQuants.Items.Add(item); }));
 					}
 				} catch(HttpRequestException ex) {
 					Invoke(new MethodInvoker(() => {
@@ -151,7 +135,8 @@ namespace LMStud{
 			}
 			var downloadUrl = $"https://huggingface.co/{uploader}/{modelName}/resolve/{branch}/{variantLabel}";
 			var targetPath = Path.Combine(targetDir, variantLabel);
-			butDownload.Enabled = false;
+			_downloading = true;
+			butDownload.Text = "Cancel";
 			progressBar1.Value = 0;
 			ThreadPool.QueueUserWorkItem(_ => {
 				try {
@@ -163,7 +148,7 @@ namespace LMStud{
 								var buffer = new byte[10485760];
 								Invoke(new MethodInvoker(() => progressBar1.Maximum = (int)(contentLength/buffer.Length)));
 								long totalBytesRead = 0;
-								while(true) {
+								while(_downloading) {
 									var bytesRead = httpStream.Read(buffer, 0, buffer.Length);
 									if(bytesRead == 0) break;
 									fileStream.Write(buffer, 0, bytesRead);
@@ -172,14 +157,16 @@ namespace LMStud{
 									var read = totalBytesRead;
 									BeginInvoke(new MethodInvoker(() => progressBar1.Value = (int)(read/buffer.Length)));
 								}
-								if(contentLength > 0 && totalBytesRead != contentLength) throw new IOException($"Download incomplete - Expected {contentLength} bytes, received {totalBytesRead}");
+								if(_downloading && contentLength > 0 && totalBytesRead != contentLength) throw new IOException($"Download incomplete - Expected {contentLength} bytes, received {totalBytesRead}");
 							}
 						}
 					}
-					Invoke(new MethodInvoker(() => {
-						MessageBox.Show(this, $"Downloaded {variantLabel} to:\n{targetPath}", "Download Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
-						PopulateModels();
-					}));
+					if(_downloading)
+						Invoke(new MethodInvoker(() => {
+							MessageBox.Show(this, $"Downloaded {variantLabel} to:\n{targetPath}", "Download Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+							PopulateModels();
+						}));
+					else File.Delete(targetPath);
 				} catch(HttpRequestException httpEx) {
 					Invoke(new MethodInvoker(() => {
 						MessageBox.Show(this, httpEx.ToString(), "Download Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -191,7 +178,8 @@ namespace LMStud{
 				} finally {
 					Invoke(new MethodInvoker(() => {
 						progressBar1.Value = 0;
-						butDownload.Enabled = true;
+						butDownload.Text = "Download";
+						_downloading = false;
 					}));
 				}
 			});

@@ -226,5 +226,29 @@ namespace LMStud.Properties {
                 this["StrictCPUBatch"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool MMap {
+            get {
+                return ((bool)(this["MMap"]));
+            }
+            set {
+                this["MMap"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool MLock {
+            get {
+                return ((bool)(this["MLock"]));
+            }
+            set {
+                this["MLock"] = value;
+            }
+        }
     }
 }

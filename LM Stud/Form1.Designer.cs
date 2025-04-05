@@ -100,7 +100,6 @@
 			this.butDownload = new System.Windows.Forms.Button();
 			this.listViewQuants = new System.Windows.Forms.ListView();
 			this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-			this.columnHeader9 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeader10 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
 			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
@@ -109,6 +108,8 @@
 			this.labelTPS = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+			this.checkMMap = new System.Windows.Forms.CheckBox();
+			this.checkMLock = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -400,6 +401,8 @@
 			// 
 			// groupAdvanced
 			// 
+			this.groupAdvanced.Controls.Add(this.checkMLock);
+			this.groupAdvanced.Controls.Add(this.checkMMap);
 			this.groupAdvanced.Controls.Add(this.comboNUMAStrat);
 			this.groupAdvanced.Controls.Add(this.label6);
 			this.groupAdvanced.Controls.Add(this.label12);
@@ -412,7 +415,7 @@
 			this.groupAdvanced.Controls.Add(this.numTopP);
 			this.groupAdvanced.Location = new System.Drawing.Point(6, 286);
 			this.groupAdvanced.Name = "groupAdvanced";
-			this.groupAdvanced.Size = new System.Drawing.Size(200, 151);
+			this.groupAdvanced.Size = new System.Drawing.Size(200, 194);
 			this.groupAdvanced.TabIndex = 34;
 			this.groupAdvanced.TabStop = false;
 			this.groupAdvanced.Text = "Advanced";
@@ -747,7 +750,7 @@
 			// 
 			// butApply
 			// 
-			this.butApply.Location = new System.Drawing.Point(6, 443);
+			this.butApply.Location = new System.Drawing.Point(6, 486);
 			this.butApply.Name = "butApply";
 			this.butApply.Size = new System.Drawing.Size(75, 23);
 			this.butApply.TabIndex = 4;
@@ -816,6 +819,7 @@
             this.columnHeader1,
             this.columnHeader2});
 			this.listViewModels.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.listViewModels.GridLines = true;
 			this.listViewModels.HideSelection = false;
 			this.listViewModels.Location = new System.Drawing.Point(0, 0);
 			this.listViewModels.Margin = new System.Windows.Forms.Padding(0);
@@ -845,6 +849,7 @@
             this.columnHeader3,
             this.columnHeader4});
 			this.listViewMeta.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.listViewMeta.GridLines = true;
 			this.listViewMeta.HideSelection = false;
 			this.listViewMeta.Location = new System.Drawing.Point(0, 0);
 			this.listViewMeta.MultiSelect = false;
@@ -983,6 +988,7 @@
             this.columnHeader12,
             this.columnHeader13,
             this.columnHeader14});
+			this.listViewModelSearch.GridLines = true;
 			this.listViewModelSearch.HideSelection = false;
 			this.listViewModelSearch.Location = new System.Drawing.Point(-2, 24);
 			this.listViewModelSearch.Margin = new System.Windows.Forms.Padding(0);
@@ -1056,8 +1062,8 @@
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.listViewQuants.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader8,
-            this.columnHeader9,
             this.columnHeader10});
+			this.listViewQuants.GridLines = true;
 			this.listViewQuants.HideSelection = false;
 			this.listViewQuants.Location = new System.Drawing.Point(-2, 0);
 			this.listViewQuants.Margin = new System.Windows.Forms.Padding(0);
@@ -1070,12 +1076,7 @@
 			// columnHeader8
 			// 
 			this.columnHeader8.Text = "Filename";
-			this.columnHeader8.Width = 434;
-			// 
-			// columnHeader9
-			// 
-			this.columnHeader9.Text = "Format";
-			this.columnHeader9.Width = 443;
+			this.columnHeader8.Width = 878;
 			// 
 			// columnHeader10
 			// 
@@ -1133,6 +1134,30 @@
 			this.toolTip1.ReshowDelay = 0;
 			this.toolTip1.UseAnimation = false;
 			this.toolTip1.UseFading = false;
+			// 
+			// checkMMap
+			// 
+			this.checkMMap.AutoSize = true;
+			this.checkMMap.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkMMap.Checked = true;
+			this.checkMMap.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkMMap.Location = new System.Drawing.Point(138, 150);
+			this.checkMMap.Name = "checkMMap";
+			this.checkMMap.Size = new System.Drawing.Size(56, 17);
+			this.checkMMap.TabIndex = 33;
+			this.checkMMap.Text = "MMap";
+			this.checkMMap.UseVisualStyleBackColor = true;
+			// 
+			// checkMLock
+			// 
+			this.checkMLock.AutoSize = true;
+			this.checkMLock.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkMLock.Location = new System.Drawing.Point(135, 173);
+			this.checkMLock.Name = "checkMLock";
+			this.checkMLock.Size = new System.Drawing.Size(59, 17);
+			this.checkMLock.TabIndex = 34;
+			this.checkMLock.Text = "MLock";
+			this.checkMLock.UseVisualStyleBackColor = true;
 			// 
 			// Form1
 			// 
@@ -1263,7 +1288,6 @@
 		private System.Windows.Forms.ColumnHeader columnHeader6;
 		private System.Windows.Forms.ColumnHeader columnHeader7;
 		private System.Windows.Forms.ColumnHeader columnHeader8;
-		private System.Windows.Forms.ColumnHeader columnHeader9;
 		private System.Windows.Forms.ColumnHeader columnHeader10;
 		private System.Windows.Forms.Button butDownload;
 		private System.Windows.Forms.ColumnHeader columnHeader11;
@@ -1278,6 +1302,8 @@
 		private System.Windows.Forms.GroupBox groupCPUParams;
 		private System.Windows.Forms.ToolTip toolTip1;
 		private System.Windows.Forms.ToolStripStatusLabel labelPreGen;
+		private System.Windows.Forms.CheckBox checkMLock;
+		private System.Windows.Forms.CheckBox checkMMap;
 	}
 }
 

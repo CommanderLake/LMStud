@@ -14,6 +14,8 @@ namespace LMStud{
 		private int _topK = 40;
 		private float _topP = 0.95f;
 		private int _batchSize = 512;
+		private bool _mMap = true;
+		private bool _mLock;
 		private int _nThreads = 8;
 		private bool _strictCPU;
 		private int _nThreadsBatch = 8;
@@ -30,6 +32,8 @@ namespace LMStud{
 			numTopK.Value = Settings.Default.TopK;
 			numTopP.Value = Settings.Default.TopP;
 			numBatchSize.Value = Settings.Default.BatchSize;
+			checkMMap.Checked = Settings.Default.MMap;
+			checkMLock.Checked = Settings.Default.MLock;
 			numThreads.Value = Settings.Default.Threads;
 			checkStrictCPU.Checked = Settings.Default.StrictCPU;
 			numThreadsBatch.Value = Settings.Default.ThreadsBatch;
@@ -47,6 +51,8 @@ namespace LMStud{
 			_topK = (int)numTopK.Value;
 			_topP = (float)numTopP.Value;
 			_batchSize = (int)numBatchSize.Value;
+			_mMap = checkMMap.Checked;
+			_mLock = checkMLock.Checked;
 			_nThreads = (int)numThreads.Value;
 			_strictCPU = checkStrictCPU.Checked;
 			_nThreadsBatch = (int)numThreadsBatch.Value;
@@ -70,6 +76,8 @@ namespace LMStud{
 			Settings.Default.TopK = numTopK.Value;
 			Settings.Default.TopP = numTopP.Value;
 			Settings.Default.BatchSize = numBatchSize.Value;
+			Settings.Default.MMap = checkMMap.Checked;
+			Settings.Default.MLock = checkMLock.Checked;
 			Settings.Default.Threads = numThreads.Value;
 			Settings.Default.StrictCPU = checkStrictCPU.Checked;
 			Settings.Default.ThreadsBatch = numThreadsBatch.Value;

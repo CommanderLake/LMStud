@@ -12,9 +12,9 @@ namespace LMStud{
 		private static NativeMethods.TokenCallback _tokenCallback;
 		private int _callbackCount;
 		private int _callbackTot;
-		private readonly Stopwatch SwRate = new Stopwatch();
-		private readonly Stopwatch SwPreGen = new Stopwatch();
-		private readonly Stopwatch SwTot = new Stopwatch();
+		private readonly Stopwatch _swRate = new Stopwatch();
+		private readonly Stopwatch _swPreGen = new Stopwatch();
+		private readonly Stopwatch _swTot = new Stopwatch();
 		private volatile bool _generating;
 		private readonly List<ChatMessage> _chatMessages = new List<ChatMessage>();
 		private ChatMessage _cntAssMsg;
@@ -42,10 +42,12 @@ namespace LMStud{
 			toolTip1.SetToolTip(numBatchSize, "Batch size for processing tokens during generation. Higher values can improve performance at the cost of higher RAM usage.");
 			toolTip1.SetToolTip(groupCPUParams, "Parameters controlling text generation on CPU.");
 			toolTip1.SetToolTip(numThreads, "CPU threads for token generation. Typically, around 75% of your physical cores is optimal to prevent oversaturating the memory controller.");
+			toolTip1.SetToolTip(checkMMap, "Map the model file to memory for on-demand loading, may improve model load times.");
+			toolTip1.SetToolTip(checkMLock, "Lock the model in RAM.");
 			toolTip1.SetToolTip(checkStrictCPU, "Sets thread affinities on supported backends to isolate threads to specific logical cores.");
-			toolTip1.SetToolTip(groupCPUParamsBatch, "Parameters for the pre-generation step (initial preparation before generation starts).");
-			toolTip1.SetToolTip(numThreadsBatch, "CPU threads used in pre-generation.");
-			toolTip1.SetToolTip(checkStrictCPUBatch, "Sets thread affinities on supported backends to isolate threads to specific logical cores pre-generation.");
+			toolTip1.SetToolTip(groupCPUParamsBatch, "Parameters for the pre-generation step (batch preparation).");
+			toolTip1.SetToolTip(numThreadsBatch, "CPU threads used for batch preparation.");
+			toolTip1.SetToolTip(checkStrictCPUBatch, "Sets thread affinities on supported backends to isolate threads to specific logical cores for batch preparation.");
 		}
 		private void Form1_Load(object sender, EventArgs e) {
 			if(!Settings.Default.LoadAuto) return;
@@ -154,20 +156,20 @@ namespace LMStud{
 				}
 				_cntAssMsg = AddMessage(false, "");
 				ThreadPool.QueueUserWorkItem(o => {
-					SwTot.Restart();
-					SwPreGen.Restart();
-					SwRate.Restart();
+					_swTot.Restart();
+					_swPreGen.Restart();
+					_swRate.Restart();
 					NativeMethods.Generate(_nGen);
-					SwTot.Stop();
-					SwRate.Stop();
+					_swTot.Stop();
+					_swRate.Stop();
 					Invoke(new MethodInvoker(() => {
-						var elapsed = SwTot.Elapsed.TotalSeconds;
+						var elapsed = _swTot.Elapsed.TotalSeconds;
 						if(_callbackTot > 0 && elapsed > 0.0){
 							var callsPerSecond = _callbackTot/elapsed;
 							labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
 							_callbackTot = 0;
-							SwTot.Reset();
-							SwRate.Reset();
+							_swTot.Reset();
+							_swRate.Reset();
 						}
 						butGen.Text = "Generate";
 						butReset.Enabled = true;
@@ -177,12 +179,12 @@ namespace LMStud{
 			} else{ NativeMethods.StopGeneration(); }
 		}
 		private static unsafe void TokenCallback(byte* tokenPtr, int strLen, int tokenCount){
-			_this.SwPreGen.Stop();
+			_this._swPreGen.Stop();
 			++_this._callbackCount;
 			++_this._callbackTot;
-			var elapsed = _this.SwRate.Elapsed.TotalSeconds;
-			if(elapsed >= 1.0) _this.SwRate.Restart();
-			var initElapsed = _this.SwPreGen.Elapsed.TotalSeconds;
+			var elapsed = _this._swRate.Elapsed.TotalSeconds;
+			if(elapsed >= 1.0) _this._swRate.Restart();
+			var initElapsed = _this._swPreGen.Elapsed.TotalSeconds;
 			var token = Encoding.UTF8.GetString(tokenPtr, strLen);
 			var thisform = _this;
 			if(_this.IsDisposed) return;
