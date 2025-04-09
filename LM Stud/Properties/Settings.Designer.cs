@@ -265,7 +265,7 @@ namespace LMStud.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Computer")]
         public string WakeWord {
             get {
                 return ((string)(this["WakeWord"]));
@@ -284,6 +284,30 @@ namespace LMStud.Properties {
             }
             set {
                 this["whisperUseGPU"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.1")]
+        public decimal VadThreshold {
+            get {
+                return ((decimal)(this["VadThreshold"]));
+            }
+            set {
+                this["VadThreshold"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("100")]
+        public decimal FreqThreshold {
+            get {
+                return ((decimal)(this["FreqThreshold"]));
+            }
+            set {
+                this["FreqThreshold"] = value;
             }
         }
     }

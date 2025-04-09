@@ -40,6 +40,11 @@
 			this.tabPage1 = new System.Windows.Forms.TabPage();
 			this.tabPage2 = new System.Windows.Forms.TabPage();
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
+			this.label18 = new System.Windows.Forms.Label();
+			this.numFreqThreshold = new System.Windows.Forms.NumericUpDown();
+			this.label17 = new System.Windows.Forms.Label();
+			this.numVadThreshold = new System.Windows.Forms.NumericUpDown();
+			this.checkWhisperUseGPU = new System.Windows.Forms.CheckBox();
 			this.label16 = new System.Windows.Forms.Label();
 			this.textWakeWord = new System.Windows.Forms.TextBox();
 			this.butWhispDown = new System.Windows.Forms.Button();
@@ -117,7 +122,6 @@
 			this.labelTPS = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-			this.checkWhisperUseGPU = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -126,6 +130,8 @@
 			this.tabPage1.SuspendLayout();
 			this.tabPage2.SuspendLayout();
 			this.groupBox1.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numFreqThreshold)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.numVadThreshold)).BeginInit();
 			this.groupCPUParamsBatch.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numThreadsBatch)).BeginInit();
 			this.groupCPUParams.SuspendLayout();
@@ -320,6 +326,10 @@
 			// 
 			// groupBox1
 			// 
+			this.groupBox1.Controls.Add(this.label18);
+			this.groupBox1.Controls.Add(this.numFreqThreshold);
+			this.groupBox1.Controls.Add(this.label17);
+			this.groupBox1.Controls.Add(this.numVadThreshold);
 			this.groupBox1.Controls.Add(this.checkWhisperUseGPU);
 			this.groupBox1.Controls.Add(this.label16);
 			this.groupBox1.Controls.Add(this.textWakeWord);
@@ -328,10 +338,89 @@
 			this.groupBox1.Controls.Add(this.label15);
 			this.groupBox1.Location = new System.Drawing.Point(209, 156);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(200, 125);
+			this.groupBox1.Size = new System.Drawing.Size(200, 174);
 			this.groupBox1.TabIndex = 37;
 			this.groupBox1.TabStop = false;
 			this.groupBox1.Text = "Whisper";
+			// 
+			// label18
+			// 
+			this.label18.AutoSize = true;
+			this.label18.Location = new System.Drawing.Point(8, 129);
+			this.label18.Name = "label18";
+			this.label18.Size = new System.Drawing.Size(110, 13);
+			this.label18.TabIndex = 9;
+			this.label18.Text = "Frequency Threshold:";
+			// 
+			// numFreqThreshold
+			// 
+			this.numFreqThreshold.Increment = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+			this.numFreqThreshold.Location = new System.Drawing.Point(124, 127);
+			this.numFreqThreshold.Maximum = new decimal(new int[] {
+            300,
+            0,
+            0,
+            0});
+			this.numFreqThreshold.Name = "numFreqThreshold";
+			this.numFreqThreshold.Size = new System.Drawing.Size(70, 20);
+			this.numFreqThreshold.TabIndex = 8;
+			this.numFreqThreshold.Value = new decimal(new int[] {
+            100,
+            0,
+            0,
+            0});
+			// 
+			// label17
+			// 
+			this.label17.AutoSize = true;
+			this.label17.Location = new System.Drawing.Point(36, 103);
+			this.label17.Name = "label17";
+			this.label17.Size = new System.Drawing.Size(82, 13);
+			this.label17.TabIndex = 7;
+			this.label17.Text = "VAD Threshold:";
+			// 
+			// numVadThreshold
+			// 
+			this.numVadThreshold.DecimalPlaces = 2;
+			this.numVadThreshold.Increment = new decimal(new int[] {
+            5,
+            0,
+            0,
+            131072});
+			this.numVadThreshold.Location = new System.Drawing.Point(124, 101);
+			this.numVadThreshold.Maximum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+			this.numVadThreshold.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            65536});
+			this.numVadThreshold.Name = "numVadThreshold";
+			this.numVadThreshold.Size = new System.Drawing.Size(70, 20);
+			this.numVadThreshold.TabIndex = 6;
+			this.numVadThreshold.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            65536});
+			// 
+			// checkWhisperUseGPU
+			// 
+			this.checkWhisperUseGPU.AutoSize = true;
+			this.checkWhisperUseGPU.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkWhisperUseGPU.Location = new System.Drawing.Point(123, 153);
+			this.checkWhisperUseGPU.Name = "checkWhisperUseGPU";
+			this.checkWhisperUseGPU.Size = new System.Drawing.Size(71, 17);
+			this.checkWhisperUseGPU.TabIndex = 5;
+			this.checkWhisperUseGPU.Text = "Use GPU";
+			this.checkWhisperUseGPU.UseVisualStyleBackColor = true;
 			// 
 			// label16
 			// 
@@ -1242,17 +1331,6 @@
 			this.toolTip1.UseAnimation = false;
 			this.toolTip1.UseFading = false;
 			// 
-			// checkWhisperUseGPU
-			// 
-			this.checkWhisperUseGPU.AutoSize = true;
-			this.checkWhisperUseGPU.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkWhisperUseGPU.Location = new System.Drawing.Point(123, 101);
-			this.checkWhisperUseGPU.Name = "checkWhisperUseGPU";
-			this.checkWhisperUseGPU.Size = new System.Drawing.Size(71, 17);
-			this.checkWhisperUseGPU.TabIndex = 5;
-			this.checkWhisperUseGPU.Text = "Use GPU";
-			this.checkWhisperUseGPU.UseVisualStyleBackColor = true;
-			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1279,6 +1357,8 @@
 			this.tabPage2.PerformLayout();
 			this.groupBox1.ResumeLayout(false);
 			this.groupBox1.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numFreqThreshold)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.numVadThreshold)).EndInit();
 			this.groupCPUParamsBatch.ResumeLayout(false);
 			this.groupCPUParamsBatch.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numThreadsBatch)).EndInit();
@@ -1408,6 +1488,10 @@
 		private System.Windows.Forms.TextBox textWakeWord;
 		private System.Windows.Forms.CheckBox checkVoiceInput;
 		private System.Windows.Forms.CheckBox checkWhisperUseGPU;
+		private System.Windows.Forms.Label label18;
+		private System.Windows.Forms.NumericUpDown numFreqThreshold;
+		private System.Windows.Forms.Label label17;
+		private System.Windows.Forms.NumericUpDown numVadThreshold;
 	}
 }
 

@@ -49,24 +49,23 @@ namespace LMStud{
 		public static extern void StopGeneration();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern unsafe void ConvertMarkdownToRtf(string markdown, ref byte* rtfOut, ref int rtfLen);
+
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate void WhisperCallback(string transcription);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetWhisperCallback(WhisperCallback cb);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern bool LoadWhisperModel(string modelPath, string language, int nThreads, bool useGPU);
+		public static extern bool LoadWhisperModel(string modelPath, int nThreads, bool useGPU);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void UnloadWhisperModel();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern bool StartSpeechTranscription();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopSpeechTranscription();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void UnloadWhisperModel();
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetWakeCommand(string wakeCmd);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetVADThresholds(float vadThreshold, float freqThreshold);
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void SetVoiceDuration(int ms);
 		[DllImport("user32.dll")]
 		public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wp, IntPtr lp);
 	}

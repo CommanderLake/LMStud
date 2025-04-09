@@ -24,6 +24,8 @@ namespace LMStud{
 		private int _whisperModel;
 		private string _wakeWord;
 		private bool _whisperUseGPU;
+		private float _vadThreshold = 0.6f;
+		private float _freqThreshold = 100.0f;
 		private void LoadConfig(){
 			textInstruction.Text = Settings.Default.Instruction;
 			textModelsPath.Text = Settings.Default.ModelsDir;
@@ -44,6 +46,8 @@ namespace LMStud{
 			checkStrictCPUBatch.Checked = Settings.Default.StrictCPUBatch;
 			textWakeWord.Text = Settings.Default.WakeWord;
 			checkWhisperUseGPU.Checked = Settings.Default.whisperUseGPU;
+			numVadThreshold.Value = Settings.Default.VadThreshold;
+			numFreqThreshold.Value = Settings.Default.FreqThreshold;
 		}
 		private void SetConfig(){
 			_instruction = textInstruction.Text;
@@ -65,9 +69,12 @@ namespace LMStud{
 			_strictCPUBatch = checkStrictCPUBatch.Checked;
 			_wakeWord = textWakeWord.Text;
 			_whisperUseGPU = checkWhisperUseGPU.Checked;
+			_vadThreshold = (float)numVadThreshold.Value;
+			_freqThreshold = (float)numFreqThreshold.Value;
 			NativeMethods.SetSystemPrompt(textInstruction.Text);
 			NativeMethods.SetThreadCount((int)numThreads.Value, (int)numThreadsBatch.Value);
 			NativeMethods.SetWakeCommand(_wakeWord);
+			NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
 		}
 		private void ButApply_Click(object sender, EventArgs e){
 			if(Settings.Default.ModelsDir != textModelsPath.Text) PopulateModels();
@@ -91,6 +98,8 @@ namespace LMStud{
 			Settings.Default.WhisperModel = comboWhisperModel.Text;
 			Settings.Default.WakeWord = textWakeWord.Text;
 			Settings.Default.whisperUseGPU = checkWhisperUseGPU.Checked;
+			Settings.Default.VadThreshold = numVadThreshold.Value;
+			Settings.Default.FreqThreshold = numFreqThreshold.Value;
 			Settings.Default.Save();
 			SetConfig();
 		}

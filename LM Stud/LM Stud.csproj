@@ -71,6 +71,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Net.Http" />
+    <Reference Include="System.Speech" />
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>

@@ -63,10 +63,16 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="WakeWord" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">Computer</Value>
     </Setting>
     <Setting Name="whisperUseGPU" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="VadThreshold" Type="System.Decimal" Scope="User">
+      <Value Profile="(Default)">0.1</Value>
+    </Setting>
+    <Setting Name="FreqThreshold" Type="System.Decimal" Scope="User">
+      <Value Profile="(Default)">100</Value>
     </Setting>
   </Settings>
 </SettingsFile>

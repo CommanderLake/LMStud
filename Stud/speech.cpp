@@ -12,18 +12,12 @@ static std::string trim(const std::string& s){
 	const size_t end = s.find_last_not_of(" \t\n\r");
 	return s.substr(start, end-start+1);
 }
-bool LoadWhisperModel(const char* modelPath, const char* language, const int nThreads, const bool useGPU){
+bool LoadWhisperModel(const char* modelPath, const int nThreads, const bool useGPU){
 	whisper_context_params cparams = whisper_context_default_params();
 	cparams.use_gpu = useGPU;
 	whisperCtx = whisper_init_from_file_with_params(modelPath, cparams);
 	if(!whisperCtx){ return false; }
 	wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
-	wparams.print_realtime = false;
-	wparams.single_segment = true;
-	if(!whisper_is_multilingual(whisperCtx)){
-		wparams.language = "en";
-		wparams.translate = false;
-	} else{ if(language&&std::strlen(language)>0){ wparams.language = language; } }
 	wparams.n_threads = nThreads;
 	audioCapture = new audio_async(30000);
 	if(!audioCapture->init(-1, WHISPER_SAMPLE_RATE)){ return false; }
@@ -76,8 +70,9 @@ bool StartSpeechTranscription(){
 	transcriptionThread = std::thread([](){
 		constexpr int nShortSamples = WHISPER_SAMPLE_RATE*2;
 		std::vector<float> pcmDataShort(nShortSamples, 0.0f);
-		const int nLongSamples = (WHISPER_SAMPLE_RATE*gVoiceDuration)/1000;
-		std::vector<float> pcmDataLong(nLongSamples, 0.0f);
+		const int initialDuration = gVoiceDuration; // base capture duration in ms
+		const int nInitialSamples = (WHISPER_SAMPLE_RATE*initialDuration)/1000;
+		std::vector<float> pcmDataLong(nInitialSamples, 0.0f);
 		// Helper lambda to split a string into words.
 		auto get_words = [](const std::string& s) -> std::vector<std::string>{
 			std::istringstream iss(s);
@@ -86,54 +81,74 @@ bool StartSpeechTranscription(){
 			while(iss>>word){ words.push_back(word); }
 			return words;
 		};
-		// static variable to track the last output and avoid duplicates.
+		// Variable to track last output and prevent duplicate transcriptions.
 		std::string lastOutput;
 		while(transcriptionRunning.load()){
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			// If no wake command is set, use the normal VAD check.
 			audioCapture->get(2000, pcmDataShort);
 			if(!VadSimple(pcmDataShort, WHISPER_SAMPLE_RATE, 1250, gVadThreshold, gFreqThreshold)){ continue; }
-			audioCapture->get(gVoiceDuration, pcmDataLong);
-			if(whisper_full(whisperCtx, wparams, pcmDataLong.data(), static_cast<int>(pcmDataLong.size()))!=0){ continue; }
+			// Capture the initial audio chunk.
+			audioCapture->get(initialDuration, pcmDataLong);
+			// Wait for additional speech by capturing extra 1000ms chunks until silence.
+			while(true){
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				constexpr int extraDuration = 1000;
+				constexpr int nExtraSamples = (WHISPER_SAMPLE_RATE*extraDuration)/1000;
+				std::vector<float> extraData(nExtraSamples, 0.0f);
+				audioCapture->get(extraDuration, extraData);
+				if(!VadSimple(extraData, WHISPER_SAMPLE_RATE, extraDuration, gVadThreshold, gFreqThreshold)){ break; }
+				pcmDataLong.insert(pcmDataLong.end(), extraData.begin(), extraData.end());
+			}
+			// Perform transcription on the accumulated audio.
+			if(whisper_full(whisperCtx, wparams, pcmDataLong.data(), static_cast<int>(pcmDataLong.size()))!=0){
+				// Reinitialize pcmDataLong for next iteration.
+				pcmDataLong.clear();
+				pcmDataLong.resize(nInitialSamples, 0.0f);
+				continue;
+			}
 			std::string transcriptionResult;
-			int nSegs = whisper_full_n_segments(whisperCtx);
+			const int nSegs = whisper_full_n_segments(whisperCtx);
 			if(nSegs>0){
-				// Use the final segment only to avoid concatenating older segments.
+				// Use the final segment to avoid duplicates.
 				transcriptionResult = std::string(whisper_full_get_segment_text(whisperCtx, nSegs-1));
 			}
-			transcriptionResult = trim(transcriptionResult);
-			{
-				// Remove bracketed or parenthesized text.
-				std::regex reBracket("\\[.*?\\]");
-				transcriptionResult = std::regex_replace(transcriptionResult, reBracket, "");
-				std::regex reParen("\\(.*?\\)");
-				transcriptionResult = std::regex_replace(transcriptionResult, reParen, "");
-				transcriptionResult = trim(transcriptionResult);
-			}
-			// If a wake command is specified, process the transcription accordingly.
+			// Process wake command if configured.
 			if(!gWakeCommand.empty()){
 				auto wakeWords = get_words(gWakeCommand);
-				int wakeWordCount = wakeWords.size();
+				const int wakeWordCount = wakeWords.size();
 				auto transWords = get_words(transcriptionResult);
-				if(transWords.size()<static_cast<size_t>(wakeWordCount)){ continue; }
+				if(transWords.size()<static_cast<size_t>(wakeWordCount)){
+					// Clear the buffer before the next iteration.
+					pcmDataLong.clear();
+					pcmDataLong.resize(nInitialSamples, 0.0f);
+					continue;
+				}
 				std::string heardWake;
 				std::string remaining;
 				for(size_t i = 0; i<transWords.size(); i++){ if(i<static_cast<size_t>(wakeWordCount)){ heardWake += transWords[i]+" "; } else{ remaining += transWords[i]+" "; } }
 				heardWake = trim(heardWake);
 				remaining = trim(remaining);
-				float sim = similarity(heardWake, gWakeCommand);
-				// Only proceed if similarity is high enough and some text remains.
-				if(sim<0.5f||remaining.empty()){ continue; }
+				const float sim = similarity(heardWake, gWakeCommand);
+				// Only proceed if similarity is acceptable and there is text remaining.
+				if(sim<0.5f||remaining.empty()){
+					pcmDataLong.clear();
+					pcmDataLong.resize(nInitialSamples, 0.0f);
+					continue;
+				}
 				transcriptionResult = remaining;
 			}
-			// Only trigger the callback if the new transcription is non-empty and different from the last output.
+			// Only fire the callback if the transcription is non-empty and different from the last output.
 			if(whisperCallback&&!transcriptionResult.empty()&&transcriptionResult!=lastOutput){
 				lastOutput = transcriptionResult;
 				whisperCallback(transcriptionResult.c_str());
-				// Clear the audio buffer to avoid reprocessing the same utterance.
 				audioCapture->clear();
 			}
+			// Reinitialize the long audio buffer before next iteration.
+			pcmDataLong.clear();
+			pcmDataLong.resize(nInitialSamples, 0.0f);
 		}
-	});
+		});
 	return true;
 }
 void StopSpeechTranscription(){
