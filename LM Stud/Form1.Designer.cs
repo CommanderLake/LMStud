@@ -31,6 +31,7 @@
 			this.textInput = new System.Windows.Forms.TextBox();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
 			this.panelChat = new LMStud.MyFlowLayoutPanel();
+			this.checkVoiceInput = new System.Windows.Forms.CheckBox();
 			this.butCodeBlock = new System.Windows.Forms.Button();
 			this.checkMarkdown = new System.Windows.Forms.CheckBox();
 			this.butReset = new System.Windows.Forms.Button();
@@ -38,6 +39,12 @@
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabPage1 = new System.Windows.Forms.TabPage();
 			this.tabPage2 = new System.Windows.Forms.TabPage();
+			this.groupBox1 = new System.Windows.Forms.GroupBox();
+			this.label16 = new System.Windows.Forms.Label();
+			this.textWakeWord = new System.Windows.Forms.TextBox();
+			this.butWhispDown = new System.Windows.Forms.Button();
+			this.comboWhisperModel = new System.Windows.Forms.ComboBox();
+			this.label15 = new System.Windows.Forms.Label();
 			this.groupCPUParamsBatch = new System.Windows.Forms.GroupBox();
 			this.numThreadsBatch = new System.Windows.Forms.NumericUpDown();
 			this.label14 = new System.Windows.Forms.Label();
@@ -47,6 +54,8 @@
 			this.label2 = new System.Windows.Forms.Label();
 			this.checkStrictCPU = new System.Windows.Forms.CheckBox();
 			this.groupAdvanced = new System.Windows.Forms.GroupBox();
+			this.checkMLock = new System.Windows.Forms.CheckBox();
+			this.checkMMap = new System.Windows.Forms.CheckBox();
 			this.comboNUMAStrat = new System.Windows.Forms.ComboBox();
 			this.label6 = new System.Windows.Forms.Label();
 			this.label12 = new System.Windows.Forms.Label();
@@ -88,7 +97,7 @@
 			this.butSearch = new System.Windows.Forms.Button();
 			this.textSearchTerm = new System.Windows.Forms.TextBox();
 			this.label13 = new System.Windows.Forms.Label();
-			this.listViewModelSearch = new System.Windows.Forms.ListView();
+			this.listViewHugSearch = new System.Windows.Forms.ListView();
 			this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeader7 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -98,7 +107,7 @@
 			this.columnHeader14 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.progressBar1 = new System.Windows.Forms.ProgressBar();
 			this.butDownload = new System.Windows.Forms.Button();
-			this.listViewQuants = new System.Windows.Forms.ListView();
+			this.listViewHugFiles = new System.Windows.Forms.ListView();
 			this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeader10 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
@@ -108,8 +117,7 @@
 			this.labelTPS = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-			this.checkMMap = new System.Windows.Forms.CheckBox();
-			this.checkMLock = new System.Windows.Forms.CheckBox();
+			this.checkWhisperUseGPU = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -117,6 +125,7 @@
 			this.tabControl1.SuspendLayout();
 			this.tabPage1.SuspendLayout();
 			this.tabPage2.SuspendLayout();
+			this.groupBox1.SuspendLayout();
 			this.groupCPUParamsBatch.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numThreadsBatch)).BeginInit();
 			this.groupCPUParams.SuspendLayout();
@@ -175,6 +184,7 @@
 			// 
 			// splitContainer1.Panel2
 			// 
+			this.splitContainer1.Panel2.Controls.Add(this.checkVoiceInput);
 			this.splitContainer1.Panel2.Controls.Add(this.butCodeBlock);
 			this.splitContainer1.Panel2.Controls.Add(this.checkMarkdown);
 			this.splitContainer1.Panel2.Controls.Add(this.butReset);
@@ -196,6 +206,18 @@
 			this.panelChat.TabIndex = 0;
 			this.panelChat.WrapContents = false;
 			this.panelChat.Layout += new System.Windows.Forms.LayoutEventHandler(this.PanelChat_Layout);
+			// 
+			// checkVoiceInput
+			// 
+			this.checkVoiceInput.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			this.checkVoiceInput.AutoSize = true;
+			this.checkVoiceInput.Location = new System.Drawing.Point(188, 154);
+			this.checkVoiceInput.Name = "checkVoiceInput";
+			this.checkVoiceInput.Size = new System.Drawing.Size(79, 17);
+			this.checkVoiceInput.TabIndex = 5;
+			this.checkVoiceInput.Text = "Voice input";
+			this.checkVoiceInput.UseVisualStyleBackColor = true;
+			this.checkVoiceInput.CheckedChanged += new System.EventHandler(this.CheckVoiceInput_CheckedChanged);
 			// 
 			// butCodeBlock
 			// 
@@ -277,6 +299,7 @@
 			// 
 			// tabPage2
 			// 
+			this.tabPage2.Controls.Add(this.groupBox1);
 			this.tabPage2.Controls.Add(this.groupCPUParamsBatch);
 			this.tabPage2.Controls.Add(this.groupCPUParams);
 			this.tabPage2.Controls.Add(this.groupAdvanced);
@@ -295,12 +318,72 @@
 			this.tabPage2.Text = "Settings";
 			this.tabPage2.UseVisualStyleBackColor = true;
 			// 
+			// groupBox1
+			// 
+			this.groupBox1.Controls.Add(this.checkWhisperUseGPU);
+			this.groupBox1.Controls.Add(this.label16);
+			this.groupBox1.Controls.Add(this.textWakeWord);
+			this.groupBox1.Controls.Add(this.butWhispDown);
+			this.groupBox1.Controls.Add(this.comboWhisperModel);
+			this.groupBox1.Controls.Add(this.label15);
+			this.groupBox1.Location = new System.Drawing.Point(209, 156);
+			this.groupBox1.Name = "groupBox1";
+			this.groupBox1.Size = new System.Drawing.Size(200, 125);
+			this.groupBox1.TabIndex = 37;
+			this.groupBox1.TabStop = false;
+			this.groupBox1.Text = "Whisper";
+			// 
+			// label16
+			// 
+			this.label16.AutoSize = true;
+			this.label16.Location = new System.Drawing.Point(6, 78);
+			this.label16.Name = "label16";
+			this.label16.Size = new System.Drawing.Size(65, 13);
+			this.label16.TabIndex = 4;
+			this.label16.Text = "Wake word:";
+			// 
+			// textWakeWord
+			// 
+			this.textWakeWord.Location = new System.Drawing.Point(77, 75);
+			this.textWakeWord.Name = "textWakeWord";
+			this.textWakeWord.Size = new System.Drawing.Size(117, 20);
+			this.textWakeWord.TabIndex = 3;
+			// 
+			// butWhispDown
+			// 
+			this.butWhispDown.Location = new System.Drawing.Point(53, 46);
+			this.butWhispDown.Name = "butWhispDown";
+			this.butWhispDown.Size = new System.Drawing.Size(141, 23);
+			this.butWhispDown.TabIndex = 2;
+			this.butWhispDown.Text = "Download Model...";
+			this.butWhispDown.UseVisualStyleBackColor = true;
+			this.butWhispDown.Click += new System.EventHandler(this.ButWhispDown_Click);
+			// 
+			// comboWhisperModel
+			// 
+			this.comboWhisperModel.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.comboWhisperModel.FormattingEnabled = true;
+			this.comboWhisperModel.Location = new System.Drawing.Point(53, 19);
+			this.comboWhisperModel.Name = "comboWhisperModel";
+			this.comboWhisperModel.Size = new System.Drawing.Size(141, 21);
+			this.comboWhisperModel.TabIndex = 1;
+			this.comboWhisperModel.DropDown += new System.EventHandler(this.ComboWhisperModel_DropDown);
+			// 
+			// label15
+			// 
+			this.label15.AutoSize = true;
+			this.label15.Location = new System.Drawing.Point(6, 22);
+			this.label15.Name = "label15";
+			this.label15.Size = new System.Drawing.Size(39, 13);
+			this.label15.TabIndex = 0;
+			this.label15.Text = "Model:";
+			// 
 			// groupCPUParamsBatch
 			// 
 			this.groupCPUParamsBatch.Controls.Add(this.numThreadsBatch);
 			this.groupCPUParamsBatch.Controls.Add(this.label14);
 			this.groupCPUParamsBatch.Controls.Add(this.checkStrictCPUBatch);
-			this.groupCPUParamsBatch.Location = new System.Drawing.Point(212, 230);
+			this.groupCPUParamsBatch.Location = new System.Drawing.Point(3, 230);
 			this.groupCPUParamsBatch.Name = "groupCPUParamsBatch";
 			this.groupCPUParamsBatch.Size = new System.Drawing.Size(200, 68);
 			this.groupCPUParamsBatch.TabIndex = 36;
@@ -352,7 +435,7 @@
 			this.groupCPUParams.Controls.Add(this.numThreads);
 			this.groupCPUParams.Controls.Add(this.label2);
 			this.groupCPUParams.Controls.Add(this.checkStrictCPU);
-			this.groupCPUParams.Location = new System.Drawing.Point(212, 156);
+			this.groupCPUParams.Location = new System.Drawing.Point(3, 156);
 			this.groupCPUParams.Name = "groupCPUParams";
 			this.groupCPUParams.Size = new System.Drawing.Size(200, 68);
 			this.groupCPUParams.TabIndex = 35;
@@ -413,12 +496,36 @@
 			this.groupAdvanced.Controls.Add(this.numTopK);
 			this.groupAdvanced.Controls.Add(this.label9);
 			this.groupAdvanced.Controls.Add(this.numTopP);
-			this.groupAdvanced.Location = new System.Drawing.Point(6, 286);
+			this.groupAdvanced.Location = new System.Drawing.Point(3, 434);
 			this.groupAdvanced.Name = "groupAdvanced";
 			this.groupAdvanced.Size = new System.Drawing.Size(200, 194);
 			this.groupAdvanced.TabIndex = 34;
 			this.groupAdvanced.TabStop = false;
 			this.groupAdvanced.Text = "Advanced";
+			// 
+			// checkMLock
+			// 
+			this.checkMLock.AutoSize = true;
+			this.checkMLock.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkMLock.Location = new System.Drawing.Point(135, 173);
+			this.checkMLock.Name = "checkMLock";
+			this.checkMLock.Size = new System.Drawing.Size(59, 17);
+			this.checkMLock.TabIndex = 34;
+			this.checkMLock.Text = "MLock";
+			this.checkMLock.UseVisualStyleBackColor = true;
+			// 
+			// checkMMap
+			// 
+			this.checkMMap.AutoSize = true;
+			this.checkMMap.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkMMap.Checked = true;
+			this.checkMMap.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkMMap.Location = new System.Drawing.Point(138, 150);
+			this.checkMMap.Name = "checkMMap";
+			this.checkMMap.Size = new System.Drawing.Size(56, 17);
+			this.checkMMap.TabIndex = 33;
+			this.checkMMap.Text = "MMap";
+			this.checkMMap.UseVisualStyleBackColor = true;
 			// 
 			// comboNUMAStrat
 			// 
@@ -581,7 +688,7 @@
 			this.groupCommon.Controls.Add(this.numNGen);
 			this.groupCommon.Controls.Add(this.numTemp);
 			this.groupCommon.Controls.Add(this.label4);
-			this.groupCommon.Location = new System.Drawing.Point(6, 156);
+			this.groupCommon.Location = new System.Drawing.Point(3, 304);
 			this.groupCommon.Name = "groupCommon";
 			this.groupCommon.Size = new System.Drawing.Size(200, 124);
 			this.groupCommon.TabIndex = 33;
@@ -750,7 +857,7 @@
 			// 
 			// butApply
 			// 
-			this.butApply.Location = new System.Drawing.Point(6, 486);
+			this.butApply.Location = new System.Drawing.Point(3, 634);
 			this.butApply.Name = "butApply";
 			this.butApply.Size = new System.Drawing.Size(75, 23);
 			this.butApply.TabIndex = 4;
@@ -761,7 +868,7 @@
 			// label1
 			// 
 			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(-3, 0);
+			this.label1.Location = new System.Drawing.Point(3, 3);
 			this.label1.Name = "label1";
 			this.label1.Size = new System.Drawing.Size(59, 13);
 			this.label1.TabIndex = 1;
@@ -932,13 +1039,13 @@
 			this.splitContainer3.Panel1.Controls.Add(this.butSearch);
 			this.splitContainer3.Panel1.Controls.Add(this.textSearchTerm);
 			this.splitContainer3.Panel1.Controls.Add(this.label13);
-			this.splitContainer3.Panel1.Controls.Add(this.listViewModelSearch);
+			this.splitContainer3.Panel1.Controls.Add(this.listViewHugSearch);
 			// 
 			// splitContainer3.Panel2
 			// 
 			this.splitContainer3.Panel2.Controls.Add(this.progressBar1);
 			this.splitContainer3.Panel2.Controls.Add(this.butDownload);
-			this.splitContainer3.Panel2.Controls.Add(this.listViewQuants);
+			this.splitContainer3.Panel2.Controls.Add(this.listViewHugFiles);
 			this.splitContainer3.Size = new System.Drawing.Size(1002, 943);
 			this.splitContainer3.SplitterDistance = 469;
 			this.splitContainer3.TabIndex = 2;
@@ -975,12 +1082,12 @@
 			this.label13.TabIndex = 1;
 			this.label13.Text = "Search models:";
 			// 
-			// listViewModelSearch
+			// listViewHugSearch
 			// 
-			this.listViewModelSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+			this.listViewHugSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.listViewModelSearch.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+			this.listViewHugSearch.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader5,
             this.columnHeader6,
             this.columnHeader7,
@@ -988,16 +1095,16 @@
             this.columnHeader12,
             this.columnHeader13,
             this.columnHeader14});
-			this.listViewModelSearch.GridLines = true;
-			this.listViewModelSearch.HideSelection = false;
-			this.listViewModelSearch.Location = new System.Drawing.Point(-2, 24);
-			this.listViewModelSearch.Margin = new System.Windows.Forms.Padding(0);
-			this.listViewModelSearch.Name = "listViewModelSearch";
-			this.listViewModelSearch.Size = new System.Drawing.Size(1000, 441);
-			this.listViewModelSearch.TabIndex = 0;
-			this.listViewModelSearch.UseCompatibleStateImageBehavior = false;
-			this.listViewModelSearch.View = System.Windows.Forms.View.Details;
-			this.listViewModelSearch.SelectedIndexChanged += new System.EventHandler(this.ListViewModelSearch_SelectedIndexChanged);
+			this.listViewHugSearch.GridLines = true;
+			this.listViewHugSearch.HideSelection = false;
+			this.listViewHugSearch.Location = new System.Drawing.Point(0, 24);
+			this.listViewHugSearch.Margin = new System.Windows.Forms.Padding(0);
+			this.listViewHugSearch.Name = "listViewHugSearch";
+			this.listViewHugSearch.Size = new System.Drawing.Size(998, 441);
+			this.listViewHugSearch.TabIndex = 0;
+			this.listViewHugSearch.UseCompatibleStateImageBehavior = false;
+			this.listViewHugSearch.View = System.Windows.Forms.View.Details;
+			this.listViewHugSearch.SelectedIndexChanged += new System.EventHandler(this.ListViewHugSearch_SelectedIndexChanged);
 			// 
 			// columnHeader5
 			// 
@@ -1055,23 +1162,23 @@
 			this.butDownload.UseVisualStyleBackColor = true;
 			this.butDownload.Click += new System.EventHandler(this.ButDownload_Click);
 			// 
-			// listViewQuants
+			// listViewHugFiles
 			// 
-			this.listViewQuants.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+			this.listViewHugFiles.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.listViewQuants.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+			this.listViewHugFiles.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader8,
             this.columnHeader10});
-			this.listViewQuants.GridLines = true;
-			this.listViewQuants.HideSelection = false;
-			this.listViewQuants.Location = new System.Drawing.Point(-2, 0);
-			this.listViewQuants.Margin = new System.Windows.Forms.Padding(0);
-			this.listViewQuants.Name = "listViewQuants";
-			this.listViewQuants.Size = new System.Drawing.Size(1000, 443);
-			this.listViewQuants.TabIndex = 1;
-			this.listViewQuants.UseCompatibleStateImageBehavior = false;
-			this.listViewQuants.View = System.Windows.Forms.View.Details;
+			this.listViewHugFiles.GridLines = true;
+			this.listViewHugFiles.HideSelection = false;
+			this.listViewHugFiles.Location = new System.Drawing.Point(0, 0);
+			this.listViewHugFiles.Margin = new System.Windows.Forms.Padding(0);
+			this.listViewHugFiles.Name = "listViewHugFiles";
+			this.listViewHugFiles.Size = new System.Drawing.Size(998, 443);
+			this.listViewHugFiles.TabIndex = 1;
+			this.listViewHugFiles.UseCompatibleStateImageBehavior = false;
+			this.listViewHugFiles.View = System.Windows.Forms.View.Details;
 			// 
 			// columnHeader8
 			// 
@@ -1135,29 +1242,16 @@
 			this.toolTip1.UseAnimation = false;
 			this.toolTip1.UseFading = false;
 			// 
-			// checkMMap
+			// checkWhisperUseGPU
 			// 
-			this.checkMMap.AutoSize = true;
-			this.checkMMap.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkMMap.Checked = true;
-			this.checkMMap.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkMMap.Location = new System.Drawing.Point(138, 150);
-			this.checkMMap.Name = "checkMMap";
-			this.checkMMap.Size = new System.Drawing.Size(56, 17);
-			this.checkMMap.TabIndex = 33;
-			this.checkMMap.Text = "MMap";
-			this.checkMMap.UseVisualStyleBackColor = true;
-			// 
-			// checkMLock
-			// 
-			this.checkMLock.AutoSize = true;
-			this.checkMLock.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkMLock.Location = new System.Drawing.Point(135, 173);
-			this.checkMLock.Name = "checkMLock";
-			this.checkMLock.Size = new System.Drawing.Size(59, 17);
-			this.checkMLock.TabIndex = 34;
-			this.checkMLock.Text = "MLock";
-			this.checkMLock.UseVisualStyleBackColor = true;
+			this.checkWhisperUseGPU.AutoSize = true;
+			this.checkWhisperUseGPU.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkWhisperUseGPU.Location = new System.Drawing.Point(123, 101);
+			this.checkWhisperUseGPU.Name = "checkWhisperUseGPU";
+			this.checkWhisperUseGPU.Size = new System.Drawing.Size(71, 17);
+			this.checkWhisperUseGPU.TabIndex = 5;
+			this.checkWhisperUseGPU.Text = "Use GPU";
+			this.checkWhisperUseGPU.UseVisualStyleBackColor = true;
 			// 
 			// Form1
 			// 
@@ -1183,6 +1277,8 @@
 			this.tabPage1.ResumeLayout(false);
 			this.tabPage2.ResumeLayout(false);
 			this.tabPage2.PerformLayout();
+			this.groupBox1.ResumeLayout(false);
+			this.groupBox1.PerformLayout();
 			this.groupCPUParamsBatch.ResumeLayout(false);
 			this.groupCPUParamsBatch.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numThreadsBatch)).EndInit();
@@ -1282,8 +1378,8 @@
 		private System.Windows.Forms.Button butSearch;
 		private System.Windows.Forms.TextBox textSearchTerm;
 		private System.Windows.Forms.Label label13;
-		private System.Windows.Forms.ListView listViewModelSearch;
-		private System.Windows.Forms.ListView listViewQuants;
+		private System.Windows.Forms.ListView listViewHugSearch;
+		private System.Windows.Forms.ListView listViewHugFiles;
 		private System.Windows.Forms.ColumnHeader columnHeader5;
 		private System.Windows.Forms.ColumnHeader columnHeader6;
 		private System.Windows.Forms.ColumnHeader columnHeader7;
@@ -1304,6 +1400,14 @@
 		private System.Windows.Forms.ToolStripStatusLabel labelPreGen;
 		private System.Windows.Forms.CheckBox checkMLock;
 		private System.Windows.Forms.CheckBox checkMMap;
+		private System.Windows.Forms.GroupBox groupBox1;
+		private System.Windows.Forms.ComboBox comboWhisperModel;
+		private System.Windows.Forms.Label label15;
+		private System.Windows.Forms.Button butWhispDown;
+		private System.Windows.Forms.Label label16;
+		private System.Windows.Forms.TextBox textWakeWord;
+		private System.Windows.Forms.CheckBox checkVoiceInput;
+		private System.Windows.Forms.CheckBox checkWhisperUseGPU;
 	}
 }
 

@@ -11,18 +11,27 @@ namespace LMStud{
 		private const string ApiUrl = "https://huggingface.co/api/models";
 		private const string Filter = "text-generation";
 		private const int Limit = 50;
-		private const string SearchAppend = " gguf"; // Extracted constant
-		private bool _downloading;
+		private const string SearchAppend = " gguf";
+		private string _uploader;
+		private string _modelName;
+		private volatile bool _downloading;
 		private void TextSearchTerm_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.Enter) return;
-			Search(textSearchTerm.Text);
+			HugSearch(textSearchTerm.Text);
 		}
-		private void ButSearch_Click(object sender, EventArgs e){Search(textSearchTerm.Text);}
+		private void ButSearch_Click(object sender, EventArgs e){HugSearch(textSearchTerm.Text);}
 		private void ButDownload_Click(object sender, EventArgs e){
-			if(!_downloading) DownloadQuant();
-			else _downloading = false;
+			if(!_downloading){
+				if(listViewHugFiles.SelectedItems.Count == 0 || string.IsNullOrEmpty(_uploader) || string.IsNullOrEmpty(_modelName)){
+					MessageBox.Show("Please select an item from both lists.", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					return;
+				}
+				var variantLabel = listViewHugFiles.SelectedItems[0].SubItems[0].Text;
+				butDownload.Text = "Cancel";
+				HugDownloadFile(_uploader, _modelName, variantLabel);
+			} else _downloading = false;
 		}
-		public class HuggingFaceModel{
+		public class HugModel{
 			public string ID = null;
 			public string Likes = null;
 			public string Downloads = null;
@@ -30,7 +39,7 @@ namespace LMStud{
 			public string CreatedAt = null;
 			public string LastModified = null;
 		}
-		private void Search(string term) {
+		private void HugSearch(string term) {
 			if(string.IsNullOrWhiteSpace(term)) return;
 			butSearch.Enabled = textSearchTerm.Enabled = false;
 			ThreadPool.QueueUserWorkItem(o => {
@@ -42,18 +51,18 @@ namespace LMStud{
 					var json = response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
 					var models = JArray.Parse(json);
 					Invoke(new MethodInvoker(() => {
-						listViewModelSearch.BeginUpdate();
-						listViewModelSearch.Items.Clear();
-						listViewQuants.Items.Clear();
+						listViewHugSearch.BeginUpdate();
+						listViewHugSearch.Items.Clear();
+						listViewHugFiles.Items.Clear();
 					}));
 					foreach(var modelToken in models) {
 						var model = (JObject)modelToken;
-						var hfModel = model.ToObject<HuggingFaceModel>();
+						var hfModel = model.ToObject<HugModel>();
 						if(hfModel?.ID == null) continue;
 						var parts = hfModel.ID.Split('/');
 						var uploader = parts.Length > 1 ? parts[0] : "";
 						var modelName = parts.Length > 1 ? parts[1] : hfModel.ID;
-						Invoke(new MethodInvoker(() => { listViewModelSearch.Items.Add(new ListViewItem(new[] { modelName, uploader, hfModel.Likes, hfModel.Downloads, hfModel.TrendingScore, hfModel.CreatedAt, hfModel.LastModified })); }));
+						Invoke(new MethodInvoker(() => { listViewHugSearch.Items.Add(new ListViewItem(new[] { modelName, uploader, hfModel.Likes, hfModel.Downloads, hfModel.TrendingScore, hfModel.CreatedAt, hfModel.LastModified })); }));
 					}
 				} catch(Exception ex) {
 					Invoke(new MethodInvoker(() => {
@@ -61,23 +70,24 @@ namespace LMStud{
 					}));
 				} finally {
 					Invoke(new MethodInvoker(() => {
-						listViewModelSearch.EndUpdate();
+						listViewHugSearch.EndUpdate();
 						butSearch.Enabled = textSearchTerm.Enabled = true;
 					}));
 				}
 			});
 		}
-		private void ListViewModelSearch_SelectedIndexChanged(object sender, EventArgs e){
-			if(listViewModelSearch.SelectedItems.Count == 0) return;
-			var selectedItem = listViewModelSearch.SelectedItems[0];
-			var modelName = selectedItem.SubItems[0].Text;
-			var uploader = selectedItem.SubItems[1].Text;
-			var repoId = $"{uploader}/{modelName}";
-			LoadQuants(repoId);
+		private void ListViewHugSearch_SelectedIndexChanged(object sender, EventArgs e){
+			if(listViewHugSearch.SelectedItems.Count == 0) return;
+			var selectedItem = listViewHugSearch.SelectedItems[0];
+			HugLoadFiles(selectedItem.SubItems[1].Text, selectedItem.SubItems[0].Text, ".gguf");
 		}
-		private void LoadQuants(string repoId) {
-			listViewQuants.BeginUpdate();
-			listViewQuants.Items.Clear();
+		private void HugLoadFiles(string uploader, string modelName, string fileExt) {
+			if(string.IsNullOrEmpty(uploader) || string.IsNullOrEmpty(modelName) || string.IsNullOrEmpty(fileExt)) return;
+			var repoId = $"{uploader}/{modelName}";
+			_uploader = uploader;
+			_modelName = modelName;
+			listViewHugFiles.BeginUpdate();
+			listViewHugFiles.Items.Clear();
 			ThreadPool.QueueUserWorkItem(o => {
 				try {
 					var infoUrl = $"https://huggingface.co/api/models/{repoId}?blobs=true";
@@ -91,11 +101,10 @@ namespace LMStud{
 						var fileName = fileObject.Value<string>("rfilename") ?? fileObject.Value<string>("filename");
 						var fileSize = fileObject.Value<long?>("size");
 						if(string.IsNullOrEmpty(fileName)) continue;
-						var format = fileName.EndsWith(".gguf", StringComparison.OrdinalIgnoreCase) ? "GGUF" : null;
-						if(format == null) continue;
+						if(!fileName.EndsWith(fileExt, StringComparison.OrdinalIgnoreCase)) continue;
 						var sizeDisplay = fileSize.HasValue ? $"{fileSize.Value / 1048576:F2} MB" : "";
 						var item = new ListViewItem(new[] { fileName, sizeDisplay });
-						Invoke(new MethodInvoker(() => { listViewQuants.Items.Add(item); }));
+						Invoke(new MethodInvoker(() => { listViewHugFiles.Items.Add(item); }));
 					}
 				} catch(HttpRequestException ex) {
 					Invoke(new MethodInvoker(() => {
@@ -111,32 +120,20 @@ namespace LMStud{
 					}));
 				} finally {
 					Invoke(new MethodInvoker(() => {
-						listViewQuants.EndUpdate();
+						listViewHugFiles.EndUpdate();
 					}));
 				}
 			});
 		}
-		private void DownloadQuant() {
-			if(listViewQuants.SelectedItems.Count == 0 || listViewModelSearch.SelectedItems.Count == 0) {
-				MessageBox.Show("Please select an item from both lists.", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-				return;
-			}
-			var variantLabel = listViewQuants.SelectedItems[0].SubItems[0].Text;
-			var uploader = listViewModelSearch.SelectedItems[0].SubItems[1].Text;
-			var modelName = listViewModelSearch.SelectedItems[0].SubItems[0].Text;
-			var branch = "main";
-			var baseFolder = _modelsPath;
-			var targetDir = Path.Combine(baseFolder, uploader, modelName);
-			try {
-				Directory.CreateDirectory(targetDir);
-			} catch(Exception ex) {
+		private void HugDownloadFile(string uploader, string modelName, string variantLabel) {
+			var downloadUrl = $"https://huggingface.co/{uploader}/{modelName}/resolve/main/{variantLabel}";
+			var targetDir = Path.Combine(_modelsPath, uploader, modelName);
+			try{ Directory.CreateDirectory(targetDir); } catch(Exception ex){
 				MessageBox.Show($"Failed to create directory: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				return;
 			}
-			var downloadUrl = $"https://huggingface.co/{uploader}/{modelName}/resolve/{branch}/{variantLabel}";
 			var targetPath = Path.Combine(targetDir, variantLabel);
 			_downloading = true;
-			butDownload.Text = "Cancel";
 			progressBar1.Value = 0;
 			ThreadPool.QueueUserWorkItem(_ => {
 				try {

@@ -2,8 +2,9 @@
 #pragma comment(lib, "llama.lib")
 #pragma comment(lib, "common.lib")
 #pragma comment(lib, "ggml-base.lib")
-void SetOMPEnv(){
+void BackendInit(){
 	_putenv("OMP_PROC_BIND=close");
+	llama_backend_init();
 }
 void InitTokens(){
 	if(!_vocab) return;
@@ -43,9 +44,8 @@ void FreeModel(){
 	}
 	llama_backend_free();
 }
-bool LoadModel(const char* filename, const char* systemPrompt, int nCtx, const float temp, const float repeatPenalty, const int topK, const int topP, const int nThreads, const bool strictCPU, const int nThreadsBatch, const bool strictCPUBatch, const int nGPULayers, const int nBatch, bool mMap, bool mLock, const ggml_numa_strategy numaStrategy){
+bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, const float temp, const float repeatPenalty, const int topK, const int topP, const int nThreads, const bool strictCPU, const int nThreadsBatch, const bool strictCPUBatch, const int nGPULayers, const int nBatch, bool mMap, bool mLock, const ggml_numa_strategy numaStrategy){
 	FreeModel();
-	llama_backend_init();
 	_params.numa = numaStrategy;
 	llama_numa_init(_params.numa);
 	_params.warmup = false;

@@ -9,6 +9,8 @@ namespace LMStud{
 		private volatile bool _loaded;
 		private volatile bool _populating;
 		private int _cntCtxMax;
+		private readonly List<ModelInfo> _models = new List<ModelInfo>();
+		private readonly List<string> _whisperModels = new List<string>();
 		private struct ModelInfo{
 			public readonly string FilePath;
 			public readonly List<GGUFMetadataManager.GGUFMetadataEntry> Meta;
@@ -17,7 +19,6 @@ namespace LMStud{
 				Meta = meta;
 			}
 		}
-		private readonly List<ModelInfo> _models = new List<ModelInfo>();
 		private void CheckLoadAuto_CheckedChanged(object sender, EventArgs e){
 			if(checkLoadAuto.Checked && File.Exists(Settings.Default.LastModel)){
 				Settings.Default.LoadAuto = true;
@@ -49,8 +50,10 @@ namespace LMStud{
 		}
 		private void PopulateModels(){
 			if(_populating) return;
-			if(!Directory.Exists(_modelsPath)) { 
-				MessageBox.Show(this, "Models folder not found", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			if(!Directory.Exists(_modelsPath)){
+				MessageBox.Show(this, "Models folder not found, please specify a valid folder in the Settings tab", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				tabControl1.SelectTab(1);
+				textModelsPath.Focus();
 				return;
 			}
 			_populating = true;

@@ -250,5 +250,41 @@ namespace LMStud.Properties {
                 this["MLock"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string WhisperModel {
+            get {
+                return ((string)(this["WhisperModel"]));
+            }
+            set {
+                this["WhisperModel"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string WakeWord {
+            get {
+                return ((string)(this["WakeWord"]));
+            }
+            set {
+                this["WakeWord"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool whisperUseGPU {
+            get {
+                return ((bool)(this["whisperUseGPU"]));
+            }
+            set {
+                this["whisperUseGPU"] = value;
+            }
+        }
     }
 }

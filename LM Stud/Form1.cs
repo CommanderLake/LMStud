@@ -10,6 +10,7 @@ namespace LMStud{
 	internal partial class Form1 : Form{
 		private static Form1 _this;
 		private static NativeMethods.TokenCallback _tokenCallback;
+		private static NativeMethods.WhisperCallback _whisperCallback;
 		private int _callbackCount;
 		private int _callbackTot;
 		private readonly Stopwatch _swRate = new Stopwatch();
@@ -19,14 +20,15 @@ namespace LMStud{
 		private readonly List<ChatMessage> _chatMessages = new List<ChatMessage>();
 		private ChatMessage _cntAssMsg;
 		private int _tokenCount;
+		private bool _whisperInited;
 		internal Form1(){
 			_this = this;
-			NativeMethods.SetOMPEnv();
 			InitializeComponent();
 			SetToolTips();
 			LoadConfig();
 			SetConfig();
 			PopulateModels();
+			PopulateWhisperModels();
 		}
 		private void SetToolTips(){
 			toolTip1.SetToolTip(textInstruction, "Tell the AI who or what to be, how to respond, or provide initial context.");
@@ -50,27 +52,58 @@ namespace LMStud{
 			toolTip1.SetToolTip(checkStrictCPUBatch, "Sets thread affinities on supported backends to isolate threads to specific logical cores for batch preparation.");
 		}
 		private void Form1_Load(object sender, EventArgs e) {
+			NativeMethods.BackendInit();
 			if(!Settings.Default.LoadAuto) return;
 			checkLoadAuto.Checked = true;
 			ThreadPool.QueueUserWorkItem(o => {
 				while(_populating) Thread.Sleep(10);
 				for(var i = 0; i < _models.Count; i++) {
 					var model = _models[i];
-					if(model.FilePath == Settings.Default.LastModel)
-						LoadModel(i, true);
+					if(model.FilePath != Settings.Default.LastModel) continue;
+					LoadModel(i, true);
+					break;
 				}
 			});
 		}
-		private void Form1_FormClosing(object sender, FormClosingEventArgs e){NativeMethods.StopGeneration();}
+		private void Form1_FormClosing(object sender, FormClosingEventArgs e){
+			if(_generating) NativeMethods.StopGeneration();
+			if(_whisperInited){
+				NativeMethods.StopSpeechTranscription();
+				NativeMethods.UnloadWhisperModel();
+			}
+		}
 		private void Form1_KeyDown(object sender, KeyEventArgs e){
-			if(e.KeyCode != Keys.Escape) return;
+			if(e.KeyCode != Keys.Escape || !_generating) return;
 			NativeMethods.StopGeneration();
+		}
+		private void ButCodeBlock_Click(object sender, EventArgs e) {
+			textInput.Paste("```\r\n\r\n```");
 		}
 		private void CheckMarkdown_CheckedChanged(object sender, EventArgs e){
 			foreach(var message in _chatMessages) message.Markdown = checkMarkdown.Checked;
 		}
-		private void ButCodeBlock_Click(object sender, EventArgs e) {
-			textInput.Paste("```\r\n\r\n```");
+		private void CheckVoiceInput_CheckedChanged(object sender, EventArgs e) {
+			if(checkVoiceInput.Checked)
+				if(_loaded){
+					if(!_whisperInited){
+						_whisperInited = NativeMethods.LoadWhisperModel(_whisperModels[_whisperModel], "auto", _nThreads, _whisperUseGPU);
+						if(_whisperInited){
+							_whisperCallback = WhisperCallback;
+							NativeMethods.SetWhisperCallback(_whisperCallback);
+						} else{
+							MessageBox.Show(this, "Error initialising whisper", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+							checkVoiceInput.Checked = false;
+							return;
+						}
+					}
+					if(NativeMethods.StartSpeechTranscription()) return;
+					MessageBox.Show(this, "Error starting whisper transcription", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					checkVoiceInput.Checked = false;
+				} else{
+					MessageBox.Show(this, "Load a model on the Models tab first", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+					checkVoiceInput.Checked = false;
+				}
+			else NativeMethods.StopSpeechTranscription();
 		}
 		private void ButGen_Click(object sender, EventArgs e){Generate(false);}
 		private void ButReset_Click(object sender, EventArgs e){
@@ -155,6 +188,7 @@ namespace LMStud{
 					NativeMethods.SendMessage(panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
 				}
 				_cntAssMsg = AddMessage(false, "");
+				textInput.Text = "";
 				ThreadPool.QueueUserWorkItem(o => {
 					_swTot.Restart();
 					_swPreGen.Restart();
@@ -200,6 +234,15 @@ namespace LMStud{
 				_this.labelTokens.Text = tokenCount + "/" + _this._cntCtxMax + " Tokens";
 				_this._tokenCount = tokenCount;
 				NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
+			}));
+		}
+		private static void WhisperCallback(string transcription){
+			var thisform = _this;
+			if(_this.IsDisposed) return;
+			_this.BeginInvoke((MethodInvoker)(() => {
+				if(thisform.IsDisposed) return;
+				_this.textInput.AppendText(transcription);
+				_this.Generate(false);
 			}));
 		}
 	}

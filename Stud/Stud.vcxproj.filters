@@ -18,12 +18,24 @@
     <ClInclude Include="stud.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="speech.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="common-sdl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stud.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MarkdownRTFConverter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="speech.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="common-sdl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

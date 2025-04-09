@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
@@ -20,6 +21,9 @@ namespace LMStud{
 		private bool _strictCPU;
 		private int _nThreadsBatch = 8;
 		private bool _strictCPUBatch;
+		private int _whisperModel;
+		private string _wakeWord;
+		private bool _whisperUseGPU;
 		private void LoadConfig(){
 			textInstruction.Text = Settings.Default.Instruction;
 			textModelsPath.Text = Settings.Default.ModelsDir;
@@ -38,6 +42,8 @@ namespace LMStud{
 			checkStrictCPU.Checked = Settings.Default.StrictCPU;
 			numThreadsBatch.Value = Settings.Default.ThreadsBatch;
 			checkStrictCPUBatch.Checked = Settings.Default.StrictCPUBatch;
+			textWakeWord.Text = Settings.Default.WakeWord;
+			checkWhisperUseGPU.Checked = Settings.Default.whisperUseGPU;
 		}
 		private void SetConfig(){
 			_instruction = textInstruction.Text;
@@ -57,14 +63,14 @@ namespace LMStud{
 			_strictCPU = checkStrictCPU.Checked;
 			_nThreadsBatch = (int)numThreadsBatch.Value;
 			_strictCPUBatch = checkStrictCPUBatch.Checked;
+			_wakeWord = textWakeWord.Text;
+			_whisperUseGPU = checkWhisperUseGPU.Checked;
+			NativeMethods.SetSystemPrompt(textInstruction.Text);
+			NativeMethods.SetThreadCount((int)numThreads.Value, (int)numThreadsBatch.Value);
+			NativeMethods.SetWakeCommand(_wakeWord);
 		}
 		private void ButApply_Click(object sender, EventArgs e){
-			if(Settings.Default.Instruction != textInstruction.Text) {
-				NativeMethods.SetSystemPrompt(textInstruction.Text);
-				NativeMethods.RetokenizeChat();
-			}
 			if(Settings.Default.ModelsDir != textModelsPath.Text) PopulateModels();
-			if(Settings.Default.Threads != numThreads.Value || Settings.Default.ThreadsBatch != numThreadsBatch.Value) NativeMethods.SetThreadCount((int)numThreads.Value, (int)numThreadsBatch.Value);
 			Settings.Default.Instruction = textInstruction.Text;
 			Settings.Default.ModelsDir = textModelsPath.Text;
 			Settings.Default.CtxSize = numCtxSize.Value;
@@ -82,6 +88,9 @@ namespace LMStud{
 			Settings.Default.StrictCPU = checkStrictCPU.Checked;
 			Settings.Default.ThreadsBatch = numThreadsBatch.Value;
 			Settings.Default.StrictCPUBatch = checkStrictCPUBatch.Checked;
+			Settings.Default.WhisperModel = comboWhisperModel.Text;
+			Settings.Default.WakeWord = textWakeWord.Text;
+			Settings.Default.whisperUseGPU = checkWhisperUseGPU.Checked;
 			Settings.Default.Save();
 			SetConfig();
 		}
@@ -93,6 +102,34 @@ namespace LMStud{
 		private void TextModelsPath_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.Enter) return;
 			MessageBox.Show(this, "Folder not found", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+		}
+		private void ComboWhisperModel_DropDown(object sender, EventArgs e){
+			if(!Directory.Exists(_modelsPath)) return;
+			PopulateWhisperModels();
+		}
+		private void ButWhispDown_Click(object sender, EventArgs e) {
+			HugLoadFiles("ggerganov", "whisper.cpp", ".bin");
+			tabControl1.SelectTab(3);
+		}
+		private void PopulateWhisperModels(){
+			UseWaitCursor = true;
+			try{
+				_whisperModels.Clear();
+				comboWhisperModel.Items.Clear();
+				var files = Directory.GetFiles(_modelsPath, "*.bin", SearchOption.AllDirectories);
+				foreach(var file in files){
+					using(var fs = new FileStream(file, FileMode.Open, FileAccess.Read))
+					using(var br = new BinaryReader(fs)){
+						var magic = br.ReadUInt32();
+						if(magic != 0x67676D6C)// "lmgg" in little-endian
+							return;
+					}
+					_whisperModels.Add(file);
+					comboWhisperModel.Items.Add(Path.GetFileName(file));
+				}
+				comboWhisperModel.SelectedIndex = comboWhisperModel.Items.IndexOf(Settings.Default.WhisperModel);
+				_whisperModel = comboWhisperModel.SelectedIndex;
+			} finally{ UseWaitCursor = false; }
 		}
 	}
 }
