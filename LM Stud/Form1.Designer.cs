@@ -122,6 +122,7 @@
 			this.labelTPS = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+			this.checkSpeak = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -326,6 +327,7 @@
 			// 
 			// groupBox1
 			// 
+			this.groupBox1.Controls.Add(this.checkSpeak);
 			this.groupBox1.Controls.Add(this.label18);
 			this.groupBox1.Controls.Add(this.numFreqThreshold);
 			this.groupBox1.Controls.Add(this.label17);
@@ -338,10 +340,10 @@
 			this.groupBox1.Controls.Add(this.label15);
 			this.groupBox1.Location = new System.Drawing.Point(209, 156);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(200, 174);
+			this.groupBox1.Size = new System.Drawing.Size(200, 197);
 			this.groupBox1.TabIndex = 37;
 			this.groupBox1.TabStop = false;
-			this.groupBox1.Text = "Whisper";
+			this.groupBox1.Text = "Voice";
 			// 
 			// label18
 			// 
@@ -406,7 +408,7 @@
 			this.numVadThreshold.Size = new System.Drawing.Size(70, 20);
 			this.numVadThreshold.TabIndex = 6;
 			this.numVadThreshold.Value = new decimal(new int[] {
-            1,
+            6,
             0,
             0,
             65536});
@@ -1331,6 +1333,17 @@
 			this.toolTip1.UseAnimation = false;
 			this.toolTip1.UseFading = false;
 			// 
+			// checkSpeak
+			// 
+			this.checkSpeak.AutoSize = true;
+			this.checkSpeak.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkSpeak.Location = new System.Drawing.Point(86, 176);
+			this.checkSpeak.Name = "checkSpeak";
+			this.checkSpeak.Size = new System.Drawing.Size(108, 17);
+			this.checkSpeak.TabIndex = 10;
+			this.checkSpeak.Text = "Speak responses";
+			this.checkSpeak.UseVisualStyleBackColor = true;
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1492,6 +1505,7 @@
 		private System.Windows.Forms.NumericUpDown numFreqThreshold;
 		private System.Windows.Forms.Label label17;
 		private System.Windows.Forms.NumericUpDown numVadThreshold;
+		private System.Windows.Forms.CheckBox checkSpeak;
 	}
 }
 

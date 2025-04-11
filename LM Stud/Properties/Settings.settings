@@ -69,10 +69,13 @@
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="VadThreshold" Type="System.Decimal" Scope="User">
-      <Value Profile="(Default)">0.1</Value>
+      <Value Profile="(Default)">0.6</Value>
     </Setting>
     <Setting Name="FreqThreshold" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">100</Value>
+    </Setting>
+    <Setting Name="Speak" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
     </Setting>
   </Settings>
 </SettingsFile>

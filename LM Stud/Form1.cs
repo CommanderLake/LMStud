@@ -28,9 +28,6 @@ namespace LMStud{
 			InitializeComponent();
 			SetToolTips();
 			LoadConfig();
-			SetConfig();
-			PopulateModels();
-			PopulateWhisperModels();
 		}
 		private void SetToolTips(){
 			toolTip1.SetToolTip(textInstruction, "Tell the AI who or what to be, how to respond, or provide initial context.");
@@ -52,10 +49,13 @@ namespace LMStud{
 			toolTip1.SetToolTip(groupCPUParamsBatch, "Parameters for the pre-generation step (batch preparation).");
 			toolTip1.SetToolTip(numThreadsBatch, "CPU threads used for batch preparation.");
 			toolTip1.SetToolTip(checkStrictCPUBatch, "Sets thread affinities on supported backends to isolate threads to specific logical cores for batch preparation.");
-			toolTip1.SetToolTip(numVadThreshold, "Voice Activity Detection, higher values increase sensitivity to speech (0.1-1.0)");
-			toolTip1.SetToolTip(numFreqThreshold, "High-pass filter cutoff frequency. Higher values reduce background noise");
+			toolTip1.SetToolTip(numVadThreshold, "Voice Activity Detection, higher values increase sensitivity to speech (0.1-1.0).");
+			toolTip1.SetToolTip(numFreqThreshold, "High-pass filter cutoff frequency. Higher values reduce background noise.");
+			toolTip1.SetToolTip(checkSpeak, "Speak the generated responses using the computers default voice.");
 		}
 		private void Form1_Load(object sender, EventArgs e) {
+			PopulateModels();
+			PopulateWhisperModels();
 			NativeMethods.BackendInit();
 			if(!Settings.Default.LoadAuto) return;
 			checkLoadAuto.Checked = true;
@@ -64,7 +64,7 @@ namespace LMStud{
 				for(var i = 0; i < _models.Count; i++) {
 					var model = _models[i];
 					if(model.FilePath != Settings.Default.LastModel) continue;
-					LoadModel(i, true);
+					Invoke(new MethodInvoker(() => {LoadModel(i, true);}));
 					break;
 				}
 			});
@@ -91,7 +91,7 @@ namespace LMStud{
 			if(checkVoiceInput.Checked)
 				if(_loaded){
 					if(!_whisperInited){
-						_whisperInited = NativeMethods.LoadWhisperModel(_whisperModels[_whisperModel], _nThreads, _whisperUseGPU);
+						_whisperInited = NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);
 						if(_whisperInited){
 							_whisperCallback = WhisperCallback;
 							NativeMethods.SetWhisperCallback(_whisperCallback);
@@ -201,7 +201,7 @@ namespace LMStud{
 					NativeMethods.Generate(_nGen);
 					_swTot.Stop();
 					_swRate.Stop();
-					_tts.SpeakAsync(_cntAssMsg.Message);
+					if(_speak) _tts.SpeakAsync(_cntAssMsg.Message);
 					Invoke(new MethodInvoker(() => {
 						var elapsed = _swTot.Elapsed.TotalSeconds;
 						if(_callbackTot > 0 && elapsed > 0.0){

@@ -9,12 +9,12 @@ namespace LMStud{
 		public const int SB_BOTTOM = 7;
 		public const int EM_SETSEL = 0xB1;
 		public enum GgmlNumaStrategy{
-			GgmlNumaStrategyDisabled = 0,
-			GgmlNumaStrategyDistribute = 1,
-			GgmlNumaStrategyIsolate = 2,
-			GgmlNumaStrategyNumactl = 3,
-			GgmlNumaStrategyMirror = 4,
-			GgmlNumaStrategyCount
+			Disabled = 0,
+			Distribute = 1,
+			Isolate = 2,
+			Numactl = 3,
+			Mirror = 4,
+			Count
 		}
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public unsafe delegate void TokenCallback(byte* tokenPtr, int strLen, int tokenCount);

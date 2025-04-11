@@ -73,10 +73,8 @@ namespace LMStud{
 							listViewModels.Items.Add(lvi);
 						}));
 					}
-				} catch(Exception ex) { Invoke(new MethodInvoker(() => {MessageBox.Show(this, ex.ToString(), "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);})); } finally {
-					Invoke(new MethodInvoker(() => {
-						listViewModels.EndUpdate();
-					}));
+				} catch(Exception ex) { Invoke(new MethodInvoker(() => {MessageBox.Show(this, ex.ToString(), "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);})); } finally{
+					try{ Invoke(new MethodInvoker(() => {listViewModels.EndUpdate();})); } catch(Exception e){ MessageBox.Show(this, e.ToString(), "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}
 					_populating = false;
 				}
 			});

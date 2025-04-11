@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
 using LMStud.Properties;
@@ -18,95 +19,152 @@ namespace LMStud{
 		private bool _mMap = true;
 		private bool _mLock;
 		private int _nThreads = 8;
-		private bool _strictCPU;
 		private int _nThreadsBatch = 8;
+		private bool _strictCPU;
 		private bool _strictCPUBatch;
-		private int _whisperModel;
+		private int _whisperModelIndex;
 		private string _wakeWord;
-		private bool _whisperUseGPU;
 		private float _vadThreshold = 0.6f;
 		private float _freqThreshold = 100.0f;
+		private bool _whisperUseGPU;
+		private bool _speak;
 		private void LoadConfig(){
-			textInstruction.Text = Settings.Default.Instruction;
-			textModelsPath.Text = Settings.Default.ModelsDir;
-			numCtxSize.Value = Settings.Default.CtxSize;
-			numGPULayers.Value = Settings.Default.GPULayers;
-			numTemp.Value = Settings.Default.Temp;
-			numNGen.Value = Settings.Default.NGen;
-			comboNUMAStrat.SelectedIndex = Settings.Default.NUMAStrat;
-			numRepPen.Value = Settings.Default.RepPen;
-			numTopK.Value = Settings.Default.TopK;
-			numTopP.Value = Settings.Default.TopP;
-			numBatchSize.Value = Settings.Default.BatchSize;
-			checkMMap.Checked = Settings.Default.MMap;
-			checkMLock.Checked = Settings.Default.MLock;
-			numThreads.Value = Settings.Default.Threads;
-			checkStrictCPU.Checked = Settings.Default.StrictCPU;
-			numThreadsBatch.Value = Settings.Default.ThreadsBatch;
-			checkStrictCPUBatch.Checked = Settings.Default.StrictCPUBatch;
-			textWakeWord.Text = Settings.Default.WakeWord;
-			checkWhisperUseGPU.Checked = Settings.Default.whisperUseGPU;
-			numVadThreshold.Value = Settings.Default.VadThreshold;
-			numFreqThreshold.Value = Settings.Default.FreqThreshold;
-		}
-		private void SetConfig(){
-			_instruction = textInstruction.Text;
-			_modelsPath = textModelsPath.Text;
-			_ctxSize = (int)numCtxSize.Value;
-			_gpuLayers = (int)numGPULayers.Value;
-			_temp = (float)numTemp.Value;
-			_nGen = (int)numNGen.Value;
-			_numaStrat = (NativeMethods.GgmlNumaStrategy)comboNUMAStrat.SelectedIndex;
-			_repPen = (float)numRepPen.Value;
-			_topK = (int)numTopK.Value;
-			_topP = (float)numTopP.Value;
-			_batchSize = (int)numBatchSize.Value;
-			_mMap = checkMMap.Checked;
-			_mLock = checkMLock.Checked;
-			_nThreads = (int)numThreads.Value;
-			_strictCPU = checkStrictCPU.Checked;
-			_nThreadsBatch = (int)numThreadsBatch.Value;
-			_strictCPUBatch = checkStrictCPUBatch.Checked;
-			_wakeWord = textWakeWord.Text;
-			_whisperUseGPU = checkWhisperUseGPU.Checked;
-			_vadThreshold = (float)numVadThreshold.Value;
-			_freqThreshold = (float)numFreqThreshold.Value;
-			NativeMethods.SetSystemPrompt(textInstruction.Text);
-			NativeMethods.SetThreadCount((int)numThreads.Value, (int)numThreadsBatch.Value);
+			_instruction = textInstruction.Text = Settings.Default.Instruction;
+			_modelsPath = textModelsPath.Text = Settings.Default.ModelsDir;
+			_ctxSize = (int)(numCtxSize.Value = Settings.Default.CtxSize);
+			_gpuLayers = (int)(numGPULayers.Value = Settings.Default.GPULayers);
+			_temp = (float)(numTemp.Value = Settings.Default.Temp);
+			_nGen = (int)(numNGen.Value = Settings.Default.NGen);
+			_numaStrat = (NativeMethods.GgmlNumaStrategy)(comboNUMAStrat.SelectedIndex = Settings.Default.NUMAStrat);
+			_repPen = (float)(numRepPen.Value = Settings.Default.RepPen);
+			_topK = (int)(numTopK.Value = Settings.Default.TopK);
+			_topP = (float)(numTopP.Value = Settings.Default.TopP);
+			_batchSize = (int)(numBatchSize.Value = Settings.Default.BatchSize);
+			_mMap = checkMMap.Checked = Settings.Default.MMap;
+			_mLock = checkMLock.Checked = Settings.Default.MLock;
+			_nThreads = (int)(numThreads.Value = Settings.Default.Threads);
+			_strictCPU = checkStrictCPU.Checked = Settings.Default.StrictCPU;
+			_nThreadsBatch = (int)(numThreadsBatch.Value = Settings.Default.ThreadsBatch);
+			_strictCPUBatch = checkStrictCPUBatch.Checked = Settings.Default.StrictCPUBatch;
+			_wakeWord = textWakeWord.Text = Settings.Default.WakeWord;
+			_vadThreshold = (float)(numVadThreshold.Value = Settings.Default.VadThreshold);
+			_freqThreshold = (float)(numFreqThreshold.Value = Settings.Default.FreqThreshold);
+			_whisperUseGPU = checkWhisperUseGPU.Checked = Settings.Default.whisperUseGPU;
+			_speak = checkSpeak.Checked = Settings.Default.Speak;
 			NativeMethods.SetWakeCommand(_wakeWord);
 			NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
 		}
+		//private void ButApply_Click(object sender, EventArgs e){
+		//	if(_instruction != textInstruction.Text){
+		//		Settings.Default.Instruction = _instruction = textInstruction.Text;
+		//		NativeMethods.SetSystemPrompt(textInstruction.Text);
+		//	}
+		//	if(_modelsPath != textModelsPath.Text){
+		//		Settings.Default.ModelsDir = _modelsPath = textModelsPath.Text;
+		//		PopulateModels();
+		//	}
+		//	if(_ctxSize != (int)numCtxSize.Value) Settings.Default.CtxSize = _ctxSize = (int)numCtxSize.Value;
+		//	if(_gpuLayers != (int)numGPULayers.Value) Settings.Default.GPULayers = _gpuLayers = (int)numGPULayers.Value;
+		//	if(_temp != (int)numTemp.Value){
+		//		_temp = (float)numTemp.Value;
+		//		Settings.Default.Temp = numTemp.Value;
+		//	}
+		//	if(_nGen != (int)numNGen.Value) Settings.Default.NGen = _nGen = (int)numNGen.Value;
+		//	if(_numaStrat != (NativeMethods.GgmlNumaStrategy)comboNUMAStrat.SelectedIndex){
+		//		_numaStrat = (NativeMethods.GgmlNumaStrategy)comboNUMAStrat.SelectedIndex;
+		//		Settings.Default.NUMAStrat = comboNUMAStrat.SelectedIndex;
+		//	}
+		//	if(_repPen != (float)numRepPen.Value){
+		//		_repPen = (float)numRepPen.Value;
+		//		Settings.Default.RepPen = numRepPen.Value;
+		//	}
+		//	if(_topK != (int)numTopK.Value) Settings.Default.TopK = _topK = (int)numTopK.Value;
+		//	if(_topP != (double)numTopP.Value){
+		//		_topP = (float)numTopP.Value;
+		//		Settings.Default.TopP = numTopP.Value;
+		//	}
+		//	if(_batchSize != (int)numBatchSize.Value) Settings.Default.BatchSize = _batchSize = (int)numBatchSize.Value;
+		//	if(_mMap != checkMMap.Checked) Settings.Default.MMap = _mMap = checkMMap.Checked;
+		//	if(_mLock != checkMLock.Checked) Settings.Default.MLock = _mLock = checkMLock.Checked;
+		//	if(_nThreads != (int)numThreads.Value || _nThreadsBatch != (int)numThreadsBatch.Value){
+		//		Settings.Default.Threads = _nThreads = (int)numThreads.Value;
+		//		Settings.Default.ThreadsBatch = _nThreadsBatch = (int)numThreadsBatch.Value;
+		//		NativeMethods.SetThreadCount((int)numThreads.Value, (int)numThreadsBatch.Value);
+		//	}
+		//	if(_strictCPU != checkStrictCPU.Checked) Settings.Default.StrictCPU = _strictCPU = checkStrictCPU.Checked;
+		//	if(_strictCPUBatch != checkStrictCPUBatch.Checked) Settings.Default.StrictCPUBatch = _strictCPUBatch = checkStrictCPUBatch.Checked;
+		//	if(_whisperModelIndex != comboWhisperModel.SelectedIndex){
+		//		_whisperModelIndex = comboWhisperModel.SelectedIndex;
+		//		Settings.Default.WhisperModel = comboWhisperModel.Text;
+		//	}
+		//	if(_wakeWord != textWakeWord.Text){
+		//		Settings.Default.WakeWord = _wakeWord = textWakeWord.Text;
+		//		NativeMethods.SetWakeCommand(_wakeWord);
+		//	}
+		//	if(_whisperUseGPU != checkWhisperUseGPU.Checked) Settings.Default.whisperUseGPU = _whisperUseGPU = checkWhisperUseGPU.Checked;
+		//	if(_vadThreshold != (double)numVadThreshold.Value || _freqThreshold != (double)numFreqThreshold.Value){
+		//		_vadThreshold = (float)numVadThreshold.Value;
+		//		Settings.Default.VadThreshold = numVadThreshold.Value;
+		//		_freqThreshold = (float)numFreqThreshold.Value;
+		//		Settings.Default.FreqThreshold = numFreqThreshold.Value;
+		//		NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
+		//	}
+		//	Settings.Default.Save();
+		//}
+		// Helper method to reduce repetition when updating a setting.
+		private void UpdateSetting<T>(ref T currentValue, T newValue, Action<T> updateAction){
+			if(!EqualityComparer<T>.Default.Equals(currentValue, newValue)){
+				currentValue = newValue;
+				updateAction(newValue);
+			}
+		}
 		private void ButApply_Click(object sender, EventArgs e){
-			if(Settings.Default.ModelsDir != textModelsPath.Text) PopulateModels();
-			Settings.Default.Instruction = textInstruction.Text;
-			Settings.Default.ModelsDir = textModelsPath.Text;
-			Settings.Default.CtxSize = numCtxSize.Value;
-			Settings.Default.GPULayers = numGPULayers.Value;
-			Settings.Default.Temp = numTemp.Value;
-			Settings.Default.NGen = numNGen.Value;
-			Settings.Default.NUMAStrat = comboNUMAStrat.SelectedIndex;
-			Settings.Default.RepPen = numRepPen.Value;
-			Settings.Default.TopK = numTopK.Value;
-			Settings.Default.TopP = numTopP.Value;
-			Settings.Default.BatchSize = numBatchSize.Value;
-			Settings.Default.MMap = checkMMap.Checked;
-			Settings.Default.MLock = checkMLock.Checked;
-			Settings.Default.Threads = numThreads.Value;
-			Settings.Default.StrictCPU = checkStrictCPU.Checked;
-			Settings.Default.ThreadsBatch = numThreadsBatch.Value;
-			Settings.Default.StrictCPUBatch = checkStrictCPUBatch.Checked;
-			Settings.Default.WhisperModel = comboWhisperModel.Text;
-			Settings.Default.WakeWord = textWakeWord.Text;
-			Settings.Default.whisperUseGPU = checkWhisperUseGPU.Checked;
-			Settings.Default.VadThreshold = numVadThreshold.Value;
-			Settings.Default.FreqThreshold = numFreqThreshold.Value;
+			UpdateSetting(ref _instruction, textInstruction.Text, value => {
+				Settings.Default.Instruction = value;
+				NativeMethods.SetSystemPrompt(value);
+			});
+			UpdateSetting(ref _modelsPath, textModelsPath.Text, value => {
+				Settings.Default.ModelsDir = value;
+				PopulateModels();
+			});
+			UpdateSetting(ref _ctxSize, (int)numCtxSize.Value, value => {Settings.Default.CtxSize = value;});
+			UpdateSetting(ref _gpuLayers, (int)numGPULayers.Value, value => {Settings.Default.GPULayers = value;});
+			UpdateSetting(ref _temp, (float)numTemp.Value, value => {Settings.Default.Temp = numTemp.Value;});
+			UpdateSetting(ref _nGen, (int)numNGen.Value, value => {Settings.Default.NGen = value;});
+			var newNumaIndex = comboNUMAStrat.SelectedIndex;
+			UpdateSetting(ref _numaStrat, (NativeMethods.GgmlNumaStrategy)newNumaIndex, value => {Settings.Default.NUMAStrat = newNumaIndex;});
+			UpdateSetting(ref _repPen, (float)numRepPen.Value, value => {Settings.Default.RepPen = numRepPen.Value;});
+			UpdateSetting(ref _topK, (int)numTopK.Value, value => {Settings.Default.TopK = value;});
+			UpdateSetting(ref _topP, (float)numTopP.Value, value => {Settings.Default.TopP = numTopP.Value;});
+			UpdateSetting(ref _batchSize, (int)numBatchSize.Value, value => {Settings.Default.BatchSize = value;});
+			UpdateSetting(ref _mMap, checkMMap.Checked, value => {Settings.Default.MMap = value;});
+			UpdateSetting(ref _mLock, checkMLock.Checked, value => {Settings.Default.MLock = value;});
+			if(_nThreads != (int)numThreads.Value || _nThreadsBatch != (int)numThreadsBatch.Value){
+				UpdateSetting(ref _nThreads, (int)numThreads.Value, value => {Settings.Default.Threads = value;});
+				UpdateSetting(ref _nThreadsBatch, (int)numThreadsBatch.Value, value => {Settings.Default.ThreadsBatch = value;});
+				NativeMethods.SetThreadCount((int)numThreads.Value, (int)numThreadsBatch.Value);
+			}
+			UpdateSetting(ref _strictCPU, checkStrictCPU.Checked, value => {Settings.Default.StrictCPU = value;});
+			UpdateSetting(ref _strictCPUBatch, checkStrictCPUBatch.Checked, value => {Settings.Default.StrictCPUBatch = value;});
+			UpdateSetting(ref _whisperModelIndex, comboWhisperModel.SelectedIndex, value => {Settings.Default.WhisperModel = comboWhisperModel.Text;});
+			UpdateSetting(ref _wakeWord, textWakeWord.Text, value => {
+				Settings.Default.WakeWord = value;
+				NativeMethods.SetWakeCommand(value);
+			});
+			UpdateSetting(ref _whisperUseGPU, checkWhisperUseGPU.Checked, value => {Settings.Default.whisperUseGPU = value;});
+			UpdateSetting(ref _vadThreshold, (float)numVadThreshold.Value, value => {
+				Settings.Default.VadThreshold = numVadThreshold.Value;
+				NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
+			});
+			UpdateSetting(ref _freqThreshold, (float)numFreqThreshold.Value, value => {
+				Settings.Default.FreqThreshold = numFreqThreshold.Value;
+				NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
+			});
+			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			Settings.Default.Save();
-			SetConfig();
 		}
 		private void ButBrowse_Click(object sender, EventArgs e){
-			if(folderBrowserDialog1.ShowDialog(this) == DialogResult.OK){
-				textModelsPath.Text = folderBrowserDialog1.SelectedPath;
-			}
+			if(folderBrowserDialog1.ShowDialog(this) == DialogResult.OK) textModelsPath.Text = folderBrowserDialog1.SelectedPath;
 		}
 		private void TextModelsPath_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.Enter) return;
@@ -116,7 +174,7 @@ namespace LMStud{
 			if(!Directory.Exists(_modelsPath)) return;
 			PopulateWhisperModels();
 		}
-		private void ButWhispDown_Click(object sender, EventArgs e) {
+		private void ButWhispDown_Click(object sender, EventArgs e){
 			HugLoadFiles("ggerganov", "whisper.cpp", ".bin");
 			tabControl1.SelectTab(3);
 		}
@@ -137,7 +195,7 @@ namespace LMStud{
 					comboWhisperModel.Items.Add(Path.GetFileName(file));
 				}
 				comboWhisperModel.SelectedIndex = comboWhisperModel.Items.IndexOf(Settings.Default.WhisperModel);
-				_whisperModel = comboWhisperModel.SelectedIndex;
+				_whisperModelIndex = comboWhisperModel.SelectedIndex;
 			} finally{ UseWaitCursor = false; }
 		}
 	}

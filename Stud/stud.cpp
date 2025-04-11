@@ -1,10 +1,16 @@
 #include "stud.h"
+#include <Windows.h>
+#include <filesystem>
 #pragma comment(lib, "llama.lib")
 #pragma comment(lib, "common.lib")
+#pragma comment(lib, "ggml.lib")
 #pragma comment(lib, "ggml-base.lib")
 void BackendInit(){
 	_putenv("OMP_PROC_BIND=close");
 	llama_backend_init();
+	ggml_backend_load("ggml-cpu.dll");
+	const HMODULE hModule = LoadLibraryA("nvcuda.dll");
+	if(hModule != nullptr) ggml_backend_load("ggml-cuda.dll");
 }
 void InitTokens(){
 	if(!_vocab) return;

@@ -289,7 +289,7 @@ namespace LMStud.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.6")]
         public decimal VadThreshold {
             get {
                 return ((decimal)(this["VadThreshold"]));
@@ -308,6 +308,18 @@ namespace LMStud.Properties {
             }
             set {
                 this["FreqThreshold"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool Speak {
+            get {
+                return ((bool)(this["Speak"]));
+            }
+            set {
+                this["Speak"] = value;
             }
         }
     }
