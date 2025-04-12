@@ -15,7 +15,7 @@ namespace LMStud{
 			InitializeComponent();
 			richTextMsg.ContentsResized += RichTextMsgOnContentsResized;
 			label1.Text = user ? "User" : "Assistant";
-			AppendText(message);
+			AppendText(message, true);
 		}
 		private void RichTextMsgOnContentsResized(object sender, ContentsResizedEventArgs e){
 			Height = e.NewRectangle.Height + 32;
@@ -61,22 +61,21 @@ namespace LMStud{
 				checkThink.Enabled = !value;
 			}
 		}
-		internal void AppendText(string text){
-			if(!User){
+		internal void AppendText(string text, bool render){
+			if(User){
+				_msgBuilder.Append(text);
+				_message = _msgBuilder.ToString();
+				if(render) RenderText();
+			} else{
 				_msgBuilder.Append(text);
 				_message = _msgBuilder.ToString();
 				var thinking = ExtractThink(ref _message, out _think);
 				if(!string.IsNullOrEmpty(_think) && checkThink.Visible == false) checkThink.Visible = true;
 				if(thinking && !checkThink.Checked) checkThink.Checked = true;
 				else if(!thinking && checkThink.Checked) checkThink.Checked = false;
-				else RenderText();
-			} else{
-				_msgBuilder.Append(text);
-				_message = _msgBuilder.ToString();
-				RenderText();
+				else if(render) RenderText();
 			}
 		}
-
 		private void CheckThink_CheckedChanged(object sender, EventArgs e){RenderText();}
 		private unsafe string MarkdownToRtf(string markdown){
 			var rtfOut = (byte*)0;

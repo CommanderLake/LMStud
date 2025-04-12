@@ -18,6 +18,7 @@ namespace LMStud{
 		private readonly Stopwatch _swPreGen = new Stopwatch();
 		private readonly Stopwatch _swTot = new Stopwatch();
 		private volatile bool _generating;
+		private volatile bool _rendering;
 		private readonly List<ChatMessage> _chatMessages = new List<ChatMessage>();
 		private ChatMessage _cntAssMsg;
 		private int _tokenCount;
@@ -194,6 +195,7 @@ namespace LMStud{
 				}
 				_cntAssMsg = AddMessage(false, "");
 				textInput.Text = "";
+				_tts.SpeakAsyncCancelAll();
 				ThreadPool.QueueUserWorkItem(o => {
 					_swTot.Restart();
 					_swPreGen.Restart();
@@ -219,27 +221,32 @@ namespace LMStud{
 			} else{ NativeMethods.StopGeneration(); }
 		}
 		private static unsafe void TokenCallback(byte* tokenPtr, int strLen, int tokenCount){
-			_this._swPreGen.Stop();
+			var first = _this._swPreGen.IsRunning;
+			if(first) _this._swPreGen.Stop();
 			++_this._callbackCount;
 			++_this._callbackTot;
 			var elapsed = _this._swRate.Elapsed.TotalSeconds;
 			if(elapsed >= 1.0) _this._swRate.Restart();
 			var initElapsed = _this._swPreGen.Elapsed.TotalSeconds;
 			var token = Encoding.UTF8.GetString(tokenPtr, strLen);
+			var renderToken = !_this._rendering;
 			var thisform = _this;
 			if(_this.IsDisposed) return;
 			_this.BeginInvoke((MethodInvoker)(() => {
 				if(thisform.IsDisposed) return;
-				_this.labelPreGen.Text = "Pre-generation time: " + initElapsed + " s";
-				if(elapsed >= 1.0){
-					var callsPerSecond = _this._callbackCount/elapsed;
-					_this.labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
-					_this._callbackCount = 0;
-				}
-				_this._cntAssMsg.AppendText(token);
-				_this.labelTokens.Text = tokenCount + "/" + _this._cntCtxMax + " Tokens";
-				_this._tokenCount = tokenCount;
-				NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
+				try{
+					_this._rendering = true;
+					if(first) _this.labelPreGen.Text = "Pre-generation time: " + initElapsed + " s";
+					if(elapsed >= 1.0){
+						var callsPerSecond = _this._callbackCount/elapsed;
+						_this.labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
+						_this._callbackCount = 0;
+					}
+					_this._cntAssMsg.AppendText(token, renderToken);
+					_this.labelTokens.Text = tokenCount + "/" + _this._cntCtxMax + " Tokens";
+					_this._tokenCount = tokenCount;
+					NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
+				} finally{ _this._rendering = false; }
 			}));
 		}
 		private static void WhisperCallback(string transcription){
