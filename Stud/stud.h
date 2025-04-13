@@ -4,6 +4,10 @@
 #include <sampling.h>
 #include <mutex>
 #include <vector>
+#pragma comment(lib, "llama.lib")
+#pragma comment(lib, "common.lib")
+#pragma comment(lib, "ggml.lib")
+#pragma comment(lib, "ggml-base.lib")
 #define EXPORT __declspec(dllexport)
 inline common_params _params;
 inline llama_model* _llModel = nullptr;

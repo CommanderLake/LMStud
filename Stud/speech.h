@@ -1,6 +1,20 @@
 #pragma once
+#define SDL_MAIN_HANDLED
 #include "common-sdl.h"
 #include <whisper.h>
+#pragma comment(lib, "winmm.lib")
+#pragma comment(lib, "imm32.lib")
+#pragma comment(lib, "version.lib")
+#pragma comment(lib, "setupapi.lib")
+#pragma comment(lib, "cfgmgr32.lib")
+#ifdef NDEBUG
+#pragma comment(lib, "manual-link\\SDL2main.lib")
+#pragma comment(lib, "SDL2-static.lib")
+#else
+#pragma comment(lib, "manual-link\\SDL2maind.lib")
+#pragma comment(lib, "SDL2-staticd.lib")
+#endif
+#pragma comment(lib, "whisper.lib")
 #define EXPORT __declspec(dllexport)
 inline int gVoiceDuration = 10000;
 inline std::atomic<bool> transcriptionRunning(false);

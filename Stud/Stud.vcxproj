@@ -46,14 +46,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>I:\llama.cpp-b4988\include;I:\llama.cpp-b4988\common;I:\llama.cpp-b4988\ggml\include;I:\llama.cpp-b4988\src;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\SDL2-2.32.4\include;$(SolutionDir)include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Administrator\Documents\Visual Studio 2017\Projects\LMStud\lib\debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>I:\llama.cpp-b4988\include;I:\llama.cpp-b4988\common;I:\llama.cpp-b4988\ggml\include;I:\llama.cpp-b4988\src;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)lib\$(Configuration);I:\vcpkg-2025.04.09\installed\x64-windows-static\debug\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>I:\llama.cpp-b4988\include;I:\llama.cpp-b4988\common;I:\llama.cpp-b4988\ggml\include;I:\llama.cpp-b4988\src;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\SDL2-2.32.4\include;$(SolutionDir)include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Administrator\Documents\Visual Studio 2017\Projects\LMStud\lib\release;$(LibraryPath)</LibraryPath>
+    <IncludePath>I:\llama.cpp-b4988\include;I:\llama.cpp-b4988\common;I:\llama.cpp-b4988\ggml\include;I:\llama.cpp-b4988\src;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)lib\$(Configuration);I:\vcpkg-2025.04.09\installed\x64-windows-static\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -71,7 +71,6 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>SDL2.lib;whisper.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"
@@ -89,7 +88,6 @@ xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <OpenMP>GenerateParallelCode</OpenMP>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
@@ -98,7 +96,6 @@ xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>SDL2.lib;whisper.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"</Command>

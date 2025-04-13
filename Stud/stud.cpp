@@ -1,10 +1,6 @@
 #include "stud.h"
 #include <Windows.h>
 #include <filesystem>
-#pragma comment(lib, "llama.lib")
-#pragma comment(lib, "common.lib")
-#pragma comment(lib, "ggml.lib")
-#pragma comment(lib, "ggml-base.lib")
 void BackendInit(){
 	_putenv("OMP_PROC_BIND=close");
 	llama_backend_init();

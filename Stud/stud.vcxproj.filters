@@ -24,6 +24,9 @@
     <ClInclude Include="common-sdl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="hug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stud.cpp">
@@ -36,6 +39,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="common-sdl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
