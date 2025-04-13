@@ -46,13 +46,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>I:\llama.cpp-b4988\include;I:\llama.cpp-b4988\common;I:\llama.cpp-b4988\ggml\include;I:\llama.cpp-b4988\src;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\SDL2-2.32.4\include;$(IncludePath)</IncludePath>
+    <IncludePath>I:\llama.cpp-b4988\include;I:\llama.cpp-b4988\common;I:\llama.cpp-b4988\ggml\include;I:\llama.cpp-b4988\src;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\SDL2-2.32.4\include;$(SolutionDir)include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\Administrator\Documents\Visual Studio 2017\Projects\LMStud\lib\debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>I:\llama.cpp-b4988\include;I:\llama.cpp-b4988\common;I:\llama.cpp-b4988\ggml\include;I:\llama.cpp-b4988\src;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\SDL2-2.32.4\include;$(IncludePath)</IncludePath>
+    <IncludePath>I:\llama.cpp-b4988\include;I:\llama.cpp-b4988\common;I:\llama.cpp-b4988\ggml\include;I:\llama.cpp-b4988\src;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\SDL2-2.32.4\include;$(SolutionDir)include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\Administrator\Documents\Visual Studio 2017\Projects\LMStud\lib\release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -106,11 +106,13 @@ xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="common-sdl.h" />
+    <ClInclude Include="hug.h" />
     <ClInclude Include="speech.h" />
     <ClInclude Include="stud.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-sdl.cpp" />
+    <ClCompile Include="hug.cpp" />
     <ClCompile Include="MarkdownRTFConverter.cpp" />
     <ClCompile Include="speech.cpp" />
     <ClCompile Include="stud.cpp" />

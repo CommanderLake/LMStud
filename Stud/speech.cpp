@@ -3,9 +3,9 @@
 #include <thread>
 #include <atomic>
 #include <vector>
-#include <cstring>
 #include <string>
 #include <regex>
+#include <sstream>
 static std::string trim(const std::string& s){
 	const size_t start = s.find_first_not_of(" \t\n\r");
 	if(start==std::string::npos) return "";

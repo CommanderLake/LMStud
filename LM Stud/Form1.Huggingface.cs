@@ -1,20 +1,21 @@
 ﻿using System;
 using System.IO;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 namespace LMStud{
 	internal partial class Form1{
-		private readonly HttpClient _client = new HttpClient();
 		private const string ApiUrl = "https://huggingface.co/api/models";
 		private const string Filter = "text-generation";
 		private const int Limit = 50;
 		private const string SearchAppend = " gguf";
-		private string _uploader;
-		private string _modelName;
+		private readonly HttpClient _client = new HttpClient();
 		private volatile bool _downloading;
+		private string _modelName;
+		private string _uploader;
 		private void TextSearchTerm_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.Enter) return;
 			HugSearch(textSearchTerm.Text);
@@ -31,44 +32,42 @@ namespace LMStud{
 				HugDownloadFile(_uploader, _modelName, variantLabel);
 			} else _downloading = false;
 		}
-		public class HugModel{
-			public string ID = null;
-			public string Likes = null;
-			public string Downloads = null;
-			public string TrendingScore = null;
-			public string CreatedAt = null;
-			public string LastModified = null;
-		}
-		private void HugSearch(string term) {
+		private void HugSearch(string term){
 			if(string.IsNullOrWhiteSpace(term)) return;
 			butSearch.Enabled = textSearchTerm.Enabled = false;
 			ThreadPool.QueueUserWorkItem(o => {
-				try {
+				try{
 					var escapedTerm = Uri.EscapeDataString(term + SearchAppend);
 					var url = $"{ApiUrl}?filter={Filter}&search={escapedTerm}&limit={Limit}&full=true";
-					var response = _client.GetAsync(url).ConfigureAwait(false).GetAwaiter().GetResult();
-					response.EnsureSuccessStatusCode();
-					var json = response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+					//var response = _client.GetAsync(url).ConfigureAwait(false).GetAwaiter().GetResult();
+					//response.EnsureSuccessStatusCode();
+					//var json = response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+					var resPtr = NativeMethods.PerformHttpGet(url);
+					var json = Marshal.PtrToStringAnsi(resPtr);
+					NativeMethods.FreeMemory(resPtr);
+					if(json == null) throw new ArgumentNullException();
+					if(json.StartsWith("Error:")) throw new Exception(json);
 					var models = JArray.Parse(json);
 					Invoke(new MethodInvoker(() => {
 						listViewHugSearch.BeginUpdate();
 						listViewHugSearch.Items.Clear();
 						listViewHugFiles.Items.Clear();
 					}));
-					foreach(var modelToken in models) {
+					foreach(var modelToken in models){
 						var model = (JObject)modelToken;
 						var hfModel = model.ToObject<HugModel>();
 						if(hfModel?.ID == null) continue;
 						var parts = hfModel.ID.Split('/');
 						var uploader = parts.Length > 1 ? parts[0] : "";
 						var modelName = parts.Length > 1 ? parts[1] : hfModel.ID;
-						Invoke(new MethodInvoker(() => { listViewHugSearch.Items.Add(new ListViewItem(new[] { modelName, uploader, hfModel.Likes, hfModel.Downloads, hfModel.TrendingScore, hfModel.CreatedAt, hfModel.LastModified })); }));
+						Invoke(new MethodInvoker(() => {
+							listViewHugSearch.Items.Add(
+								new ListViewItem(new[]{ modelName, uploader, hfModel.Likes, hfModel.Downloads, hfModel.TrendingScore, hfModel.CreatedAt, hfModel.LastModified }));
+						}));
 					}
-				} catch(Exception ex) {
-					Invoke(new MethodInvoker(() => {
-						MessageBox.Show(this, $"Model search error: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-					}));
-				} finally {
+				} catch(Exception ex){
+					Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"Model search error: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+				} finally{
 					Invoke(new MethodInvoker(() => {
 						listViewHugSearch.EndUpdate();
 						butSearch.Enabled = textSearchTerm.Enabled = true;
@@ -81,7 +80,7 @@ namespace LMStud{
 			var selectedItem = listViewHugSearch.SelectedItems[0];
 			HugLoadFiles(selectedItem.SubItems[1].Text, selectedItem.SubItems[0].Text, ".gguf");
 		}
-		private void HugLoadFiles(string uploader, string modelName, string fileExt) {
+		private void HugLoadFiles(string uploader, string modelName, string fileExt){
 			if(string.IsNullOrEmpty(uploader) || string.IsNullOrEmpty(modelName) || string.IsNullOrEmpty(fileExt)) return;
 			var repoId = $"{uploader}/{modelName}";
 			_uploader = uploader;
@@ -89,11 +88,16 @@ namespace LMStud{
 			listViewHugFiles.BeginUpdate();
 			listViewHugFiles.Items.Clear();
 			ThreadPool.QueueUserWorkItem(o => {
-				try {
+				try{
 					var infoUrl = $"https://huggingface.co/api/models/{repoId}?blobs=true";
-					var response = _client.GetAsync(infoUrl).ConfigureAwait(false).GetAwaiter().GetResult();
-					response.EnsureSuccessStatusCode();
-					var infoJson = response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+					//var response = _client.GetAsync(infoUrl).ConfigureAwait(false).GetAwaiter().GetResult();
+					//response.EnsureSuccessStatusCode();
+					//var infoJson = response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+					var resPtr = NativeMethods.PerformHttpGet(infoUrl);
+					var infoJson = Marshal.PtrToStringAnsi(resPtr);
+					NativeMethods.FreeMemory(resPtr);
+					if(infoJson == null) throw new ArgumentNullException();
+					if(infoJson.StartsWith("Error:")) throw new Exception(infoJson);
 					var info = JObject.Parse(infoJson);
 					if(!info.TryGetValue("siblings", out var siblings) || !(siblings is JArray siblingsArray)) return;
 					foreach(var file in siblingsArray){
@@ -102,30 +106,72 @@ namespace LMStud{
 						var fileSize = fileObject.Value<long?>("size");
 						if(string.IsNullOrEmpty(fileName)) continue;
 						if(!fileName.EndsWith(fileExt, StringComparison.OrdinalIgnoreCase)) continue;
-						var sizeDisplay = fileSize.HasValue ? $"{fileSize.Value / 1048576:F2} MB" : "";
-						var item = new ListViewItem(new[] { fileName, sizeDisplay });
-						Invoke(new MethodInvoker(() => { listViewHugFiles.Items.Add(item); }));
+						var sizeDisplay = fileSize.HasValue ? $"{fileSize.Value/1048576:F2} MB" : "";
+						var item = new ListViewItem(new[]{ fileName, sizeDisplay });
+						Invoke(new MethodInvoker(() => {listViewHugFiles.Items.Add(item);}));
 					}
-				} catch(HttpRequestException ex) {
-					Invoke(new MethodInvoker(() => {
-						MessageBox.Show(this, $"HTTP Error loading files for {repoId}: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-					}));
-				} catch(JsonException ex) {
-					Invoke(new MethodInvoker(() => {
-						MessageBox.Show(this, $"JSON Parse Error for {repoId}: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-					}));
-				} catch(Exception ex) {
-					Invoke(new MethodInvoker(() => {
-						MessageBox.Show(this, $"Error loading files for {repoId}: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-					}));
-				} finally {
-					Invoke(new MethodInvoker(() => {
-						listViewHugFiles.EndUpdate();
-					}));
-				}
+				} catch(HttpRequestException ex){
+					Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"HTTP Error loading files for {repoId}: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+				} catch(JsonException ex){
+					Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"JSON Parse Error for {repoId}: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+				} catch(Exception ex){
+					Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"Error loading files for {repoId}: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+				} finally{ Invoke(new MethodInvoker(() => {listViewHugFiles.EndUpdate();})); }
 			});
 		}
-		private void HugDownloadFile(string uploader, string modelName, string variantLabel) {
+		//private void HugDownloadFile(string uploader, string modelName, string variantLabel){
+		//	var downloadUrl = $"https://huggingface.co/{uploader}/{modelName}/resolve/main/{variantLabel}";
+		//	var targetDir = Path.Combine(_modelsPath, uploader, modelName);
+		//	try{ Directory.CreateDirectory(targetDir); } catch(Exception ex){
+		//		MessageBox.Show($"Failed to create directory: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+		//		return;
+		//	}
+		//	var targetPath = Path.Combine(targetDir, variantLabel);
+		//	_downloading = true;
+		//	progressBar1.Value = 0;
+		//	ThreadPool.QueueUserWorkItem(_ => {
+		//		try{
+		//			using(var response = _client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false).GetAwaiter().GetResult()){
+		//				response.EnsureSuccessStatusCode();
+		//				using(var httpStream = response.Content.ReadAsStreamAsync().ConfigureAwait(false).GetAwaiter().GetResult()){
+		//					using(var fileStream = File.Create(targetPath)){
+		//						var contentLength = response.Content.Headers.ContentLength ?? 0;
+		//						var buffer = new byte[10485760];
+		//						Invoke(new MethodInvoker(() => progressBar1.Maximum = (int)(contentLength/buffer.Length)));
+		//						long totalBytesRead = 0;
+		//						while(_downloading){
+		//							var bytesRead = httpStream.Read(buffer, 0, buffer.Length);
+		//							if(bytesRead == 0) break;
+		//							fileStream.Write(buffer, 0, bytesRead);
+		//							totalBytesRead += bytesRead;
+		//							if(contentLength <= 0) continue;
+		//							var read = totalBytesRead;
+		//							BeginInvoke(new MethodInvoker(() => progressBar1.Value = (int)(read/buffer.Length)));
+		//						}
+		//						if(_downloading && contentLength > 0 && totalBytesRead != contentLength)
+		//							throw new IOException($"Download incomplete - Expected {contentLength} bytes, received {totalBytesRead}");
+		//					}
+		//				}
+		//			}
+		//			if(_downloading)
+		//				Invoke(new MethodInvoker(() => {
+		//					MessageBox.Show(this, $"Downloaded {variantLabel} to:\n{targetPath}", "Download Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+		//					PopulateModels();
+		//				}));
+		//			else File.Delete(targetPath);
+		//		} catch(HttpRequestException
+		//				httpEx){ Invoke(new MethodInvoker(() => {MessageBox.Show(this, httpEx.ToString(), "Download Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);})); } catch(Exception ex){
+		//			Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"Download failed: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+		//		} finally{
+		//			Invoke(new MethodInvoker(() => {
+		//				progressBar1.Value = 0;
+		//				butDownload.Text = "Download";
+		//				_downloading = false;
+		//			}));
+		//		}
+		//	});
+		//}
+		private void HugDownloadFile(string uploader, string modelName, string variantLabel){
 			var downloadUrl = $"https://huggingface.co/{uploader}/{modelName}/resolve/main/{variantLabel}";
 			var targetDir = Path.Combine(_modelsPath, uploader, modelName);
 			try{ Directory.CreateDirectory(targetDir); } catch(Exception ex){
@@ -135,44 +181,31 @@ namespace LMStud{
 			var targetPath = Path.Combine(targetDir, variantLabel);
 			_downloading = true;
 			progressBar1.Value = 0;
+			progressBar1.Maximum = 1000;
+			int ProgressCb(long totalBytes, long downloadedBytes){
+				if(totalBytes <= 0) return 0;
+				var percent = (int)(downloadedBytes*1000/totalBytes);
+				progressBar1.Invoke((MethodInvoker)(() => {
+					progressBar1.Value = percent;
+				}));
+				return 0;
+			}
 			ThreadPool.QueueUserWorkItem(_ => {
-				try {
-					using(var response = _client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false).GetAwaiter().GetResult()) {
-						response.EnsureSuccessStatusCode();
-						using(var httpStream = response.Content.ReadAsStreamAsync().ConfigureAwait(false).GetAwaiter().GetResult()) {
-							using(var fileStream = File.Create(targetPath)) {
-								var contentLength = response.Content.Headers.ContentLength ?? 0;
-								var buffer = new byte[10485760];
-								Invoke(new MethodInvoker(() => progressBar1.Maximum = (int)(contentLength/buffer.Length)));
-								long totalBytesRead = 0;
-								while(_downloading) {
-									var bytesRead = httpStream.Read(buffer, 0, buffer.Length);
-									if(bytesRead == 0) break;
-									fileStream.Write(buffer, 0, bytesRead);
-									totalBytesRead += bytesRead;
-									if(contentLength <= 0) continue;
-									var read = totalBytesRead;
-									BeginInvoke(new MethodInvoker(() => progressBar1.Value = (int)(read/buffer.Length)));
-								}
-								if(_downloading && contentLength > 0 && totalBytesRead != contentLength) throw new IOException($"Download incomplete - Expected {contentLength} bytes, received {totalBytesRead}");
-							}
-						}
+				try{
+					var result = NativeMethods.DownloadFileWithProgress(downloadUrl, targetPath, ProgressCb);
+					if(result == 0){
+						if(_downloading){
+							Invoke(new MethodInvoker(() => {
+								MessageBox.Show(this, $"Downloaded {variantLabel} to:\n{targetPath}", "Download Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+								PopulateModels();
+							}));
+						} else{ File.Delete(targetPath); }
+					} else{
+						Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"Download failed with error code: {result}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 					}
-					if(_downloading)
-						Invoke(new MethodInvoker(() => {
-							MessageBox.Show(this, $"Downloaded {variantLabel} to:\n{targetPath}", "Download Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
-							PopulateModels();
-						}));
-					else File.Delete(targetPath);
-				} catch(HttpRequestException httpEx) {
-					Invoke(new MethodInvoker(() => {
-						MessageBox.Show(this, httpEx.ToString(), "Download Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-					}));
-				} catch(Exception ex) {
-					Invoke(new MethodInvoker(() => {
-						MessageBox.Show(this, $"Download failed: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-					}));
-				} finally {
+				} catch(Exception ex){
+					Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"Download failed: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+				} finally{
 					Invoke(new MethodInvoker(() => {
 						progressBar1.Value = 0;
 						butDownload.Text = "Download";
@@ -180,6 +213,14 @@ namespace LMStud{
 					}));
 				}
 			});
+		}
+		public class HugModel{
+			public string CreatedAt = null;
+			public string Downloads = null;
+			public string ID = null;
+			public string LastModified = null;
+			public string Likes = null;
+			public string TrendingScore = null;
 		}
 	}
 }

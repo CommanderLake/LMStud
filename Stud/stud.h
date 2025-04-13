@@ -4,11 +4,7 @@
 #include <sampling.h>
 #include <mutex>
 #include <vector>
-#ifdef _WIN32
 #define EXPORT __declspec(dllexport)
-#else
-#define EXPORT
-#endif
 inline common_params _params;
 inline llama_model* _llModel = nullptr;
 inline llama_context* _ctx = nullptr;

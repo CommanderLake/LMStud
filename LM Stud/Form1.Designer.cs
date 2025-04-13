@@ -191,6 +191,7 @@
 			// 
 			// splitContainer1.Panel2
 			// 
+			this.splitContainer1.Panel2.Controls.Add(this.checkSpeak);
 			this.splitContainer1.Panel2.Controls.Add(this.checkVoiceInput);
 			this.splitContainer1.Panel2.Controls.Add(this.butCodeBlock);
 			this.splitContainer1.Panel2.Controls.Add(this.checkMarkdown);
@@ -327,7 +328,6 @@
 			// 
 			// groupBox1
 			// 
-			this.groupBox1.Controls.Add(this.checkSpeak);
 			this.groupBox1.Controls.Add(this.label18);
 			this.groupBox1.Controls.Add(this.numFreqThreshold);
 			this.groupBox1.Controls.Add(this.label17);
@@ -1336,13 +1336,13 @@
 			// checkSpeak
 			// 
 			this.checkSpeak.AutoSize = true;
-			this.checkSpeak.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkSpeak.Location = new System.Drawing.Point(86, 176);
+			this.checkSpeak.Location = new System.Drawing.Point(273, 154);
 			this.checkSpeak.Name = "checkSpeak";
 			this.checkSpeak.Size = new System.Drawing.Size(108, 17);
-			this.checkSpeak.TabIndex = 10;
+			this.checkSpeak.TabIndex = 11;
 			this.checkSpeak.Text = "Speak responses";
 			this.checkSpeak.UseVisualStyleBackColor = true;
+			this.checkSpeak.CheckedChanged += new System.EventHandler(this.CheckSpeak_CheckedChanged);
 			// 
 			// Form1
 			// 
@@ -1353,6 +1353,7 @@
 			this.Controls.Add(this.statusStrip1);
 			this.Controls.Add(this.tabControl1);
 			this.DoubleBuffered = true;
+			this.KeyPreview = true;
 			this.Name = "Form1";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "LM Stud";

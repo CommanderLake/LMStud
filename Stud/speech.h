@@ -1,7 +1,7 @@
 #pragma once
-#include "stud.h"
 #include "common-sdl.h"
 #include <whisper.h>
+#define EXPORT __declspec(dllexport)
 inline int gVoiceDuration = 10000;
 inline std::atomic<bool> transcriptionRunning(false);
 inline std::thread transcriptionThread;

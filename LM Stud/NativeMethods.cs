@@ -66,6 +66,22 @@ namespace LMStud{
 		public static extern void SetWakeCommand(string wakeCmd);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetVADThresholds(float vadThreshold, float freqThreshold);
+
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		public delegate int ProgressCallback(long totalBytes, long downloadedBytes);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+		public static extern IntPtr PerformHttpGet(string url);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+		public static extern int DownloadFile(string url, string targetPath);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+		public static extern int DownloadFileWithProgress(string url, string targetPath, ProgressCallback progressCallback);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+		public static extern void FreeMemory(IntPtr ptr);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void CurlGlobalInit();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void CurlGlobalCleanup();
+
 		[DllImport("user32.dll")]
 		public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wp, IntPtr lp);
 	}

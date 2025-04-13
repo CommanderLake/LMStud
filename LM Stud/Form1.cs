@@ -21,6 +21,7 @@ namespace LMStud{
 		private volatile bool _rendering;
 		private readonly List<ChatMessage> _chatMessages = new List<ChatMessage>();
 		private ChatMessage _cntAssMsg;
+		private readonly StringBuilder _speechBuffer = new StringBuilder();
 		private int _tokenCount;
 		private bool _whisperInited;
 		private SpeechSynthesizer _tts = new SpeechSynthesizer();
@@ -55,6 +56,7 @@ namespace LMStud{
 			toolTip1.SetToolTip(checkSpeak, "Speak the generated responses using the computers default voice.");
 		}
 		private void Form1_Load(object sender, EventArgs e) {
+			NativeMethods.CurlGlobalInit();
 			PopulateModels();
 			PopulateWhisperModels();
 			NativeMethods.BackendInit();
@@ -76,10 +78,12 @@ namespace LMStud{
 				NativeMethods.StopSpeechTranscription();
 				NativeMethods.UnloadWhisperModel();
 			}
+			NativeMethods.CurlGlobalCleanup();
 		}
 		private void Form1_KeyDown(object sender, KeyEventArgs e){
+			if(e.KeyCode != Keys.Escape) return;
 			_tts.SpeakAsyncCancelAll();
-			if(e.KeyCode != Keys.Escape || !_generating) return;
+			if(!_generating) return;
 			NativeMethods.StopGeneration();
 		}
 		private void ButCodeBlock_Click(object sender, EventArgs e) {
@@ -110,6 +114,10 @@ namespace LMStud{
 					checkVoiceInput.Checked = false;
 				}
 			else NativeMethods.StopSpeechTranscription();
+		}
+		private void CheckSpeak_CheckedChanged(object sender, EventArgs e) {
+			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
+			Settings.Default.Save();
 		}
 		private void ButGen_Click(object sender, EventArgs e){Generate(false);}
 		private void ButReset_Click(object sender, EventArgs e){
@@ -194,6 +202,7 @@ namespace LMStud{
 					NativeMethods.SendMessage(panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
 				}
 				_cntAssMsg = AddMessage(false, "");
+				foreach(var message in _chatMessages) message.Generating = true;
 				textInput.Text = "";
 				_tts.SpeakAsyncCancelAll();
 				ThreadPool.QueueUserWorkItem(o => {
@@ -203,7 +212,11 @@ namespace LMStud{
 					NativeMethods.Generate(_nGen);
 					_swTot.Stop();
 					_swRate.Stop();
-					if(_speak) _tts.SpeakAsync(_cntAssMsg.Message);
+					if(_speechBuffer.Length > 0){
+						var remainingText = _speechBuffer.ToString().Trim();
+						if(!string.IsNullOrWhiteSpace(remainingText)) _tts.SpeakAsync(remainingText);
+						_speechBuffer.Clear();
+					}
 					Invoke(new MethodInvoker(() => {
 						var elapsed = _swTot.Elapsed.TotalSeconds;
 						if(_callbackTot > 0 && elapsed > 0.0){
@@ -216,6 +229,7 @@ namespace LMStud{
 						butGen.Text = "Generate";
 						butReset.Enabled = true;
 						_generating = false;
+						foreach(var message in _chatMessages) message.Generating = false;
 					}));
 				});
 			} else{ NativeMethods.StopGeneration(); }
@@ -242,7 +256,18 @@ namespace LMStud{
 						_this.labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
 						_this._callbackCount = 0;
 					}
+					var lastThink = _this._cntAssMsg.checkThink.Checked;
 					_this._cntAssMsg.AppendText(token, renderToken);
+					if(_this._speak && !_this._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(token)){
+						_this._speechBuffer.Append(token);
+						var sentences = System.Text.RegularExpressions.Regex.Split(_this._speechBuffer.ToString(), @"(?<=[\.!\?])\s+");
+						for(var i = 0; i < sentences.Length - 1; i++){
+							var sentence = sentences[i].Trim();
+							if(!string.IsNullOrWhiteSpace(sentence)) _this._tts.SpeakAsync(sentence);
+						}
+						_this._speechBuffer.Clear();
+						_this._speechBuffer.Append(sentences[sentences.Length - 1]);
+					}
 					_this.labelTokens.Text = tokenCount + "/" + _this._cntCtxMax + " Tokens";
 					_this._tokenCount = tokenCount;
 					NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);

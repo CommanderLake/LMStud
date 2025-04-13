@@ -8,6 +8,7 @@ namespace LMStud{
 		private bool _markdown;
 		private string _message;
 		private string _think;
+		private bool _generating;
 		private bool _editing;
 		internal ChatMessage(bool user, string message, bool markdown){
 			User = user;
@@ -58,6 +59,18 @@ namespace LMStud{
 				butCancelEdit.Enabled = value;
 				butApplyEdit.Visible = value;
 				butApplyEdit.Enabled = value;
+				checkThink.Enabled = !value;
+			}
+		}
+		internal bool Generating{
+			get => _generating;
+			set{
+				_generating = value;
+				butApplyEdit.Enabled = !value;
+				butCancelEdit.Enabled = !value;
+				butDelete.Enabled = !value;
+				butEdit.Enabled = !value;
+				butRegen.Enabled = !value;
 				checkThink.Enabled = !value;
 			}
 		}

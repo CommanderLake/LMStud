@@ -56,6 +56,7 @@
 			// butDelete
 			// 
 			this.butDelete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.butDelete.Enabled = false;
 			this.butDelete.Image = ((System.Drawing.Image)(resources.GetObject("butDelete.Image")));
 			this.butDelete.Location = new System.Drawing.Point(176, 0);
 			this.butDelete.Margin = new System.Windows.Forms.Padding(0);
@@ -67,6 +68,7 @@
 			// butEdit
 			// 
 			this.butEdit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.butEdit.Enabled = false;
 			this.butEdit.Image = ((System.Drawing.Image)(resources.GetObject("butEdit.Image")));
 			this.butEdit.Location = new System.Drawing.Point(152, 0);
 			this.butEdit.Margin = new System.Windows.Forms.Padding(0);
@@ -78,6 +80,7 @@
 			// butRegen
 			// 
 			this.butRegen.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.butRegen.Enabled = false;
 			this.butRegen.Image = ((System.Drawing.Image)(resources.GetObject("butRegen.Image")));
 			this.butRegen.Location = new System.Drawing.Point(128, 0);
 			this.butRegen.Margin = new System.Windows.Forms.Padding(0);
@@ -143,6 +146,7 @@
 			// 
 			this.checkThink.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.checkThink.AutoSize = true;
+			this.checkThink.Enabled = false;
 			this.checkThink.Location = new System.Drawing.Point(72, 5);
 			this.checkThink.Name = "checkThink";
 			this.checkThink.Size = new System.Drawing.Size(53, 17);
