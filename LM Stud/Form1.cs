@@ -176,6 +176,9 @@ namespace LMStud{
 			cm.Editing = false;
 			cm.Markdown = checkMarkdown.Checked;
 		}
+		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){
+			NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)((e.Delta << 16) & 0xffff0000), IntPtr.Zero);
+		}
 		private ChatMessage AddMessage(bool user, string message){
 			var cm = new ChatMessage(user, message, checkMarkdown.Checked);
 			cm.Width = panelChat.ClientSize.Width;
@@ -184,6 +187,7 @@ namespace LMStud{
 			cm.butEdit.Click += (o, args) => MsgButEditOnClick(cm);
 			cm.butCancelEdit.Click += (o, args) => MsgButEditCancelOnClick(cm);
 			cm.butApplyEdit.Click += (o, args) => MsgButEditApplyOnClick(cm);
+			cm.richTextMsg.MouseWheel += RichTextMsgOnMouseWheel;
 			panelChat.Controls.Add(cm);
 			_chatMessages.Add(cm);
 			return cm;
@@ -199,9 +203,9 @@ namespace LMStud{
 					var msg = textInput.Text.Trim();
 					AddMessage(true, msg);
 					NativeMethods.AddMessage(true, msg);
-					NativeMethods.SendMessage(panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
 				}
 				_cntAssMsg = AddMessage(false, "");
+				NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
 				foreach(var message in _chatMessages) message.Generating = true;
 				textInput.Text = "";
 				_tts.SpeakAsyncCancelAll();

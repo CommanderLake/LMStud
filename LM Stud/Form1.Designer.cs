@@ -31,6 +31,7 @@
 			this.textInput = new System.Windows.Forms.TextBox();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
 			this.panelChat = new LMStud.MyFlowLayoutPanel();
+			this.checkSpeak = new System.Windows.Forms.CheckBox();
 			this.checkVoiceInput = new System.Windows.Forms.CheckBox();
 			this.butCodeBlock = new System.Windows.Forms.Button();
 			this.checkMarkdown = new System.Windows.Forms.CheckBox();
@@ -122,7 +123,6 @@
 			this.labelTPS = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-			this.checkSpeak = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -214,6 +214,17 @@
 			this.panelChat.TabIndex = 0;
 			this.panelChat.WrapContents = false;
 			this.panelChat.Layout += new System.Windows.Forms.LayoutEventHandler(this.PanelChat_Layout);
+			// 
+			// checkSpeak
+			// 
+			this.checkSpeak.AutoSize = true;
+			this.checkSpeak.Location = new System.Drawing.Point(273, 154);
+			this.checkSpeak.Name = "checkSpeak";
+			this.checkSpeak.Size = new System.Drawing.Size(108, 17);
+			this.checkSpeak.TabIndex = 11;
+			this.checkSpeak.Text = "Speak responses";
+			this.checkSpeak.UseVisualStyleBackColor = true;
+			this.checkSpeak.CheckedChanged += new System.EventHandler(this.CheckSpeak_CheckedChanged);
 			// 
 			// checkVoiceInput
 			// 
@@ -340,7 +351,7 @@
 			this.groupBox1.Controls.Add(this.label15);
 			this.groupBox1.Location = new System.Drawing.Point(209, 156);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(200, 197);
+			this.groupBox1.Size = new System.Drawing.Size(200, 174);
 			this.groupBox1.TabIndex = 37;
 			this.groupBox1.TabStop = false;
 			this.groupBox1.Text = "Voice";
@@ -1332,17 +1343,6 @@
 			this.toolTip1.ReshowDelay = 0;
 			this.toolTip1.UseAnimation = false;
 			this.toolTip1.UseFading = false;
-			// 
-			// checkSpeak
-			// 
-			this.checkSpeak.AutoSize = true;
-			this.checkSpeak.Location = new System.Drawing.Point(273, 154);
-			this.checkSpeak.Name = "checkSpeak";
-			this.checkSpeak.Size = new System.Drawing.Size(108, 17);
-			this.checkSpeak.TabIndex = 11;
-			this.checkSpeak.Text = "Speak responses";
-			this.checkSpeak.UseVisualStyleBackColor = true;
-			this.checkSpeak.CheckedChanged += new System.EventHandler(this.CheckSpeak_CheckedChanged);
 			// 
 			// Form1
 			// 
