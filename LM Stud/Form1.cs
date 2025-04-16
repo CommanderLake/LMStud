@@ -58,7 +58,6 @@ namespace LMStud{
 		private void Form1_Load(object sender, EventArgs e) {
 			NativeMethods.CurlGlobalInit();
 			PopulateModels();
-			PopulateWhisperModels();
 			NativeMethods.BackendInit();
 			if(!Settings.Default.LoadAuto) return;
 			checkLoadAuto.Checked = true;
@@ -177,7 +176,7 @@ namespace LMStud{
 			cm.Markdown = checkMarkdown.Checked;
 		}
 		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){
-			NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)((e.Delta << 16) & 0xffff0000), IntPtr.Zero);
+			NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)((e.Delta/8 << 16) & 0xffff0000), IntPtr.Zero);
 		}
 		private ChatMessage AddMessage(bool user, string message){
 			var cm = new ChatMessage(user, message, checkMarkdown.Checked);

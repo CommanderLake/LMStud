@@ -48,14 +48,17 @@ namespace LMStud{
 			if(listViewModels.SelectedIndices.Count == 0) return;
 			LoadModel(listViewModels.SelectedIndices[0], false);
 		}
-		private void PopulateModels(){
-			if(_populating) return;
+		private bool ModelsFolderExists() { 
 			if(!Directory.Exists(_modelsPath)){
 				MessageBox.Show(this, "Models folder not found, please specify a valid folder in the Settings tab", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				tabControl1.SelectTab(1);
 				textModelsPath.Focus();
-				return;
+				return false;
 			}
+			return true;
+		}
+		private void PopulateModels(){
+			if(_populating || !ModelsFolderExists()) return;
 			_populating = true;
 			listViewModels.BeginUpdate();
 			listViewModels.Items.Clear();

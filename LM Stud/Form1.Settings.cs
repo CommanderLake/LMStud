@@ -179,6 +179,7 @@ namespace LMStud{
 			tabControl1.SelectTab(3);
 		}
 		private void PopulateWhisperModels(){
+			if (!ModelsFolderExists()) return;
 			UseWaitCursor = true;
 			try{
 				_whisperModels.Clear();
