@@ -12,7 +12,7 @@ namespace LMStud{
 		private const string Filter = "text-generation";
 		private const int Limit = 50;
 		private const string SearchAppend = " gguf";
-		private readonly HttpClient _client = new HttpClient();
+		//private readonly HttpClient _client = new HttpClient();
 		private volatile bool _downloading;
 		private string _modelName;
 		private string _uploader;

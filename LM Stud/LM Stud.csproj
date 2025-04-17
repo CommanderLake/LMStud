@@ -98,7 +98,6 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="GGUFMetadataManager.cs" />
-    <Compile Include="MarkdownToRtfConverter.cs" />
     <Compile Include="MyFlowLayoutPanel.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -121,6 +120,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <None Include="cacert.pem">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

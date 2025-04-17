@@ -5,46 +5,6 @@
 #include <cstring>
 #include <stdexcept>
 #include <string>
-std::string GetCACertBundlePath(){
-	// Get temp folder from environment (fallback to "C:\temp" if not set)
-	const char* tempDir = std::getenv("TEMP");
-	if(!tempDir){
-		tempDir = "C:\\temp";
-	}
-	std::string caPath = std::string(tempDir) + "\\cacert.pem";
-
-	// Check if the file already exists
-	FILE* file = std::fopen(caPath.c_str(), "rb");
-	if(file){
-		std::fclose(file);
-		return caPath;
-	}
-
-	// File does not exist: download it using libcurl.
-	CURL* curl = curl_easy_init();
-	if(curl){
-		FILE* fp = std::fopen(caPath.c_str(), "wb");
-		if(fp){
-			curl_easy_setopt(curl, CURLOPT_URL, "https://curl.se/ca/cacert.pem");
-			// Disable verification temporarily to allow downloading the CA bundle.
-			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-			// Write callback directly writes downloaded data to file.
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-			CURLcode res = curl_easy_perform(curl);
-			std::fclose(fp);
-			if(res != CURLE_OK){
-				// On failure, remove the file and return an empty path.
-				std::remove(caPath.c_str());
-				caPath = "";
-			}
-		}
-		curl_easy_cleanup(curl);
-	}
-	return caPath;
-}
-
 //------------------------------------------------------------------------------
 // Callback that accumulates HTTP response data into a std::string.
 static size_t WriteCallback(void* ptr, size_t size, size_t nmemb, void* userdata){
@@ -75,13 +35,7 @@ char* PerformHttpGet(const char* url){
 		curl_easy_setopt(curl, CURLOPT_URL, url);
 		// Enforce TLS 1.3.
 		curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_3);
-
-		// Get the CA bundle; if available, set it for certificate verification.
-		std::string caPath = GetCACertBundlePath();
-		if(!caPath.empty()){
-			curl_easy_setopt(curl, CURLOPT_CAINFO, caPath.c_str());
-		}
-
+		curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem");
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -118,13 +72,7 @@ int DownloadFile(const char* url, const char* targetPath){
 
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_3);
-
-	// Get the CA bundle and set it for certificate verification.
-	std::string caPath = GetCACertBundlePath();
-	if(!caPath.empty()){
-		curl_easy_setopt(curl, CURLOPT_CAINFO, caPath.c_str());
-	}
-
+	curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem");
 	// Use fwrite directly as the write callback.
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
@@ -183,13 +131,7 @@ int DownloadFileWithProgress(const char* url, const char* targetPath, NativeProg
 	}
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_3);
-
-	// Set the CA bundle (downloaded to %TEMP% if needed).
-	std::string caPath = GetCACertBundlePath();
-	if(!caPath.empty()){
-		curl_easy_setopt(curl, CURLOPT_CAINFO, caPath.c_str());
-	}
-
+	curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem");
 	// Set the progress callback if provided.
 	if(progressCallback != nullptr){
 		curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, InternalProgressCallback);
