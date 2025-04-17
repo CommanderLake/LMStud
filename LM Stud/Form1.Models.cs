@@ -106,6 +106,7 @@ namespace LMStud{
 					_tokenCallback = TokenCallback;
 					NativeMethods.SetTokenCallback(_tokenCallback);
 					Invoke(new MethodInvoker(() => {
+						toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.\r\nThe model currently loaded has a maximum context size of " + modelCtxMax);
 						Settings.Default.LastModel = modelPath;
 						if(checkLoadAuto.Checked && !autoLoad){
 							Settings.Default.LoadAuto = true;

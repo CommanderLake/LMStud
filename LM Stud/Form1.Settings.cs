@@ -190,7 +190,7 @@ namespace LMStud{
 					using(var br = new BinaryReader(fs)){
 						var magic = br.ReadUInt32();
 						if(magic != 0x67676D6C)// "lmgg" in little-endian
-							return;
+							continue;
 					}
 					_whisperModels.Add(file);
 					comboWhisperModel.Items.Add(Path.GetFileName(file));

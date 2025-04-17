@@ -188,7 +188,7 @@ namespace LMStud{
 				progressBar1.Invoke((MethodInvoker)(() => {
 					progressBar1.Value = percent;
 				}));
-				return 0;
+				return _downloading ? 0 : 1;
 			}
 			ThreadPool.QueueUserWorkItem(_ => {
 				try{
@@ -204,7 +204,7 @@ namespace LMStud{
 						Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"Download failed with error code: {result}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 					}
 				} catch(Exception ex){
-					Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"Download failed: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+					if(_downloading) Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"Download failed: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 				} finally{
 					Invoke(new MethodInvoker(() => {
 						progressBar1.Value = 0;

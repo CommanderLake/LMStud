@@ -58,6 +58,7 @@ namespace LMStud{
 		private void Form1_Load(object sender, EventArgs e) {
 			NativeMethods.CurlGlobalInit();
 			PopulateModels();
+			PopulateWhisperModels();
 			NativeMethods.BackendInit();
 			if(!Settings.Default.LoadAuto) return;
 			checkLoadAuto.Checked = true;
