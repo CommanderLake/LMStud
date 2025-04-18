@@ -148,7 +148,7 @@ bool StartSpeechTranscription(){
 			pcmDataLong.clear();
 			pcmDataLong.resize(nInitialSamples, 0.0f);
 		}
-		});
+	});
 	return true;
 }
 void StopSpeechTranscription(){

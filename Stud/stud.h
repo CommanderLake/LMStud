@@ -4,6 +4,7 @@
 #include <sampling.h>
 #include <mutex>
 #include <vector>
+#include <atomic>
 #pragma comment(lib, "llama.lib")
 #pragma comment(lib, "common.lib")
 #pragma comment(lib, "ggml.lib")
@@ -16,10 +17,10 @@ inline common_sampler* _smpl = nullptr;
 inline const llama_vocab* _vocab = nullptr;
 inline std::vector<llama_token> _tokens;
 inline std::vector<common_chat_msg> _chatMsgs;
-inline bool _stop = false;
+inline std::atomic_bool _stop{false};
 inline common_chat_templates_ptr _chatTemplates;
 using TokenCallbackFn = void(*)(const char* token, int strLen, int tokenCount);
-static TokenCallbackFn _tokenCb = nullptr;
+inline TokenCallbackFn _tokenCb = nullptr;
 inline int _gaI = 0;
 inline int _gaN = 0;
 inline int _gaW = 0;

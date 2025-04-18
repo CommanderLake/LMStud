@@ -119,7 +119,10 @@ namespace LMStud{
 			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			Settings.Default.Save();
 		}
-		private void ButGen_Click(object sender, EventArgs e){Generate(false);}
+		private void ButGen_Click(object sender, EventArgs e){
+			if(_generating) NativeMethods.StopGeneration();
+			else Generate(false);
+		}
 		private void ButReset_Click(object sender, EventArgs e){
 			NativeMethods.ResetChat();
 			foreach(var message in _chatMessages) message.Dispose();
@@ -130,13 +133,13 @@ namespace LMStud{
 		private void TextInput_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.Enter || e.Control || e.Shift || !butGen.Enabled) return;
 			e.SuppressKeyPress = true;
-			Generate(false);
+			ButGen_Click(null, null);
 		}
 		private void PanelChat_Layout(object sender, LayoutEventArgs e){
 			panelChat.SuspendLayout();
 			try{
 				for(var i = 0; i < panelChat.Controls.Count; ++i) panelChat.Controls[i].Width = panelChat.ClientSize.Width;
-			} finally{ panelChat.ResumeLayout(false); }
+			} finally{ panelChat.ResumeLayout(true); }
 		}
 		private void MsgButDeleteOnClick(ChatMessage cm){
 			if(_generating) return;
@@ -193,50 +196,50 @@ namespace LMStud{
 			return cm;
 		}
 		private void Generate(bool regenerating){
-			if(!_loaded) return;
-			if(!_generating){
-				_generating = true;
-				foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
-				butGen.Text = "Stop";
-				butReset.Enabled = false;
-				if(!regenerating){
-					var msg = textInput.Text.Trim();
-					AddMessage(true, msg);
-					NativeMethods.AddMessage(true, msg);
+			if(!_loaded || _generating || string.IsNullOrWhiteSpace(textInput.Text)) return;
+			_generating = true;
+			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
+			butGen.Text = "Stop";
+			butReset.Enabled = false;
+			if(!regenerating){
+				var msg = textInput.Text.Trim();
+				var cm = AddMessage(true, msg);
+				cm.Width -= 1;//Workaround for resize issue
+				cm.Width = panelChat.ClientSize.Width;
+				NativeMethods.AddMessage(true, msg);
+			}
+			_cntAssMsg = AddMessage(false, "");
+			NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
+			foreach(var message in _chatMessages) message.Generating = true;
+			textInput.Text = "";
+			_tts.SpeakAsyncCancelAll();
+			ThreadPool.QueueUserWorkItem(o => {
+				_swTot.Restart();
+				_swPreGen.Restart();
+				_swRate.Restart();
+				NativeMethods.Generate(_nGen);
+				_swTot.Stop();
+				_swRate.Stop();
+				if(_speechBuffer.Length > 0){
+					var remainingText = _speechBuffer.ToString().Trim();
+					if(!string.IsNullOrWhiteSpace(remainingText)) _tts.SpeakAsync(remainingText);
+					_speechBuffer.Clear();
 				}
-				_cntAssMsg = AddMessage(false, "");
-				NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
-				foreach(var message in _chatMessages) message.Generating = true;
-				textInput.Text = "";
-				_tts.SpeakAsyncCancelAll();
-				ThreadPool.QueueUserWorkItem(o => {
-					_swTot.Restart();
-					_swPreGen.Restart();
-					_swRate.Restart();
-					NativeMethods.Generate(_nGen);
-					_swTot.Stop();
-					_swRate.Stop();
-					if(_speechBuffer.Length > 0){
-						var remainingText = _speechBuffer.ToString().Trim();
-						if(!string.IsNullOrWhiteSpace(remainingText)) _tts.SpeakAsync(remainingText);
-						_speechBuffer.Clear();
+				Invoke(new MethodInvoker(() => {
+					var elapsed = _swTot.Elapsed.TotalSeconds;
+					if(_callbackTot > 0 && elapsed > 0.0){
+						var callsPerSecond = _callbackTot/elapsed;
+						labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
+						_callbackTot = 0;
+						_swTot.Reset();
+						_swRate.Reset();
 					}
-					Invoke(new MethodInvoker(() => {
-						var elapsed = _swTot.Elapsed.TotalSeconds;
-						if(_callbackTot > 0 && elapsed > 0.0){
-							var callsPerSecond = _callbackTot/elapsed;
-							labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
-							_callbackTot = 0;
-							_swTot.Reset();
-							_swRate.Reset();
-						}
-						butGen.Text = "Generate";
-						butReset.Enabled = true;
-						_generating = false;
-						foreach(var message in _chatMessages) message.Generating = false;
-					}));
-				});
-			} else{ NativeMethods.StopGeneration(); }
+					butGen.Text = "Generate";
+					butReset.Enabled = true;
+					_generating = false;
+					foreach(var message in _chatMessages) message.Generating = false;
+				}));
+			});
 		}
 		private static unsafe void TokenCallback(byte* tokenPtr, int strLen, int tokenCount){
 			var first = _this._swPreGen.IsRunning;

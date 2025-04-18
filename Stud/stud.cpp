@@ -6,7 +6,7 @@ void BackendInit(){
 	llama_backend_init();
 	ggml_backend_load("ggml-cpu.dll");
 	const HMODULE hModule = LoadLibraryA("nvcuda.dll");
-	if(hModule != nullptr) ggml_backend_load("ggml-cuda.dll");
+	if(hModule!=nullptr) ggml_backend_load("ggml-cuda.dll");
 }
 void InitTokens(){
 	if(!_vocab) return;
@@ -18,14 +18,12 @@ void InitTokens(){
 		const auto systemPrompt = common_chat_format_single(_chatTemplates.get(), _chatMsgs, newMsg, false, _params.use_jinja);
 		_tokens = common_tokenize(_ctx, systemPrompt, true, true);
 	}
-	if(_tokens.empty() && llama_vocab_get_add_bos(_vocab) && !_params.use_jinja){
-		_tokens.push_back(llama_vocab_bos(_vocab));
-	}
+	if(_tokens.empty()&&llama_vocab_get_add_bos(_vocab)&&!_params.use_jinja){ _tokens.push_back(llama_vocab_bos(_vocab)); }
 	_params.n_keep = _tokens.size();
 }
 void ResetChat(const bool msgs){
 	if(_ctx) llama_kv_self_clear(_ctx);
-	_tokens.erase(_tokens.begin() + _params.n_keep, _tokens.end());
+	_tokens.erase(_tokens.begin()+_params.n_keep, _tokens.end());
 	if(msgs) _chatMsgs.clear();
 	_nPast = 0;
 	_nConsumed = 0;
@@ -46,7 +44,8 @@ void FreeModel(){
 	}
 	llama_backend_free();
 }
-bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, const float temp, const float repeatPenalty, const int topK, const int topP, const int nThreads, const bool strictCPU, const int nThreadsBatch, const bool strictCPUBatch, const int nGPULayers, const int nBatch, bool mMap, bool mLock, const ggml_numa_strategy numaStrategy){
+bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, const float temp, const float repeatPenalty, const int topK, const int topP, const int nThreads, const bool strictCPU, const int nThreadsBatch, const bool strictCPUBatch,
+				const int nGPULayers, const int nBatch, bool mMap, bool mLock, const ggml_numa_strategy numaStrategy){
 	FreeModel();
 	_params.numa = numaStrategy;
 	llama_numa_init(_params.numa);
@@ -73,7 +72,7 @@ bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, c
 	_ctx = llamaInit.context.release();
 	_vocab = llama_model_get_vocab(_llModel);
 	_chatTemplates = common_chat_templates_init(_llModel, _params.chat_template);
-	if(!llama_model_has_encoder(_llModel) && llama_vocab_get_add_eos(_vocab)) return false;
+	if(!llama_model_has_encoder(_llModel)&&llama_vocab_get_add_eos(_vocab)) return false;
 	_smpl = common_sampler_init(_llModel, _params.sampling);
 	if(!_smpl) return false;
 	_gaI = 0;
@@ -83,12 +82,8 @@ bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, c
 	RetokenizeChat();
 	return true;
 }
-void SetTokenCallback(const TokenCallbackFn cb){
-	_tokenCb = cb;
-}
-void SetThreadCount(int n, int nBatch){
-	if(_ctx) llama_set_n_threads(_ctx, n, nBatch);
-}
+void SetTokenCallback(const TokenCallbackFn cb){ _tokenCb = cb; }
+void SetThreadCount(int n, int nBatch){ if(_ctx) llama_set_n_threads(_ctx, n, nBatch); }
 int AddMessage(const bool user, const char* message){
 	if(!_vocab) return 0;
 	common_chat_msg newMsg;
@@ -103,8 +98,8 @@ int AddMessage(const bool user, const char* message){
 void RetokenizeChat(){
 	ResetChat(false);
 	InitTokens();
-	for(auto i = 0; i < _chatMsgs.size(); ++i){
-		const auto formatted = common_chat_format_single(_chatTemplates.get(), _chatMsgs, _chatMsgs[i], i == _chatMsgs.size() - 1 && _chatMsgs[i].role == "user", _params.use_jinja);
+	for(auto i = 0; i<_chatMsgs.size(); ++i){
+		const auto formatted = common_chat_format_single(_chatTemplates.get(), _chatMsgs, _chatMsgs[i], i==_chatMsgs.size()-1&&_chatMsgs[i].role=="user", _params.use_jinja);
 		auto tokens = common_tokenize(_vocab, formatted, false, true);
 		_tokens.insert(_tokens.end(), tokens.begin(), tokens.end());
 	}
@@ -114,31 +109,31 @@ void SetSystemPrompt(const char* prompt){
 	RetokenizeChat();
 }
 void SetMessageAt(int index, const char* message){
-	if(index < 0 || index >= static_cast<int>(_chatMsgs.size())) return;
+	if(index<0||index>=static_cast<int>(_chatMsgs.size())) return;
 	_chatMsgs[index].content = std::string(message);
 	RetokenizeChat();
 }
 void RemoveMessageAt(const int index){
-	if(index < 0 || index >= static_cast<int>(_chatMsgs.size())) return;
-	_chatMsgs.erase(_chatMsgs.begin() + index);
+	if(index<0||index>=static_cast<int>(_chatMsgs.size())) return;
+	_chatMsgs.erase(_chatMsgs.begin()+index);
 	RetokenizeChat();
 }
 void RemoveMessagesStartingAt(int index){
-	if(index < 0) index = 0;
-	if(index > static_cast<int>(_chatMsgs.size())) index = static_cast<int>(_chatMsgs.size());
-	_chatMsgs.erase(_chatMsgs.begin() + index, _chatMsgs.end());
+	if(index<0) index = 0;
+	if(index>static_cast<int>(_chatMsgs.size())) index = static_cast<int>(_chatMsgs.size());
+	_chatMsgs.erase(_chatMsgs.begin()+index, _chatMsgs.end());
 	RetokenizeChat();
 }
 void Generate(const unsigned int nPredict){
-	_stop = false;
+	_stop.store(false);
+	const TokenCallbackFn cb = _tokenCb;
 	std::vector<llama_token> embd;
 	std::ostringstream assMsg;
-	for(auto i = 0; i < nPredict && !_stop; ++i){
+	for(unsigned i = 0; i<nPredict&&!_stop.load(); ++i){
+		bool sampled = false;
 		if(_gaN==1){
 			if(_nPast+static_cast<int>(embd.size())>=_params.n_ctx){
-				if(!_params.ctx_shift){
-					break;         
-				}
+				if(!_params.ctx_shift){ break; }
 				const int nLeft = _nPast-_params.n_keep;
 				const int nDiscard = nLeft/2;
 				llama_kv_self_seq_rm(_ctx, 0, _params.n_keep, _params.n_keep+nDiscard);
@@ -147,9 +142,9 @@ void Generate(const unsigned int nPredict){
 			}
 		} else{
 			while(_nPast>=_gaI+_gaW){
-				const int ib = (_gaN*_gaI)/_gaW;
-				const int bd = (_gaW/_gaN)*(_gaN-1);
-				const int dd = (_gaW/_gaN)-ib*bd-_gaW;
+				const int ib = _gaN*_gaI/_gaW;
+				const int bd = _gaW/_gaN*(_gaN-1);
+				const int dd = _gaW/_gaN-ib*bd-_gaW;
 				llama_kv_self_seq_add(_ctx, 0, _gaI, _nPast, ib*bd);
 				llama_kv_self_seq_div(_ctx, 0, _gaI+ib*bd, _gaI+ib*bd+_gaW, _gaN);
 				llama_kv_self_seq_add(_ctx, 0, _gaI+ib*bd+_gaW, _nPast+ib*bd, dd);
@@ -157,35 +152,35 @@ void Generate(const unsigned int nPredict){
 				_gaI += _gaW/_gaN;
 			}
 		}
-		if(static_cast<int>(_tokens.size())<=_nConsumed){
+		if(_nConsumed>=static_cast<int>(_tokens.size())){
 			llama_token id = common_sampler_sample(_smpl, _ctx, -1);
 			common_sampler_accept(_smpl, id, true);
 			embd.push_back(id);
+			sampled = true;
 		} else{
 			while(_nConsumed<static_cast<int>(_tokens.size())&&embd.size()<_params.n_batch){
 				embd.push_back(_tokens[_nConsumed]);
 				common_sampler_accept(_smpl, _tokens[_nConsumed], false);
 				++_nConsumed;
-				if(static_cast<int>(embd.size()) >= _params.n_batch){
-					break;
-				}
 			}
 		}
 		for(int j = 0; j<static_cast<int>(embd.size()); j += _params.n_batch){
 			int nEval = static_cast<int>(embd.size())-j;
 			if(nEval>_params.n_batch) nEval = _params.n_batch;
-			if(llama_decode(_ctx, llama_batch_get_one(&embd[j], nEval))){
-				return;
-			}
+			if(llama_decode(_ctx, llama_batch_get_one(&embd[j], nEval))) return;
 			_nPast += nEval;
 		}
-		const auto id = common_sampler_last(_smpl);
-		std::string tokenStr = common_token_to_piece(_ctx, id, false);
-		assMsg << tokenStr;
-		if(_tokenCb) _tokenCb(tokenStr.c_str(), tokenStr.length(), _tokens.size() + i);
-		if(!embd.empty() && llama_vocab_is_eog(_vocab, embd.back())) break;
+		if(sampled){
+			const llama_token id = common_sampler_last(_smpl);
+			std::string tokenStr = common_token_to_piece(_ctx, id, false);
+			if(!tokenStr.empty()){
+				assMsg<<tokenStr;
+				if(cb) cb(tokenStr.c_str(), static_cast<int>(tokenStr.length()), static_cast<int>(_tokens.size()+i));
+			}
+			if(llama_vocab_is_eog(_vocab, id)) break;
+		}
 		embd.clear();
 	}
 	AddMessage(false, assMsg.str().c_str());
 }
-void StopGeneration(){ _stop = true; }
+void StopGeneration(){ _stop.store(true); }

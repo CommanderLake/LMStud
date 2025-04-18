@@ -20,7 +20,7 @@ inline int gVoiceDuration = 10000;
 inline std::atomic<bool> transcriptionRunning(false);
 inline std::thread transcriptionThread;
 typedef void(*WhisperCallbackFn)(const char* transcription);
-static WhisperCallbackFn whisperCallback = nullptr;
+inline WhisperCallbackFn whisperCallback = nullptr;
 inline whisper_context* whisperCtx = nullptr;
 inline whisper_full_params wparams = {};
 inline audio_async* audioCapture = nullptr;

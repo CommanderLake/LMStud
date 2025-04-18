@@ -180,7 +180,7 @@
 		internal System.Windows.Forms.Button butDelete;
 		internal System.Windows.Forms.Button butEdit;
 		internal System.Windows.Forms.Button butRegen;
-		private System.Windows.Forms.Panel panel1;
+		internal System.Windows.Forms.Panel panel1;
 		internal System.Windows.Forms.CheckBox checkThink;
 		internal System.Windows.Forms.Button butApplyEdit;
 		internal System.Windows.Forms.Button butCancelEdit;
