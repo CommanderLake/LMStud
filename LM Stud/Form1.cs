@@ -125,7 +125,9 @@ namespace LMStud{
 		}
 		private void ButReset_Click(object sender, EventArgs e){
 			NativeMethods.ResetChat();
+			panelChat.SuspendLayout();
 			foreach(var message in _chatMessages) message.Dispose();
+			panelChat.ResumeLayout();
 			_chatMessages.Clear();
 			_tokenCount = 0;
 			labelTokens.Text = "0 Tokens";

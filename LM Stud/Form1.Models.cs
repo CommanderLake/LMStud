@@ -93,6 +93,10 @@ namespace LMStud{
 						NativeMethods.StopGeneration();
 						while(_generating) Thread.Sleep(10);
 					}
+					if(_whisperInited){
+						NativeMethods.StopSpeechTranscription();
+						NativeMethods.UnloadWhisperModel();
+					}
 					var modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
 					_cntCtxMax = _ctxSize > modelCtxMax ? modelCtxMax : _ctxSize;
 					var success = NativeMethods.LoadModel(modelPath, _instruction, _cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _strictCPU, _nThreadsBatch, _strictCPUBatch, _gpuLayers, _batchSize, _mMap, _mLock, _numaStrat);
@@ -105,6 +109,10 @@ namespace LMStud{
 					_loaded = true;
 					_tokenCallback = TokenCallback;
 					NativeMethods.SetTokenCallback(_tokenCallback);
+					if(checkVoiceInput.Checked){
+						NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);
+						NativeMethods.StartSpeechTranscription();
+					}
 					Invoke(new MethodInvoker(() => {
 						toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.\r\nThe model currently loaded has a maximum context size of " + modelCtxMax);
 						Settings.Default.LastModel = modelPath;

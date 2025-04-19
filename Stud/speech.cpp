@@ -19,9 +19,9 @@ bool LoadWhisperModel(const char* modelPath, const int nThreads, const bool useG
 	if(!whisperCtx){ return false; }
 	wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
 	wparams.n_threads = nThreads;
+	wparams.tdrz_enable = true;
 	audioCapture = new audio_async(30000);
 	if(!audioCapture->init(-1, WHISPER_SAMPLE_RATE)){ return false; }
-	audioCapture->resume();
 	return true;
 }
 void HighPassFilter(std::vector<float>& data, const float cutoff, const float sampleRate){
@@ -83,6 +83,8 @@ bool StartSpeechTranscription(){
 		};
 		// Variable to track last output and prevent duplicate transcriptions.
 		std::string lastOutput;
+		audioCapture->clear();
+		audioCapture->resume();
 		while(transcriptionRunning.load()){
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			// If no wake command is set, use the normal VAD check.
@@ -94,10 +96,10 @@ bool StartSpeechTranscription(){
 			while(true){
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 				constexpr int extraDuration = 1000;
-				constexpr int nExtraSamples = (WHISPER_SAMPLE_RATE*extraDuration)/1000;
+				constexpr int nExtraSamples = WHISPER_SAMPLE_RATE*extraDuration/1000;
 				std::vector<float> extraData(nExtraSamples, 0.0f);
 				audioCapture->get(extraDuration, extraData);
-				if(!VadSimple(extraData, WHISPER_SAMPLE_RATE, extraDuration, gVadThreshold, gFreqThreshold)){ break; }
+				if(!VadSimple(extraData, WHISPER_SAMPLE_RATE, extraDuration, gVadThreshold*0.5f, gFreqThreshold)){ break; }
 				pcmDataLong.insert(pcmDataLong.end(), extraData.begin(), extraData.end());
 			}
 			// Perform transcription on the accumulated audio.
@@ -148,6 +150,7 @@ bool StartSpeechTranscription(){
 			pcmDataLong.clear();
 			pcmDataLong.resize(nInitialSamples, 0.0f);
 		}
+		audioCapture->pause();
 	});
 	return true;
 }
