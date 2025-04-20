@@ -6,7 +6,7 @@ using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
 	internal partial class Form1{
-		private volatile bool _loaded;
+		private volatile bool _modelLoaded;
 		private volatile bool _populating;
 		private int _cntCtxMax;
 		private readonly List<ModelInfo> _models = new List<ModelInfo>();
@@ -48,9 +48,9 @@ namespace LMStud{
 			if(listViewModels.SelectedIndices.Count == 0) return;
 			LoadModel(listViewModels.SelectedIndices[0], false);
 		}
-		private bool ModelsFolderExists() { 
+		private bool ModelsFolderExists(bool showError){
 			if(!Directory.Exists(_modelsPath)){
-				MessageBox.Show(this, "Models folder not found, please specify a valid folder in the Settings tab", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				if(showError) MessageBox.Show(this, "Models folder not found, please specify a valid folder in the Settings tab", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				tabControl1.SelectTab(1);
 				textModelsPath.Focus();
 				return false;
@@ -58,7 +58,7 @@ namespace LMStud{
 			return true;
 		}
 		private void PopulateModels(){
-			if(_populating || !ModelsFolderExists()) return;
+			if(_populating || !ModelsFolderExists(true)) return;
 			_populating = true;
 			listViewModels.BeginUpdate();
 			listViewModels.Items.Clear();
@@ -106,7 +106,7 @@ namespace LMStud{
 						Invoke(new MethodInvoker(() => {MessageBox.Show(this, "Error loading model", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 						return;
 					}
-					_loaded = true;
+					_modelLoaded = true;
 					_tokenCallback = TokenCallback;
 					NativeMethods.SetTokenCallback(_tokenCallback);
 					if(checkVoiceInput.Checked){
@@ -134,7 +134,7 @@ namespace LMStud{
 					while(_generating) Thread.Sleep(10);
 				}
 				NativeMethods.FreeModel();
-				_loaded = false;
+				_modelLoaded = false;
 				Invoke(new MethodInvoker(() => {
 					toolStripStatusLabel1.Text = "Model unloaded";
 				}));

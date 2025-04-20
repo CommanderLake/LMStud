@@ -66,6 +66,8 @@ namespace LMStud{
 		public static extern void SetWakeCommand(string wakeCmd);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetVADThresholds(float vadThreshold, float freqThreshold);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void SetVoiceDuration(int voiceDuration);
 
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate int ProgressCallback(long totalBytes, long downloadedBytes);

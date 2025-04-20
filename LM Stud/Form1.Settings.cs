@@ -121,7 +121,7 @@ namespace LMStud{
 		private void ButApply_Click(object sender, EventArgs e){
 			UpdateSetting(ref _instruction, textInstruction.Text, value => {
 				Settings.Default.Instruction = value;
-				NativeMethods.SetSystemPrompt(value);
+				if(_modelLoaded) NativeMethods.SetSystemPrompt(value);
 			});
 			UpdateSetting(ref _modelsPath, textModelsPath.Text, value => {
 				Settings.Default.ModelsDir = value;
@@ -179,7 +179,7 @@ namespace LMStud{
 			tabControl1.SelectTab(3);
 		}
 		private void PopulateWhisperModels(){
-			if (!ModelsFolderExists()) return;
+			if (!ModelsFolderExists(false)) return;
 			UseWaitCursor = true;
 			try{
 				_whisperModels.Clear();

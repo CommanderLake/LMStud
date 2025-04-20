@@ -16,17 +16,17 @@
 #endif
 #pragma comment(lib, "whisper.lib")
 #define EXPORT __declspec(dllexport)
-inline int gVoiceDuration = 10000;
-inline std::atomic<bool> transcriptionRunning(false);
-inline std::thread transcriptionThread;
+inline int _gVoiceDuration = 60000;
+inline std::atomic<bool> _transcriptionRunning(false);
+inline std::thread _transcriptionThread;
 typedef void(*WhisperCallbackFn)(const char* transcription);
-inline WhisperCallbackFn whisperCallback = nullptr;
-inline whisper_context* whisperCtx = nullptr;
-inline whisper_full_params wparams = {};
-inline audio_async* audioCapture = nullptr;
-inline std::string gWakeCommand = "";
-inline float gVadThreshold = 0.8f;
-inline float gFreqThreshold = 80.0f;
+inline WhisperCallbackFn _whisperCallback = nullptr;
+inline whisper_context* _whisperCtx = nullptr;
+inline whisper_full_params _wparams = {};
+inline audio_async* _audioCapture = nullptr;
+inline std::string _gWakeCommand = "";
+inline float _gVadThreshold = 0.5f;
+inline float _gFreqThreshold = 100.0f;
 extern "C"{
 	EXPORT void SetWhisperCallback(WhisperCallbackFn cb);
 	EXPORT bool LoadWhisperModel(const char* modelPath, int nThreads, bool useGPU);
@@ -35,7 +35,7 @@ extern "C"{
 	EXPORT void UnloadWhisperModel();
 	EXPORT void SetWakeCommand(const char* wakeCmd);
 	EXPORT void SetVADThresholds(float vadThreshold, float freqThreshold);
-	EXPORT inline void SetVoiceDuration(const int ms){
-		gVoiceDuration = ms;
+	EXPORT inline void SetVoiceDuration(const int voiceDuration){
+		_gVoiceDuration = voiceDuration;
 	}
 }

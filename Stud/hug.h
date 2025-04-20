@@ -5,7 +5,6 @@
 #pragma comment(lib, "Crypt32.lib")
 #pragma comment(lib, "libcrypto.lib")
 #pragma comment(lib, "libssl.lib")
-#pragma comment(lib, "libcurl.lib")
 #ifdef NDEBUG
 #pragma comment(lib, "zlib.lib")
 #pragma comment(lib, "libcurl.lib")

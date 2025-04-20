@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Speech.Synthesis;
 using System.Text;
@@ -92,9 +93,15 @@ namespace LMStud{
 		private void CheckMarkdown_CheckedChanged(object sender, EventArgs e){
 			foreach(var message in _chatMessages) message.Markdown = checkMarkdown.Checked;
 		}
-		private void CheckVoiceInput_CheckedChanged(object sender, EventArgs e) {
-			if(checkVoiceInput.Checked)
-				if(_loaded){
+		private void CheckVoiceInput_CheckedChanged(object sender, EventArgs e){
+			if(checkVoiceInput.Checked){
+				if(_whisperModelIndex < 0 || !File.Exists(_whisperModels[_whisperModelIndex])){
+					MessageBox.Show(this, "Invalid whisper model selection", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					tabControl1.SelectTab(1);
+					checkVoiceInput.Checked = false;
+					return;
+				}
+				if(_modelLoaded){
 					if(!_whisperInited){
 						_whisperInited = NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);
 						if(_whisperInited){
@@ -113,7 +120,7 @@ namespace LMStud{
 					MessageBox.Show(this, "Load a model on the Models tab first", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 					checkVoiceInput.Checked = false;
 				}
-			else NativeMethods.StopSpeechTranscription();
+			} else NativeMethods.StopSpeechTranscription();
 		}
 		private void CheckSpeak_CheckedChanged(object sender, EventArgs e) {
 			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
@@ -151,7 +158,7 @@ namespace LMStud{
 			_chatMessages.RemoveAt(id);
 		}
 		private void MsgButRegenOnClick(ChatMessage cm){
-			if(!_loaded || _generating) return;
+			if(!_modelLoaded || _generating) return;
 			var id = _chatMessages.IndexOf(cm);
 			if(_chatMessages[id].User) ++id;
 			if(id < _chatMessages.Count){
@@ -198,7 +205,7 @@ namespace LMStud{
 			return cm;
 		}
 		private void Generate(bool regenerating){
-			if(!_loaded || _generating || string.IsNullOrWhiteSpace(textInput.Text)) return;
+			if(!_modelLoaded || _generating || string.IsNullOrWhiteSpace(textInput.Text)) return;
 			_generating = true;
 			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
 			butGen.Text = "Stop";
