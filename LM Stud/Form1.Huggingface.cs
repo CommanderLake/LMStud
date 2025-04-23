@@ -9,10 +9,9 @@ using Newtonsoft.Json.Linq;
 namespace LMStud{
 	internal partial class Form1{
 		private const string ApiUrl = "https://huggingface.co/api/models";
-		private const string Filter = "text-generation";
+		private const string PipelineTag = "text-generation";
+		private const string Filter = "gguf";
 		private const int Limit = 50;
-		private const string SearchAppend = " gguf";
-		//private readonly HttpClient _client = new HttpClient();
 		private volatile bool _downloading;
 		private string _modelName;
 		private string _uploader;
@@ -37,16 +36,13 @@ namespace LMStud{
 			butSearch.Enabled = textSearchTerm.Enabled = false;
 			ThreadPool.QueueUserWorkItem(o => {
 				try{
-					var escapedTerm = Uri.EscapeDataString(term + SearchAppend);
-					var url = $"{ApiUrl}?filter={Filter}&search={escapedTerm}&limit={Limit}&full=true";
-					//var response = _client.GetAsync(url).ConfigureAwait(false).GetAwaiter().GetResult();
-					//response.EnsureSuccessStatusCode();
-					//var json = response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+					var escapedTerm = Uri.EscapeDataString(term);
+					var url = $"{ApiUrl}?&filter={Filter}&search={escapedTerm}";
 					var resPtr = NativeMethods.PerformHttpGet(url);
 					var json = Marshal.PtrToStringAnsi(resPtr);
 					NativeMethods.FreeMemory(resPtr);
 					if(json == null) throw new ArgumentNullException();
-					if(json.StartsWith("Error:")) throw new Exception(json);
+					if(json.StartsWith("Error:") || json.StartsWith("{\"error\":")) throw new Exception(json);
 					var models = JArray.Parse(json);
 					Invoke(new MethodInvoker(() => {
 						listViewHugSearch.BeginUpdate();
@@ -90,9 +86,6 @@ namespace LMStud{
 			ThreadPool.QueueUserWorkItem(o => {
 				try{
 					var infoUrl = $"https://huggingface.co/api/models/{repoId}?blobs=true";
-					//var response = _client.GetAsync(infoUrl).ConfigureAwait(false).GetAwaiter().GetResult();
-					//response.EnsureSuccessStatusCode();
-					//var infoJson = response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
 					var resPtr = NativeMethods.PerformHttpGet(infoUrl);
 					var infoJson = Marshal.PtrToStringAnsi(resPtr);
 					NativeMethods.FreeMemory(resPtr);
@@ -119,58 +112,6 @@ namespace LMStud{
 				} finally{ Invoke(new MethodInvoker(() => {listViewHugFiles.EndUpdate();})); }
 			});
 		}
-		//private void HugDownloadFile(string uploader, string modelName, string variantLabel){
-		//	var downloadUrl = $"https://huggingface.co/{uploader}/{modelName}/resolve/main/{variantLabel}";
-		//	var targetDir = Path.Combine(_modelsPath, uploader, modelName);
-		//	try{ Directory.CreateDirectory(targetDir); } catch(Exception ex){
-		//		MessageBox.Show($"Failed to create directory: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-		//		return;
-		//	}
-		//	var targetPath = Path.Combine(targetDir, variantLabel);
-		//	_downloading = true;
-		//	progressBar1.Value = 0;
-		//	ThreadPool.QueueUserWorkItem(_ => {
-		//		try{
-		//			using(var response = _client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false).GetAwaiter().GetResult()){
-		//				response.EnsureSuccessStatusCode();
-		//				using(var httpStream = response.Content.ReadAsStreamAsync().ConfigureAwait(false).GetAwaiter().GetResult()){
-		//					using(var fileStream = File.Create(targetPath)){
-		//						var contentLength = response.Content.Headers.ContentLength ?? 0;
-		//						var buffer = new byte[10485760];
-		//						Invoke(new MethodInvoker(() => progressBar1.Maximum = (int)(contentLength/buffer.Length)));
-		//						long totalBytesRead = 0;
-		//						while(_downloading){
-		//							var bytesRead = httpStream.Read(buffer, 0, buffer.Length);
-		//							if(bytesRead == 0) break;
-		//							fileStream.Write(buffer, 0, bytesRead);
-		//							totalBytesRead += bytesRead;
-		//							if(contentLength <= 0) continue;
-		//							var read = totalBytesRead;
-		//							BeginInvoke(new MethodInvoker(() => progressBar1.Value = (int)(read/buffer.Length)));
-		//						}
-		//						if(_downloading && contentLength > 0 && totalBytesRead != contentLength)
-		//							throw new IOException($"Download incomplete - Expected {contentLength} bytes, received {totalBytesRead}");
-		//					}
-		//				}
-		//			}
-		//			if(_downloading)
-		//				Invoke(new MethodInvoker(() => {
-		//					MessageBox.Show(this, $"Downloaded {variantLabel} to:\n{targetPath}", "Download Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
-		//					PopulateModels();
-		//				}));
-		//			else File.Delete(targetPath);
-		//		} catch(HttpRequestException
-		//				httpEx){ Invoke(new MethodInvoker(() => {MessageBox.Show(this, httpEx.ToString(), "Download Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);})); } catch(Exception ex){
-		//			Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"Download failed: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
-		//		} finally{
-		//			Invoke(new MethodInvoker(() => {
-		//				progressBar1.Value = 0;
-		//				butDownload.Text = "Download";
-		//				_downloading = false;
-		//			}));
-		//		}
-		//	});
-		//}
 		private void HugDownloadFile(string uploader, string modelName, string variantLabel){
 			var downloadUrl = $"https://huggingface.co/{uploader}/{modelName}/resolve/main/{variantLabel}";
 			var targetDir = Path.Combine(_modelsPath, uploader, modelName);
