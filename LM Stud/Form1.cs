@@ -205,7 +205,7 @@ namespace LMStud{
 			return cm;
 		}
 		private void Generate(bool regenerating){
-			if(!_modelLoaded || _generating || string.IsNullOrWhiteSpace(textInput.Text)) return;
+			if(!_modelLoaded || _generating || !regenerating && string.IsNullOrWhiteSpace(textInput.Text)) return;
 			_generating = true;
 			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
 			butGen.Text = "Stop";

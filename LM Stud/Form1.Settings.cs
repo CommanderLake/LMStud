@@ -28,6 +28,7 @@ namespace LMStud{
 		private float _freqThreshold = 100.0f;
 		private bool _whisperUseGPU;
 		private bool _speak;
+		private bool _flashAttn = true;
 		private void LoadConfig(){
 			_instruction = textInstruction.Text = Settings.Default.Instruction;
 			_modelsPath = textModelsPath.Text = Settings.Default.ModelsDir;
@@ -51,66 +52,10 @@ namespace LMStud{
 			_freqThreshold = (float)(numFreqThreshold.Value = Settings.Default.FreqThreshold);
 			_whisperUseGPU = checkWhisperUseGPU.Checked = Settings.Default.whisperUseGPU;
 			_speak = checkSpeak.Checked = Settings.Default.Speak;
+			_flashAttn = checkFlashAttn.Checked = Settings.Default.FlashAttn;
 			NativeMethods.SetWakeCommand(_wakeWord);
 			NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
 		}
-		//private void ButApply_Click(object sender, EventArgs e){
-		//	if(_instruction != textInstruction.Text){
-		//		Settings.Default.Instruction = _instruction = textInstruction.Text;
-		//		NativeMethods.SetSystemPrompt(textInstruction.Text);
-		//	}
-		//	if(_modelsPath != textModelsPath.Text){
-		//		Settings.Default.ModelsDir = _modelsPath = textModelsPath.Text;
-		//		PopulateModels();
-		//	}
-		//	if(_ctxSize != (int)numCtxSize.Value) Settings.Default.CtxSize = _ctxSize = (int)numCtxSize.Value;
-		//	if(_gpuLayers != (int)numGPULayers.Value) Settings.Default.GPULayers = _gpuLayers = (int)numGPULayers.Value;
-		//	if(_temp != (int)numTemp.Value){
-		//		_temp = (float)numTemp.Value;
-		//		Settings.Default.Temp = numTemp.Value;
-		//	}
-		//	if(_nGen != (int)numNGen.Value) Settings.Default.NGen = _nGen = (int)numNGen.Value;
-		//	if(_numaStrat != (NativeMethods.GgmlNumaStrategy)comboNUMAStrat.SelectedIndex){
-		//		_numaStrat = (NativeMethods.GgmlNumaStrategy)comboNUMAStrat.SelectedIndex;
-		//		Settings.Default.NUMAStrat = comboNUMAStrat.SelectedIndex;
-		//	}
-		//	if(_repPen != (float)numRepPen.Value){
-		//		_repPen = (float)numRepPen.Value;
-		//		Settings.Default.RepPen = numRepPen.Value;
-		//	}
-		//	if(_topK != (int)numTopK.Value) Settings.Default.TopK = _topK = (int)numTopK.Value;
-		//	if(_topP != (double)numTopP.Value){
-		//		_topP = (float)numTopP.Value;
-		//		Settings.Default.TopP = numTopP.Value;
-		//	}
-		//	if(_batchSize != (int)numBatchSize.Value) Settings.Default.BatchSize = _batchSize = (int)numBatchSize.Value;
-		//	if(_mMap != checkMMap.Checked) Settings.Default.MMap = _mMap = checkMMap.Checked;
-		//	if(_mLock != checkMLock.Checked) Settings.Default.MLock = _mLock = checkMLock.Checked;
-		//	if(_nThreads != (int)numThreads.Value || _nThreadsBatch != (int)numThreadsBatch.Value){
-		//		Settings.Default.Threads = _nThreads = (int)numThreads.Value;
-		//		Settings.Default.ThreadsBatch = _nThreadsBatch = (int)numThreadsBatch.Value;
-		//		NativeMethods.SetThreadCount((int)numThreads.Value, (int)numThreadsBatch.Value);
-		//	}
-		//	if(_strictCPU != checkStrictCPU.Checked) Settings.Default.StrictCPU = _strictCPU = checkStrictCPU.Checked;
-		//	if(_strictCPUBatch != checkStrictCPUBatch.Checked) Settings.Default.StrictCPUBatch = _strictCPUBatch = checkStrictCPUBatch.Checked;
-		//	if(_whisperModelIndex != comboWhisperModel.SelectedIndex){
-		//		_whisperModelIndex = comboWhisperModel.SelectedIndex;
-		//		Settings.Default.WhisperModel = comboWhisperModel.Text;
-		//	}
-		//	if(_wakeWord != textWakeWord.Text){
-		//		Settings.Default.WakeWord = _wakeWord = textWakeWord.Text;
-		//		NativeMethods.SetWakeCommand(_wakeWord);
-		//	}
-		//	if(_whisperUseGPU != checkWhisperUseGPU.Checked) Settings.Default.whisperUseGPU = _whisperUseGPU = checkWhisperUseGPU.Checked;
-		//	if(_vadThreshold != (double)numVadThreshold.Value || _freqThreshold != (double)numFreqThreshold.Value){
-		//		_vadThreshold = (float)numVadThreshold.Value;
-		//		Settings.Default.VadThreshold = numVadThreshold.Value;
-		//		_freqThreshold = (float)numFreqThreshold.Value;
-		//		Settings.Default.FreqThreshold = numFreqThreshold.Value;
-		//		NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
-		//	}
-		//	Settings.Default.Save();
-		//}
 		// Helper method to reduce repetition when updating a setting.
 		private void UpdateSetting<T>(ref T currentValue, T newValue, Action<T> updateAction){
 			if(!EqualityComparer<T>.Default.Equals(currentValue, newValue)){
@@ -161,6 +106,7 @@ namespace LMStud{
 				NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
 			});
 			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
+			UpdateSetting(ref _flashAttn, checkFlashAttn.Checked, value => {Settings.Default.FlashAttn = value;});
 			Settings.Default.Save();
 		}
 		private void ButBrowse_Click(object sender, EventArgs e){

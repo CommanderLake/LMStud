@@ -3,10 +3,10 @@
 #include <filesystem>
 void BackendInit(){
 	_putenv("OMP_PROC_BIND=close");
-	llama_backend_init();
 	ggml_backend_load("ggml-cpu.dll");
 	const HMODULE hModule = LoadLibraryA("nvcuda.dll");
 	if(hModule!=nullptr) ggml_backend_load("ggml-cuda.dll");
+	llama_backend_init();
 }
 void InitTokens(){
 	if(!_vocab) return;
@@ -45,7 +45,7 @@ void FreeModel(){
 	llama_backend_free();
 }
 bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, const float temp, const float repeatPenalty, const int topK, const int topP, const int nThreads, const bool strictCPU, const int nThreadsBatch, const bool strictCPUBatch,
-				const int nGPULayers, const int nBatch, bool mMap, bool mLock, const ggml_numa_strategy numaStrategy){
+				const int nGPULayers, const int nBatch, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy, const bool flashAttn){
 	FreeModel();
 	_params.numa = numaStrategy;
 	llama_numa_init(_params.numa);
@@ -59,6 +59,7 @@ bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, c
 	_params.sampling.top_p = topP;
 	_params.use_mmap = mMap;
 	_params.use_mlock = mLock;
+	_params.flash_attn = flashAttn;
 	_params.cpuparams.n_threads = nThreads;
 	_params.cpuparams.strict_cpu = strictCPU;
 	_params.cpuparams_batch.n_threads = nThreadsBatch;

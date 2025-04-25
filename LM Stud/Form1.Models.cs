@@ -99,7 +99,7 @@ namespace LMStud{
 					}
 					var modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
 					_cntCtxMax = _ctxSize > modelCtxMax ? modelCtxMax : _ctxSize;
-					var success = NativeMethods.LoadModel(modelPath, _instruction, _cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _strictCPU, _nThreadsBatch, _strictCPUBatch, _gpuLayers, _batchSize, _mMap, _mLock, _numaStrat);
+					var success = NativeMethods.LoadModel(modelPath, _instruction, _cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _strictCPU, _nThreadsBatch, _strictCPUBatch, _gpuLayers, _batchSize, _mMap, _mLock, _numaStrat, _flashAttn);
 					if(!success){
 						Settings.Default.LoadAuto = false;
 						Settings.Default.Save();

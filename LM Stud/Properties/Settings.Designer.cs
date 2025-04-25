@@ -322,5 +322,17 @@ namespace LMStud.Properties {
                 this["Speak"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool FlashAttn {
+            get {
+                return ((bool)(this["FlashAttn"]));
+            }
+            set {
+                this["FlashAttn"] = value;
+            }
+        }
     }
 }
