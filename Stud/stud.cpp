@@ -1,6 +1,8 @@
 #include "stud.h"
 #include <Windows.h>
 #include <filesystem>
+#include <chrono>
+using hr_clock = std::chrono::high_resolution_clock;
 void BackendInit(){
 	_putenv("OMP_PROC_BIND=close");
 	ggml_backend_load("ggml-cpu.dll");
@@ -50,7 +52,7 @@ bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, c
 	_params.numa = numaStrategy;
 	llama_numa_init(_params.numa);
 	_params.warmup = false;
-	_params.model = filename;
+	_params.model.path = filename;
 	_params.prompt = systemPrompt;
 	_params.n_ctx = nCtx;
 	_params.sampling.temp = temp;
@@ -125,12 +127,15 @@ void RemoveMessagesStartingAt(int index){
 	_chatMsgs.erase(_chatMsgs.begin()+index, _chatMsgs.end());
 	RetokenizeChat();
 }
-void Generate(const unsigned int nPredict){
+int Generate(const unsigned int nPredict, const bool callback){
+	const auto prepStart = hr_clock::now();
 	_stop.store(false);
 	const TokenCallbackFn cb = _tokenCb;
 	std::vector<llama_token> embd;
 	std::ostringstream assMsg;
-	for(unsigned i = 0; i<nPredict&&!_stop.load(); ++i){
+	double ftTime = 0.0;
+	unsigned i = 0;
+	while(i<nPredict&&!_stop.load()){
 		bool sampled = false;
 		if(_gaN==1){
 			if(_nPast+static_cast<int>(embd.size())>=_params.n_ctx){
@@ -168,20 +173,24 @@ void Generate(const unsigned int nPredict){
 		for(int j = 0; j<static_cast<int>(embd.size()); j += _params.n_batch){
 			int nEval = static_cast<int>(embd.size())-j;
 			if(nEval>_params.n_batch) nEval = _params.n_batch;
-			if(llama_decode(_ctx, llama_batch_get_one(&embd[j], nEval))) return;
+			if(llama_decode(_ctx, llama_batch_get_one(&embd[j], nEval))) return i;
 			_nPast += nEval;
 		}
 		if(sampled){
+			++i;
 			const llama_token id = common_sampler_last(_smpl);
 			std::string tokenStr = common_token_to_piece(_ctx, id, false);
+			if(ftTime == 0.0) ftTime = std::chrono::duration<double, std::ratio<1, 1>>(hr_clock::now()-prepStart).count();
 			if(!tokenStr.empty()){
 				assMsg<<tokenStr;
-				if(cb) cb(tokenStr.c_str(), static_cast<int>(tokenStr.length()), static_cast<int>(_tokens.size()+i));
+				if(cb && callback) cb(tokenStr.c_str(), static_cast<int>(tokenStr.length()), 1, static_cast<int>(_tokens.size()+i), ftTime);
 			}
 			if(llama_vocab_is_eog(_vocab, id)) break;
 		}
 		embd.clear();
 	}
 	AddMessage(false, assMsg.str().c_str());
+	if(cb && !callback) cb(assMsg.str().c_str(), assMsg.str().length(), i, static_cast<int>(_tokens.size()), ftTime);
+	return i;
 }
 void StopGeneration(){ _stop.store(true); }

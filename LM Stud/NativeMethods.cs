@@ -17,7 +17,7 @@ namespace LMStud{
 			Count
 		}
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-		public unsafe delegate void TokenCallback(byte* tokenPtr, int strLen, int tokenCount);
+		public unsafe delegate void TokenCallback(byte* strPtr, int strLen, int tokens, int tokensTotal, double ftTime);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void BackendInit();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -44,7 +44,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void RemoveMessagesStartingAt(int index);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void Generate(int nPredict);
+		public static extern int Generate(int nPredict, bool callback);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopGeneration();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

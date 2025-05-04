@@ -60,6 +60,7 @@
 			this.label2 = new System.Windows.Forms.Label();
 			this.checkStrictCPU = new System.Windows.Forms.CheckBox();
 			this.groupAdvanced = new System.Windows.Forms.GroupBox();
+			this.checkFlashAttn = new System.Windows.Forms.CheckBox();
 			this.checkMLock = new System.Windows.Forms.CheckBox();
 			this.checkMMap = new System.Windows.Forms.CheckBox();
 			this.comboNUMAStrat = new System.Windows.Forms.ComboBox();
@@ -123,7 +124,7 @@
 			this.labelTPS = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-			this.checkFlashAttn = new System.Windows.Forms.CheckBox();
+			this.checkStream = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -192,6 +193,7 @@
 			// 
 			// splitContainer1.Panel2
 			// 
+			this.splitContainer1.Panel2.Controls.Add(this.checkStream);
 			this.splitContainer1.Panel2.Controls.Add(this.checkSpeak);
 			this.splitContainer1.Panel2.Controls.Add(this.checkVoiceInput);
 			this.splitContainer1.Panel2.Controls.Add(this.butCodeBlock);
@@ -606,6 +608,19 @@
 			this.groupAdvanced.TabIndex = 34;
 			this.groupAdvanced.TabStop = false;
 			this.groupAdvanced.Text = "Advanced";
+			// 
+			// checkFlashAttn
+			// 
+			this.checkFlashAttn.AutoSize = true;
+			this.checkFlashAttn.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkFlashAttn.Checked = true;
+			this.checkFlashAttn.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkFlashAttn.Location = new System.Drawing.Point(98, 196);
+			this.checkFlashAttn.Name = "checkFlashAttn";
+			this.checkFlashAttn.Size = new System.Drawing.Size(96, 17);
+			this.checkFlashAttn.TabIndex = 35;
+			this.checkFlashAttn.Text = "Flash Attention";
+			this.checkFlashAttn.UseVisualStyleBackColor = true;
 			// 
 			// checkMLock
 			// 
@@ -1346,18 +1361,17 @@
 			this.toolTip1.UseAnimation = false;
 			this.toolTip1.UseFading = false;
 			// 
-			// checkFlashAttn
+			// checkStream
 			// 
-			this.checkFlashAttn.AutoSize = true;
-			this.checkFlashAttn.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkFlashAttn.Checked = true;
-			this.checkFlashAttn.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkFlashAttn.Location = new System.Drawing.Point(98, 196);
-			this.checkFlashAttn.Name = "checkFlashAttn";
-			this.checkFlashAttn.Size = new System.Drawing.Size(96, 17);
-			this.checkFlashAttn.TabIndex = 35;
-			this.checkFlashAttn.Text = "Flash Attention";
-			this.checkFlashAttn.UseVisualStyleBackColor = true;
+			this.checkStream.AutoSize = true;
+			this.checkStream.Checked = true;
+			this.checkStream.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkStream.Location = new System.Drawing.Point(387, 154);
+			this.checkStream.Name = "checkStream";
+			this.checkStream.Size = new System.Drawing.Size(92, 17);
+			this.checkStream.TabIndex = 12;
+			this.checkStream.Text = "Stream output";
+			this.checkStream.UseVisualStyleBackColor = true;
 			// 
 			// Form1
 			// 
@@ -1523,6 +1537,7 @@
 		private System.Windows.Forms.NumericUpDown numVadThreshold;
 		private System.Windows.Forms.CheckBox checkSpeak;
 		private System.Windows.Forms.CheckBox checkFlashAttn;
+		private System.Windows.Forms.CheckBox checkStream;
 	}
 }
 

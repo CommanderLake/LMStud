@@ -13,19 +13,18 @@ namespace LMStud{
 		private static Form1 _this;
 		private static NativeMethods.TokenCallback _tokenCallback;
 		private static NativeMethods.WhisperCallback _whisperCallback;
-		private int _callbackCount;
-		private int _callbackTot;
+		private int _msgTokenCount;
 		private readonly Stopwatch _swRate = new Stopwatch();
-		private readonly Stopwatch _swPreGen = new Stopwatch();
 		private readonly Stopwatch _swTot = new Stopwatch();
 		private volatile bool _generating;
 		private volatile bool _rendering;
 		private readonly List<ChatMessage> _chatMessages = new List<ChatMessage>();
 		private ChatMessage _cntAssMsg;
 		private readonly StringBuilder _speechBuffer = new StringBuilder();
-		private int _tokenCount;
+		private int _tokensTotal;
 		private bool _whisperInited;
-		private SpeechSynthesizer _tts = new SpeechSynthesizer();
+		private bool _first = true;
+		private readonly SpeechSynthesizer _tts = new SpeechSynthesizer();
 		internal Form1(){
 			_this = this;
 			InitializeComponent();
@@ -136,7 +135,7 @@ namespace LMStud{
 			foreach(var message in _chatMessages) message.Dispose();
 			panelChat.ResumeLayout();
 			_chatMessages.Clear();
-			_tokenCount = 0;
+			_tokensTotal = 0;
 			labelTokens.Text = "0 Tokens";
 		}
 		private void TextInput_KeyDown(object sender, KeyEventArgs e){
@@ -222,11 +221,11 @@ namespace LMStud{
 			foreach(var message in _chatMessages) message.Generating = true;
 			textInput.Text = "";
 			_tts.SpeakAsyncCancelAll();
+			_first = true;
 			ThreadPool.QueueUserWorkItem(o => {
 				_swTot.Restart();
-				_swPreGen.Restart();
 				_swRate.Restart();
-				NativeMethods.Generate(_nGen);
+				var toks = NativeMethods.Generate(_nGen, checkStream.Checked);
 				_swTot.Stop();
 				_swRate.Stop();
 				if(_speechBuffer.Length > 0){
@@ -236,10 +235,9 @@ namespace LMStud{
 				}
 				Invoke(new MethodInvoker(() => {
 					var elapsed = _swTot.Elapsed.TotalSeconds;
-					if(_callbackTot > 0 && elapsed > 0.0){
-						var callsPerSecond = _callbackTot/elapsed;
+					if(toks > 0 && elapsed > 0.0){
+						var callsPerSecond = toks/elapsed;
 						labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
-						_callbackTot = 0;
 						_swTot.Reset();
 						_swRate.Reset();
 					}
@@ -250,15 +248,11 @@ namespace LMStud{
 				}));
 			});
 		}
-		private static unsafe void TokenCallback(byte* tokenPtr, int strLen, int tokenCount){
-			var first = _this._swPreGen.IsRunning;
-			if(first) _this._swPreGen.Stop();
-			++_this._callbackCount;
-			++_this._callbackTot;
+		private static unsafe void TokenCallback(byte* strPtr, int strLen, int tokens, int tokensTotal, double ftTime){
+			_this._msgTokenCount += tokens;
 			var elapsed = _this._swRate.Elapsed.TotalSeconds;
 			if(elapsed >= 1.0) _this._swRate.Restart();
-			var initElapsed = _this._swPreGen.Elapsed.TotalSeconds;
-			var token = Encoding.UTF8.GetString(tokenPtr, strLen);
+			var tokenStr = Encoding.UTF8.GetString(strPtr, strLen);
 			var renderToken = !_this._rendering;
 			var thisform = _this;
 			if(_this.IsDisposed) return;
@@ -266,16 +260,19 @@ namespace LMStud{
 				if(thisform.IsDisposed) return;
 				try{
 					_this._rendering = true;
-					if(first) _this.labelPreGen.Text = "Pre-generation time: " + initElapsed + " s";
+					if(_this._first){
+						_this.labelPreGen.Text = "First token time: " + ftTime + " s";
+						_this._first = false;
+					}
 					if(elapsed >= 1.0){
-						var callsPerSecond = _this._callbackCount/elapsed;
+						var callsPerSecond = _this._msgTokenCount/elapsed;
 						_this.labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
-						_this._callbackCount = 0;
+						_this._msgTokenCount = 0;
 					}
 					var lastThink = _this._cntAssMsg.checkThink.Checked;
-					_this._cntAssMsg.AppendText(token, renderToken);
-					if(_this._speak && !_this._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(token)){
-						_this._speechBuffer.Append(token);
+					_this._cntAssMsg.AppendText(tokenStr, renderToken);
+					if(_this._speak && !_this._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(tokenStr)){
+						_this._speechBuffer.Append(tokenStr);
 						var sentences = System.Text.RegularExpressions.Regex.Split(_this._speechBuffer.ToString(), @"(?<=[\.!\?])\s+");
 						for(var i = 0; i < sentences.Length - 1; i++){
 							var sentence = sentences[i].Trim();
@@ -284,8 +281,8 @@ namespace LMStud{
 						_this._speechBuffer.Clear();
 						_this._speechBuffer.Append(sentences[sentences.Length - 1]);
 					}
-					_this.labelTokens.Text = tokenCount + "/" + _this._cntCtxMax + " Tokens";
-					_this._tokenCount = tokenCount;
+					_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
+					_this._tokensTotal = tokensTotal;
 					NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
 				} finally{ _this._rendering = false; }
 			}));

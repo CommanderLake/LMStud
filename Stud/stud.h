@@ -19,7 +19,7 @@ inline std::vector<llama_token> _tokens;
 inline std::vector<common_chat_msg> _chatMsgs;
 inline std::atomic_bool _stop{false};
 inline common_chat_templates_ptr _chatTemplates;
-using TokenCallbackFn = void(*)(const char* token, int strLen, int tokenCount);
+using TokenCallbackFn = void(*)(const char* token, int strLen, int tokens, int tokensTotal, double ftTime);
 inline TokenCallbackFn _tokenCb = nullptr;
 inline int _gaI = 0;
 inline int _gaN = 0;
@@ -39,6 +39,6 @@ extern "C"{
 	EXPORT void SetMessageAt(int index, const char* message);
 	EXPORT void RemoveMessageAt(int index);
 	EXPORT void RemoveMessagesStartingAt(int index);
-	EXPORT void Generate(unsigned int nPredict);
+	EXPORT int Generate(unsigned int nPredict, bool callback);
 	EXPORT void StopGeneration();
 }
