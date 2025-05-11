@@ -123,7 +123,7 @@ bool StartSpeechTranscription(){
 				remaining = trim(remaining);
 				const float sim = similarity(heardWake, _gWakeCommand);
 				// Only proceed if similarity is acceptable and there is text remaining.
-				if(sim<0.6f||remaining.empty()){
+				if(sim<0.8f||remaining.empty()){
 					pcmDataLong.clear();
 					pcmDataLong.resize(nInitialSamples, 0.0f);
 					continue;

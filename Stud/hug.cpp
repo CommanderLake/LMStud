@@ -92,8 +92,7 @@ int DownloadFile(const char* url, const char* targetPath){
 //------------------------------------------------------------------------------
 // Frees memory allocated by the PerformHttpGet function.
 void FreeMemory(char* ptr){
-	if(ptr)
-		std::free(ptr);
+	if(ptr) std::free(ptr);
 }
 
 //------------------------------------------------------------------------------
@@ -144,6 +143,7 @@ int DownloadFileWithProgress(const char* url, const char* targetPath, NativeProg
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+	curl_easy_setopt(curl, CURLOPT_BUFFERSIZE, 1048576);
 
 	CURLcode res = curl_easy_perform(curl);
 	curl_easy_cleanup(curl);

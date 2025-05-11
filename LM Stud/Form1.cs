@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Speech.Synthesis;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 using LMStud.Properties;
@@ -28,6 +29,7 @@ namespace LMStud{
 		internal Form1(){
 			_this = this;
 			InitializeComponent();
+			Icon = Resources.LM_Stud_256;
 			SetToolTips();
 			LoadConfig();
 		}
@@ -272,7 +274,7 @@ namespace LMStud{
 					var lastThink = _this._cntAssMsg.checkThink.Checked;
 					_this._cntAssMsg.AppendText(tokenStr, renderToken);
 					if(_this._speak && !_this._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(tokenStr)){
-						_this._speechBuffer.Append(tokenStr);
+						_this._speechBuffer.Append(Regex.Replace(tokenStr, @"[`*_#]", ""));
 						var sentences = System.Text.RegularExpressions.Regex.Split(_this._speechBuffer.ToString(), @"(?<=[\.!\?])\s+");
 						for(var i = 0; i < sentences.Length - 1; i++){
 							var sentence = sentences[i].Trim();
