@@ -21,7 +21,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void BackendInit();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern bool LoadModel(string filename, string systemPrompt, int nCtx, float temp, float repeatPenalty, int topK, float topP, int nThreads, bool strictCPU, int nThreadsBatch,
+		public static extern bool LoadModel(string filename, [MarshalAs(UnmanagedType.LPUTF8Str)] string systemPrompt, int nCtx, float temp, float repeatPenalty, int topK, float topP, int nThreads, bool strictCPU, int nThreadsBatch,
 			bool strictCPUBatch, int nGPULayers, int nBatch, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy, bool flashAttn);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void FreeModel();
@@ -32,13 +32,13 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetThreadCount(int n, int nBatch);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern int AddMessage(bool user, string text);
+		public static extern int AddMessage(bool user, [MarshalAs(UnmanagedType.LPUTF8Str)] string text);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void RetokenizeChat();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void SetSystemPrompt(string prompt);
+		public static extern void SetSystemPrompt([MarshalAs(UnmanagedType.LPUTF8Str)] string prompt);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void SetMessageAt(int index, string message);
+		public static extern void SetMessageAt(int index, [MarshalAs(UnmanagedType.LPUTF8Str)] string message);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void RemoveMessageAt(int index);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -48,7 +48,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopGeneration();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern unsafe void ConvertMarkdownToRtf(string markdown, ref byte* rtfOut, ref int rtfLen);
+		public static extern unsafe void ConvertMarkdownToRtf([MarshalAs(UnmanagedType.LPUTF8Str)] string markdown, ref byte* rtfOut, ref int rtfLen);
 
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate void WhisperCallback(string transcription);

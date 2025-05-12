@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.33529.398
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.35931.194
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LM Stud", "LM Stud\LM Stud.csproj", "{2101CFCA-AF13-459C-974D-B4B97E919B42}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -16,6 +16,8 @@ Global
 		Debug|x64 = Debug|x64
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
+		ReleaseCUDA12|Any CPU = ReleaseCUDA12|Any CPU
+		ReleaseCUDA12|x64 = ReleaseCUDA12|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{2101CFCA-AF13-459C-974D-B4B97E919B42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -26,12 +28,19 @@ Global
 		{2101CFCA-AF13-459C-974D-B4B97E919B42}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2101CFCA-AF13-459C-974D-B4B97E919B42}.Release|x64.ActiveCfg = Release|x64
 		{2101CFCA-AF13-459C-974D-B4B97E919B42}.Release|x64.Build.0 = Release|x64
+		{2101CFCA-AF13-459C-974D-B4B97E919B42}.ReleaseCUDA12|Any CPU.ActiveCfg = ReleaseCUDA12|Any CPU
+		{2101CFCA-AF13-459C-974D-B4B97E919B42}.ReleaseCUDA12|Any CPU.Build.0 = ReleaseCUDA12|Any CPU
+		{2101CFCA-AF13-459C-974D-B4B97E919B42}.ReleaseCUDA12|x64.ActiveCfg = ReleaseCUDA12|x64
+		{2101CFCA-AF13-459C-974D-B4B97E919B42}.ReleaseCUDA12|x64.Build.0 = ReleaseCUDA12|x64
 		{F72316D8-57CA-4E8D-B890-B546F2C1F64F}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{F72316D8-57CA-4E8D-B890-B546F2C1F64F}.Debug|x64.ActiveCfg = Debug|x64
 		{F72316D8-57CA-4E8D-B890-B546F2C1F64F}.Debug|x64.Build.0 = Debug|x64
 		{F72316D8-57CA-4E8D-B890-B546F2C1F64F}.Release|Any CPU.ActiveCfg = Release|x64
 		{F72316D8-57CA-4E8D-B890-B546F2C1F64F}.Release|x64.ActiveCfg = Release|x64
 		{F72316D8-57CA-4E8D-B890-B546F2C1F64F}.Release|x64.Build.0 = Release|x64
+		{F72316D8-57CA-4E8D-B890-B546F2C1F64F}.ReleaseCUDA12|Any CPU.ActiveCfg = ReleaseCUDA12|x64
+		{F72316D8-57CA-4E8D-B890-B546F2C1F64F}.ReleaseCUDA12|x64.ActiveCfg = ReleaseCUDA12|x64
+		{F72316D8-57CA-4E8D-B890-B546F2C1F64F}.ReleaseCUDA12|x64.Build.0 = ReleaseCUDA12|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

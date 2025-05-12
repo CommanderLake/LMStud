@@ -94,7 +94,7 @@ namespace LMStud{
 			var rtfOut = (byte*)0;
 			var rtfLen = 0;
 			NativeMethods.ConvertMarkdownToRtf(markdown, ref rtfOut, ref rtfLen);
-			return Encoding.UTF8.GetString(rtfOut, rtfLen);
+			return Encoding.ASCII.GetString(rtfOut, rtfLen);
 		}
 		internal void RenderText(){
 			if(checkThink.Checked){

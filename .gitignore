@@ -400,3 +400,4 @@ FodyWeavers.xsd
 *.sln.iml
 /include
 /Icon
+/lib/ReleaseCUDA12
