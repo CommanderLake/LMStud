@@ -298,5 +298,93 @@ namespace LMStud{
 				_this.Generate(false);
 			}));
 		}
+		private void TextInput_DragEnter(object sender, DragEventArgs e) {
+			if(e.Data.GetDataPresent(DataFormats.UnicodeText) || e.Data.GetDataPresent(DataFormats.Text)){
+				e.Effect = DragDropEffects.Copy;
+			}
+		}
+		private void TextInput_DragOver(object sender, DragEventArgs e) {
+			e.Effect = DragDropEffects.Copy;
+		}
+		private void TextInput_DragDrop(object sender, DragEventArgs e) {
+			var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+			foreach(var filePath in files){
+				try{
+					var fileName = Path.GetFileName(filePath);
+					var fileContent = File.ReadAllText(filePath);
+					string contentType;
+					switch(Path.GetExtension(filePath)){
+						case ".h":// C/C++ header
+						case ".cpp":// C++ source
+						case ".cc":// C++ source
+						case ".cxx":// C++ source
+						case ".c":// C source
+							contentType = "cpp";
+							break;
+						case ".cs":// C#
+							contentType = "csharp";
+							break;
+						case ".py":// Python
+							contentType = "python";
+							break;
+						case ".java":// Java
+							contentType = "java";
+							break;
+						case ".js":// JavaScript
+						case ".jsx":// React/JSX
+							contentType = "javascript";
+							break;
+						case ".html":// HTML
+						case ".htm":// HTML
+							contentType = "html";
+							break;
+						case ".css":// CSS
+							contentType = "css";
+							break;
+						case ".xml":// XML
+							contentType = "xml";
+							break;
+						case ".json":// JSON
+							contentType = "json";
+							break;
+						case ".md":// Markdown
+							contentType = "markdown";
+							break;
+						case ".rb":// Ruby
+							contentType = "ruby";
+							break;
+						case ".php":// PHP
+							contentType = "php";
+							break;
+						case ".swift":// Swift
+							contentType = "swift";
+							break;
+						case ".go":// Go
+							contentType = "go";
+							break;
+						case ".rs":// Rust
+							contentType = "rust";
+							break;
+						case ".ts":// TypeScript
+						case ".tsx":// TypeScript React
+							contentType = "typescript";
+							break;
+						case ".sql":// SQL
+							contentType = "sql";
+							break;
+						case ".sh":// Shell script
+							contentType = "bash";
+							break;
+						default:// Fallback for unknown files
+							contentType = "";
+							break;
+					}
+					textInput.AppendText($"[FILE] {fileName}\r\n```{contentType}\r\n{fileContent}\r\n```\r\n\r\n");
+				} catch(Exception ex){ MessageBox.Show($"Error reading file: {ex.Message}"); }
+			}
+		}
+		private void TextInput_DragLeave(object sender, EventArgs e) {
+
+		}
 	}
 }

@@ -31,6 +31,7 @@
 			this.textInput = new System.Windows.Forms.TextBox();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
 			this.panelChat = new LMStud.MyFlowLayoutPanel();
+			this.checkStream = new System.Windows.Forms.CheckBox();
 			this.checkSpeak = new System.Windows.Forms.CheckBox();
 			this.checkVoiceInput = new System.Windows.Forms.CheckBox();
 			this.butCodeBlock = new System.Windows.Forms.Button();
@@ -124,7 +125,6 @@
 			this.labelTPS = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-			this.checkStream = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -164,6 +164,7 @@
 			// 
 			// textInput
 			// 
+			this.textInput.AllowDrop = true;
 			this.textInput.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
@@ -175,6 +176,10 @@
 			this.textInput.ScrollBars = System.Windows.Forms.ScrollBars.Both;
 			this.textInput.Size = new System.Drawing.Size(1004, 150);
 			this.textInput.TabIndex = 0;
+			this.textInput.DragDrop += new System.Windows.Forms.DragEventHandler(this.TextInput_DragDrop);
+			this.textInput.DragEnter += new System.Windows.Forms.DragEventHandler(this.TextInput_DragEnter);
+			this.textInput.DragOver += new System.Windows.Forms.DragEventHandler(this.TextInput_DragOver);
+			this.textInput.DragLeave += new System.EventHandler(this.TextInput_DragLeave);
 			this.textInput.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextInput_KeyDown);
 			// 
 			// splitContainer1
@@ -217,6 +222,18 @@
 			this.panelChat.TabIndex = 0;
 			this.panelChat.WrapContents = false;
 			this.panelChat.Layout += new System.Windows.Forms.LayoutEventHandler(this.PanelChat_Layout);
+			// 
+			// checkStream
+			// 
+			this.checkStream.AutoSize = true;
+			this.checkStream.Checked = true;
+			this.checkStream.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkStream.Location = new System.Drawing.Point(387, 154);
+			this.checkStream.Name = "checkStream";
+			this.checkStream.Size = new System.Drawing.Size(92, 17);
+			this.checkStream.TabIndex = 12;
+			this.checkStream.Text = "Stream output";
+			this.checkStream.UseVisualStyleBackColor = true;
 			// 
 			// checkSpeak
 			// 
@@ -1360,18 +1377,6 @@
 			this.toolTip1.ReshowDelay = 0;
 			this.toolTip1.UseAnimation = false;
 			this.toolTip1.UseFading = false;
-			// 
-			// checkStream
-			// 
-			this.checkStream.AutoSize = true;
-			this.checkStream.Checked = true;
-			this.checkStream.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkStream.Location = new System.Drawing.Point(387, 154);
-			this.checkStream.Name = "checkStream";
-			this.checkStream.Size = new System.Drawing.Size(92, 17);
-			this.checkStream.TabIndex = 12;
-			this.checkStream.Text = "Stream output";
-			this.checkStream.UseVisualStyleBackColor = true;
 			// 
 			// Form1
 			// 
