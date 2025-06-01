@@ -95,7 +95,6 @@ namespace LMStud{
 					}
 					if(_whisperInited){
 						NativeMethods.StopSpeechTranscription();
-						NativeMethods.UnloadWhisperModel();
 					}
 					var modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
 					_cntCtxMax = _ctxSize > modelCtxMax ? modelCtxMax : _ctxSize;
