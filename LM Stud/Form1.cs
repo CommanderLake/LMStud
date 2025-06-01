@@ -235,19 +235,21 @@ namespace LMStud{
 					if(!string.IsNullOrWhiteSpace(remainingText)) _tts.SpeakAsync(remainingText);
 					_speechBuffer.Clear();
 				}
-				Invoke(new MethodInvoker(() => {
-					var elapsed = _swTot.Elapsed.TotalSeconds;
-					if(toks > 0 && elapsed > 0.0){
-						var callsPerSecond = toks/elapsed;
-						labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
-						_swTot.Reset();
-						_swRate.Reset();
-					}
-					butGen.Text = "Generate";
-					butReset.Enabled = true;
-					_generating = false;
-					foreach(var message in _chatMessages) message.Generating = false;
-				}));
+				try{
+					Invoke(new MethodInvoker(() => {
+						var elapsed = _swTot.Elapsed.TotalSeconds;
+						if(toks > 0 && elapsed > 0.0){
+							var callsPerSecond = toks/elapsed;
+							labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
+							_swTot.Reset();
+							_swRate.Reset();
+						}
+						butGen.Text = "Generate";
+						butReset.Enabled = true;
+						_generating = false;
+						foreach(var message in _chatMessages) message.Generating = false;
+					}));
+				} catch(ObjectDisposedException){}
 			});
 		}
 		private static unsafe void TokenCallback(byte* strPtr, int strLen, int tokens, int tokensTotal, double ftTime){
@@ -256,38 +258,37 @@ namespace LMStud{
 			if(elapsed >= 1.0) _this._swRate.Restart();
 			var tokenStr = Encoding.UTF8.GetString(strPtr, strLen);
 			var renderToken = !_this._rendering;
-			var thisform = _this;
-			if(_this.IsDisposed) return;
-			_this.BeginInvoke((MethodInvoker)(() => {
-				if(thisform.IsDisposed) return;
-				try{
-					_this._rendering = true;
-					if(_this._first){
-						_this.labelPreGen.Text = "First token time: " + ftTime + " s";
-						_this._first = false;
-					}
-					if(elapsed >= 1.0){
-						var callsPerSecond = _this._msgTokenCount/elapsed;
-						_this.labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
-						_this._msgTokenCount = 0;
-					}
-					var lastThink = _this._cntAssMsg.checkThink.Checked;
-					_this._cntAssMsg.AppendText(tokenStr, renderToken);
-					if(_this._speak && !_this._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(tokenStr)){
-						_this._speechBuffer.Append(Regex.Replace(tokenStr, @"[`*_#]", ""));
-						var sentences = System.Text.RegularExpressions.Regex.Split(_this._speechBuffer.ToString(), @"(?<=[\.!\?])\s+");
-						for(var i = 0; i < sentences.Length - 1; i++){
-							var sentence = sentences[i].Trim();
-							if(!string.IsNullOrWhiteSpace(sentence)) _this._tts.SpeakAsync(sentence);
+			try{
+				_this.BeginInvoke((MethodInvoker)(() => {
+					try{
+						_this._rendering = true;
+						if(_this._first){
+							_this.labelPreGen.Text = "First token time: " + ftTime + " s";
+							_this._first = false;
 						}
-						_this._speechBuffer.Clear();
-						_this._speechBuffer.Append(sentences[sentences.Length - 1]);
-					}
-					_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
-					_this._tokensTotal = tokensTotal;
-					NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
-				} finally{ _this._rendering = false; }
-			}));
+						if(elapsed >= 1.0){
+							var callsPerSecond = _this._msgTokenCount/elapsed;
+							_this.labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
+							_this._msgTokenCount = 0;
+						}
+						var lastThink = _this._cntAssMsg.checkThink.Checked;
+						_this._cntAssMsg.AppendText(tokenStr, renderToken);
+						if(_this._speak && !_this._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(tokenStr)){
+							_this._speechBuffer.Append(Regex.Replace(tokenStr, @"[`*_#]", ""));
+							var sentences = Regex.Split(_this._speechBuffer.ToString(), @"(?<=[\.!\?])\s+");
+							for(var i = 0; i < sentences.Length - 1; i++){
+								var sentence = sentences[i].Trim();
+								if(!string.IsNullOrWhiteSpace(sentence)) _this._tts.SpeakAsync(sentence);
+							}
+							_this._speechBuffer.Clear();
+							_this._speechBuffer.Append(sentences[sentences.Length - 1]);
+						}
+						_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
+						_this._tokensTotal = tokensTotal;
+						NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
+					} catch(ObjectDisposedException){} finally{ _this._rendering = false; }
+				}));
+			} catch(ObjectDisposedException){}
 		}
 		private static void WhisperCallback(string transcription){
 			var thisform = _this;
@@ -299,12 +300,7 @@ namespace LMStud{
 			}));
 		}
 		private void TextInput_DragEnter(object sender, DragEventArgs e) {
-			if(e.Data.GetDataPresent(DataFormats.UnicodeText) || e.Data.GetDataPresent(DataFormats.Text)){
-				e.Effect = DragDropEffects.Copy;
-			}
-		}
-		private void TextInput_DragOver(object sender, DragEventArgs e) {
-			e.Effect = DragDropEffects.Copy;
+			if(e.Data.GetDataPresent(DataFormats.FileDrop)) e.Effect = DragDropEffects.Copy;
 		}
 		private void TextInput_DragDrop(object sender, DragEventArgs e) {
 			var files = (string[])e.Data.GetData(DataFormats.FileDrop);
@@ -382,9 +378,6 @@ namespace LMStud{
 					textInput.AppendText($"[FILE] {fileName}\r\n```{contentType}\r\n{fileContent}\r\n```\r\n\r\n");
 				} catch(Exception ex){ MessageBox.Show($"Error reading file: {ex.Message}"); }
 			}
-		}
-		private void TextInput_DragLeave(object sender, EventArgs e) {
-
 		}
 	}
 }

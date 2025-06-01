@@ -89,14 +89,15 @@ void SetTokenCallback(const TokenCallbackFn cb){ _tokenCb = cb; }
 void SetThreadCount(int n, int nBatch){ if(_ctx) llama_set_n_threads(_ctx, n, nBatch); }
 int AddMessage(const bool user, const char* message){
 	if(!_vocab) return 0;
+	if(!message) return 0;
 	common_chat_msg newMsg;
 	newMsg.role = user ? "user" : "assistant";
 	newMsg.content = message;
-	const auto formatted = common_chat_format_single(_chatTemplates.get(), _chatMsgs, newMsg, newMsg.role=="user", _params.use_jinja);
+	const auto formatted = common_chat_format_single(_chatTemplates.get(), _chatMsgs, newMsg, user, _params.use_jinja);
 	_chatMsgs.push_back(newMsg);
-	auto tokens = common_tokenize(_vocab, formatted, false, true);
-	_tokens.insert(_tokens.end(), tokens.begin(), tokens.end());
-	return tokens.size();
+	std::vector<llama_token> toks = common_tokenize(_vocab, formatted, false, true);
+	_tokens.insert(_tokens.end(), toks.begin(), toks.end());
+	return static_cast<int>(toks.size());
 }
 void RetokenizeChat(){
 	ResetChat(false);
@@ -190,6 +191,7 @@ int Generate(const unsigned int nPredict, const bool callback){
 		embd.clear();
 	}
 	AddMessage(false, assMsg.str().c_str());
+	_nConsumed = static_cast<int>(_tokens.size());
 	if(cb && !callback) cb(assMsg.str().c_str(), assMsg.str().length(), i, static_cast<int>(_tokens.size()), ftTime);
 	return i;
 }

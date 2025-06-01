@@ -178,8 +178,6 @@
 			this.textInput.TabIndex = 0;
 			this.textInput.DragDrop += new System.Windows.Forms.DragEventHandler(this.TextInput_DragDrop);
 			this.textInput.DragEnter += new System.Windows.Forms.DragEventHandler(this.TextInput_DragEnter);
-			this.textInput.DragOver += new System.Windows.Forms.DragEventHandler(this.TextInput_DragOver);
-			this.textInput.DragLeave += new System.EventHandler(this.TextInput_DragLeave);
 			this.textInput.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextInput_KeyDown);
 			// 
 			// splitContainer1
@@ -225,10 +223,11 @@
 			// 
 			// checkStream
 			// 
+			this.checkStream.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.checkStream.AutoSize = true;
 			this.checkStream.Checked = true;
 			this.checkStream.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkStream.Location = new System.Drawing.Point(387, 154);
+			this.checkStream.Location = new System.Drawing.Point(106, 154);
 			this.checkStream.Name = "checkStream";
 			this.checkStream.Size = new System.Drawing.Size(92, 17);
 			this.checkStream.TabIndex = 12;
@@ -237,8 +236,9 @@
 			// 
 			// checkSpeak
 			// 
+			this.checkSpeak.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.checkSpeak.AutoSize = true;
-			this.checkSpeak.Location = new System.Drawing.Point(273, 154);
+			this.checkSpeak.Location = new System.Drawing.Point(371, 154);
 			this.checkSpeak.Name = "checkSpeak";
 			this.checkSpeak.Size = new System.Drawing.Size(108, 17);
 			this.checkSpeak.TabIndex = 11;
@@ -250,7 +250,7 @@
 			// 
 			this.checkVoiceInput.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.checkVoiceInput.AutoSize = true;
-			this.checkVoiceInput.Location = new System.Drawing.Point(188, 154);
+			this.checkVoiceInput.Location = new System.Drawing.Point(286, 154);
 			this.checkVoiceInput.Name = "checkVoiceInput";
 			this.checkVoiceInput.Size = new System.Drawing.Size(79, 17);
 			this.checkVoiceInput.TabIndex = 5;
@@ -275,7 +275,7 @@
 			this.checkMarkdown.AutoSize = true;
 			this.checkMarkdown.Checked = true;
 			this.checkMarkdown.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkMarkdown.Location = new System.Drawing.Point(106, 154);
+			this.checkMarkdown.Location = new System.Drawing.Point(204, 154);
 			this.checkMarkdown.Name = "checkMarkdown";
 			this.checkMarkdown.Size = new System.Drawing.Size(76, 17);
 			this.checkMarkdown.TabIndex = 3;
