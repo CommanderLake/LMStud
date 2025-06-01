@@ -255,6 +255,7 @@
 			this.checkVoiceInput.Size = new System.Drawing.Size(79, 17);
 			this.checkVoiceInput.TabIndex = 5;
 			this.checkVoiceInput.Text = "Voice input";
+			this.checkVoiceInput.ThreeState = true;
 			this.checkVoiceInput.UseVisualStyleBackColor = true;
 			this.checkVoiceInput.CheckedChanged += new System.EventHandler(this.CheckVoiceInput_CheckedChanged);
 			// 

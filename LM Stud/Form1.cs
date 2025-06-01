@@ -56,6 +56,7 @@ namespace LMStud{
 			toolTip1.SetToolTip(numVadThreshold, "Voice Activity Detection, higher values increase sensitivity to speech (0.1-1.0).");
 			toolTip1.SetToolTip(numFreqThreshold, "High-pass filter cutoff frequency. Higher values reduce background noise.");
 			toolTip1.SetToolTip(checkSpeak, "Speak the generated responses using the computers default voice.");
+			toolTip1.SetToolTip(checkVoiceInput, "An intermediate check state (filled in) means it will transcribe spoken words without generating, when checked it will automatically generate.");
 		}
 		private void Form1_Load(object sender, EventArgs e) {
 			NativeMethods.CurlGlobalInit();
@@ -95,7 +96,7 @@ namespace LMStud{
 			foreach(var message in _chatMessages) message.Markdown = checkMarkdown.Checked;
 		}
 		private void CheckVoiceInput_CheckedChanged(object sender, EventArgs e){
-			if(checkVoiceInput.Checked){
+			if(checkVoiceInput.CheckState != CheckState.Unchecked){
 				if(_whisperModelIndex < 0 || !File.Exists(_whisperModels[_whisperModelIndex])){
 					MessageBox.Show(this, "Invalid whisper model selection", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 					tabControl1.SelectTab(1);
@@ -296,7 +297,7 @@ namespace LMStud{
 			_this.BeginInvoke((MethodInvoker)(() => {
 				if(thisform.IsDisposed) return;
 				_this.textInput.AppendText(transcription);
-				_this.Generate(false);
+				if(_this.checkVoiceInput.CheckState == CheckState.Checked) _this.Generate(false);
 			}));
 		}
 		private void TextInput_DragEnter(object sender, DragEventArgs e) {

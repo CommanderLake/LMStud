@@ -138,27 +138,6 @@ int Generate(const unsigned int nPredict, const bool callback){
 	unsigned i = 0;
 	while(i<nPredict&&!_stop.load()){
 		bool sampled = false;
-		if(_gaN==1){
-			if(_nPast+static_cast<int>(embd.size())>=_params.n_ctx){
-				if(!_params.ctx_shift){ break; }
-				const int nLeft = _nPast-_params.n_keep;
-				const int nDiscard = nLeft/2;
-				llama_kv_self_seq_rm(_ctx, 0, _params.n_keep, _params.n_keep+nDiscard);
-				llama_kv_self_seq_add(_ctx, 0, _params.n_keep+nDiscard, _nPast, -nDiscard);
-				_nPast -= nDiscard;
-			}
-		} else{
-			while(_nPast>=_gaI+_gaW){
-				const int ib = _gaN*_gaI/_gaW;
-				const int bd = _gaW/_gaN*(_gaN-1);
-				const int dd = _gaW/_gaN-ib*bd-_gaW;
-				llama_kv_self_seq_add(_ctx, 0, _gaI, _nPast, ib*bd);
-				llama_kv_self_seq_div(_ctx, 0, _gaI+ib*bd, _gaI+ib*bd+_gaW, _gaN);
-				llama_kv_self_seq_add(_ctx, 0, _gaI+ib*bd+_gaW, _nPast+ib*bd, dd);
-				_nPast -= bd;
-				_gaI += _gaW/_gaN;
-			}
-		}
 		if(_nConsumed>=static_cast<int>(_tokens.size())){
 			llama_token id = common_sampler_sample(_smpl, _ctx, -1);
 			common_sampler_accept(_smpl, id, true);
