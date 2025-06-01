@@ -122,7 +122,10 @@ namespace LMStud{
 					MessageBox.Show(this, "Load a model on the Models tab first", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 					checkVoiceInput.Checked = false;
 				}
-			} else NativeMethods.StopSpeechTranscription();
+			} else{
+				NativeMethods.StopSpeechTranscription();
+				_whisperInited = false;
+			}
 		}
 		private void CheckSpeak_CheckedChanged(object sender, EventArgs e) {
 			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});

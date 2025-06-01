@@ -72,7 +72,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCUDA12|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>I:\llama.cpp-b5359\include;I:\llama.cpp-b5359\common;I:\llama.cpp-b5359\ggml\include;I:\llama.cpp-b5359\src;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
+    <IncludePath>I:\llama.cpp-b5573\include;I:\llama.cpp-b5573\common;I:\llama.cpp-b5573\ggml\include;I:\llama.cpp-b5573\src;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)lib\$(Configuration);I:\vcpkg-2025.04.09\installed\x64-windows-static\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

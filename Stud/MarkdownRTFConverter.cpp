@@ -19,16 +19,22 @@ std::string EscapeRtf(const std::string& utf8){
     if (utf8.empty()) return {};
     std::string out;
     out.reserve(utf8.size() * 4);
-    for (std::size_t i = 0; i < utf8.size(); ){
+    for(std::size_t i = 0; i < utf8.size(); ){
         uint32_t cp = 0;
         unsigned char b = utf8[i];
-        if (b < 0x80) { cp = b; ++i; }
-        else if ((b & 0xE0) == 0xC0 && i + 1 < utf8.size()) {
-            cp = ((b & 0x1F) << 6) | (utf8[i + 1] & 0x3F); i += 2;
-        } else if ((b & 0xF0) == 0xE0 && i + 2 < utf8.size()) {
-            cp = ((b & 0x0F) << 12) | ((utf8[i + 1] & 0x3F) << 6) | (utf8[i + 2] & 0x3F); i += 3;
-        } else if ((b & 0xF8) == 0xF0 && i + 3 < utf8.size()) {
-            cp = ((b & 0x07) << 18) | ((utf8[i + 1] & 0x3F) << 12) | ((utf8[i + 2] & 0x3F) << 6) | (utf8[i + 3] & 0x3F); i += 4;
+        if(b < 0x80){
+            cp = b;
+            ++i;
+        }
+        else if((b & 0xE0) == 0xC0 && i + 1 < utf8.size()) {
+            cp = ((b & 0x1F) << 6) | (utf8[i + 1] & 0x3F);
+            i += 2;
+        } else if((b & 0xF0) == 0xE0 && i + 2 < utf8.size()) {
+            cp = ((b & 0x0F) << 12) | ((utf8[i + 1] & 0x3F) << 6) | (utf8[i + 2] & 0x3F);
+            i += 3;
+        } else if((b & 0xF8) == 0xF0 && i + 3 < utf8.size()) {
+            cp = ((b & 0x07) << 18) | ((utf8[i + 1] & 0x3F) << 12) | ((utf8[i + 2] & 0x3F) << 6) | (utf8[i + 3] & 0x3F);
+            i += 4;
         } else { ++i; continue; }
         if (cp < 0x20 || (cp >= 0x80 && cp < 0x100)){
             out += "\\'";
