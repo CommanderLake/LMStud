@@ -97,7 +97,8 @@ namespace LMStud{
 						NativeMethods.StopSpeechTranscription();
 					}
 					var modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
-					_cntCtxMax = _ctxSize > modelCtxMax ? modelCtxMax : _ctxSize;
+					if(modelCtxMax <= 0) _cntCtxMax = _ctxSize;
+					else _cntCtxMax = _ctxSize > modelCtxMax ? modelCtxMax : _ctxSize;
 					var success = NativeMethods.LoadModel(modelPath, _instruction, _cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _strictCPU, _nThreadsBatch, _strictCPUBatch, _gpuLayers, _batchSize, _mMap, _mLock, _numaStrat, _flashAttn);
 					if(!success){
 						Settings.Default.LoadAuto = false;
