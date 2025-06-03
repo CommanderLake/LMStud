@@ -43,11 +43,11 @@ This project was born out of frustration with slow bloated embedded web-based GU
    - llama.lib
    - ggml-base.lib
 
-3. Place these `.lib` files in a directory such as `lib\release` or `lib\debug` within the LM Stud solution folder, matching your build configuration.
-4. Modify the LM Stud project's VC++ Directories settings to include the paths to llama.cpp's include folders.
-5. Copy the generated llama.cpp DLL files into the LM Stud project's output directory (`bin` folder), alongside the `LMStud.exe` file.
-6. Do a similar thing for whisper.cpp (you only need whisper.dll and lib/includes it can use the llama.cpp backends).
-7. Use vcpkg to install SDL2 and Curl with OpenSSL (`vcpkg install SDL2:x64-windows-static`, `vcpkg install curl[openssl]:x64-windows-static`) and set the Stud VC++ Directories to your vcpkg repository location.
+2. Place these `.lib` files in a directory such as `lib\release` or `lib\debug` within the LM Stud solution folder, matching your build configuration.
+3. Modify the LM Stud project's VC++ Directories settings to include the paths to llama.cpp's include folders.
+4. Copy the generated llama.cpp DLL files into the LM Stud project's output directory (`bin` folder), alongside the `LMStud.exe` file.
+5. Do a similar thing for whisper.cpp (you only need whisper.dll and lib/includes it can use the llama.cpp backends).
+6. Use vcpkg to install SDL2 and Curl with OpenSSL (`vcpkg install SDL2:x64-windows-static`, `vcpkg install curl[openssl]:x64-windows-static`) and set the Stud VC++ Directories to your vcpkg repository location.
 
 ### Running LM Stud
 
