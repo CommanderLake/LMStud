@@ -265,14 +265,10 @@ extern "C" __declspec(dllexport) void ConvertMarkdownToRtf(const char* markdown,
 	const std::vector<std::string> lines = splitString(normalized, '\n');
 	size_t startIndex = 0;
 	while(startIndex<lines.size()&&isWhitespace(lines[startIndex])){ ++startIndex; }
-	if(startIndex==lines.size()){
-		rtf<<"}";
-		rtfStr = rtf.str();
-		rtfOut = rtfStr.c_str();
-		rtfLen = rtfStr.size();
+	if(startIndex<lines.size()){
+		MarkdownState state;
+		for(size_t i = startIndex; i<lines.size(); ++i){ ProcessLine(lines[i], rtf, state); }
 	}
-	MarkdownState state;
-	for(size_t i = startIndex; i<lines.size(); ++i){ ProcessLine(lines[i], rtf, state); }
 	rtf<<"}";
 	rtfStr = rtf.str();
 	rtfOut = rtfStr.c_str();
