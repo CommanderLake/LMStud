@@ -114,7 +114,9 @@ namespace LMStud{
 		}
 		private void TextModelsPath_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.Enter) return;
-			MessageBox.Show(this, "Folder not found", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			var path = textModelsPath.Text.Trim();
+			if(Directory.Exists(path)) textModelsPath.Text = path;
+			else MessageBox.Show(this, "Folder not found", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}
 		private void ComboWhisperModel_DropDown(object sender, EventArgs e){
 			if(!Directory.Exists(_modelsPath)) return;
