@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
@@ -49,6 +50,7 @@ namespace LMStud{
 						listViewHugSearch.Items.Clear();
 						listViewHugFiles.Items.Clear();
 					}));
+					var items = new List<ListViewItem>();
 					foreach(var modelToken in models){
 						var model = (JObject)modelToken;
 						var hfModel = model.ToObject<HugModel>();
@@ -56,11 +58,9 @@ namespace LMStud{
 						var parts = hfModel.ID.Split('/');
 						var uploader = parts.Length > 1 ? parts[0] : "";
 						var modelName = parts.Length > 1 ? parts[1] : hfModel.ID;
-						Invoke(new MethodInvoker(() => {
-							listViewHugSearch.Items.Add(
-								new ListViewItem(new[]{ modelName, uploader, hfModel.Likes, hfModel.Downloads, hfModel.TrendingScore, hfModel.CreatedAt, hfModel.LastModified }));
-						}));
+						items.Add(new ListViewItem(new[]{ modelName, uploader, hfModel.Likes, hfModel.Downloads, hfModel.TrendingScore, hfModel.CreatedAt, hfModel.LastModified }));
 					}
+					if(items.Count > 0) Invoke(new MethodInvoker(() => {listViewHugSearch.Items.AddRange(items.ToArray());}));
 				} catch(Exception ex){
 					Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"Model search error: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 				} finally{
@@ -93,6 +93,7 @@ namespace LMStud{
 					if(infoJson.StartsWith("Error:")) throw new Exception(infoJson);
 					var info = JObject.Parse(infoJson);
 					if(!info.TryGetValue("siblings", out var siblings) || !(siblings is JArray siblingsArray)) return;
+					var items = new List<ListViewItem>();
 					foreach(var file in siblingsArray){
 						if(!(file is JObject fileObject)) continue;
 						var fileName = fileObject.Value<string>("rfilename") ?? fileObject.Value<string>("filename");
@@ -101,8 +102,9 @@ namespace LMStud{
 						if(!fileName.EndsWith(fileExt, StringComparison.OrdinalIgnoreCase)) continue;
 						var sizeDisplay = fileSize.HasValue ? $"{fileSize.Value/1048576:F2} MB" : "";
 						var item = new ListViewItem(new[]{ fileName, sizeDisplay });
-						Invoke(new MethodInvoker(() => {listViewHugFiles.Items.Add(item);}));
+						items.Add(item);
 					}
+					if(items.Count > 0) Invoke(new MethodInvoker(() => {listViewHugFiles.Items.AddRange(items.ToArray());}));
 				} catch(HttpRequestException ex){
 					Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"HTTP Error loading files for {repoId}: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 				} catch(JsonException ex){

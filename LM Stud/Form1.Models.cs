@@ -65,19 +65,21 @@ namespace LMStud{
 			for(var i = _models.Count - 1; i >= 0; i--) _models[i].Meta.Clear();
 			_models.Clear();
 			ThreadPool.QueueUserWorkItem(_ => {
-				try {
+				try{
 					var files = Directory.GetFiles(_modelsPath, "*.gguf", SearchOption.AllDirectories);
-					foreach(var file in files) {
+					var items = new List<ListViewItem>();
+					foreach(var file in files){
 						var meta = GGUFMetadataManager.LoadGGUFMetadata(file);
 						_models.Add(new ModelInfo(file, meta));
-						Invoke(new MethodInvoker(() => {
-							var lvi = new ListViewItem(Path.GetFileName(file));
-							lvi.SubItems.Add(file);
-							listViewModels.Items.Add(lvi);
-						}));
+						var lvi = new ListViewItem(Path.GetFileName(file));
+						lvi.SubItems.Add(file);
+						items.Add(lvi);
 					}
-				} catch(Exception ex) { Invoke(new MethodInvoker(() => {MessageBox.Show(this, ex.ToString(), "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);})); } finally{
-					try{ Invoke(new MethodInvoker(() => {listViewModels.EndUpdate();})); } catch(Exception e){ MessageBox.Show(this, e.ToString(), "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}
+					Invoke(new MethodInvoker(() => {listViewModels.Items.AddRange(items.ToArray());}));
+				} catch(Exception ex){ Invoke(new MethodInvoker(() => {MessageBox.Show(this, ex.ToString(), "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);})); } finally{
+					try{ Invoke(new MethodInvoker(() => {listViewModels.EndUpdate();})); } catch(Exception e){
+						MessageBox.Show(this, e.ToString(), "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					}
 					_populating = false;
 				}
 			});
