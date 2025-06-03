@@ -256,6 +256,10 @@ namespace LMStud{
 				} catch(ObjectDisposedException){}
 			});
 		}
+		private static int FindSentenceEnd(StringBuilder sb){
+			for(var i = 0; i < sb.Length - 1; i++) if((sb[i] == '.' || sb[i] == '!' || sb[i] == '?') && char.IsWhiteSpace(sb[i + 1])) return i;
+			return -1;
+		}
 		private static unsafe void TokenCallback(byte* strPtr, int strLen, int tokens, int tokensTotal, double ftTime){
 			_this._msgTokenCount += tokens;
 			var elapsed = _this._swRate.Elapsed.TotalSeconds;
@@ -278,14 +282,14 @@ namespace LMStud{
 						var lastThink = _this._cntAssMsg.checkThink.Checked;
 						_this._cntAssMsg.AppendText(tokenStr, renderToken);
 						if(_this._speak && !_this._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(tokenStr)){
-							_this._speechBuffer.Append(Regex.Replace(tokenStr, @"[`*_#]", ""));
-							var sentences = Regex.Split(_this._speechBuffer.ToString(), @"(?<=[\.!\?])\s+");
-							for(var i = 0; i < sentences.Length - 1; i++){
-								var sentence = sentences[i].Trim();
+							foreach(var ch in tokenStr.Where(ch => ch != '`' && ch != '*' && ch != '_' && ch != '#')) _this._speechBuffer.Append(ch);
+							int idx;
+							while((idx = FindSentenceEnd(_this._speechBuffer)) >= 0){
+								var sentence = _this._speechBuffer.ToString(0, idx + 1).Trim();
 								if(!string.IsNullOrWhiteSpace(sentence)) _this._tts.SpeakAsync(sentence);
+								_this._speechBuffer.Remove(0, idx + 1);
+								while(_this._speechBuffer.Length > 0 && char.IsWhiteSpace(_this._speechBuffer[0])) _this._speechBuffer.Remove(0, 1);
 							}
-							_this._speechBuffer.Clear();
-							_this._speechBuffer.Append(sentences[sentences.Length - 1]);
 						}
 						_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
 						_this._tokensTotal = tokensTotal;
