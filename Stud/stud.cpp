@@ -1,8 +1,60 @@
 #include "stud.h"
+#include "hug.h"
 #include <Windows.h>
 #include <filesystem>
 #include <chrono>
+#include <regex>
+#include <unordered_map>
 using hr_clock = std::chrono::high_resolution_clock;
+
+static std::string url_encode(const char * text){
+    CURL * curl = curl_easy_init();
+    char * enc = curl_easy_escape(curl, text, 0);
+    std::string out = enc ? enc : "";
+    curl_free(enc);
+    curl_easy_cleanup(curl);
+    return out;
+}
+
+void ClearTools(){
+    _tools.clear();
+    _toolHandlers.clear();
+}
+
+void AddTool(const char* name, const char* description, const char* parameters, char*(*handler)(const char* args)){
+    if(!name) return;
+    common_chat_tool t;
+    t.name = name;
+    if(description) t.description = description;
+    if(parameters) t.parameters = parameters;
+    _tools.push_back(t);
+    if(handler) _toolHandlers[name] = handler;
+}
+
+char* GoogleSearch(const char* query){
+    if(!query) return nullptr;
+    std::string url = "https://www.google.com/search?q=" + url_encode(query);
+    char* htmlRaw = PerformHttpGet(url.c_str());
+    if(!htmlRaw) return nullptr;
+    std::string html(htmlRaw);
+    FreeMemory(htmlRaw);
+    std::regex linkRe("<a href=\\\"/url\\?q=([^&]+)&");
+    std::sregex_iterator it(html.begin(), html.end(), linkRe);
+    std::sregex_iterator end;
+    std::ostringstream oss;
+    int count = 0;
+    CURL * curl = curl_easy_init();
+    for(; it!=end && count<5; ++it, ++count){
+        std::string enc = (*it)[1];
+        char * dec = curl_easy_unescape(curl, enc.c_str(), 0, nullptr);
+        if(dec){
+            oss << dec << "\n";
+            curl_free(dec);
+        }
+    }
+    curl_easy_cleanup(curl);
+    return AllocateAndCopy(oss.str());
+}
 void BackendInit(){
 	_putenv("OMP_PROC_BIND=close");
 	ggml_backend_load("ggml-cpu.dll");
@@ -11,17 +63,28 @@ void BackendInit(){
 	llama_backend_init();
 }
 void InitTokens(){
-	if(!_vocab) return;
-	_tokens.clear();
-	if(!_params.prompt.empty()){
-		common_chat_msg newMsg;
-		newMsg.role = "system";
-		newMsg.content = _params.prompt;
-		const auto systemPrompt = common_chat_format_single(_chatTemplates.get(), _chatMsgs, newMsg, false, _params.use_jinja);
-		_tokens = common_tokenize(_ctx, systemPrompt, true, true);
-	}
-	if(_tokens.empty()&&llama_vocab_get_add_bos(_vocab)&&!_params.use_jinja){ _tokens.push_back(llama_vocab_bos(_vocab)); }
-	_params.n_keep = _tokens.size();
+        if(!_vocab) return;
+        _tokens.clear();
+        std::vector<common_chat_msg> msgs;
+        if(!_params.prompt.empty()){
+                common_chat_msg sys;
+                sys.role = "system";
+                sys.content = _params.prompt;
+                msgs.push_back(sys);
+        }
+        common_chat_templates_inputs inputs;
+        inputs.use_jinja = _params.use_jinja;
+        inputs.messages = msgs;
+        inputs.add_generation_prompt = false;
+        inputs.tools = _tools;
+        inputs.tool_choice = COMMON_CHAT_TOOL_CHOICE_AUTO;
+        auto chatData = common_chat_templates_apply(_chatTemplates.get(), inputs);
+        _chatFormat = chatData.format;
+        _tokens = common_tokenize(_ctx, chatData.prompt, true, true);
+        if(_tokens.empty() && llama_vocab_get_add_bos(_vocab) && !_params.use_jinja){
+                _tokens.push_back(llama_vocab_bos(_vocab));
+        }
+        _params.n_keep = _tokens.size();
 }
 void ResetChat(const bool msgs){
 	if(_ctx) llama_kv_self_clear(_ctx);
@@ -88,25 +151,37 @@ bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, c
 void SetTokenCallback(const TokenCallbackFn cb){ _tokenCb = cb; }
 void SetThreadCount(int n, int nBatch){ if(_ctx) llama_set_n_threads(_ctx, n, nBatch); }
 int AddMessage(const bool user, const char* message){
-	if(!_vocab) return 0;
-	if(!message) return 0;
-	common_chat_msg newMsg;
-	newMsg.role = user ? "user" : "assistant";
-	newMsg.content = message;
-	const auto formatted = common_chat_format_single(_chatTemplates.get(), _chatMsgs, newMsg, user, _params.use_jinja);
-	_chatMsgs.push_back(newMsg);
-	std::vector<llama_token> toks = common_tokenize(_vocab, formatted, false, true);
-	_tokens.insert(_tokens.end(), toks.begin(), toks.end());
-	return static_cast<int>(toks.size());
+        if(!_vocab) return 0;
+        if(!message) return 0;
+        const size_t prev = _tokens.size();
+        common_chat_msg newMsg;
+        newMsg.role = user ? "user" : "assistant";
+        newMsg.content = message;
+        _chatMsgs.push_back(newMsg);
+        RetokenizeChat();
+        return static_cast<int>(_tokens.size()-prev);
 }
 void RetokenizeChat(){
-	ResetChat(false);
-	InitTokens();
-	for(auto i = 0; i<_chatMsgs.size(); ++i){
-		const auto formatted = common_chat_format_single(_chatTemplates.get(), _chatMsgs, _chatMsgs[i], i==_chatMsgs.size()-1&&_chatMsgs[i].role=="user", _params.use_jinja);
-		auto tokens = common_tokenize(_vocab, formatted, false, true);
-		_tokens.insert(_tokens.end(), tokens.begin(), tokens.end());
-	}
+        ResetChat(false);
+        std::vector<common_chat_msg> msgs;
+        if(!_params.prompt.empty()){
+                common_chat_msg sys;
+                sys.role = "system";
+                sys.content = _params.prompt;
+                msgs.push_back(sys);
+        }
+        msgs.insert(msgs.end(), _chatMsgs.begin(), _chatMsgs.end());
+        common_chat_templates_inputs inputs;
+        inputs.use_jinja = _params.use_jinja;
+        inputs.messages = msgs;
+        inputs.add_generation_prompt = true;
+        inputs.tools = _tools;
+        inputs.tool_choice = COMMON_CHAT_TOOL_CHOICE_AUTO;
+        auto chatData = common_chat_templates_apply(_chatTemplates.get(), inputs);
+        _chatFormat = chatData.format;
+        _tokens = common_tokenize(_vocab, chatData.prompt, true, true);
+        _params.n_keep = _tokens.size();
+        _nConsumed = _tokens.size();
 }
 void SetSystemPrompt(const char* prompt){
 	_params.prompt = std::string(prompt);
@@ -169,9 +244,30 @@ int Generate(const unsigned int nPredict, const bool callback){
 		}
 		embd.clear();
 	}
-	AddMessage(false, assMsg.str().c_str());
-	_nConsumed = static_cast<int>(_tokens.size());
-	if(cb && !callback) cb(assMsg.str().c_str(), assMsg.str().length(), i, static_cast<int>(_tokens.size()), ftTime);
-	return i;
+        AddMessage(false, assMsg.str().c_str());
+        _nConsumed = static_cast<int>(_tokens.size());
+        if(cb && !callback) cb(assMsg.str().c_str(), assMsg.str().length(), i, static_cast<int>(_tokens.size()), ftTime);
+        return i;
+}
+
+int GenerateWithTools(const unsigned int nPredict, const bool callback){
+        int res = Generate(nPredict, callback);
+        if(_chatMsgs.empty()) return res;
+        const auto & last = _chatMsgs.back();
+        common_chat_syntax syntax;
+        syntax.format = _chatFormat;
+        syntax.parse_tool_calls = true;
+        auto parsed = common_chat_parse(last.content, false, syntax);
+        for(const auto & tc : parsed.tool_calls){
+                auto it = _toolHandlers.find(tc.name);
+                if(it != _toolHandlers.end()){
+                        char* result = it->second(tc.arguments.c_str());
+                        if(result){
+                                AddMessage(false, result);
+                                FreeMemory(result);
+                        }
+                }
+        }
+        return res;
 }
 void StopGeneration(){ _stop.store(true); }
