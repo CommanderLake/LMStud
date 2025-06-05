@@ -231,7 +231,7 @@ namespace LMStud{
 			ThreadPool.QueueUserWorkItem(o => {
 				_swTot.Restart();
 				_swRate.Restart();
-				var toks = NativeMethods.Generate(_nGen, checkStream.Checked);
+				var toks = _googleHandler != null ? NativeMethods.GenerateWithTools(_nGen, checkStream.Checked) : NativeMethods.Generate(_nGen, checkStream.Checked);
 				_swTot.Stop();
 				_swRate.Stop();
 				if(_speechBuffer.Length > 0){

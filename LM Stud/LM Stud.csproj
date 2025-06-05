@@ -122,6 +122,9 @@
     <Compile Include="Form1.Settings.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Form1.Tools.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="GGUFMetadataManager.cs" />
     <Compile Include="MyFlowLayoutPanel.cs">
       <SubType>Component</SubType>

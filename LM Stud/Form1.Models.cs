@@ -111,6 +111,7 @@ namespace LMStud{
 					_modelLoaded = true;
 					_tokenCallback = TokenCallback;
 					NativeMethods.SetTokenCallback(_tokenCallback);
+					RegisterTools();
 					if(checkVoiceInput.Checked){
 						NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);
 						NativeMethods.StartSpeechTranscription();
@@ -135,6 +136,7 @@ namespace LMStud{
 					NativeMethods.StopGeneration();
 					while(_generating) Thread.Sleep(10);
 				}
+				ClearRegisteredTools();
 				NativeMethods.FreeModel();
 				_modelLoaded = false;
 				Invoke(new MethodInvoker(() => {
