@@ -15,7 +15,7 @@ static size_t WriteCallback(void* ptr, size_t size, size_t nmemb, void* userdata
 
 // Helper: Allocates memory (using malloc) and copies the content of a std::string.
 // The caller is expected to free the returned pointer via FreeMemory.
-static char* AllocateAndCopy(const std::string& str){
+char* AllocateAndCopy(const std::string& str){
 	auto buffer = static_cast<char*>(std::malloc(str.size() + 1));
 	if(buffer) std::memcpy(buffer, str.c_str(), str.size() + 1);
 	return buffer;

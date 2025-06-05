@@ -46,6 +46,17 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int Generate(int nPredict, bool callback);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern int GenerateWithTools(int nPredict, bool callback);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern IntPtr GoogleSearch([MarshalAs(UnmanagedType.LPUTF8Str)] string query);
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		public delegate IntPtr ToolHandler([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void AddTool([MarshalAs(UnmanagedType.LPUTF8Str)] string name, [MarshalAs(UnmanagedType.LPUTF8Str)] string description,
+			[MarshalAs(UnmanagedType.LPUTF8Str)] string parameters, ToolHandler handler);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void ClearTools();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopGeneration();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern unsafe void ConvertMarkdownToRtf([MarshalAs(UnmanagedType.LPUTF8Str)] string markdown, ref byte* rtfOut, ref int rtfLen);
