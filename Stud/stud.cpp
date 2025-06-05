@@ -59,35 +59,9 @@ void BackendInit(){
 	if(hModule!=nullptr) ggml_backend_load("ggml-cuda.dll");
 	llama_backend_init();
 }
-void InitTokens(){
-	if(!_vocab) return;
-	_tokens.clear();
-	std::vector<common_chat_msg> msgs;
-	if(!_params.prompt.empty()){
-		common_chat_msg sys;
-		sys.role = "system";
-		sys.content = _params.prompt;
-		msgs.push_back(sys);
-	}
-	common_chat_templates_inputs inputs;
-	inputs.use_jinja = _params.use_jinja;
-	inputs.messages = msgs;
-	inputs.add_generation_prompt = false;
-	inputs.tools = _tools;
-	inputs.tool_choice = COMMON_CHAT_TOOL_CHOICE_AUTO;
-	auto chatData = common_chat_templates_apply(_chatTemplates.get(), inputs);
-	_chatFormat = chatData.format;
-	_tokens = common_tokenize(_ctx, chatData.prompt, true, true);
-	if(_tokens.empty()&&llama_vocab_get_add_bos(_vocab)&&!_params.use_jinja){ _tokens.push_back(llama_vocab_bos(_vocab)); }
-	_params.n_keep = _tokens.size();
-}
-void ResetChat(const bool msgs){
-	if(_ctx) llama_kv_self_clear(_ctx);
-	_tokens.erase(_tokens.begin()+_params.n_keep, _tokens.end());
-	if(msgs) _chatMsgs.clear();
-	_nPast = 0;
-	_nConsumed = 0;
-	_gaI = 0;
+void ResetChat(){
+	_chatMsgs.clear();
+	RetokenizeChat();
 }
 void FreeModel(){
 	if(_smpl){
@@ -136,28 +110,22 @@ bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, c
 	if(!llama_model_has_encoder(_llModel)&&llama_vocab_get_add_eos(_vocab)) return false;
 	_smpl = common_sampler_init(_llModel, _params.sampling);
 	if(!_smpl) return false;
-	_gaI = 0;
-	_gaN = _params.grp_attn_n;
-	_gaW = _params.grp_attn_w;
-	if(_gaN!=1&&(_gaN<0||_gaW%_gaN!=0)) return false;
-	RetokenizeChat();
 	return true;
 }
 void SetTokenCallback(const TokenCallbackFn cb){ _tokenCb = cb; }
 void SetThreadCount(int n, int nBatch){ if(_ctx) llama_set_n_threads(_ctx, n, nBatch); }
 int AddMessage(const bool user, const char* message){
-	if(!_vocab) return 0;
-	if(!message) return 0;
+	if(!_vocab || !message) return 0;
 	const size_t prev = _tokens.size();
 	common_chat_msg newMsg;
 	newMsg.role = user ? "user" : "assistant";
 	newMsg.content = message;
 	_chatMsgs.push_back(newMsg);
-	RetokenizeChat();
 	return static_cast<int>(_tokens.size()-prev);
 }
 void RetokenizeChat(){
-	ResetChat(false);
+	if(_ctx) llama_kv_self_clear(_ctx);
+	_tokens.clear();
 	std::vector<common_chat_msg> msgs;
 	if(!_params.prompt.empty()){
 		common_chat_msg sys;
@@ -165,14 +133,14 @@ void RetokenizeChat(){
 		sys.content = _params.prompt;
 		msgs.push_back(sys);
 	}
-	msgs.insert(msgs.end(), _chatMsgs.begin(), _chatMsgs.end());
+	if(!_chatMsgs.empty()) msgs.insert(msgs.end(), _chatMsgs.begin(), _chatMsgs.end());
 	common_chat_templates_inputs inputs;
 	inputs.use_jinja = _params.use_jinja;
 	inputs.messages = msgs;
 	inputs.add_generation_prompt = true;
 	inputs.tools = _tools;
 	inputs.tool_choice = COMMON_CHAT_TOOL_CHOICE_AUTO;
-	auto chatData = common_chat_templates_apply(_chatTemplates.get(), inputs);
+	const auto chatData = common_chat_templates_apply(_chatTemplates.get(), inputs);
 	_chatFormat = chatData.format;
 	_tokens = common_tokenize(_vocab, chatData.prompt, true, true);
 	_nConsumed = 0;
@@ -223,7 +191,6 @@ int Generate(const unsigned int nPredict, const bool callback){
 			int nEval = static_cast<int>(embd.size())-j;
 			if(nEval>_params.n_batch) nEval = _params.n_batch;
 			if(llama_decode(_ctx, llama_batch_get_one(&embd[j], nEval))) return i;
-			_nPast += nEval;
 		}
 		if(sampled){
 			++i;

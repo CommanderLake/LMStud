@@ -112,6 +112,7 @@ namespace LMStud{
 					_tokenCallback = TokenCallback;
 					NativeMethods.SetTokenCallback(_tokenCallback);
 					RegisterTools();
+					NativeMethods.RetokenizeChat();
 					if(checkVoiceInput.Checked){
 						NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);
 						NativeMethods.StartSpeechTranscription();

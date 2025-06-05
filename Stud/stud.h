@@ -23,17 +23,13 @@ inline std::atomic_bool _stop{false};
 inline common_chat_templates_ptr _chatTemplates;
 using TokenCallbackFn = void(*)(const char* token, int strLen, int tokens, int tokensTotal, double ftTime);
 inline TokenCallbackFn _tokenCb = nullptr;
-inline int _gaI = 0;
-inline int _gaN = 0;
-inline int _gaW = 0;
-inline int _nPast = 0;
 inline int _nConsumed = 0;
 inline std::vector<common_chat_tool> _tools;
 inline std::unordered_map<std::string, char*(*)(const char*)> _toolHandlers;
 inline common_chat_format _chatFormat = COMMON_CHAT_FORMAT_CONTENT_ONLY;
 extern "C"{
 	EXPORT void BackendInit();
-	EXPORT void ResetChat(bool msgs);
+	EXPORT void ResetChat();
 	EXPORT void FreeModel();
 	EXPORT bool LoadModel(const char* filename, const char* systemPrompt, int nCtx, float temp, float repeatPenalty, int topK, int topP, int nThreads, bool strictCPU, int nThreadsBatch, bool strictCPUBatch, int nGPULayers, int nBatch, bool mMap, bool mLock, ggml_numa_strategy numaStrategy, bool flashAttn);
 	EXPORT void SetTokenCallback(TokenCallbackFn cb);
@@ -43,11 +39,11 @@ extern "C"{
 	EXPORT void SetSystemPrompt(const char* prompt);
 	EXPORT void SetMessageAt(int index, const char* message);
 	EXPORT void RemoveMessageAt(int index);
-        EXPORT void RemoveMessagesStartingAt(int index);
-        EXPORT int Generate(unsigned int nPredict, bool callback);
-        EXPORT int GenerateWithTools(unsigned int nPredict, bool callback);
-        EXPORT char* GoogleSearch(const char* query);
-        EXPORT void AddTool(const char* name, const char* description, const char* parameters, char*(*handler)(const char* args));
-        EXPORT void ClearTools();
-        EXPORT void StopGeneration();
+    EXPORT void RemoveMessagesStartingAt(int index);
+    EXPORT int Generate(unsigned int nPredict, bool callback);
+    EXPORT int GenerateWithTools(unsigned int nPredict, bool callback);
+    EXPORT char* GoogleSearch(const char* query);
+    EXPORT void AddTool(const char* name, const char* description, const char* parameters, char*(*handler)(const char* args));
+    EXPORT void ClearTools();
+    EXPORT void StopGeneration();
 }
