@@ -120,7 +120,10 @@ int AddMessage(const bool user, const char* message){
 	common_chat_msg newMsg;
 	newMsg.role = user ? "user" : "assistant";
 	newMsg.content = message;
+	const auto formatted = common_chat_format_single(_chatTemplates.get(), _chatMsgs, newMsg, user, _params.use_jinja);
 	_chatMsgs.push_back(newMsg);
+	std::vector<llama_token> toks = common_tokenize(_vocab, formatted, false, true);
+	_tokens.insert(_tokens.end(), toks.begin(), toks.end());
 	return static_cast<int>(_tokens.size()-prev);
 }
 void RetokenizeChat(){
