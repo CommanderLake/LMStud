@@ -49,6 +49,8 @@ namespace LMStud{
 		public static extern int GenerateWithTools(int nPredict, bool callback);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr GoogleSearch([MarshalAs(UnmanagedType.LPUTF8Str)] string query);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void SetGoogle(string apiKey, string searchEngineID);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate IntPtr ToolHandler([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

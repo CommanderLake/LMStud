@@ -28,29 +28,15 @@ void AddTool(const char* name, const char* description, const char* parameters, 
 	_tools.push_back(t);
 	if(handler) _toolHandlers[name] = handler;
 }
-char* GoogleSearch(const char* query){
+const char* GoogleSearch(const char* query){
 	if(!query) return nullptr;
-	std::string url = "https://www.google.com/search?q="+url_encode(query);
-	char* htmlRaw = PerformHttpGet(url.c_str());
-	if(!htmlRaw) return nullptr;
-	std::string html(htmlRaw);
-	FreeMemory(htmlRaw);
-	std::regex linkRe("<a href=\\\"/url\\?q=([^&]+)&");
-	std::sregex_iterator it(html.begin(), html.end(), linkRe);
-	std::sregex_iterator end;
-	std::ostringstream oss;
-	int count = 0;
-	CURL* curl = curl_easy_init();
-	for(; it!=end&&count<5; ++it,++count){
-		std::string enc = (*it)[1];
-		char* dec = curl_easy_unescape(curl, enc.c_str(), 0, nullptr);
-		if(dec){
-			oss<<dec<<"\n";
-			curl_free(dec);
-		}
-	}
-	curl_easy_cleanup(curl);
-	return AllocateAndCopy(oss.str());
+	const std::string url = "https://customsearch.googleapis.com/customsearch/v1?key=" + googleAPIKey + "&cx=" + googleSearchID + "&num=5&q=" + url_encode(query);
+	const std::string jsonStr = PerformHttpGet(url.c_str());
+	return jsonStr.c_str();
+}
+void SetGoogle(const char* apiKey, const char* searchEngineId){
+	googleAPIKey = apiKey;
+	googleSearchID = searchEngineId;
 }
 void BackendInit(){
 	_putenv("OMP_PROC_BIND=close");
@@ -85,7 +71,9 @@ bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, c
 	llama_numa_init(_params.numa);
 	_params.warmup = false;
 	_params.model.path = filename;
-	_params.prompt = systemPrompt;
+	std::string sysPrompt(systemPrompt);
+	if(sysPrompt.empty()) sysPrompt = std::string("Assist the user to the best of your ability.");
+	_params.prompt = sysPrompt;
 	_params.n_ctx = nCtx;
 	_params.sampling.temp = temp;
 	_params.sampling.penalty_repeat = repeatPenalty;
@@ -101,6 +89,7 @@ bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, c
 	_params.n_gpu_layers = nGPULayers;
 	_params.n_ubatch = nBatch;
 	_params.enable_chat_template = true;
+	_params.use_jinja = true;
 	auto llamaInit = common_init_from_params(_params);
 	if(!llamaInit.model||!llamaInit.context) return false;
 	_llModel = llamaInit.model.release();
@@ -114,17 +103,20 @@ bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, c
 }
 void SetTokenCallback(const TokenCallbackFn cb){ _tokenCb = cb; }
 void SetThreadCount(int n, int nBatch){ if(_ctx) llama_set_n_threads(_ctx, n, nBatch); }
-int AddMessage(const bool user, const char* message){
-	if(!_vocab || !message) return 0;
+int AddMessage(std::string role, std::string message){
+	if(!_vocab || role.empty()) return 0;
 	const size_t prev = _tokens.size();
 	common_chat_msg newMsg;
-	newMsg.role = user ? "user" : "assistant";
+	newMsg.role = role;
 	newMsg.content = message;
-	const auto formatted = common_chat_format_single(_chatTemplates.get(), _chatMsgs, newMsg, user, _params.use_jinja);
+	const auto formatted = common_chat_format_single(_chatTemplates.get(), _chatMsgs, newMsg, !role._Equal("assistant"), _params.use_jinja);
 	_chatMsgs.push_back(newMsg);
 	std::vector<llama_token> toks = common_tokenize(_vocab, formatted, false, true);
 	_tokens.insert(_tokens.end(), toks.begin(), toks.end());
 	return static_cast<int>(_tokens.size()-prev);
+}
+int AddMessage(const bool user, const char* message){
+	return AddMessage(std::string(user ? "user" : "assistant"), std::string(message));
 }
 void RetokenizeChat(){
 	if(_ctx) llama_kv_self_clear(_ctx);
@@ -213,20 +205,28 @@ int Generate(const unsigned int nPredict, const bool callback){
 	return i;
 }
 int GenerateWithTools(const unsigned int nPredict, const bool callback){
-	const int res = Generate(nPredict, callback);
-	if(_chatMsgs.empty()) return res;
-	const auto& last = _chatMsgs.back();
-	const auto parsed = common_chat_parse(last.content, _chatFormat);
-	for(const auto& tc : parsed.tool_calls){
-		auto it = _toolHandlers.find(tc.name);
-		if(it!=_toolHandlers.end()){
-			char* result = it->second(tc.arguments.c_str());
-			if(result){
-				AddMessage(false, result);
-				FreeMemory(result);
+	int res;
+	bool toolCalled;
+	const TokenCallbackFn cb = _tokenCb;
+	do{
+		toolCalled = false;
+		res = Generate(nPredict, callback);
+		if(_chatMsgs.empty()) return res;
+		const auto& last = _chatMsgs.back();
+		const auto parsed = common_chat_parse(last.content, _chatFormat);
+		for(const auto& tc : parsed.tool_calls){
+			auto it = _toolHandlers.find(tc.name);
+			if(it!=_toolHandlers.end()){
+				const auto result = it->second(tc.arguments.c_str());
+				std::string resultStr = result ? result : "";
+				AddMessage(std::string("tool"), resultStr);
+				if(cb&&callback) cb(result, static_cast<int>(resultStr.length()), 0, static_cast<int>(_tokens.size()), 0);
+				if(result){
+					toolCalled = true;
+				}
 			}
 		}
-	}
+	} while(toolCalled);
 	return res;
 }
 void StopGeneration(){ _stop.store(true); }

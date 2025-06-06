@@ -27,6 +27,8 @@ inline int _nConsumed = 0;
 inline std::vector<common_chat_tool> _tools;
 inline std::unordered_map<std::string, char*(*)(const char*)> _toolHandlers;
 inline common_chat_format _chatFormat = COMMON_CHAT_FORMAT_CONTENT_ONLY;
+inline std::string googleAPIKey;
+inline std::string googleSearchID;
 extern "C"{
 	EXPORT void BackendInit();
 	EXPORT void ResetChat();
@@ -42,7 +44,8 @@ extern "C"{
     EXPORT void RemoveMessagesStartingAt(int index);
     EXPORT int Generate(unsigned int nPredict, bool callback);
     EXPORT int GenerateWithTools(unsigned int nPredict, bool callback);
-    EXPORT char* GoogleSearch(const char* query);
+	EXPORT const char* GoogleSearch(const char* query);
+	EXPORT void SetGoogle(const char* apiKey, const char* searchEngineId);
     EXPORT void AddTool(const char* name, const char* description, const char* parameters, char*(*handler)(const char* args));
     EXPORT void ClearTools();
     EXPORT void StopGeneration();

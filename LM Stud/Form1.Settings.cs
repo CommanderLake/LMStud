@@ -29,6 +29,8 @@ namespace LMStud{
 		private bool _whisperUseGPU;
 		private bool _speak;
 		private bool _flashAttn = true;
+		private string _googleAPIKey;
+		private string _googleSearchID;
 		private void LoadConfig(){
 			_instruction = textInstruction.Text = Settings.Default.Instruction;
 			_modelsPath = textModelsPath.Text = Settings.Default.ModelsDir;
@@ -53,10 +55,12 @@ namespace LMStud{
 			_whisperUseGPU = checkWhisperUseGPU.Checked = Settings.Default.whisperUseGPU;
 			_speak = checkSpeak.Checked = Settings.Default.Speak;
 			_flashAttn = checkFlashAttn.Checked = Settings.Default.FlashAttn;
+			_googleAPIKey = textGoogleApiKey.Text = Settings.Default.GoogleAPIKey;
+			_googleSearchID = textGoogleSearchID.Text = Settings.Default.GoogleSearchID;
 			NativeMethods.SetWakeCommand(_wakeWord);
 			NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
+			NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID);
 		}
-		// Helper method to reduce repetition when updating a setting.
 		private void UpdateSetting<T>(ref T currentValue, T newValue, Action<T> updateAction){
 			if(!EqualityComparer<T>.Default.Equals(currentValue, newValue)){
 				currentValue = newValue;
@@ -107,6 +111,14 @@ namespace LMStud{
 			});
 			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			UpdateSetting(ref _flashAttn, checkFlashAttn.Checked, value => {Settings.Default.FlashAttn = value;});
+			UpdateSetting(ref _googleAPIKey, textGoogleApiKey.Text, value => {
+				Settings.Default.GoogleAPIKey = value;
+				NativeMethods.SetGoogle(value, _googleSearchID);
+			});
+			UpdateSetting(ref _googleSearchID, textGoogleSearchID.Text, value => {
+				Settings.Default.GoogleSearchID = value;
+				NativeMethods.SetGoogle(_googleAPIKey, value);
+			});
 			Settings.Default.Save();
 		}
 		private void ButBrowse_Click(object sender, EventArgs e){

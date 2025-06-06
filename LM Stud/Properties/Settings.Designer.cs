@@ -334,5 +334,29 @@ namespace LMStud.Properties {
                 this["FlashAttn"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string GoogleAPIKey {
+            get {
+                return ((string)(this["GoogleAPIKey"]));
+            }
+            set {
+                this["GoogleAPIKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string GoogleSearchID {
+            get {
+                return ((string)(this["GoogleSearchID"]));
+            }
+            set {
+                this["GoogleSearchID"] = value;
+            }
+        }
     }
 }
