@@ -18,6 +18,7 @@ namespace LMStud{
 			label1.Text = user ? "User" : "Assistant";
 			AppendText(message, true);
 		}
+		internal void SetRoleText(string role){label1.Text = role;}
 		private void RichTextMsgOnContentsResized(object sender, ContentsResizedEventArgs e){
 			Height = e.NewRectangle.Height + 32;
 		}
@@ -96,7 +97,7 @@ namespace LMStud{
 			NativeMethods.ConvertMarkdownToRtf(markdown, ref rtfOut, ref rtfLen);
 			return Encoding.ASCII.GetString(rtfOut, rtfLen);
 		}
-		internal void RenderText(){
+		private void RenderText(){
 			if(checkThink.Checked){
 				if(_markdown) richTextMsg.Rtf = MarkdownToRtf(_think);
 				else richTextMsg.Text = _think;

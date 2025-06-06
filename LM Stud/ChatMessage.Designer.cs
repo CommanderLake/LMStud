@@ -42,7 +42,6 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.richTextMsg.CausesValidation = false;
-			this.richTextMsg.DetectUrls = false;
 			this.richTextMsg.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.richTextMsg.Location = new System.Drawing.Point(0, 24);
 			this.richTextMsg.Margin = new System.Windows.Forms.Padding(0);

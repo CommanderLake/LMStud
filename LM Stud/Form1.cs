@@ -22,7 +22,6 @@ namespace LMStud{
 		private readonly List<ChatMessage> _chatMessages = new List<ChatMessage>();
 		private ChatMessage _cntAssMsg;
 		private readonly StringBuilder _speechBuffer = new StringBuilder();
-		private int _tokensTotal;
 		private bool _whisperInited;
 		private bool _first = true;
 		private readonly SpeechSynthesizer _tts = new SpeechSynthesizer();
@@ -141,7 +140,6 @@ namespace LMStud{
 			foreach(var message in _chatMessages) message.Dispose();
 			panelChat.ResumeLayout();
 			_chatMessages.Clear();
-			_tokensTotal = 0;
 			labelTokens.Text = "0 Tokens";
 		}
 		private void TextInput_KeyDown(object sender, KeyEventArgs e){
@@ -205,9 +203,13 @@ namespace LMStud{
 			cm.butCancelEdit.Click += (o, args) => MsgButEditCancelOnClick(cm);
 			cm.butApplyEdit.Click += (o, args) => MsgButEditApplyOnClick(cm);
 			cm.richTextMsg.MouseWheel += RichTextMsgOnMouseWheel;
+			cm.richTextMsg.LinkClicked += RichTextMsgOnLinkClicked;
 			panelChat.Controls.Add(cm);
 			_chatMessages.Add(cm);
 			return cm;
+		}
+		private void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){
+			Process.Start(e.LinkText);
 		}
 		private void Generate(bool regenerating){
 			if(!_modelLoaded || _generating || !regenerating && string.IsNullOrWhiteSpace(textInput.Text)) return;
@@ -261,10 +263,24 @@ namespace LMStud{
 			return -1;
 		}
 		private static unsafe void TokenCallback(byte* strPtr, int strLen, int tokens, int tokensTotal, double ftTime){
+			var tokenStr = Encoding.UTF8.GetString(strPtr, strLen);
+			if(tokens == 0){
+				try{
+					_this.Invoke(new MethodInvoker(() => {
+						var cm = _this.AddMessage(false, tokenStr);
+						cm.SetRoleText("Tool");
+						cm.Width -= 1;//Workaround for resize issue
+						cm.Width = _this.panelChat.ClientSize.Width;
+						_this._cntAssMsg = _this.AddMessage(false, "");
+						_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
+						NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
+					}));
+				} catch(ObjectDisposedException){}
+				return;
+			}
 			_this._msgTokenCount += tokens;
 			var elapsed = _this._swRate.Elapsed.TotalSeconds;
 			if(elapsed >= 1.0) _this._swRate.Restart();
-			var tokenStr = Encoding.UTF8.GetString(strPtr, strLen);
 			var renderToken = !_this._rendering;
 			try{
 				_this.BeginInvoke((MethodInvoker)(() => {
@@ -292,7 +308,6 @@ namespace LMStud{
 							}
 						}
 						_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
-						_this._tokensTotal = tokensTotal;
 						NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
 					} catch(ObjectDisposedException){} finally{ _this._rendering = false; }
 				}));

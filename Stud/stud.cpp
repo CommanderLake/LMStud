@@ -28,11 +28,30 @@ void AddTool(const char* name, const char* description, const char* parameters, 
 	_tools.push_back(t);
 	if(handler) _toolHandlers[name] = handler;
 }
-const char* GoogleSearch(const char* query){
-	if(!query) return nullptr;
-	const std::string url = "https://customsearch.googleapis.com/customsearch/v1?key=" + googleAPIKey + "&cx=" + googleSearchID + "&num=5&q=" + url_encode(query);
-	const std::string jsonStr = PerformHttpGet(url.c_str());
-	return jsonStr.c_str();
+const char* GoogleSearch(const char* argsJson){
+	const char* queryStart = nullptr;
+	const char* queryEnd = nullptr;
+	if(argsJson){
+		const char* p = strstr(argsJson, "\"query\"");
+		if(p){
+			p = strchr(p, ':');
+			if(p){
+				++p;
+				while(*p==' '||*p=='\t') ++p;
+				if(*p=='\"'){
+					queryStart = ++p;
+					queryEnd = strchr(queryStart, '\"');
+				}
+			}
+		}
+	}
+	std::string query;
+	if(queryStart&&queryEnd&&queryEnd>queryStart){
+		query.assign(queryStart, queryEnd);
+	} else{
+		query = argsJson ? argsJson : "";
+	}
+	return PerformHttpGet(("https://customsearch.googleapis.com/customsearch/v1?key=" + googleAPIKey + "&cx=" + googleSearchID + "&num=5&fields=items(title,link,snippet)&prettyPrint=false&q=" + url_encode(query.c_str())).c_str());
 }
 void SetGoogle(const char* apiKey, const char* searchEngineId){
 	googleAPIKey = apiKey;
@@ -109,7 +128,7 @@ int AddMessage(std::string role, std::string message){
 	common_chat_msg newMsg;
 	newMsg.role = role;
 	newMsg.content = message;
-	const auto formatted = common_chat_format_single(_chatTemplates.get(), _chatMsgs, newMsg, !role._Equal("assistant"), _params.use_jinja);
+	const auto formatted = common_chat_format_single(_chatTemplates.get(), _chatMsgs, newMsg, !role._Equal("assistant"), _params.use_jinja && role._Equal("assistant"));
 	_chatMsgs.push_back(newMsg);
 	std::vector<llama_token> toks = common_tokenize(_vocab, formatted, false, true);
 	_tokens.insert(_tokens.end(), toks.begin(), toks.end());
@@ -220,7 +239,7 @@ int GenerateWithTools(const unsigned int nPredict, const bool callback){
 				const auto result = it->second(tc.arguments.c_str());
 				std::string resultStr = result ? result : "";
 				AddMessage(std::string("tool"), resultStr);
-				if(cb&&callback) cb(result, static_cast<int>(resultStr.length()), 0, static_cast<int>(_tokens.size()), 0);
+				if(cb&&callback) cb(resultStr.c_str(), static_cast<int>(resultStr.length()), 0, static_cast<int>(_tokens.size()), 0);
 				if(result){
 					toolCalled = true;
 				}
