@@ -213,14 +213,14 @@ int Generate(const unsigned int nPredict, const bool callback){
 			if(ftTime==0.0) ftTime = std::chrono::duration<double, std::ratio<1, 1>>(hr_clock::now()-prepStart).count();
 			if(!tokenStr.empty()){
 				assMsg<<tokenStr;
-				if(cb&&callback) cb(tokenStr.c_str(), static_cast<int>(tokenStr.length()), 1, static_cast<int>(_tokens.size()+i), ftTime);
+                                if(cb&&callback) cb(tokenStr.c_str(), static_cast<int>(tokenStr.length()), 1, static_cast<int>(_tokens.size()+i), ftTime, "assistant");
 			}
 			if(llama_vocab_is_eog(_vocab, id)) break;
 		}
 		embd.clear();
 	}
-	AddMessage(false, assMsg.str().c_str());
-	if(cb&&!callback) cb(assMsg.str().c_str(), assMsg.str().length(), i, static_cast<int>(_tokens.size()), ftTime);
+        AddMessage(false, assMsg.str().c_str());
+        if(cb&&!callback) cb(assMsg.str().c_str(), assMsg.str().length(), i, static_cast<int>(_tokens.size()), ftTime, "assistant");
 	return i;
 }
 int GenerateWithTools(const unsigned int nPredict, const bool callback){
@@ -239,7 +239,7 @@ int GenerateWithTools(const unsigned int nPredict, const bool callback){
 				const auto result = it->second(tc.arguments.c_str());
 				std::string resultStr = result ? result : "";
 				AddMessage(std::string("tool"), resultStr);
-				if(cb&&callback) cb(resultStr.c_str(), static_cast<int>(resultStr.length()), 0, static_cast<int>(_tokens.size()), 0);
+                                if(cb&&callback) cb(resultStr.c_str(), static_cast<int>(resultStr.length()), 0, static_cast<int>(_tokens.size()), 0, "tool");
 				if(result){
 					toolCalled = true;
 				}
