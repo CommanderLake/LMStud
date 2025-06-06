@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 using LMStud.Properties;
 namespace LMStud{
 	internal partial class Form1 : Form{
@@ -224,8 +225,8 @@ namespace LMStud{
 				cm.Width = panelChat.ClientSize.Width;
 				NativeMethods.AddMessage(true, msg);
 			}
-			_cntAssMsg = AddMessage(false, "");
-			NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
+                        _cntAssMsg = null;
+                        NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
 			foreach(var message in _chatMessages) message.Generating = true;
 			textInput.Text = "";
 			_tts.SpeakAsyncCancelAll();
@@ -262,44 +263,57 @@ namespace LMStud{
 			for(var i = 0; i < sb.Length - 1; i++) if((sb[i] == '.' || sb[i] == '!' || sb[i] == '?') && char.IsWhiteSpace(sb[i + 1])) return i;
 			return -1;
 		}
-		private static unsafe void TokenCallback(byte* strPtr, int strLen, int tokens, int tokensTotal, double ftTime){
-			var tokenStr = Encoding.UTF8.GetString(strPtr, strLen);
-			if(tokens == 0){
-				try{
-					_this.Invoke(new MethodInvoker(() => {
-						var cm = _this.AddMessage(false, tokenStr);
-						cm.SetRoleText("Tool");
-						cm.Width -= 1;//Workaround for resize issue
-						cm.Width = _this.panelChat.ClientSize.Width;
-						_this._cntAssMsg = _this.AddMessage(false, "");
-						_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
-						NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
-					}));
-				} catch(ObjectDisposedException){}
-				return;
-			}
-			_this._msgTokenCount += tokens;
-			var elapsed = _this._swRate.Elapsed.TotalSeconds;
-			if(elapsed >= 1.0) _this._swRate.Restart();
-			var renderToken = !_this._rendering;
-			try{
-				_this.BeginInvoke((MethodInvoker)(() => {
-					try{
-						_this._rendering = true;
-						if(_this._first){
-							_this.labelPreGen.Text = "First token time: " + ftTime + " s";
-							_this._first = false;
-						}
-						if(elapsed >= 1.0){
-							var callsPerSecond = _this._msgTokenCount/elapsed;
-							_this.labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
-							_this._msgTokenCount = 0;
-						}
-						var lastThink = _this._cntAssMsg.checkThink.Checked;
-						_this._cntAssMsg.AppendText(tokenStr, renderToken);
-						if(_this._speak && !_this._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(tokenStr)){
-							foreach(var ch in tokenStr.Where(ch => ch != '`' && ch != '*' && ch != '_' && ch != '#')) _this._speechBuffer.Append(ch);
-							int idx;
+                private static unsafe void TokenCallback(byte* strPtr, int strLen, int tokens, int tokensTotal, double ftTime, byte* rolePtr, int roleLen){
+                        var tokenStr = Encoding.UTF8.GetString(strPtr, strLen);
+                        string role;
+                        if(rolePtr == null || roleLen <= 0){
+                                role = string.Empty;
+                        } else{
+                                var bytes = new byte[roleLen];
+                                Marshal.Copy(new IntPtr(rolePtr), bytes, 0, roleLen);
+                                role = Encoding.UTF8.GetString(bytes);
+                        }
+                        if(role == "tool"){
+                                try{
+                                        _this.Invoke(new MethodInvoker(() => {
+                                                var cm = _this.AddMessage(false, tokenStr);
+                                                cm.SetRoleText("Tool");
+                                                cm.Width -= 1;//Workaround for resize issue
+                                                cm.Width = _this.panelChat.ClientSize.Width;
+                                                _this._cntAssMsg = null;
+                                                _this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
+                                                NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
+                                        }));
+                                } catch(ObjectDisposedException){}
+                                return;
+                        }
+                        _this._msgTokenCount += tokens;
+                        var elapsed = _this._swRate.Elapsed.TotalSeconds;
+                        if(elapsed >= 1.0) _this._swRate.Restart();
+                        var renderToken = !_this._rendering;
+                        try{
+                                _this.BeginInvoke((MethodInvoker)(() => {
+                                        try{
+                                                _this._rendering = true;
+                                                if(_this._first){
+                                                        _this.labelPreGen.Text = "First token time: " + ftTime + " s";
+                                                        _this._first = false;
+                                                }
+                                                if(elapsed >= 1.0){
+                                                        var callsPerSecond = _this._msgTokenCount/elapsed;
+                                                        _this.labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
+                                                        _this._msgTokenCount = 0;
+                                                }
+                                                if(_this._cntAssMsg == null){
+                                                        _this._cntAssMsg = _this.AddMessage(false, "");
+                                                        _this._cntAssMsg.Width -= 1;//Workaround for resize issue
+                                                        _this._cntAssMsg.Width = _this.panelChat.ClientSize.Width;
+                                                }
+                                                var lastThink = _this._cntAssMsg.checkThink.Checked;
+                                                _this._cntAssMsg.AppendText(tokenStr, renderToken);
+                                                if(_this._speak && !_this._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(tokenStr)){
+                                                        foreach(var ch in tokenStr.Where(ch => ch != '`' && ch != '*' && ch != '_' && ch != '#')) _this._speechBuffer.Append(ch);
+                                                        int idx;
 							while((idx = FindSentenceEnd(_this._speechBuffer)) >= 0){
 								var sentence = _this._speechBuffer.ToString(0, idx + 1).Trim();
 								if(!string.IsNullOrWhiteSpace(sentence)) _this._tts.SpeakAsync(sentence);

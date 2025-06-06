@@ -21,7 +21,7 @@ inline std::vector<llama_token> _tokens;
 inline std::vector<common_chat_msg> _chatMsgs;
 inline std::atomic_bool _stop{false};
 inline common_chat_templates_ptr _chatTemplates;
-using TokenCallbackFn = void(*)(const char* token, int strLen, int tokens, int tokensTotal, double ftTime);
+using TokenCallbackFn = void(*)(const char* token, int strLen, int tokens, int tokensTotal, double ftTime, const char* role, int roleLen);
 inline TokenCallbackFn _tokenCb = nullptr;
 inline int _nConsumed = 0;
 inline std::vector<common_chat_tool> _tools;
