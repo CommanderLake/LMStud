@@ -263,9 +263,16 @@ namespace LMStud{
 			for(var i = 0; i < sb.Length - 1; i++) if((sb[i] == '.' || sb[i] == '!' || sb[i] == '?') && char.IsWhiteSpace(sb[i + 1])) return i;
 			return -1;
 		}
-                private static unsafe void TokenCallback(byte* strPtr, int strLen, int tokens, int tokensTotal, double ftTime, IntPtr rolePtr){
+                private static unsafe void TokenCallback(byte* strPtr, int strLen, int tokens, int tokensTotal, double ftTime, byte* rolePtr, int roleLen){
                         var tokenStr = Encoding.UTF8.GetString(strPtr, strLen);
-                        var role = Marshal.PtrToStringUTF8(rolePtr) ?? string.Empty;
+                        string role;
+                        if(rolePtr == null || roleLen <= 0){
+                                role = string.Empty;
+                        } else{
+                                var bytes = new byte[roleLen];
+                                Marshal.Copy(new IntPtr(rolePtr), bytes, 0, roleLen);
+                                role = Encoding.UTF8.GetString(bytes);
+                        }
                         if(role == "tool"){
                                 try{
                                         _this.Invoke(new MethodInvoker(() => {

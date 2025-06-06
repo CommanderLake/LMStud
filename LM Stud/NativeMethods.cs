@@ -17,7 +17,7 @@ namespace LMStud{
 			Count
 		}
                 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-                public unsafe delegate void TokenCallback(byte* strPtr, int strLen, int tokens, int tokensTotal, double ftTime, IntPtr rolePtr);
+                public unsafe delegate void TokenCallback(byte* strPtr, int strLen, int tokens, int tokensTotal, double ftTime, byte* rolePtr, int roleLen);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void BackendInit();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
