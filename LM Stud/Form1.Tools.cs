@@ -18,9 +18,9 @@ namespace LMStud{
 			if(_googleSearchEnable)
 				NativeMethods.AddTool("google_search", "Search Google and return the top results", "{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]}", _googleHandler);
 			if(_webpageFetchEnable){
-				NativeMethods.AddTool("fetch_webpage_to_cache", "Fetch a webpage and cache its sections", "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", _fetchPageHandler);
+				NativeMethods.AddTool("fetch_webpage_to_cache", "Fetch a webpage and cache its sections for retrieval using fetch_webpage_section_from_cache", "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", _fetchPageHandler);
 				NativeMethods.AddTool("list_webpage_cache", "List sections for a webpage cached after using fetch_webpage", "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", _browseCacheHandler);
-				NativeMethods.AddTool("fetch_webpage_section", "Get text from a section of a webpage cached after using fetch_webpage",
+				NativeMethods.AddTool("fetch_webpage_section_from_cache", "Get text from a section of a webpage cached after using fetch_webpage",
 					"{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"},\"id\":{\"type\":\"integer\"}},\"required\":[\"url\",\"id\"]}", _getSectionHandler);
 			}
 		}

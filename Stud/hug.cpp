@@ -23,7 +23,7 @@ char* PerformHttpGet(const char* url){
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-		curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 (LM Stud Bot; +https://github.com/CommanderLake/LMStud)");
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 (LM Stud; +https://github.com/CommanderLake/LMStud)");
 		const CURLcode res = curl_easy_perform(curl);
 		if(res!=CURLE_OK){
 			std::string err = "HTTP GET failed: ";
