@@ -110,16 +110,16 @@ const char* FetchWebpage(const char* argsJson){
 	CachedPage page;
 	ParseSections(html, page);
 	_webCache[url] = page;
-	std::string json = "{\"url\":\""+JsonEscape(url)+"\",\"sections\":";
-	json += "[";
+	std::string json = "{\n  \"url\": \""+JsonEscape(url)+"\",\n  \"sections\": [\n";
 	for(size_t i = 0; i<page.sections.size(); ++i){
 		auto& sec = page.sections[i];
 		std::string snippet = sec.text.substr(0, 80);
 		if(sec.text.size()>80) snippet += "...";
-		json += "{\"id\":"+std::to_string(i)+",\"tag\":\""+sec.tag+"\",\"snippet\":\""+JsonEscape(snippet)+"\"}";
+		json += "    {\"id\": "+std::to_string(i)+", \"tag\": \""+sec.tag+"\", \"snippet\": \""+JsonEscape(snippet)+"\"}";
 		if(i+1<page.sections.size()) json += ",";
+		json += "\n";
 	}
-	json += "]}";
+	json += "  ]\n}";
 	return MakeJson(json);
 }
 const char* BrowseWebCache(const char* argsJson){
@@ -128,16 +128,16 @@ const char* BrowseWebCache(const char* argsJson){
 	const auto it = _webCache.find(url);
 	if(it==_webCache.end()) return MakeJson("{\"error\":\"not cached\"}");
 	const auto& page = it->second;
-	std::string json = "{\"url\":\""+JsonEscape(url)+"\",\"sections\":";
-	json += "[";
+	std::string json = "{\n  \"url\": \""+JsonEscape(url)+"\",\n  \"sections\": [\n";
 	for(size_t i = 0; i<page.sections.size(); ++i){
 		auto& sec = page.sections[i];
 		std::string snippet = sec.text.substr(0, 80);
 		if(sec.text.size()>80) snippet += "...";
-		json += "{\"id\":"+std::to_string(i)+",\"tag\":\""+sec.tag+"\",\"snippet\":\""+JsonEscape(snippet)+"\"}";
+		json += "    {\"id\": "+std::to_string(i)+", \"tag\": \""+sec.tag+"\", \"snippet\": \""+JsonEscape(snippet)+"\"}";
 		if(i+1<page.sections.size()) json += ",";
+		json += "\n";
 	}
-	json += "]}";
+	json += "  ]\n}";
 	return MakeJson(json);
 }
 const char* GetWebSection(const char* argsJson){
