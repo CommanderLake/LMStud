@@ -49,4 +49,8 @@ extern "C"{
     EXPORT void AddTool(const char* name, const char* description, const char* parameters, char*(*handler)(const char* args));
     EXPORT void ClearTools();
     EXPORT void StopGeneration();
+    EXPORT const char* FetchWebpage(const char* argsJson);
+    EXPORT const char* BrowseWebCache(const char* argsJson);
+    EXPORT const char* GetWebSection(const char* argsJson);
+    EXPORT void ClearWebCache();
 }
