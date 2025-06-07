@@ -132,7 +132,8 @@ int AddMessage(std::string role, std::string message){
 }
 int AddMessage(const bool user, const char* message){ return AddMessage(std::string(user ? "user" : "assistant"), std::string(message)); }
 void RetokenizeChat(){
-	if(_ctx) llama_kv_self_clear(_ctx);
+	if(!_ctx || !_vocab) return;
+	llama_kv_self_clear(_ctx);
 	_tokens.clear();
 	std::vector<common_chat_msg> msgs;
 	if(!_params.prompt.empty()){
@@ -231,10 +232,12 @@ int GenerateWithTools(const unsigned int nPredict, const bool callback){
 			auto it = _toolHandlers.find(tc.name);
 			if(it!=_toolHandlers.end()){
 				const auto result = it->second(tc.arguments.c_str());
-				std::string resultStr = result ? result : "";
+				const bool gotResult = result != nullptr;
+				std::string resultStr = gotResult ? result : "";
+				FreeMemory(result);
 				AddMessage(std::string("tool"), resultStr);
 				if(cb&&callback) cb(resultStr.c_str(), static_cast<int>(resultStr.length()), 0, static_cast<int>(_tokens.size()), 0, true);
-				if(result){ toolCalled = true; }
+				if(gotResult){ toolCalled = true; }
 			}
 		}
 	} while(toolCalled);

@@ -90,41 +90,45 @@ namespace LMStud{
 			var fileName = Path.GetFileName(modelPath);
 			toolStripStatusLabel1.Text = "Loading: " + fileName;
 			ThreadPool.QueueUserWorkItem(o => {
-				unsafe{
-					if(_generating){
-						NativeMethods.StopGeneration();
-						while(_generating) Thread.Sleep(10);
-					}
-					if(_whisperInited) NativeMethods.StopSpeechTranscription();
-					var modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
-					if(modelCtxMax <= 0) _cntCtxMax = _ctxSize;
-					else _cntCtxMax = _ctxSize > modelCtxMax ? modelCtxMax : _ctxSize;
-					var success = NativeMethods.LoadModel(modelPath, _instruction, _cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _strictCPU, _nThreadsBatch, _strictCPUBatch, _gpuLayers, _batchSize, _mMap, _mLock, _numaStrat, _flashAttn);
-					if(!success){
-						Settings.Default.LoadAuto = false;
-						Settings.Default.Save();
-						Invoke(new MethodInvoker(() => {MessageBox.Show(this, "Error loading model", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
-						return;
-					}
-					_modelLoaded = true;
-					_tokenCallback = TokenCallback;
-					NativeMethods.SetTokenCallback(_tokenCallback);
-					RegisterTools();
-					NativeMethods.RetokenizeChat();
-					if(checkVoiceInput.Checked){
-						NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);
-						NativeMethods.StartSpeechTranscription();
-					}
-					Invoke(new MethodInvoker(() => {
-						toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.\r\nThe model currently loaded has a maximum context size of " + modelCtxMax);
-						Settings.Default.LastModel = modelPath;
-						if(checkLoadAuto.Checked && !autoLoad){
-							Settings.Default.LoadAuto = true;
-							Settings.Default.Save();
+				try{
+					unsafe{
+						if(_generating){
+							NativeMethods.StopGeneration();
+							while(_generating) Thread.Sleep(10);
 						}
-						toolStripStatusLabel1.Text = "Loaded model: " + fileName;
-						butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = true;
-					}));
+						if(_whisperInited) NativeMethods.StopSpeechTranscription();
+						var modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
+						if(modelCtxMax <= 0) _cntCtxMax = _ctxSize;
+						else _cntCtxMax = _ctxSize > modelCtxMax ? modelCtxMax : _ctxSize;
+						var success = NativeMethods.LoadModel(modelPath, _instruction, _cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _strictCPU, _nThreadsBatch, _strictCPUBatch, _gpuLayers,
+							_batchSize, _mMap, _mLock, _numaStrat, _flashAttn);
+						if(!success){
+							Settings.Default.LoadAuto = false;
+							Settings.Default.Save();
+							Invoke(new MethodInvoker(() => {MessageBox.Show(this, "Error loading model", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+							return;
+						}
+						_modelLoaded = true;
+						_tokenCallback = TokenCallback;
+						NativeMethods.SetTokenCallback(_tokenCallback);
+						RegisterTools();
+						NativeMethods.RetokenizeChat();
+						if(checkVoiceInput.Checked){
+							NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);
+							NativeMethods.StartSpeechTranscription();
+						}
+						Invoke(new MethodInvoker(() => {
+							toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.\r\nThe model currently loaded has a maximum context size of " + modelCtxMax);
+							Settings.Default.LastModel = modelPath;
+							if(checkLoadAuto.Checked && !autoLoad){
+								Settings.Default.LoadAuto = true;
+								Settings.Default.Save();
+							}
+							toolStripStatusLabel1.Text = "Loaded model: " + fileName;
+						}));
+					}
+				} finally{
+					butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = true;
 				}
 			});
 		}

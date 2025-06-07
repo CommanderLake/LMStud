@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Speech.Synthesis;
 using System.Text;
 using System.Threading;
@@ -56,6 +55,8 @@ namespace LMStud{
 			toolTip1.SetToolTip(numFreqThreshold, "High-pass filter cutoff frequency. Higher values reduce background noise.");
 			toolTip1.SetToolTip(checkSpeak, "Speak the generated responses using the computers default voice.");
 			toolTip1.SetToolTip(checkVoiceInput, "An intermediate check state (filled in) means it will transcribe spoken words without generating, when checked it will automatically generate.");
+			toolTip1.SetToolTip(textGoogleApiKey, "A Google API key is required to use the search tool, you can get a free one for 100 searches per day.");
+			toolTip1.SetToolTip(textGoogleSearchID, "Create your own Google Programmable Search Engine and copy its \"Search engine ID\" here.");
 		}
 		private void Form1_Load(object sender, EventArgs e){
 			NativeMethods.CurlGlobalInit();
@@ -210,7 +211,7 @@ namespace LMStud{
 			_generating = true;
 			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
 			butGen.Text = "Stop";
-			butReset.Enabled = false;
+			butReset.Enabled = butApply.Enabled = false;
 			if(!regenerating){
 				var msg = textInput.Text.Trim();
 				var cm = AddMessage(true, msg);
@@ -245,7 +246,7 @@ namespace LMStud{
 							_swRate.Reset();
 						}
 						butGen.Text = "Generate";
-						butReset.Enabled = true;
+						butReset.Enabled = butApply.Enabled = true;
 						_generating = false;
 						foreach(var message in _chatMessages) message.Generating = false;
 					}));

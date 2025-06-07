@@ -6,7 +6,7 @@ namespace LMStud{
 		private void RegisterTools(){
 			NativeMethods.ClearTools();
 			_googleHandler = GoogleSearchHandler;
-			NativeMethods.AddTool("google_search", "Search Google and return the top results", "{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]}", _googleHandler);
+			if(_googleSearchEnable) NativeMethods.AddTool("google_search", "Search Google and return the top results", "{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]}", _googleHandler);
 		}
 		private void ClearRegisteredTools(){
 			NativeMethods.ClearTools();

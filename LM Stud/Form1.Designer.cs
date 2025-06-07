@@ -30,6 +30,7 @@
 			this.components = new System.ComponentModel.Container();
 			this.textInput = new System.Windows.Forms.TextBox();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+			this.panelChat = new LMStud.MyFlowLayoutPanel();
 			this.checkStream = new System.Windows.Forms.CheckBox();
 			this.checkSpeak = new System.Windows.Forms.CheckBox();
 			this.checkVoiceInput = new System.Windows.Forms.CheckBox();
@@ -40,6 +41,11 @@
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabPage1 = new System.Windows.Forms.TabPage();
 			this.tabPage2 = new System.Windows.Forms.TabPage();
+			this.groupBox2 = new System.Windows.Forms.GroupBox();
+			this.label20 = new System.Windows.Forms.Label();
+			this.label19 = new System.Windows.Forms.Label();
+			this.textGoogleSearchID = new System.Windows.Forms.TextBox();
+			this.textGoogleApiKey = new System.Windows.Forms.TextBox();
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
 			this.label18 = new System.Windows.Forms.Label();
 			this.numFreqThreshold = new System.Windows.Forms.NumericUpDown();
@@ -124,12 +130,7 @@
 			this.labelTPS = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-			this.panelChat = new LMStud.MyFlowLayoutPanel();
-			this.groupBox2 = new System.Windows.Forms.GroupBox();
-			this.textGoogleApiKey = new System.Windows.Forms.TextBox();
-			this.textGoogleSearchID = new System.Windows.Forms.TextBox();
-			this.label19 = new System.Windows.Forms.Label();
-			this.label20 = new System.Windows.Forms.Label();
+			this.checkGoogleEnable = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -137,6 +138,7 @@
 			this.tabControl1.SuspendLayout();
 			this.tabPage1.SuspendLayout();
 			this.tabPage2.SuspendLayout();
+			this.groupBox2.SuspendLayout();
 			this.groupBox1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numFreqThreshold)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numVadThreshold)).BeginInit();
@@ -165,7 +167,6 @@
 			this.splitContainer3.Panel2.SuspendLayout();
 			this.splitContainer3.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
-			this.groupBox2.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// textInput
@@ -213,6 +214,19 @@
 			this.splitContainer1.Size = new System.Drawing.Size(1008, 949);
 			this.splitContainer1.SplitterDistance = 768;
 			this.splitContainer1.TabIndex = 1;
+			// 
+			// panelChat
+			// 
+			this.panelChat.AutoScroll = true;
+			this.panelChat.CausesValidation = false;
+			this.panelChat.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.panelChat.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+			this.panelChat.Location = new System.Drawing.Point(0, 0);
+			this.panelChat.Name = "panelChat";
+			this.panelChat.Size = new System.Drawing.Size(1004, 764);
+			this.panelChat.TabIndex = 0;
+			this.panelChat.WrapContents = false;
+			this.panelChat.Layout += new System.Windows.Forms.LayoutEventHandler(this.PanelChat_Layout);
 			// 
 			// checkStream
 			// 
@@ -351,6 +365,52 @@
 			this.tabPage2.TabIndex = 1;
 			this.tabPage2.Text = "Settings";
 			this.tabPage2.UseVisualStyleBackColor = true;
+			// 
+			// groupBox2
+			// 
+			this.groupBox2.Controls.Add(this.checkGoogleEnable);
+			this.groupBox2.Controls.Add(this.label20);
+			this.groupBox2.Controls.Add(this.label19);
+			this.groupBox2.Controls.Add(this.textGoogleSearchID);
+			this.groupBox2.Controls.Add(this.textGoogleApiKey);
+			this.groupBox2.Location = new System.Drawing.Point(209, 336);
+			this.groupBox2.Name = "groupBox2";
+			this.groupBox2.Size = new System.Drawing.Size(200, 92);
+			this.groupBox2.TabIndex = 38;
+			this.groupBox2.TabStop = false;
+			this.groupBox2.Text = "Google Search Tool";
+			// 
+			// label20
+			// 
+			this.label20.AutoSize = true;
+			this.label20.Location = new System.Drawing.Point(8, 67);
+			this.label20.Name = "label20";
+			this.label20.Size = new System.Drawing.Size(93, 13);
+			this.label20.TabIndex = 3;
+			this.label20.Text = "Search engine ID:";
+			// 
+			// label19
+			// 
+			this.label19.AutoSize = true;
+			this.label19.Location = new System.Drawing.Point(8, 41);
+			this.label19.Name = "label19";
+			this.label19.Size = new System.Drawing.Size(48, 13);
+			this.label19.TabIndex = 2;
+			this.label19.Text = "API Key:";
+			// 
+			// textGoogleSearchID
+			// 
+			this.textGoogleSearchID.Location = new System.Drawing.Point(107, 64);
+			this.textGoogleSearchID.Name = "textGoogleSearchID";
+			this.textGoogleSearchID.Size = new System.Drawing.Size(87, 20);
+			this.textGoogleSearchID.TabIndex = 1;
+			// 
+			// textGoogleApiKey
+			// 
+			this.textGoogleApiKey.Location = new System.Drawing.Point(62, 38);
+			this.textGoogleApiKey.Name = "textGoogleApiKey";
+			this.textGoogleApiKey.Size = new System.Drawing.Size(132, 20);
+			this.textGoogleApiKey.TabIndex = 0;
 			// 
 			// groupBox1
 			// 
@@ -1373,63 +1433,16 @@
 			this.toolTip1.UseAnimation = false;
 			this.toolTip1.UseFading = false;
 			// 
-			// panelChat
+			// checkGoogleEnable
 			// 
-			this.panelChat.AutoScroll = true;
-			this.panelChat.CausesValidation = false;
-			this.panelChat.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.panelChat.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-			this.panelChat.Location = new System.Drawing.Point(0, 0);
-			this.panelChat.Name = "panelChat";
-			this.panelChat.Size = new System.Drawing.Size(1004, 764);
-			this.panelChat.TabIndex = 0;
-			this.panelChat.WrapContents = false;
-			this.panelChat.Layout += new System.Windows.Forms.LayoutEventHandler(this.PanelChat_Layout);
-			// 
-			// groupBox2
-			// 
-			this.groupBox2.Controls.Add(this.label20);
-			this.groupBox2.Controls.Add(this.label19);
-			this.groupBox2.Controls.Add(this.textGoogleSearchID);
-			this.groupBox2.Controls.Add(this.textGoogleApiKey);
-			this.groupBox2.Location = new System.Drawing.Point(209, 336);
-			this.groupBox2.Name = "groupBox2";
-			this.groupBox2.Size = new System.Drawing.Size(200, 72);
-			this.groupBox2.TabIndex = 38;
-			this.groupBox2.TabStop = false;
-			this.groupBox2.Text = "Google Search";
-			// 
-			// textGoogleApiKey
-			// 
-			this.textGoogleApiKey.Location = new System.Drawing.Point(62, 19);
-			this.textGoogleApiKey.Name = "textGoogleApiKey";
-			this.textGoogleApiKey.Size = new System.Drawing.Size(132, 20);
-			this.textGoogleApiKey.TabIndex = 0;
-			// 
-			// textGoogleSearchID
-			// 
-			this.textGoogleSearchID.Location = new System.Drawing.Point(107, 45);
-			this.textGoogleSearchID.Name = "textGoogleSearchID";
-			this.textGoogleSearchID.Size = new System.Drawing.Size(87, 20);
-			this.textGoogleSearchID.TabIndex = 1;
-			// 
-			// label19
-			// 
-			this.label19.AutoSize = true;
-			this.label19.Location = new System.Drawing.Point(8, 22);
-			this.label19.Name = "label19";
-			this.label19.Size = new System.Drawing.Size(48, 13);
-			this.label19.TabIndex = 2;
-			this.label19.Text = "API Key:";
-			// 
-			// label20
-			// 
-			this.label20.AutoSize = true;
-			this.label20.Location = new System.Drawing.Point(8, 48);
-			this.label20.Name = "label20";
-			this.label20.Size = new System.Drawing.Size(93, 13);
-			this.label20.TabIndex = 3;
-			this.label20.Text = "Search engine ID:";
+			this.checkGoogleEnable.AutoSize = true;
+			this.checkGoogleEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkGoogleEnable.Location = new System.Drawing.Point(135, 14);
+			this.checkGoogleEnable.Name = "checkGoogleEnable";
+			this.checkGoogleEnable.Size = new System.Drawing.Size(59, 17);
+			this.checkGoogleEnable.TabIndex = 4;
+			this.checkGoogleEnable.Text = "Enable";
+			this.checkGoogleEnable.UseVisualStyleBackColor = true;
 			// 
 			// Form1
 			// 
@@ -1456,6 +1469,8 @@
 			this.tabPage1.ResumeLayout(false);
 			this.tabPage2.ResumeLayout(false);
 			this.tabPage2.PerformLayout();
+			this.groupBox2.ResumeLayout(false);
+			this.groupBox2.PerformLayout();
 			this.groupBox1.ResumeLayout(false);
 			this.groupBox1.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numFreqThreshold)).EndInit();
@@ -1492,8 +1507,6 @@
 			this.splitContainer3.ResumeLayout(false);
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();
-			this.groupBox2.ResumeLayout(false);
-			this.groupBox2.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -1603,6 +1616,7 @@
 		private System.Windows.Forms.Label label19;
 		private System.Windows.Forms.TextBox textGoogleSearchID;
 		private System.Windows.Forms.TextBox textGoogleApiKey;
+		private System.Windows.Forms.CheckBox checkGoogleEnable;
 	}
 }
 

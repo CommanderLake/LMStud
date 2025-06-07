@@ -31,6 +31,7 @@ namespace LMStud{
 		private bool _flashAttn = true;
 		private string _googleAPIKey;
 		private string _googleSearchID;
+		private bool _googleSearchEnable;
 		private void LoadConfig(){
 			_instruction = textInstruction.Text = Settings.Default.Instruction;
 			_modelsPath = textModelsPath.Text = Settings.Default.ModelsDir;
@@ -57,6 +58,7 @@ namespace LMStud{
 			_flashAttn = checkFlashAttn.Checked = Settings.Default.FlashAttn;
 			_googleAPIKey = textGoogleApiKey.Text = Settings.Default.GoogleAPIKey;
 			_googleSearchID = textGoogleSearchID.Text = Settings.Default.GoogleSearchID;
+			_googleSearchEnable = checkGoogleEnable.Checked = Settings.Default.GoogleSearchEnable;
 			NativeMethods.SetWakeCommand(_wakeWord);
 			NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
 			NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID);
@@ -118,6 +120,12 @@ namespace LMStud{
 			UpdateSetting(ref _googleSearchID, textGoogleSearchID.Text, value => {
 				Settings.Default.GoogleSearchID = value;
 				NativeMethods.SetGoogle(_googleAPIKey, value);
+			});
+			UpdateSetting(ref _googleSearchEnable, checkGoogleEnable.Checked, value => {
+				Settings.Default.GoogleSearchEnable = value;
+				if(!_modelLoaded) return;
+				RegisterTools();
+				NativeMethods.RetokenizeChat();
 			});
 			Settings.Default.Save();
 		}
