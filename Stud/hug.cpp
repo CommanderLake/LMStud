@@ -8,6 +8,9 @@ static size_t WriteCallback(void* ptr, size_t size, size_t nmemb, void* userdata
 	response->append(static_cast<char*>(ptr), size*nmemb);
 	return size*nmemb;
 }
+void FreeMemory(char* ptr){
+	if(ptr) std::free(ptr);
+}
 const char* PerformHttpGet(const char* url){
 	if(!url) return nullptr;
 	try{
@@ -28,11 +31,17 @@ const char* PerformHttpGet(const char* url){
 			throw std::runtime_error(err);
 		}
 		curl_easy_cleanup(curl);
-		return response.c_str();
+		const auto out = static_cast<char*>(std::malloc(response.size()+1));
+		if(out){
+			std::memcpy(out, response.c_str(), response.size()+1);
+		}
+		return out;
 	} catch(const std::exception& ex){
 		std::string err = "Error: ";
 		err += ex.what();
-		return err.c_str();
+		const auto out = static_cast<char*>(std::malloc(err.size()+1));
+		if(out){ std::memcpy(out, err.c_str(), err.size()+1); }
+		return out;
 	}
 }
 int DownloadFile(const char* url, const char* targetPath){
