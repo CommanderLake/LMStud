@@ -65,9 +65,9 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopGeneration();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern IntPtr FetchWebpage([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
+		public static extern IntPtr GetWebpage([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern IntPtr BrowseWebCache([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
+		public static extern IntPtr ListSections([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr GetWebSection([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

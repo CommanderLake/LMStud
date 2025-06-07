@@ -14,8 +14,8 @@ static std::unordered_map<std::string, CachedPage> _webCache;
 extern "C" {
 	EXPORT void SetGoogle(const char* apiKey, const char* searchEngineId);
 	EXPORT const char* GoogleSearch(const char* query);
-	EXPORT const char* FetchWebpage(const char* argsJson);
-	EXPORT const char* BrowseWebCache(const char* argsJson);
+	EXPORT const char* GetWebpage(const char* argsJson);
 	EXPORT const char* GetWebSection(const char* argsJson);
+	EXPORT const char* ListSections(const char* argsJson);
 	EXPORT void ClearWebCache();
 }

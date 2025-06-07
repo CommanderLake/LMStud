@@ -100,7 +100,7 @@ static char* MakeJson(const std::string& s){
 	if(out) std::memcpy(out, s.c_str(), s.size()+1);
 	return out;
 }
-const char* FetchWebpage(const char* argsJson){
+const char* GetWebpage(const char* argsJson){
 	std::string url = GetJsonValue(argsJson, "url");
 	if(url.empty()) url = argsJson ? argsJson : "";
 	const auto res = PerformHttpGet(url.c_str());
@@ -122,7 +122,16 @@ const char* FetchWebpage(const char* argsJson){
 	json += "  ]\n}";
 	return MakeJson(json);
 }
-const char* BrowseWebCache(const char* argsJson){
+const char* GetWebSection(const char* argsJson){
+	std::string url = GetJsonValue(argsJson, "url");
+	const std::string idStr = GetJsonValue(argsJson, "id");
+	if(url.empty()) url = argsJson ? argsJson : "";
+	const int id = idStr.empty() ? -1 : std::stoi(idStr);
+	const auto it = _webCache.find(url);
+	if(it==_webCache.end()||id<0||id>=static_cast<int>(it->second.sections.size())) return MakeJson("{\"error\":\"not found\"}");
+	return MakeJson(JsonEscape(it->second.sections[id].text));
+}
+const char* ListSections(const char* argsJson){
 	std::string url = GetJsonValue(argsJson, "url");
 	if(url.empty()) url = argsJson ? argsJson : "";
 	const auto it = _webCache.find(url);
@@ -139,14 +148,5 @@ const char* BrowseWebCache(const char* argsJson){
 	}
 	json += "  ]\n}";
 	return MakeJson(json);
-}
-const char* GetWebSection(const char* argsJson){
-	std::string url = GetJsonValue(argsJson, "url");
-	const std::string idStr = GetJsonValue(argsJson, "id");
-	if(url.empty()) url = argsJson ? argsJson : "";
-	const int id = idStr.empty() ? -1 : std::stoi(idStr);
-	const auto it = _webCache.find(url);
-	if(it==_webCache.end()||id<0||id>=static_cast<int>(it->second.sections.size())) return MakeJson("{\"error\":\"not found\"}");
-	return MakeJson(JsonEscape(it->second.sections[id].text));
 }
 void ClearWebCache(){ _webCache.clear(); }
