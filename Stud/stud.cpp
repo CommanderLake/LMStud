@@ -7,6 +7,9 @@
 #include <unordered_map>
 #include <curl\curl.h>
 using hr_clock = std::chrono::high_resolution_clock;
+struct WebSection{ std::string tag; std::string text; };
+struct CachedPage{ std::vector<WebSection> sections; };
+static std::unordered_map<std::string, CachedPage> _webCache;
 static std::string url_encode(const char* text){
 	CURL* curl = curl_easy_init();
 	char* enc = curl_easy_escape(curl, text, 0);
@@ -244,3 +247,119 @@ int GenerateWithTools(const unsigned int nPredict, const bool callback){
 	return res;
 }
 void StopGeneration(){ _stop.store(true); }
+
+static std::string json_escape(const std::string& in){
+        std::string out; out.reserve(in.size());
+        for(const char c : in){
+                switch(c){
+                        case '"': out += "\\\""; break;
+                        case '\\': out += "\\\\"; break;
+                        case '\n': out += "\\n"; break;
+                        case '\r': out += "\\r"; break;
+                        case '\t': out += "\\t"; break;
+                        default: out += c; break;
+                }
+        }
+        return out;
+}
+
+static std::string get_json_value(const char* json, const char* key){
+        if(!json||!key) return "";
+        const char* p = strstr(json, key);
+        if(!p) return "";
+        p = strchr(p, ':');
+        if(!p) return "";
+        ++p;
+        while(*p==' '||*p=='\t') ++p;
+        if(*p=='\"'){
+                ++p;
+                const char* end = strchr(p, '\"');
+                if(end&&end>p) return std::string(p, end);
+        } else{
+                const char* end = p;
+                while(*end&&*end!=','&&*end!='}'&&*end!=' ') ++end;
+                if(end>p) return std::string(p, end);
+        }
+        return "";
+}
+
+static void parse_sections(const std::string& html, CachedPage& page){
+        std::string cleaned = std::regex_replace(html, std::regex("<(script|style)[^>]*?>.*?</\\s*\\1\\s*>", std::regex::icase|std::regex::dotall), " ");
+        std::regex section_re("<(p|h[1-6]|li|title|article|section)[^>]*>(.*?)</\\s*\\1\\s*>", std::regex::icase|std::regex::dotall);
+        std::regex tag_re("<[^>]+>");
+        std::regex ws_re("\\s+");
+        auto it = cleaned.cbegin();
+        std::smatch m;
+        while(std::regex_search(it, cleaned.cend(), m, section_re)){
+                std::string tag = m[1].str();
+                std::string txt = std::regex_replace(m[2].str(), tag_re, " ");
+                txt = std::regex_replace(txt, ws_re, " ");
+                size_t s = txt.find_first_not_of(' ');
+                size_t e = txt.find_last_not_of(' ');
+                if(s!=std::string::npos&&e!=std::string::npos){
+                        txt = txt.substr(s, e-s+1);
+                        if(!txt.empty()) page.sections.push_back({tag, txt});
+                }
+                it = m.suffix().first;
+        }
+}
+
+static char* make_json(const std::string& s){
+        char* out = static_cast<char*>(std::malloc(s.size()+1));
+        if(out) std::memcpy(out, s.c_str(), s.size()+1);
+        return out;
+}
+
+const char* FetchWebpage(const char* argsJson){
+        std::string url = get_json_value(argsJson, "url");
+        if(url.empty()) url = argsJson ? argsJson : "";
+        char* res = PerformHttpGet(url.c_str());
+        if(!res) return nullptr;
+        std::string html(res);
+        FreeMemory(res);
+        CachedPage page; parse_sections(html, page);
+        _webCache[url] = page;
+        std::string json = "{\"url\":\""+json_escape(url)+"\",\"sections\":";
+        json += "[";
+        for(size_t i=0;i<page.sections.size();++i){
+                auto& sec = page.sections[i];
+                std::string snippet = sec.text.substr(0,80);
+                if(sec.text.size()>80) snippet += "...";
+                json += "{\"id\":"+std::to_string(i)+",\"tag\":\""+sec.tag+"\",\"snippet\":\""+json_escape(snippet)+"\"}";
+                if(i+1<page.sections.size()) json += ",";
+        }
+        json += "]}";
+        return make_json(json);
+}
+
+const char* BrowseWebCache(const char* argsJson){
+        std::string url = get_json_value(argsJson, "url");
+        if(url.empty()) url = argsJson ? argsJson : "";
+        auto it = _webCache.find(url);
+        if(it==_webCache.end()) return make_json("{\"error\":\"not cached\"}");
+        const auto& page = it->second;
+        std::string json = "{\"url\":\""+json_escape(url)+"\",\"sections\":";
+        json += "[";
+        for(size_t i=0;i<page.sections.size();++i){
+                auto& sec = page.sections[i];
+                std::string snippet = sec.text.substr(0,80);
+                if(sec.text.size()>80) snippet += "...";
+                json += "{\"id\":"+std::to_string(i)+",\"tag\":\""+sec.tag+"\",\"snippet\":\""+json_escape(snippet)+"\"}";
+                if(i+1<page.sections.size()) json += ",";
+        }
+        json += "]}";
+        return make_json(json);
+}
+
+const char* GetWebSection(const char* argsJson){
+        std::string url = get_json_value(argsJson, "url");
+        std::string idStr = get_json_value(argsJson, "id");
+        if(url.empty()) url = argsJson ? argsJson : "";
+        int id = idStr.empty() ? -1 : std::stoi(idStr);
+        auto it = _webCache.find(url);
+        if(it==_webCache.end()||id<0||id>=static_cast<int>(it->second.sections.size()))
+                return make_json("{\"error\":\"not found\"}");
+        return make_json(json_escape(it->second.sections[id].text));
+}
+
+void ClearWebCache(){ _webCache.clear(); }
