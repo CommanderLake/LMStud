@@ -47,7 +47,7 @@ const char* GoogleSearch(const char* argsJson){
 	}
 	std::string query;
 	if(queryStart&&queryEnd&&queryEnd>queryStart){ query.assign(queryStart, queryEnd); } else{ query = argsJson ? argsJson : ""; }
-	return PerformHttpGet(("https://customsearch.googleapis.com/customsearch/v1?key="+googleAPIKey+"&cx="+googleSearchID+"&num=5&fields=items(title,link,snippet)&prettyPrint=false&q="+url_encode(query.c_str())).c_str());
+	return PerformHttpGet(("https://customsearch.googleapis.com/customsearch/v1?key="+googleAPIKey+"&cx="+googleSearchID+"&num=5&fields=items(title,link,snippet)&prettyPrint=true&q="+url_encode(query.c_str())).c_str());
 }
 void SetGoogle(const char* apiKey, const char* searchEngineId){
 	googleAPIKey = apiKey;

@@ -128,7 +128,7 @@ namespace LMStud{
 						}));
 					}
 				} finally{
-					butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = true;
+					Invoke(new MethodInvoker(() => {butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = true;}));
 				}
 			});
 		}
@@ -143,6 +143,7 @@ namespace LMStud{
 				NativeMethods.FreeModel();
 				_modelLoaded = false;
 				Invoke(new MethodInvoker(() => {
+					toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.");
 					toolStripStatusLabel1.Text = "Model unloaded";
 				}));
 			});
