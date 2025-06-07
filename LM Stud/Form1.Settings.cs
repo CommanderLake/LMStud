@@ -32,6 +32,7 @@ namespace LMStud{
 		private string _googleAPIKey;
 		private string _googleSearchID;
 		private bool _googleSearchEnable;
+		private bool _webpageFetchEnable;
 		private void LoadConfig(){
 			_instruction = textInstruction.Text = Settings.Default.Instruction;
 			_modelsPath = textModelsPath.Text = Settings.Default.ModelsDir;
@@ -59,6 +60,7 @@ namespace LMStud{
 			_googleAPIKey = textGoogleApiKey.Text = Settings.Default.GoogleAPIKey;
 			_googleSearchID = textGoogleSearchID.Text = Settings.Default.GoogleSearchID;
 			_googleSearchEnable = checkGoogleEnable.Checked = Settings.Default.GoogleSearchEnable;
+			_webpageFetchEnable = checkWebpageFetchEnable.Checked = Settings.Default.WebpageFetchEnable;
 			NativeMethods.SetWakeCommand(_wakeWord);
 			NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
 			NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID);
@@ -123,6 +125,12 @@ namespace LMStud{
 			});
 			UpdateSetting(ref _googleSearchEnable, checkGoogleEnable.Checked, value => {
 				Settings.Default.GoogleSearchEnable = value;
+				if(!_modelLoaded) return;
+				RegisterTools();
+				NativeMethods.RetokenizeChat();
+			});
+			UpdateSetting(ref _webpageFetchEnable, checkWebpageFetchEnable.Checked, value => {
+				Settings.Default.WebpageFetchEnable = value;
 				if(!_modelLoaded) return;
 				RegisterTools();
 				NativeMethods.RetokenizeChat();

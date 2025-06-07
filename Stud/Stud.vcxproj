@@ -148,6 +148,7 @@ xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\
     <ClInclude Include="hug.h" />
     <ClInclude Include="speech.h" />
     <ClInclude Include="stud.h" />
+    <ClInclude Include="tools.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-sdl.cpp" />
@@ -155,6 +156,7 @@ xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\
     <ClCompile Include="MarkdownRTFConverter.cpp" />
     <ClCompile Include="speech.cpp" />
     <ClCompile Include="stud.cpp" />
+    <ClCompile Include="tools.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

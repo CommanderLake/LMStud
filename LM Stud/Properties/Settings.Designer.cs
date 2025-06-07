@@ -370,5 +370,17 @@ namespace LMStud.Properties {
                 this["GoogleSearchEnable"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool WebpageFetchEnable {
+            get {
+                return ((bool)(this["WebpageFetchEnable"]));
+            }
+            set {
+                this["WebpageFetchEnable"] = value;
+            }
+        }
     }
 }

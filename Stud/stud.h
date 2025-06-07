@@ -27,13 +27,12 @@ inline int _nConsumed = 0;
 inline std::vector<common_chat_tool> _tools;
 inline std::unordered_map<std::string, char*(*)(const char*)> _toolHandlers;
 inline common_chat_format _chatFormat = COMMON_CHAT_FORMAT_CONTENT_ONLY;
-inline std::string googleAPIKey;
-inline std::string googleSearchID;
-extern "C"{
+extern "C" {
 	EXPORT void BackendInit();
 	EXPORT void ResetChat();
 	EXPORT void FreeModel();
-	EXPORT bool LoadModel(const char* filename, const char* systemPrompt, int nCtx, float temp, float repeatPenalty, int topK, int topP, int nThreads, bool strictCPU, int nThreadsBatch, bool strictCPUBatch, int nGPULayers, int nBatch, bool mMap, bool mLock, ggml_numa_strategy numaStrategy, bool flashAttn);
+	EXPORT bool LoadModel(const char* filename, const char* systemPrompt, int nCtx, float temp, float repeatPenalty, int topK, int topP, int nThreads, bool strictCPU, int nThreadsBatch, bool strictCPUBatch, int nGPULayers, int nBatch, bool mMap,
+						bool mLock, ggml_numa_strategy numaStrategy, bool flashAttn);
 	EXPORT void SetTokenCallback(TokenCallbackFn cb);
 	EXPORT void SetThreadCount(int n, int nBatch);
 	EXPORT int AddMessage(bool user, const char* message);
@@ -41,16 +40,10 @@ extern "C"{
 	EXPORT void SetSystemPrompt(const char* prompt);
 	EXPORT void SetMessageAt(int index, const char* message);
 	EXPORT void RemoveMessageAt(int index);
-    EXPORT void RemoveMessagesStartingAt(int index);
-    EXPORT int Generate(unsigned int nPredict, bool callback);
-    EXPORT int GenerateWithTools(unsigned int nPredict, bool callback);
-	EXPORT const char* GoogleSearch(const char* query);
-	EXPORT void SetGoogle(const char* apiKey, const char* searchEngineId);
-    EXPORT void AddTool(const char* name, const char* description, const char* parameters, char*(*handler)(const char* args));
-    EXPORT void ClearTools();
-    EXPORT void StopGeneration();
-    EXPORT const char* FetchWebpage(const char* argsJson);
-    EXPORT const char* BrowseWebCache(const char* argsJson);
-    EXPORT const char* GetWebSection(const char* argsJson);
-    EXPORT void ClearWebCache();
+	EXPORT void RemoveMessagesStartingAt(int index);
+	EXPORT int Generate(unsigned int nPredict, bool callback);
+	EXPORT int GenerateWithTools(unsigned int nPredict, bool callback);
+	EXPORT void AddTool(const char* name, const char* description, const char* parameters, char*(*handler)(const char* args));
+	EXPORT void ClearTools();
+	EXPORT void StopGeneration();
 }

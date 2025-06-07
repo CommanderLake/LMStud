@@ -42,6 +42,7 @@
 			this.tabPage1 = new System.Windows.Forms.TabPage();
 			this.tabPage2 = new System.Windows.Forms.TabPage();
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
+			this.checkGoogleEnable = new System.Windows.Forms.CheckBox();
 			this.label20 = new System.Windows.Forms.Label();
 			this.label19 = new System.Windows.Forms.Label();
 			this.textGoogleSearchID = new System.Windows.Forms.TextBox();
@@ -130,7 +131,8 @@
 			this.labelTPS = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-			this.checkGoogleEnable = new System.Windows.Forms.CheckBox();
+			this.groupBox3 = new System.Windows.Forms.GroupBox();
+			this.checkWebpageFetchEnable = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -167,6 +169,7 @@
 			this.splitContainer3.Panel2.SuspendLayout();
 			this.splitContainer3.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
+			this.groupBox3.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// textInput
@@ -346,6 +349,7 @@
 			// 
 			// tabPage2
 			// 
+			this.tabPage2.Controls.Add(this.groupBox3);
 			this.tabPage2.Controls.Add(this.groupBox2);
 			this.tabPage2.Controls.Add(this.groupBox1);
 			this.tabPage2.Controls.Add(this.groupCPUParamsBatch);
@@ -379,6 +383,17 @@
 			this.groupBox2.TabIndex = 38;
 			this.groupBox2.TabStop = false;
 			this.groupBox2.Text = "Google Search Tool";
+			// 
+			// checkGoogleEnable
+			// 
+			this.checkGoogleEnable.AutoSize = true;
+			this.checkGoogleEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkGoogleEnable.Location = new System.Drawing.Point(135, 14);
+			this.checkGoogleEnable.Name = "checkGoogleEnable";
+			this.checkGoogleEnable.Size = new System.Drawing.Size(59, 17);
+			this.checkGoogleEnable.TabIndex = 4;
+			this.checkGoogleEnable.Text = "Enable";
+			this.checkGoogleEnable.UseVisualStyleBackColor = true;
 			// 
 			// label20
 			// 
@@ -1433,16 +1448,26 @@
 			this.toolTip1.UseAnimation = false;
 			this.toolTip1.UseFading = false;
 			// 
-			// checkGoogleEnable
+			// groupBox3
 			// 
-			this.checkGoogleEnable.AutoSize = true;
-			this.checkGoogleEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkGoogleEnable.Location = new System.Drawing.Point(135, 14);
-			this.checkGoogleEnable.Name = "checkGoogleEnable";
-			this.checkGoogleEnable.Size = new System.Drawing.Size(59, 17);
-			this.checkGoogleEnable.TabIndex = 4;
-			this.checkGoogleEnable.Text = "Enable";
-			this.checkGoogleEnable.UseVisualStyleBackColor = true;
+			this.groupBox3.Controls.Add(this.checkWebpageFetchEnable);
+			this.groupBox3.Location = new System.Drawing.Point(209, 434);
+			this.groupBox3.Name = "groupBox3";
+			this.groupBox3.Size = new System.Drawing.Size(200, 52);
+			this.groupBox3.TabIndex = 39;
+			this.groupBox3.TabStop = false;
+			this.groupBox3.Text = "Webpage Fetch Tool";
+			// 
+			// checkWebpageFetchEnable
+			// 
+			this.checkWebpageFetchEnable.AutoSize = true;
+			this.checkWebpageFetchEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkWebpageFetchEnable.Location = new System.Drawing.Point(135, 21);
+			this.checkWebpageFetchEnable.Name = "checkWebpageFetchEnable";
+			this.checkWebpageFetchEnable.Size = new System.Drawing.Size(59, 17);
+			this.checkWebpageFetchEnable.TabIndex = 0;
+			this.checkWebpageFetchEnable.Text = "Enable";
+			this.checkWebpageFetchEnable.UseVisualStyleBackColor = true;
 			// 
 			// Form1
 			// 
@@ -1507,6 +1532,8 @@
 			this.splitContainer3.ResumeLayout(false);
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();
+			this.groupBox3.ResumeLayout(false);
+			this.groupBox3.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -1617,6 +1644,8 @@
 		private System.Windows.Forms.TextBox textGoogleSearchID;
 		private System.Windows.Forms.TextBox textGoogleApiKey;
 		private System.Windows.Forms.CheckBox checkGoogleEnable;
+		private System.Windows.Forms.GroupBox groupBox3;
+		private System.Windows.Forms.CheckBox checkWebpageFetchEnable;
 	}
 }
 

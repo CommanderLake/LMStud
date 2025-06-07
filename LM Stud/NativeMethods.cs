@@ -63,17 +63,17 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void ClearTools();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-                public static extern void StopGeneration();
-                [DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-                public static extern IntPtr FetchWebpage([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
-                [DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-                public static extern IntPtr BrowseWebCache([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
-                [DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-                public static extern IntPtr GetWebSection([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
-                [DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-                public static extern void ClearWebCache();
-                [DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-                public static extern unsafe void ConvertMarkdownToRtf([MarshalAs(UnmanagedType.LPUTF8Str)] string markdown, ref byte* rtfOut, ref int rtfLen);
+		public static extern void StopGeneration();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern IntPtr FetchWebpage([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern IntPtr BrowseWebCache([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern IntPtr GetWebSection([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void ClearWebCache();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern unsafe void ConvertMarkdownToRtf([MarshalAs(UnmanagedType.LPUTF8Str)] string markdown, ref byte* rtfOut, ref int rtfLen);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetWhisperCallback(WhisperCallback cb);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

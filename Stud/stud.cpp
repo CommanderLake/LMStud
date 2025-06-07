@@ -5,57 +5,7 @@
 #include <chrono>
 #include <regex>
 #include <unordered_map>
-#include <curl\curl.h>
-using hr_clock = std::chrono::high_resolution_clock;
-struct WebSection{ std::string tag; std::string text; };
-struct CachedPage{ std::vector<WebSection> sections; };
-static std::unordered_map<std::string, CachedPage> _webCache;
-static std::string url_encode(const char* text){
-	CURL* curl = curl_easy_init();
-	char* enc = curl_easy_escape(curl, text, 0);
-	std::string out = enc ? enc : "";
-	curl_free(enc);
-	curl_easy_cleanup(curl);
-	return out;
-}
-void ClearTools(){
-	_tools.clear();
-	_toolHandlers.clear();
-}
-void AddTool(const char* name, const char* description, const char* parameters, char*(*handler)(const char* args)){
-	if(!name) return;
-	common_chat_tool t;
-	t.name = name;
-	if(description) t.description = description;
-	if(parameters) t.parameters = parameters;
-	_tools.push_back(t);
-	if(handler) _toolHandlers[name] = handler;
-}
-const char* GoogleSearch(const char* argsJson){
-	const char* queryStart = nullptr;
-	const char* queryEnd = nullptr;
-	if(argsJson){
-		const char* p = strstr(argsJson, "\"query\"");
-		if(p){
-			p = strchr(p, ':');
-			if(p){
-				++p;
-				while(*p==' '||*p=='\t') ++p;
-				if(*p=='\"'){
-					queryStart = ++p;
-					queryEnd = strchr(queryStart, '\"');
-				}
-			}
-		}
-	}
-	std::string query;
-	if(queryStart&&queryEnd&&queryEnd>queryStart){ query.assign(queryStart, queryEnd); } else{ query = argsJson ? argsJson : ""; }
-	return PerformHttpGet(("https://customsearch.googleapis.com/customsearch/v1?key="+googleAPIKey+"&cx="+googleSearchID+"&num=5&fields=items(title,link,snippet)&prettyPrint=true&q="+url_encode(query.c_str())).c_str());
-}
-void SetGoogle(const char* apiKey, const char* searchEngineId){
-	googleAPIKey = apiKey;
-	googleSearchID = searchEngineId;
-}
+using HrClock = std::chrono::high_resolution_clock;
 void BackendInit(){
 	_putenv("OMP_PROC_BIND=close");
 	ggml_backend_load("ggml-cpu.dll");
@@ -119,6 +69,19 @@ bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, c
 	if(!_smpl) return false;
 	return true;
 }
+void AddTool(const char* name, const char* description, const char* parameters, char*(*handler)(const char* args)){
+	if(!name) return;
+	common_chat_tool t;
+	t.name = name;
+	if(description) t.description = description;
+	if(parameters) t.parameters = parameters;
+	_tools.push_back(t);
+	if(handler) _toolHandlers[name] = handler;
+}
+void ClearTools(){
+	_tools.clear();
+	_toolHandlers.clear();
+}
 void SetTokenCallback(const TokenCallbackFn cb){ _tokenCb = cb; }
 void SetThreadCount(int n, int nBatch){ if(_ctx) llama_set_n_threads(_ctx, n, nBatch); }
 int AddMessage(std::string role, std::string message){
@@ -135,7 +98,7 @@ int AddMessage(std::string role, std::string message){
 }
 int AddMessage(const bool user, const char* message){ return AddMessage(std::string(user ? "user" : "assistant"), std::string(message)); }
 void RetokenizeChat(){
-	if(!_ctx || !_vocab) return;
+	if(!_ctx||!_vocab) return;
 	llama_kv_self_clear(_ctx);
 	_tokens.clear();
 	std::vector<common_chat_msg> msgs;
@@ -178,7 +141,7 @@ void RemoveMessagesStartingAt(int index){
 	RetokenizeChat();
 }
 int Generate(const unsigned int nPredict, const bool callback){
-	const auto prepStart = hr_clock::now();
+	const auto prepStart = HrClock::now();
 	_stop.store(false);
 	const TokenCallbackFn cb = _tokenCb;
 	std::vector<llama_token> embd;
@@ -208,7 +171,7 @@ int Generate(const unsigned int nPredict, const bool callback){
 			++i;
 			const llama_token id = common_sampler_last(_smpl);
 			std::string tokenStr = common_token_to_piece(_ctx, id, false);
-			if(ftTime==0.0) ftTime = std::chrono::duration<double, std::ratio<1, 1>>(hr_clock::now()-prepStart).count();
+			if(ftTime==0.0) ftTime = std::chrono::duration<double, std::ratio<1, 1>>(HrClock::now()-prepStart).count();
 			if(!tokenStr.empty()){
 				assMsg<<tokenStr;
 				if(cb&&callback) cb(tokenStr.c_str(), static_cast<int>(tokenStr.length()), 1, static_cast<int>(_tokens.size()+i), ftTime, false);
@@ -235,7 +198,7 @@ int GenerateWithTools(const unsigned int nPredict, const bool callback){
 			auto it = _toolHandlers.find(tc.name);
 			if(it!=_toolHandlers.end()){
 				const auto result = it->second(tc.arguments.c_str());
-				const bool gotResult = result != nullptr;
+				const bool gotResult = result!=nullptr;
 				std::string resultStr = gotResult ? result : "";
 				FreeMemory(result);
 				AddMessage(std::string("tool"), resultStr);
@@ -247,119 +210,3 @@ int GenerateWithTools(const unsigned int nPredict, const bool callback){
 	return res;
 }
 void StopGeneration(){ _stop.store(true); }
-
-static std::string json_escape(const std::string& in){
-        std::string out; out.reserve(in.size());
-        for(const char c : in){
-                switch(c){
-                        case '"': out += "\\\""; break;
-                        case '\\': out += "\\\\"; break;
-                        case '\n': out += "\\n"; break;
-                        case '\r': out += "\\r"; break;
-                        case '\t': out += "\\t"; break;
-                        default: out += c; break;
-                }
-        }
-        return out;
-}
-
-static std::string get_json_value(const char* json, const char* key){
-        if(!json||!key) return "";
-        const char* p = strstr(json, key);
-        if(!p) return "";
-        p = strchr(p, ':');
-        if(!p) return "";
-        ++p;
-        while(*p==' '||*p=='\t') ++p;
-        if(*p=='\"'){
-                ++p;
-                const char* end = strchr(p, '\"');
-                if(end&&end>p) return std::string(p, end);
-        } else{
-                const char* end = p;
-                while(*end&&*end!=','&&*end!='}'&&*end!=' ') ++end;
-                if(end>p) return std::string(p, end);
-        }
-        return "";
-}
-
-static void parse_sections(const std::string& html, CachedPage& page){
-        std::string cleaned = std::regex_replace(html, std::regex("<(script|style)[^>]*?>.*?</\\s*\\1\\s*>", std::regex::icase|std::regex::dotall), " ");
-        std::regex section_re("<(p|h[1-6]|li|title|article|section)[^>]*>(.*?)</\\s*\\1\\s*>", std::regex::icase|std::regex::dotall);
-        std::regex tag_re("<[^>]+>");
-        std::regex ws_re("\\s+");
-        auto it = cleaned.cbegin();
-        std::smatch m;
-        while(std::regex_search(it, cleaned.cend(), m, section_re)){
-                std::string tag = m[1].str();
-                std::string txt = std::regex_replace(m[2].str(), tag_re, " ");
-                txt = std::regex_replace(txt, ws_re, " ");
-                size_t s = txt.find_first_not_of(' ');
-                size_t e = txt.find_last_not_of(' ');
-                if(s!=std::string::npos&&e!=std::string::npos){
-                        txt = txt.substr(s, e-s+1);
-                        if(!txt.empty()) page.sections.push_back({tag, txt});
-                }
-                it = m.suffix().first;
-        }
-}
-
-static char* make_json(const std::string& s){
-        char* out = static_cast<char*>(std::malloc(s.size()+1));
-        if(out) std::memcpy(out, s.c_str(), s.size()+1);
-        return out;
-}
-
-const char* FetchWebpage(const char* argsJson){
-        std::string url = get_json_value(argsJson, "url");
-        if(url.empty()) url = argsJson ? argsJson : "";
-        char* res = PerformHttpGet(url.c_str());
-        if(!res) return nullptr;
-        std::string html(res);
-        FreeMemory(res);
-        CachedPage page; parse_sections(html, page);
-        _webCache[url] = page;
-        std::string json = "{\"url\":\""+json_escape(url)+"\",\"sections\":";
-        json += "[";
-        for(size_t i=0;i<page.sections.size();++i){
-                auto& sec = page.sections[i];
-                std::string snippet = sec.text.substr(0,80);
-                if(sec.text.size()>80) snippet += "...";
-                json += "{\"id\":"+std::to_string(i)+",\"tag\":\""+sec.tag+"\",\"snippet\":\""+json_escape(snippet)+"\"}";
-                if(i+1<page.sections.size()) json += ",";
-        }
-        json += "]}";
-        return make_json(json);
-}
-
-const char* BrowseWebCache(const char* argsJson){
-        std::string url = get_json_value(argsJson, "url");
-        if(url.empty()) url = argsJson ? argsJson : "";
-        auto it = _webCache.find(url);
-        if(it==_webCache.end()) return make_json("{\"error\":\"not cached\"}");
-        const auto& page = it->second;
-        std::string json = "{\"url\":\""+json_escape(url)+"\",\"sections\":";
-        json += "[";
-        for(size_t i=0;i<page.sections.size();++i){
-                auto& sec = page.sections[i];
-                std::string snippet = sec.text.substr(0,80);
-                if(sec.text.size()>80) snippet += "...";
-                json += "{\"id\":"+std::to_string(i)+",\"tag\":\""+sec.tag+"\",\"snippet\":\""+json_escape(snippet)+"\"}";
-                if(i+1<page.sections.size()) json += ",";
-        }
-        json += "]}";
-        return make_json(json);
-}
-
-const char* GetWebSection(const char* argsJson){
-        std::string url = get_json_value(argsJson, "url");
-        std::string idStr = get_json_value(argsJson, "id");
-        if(url.empty()) url = argsJson ? argsJson : "";
-        int id = idStr.empty() ? -1 : std::stoi(idStr);
-        auto it = _webCache.find(url);
-        if(it==_webCache.end()||id<0||id>=static_cast<int>(it->second.sections.size()))
-                return make_json("{\"error\":\"not found\"}");
-        return make_json(json_escape(it->second.sections[id].text));
-}
-
-void ClearWebCache(){ _webCache.clear(); }

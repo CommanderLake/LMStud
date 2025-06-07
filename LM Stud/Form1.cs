@@ -135,6 +135,7 @@ namespace LMStud{
 		}
 		private void ButReset_Click(object sender, EventArgs e){
 			NativeMethods.ResetChat();
+			NativeMethods.ClearWebCache();
 			panelChat.SuspendLayout();
 			foreach(var message in _chatMessages) message.Dispose();
 			panelChat.ResumeLayout();
