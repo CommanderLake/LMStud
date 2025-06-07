@@ -95,9 +95,7 @@ namespace LMStud{
 						NativeMethods.StopGeneration();
 						while(_generating) Thread.Sleep(10);
 					}
-					if(_whisperInited){
-						NativeMethods.StopSpeechTranscription();
-					}
+					if(_whisperInited) NativeMethods.StopSpeechTranscription();
 					var modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
 					if(modelCtxMax <= 0) _cntCtxMax = _ctxSize;
 					else _cntCtxMax = _ctxSize > modelCtxMax ? modelCtxMax : _ctxSize;

@@ -2,12 +2,14 @@
 using System.Runtime.InteropServices;
 namespace LMStud{
 	internal static class NativeMethods{
-		private const string DLLName = "stud";
-		public const int WM_USER = 0x400;
-		public const int EM_SETSCROLLPOS = WM_USER + 222;
-		public const int WM_VSCROLL = 0x115;
-		public const int SB_BOTTOM = 7;
-		public const int EM_SETSEL = 0xB1;
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		public delegate int ProgressCallback(long totalBytes, long downloadedBytes);
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		public unsafe delegate void TokenCallback(byte* strPtr, int strLen, int tokenCount, int tokensTotal, double ftTime, bool tool);
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		public delegate IntPtr ToolHandler([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		public delegate void WhisperCallback(string transcription);
 		public enum GgmlNumaStrategy{
 			Disabled = 0,
 			Distribute = 1,
@@ -16,13 +18,17 @@ namespace LMStud{
 			Mirror = 4,
 			Count
 		}
-                [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-                public unsafe delegate void TokenCallback(byte* strPtr, int strLen, int tokens, int tokensTotal, double ftTime, IntPtr rolePtr);
+		private const string DLLName = "stud";
+		public const int WM_USER = 0x400;
+		public const int EM_SETSCROLLPOS = WM_USER + 222;
+		public const int WM_VSCROLL = 0x115;
+		public const int SB_BOTTOM = 7;
+		public const int EM_SETSEL = 0xB1;
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void BackendInit();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern bool LoadModel(string filename, [MarshalAs(UnmanagedType.LPUTF8Str)] string systemPrompt, int nCtx, float temp, float repeatPenalty, int topK, float topP, int nThreads, bool strictCPU, int nThreadsBatch,
-			bool strictCPUBatch, int nGPULayers, int nBatch, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy, bool flashAttn);
+		public static extern bool LoadModel(string filename, [MarshalAs(UnmanagedType.LPUTF8Str)] string systemPrompt, int nCtx, float temp, float repeatPenalty, int topK, float topP, int nThreads,
+			bool strictCPU, int nThreadsBatch, bool strictCPUBatch, int nGPULayers, int nBatch, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy, bool flashAttn);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void FreeModel();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -51,19 +57,15 @@ namespace LMStud{
 		public static extern IntPtr GoogleSearch([MarshalAs(UnmanagedType.LPUTF8Str)] string query);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetGoogle(string apiKey, string searchEngineID);
-		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-		public delegate IntPtr ToolHandler([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void AddTool([MarshalAs(UnmanagedType.LPUTF8Str)] string name, [MarshalAs(UnmanagedType.LPUTF8Str)] string description, [MarshalAs(UnmanagedType.LPUTF8Str)] string parameters, ToolHandler handler);
+		public static extern void AddTool([MarshalAs(UnmanagedType.LPUTF8Str)] string name, [MarshalAs(UnmanagedType.LPUTF8Str)] string description,
+			[MarshalAs(UnmanagedType.LPUTF8Str)] string parameters, ToolHandler handler);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void ClearTools();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopGeneration();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern unsafe void ConvertMarkdownToRtf([MarshalAs(UnmanagedType.LPUTF8Str)] string markdown, ref byte* rtfOut, ref int rtfLen);
-
-		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-		public delegate void WhisperCallback(string transcription);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetWhisperCallback(WhisperCallback cb);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -80,9 +82,6 @@ namespace LMStud{
 		public static extern void SetVADThresholds(float vadThreshold, float freqThreshold);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetVoiceDuration(int voiceDuration);
-
-		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-		public delegate int ProgressCallback(long totalBytes, long downloadedBytes);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 		public static extern IntPtr PerformHttpGet(string url);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
@@ -95,7 +94,6 @@ namespace LMStud{
 		public static extern void CurlGlobalInit();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void CurlGlobalCleanup();
-
 		[DllImport("user32.dll")]
 		public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wp, IntPtr lp);
 	}

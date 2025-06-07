@@ -3,29 +3,28 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Speech.Synthesis;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
-using System.Runtime.InteropServices;
 using LMStud.Properties;
 namespace LMStud{
 	internal partial class Form1 : Form{
 		private static Form1 _this;
 		private static NativeMethods.TokenCallback _tokenCallback;
 		private static NativeMethods.WhisperCallback _whisperCallback;
-		private int _msgTokenCount;
+		private readonly List<ChatMessage> _chatMessages = new List<ChatMessage>();
+		private readonly StringBuilder _speechBuffer = new StringBuilder();
 		private readonly Stopwatch _swRate = new Stopwatch();
 		private readonly Stopwatch _swTot = new Stopwatch();
-		private volatile bool _generating;
-		private volatile bool _rendering;
-		private readonly List<ChatMessage> _chatMessages = new List<ChatMessage>();
-		private ChatMessage _cntAssMsg;
-		private readonly StringBuilder _speechBuffer = new StringBuilder();
-		private bool _whisperInited;
-		private bool _first = true;
 		private readonly SpeechSynthesizer _tts = new SpeechSynthesizer();
+		private ChatMessage _cntAssMsg;
+		private bool _first = true;
+		private volatile bool _generating;
+		private int _msgTokenCount;
+		private volatile bool _rendering;
+		private bool _whisperInited;
 		internal Form1(){
 			_this = this;
 			InitializeComponent();
@@ -58,7 +57,7 @@ namespace LMStud{
 			toolTip1.SetToolTip(checkSpeak, "Speak the generated responses using the computers default voice.");
 			toolTip1.SetToolTip(checkVoiceInput, "An intermediate check state (filled in) means it will transcribe spoken words without generating, when checked it will automatically generate.");
 		}
-		private void Form1_Load(object sender, EventArgs e) {
+		private void Form1_Load(object sender, EventArgs e){
 			NativeMethods.CurlGlobalInit();
 			PopulateModels();
 			PopulateWhisperModels();
@@ -67,7 +66,7 @@ namespace LMStud{
 			checkLoadAuto.Checked = true;
 			ThreadPool.QueueUserWorkItem(o => {
 				while(_populating) Thread.Sleep(10);
-				for(var i = 0; i < _models.Count; i++) {
+				for(var i = 0; i < _models.Count; i++){
 					var model = _models[i];
 					if(model.FilePath != Settings.Default.LastModel) continue;
 					Invoke(new MethodInvoker(() => {LoadModel(i, true);}));
@@ -89,9 +88,7 @@ namespace LMStud{
 			if(!_generating) return;
 			NativeMethods.StopGeneration();
 		}
-		private void ButCodeBlock_Click(object sender, EventArgs e) {
-			textInput.Paste("```\r\n\r\n```");
-		}
+		private void ButCodeBlock_Click(object sender, EventArgs e){textInput.Paste("```\r\n\r\n```");}
 		private void CheckMarkdown_CheckedChanged(object sender, EventArgs e){
 			foreach(var message in _chatMessages) message.Markdown = checkMarkdown.Checked;
 		}
@@ -127,7 +124,7 @@ namespace LMStud{
 				_whisperInited = false;
 			}
 		}
-		private void CheckSpeak_CheckedChanged(object sender, EventArgs e) {
+		private void CheckSpeak_CheckedChanged(object sender, EventArgs e){
 			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			Settings.Default.Save();
 		}
@@ -192,9 +189,7 @@ namespace LMStud{
 			cm.Editing = false;
 			cm.Markdown = checkMarkdown.Checked;
 		}
-		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){
-			NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)((e.Delta/8 << 16) & 0xffff0000), IntPtr.Zero);
-		}
+		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)(((e.Delta/8) << 16) & 0xffff0000), IntPtr.Zero);}
 		private ChatMessage AddMessage(bool user, string message){
 			var cm = new ChatMessage(user, message, checkMarkdown.Checked);
 			cm.Width = panelChat.ClientSize.Width;
@@ -209,11 +204,9 @@ namespace LMStud{
 			_chatMessages.Add(cm);
 			return cm;
 		}
-		private void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){
-			Process.Start(e.LinkText);
-		}
+		private void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){Process.Start(e.LinkText);}
 		private void Generate(bool regenerating){
-			if(!_modelLoaded || _generating || !regenerating && string.IsNullOrWhiteSpace(textInput.Text)) return;
+			if(!_modelLoaded || _generating || (!regenerating && string.IsNullOrWhiteSpace(textInput.Text))) return;
 			_generating = true;
 			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
 			butGen.Text = "Stop";
@@ -225,8 +218,8 @@ namespace LMStud{
 				cm.Width = panelChat.ClientSize.Width;
 				NativeMethods.AddMessage(true, msg);
 			}
-                        _cntAssMsg = null;
-                        NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
+			_cntAssMsg = null;
+			NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
 			foreach(var message in _chatMessages) message.Generating = true;
 			textInput.Text = "";
 			_tts.SpeakAsyncCancelAll();
@@ -260,53 +253,54 @@ namespace LMStud{
 			});
 		}
 		private static int FindSentenceEnd(StringBuilder sb){
-			for(var i = 0; i < sb.Length - 1; i++) if((sb[i] == '.' || sb[i] == '!' || sb[i] == '?') && char.IsWhiteSpace(sb[i + 1])) return i;
+			for(var i = 0; i < sb.Length - 1; i++)
+				if((sb[i] == '.' || sb[i] == '!' || sb[i] == '?') && char.IsWhiteSpace(sb[i + 1]))
+					return i;
 			return -1;
 		}
-                private static unsafe void TokenCallback(byte* strPtr, int strLen, int tokens, int tokensTotal, double ftTime, IntPtr rolePtr){
-                        var tokenStr = Encoding.UTF8.GetString(strPtr, strLen);
-                        var role = Marshal.PtrToStringUTF8(rolePtr) ?? string.Empty;
-                        if(role == "tool"){
-                                try{
-                                        _this.Invoke(new MethodInvoker(() => {
-                                                var cm = _this.AddMessage(false, tokenStr);
-                                                cm.SetRoleText("Tool");
-                                                cm.Width -= 1;//Workaround for resize issue
-                                                cm.Width = _this.panelChat.ClientSize.Width;
-                                                _this._cntAssMsg = null;
-                                                _this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
-                                                NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
-                                        }));
-                                } catch(ObjectDisposedException){}
-                                return;
-                        }
-                        _this._msgTokenCount += tokens;
-                        var elapsed = _this._swRate.Elapsed.TotalSeconds;
-                        if(elapsed >= 1.0) _this._swRate.Restart();
-                        var renderToken = !_this._rendering;
-                        try{
-                                _this.BeginInvoke((MethodInvoker)(() => {
-                                        try{
-                                                _this._rendering = true;
-                                                if(_this._first){
-                                                        _this.labelPreGen.Text = "First token time: " + ftTime + " s";
-                                                        _this._first = false;
-                                                }
-                                                if(elapsed >= 1.0){
-                                                        var callsPerSecond = _this._msgTokenCount/elapsed;
-                                                        _this.labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
-                                                        _this._msgTokenCount = 0;
-                                                }
-                                                if(_this._cntAssMsg == null){
-                                                        _this._cntAssMsg = _this.AddMessage(false, "");
-                                                        _this._cntAssMsg.Width -= 1;//Workaround for resize issue
-                                                        _this._cntAssMsg.Width = _this.panelChat.ClientSize.Width;
-                                                }
-                                                var lastThink = _this._cntAssMsg.checkThink.Checked;
-                                                _this._cntAssMsg.AppendText(tokenStr, renderToken);
-                                                if(_this._speak && !_this._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(tokenStr)){
-                                                        foreach(var ch in tokenStr.Where(ch => ch != '`' && ch != '*' && ch != '_' && ch != '#')) _this._speechBuffer.Append(ch);
-                                                        int idx;
+		private static unsafe void TokenCallback(byte* strPtr, int strLen, int tokenCount, int tokensTotal, double ftTime, bool tool){
+			var elapsed = _this._swRate.Elapsed.TotalSeconds;
+			if(elapsed >= 1.0) _this._swRate.Restart();
+			var tokenStr = Encoding.UTF8.GetString(strPtr, strLen);
+			if(tool){
+				try{
+					_this.Invoke(new MethodInvoker(() => {
+						var cm = _this.AddMessage(false, tokenStr);
+						cm.SetRoleText("Tool");
+						cm.Width -= 1;//Workaround for resize issue
+						cm.Width = _this.panelChat.ClientSize.Width;
+						_this._cntAssMsg = null;
+						_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
+						NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
+					}));
+				} catch(ObjectDisposedException){}
+				return;
+			}
+			_this._msgTokenCount += tokenCount;
+			var renderToken = !_this._rendering;
+			try{
+				_this.BeginInvoke((MethodInvoker)(() => {
+					try{
+						_this._rendering = true;
+						if(_this._first){
+							_this.labelPreGen.Text = "First token time: " + ftTime + " s";
+							_this._first = false;
+						}
+						if(elapsed >= 1.0){
+							var callsPerSecond = _this._msgTokenCount/elapsed;
+							_this.labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
+							_this._msgTokenCount = 0;
+						}
+						if(_this._cntAssMsg == null){
+							_this._cntAssMsg = _this.AddMessage(false, "");
+							_this._cntAssMsg.Width -= 1;//Workaround for resize issue
+							_this._cntAssMsg.Width = _this.panelChat.ClientSize.Width;
+						}
+						var lastThink = _this._cntAssMsg.checkThink.Checked;
+						_this._cntAssMsg.AppendText(tokenStr, renderToken);
+						if(_this._speak && !_this._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(tokenStr)){
+							foreach(var ch in tokenStr.Where(ch => ch != '`' && ch != '*' && ch != '_' && ch != '#')) _this._speechBuffer.Append(ch);
+							int idx;
 							while((idx = FindSentenceEnd(_this._speechBuffer)) >= 0){
 								var sentence = _this._speechBuffer.ToString(0, idx + 1).Trim();
 								if(!string.IsNullOrWhiteSpace(sentence)) _this._tts.SpeakAsync(sentence);
@@ -329,12 +323,12 @@ namespace LMStud{
 				if(_this.checkVoiceInput.CheckState == CheckState.Checked) _this.Generate(false);
 			}));
 		}
-		private void TextInput_DragEnter(object sender, DragEventArgs e) {
+		private void TextInput_DragEnter(object sender, DragEventArgs e){
 			if(e.Data.GetDataPresent(DataFormats.FileDrop)) e.Effect = DragDropEffects.Copy;
 		}
-		private void TextInput_DragDrop(object sender, DragEventArgs e) {
+		private void TextInput_DragDrop(object sender, DragEventArgs e){
 			var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-			foreach(var filePath in files){
+			foreach(var filePath in files)
 				try{
 					var fileName = Path.GetFileName(filePath);
 					var fileContent = File.ReadAllText(filePath);
@@ -407,7 +401,6 @@ namespace LMStud{
 					}
 					textInput.AppendText($"[FILE] {fileName}\r\n```{contentType}\r\n{fileContent}\r\n```\r\n\r\n");
 				} catch(Exception ex){ MessageBox.Show($"Error reading file: {ex.Message}"); }
-			}
 		}
 	}
 }

@@ -46,12 +46,8 @@ const char* GoogleSearch(const char* argsJson){
 		}
 	}
 	std::string query;
-	if(queryStart&&queryEnd&&queryEnd>queryStart){
-		query.assign(queryStart, queryEnd);
-	} else{
-		query = argsJson ? argsJson : "";
-	}
-	return PerformHttpGet(("https://customsearch.googleapis.com/customsearch/v1?key=" + googleAPIKey + "&cx=" + googleSearchID + "&num=5&fields=items(title,link,snippet)&prettyPrint=false&q=" + url_encode(query.c_str())).c_str());
+	if(queryStart&&queryEnd&&queryEnd>queryStart){ query.assign(queryStart, queryEnd); } else{ query = argsJson ? argsJson : ""; }
+	return PerformHttpGet(("https://customsearch.googleapis.com/customsearch/v1?key="+googleAPIKey+"&cx="+googleSearchID+"&num=5&fields=items(title,link,snippet)&prettyPrint=false&q="+url_encode(query.c_str())).c_str());
 }
 void SetGoogle(const char* apiKey, const char* searchEngineId){
 	googleAPIKey = apiKey;
@@ -123,20 +119,18 @@ bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, c
 void SetTokenCallback(const TokenCallbackFn cb){ _tokenCb = cb; }
 void SetThreadCount(int n, int nBatch){ if(_ctx) llama_set_n_threads(_ctx, n, nBatch); }
 int AddMessage(std::string role, std::string message){
-	if(!_vocab || role.empty()) return 0;
+	if(!_vocab||role.empty()) return 0;
 	const size_t prev = _tokens.size();
 	common_chat_msg newMsg;
 	newMsg.role = role;
 	newMsg.content = message;
-	const auto formatted = common_chat_format_single(_chatTemplates.get(), _chatMsgs, newMsg, !role._Equal("assistant"), _params.use_jinja && role._Equal("assistant"));
+	const auto formatted = common_chat_format_single(_chatTemplates.get(), _chatMsgs, newMsg, !role._Equal("assistant"), _params.use_jinja&&role._Equal("assistant"));
 	_chatMsgs.push_back(newMsg);
 	std::vector<llama_token> toks = common_tokenize(_vocab, formatted, false, true);
 	_tokens.insert(_tokens.end(), toks.begin(), toks.end());
 	return static_cast<int>(_tokens.size()-prev);
 }
-int AddMessage(const bool user, const char* message){
-	return AddMessage(std::string(user ? "user" : "assistant"), std::string(message));
-}
+int AddMessage(const bool user, const char* message){ return AddMessage(std::string(user ? "user" : "assistant"), std::string(message)); }
 void RetokenizeChat(){
 	if(_ctx) llama_kv_self_clear(_ctx);
 	_tokens.clear();
@@ -213,14 +207,14 @@ int Generate(const unsigned int nPredict, const bool callback){
 			if(ftTime==0.0) ftTime = std::chrono::duration<double, std::ratio<1, 1>>(hr_clock::now()-prepStart).count();
 			if(!tokenStr.empty()){
 				assMsg<<tokenStr;
-                                if(cb&&callback) cb(tokenStr.c_str(), static_cast<int>(tokenStr.length()), 1, static_cast<int>(_tokens.size()+i), ftTime, "assistant");
+				if(cb&&callback) cb(tokenStr.c_str(), static_cast<int>(tokenStr.length()), 1, static_cast<int>(_tokens.size()+i), ftTime, false);
 			}
 			if(llama_vocab_is_eog(_vocab, id)) break;
 		}
 		embd.clear();
 	}
-        AddMessage(false, assMsg.str().c_str());
-        if(cb&&!callback) cb(assMsg.str().c_str(), assMsg.str().length(), i, static_cast<int>(_tokens.size()), ftTime, "assistant");
+	AddMessage(false, assMsg.str().c_str());
+	if(cb&&!callback) cb(assMsg.str().c_str(), assMsg.str().length(), i, static_cast<int>(_tokens.size()), ftTime, false);
 	return i;
 }
 int GenerateWithTools(const unsigned int nPredict, const bool callback){
@@ -239,10 +233,8 @@ int GenerateWithTools(const unsigned int nPredict, const bool callback){
 				const auto result = it->second(tc.arguments.c_str());
 				std::string resultStr = result ? result : "";
 				AddMessage(std::string("tool"), resultStr);
-                                if(cb&&callback) cb(resultStr.c_str(), static_cast<int>(resultStr.length()), 0, static_cast<int>(_tokens.size()), 0, "tool");
-				if(result){
-					toolCalled = true;
-				}
+				if(cb&&callback) cb(resultStr.c_str(), static_cast<int>(resultStr.length()), 0, static_cast<int>(_tokens.size()), 0, true);
+				if(result){ toolCalled = true; }
 			}
 		}
 	} while(toolCalled);
