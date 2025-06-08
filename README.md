@@ -11,11 +11,10 @@ This project was born out of frustration with slow bloated embedded web-based GU
 - Simple, intuitive Windows Forms-based chat interface
 - Basic Markdown to RTF conversion for the RichTextBox
 - Seperate display of the thinking process for thinking models
-- Native integration using llama.cpp
-- Minimal resource usage compared to embedded web GUIs
+- Minimal resource usage compared to embedded web based GUIs
 - NEW! Huggingface model search and download!
 - EVEN NEWER! Voice prompting with Whisper.cpp and TTS!
-- Google search and webpage browsing tools for your models
+- EVEN NEWERER!! Google search and webpage browsing!
 
 (Out of date screenshot but you get the idea)
 ![LM Stud Chat Interface](./screenshots/LMStud_Chat.png)
