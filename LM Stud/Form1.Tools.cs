@@ -16,15 +16,15 @@ namespace LMStud{
 			_getSectionHandler = GetSectionHandler;
 			_listSectionsHandler = ListSectionsHandler;
 			if(_googleSearchEnable){
-				NativeMethods.AddTool("web_search", "Search Google and give me the top results so I can immediately feed one to cache_add_page.",
+				NativeMethods.AddTool("web_search", "Search Google and return the top results in JSON format.",
 					"{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]}", _googleHandler);
 			}
 			if(_webpageFetchEnable){
-				NativeMethods.AddTool("cache_add_page", "Download url, store all text blocks locally and return a JSON array 'sections' with {id, preview} objects so I can get a section of text using cache_get_section.",
+				NativeMethods.AddTool("download_webpage", "Download the webpage at url and store sections of text in a local cache, after using this tool you must call page_get_section with a url and section id.",
 					"{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", _addPageHandler);
-				NativeMethods.AddTool("cache_get_section", "Give me the full text of one cached section by url and id that I saw in cache_add_page.",
+				NativeMethods.AddTool("get_text_from_downloaded_webpage", "Return the full text of one section of a webpage from the local cache.",
 					"{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"},\"id\":{\"type\":\"string\"}},\"required\":[\"url\",\"id\"]}", _getSectionHandler);
-				//NativeMethods.AddTool("cache_list_sections", "If I lost track of the previews from cache_add_page, show them again for this url.",
+				//NativeMethods.AddTool("page_list_sections", "List the section cache contents of a previously fetched webpage.",
 				//	"{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", _listSectionsHandler);
 			}
 		}

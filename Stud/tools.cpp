@@ -1,4 +1,7 @@
 #include "tools.h"
+
+#include <charconv>
+
 #include "hug.h"
 #include <regex>
 #include <curl\curl.h>
@@ -77,7 +80,7 @@ static std::string GetJsonValue(const char* json, const char* key){
 }
 static void ParseSections(const std::string& html, CachedPage& page){
 	const std::string cleaned = std::regex_replace(html, std::regex(R"(<(script|style)[^>]*?>[\s\S]*?<\/\s*\1\s*>)", std::regex::icase), " ");
-	const std::regex sectionRe(R"(<(p|h[1-6]|title|article|section)[^>]*>([\s\S]*?)<\/\s*\1\s*>)", std::regex::icase);
+	const std::regex sectionRe(R"(<(p|article|section)[^>]*>([\s\S]*?)<\/\s*\1\s*>)", std::regex::icase);
 	const std::regex tagRe("<[^>]+>");
 	const std::regex wsRe("\\s+");
 	auto it = cleaned.cbegin();
@@ -126,7 +129,11 @@ const char* GetWebSection(const char* argsJson){
 	std::string url = GetJsonValue(argsJson, "url");
 	const std::string idStr = GetJsonValue(argsJson, "id");
 	if(url.empty()) url = argsJson ? argsJson : "";
-	const int id = idStr.empty() ? -1 : std::stoi(idStr);
+	int id = -1;
+	if(!idStr.empty()){
+		const auto res = std::from_chars(idStr.data(), idStr.data() + idStr.size(), id);
+		if(res.ec != std::errc()) id = -1;
+	}
 	const auto it = _webCache.find(url);
 	if(it==_webCache.end()||id<0||id>=static_cast<int>(it->second.sections.size())) return MakeJson("{\"error\":\"not found\"}");
 	return MakeJson(JsonEscape(it->second.sections[id].text));

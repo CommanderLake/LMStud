@@ -6,6 +6,8 @@
 #include <regex>
 #include <unordered_map>
 using HrClock = std::chrono::high_resolution_clock;
+const std::string DEFAULT_PROMPT("Assist the user to the best of your ability.");
+const std::string TOOLS_PROMPT("\nWhen using the tool web_search you must follow these steps:\n 1. Call the tool download_webpage with a url, this will list snippets of each text containing tag on the webpage.\n 2. Call the tool get_text_from_downloaded_webpage with the url and an id from a section listed by the previous tool and repeat for each section you wish to expand.");
 void BackendInit(){
 	_putenv("OMP_PROC_BIND=close");
 	ggml_backend_load("ggml-cpu.dll");
@@ -40,7 +42,8 @@ bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, c
 	_params.warmup = false;
 	_params.model.path = filename;
 	std::string sysPrompt(systemPrompt);
-	if(sysPrompt.empty()) sysPrompt = std::string("Assist the user to the best of your ability.");
+	if(sysPrompt.empty()) sysPrompt = DEFAULT_PROMPT;
+	sysPrompt += TOOLS_PROMPT;
 	_params.prompt = sysPrompt;
 	_params.n_ctx = nCtx;
 	_params.sampling.temp = temp;
@@ -122,6 +125,8 @@ void RetokenizeChat(){
 }
 void SetSystemPrompt(const char* prompt){
 	_params.prompt = std::string(prompt);
+	if(_params.prompt.empty()) _params.prompt = DEFAULT_PROMPT;
+	_params.prompt += TOOLS_PROMPT;
 	RetokenizeChat();
 }
 void SetMessageAt(int index, const char* message){
