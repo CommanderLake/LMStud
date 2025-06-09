@@ -25,7 +25,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>Intel C++ Compiler 19.0</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -33,14 +33,14 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>Intel C++ Compiler 19.0</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCUDA12|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -60,19 +60,19 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
+    <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\llama.cpp-b5604\vendor;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)lib\$(Configuration);I:\vcpkg-2025.04.09\installed\x64-windows-static\debug\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
+    <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\llama.cpp-b5604\vendor;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)lib\$(Configuration);I:\vcpkg-2025.04.09\installed\x64-windows-static\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCUDA12|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>I:\llama.cpp-b5573\include;I:\llama.cpp-b5573\common;I:\llama.cpp-b5573\ggml\include;I:\llama.cpp-b5573\src;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
+    <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\llama.cpp-b5604\vendor;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)lib\$(Configuration);I:\vcpkg-2025.04.09\installed\x64-windows-static\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -109,7 +109,6 @@ xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\
       <LanguageStandard>stdcpp17</LanguageStandard>
       <OpenMP>GenerateParallelCode</OpenMP>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <Optimization>MaxSpeedHighLevel</Optimization>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -133,6 +132,8 @@ xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\
       <OpenMP>GenerateParallelCode</OpenMP>
       <FloatingPointModel>Fast</FloatingPointModel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>Full</Optimization>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

@@ -21,12 +21,13 @@ inline std::vector<llama_token> _tokens;
 inline std::vector<common_chat_msg> _chatMsgs;
 inline std::atomic_bool _stop{false};
 inline common_chat_templates_ptr _chatTemplates;
-using TokenCallbackFn = void(*)(const char* strPtr, int strLen, int tokenCount, int tokensTotal, double ftTime, bool tool);
+using TokenCallbackFn = void(*)(const char* strPtr, int strLen, int tokenCount, int tokensTotal, double ftTime, int tool);
 inline TokenCallbackFn _tokenCb = nullptr;
 inline int _nConsumed = 0;
 inline std::vector<common_chat_tool> _tools;
 inline std::unordered_map<std::string, char*(*)(const char*)> _toolHandlers;
 inline common_chat_format _chatFormat = COMMON_CHAT_FORMAT_CONTENT_ONLY;
+inline bool _hasTools;
 extern "C" {
 	EXPORT void BackendInit();
 	EXPORT void ResetChat();

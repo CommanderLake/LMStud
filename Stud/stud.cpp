@@ -5,6 +5,8 @@
 #include <chrono>
 #include <regex>
 #include <unordered_map>
+#include <minja\minja.hpp>
+#include <minja\chat-template.hpp>
 using HrClock = std::chrono::high_resolution_clock;
 const std::string DEFAULT_PROMPT("Assist the user to the best of your ability.");
 const std::string TOOLS_PROMPT("\nWhen using the tool web_search you must follow these steps:\n 1. Call the tool download_webpage with a url, this will list snippets of each text containing tag on the webpage.\n 2. Call the tool get_text_from_downloaded_webpage with the url and an id from a section listed by the previous tool and repeat for each section you wish to expand.");
@@ -34,8 +36,7 @@ void FreeModel(){
 	}
 	llama_backend_free();
 }
-bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, const float temp, const float repeatPenalty, const int topK, const int topP, const int nThreads, const bool strictCPU, const int nThreadsBatch, const bool strictCPUBatch,
-				const int nGPULayers, const int nBatch, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy, const bool flashAttn){
+bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, const float temp, const float repeatPenalty, const int topK, const int topP, const int nThreads, const bool strictCPU, const int nThreadsBatch, const bool strictCPUBatch, const int nGPULayers, const int nBatch, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy, const bool flashAttn){
 	FreeModel();
 	_params.numa = numaStrategy;
 	llama_numa_init(_params.numa);
@@ -43,7 +44,6 @@ bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, c
 	_params.model.path = filename;
 	std::string sysPrompt(systemPrompt);
 	if(sysPrompt.empty()) sysPrompt = DEFAULT_PROMPT;
-	sysPrompt += TOOLS_PROMPT;
 	_params.prompt = sysPrompt;
 	_params.n_ctx = nCtx;
 	_params.sampling.temp = temp;
@@ -67,13 +67,23 @@ bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, c
 	_ctx = llamaInit.context.release();
 	_vocab = llama_model_get_vocab(_llModel);
 	_chatTemplates = common_chat_templates_init(_llModel, _params.chat_template);
+	llama_token bosToken = llama_vocab_bos(_vocab);
+	auto eosToken = llama_vocab_eos(_vocab);
+	auto bosStr = llama_vocab_get_text(_vocab, bosToken);
+	auto eosStr = llama_vocab_get_text(_vocab, eosToken);
+	const char *tmplSrc = llama_model_chat_template(_llModel, nullptr);
+	if(tmplSrc){
+		minja::chat_template tmpl(std::string(tmplSrc), bosStr, eosStr);
+		_hasTools = tmpl.original_caps().supports_tools;
+	}
+	if(_hasTools) sysPrompt += TOOLS_PROMPT;
 	if(!llama_model_has_encoder(_llModel)&&llama_vocab_get_add_eos(_vocab)) return false;
 	_smpl = common_sampler_init(_llModel, _params.sampling);
 	if(!_smpl) return false;
 	return true;
 }
 void AddTool(const char* name, const char* description, const char* parameters, char*(*handler)(const char* args)){
-	if(!name) return;
+	if(!name || !_hasTools) return;
 	common_chat_tool t;
 	t.name = name;
 	if(description) t.description = description;
@@ -102,7 +112,7 @@ int AddMessage(std::string role, std::string message){
 int AddMessage(const bool user, const char* message){ return AddMessage(std::string(user ? "user" : "assistant"), std::string(message)); }
 void RetokenizeChat(){
 	if(!_ctx||!_vocab) return;
-	llama_kv_self_clear(_ctx);
+	llama_memory_clear(llama_get_memory(_ctx), true);
 	_tokens.clear();
 	std::vector<common_chat_msg> msgs;
 	if(!_params.prompt.empty()){
@@ -126,7 +136,7 @@ void RetokenizeChat(){
 void SetSystemPrompt(const char* prompt){
 	_params.prompt = std::string(prompt);
 	if(_params.prompt.empty()) _params.prompt = DEFAULT_PROMPT;
-	_params.prompt += TOOLS_PROMPT;
+	if(_hasTools) _params.prompt += TOOLS_PROMPT;
 	RetokenizeChat();
 }
 void SetMessageAt(int index, const char* message){
@@ -179,14 +189,14 @@ int Generate(const unsigned int nPredict, const bool callback){
 			if(ftTime==0.0) ftTime = std::chrono::duration<double, std::ratio<1, 1>>(HrClock::now()-prepStart).count();
 			if(!tokenStr.empty()){
 				assMsg<<tokenStr;
-				if(cb&&callback) cb(tokenStr.c_str(), static_cast<int>(tokenStr.length()), 1, static_cast<int>(_tokens.size()+i), ftTime, false);
+				if(cb&&callback) cb(tokenStr.c_str(), static_cast<int>(tokenStr.length()), 1, static_cast<int>(_tokens.size()+i), ftTime, 0);
 			}
 			if(llama_vocab_is_eog(_vocab, id)) break;
 		}
 		embd.clear();
 	}
 	AddMessage(false, assMsg.str().c_str());
-	if(cb&&!callback) cb(assMsg.str().c_str(), assMsg.str().length(), i, static_cast<int>(_tokens.size()), ftTime, false);
+	if(cb&&!callback) cb(assMsg.str().c_str(), assMsg.str().length(), i, static_cast<int>(_tokens.size()), ftTime, 0);
 	return i;
 }
 int GenerateWithTools(const unsigned int nPredict, const bool callback){
@@ -198,19 +208,24 @@ int GenerateWithTools(const unsigned int nPredict, const bool callback){
 		res = Generate(nPredict, callback);
 		if(_chatMsgs.empty()) return res;
 		const auto& last = _chatMsgs.back();
-		const auto parsed = common_chat_parse(last.content, _chatFormat);
-		for(const auto& tc : parsed.tool_calls){
-			auto it = _toolHandlers.find(tc.name);
-			if(it!=_toolHandlers.end()){
-				const auto result = it->second(tc.arguments.c_str());
-				const bool gotResult = result!=nullptr;
-				std::string resultStr = gotResult ? result : "";
-				FreeMemory(result);
-				AddMessage(std::string("tool"), resultStr);
-				if(cb&&callback) cb(resultStr.c_str(), static_cast<int>(resultStr.length()), 0, static_cast<int>(_tokens.size()), 0, true);
-				if(gotResult){ toolCalled = true; }
+		common_chat_syntax syntax;
+		syntax.format = _chatFormat;
+		syntax.parse_tool_calls = true;
+		try{
+			const auto parsed = common_chat_parse(last.content, false, syntax);
+			for(const auto& tc : parsed.tool_calls){
+				auto it = _toolHandlers.find(tc.name);
+				if(it!=_toolHandlers.end()){
+					const auto result = it->second(tc.arguments.c_str());
+					const bool gotResult = result!=nullptr;
+					std::string resultStr = gotResult ? result : "";
+					FreeMemory(result);
+					AddMessage(std::string("tool"), resultStr);
+					if(cb&&callback) cb(resultStr.c_str(), static_cast<int>(resultStr.length()), 0, static_cast<int>(_tokens.size()), 0, 1);
+					if(gotResult){ toolCalled = true; }
+				}
 			}
-		}
+		} catch(...){break;}
 	} while(toolCalled);
 	return res;
 }

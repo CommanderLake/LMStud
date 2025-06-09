@@ -1,8 +1,6 @@
 #include "tools.h"
-
-#include <charconv>
-
 #include "hug.h"
+#include <charconv>
 #include <regex>
 #include <curl\curl.h>
 static std::string UrlEncode(const char* text){
@@ -13,7 +11,7 @@ static std::string UrlEncode(const char* text){
 	curl_easy_cleanup(curl);
 	return out;
 }
-static void SetGoogle(const char* apiKey, const char* searchEngineId){
+void SetGoogle(const char* apiKey, const char* searchEngineId){
 	googleAPIKey = apiKey;
 	googleSearchID = searchEngineId;
 }

@@ -260,11 +260,11 @@ namespace LMStud{
 					return i;
 			return -1;
 		}
-		private static unsafe void TokenCallback(byte* strPtr, int strLen, int tokenCount, int tokensTotal, double ftTime, bool tool){
+		private static unsafe void TokenCallback(byte* strPtr, int strLen, int tokenCount, int tokensTotal, double ftTime, int tool){
 			var elapsed = _this._swRate.Elapsed.TotalSeconds;
 			if(elapsed >= 1.0) _this._swRate.Restart();
 			var tokenStr = Encoding.UTF8.GetString(strPtr, strLen);
-			if(tool){
+			if(tool == 1){
 				try{
 					_this.Invoke(new MethodInvoker(() => {
 						var cm = _this.AddMessage(false, tokenStr);

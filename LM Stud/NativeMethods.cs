@@ -5,7 +5,7 @@ namespace LMStud{
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate int ProgressCallback(long totalBytes, long downloadedBytes);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-		public unsafe delegate void TokenCallback(byte* strPtr, int strLen, int tokenCount, int tokensTotal, double ftTime, bool tool);
+		public unsafe delegate void TokenCallback(byte* strPtr, int strLen, int tokenCount, int tokensTotal, double ftTime, int tool);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate IntPtr ToolHandler([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
