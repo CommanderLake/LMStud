@@ -14,7 +14,7 @@ This project was born out of frustration with slow bloated embedded web-based GU
 - Minimal resource usage compared to embedded web based GUIs
 - NEW! Huggingface model search and download!
 - EVEN NEWER! Voice prompting with Whisper.cpp and TTS!
-- EVEN NEWERER!! Google search and webpage browsing!
+- EVEN NEWERER!! Google search and webpage browsing tools!
 
 (Out of date screenshot but you get the idea)
 ![LM Stud Chat Interface](./screenshots/LMStud_Chat.png)
