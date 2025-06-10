@@ -55,6 +55,9 @@ Once set up:
 
 - Build and run the LM Stud project from Visual Studio.
 - Ensure the necessary llama.cpp DLLs are present in the output directory.
+- If you wish to use the Google Search Tool, configure these on the Settings tab:
+1. Get your Google API key here for 100 free searches per day: https://console.cloud.google.com/apis/dashboard
+2. Also required is a "Search engine ID" from Programmable Search Engine: https://programmablesearchengine.google.com/controlpanel/overview
 
 ## Contributing
 
