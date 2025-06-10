@@ -32,7 +32,7 @@ namespace LMStud{
 			LoadConfig();
 		}
 		private void SetToolTips(){
-			toolTip1.SetToolTip(textInstruction, "Tell the AI who or what to be, how to respond, or provide initial context.");
+			toolTip1.SetToolTip(textSystemPrompt, "Tell the AI who or what to be, how to respond, or provide initial context.");
 			toolTip1.SetToolTip(textModelsPath, "Path to the folder containing your .gguf model files.");
 			toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.");
 			toolTip1.SetToolTip(numGPULayers, "Number of layers to offload to GPU. More layers improve performance but increase GPU memory usage.");

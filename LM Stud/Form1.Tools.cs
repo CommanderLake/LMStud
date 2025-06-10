@@ -20,9 +20,9 @@ namespace LMStud{
 					"{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]}", _googleHandler);
 			}
 			if(_webpageFetchEnable){
-				NativeMethods.AddTool("download_webpage", "Download the webpage at url and store sections of text in a local cache, after using this tool you must call page_get_section with a url and section id.",
+				NativeMethods.AddTool("browse_webpage", "Download the webpage at url and store sections of text in a local cache, after using this tool you must call page_get_section with a url and section id.",
 					"{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", _addPageHandler);
-				NativeMethods.AddTool("get_text_from_downloaded_webpage", "Return the full text of one section of a webpage from the local cache.",
+				NativeMethods.AddTool("expand_snippet", "Return the full text of one section of a webpage from the local cache.",
 					"{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"},\"id\":{\"type\":\"string\"}},\"required\":[\"url\",\"id\"]}", _getSectionHandler);
 				//NativeMethods.AddTool("page_list_sections", "List the section cache contents of a previously fetched webpage.",
 				//	"{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", _listSectionsHandler);

@@ -32,8 +32,10 @@ extern "C" {
 	EXPORT void BackendInit();
 	EXPORT void ResetChat();
 	EXPORT void FreeModel();
-	EXPORT bool LoadModel(const char* filename, const char* systemPrompt, int nCtx, float temp, float repeatPenalty, int topK, int topP, int nThreads, bool strictCPU, int nThreadsBatch, bool strictCPUBatch, int nGPULayers, int nBatch, bool mMap,
-						bool mLock, ggml_numa_strategy numaStrategy, bool flashAttn);
+	EXPORT bool LoadModel(const char* filename, int nCtx, float temp, float repeatPenalty, int topK, int topP, int nThreads, bool strictCPU, int nThreadsBatch, bool strictCPUBatch, int nGPULayers, int nBatch, bool mMap, bool mLock, ggml_numa_strategy numaStrategy, bool flashAttn);
+	EXPORT void AddTool(const char* name, const char* description, const char* parameters, char*(*handler)(const char* args));
+	EXPORT void ClearTools();
+	EXPORT bool HasTool(const char* name);
 	EXPORT void SetTokenCallback(TokenCallbackFn cb);
 	EXPORT void SetThreadCount(int n, int nBatch);
 	EXPORT int AddMessage(bool user, const char* message);
@@ -44,7 +46,5 @@ extern "C" {
 	EXPORT void RemoveMessagesStartingAt(int index);
 	EXPORT int Generate(unsigned int nPredict, bool callback);
 	EXPORT int GenerateWithTools(unsigned int nPredict, bool callback);
-	EXPORT void AddTool(const char* name, const char* description, const char* parameters, char*(*handler)(const char* args));
-	EXPORT void ClearTools();
 	EXPORT void StopGeneration();
 }

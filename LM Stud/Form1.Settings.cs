@@ -5,7 +5,7 @@ using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
 	internal partial class Form1{
-		private string _instruction = "";
+		private string _systemPrompt = "";
 		private string _modelsPath = "";
 		private int _ctxSize = 4096;
 		private int _gpuLayers = 32;
@@ -34,7 +34,7 @@ namespace LMStud{
 		private bool _googleSearchEnable;
 		private bool _webpageFetchEnable;
 		private void LoadConfig(){
-			_instruction = textInstruction.Text = Settings.Default.Instruction;
+			_systemPrompt = textSystemPrompt.Text = Settings.Default.SystemPrompt;
 			_modelsPath = textModelsPath.Text = Settings.Default.ModelsDir;
 			_ctxSize = (int)(numCtxSize.Value = Settings.Default.CtxSize);
 			_gpuLayers = (int)(numGPULayers.Value = Settings.Default.GPULayers);
@@ -72,8 +72,8 @@ namespace LMStud{
 			}
 		}
 		private void ButApply_Click(object sender, EventArgs e){
-			UpdateSetting(ref _instruction, textInstruction.Text, value => {
-				Settings.Default.Instruction = value;
+			UpdateSetting(ref _systemPrompt, textSystemPrompt.Text, value => {
+				Settings.Default.SystemPrompt = value;
 				if(_modelLoaded) NativeMethods.SetSystemPrompt(value);
 			});
 			UpdateSetting(ref _modelsPath, textModelsPath.Text, value => {
@@ -133,7 +133,7 @@ namespace LMStud{
 				Settings.Default.WebpageFetchEnable = value;
 				if(!_modelLoaded) return;
 				RegisterTools();
-				NativeMethods.RetokenizeChat();
+				SetSystemPrompt();
 			});
 			Settings.Default.Save();
 		}

@@ -26,12 +26,12 @@ namespace LMStud.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string Instruction {
+        public string SystemPrompt {
             get {
-                return ((string)(this["Instruction"]));
+                return ((string)(this["SystemPrompt"]));
             }
             set {
-                this["Instruction"] = value;
+                this["SystemPrompt"] = value;
             }
         }
         

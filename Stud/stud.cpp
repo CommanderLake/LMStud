@@ -8,8 +8,6 @@
 #include <minja\minja.hpp>
 #include <minja\chat-template.hpp>
 using HrClock = std::chrono::high_resolution_clock;
-const std::string DEFAULT_PROMPT("Assist the user to the best of your ability.");
-const std::string TOOLS_PROMPT("\nWhen using the tool web_search you must follow these steps:\n 1. Call the tool download_webpage with a url, this will list snippets of each text containing tag on the webpage.\n 2. Call the tool get_text_from_downloaded_webpage with the url and an id from a section listed by the previous tool and repeat for each section you wish to expand.");
 void BackendInit(){
 	_putenv("OMP_PROC_BIND=close");
 	ggml_backend_load("ggml-cpu.dll");
@@ -36,15 +34,12 @@ void FreeModel(){
 	}
 	llama_backend_free();
 }
-bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, const float temp, const float repeatPenalty, const int topK, const int topP, const int nThreads, const bool strictCPU, const int nThreadsBatch, const bool strictCPUBatch, const int nGPULayers, const int nBatch, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy, const bool flashAttn){
+bool LoadModel(const char* filename, const int nCtx, const float temp, const float repeatPenalty, const int topK, const int topP, const int nThreads, const bool strictCPU, const int nThreadsBatch, const bool strictCPUBatch, const int nGPULayers, const int nBatch, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy, const bool flashAttn){
 	FreeModel();
 	_params.numa = numaStrategy;
 	llama_numa_init(_params.numa);
 	_params.warmup = false;
 	_params.model.path = filename;
-	std::string sysPrompt(systemPrompt);
-	if(sysPrompt.empty()) sysPrompt = DEFAULT_PROMPT;
-	_params.prompt = sysPrompt;
 	_params.n_ctx = nCtx;
 	_params.sampling.temp = temp;
 	_params.sampling.penalty_repeat = repeatPenalty;
@@ -67,16 +62,15 @@ bool LoadModel(const char* filename, const char* systemPrompt, const int nCtx, c
 	_ctx = llamaInit.context.release();
 	_vocab = llama_model_get_vocab(_llModel);
 	_chatTemplates = common_chat_templates_init(_llModel, _params.chat_template);
-	llama_token bosToken = llama_vocab_bos(_vocab);
-	auto eosToken = llama_vocab_eos(_vocab);
-	auto bosStr = llama_vocab_get_text(_vocab, bosToken);
-	auto eosStr = llama_vocab_get_text(_vocab, eosToken);
+	const llama_token bosToken = llama_vocab_bos(_vocab);
+	const auto eosToken = llama_vocab_eos(_vocab);
+	const auto bosStr = llama_vocab_get_text(_vocab, bosToken);
+	const auto eosStr = llama_vocab_get_text(_vocab, eosToken);
 	const char *tmplSrc = llama_model_chat_template(_llModel, nullptr);
 	if(tmplSrc){
-		minja::chat_template tmpl(std::string(tmplSrc), bosStr, eosStr);
+		const minja::chat_template tmpl(std::string(tmplSrc), bosStr, eosStr);
 		_hasTools = tmpl.original_caps().supports_tools;
 	}
-	if(_hasTools) sysPrompt += TOOLS_PROMPT;
 	if(!llama_model_has_encoder(_llModel)&&llama_vocab_get_add_eos(_vocab)) return false;
 	_smpl = common_sampler_init(_llModel, _params.sampling);
 	if(!_smpl) return false;
@@ -94,6 +88,12 @@ void AddTool(const char* name, const char* description, const char* parameters, 
 void ClearTools(){
 	_tools.clear();
 	_toolHandlers.clear();
+}
+bool HasTool(const char* name){
+	for(const auto & tool : _tools){
+		if(tool.name._Equal(name)) return true;
+	}
+	return false;
 }
 void SetTokenCallback(const TokenCallbackFn cb){ _tokenCb = cb; }
 void SetThreadCount(int n, int nBatch){ if(_ctx) llama_set_n_threads(_ctx, n, nBatch); }
@@ -135,8 +135,6 @@ void RetokenizeChat(){
 }
 void SetSystemPrompt(const char* prompt){
 	_params.prompt = std::string(prompt);
-	if(_params.prompt.empty()) _params.prompt = DEFAULT_PROMPT;
-	if(_hasTools) _params.prompt += TOOLS_PROMPT;
 	RetokenizeChat();
 }
 void SetMessageAt(int index, const char* message){

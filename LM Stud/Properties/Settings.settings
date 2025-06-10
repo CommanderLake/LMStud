@@ -2,7 +2,7 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="LMStud.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="Instruction" Type="System.String" Scope="User">
+    <Setting Name="SystemPrompt" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="Threads" Type="System.Decimal" Scope="User">

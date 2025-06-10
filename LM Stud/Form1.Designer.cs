@@ -94,7 +94,7 @@
 			this.textModelsPath = new System.Windows.Forms.TextBox();
 			this.butApply = new System.Windows.Forms.Button();
 			this.label1 = new System.Windows.Forms.Label();
-			this.textInstruction = new System.Windows.Forms.TextBox();
+			this.textSystemPrompt = new System.Windows.Forms.TextBox();
 			this.tabPage3 = new System.Windows.Forms.TabPage();
 			this.splitContainer2 = new System.Windows.Forms.SplitContainer();
 			this.listViewModels = new System.Windows.Forms.ListView();
@@ -361,7 +361,7 @@
 			this.tabPage2.Controls.Add(this.textModelsPath);
 			this.tabPage2.Controls.Add(this.butApply);
 			this.tabPage2.Controls.Add(this.label1);
-			this.tabPage2.Controls.Add(this.textInstruction);
+			this.tabPage2.Controls.Add(this.textSystemPrompt);
 			this.tabPage2.Location = new System.Drawing.Point(4, 22);
 			this.tabPage2.Margin = new System.Windows.Forms.Padding(0);
 			this.tabPage2.Name = "tabPage2";
@@ -1080,16 +1080,16 @@
 			this.label1.TabIndex = 1;
 			this.label1.Text = "Instruction:";
 			// 
-			// textInstruction
+			// textSystemPrompt
 			// 
-			this.textInstruction.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+			this.textSystemPrompt.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.textInstruction.Location = new System.Drawing.Point(0, 16);
-			this.textInstruction.Margin = new System.Windows.Forms.Padding(0);
-			this.textInstruction.Multiline = true;
-			this.textInstruction.Name = "textInstruction";
-			this.textInstruction.Size = new System.Drawing.Size(1008, 109);
-			this.textInstruction.TabIndex = 0;
+			this.textSystemPrompt.Location = new System.Drawing.Point(0, 16);
+			this.textSystemPrompt.Margin = new System.Windows.Forms.Padding(0);
+			this.textSystemPrompt.Multiline = true;
+			this.textSystemPrompt.Name = "textSystemPrompt";
+			this.textSystemPrompt.Size = new System.Drawing.Size(1008, 109);
+			this.textSystemPrompt.TabIndex = 0;
 			// 
 			// tabPage3
 			// 
@@ -1550,7 +1550,7 @@
 		private System.Windows.Forms.NumericUpDown numThreads;
 		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.Label label1;
-		private System.Windows.Forms.TextBox textInstruction;
+		private System.Windows.Forms.TextBox textSystemPrompt;
 		private System.Windows.Forms.Button butApply;
 		private System.Windows.Forms.Button butBrowse;
 		private System.Windows.Forms.TextBox textModelsPath;

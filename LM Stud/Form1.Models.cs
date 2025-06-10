@@ -6,6 +6,9 @@ using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
 	internal partial class Form1{
+		private const string DefaultPrompt = "Assist the user to the best of your ability.";
+		private const string FetchPrompt =
+			"\nAfter using the web_search tool you must subsequently:\n 1. Use the browse_webpage tool with a url to display snippets of each <p>, <article> or <section> tag on the webpage.\n 2. For any section you wish to expand, call the expand_snippet tool with the url and id of the snippet.";
 		private volatile bool _modelLoaded;
 		private volatile bool _populating;
 		private int _cntCtxMax;
@@ -84,6 +87,7 @@ namespace LMStud{
 				}
 			});
 		}
+		private void SetSystemPrompt(){NativeMethods.SetSystemPrompt((_systemPrompt.Length > 0 ? _systemPrompt : DefaultPrompt) + (_webpageFetchEnable ? FetchPrompt : ""));}
 		private void LoadModel(int modelIndex, bool autoLoad){
 			butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = false;
 			var modelPath = _models[modelIndex].FilePath;
@@ -100,7 +104,8 @@ namespace LMStud{
 						var modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
 						if(modelCtxMax <= 0) _cntCtxMax = _ctxSize;
 						else _cntCtxMax = _ctxSize > modelCtxMax ? modelCtxMax : _ctxSize;
-						var success = NativeMethods.LoadModel(modelPath, _instruction, _cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _strictCPU, _nThreadsBatch, _strictCPUBatch, _gpuLayers,
+						RegisterTools();
+						var success = NativeMethods.LoadModel(modelPath, _cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _strictCPU, _nThreadsBatch, _strictCPUBatch, _gpuLayers,
 							_batchSize, _mMap, _mLock, _numaStrat, _flashAttn);
 						if(!success){
 							Settings.Default.LoadAuto = false;
@@ -111,14 +116,13 @@ namespace LMStud{
 						_modelLoaded = true;
 						_tokenCallback = TokenCallback;
 						NativeMethods.SetTokenCallback(_tokenCallback);
-						RegisterTools();
-						NativeMethods.RetokenizeChat();
+						SetSystemPrompt();
 						if(checkVoiceInput.Checked){
 							NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);
 							NativeMethods.StartSpeechTranscription();
 						}
 						Invoke(new MethodInvoker(() => {
-							toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.\r\nThe model currently loaded has a maximum context size of " + modelCtxMax);
+							toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.\r\nThe model last loaded has a maximum context size of " + modelCtxMax);
 							Settings.Default.LastModel = modelPath;
 							if(checkLoadAuto.Checked && !autoLoad){
 								Settings.Default.LoadAuto = true;
