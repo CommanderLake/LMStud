@@ -24,7 +24,7 @@ namespace LMStud{
 		public static List<GGUFMetadataEntry> LoadGGUFMetadata(string filename){
 			var metadata = new List<GGUFMetadataEntry>();
 			// Open the file in binary mode
-			using(var fs = new FileStream(filename, FileMode.Open, FileAccess.Read))
+			using(var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
 			using(var br = new BinaryReader(fs)){
 				// Read the 'magic' and check it
 				var magic = br.ReadUInt32();
