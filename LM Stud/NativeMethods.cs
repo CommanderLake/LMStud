@@ -27,8 +27,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void BackendInit();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern bool LoadModel(string filename, int nCtx, float temp, float repeatPenalty, int topK, float topP, int nThreads,
-			bool strictCPU, int nThreadsBatch, bool strictCPUBatch, int nGPULayers, int nBatch, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy, bool flashAttn);
+		public static extern bool LoadModel(string filename, int nCtx, float temp, float repeatPenalty, int topK, float topP, int nThreads, bool strictCPU, int nThreadsBatch, bool strictCPUBatch, int nGPULayers, int nBatch, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy, bool flashAttn);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void FreeModel();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -54,22 +53,21 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int GenerateWithTools(int nPredict, bool callback);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern IntPtr GoogleSearch([MarshalAs(UnmanagedType.LPUTF8Str)] string query);
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetGoogle(string apiKey, string searchEngineID);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void AddTool([MarshalAs(UnmanagedType.LPUTF8Str)] string name, [MarshalAs(UnmanagedType.LPUTF8Str)] string description,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string parameters, ToolHandler handler);
+		public static extern void AddTool([MarshalAs(UnmanagedType.LPUTF8Str)] string name, [MarshalAs(UnmanagedType.LPUTF8Str)] string description, [MarshalAs(UnmanagedType.LPUTF8Str)] string parameters, ToolHandler handler);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void ClearTools();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopGeneration();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern IntPtr GoogleSearch([MarshalAs(UnmanagedType.LPUTF8Str)] string query);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr GetWebpage([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern IntPtr ListSections([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
+		public static extern IntPtr ListWebTags([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern IntPtr GetWebSection([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
+		public static extern IntPtr GetWebTag([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void ClearWebCache();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

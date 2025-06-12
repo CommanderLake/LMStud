@@ -8,7 +8,7 @@ namespace LMStud{
 	internal partial class Form1{
 		private const string DefaultPrompt = "Assist the user to the best of your ability.";
 		private const string FetchPrompt =
-			"\nAfter using the web_search tool you must subsequently:\n 1. Use the browse_webpage tool with a url to display snippets of each <p>, <article> or <section> tag on the webpage.\n 2. For any section you wish to expand, call the expand_snippet tool with the url and id of the snippet.";
+			"\nAfter using the web_search tool you must subsequently:\n 1. Use the browse_webpage tool with a url to display previews of each <p>, <article> and <section> tag on the webpage.\n 2. For any tag you wish to expand, call the expand_tag tool.";
 		private volatile bool _modelLoaded;
 		private volatile bool _populating;
 		private int _cntCtxMax;
@@ -104,7 +104,6 @@ namespace LMStud{
 						var modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
 						if(modelCtxMax <= 0) _cntCtxMax = _ctxSize;
 						else _cntCtxMax = _ctxSize > modelCtxMax ? modelCtxMax : _ctxSize;
-						RegisterTools();
 						var success = NativeMethods.LoadModel(modelPath, _cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _strictCPU, _nThreadsBatch, _strictCPUBatch, _gpuLayers,
 							_batchSize, _mMap, _mLock, _numaStrat, _flashAttn);
 						if(!success){
@@ -116,6 +115,7 @@ namespace LMStud{
 						_modelLoaded = true;
 						_tokenCallback = TokenCallback;
 						NativeMethods.SetTokenCallback(_tokenCallback);
+						RegisterTools();
 						SetSystemPrompt();
 						if(checkVoiceInput.Checked){
 							NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);

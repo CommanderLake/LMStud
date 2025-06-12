@@ -1,29 +1,29 @@
 ﻿using System;
 namespace LMStud{
 	internal partial class Form1{
-		private NativeMethods.ToolHandler _googleHandler;
-		private NativeMethods.ToolHandler _addPageHandler;
-		private NativeMethods.ToolHandler _getSectionHandler;
-		private NativeMethods.ToolHandler _listSectionsHandler;
+		private NativeMethods.ToolHandler _googleSearchHandler;
+		private NativeMethods.ToolHandler _getWebpageHandler;
+		private NativeMethods.ToolHandler _getWebTagHandler;
+		private NativeMethods.ToolHandler _listWebTagsHandler;
 		private static IntPtr GoogleSearchHandler(string args){return NativeMethods.GoogleSearch(args);}
-		private static IntPtr GetPageHandler(string args){return NativeMethods.GetWebpage(args);}
-		private static IntPtr GetSectionHandler(string args){return NativeMethods.GetWebSection(args);}
-		private static IntPtr ListSectionsHandler(string args){return NativeMethods.ListSections(args);}
+		private static IntPtr GetWebpageHandler(string args){return NativeMethods.GetWebpage(args);}
+		private static IntPtr GetWebTagHandler(string args){return NativeMethods.GetWebTag(args);}
+		private static IntPtr ListWebTagsHandler(string args){return NativeMethods.ListWebTags(args);}
 		private void RegisterTools(){
 			NativeMethods.ClearTools();
-			_googleHandler = GoogleSearchHandler;
-			_addPageHandler = GetPageHandler;
-			_getSectionHandler = GetSectionHandler;
-			_listSectionsHandler = ListSectionsHandler;
+			_googleSearchHandler = GoogleSearchHandler;
+			_getWebpageHandler = GetWebpageHandler;
+			_getWebTagHandler = GetWebTagHandler;
+			_listWebTagsHandler = ListWebTagsHandler;
 			if(_googleSearchEnable){
 				NativeMethods.AddTool("web_search", "Search Google and return the top results in JSON format.",
-					"{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]}", _googleHandler);
+					"{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]}", _googleSearchHandler);
 			}
 			if(_webpageFetchEnable){
-				NativeMethods.AddTool("browse_webpage", "Download the webpage at url and store sections of text in a local cache, after using this tool you must call page_get_section with a url and section id.",
-					"{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", _addPageHandler);
-				NativeMethods.AddTool("expand_snippet", "Return the full text of one section of a webpage from the local cache.",
-					"{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"},\"id\":{\"type\":\"string\"}},\"required\":[\"url\",\"id\"]}", _getSectionHandler);
+				NativeMethods.AddTool("browse_webpage", "Download the webpage at url and preview the text in all <p>, <article> and <section> tags.",
+					"{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", _getWebpageHandler);
+				NativeMethods.AddTool("expand_tag", "Expand a tag preview listed by the browse_webpage tool.",
+					"{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"},\"id\":{\"type\":\"string\"}},\"required\":[\"url\",\"id\"]}", _getWebTagHandler);
 				//NativeMethods.AddTool("page_list_sections", "List the section cache contents of a previously fetched webpage.",
 				//	"{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", _listSectionsHandler);
 			}
@@ -31,10 +31,10 @@ namespace LMStud{
 		private void ClearRegisteredTools(){
 			NativeMethods.ClearTools();
 			NativeMethods.ClearWebCache();
-			_googleHandler = null;
-			_addPageHandler = null;
-			_getSectionHandler = null;
-			_listSectionsHandler = null;
+			_googleSearchHandler = null;
+			_getWebpageHandler = null;
+			_getWebTagHandler = null;
+			_listWebTagsHandler = null;
 		}
 	}
 }

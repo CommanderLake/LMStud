@@ -8,14 +8,14 @@ struct WebSection{
 	std::string text;
 };
 struct CachedPage{
-	std::vector<WebSection> sections;
+	std::vector<WebSection> tags;
 };
 static std::unordered_map<std::string, CachedPage> _webCache;
 extern "C" {
 	EXPORT void SetGoogle(const char* apiKey, const char* searchEngineId);
 	EXPORT const char* GoogleSearch(const char* query);
 	EXPORT const char* GetWebpage(const char* argsJson);
-	EXPORT const char* GetWebSection(const char* argsJson);
-	EXPORT const char* ListSections(const char* argsJson);
+	EXPORT const char* GetWebTag(const char* argsJson);
+	EXPORT const char* ListWebTags(const char* argsJson);
 	EXPORT void ClearWebCache();
 }

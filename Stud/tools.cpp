@@ -76,14 +76,14 @@ static std::string GetJsonValue(const char* json, const char* key){
 	}
 	return "";
 }
-static void ParseSections(const std::string& html, CachedPage& page){
+static void ParseTags(const std::string& html, CachedPage& page){
 	const std::string cleaned = std::regex_replace(html, std::regex(R"(<(script|style)[^>]*?>[\s\S]*?<\/\s*\1\s*>)", std::regex::icase), " ");
-	const std::regex sectionRe(R"(<(p|article|section)[^>]*>([\s\S]*?)<\/\s*\1\s*>)", std::regex::icase);
+	const std::regex tagsRe(R"(<(p|article|section)[^>]*>([\s\S]*?)<\/\s*\1\s*>)", std::regex::icase);
 	const std::regex tagRe("<[^>]+>");
 	const std::regex wsRe("\\s+");
 	auto it = cleaned.cbegin();
 	std::smatch m;
-	while(std::regex_search(it, cleaned.cend(), m, sectionRe)){
+	while(std::regex_search(it, cleaned.cend(), m, tagsRe)){
 		const std::string tag = m[1].str();
 		std::string txt = std::regex_replace(m[2].str(), tagRe, " ");
 		txt = std::regex_replace(txt, wsRe, " ");
@@ -91,7 +91,7 @@ static void ParseSections(const std::string& html, CachedPage& page){
 		const size_t e = txt.find_last_not_of(' ');
 		if(s!=std::string::npos&&e!=std::string::npos){
 			txt = txt.substr(s, e-s+1);
-			if(!txt.empty()) page.sections.push_back({tag, txt});
+			if(!txt.empty()) page.tags.push_back({tag, txt});
 		}
 		it = m.suffix().first;
 	}
@@ -109,21 +109,21 @@ const char* GetWebpage(const char* argsJson){
 	const std::string html(res);
 	FreeMemory(res);
 	CachedPage page;
-	ParseSections(html, page);
+	ParseTags(html, page);
 	_webCache[url] = page;
-	std::string json = "{\n  \"url\": \""+JsonEscape(url)+"\",\n  \"sections\": [\n";
-	for(size_t i = 0; i<page.sections.size(); ++i){
-		auto& sec = page.sections[i];
-		std::string snippet = sec.text.substr(0, 80);
-		if(sec.text.size()>80) snippet += "...";
-		json += "    {\"id\": "+std::to_string(i)+", \"tag\": \""+sec.tag+"\", \"snippet\": \""+JsonEscape(snippet)+"\"}";
-		if(i+1<page.sections.size()) json += ",";
+	std::string json = "{\n  \"url\": \""+JsonEscape(url)+"\",\n  \"tags\": [\n";
+	for(size_t i = 0; i<page.tags.size(); ++i){
+		auto& sec = page.tags[i];
+		std::string preview = sec.text.substr(0, 80);
+		if(sec.text.size()>80) preview += "...";
+		json += "    {\"id\": "+std::to_string(i)+", \"tag\": \""+sec.tag+"\", \"preview\": \""+JsonEscape(preview)+"\"}";
+		if(i+1<page.tags.size()) json += ",";
 		json += "\n";
 	}
 	json += "  ]\n}";
 	return MakeJson(json);
 }
-const char* GetWebSection(const char* argsJson){
+const char* GetWebTag(const char* argsJson){
 	std::string url = GetJsonValue(argsJson, "url");
 	const std::string idStr = GetJsonValue(argsJson, "id");
 	if(url.empty()) url = argsJson ? argsJson : "";
@@ -133,22 +133,22 @@ const char* GetWebSection(const char* argsJson){
 		if(res.ec != std::errc()) id = -1;
 	}
 	const auto it = _webCache.find(url);
-	if(it==_webCache.end()||id<0||id>=static_cast<int>(it->second.sections.size())) return MakeJson("{\"error\":\"not found\"}");
-	return MakeJson(JsonEscape(it->second.sections[id].text));
+	if(it==_webCache.end()||id<0||id>=static_cast<int>(it->second.tags.size())) return MakeJson("{\"error\":\"not found\"}");
+	return MakeJson(JsonEscape(it->second.tags[id].text));
 }
-const char* ListSections(const char* argsJson){
+const char* ListWebTags(const char* argsJson){
 	std::string url = GetJsonValue(argsJson, "url");
 	if(url.empty()) url = argsJson ? argsJson : "";
 	const auto it = _webCache.find(url);
 	if(it==_webCache.end()) return MakeJson("{\"error\":\"not cached\"}");
 	const auto& page = it->second;
-	std::string json = "{\n  \"url\": \""+JsonEscape(url)+"\",\n  \"sections\": [\n";
-	for(size_t i = 0; i<page.sections.size(); ++i){
-		auto& sec = page.sections[i];
-		std::string snippet = sec.text.substr(0, 80);
-		if(sec.text.size()>80) snippet += "...";
-		json += "    {\"id\": "+std::to_string(i)+", \"tag\": \""+sec.tag+"\", \"snippet\": \""+JsonEscape(snippet)+"\"}";
-		if(i+1<page.sections.size()) json += ",";
+	std::string json = "{\n  \"url\": \""+JsonEscape(url)+"\",\n  \"tags\": [\n";
+	for(size_t i = 0; i<page.tags.size(); ++i){
+		auto& sec = page.tags[i];
+		std::string preview = sec.text.substr(0, 80);
+		if(sec.text.size()>80) preview += "...";
+		json += "    {\"id\": "+std::to_string(i)+", \"tag\": \""+sec.tag+"\", \"preview\": \""+JsonEscape(preview)+"\"}";
+		if(i+1<page.tags.size()) json += ",";
 		json += "\n";
 	}
 	json += "  ]\n}";
