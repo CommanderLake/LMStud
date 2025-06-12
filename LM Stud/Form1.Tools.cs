@@ -24,8 +24,8 @@ namespace LMStud{
 					"{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", _getWebpageHandler);
 				NativeMethods.AddTool("expand_tag", "Expand a tag preview listed by the browse_webpage tool.",
 					"{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"},\"id\":{\"type\":\"string\"}},\"required\":[\"url\",\"id\"]}", _getWebTagHandler);
-				//NativeMethods.AddTool("page_list_sections", "List the section cache contents of a previously fetched webpage.",
-				//	"{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", _listSectionsHandler);
+				//NativeMethods.AddTool("list_tags", "List the tags of a previously fetched webpage.",
+				//	"{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", _listWebTagsHandler);
 			}
 		}
 		private void ClearRegisteredTools(){

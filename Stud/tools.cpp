@@ -3,6 +3,7 @@
 #include <charconv>
 #include <regex>
 #include <curl\curl.h>
+static std::unordered_map<std::string, CachedPage> _webCache;
 static std::string UrlEncode(const char* text){
 	CURL* curl = curl_easy_init();
 	char* enc = curl_easy_escape(curl, text, 0);
@@ -12,8 +13,16 @@ static std::string UrlEncode(const char* text){
 	return out;
 }
 void SetGoogle(const char* apiKey, const char* searchEngineId){
-	googleAPIKey = apiKey;
-	googleSearchID = searchEngineId;
+	if(apiKey){
+		googleAPIKey = apiKey;
+	} else{
+		googleAPIKey.clear();
+	}
+	if(searchEngineId){
+		googleSearchID = searchEngineId;
+	} else{
+		googleSearchID.clear();
+	}
 }
 const char* GoogleSearch(const char* argsJson){
 	const char* queryStart = nullptr;

@@ -10,7 +10,6 @@ struct WebSection{
 struct CachedPage{
 	std::vector<WebSection> tags;
 };
-static std::unordered_map<std::string, CachedPage> _webCache;
 extern "C" {
 	EXPORT void SetGoogle(const char* apiKey, const char* searchEngineId);
 	EXPORT const char* GoogleSearch(const char* query);
