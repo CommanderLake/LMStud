@@ -106,31 +106,38 @@ static void ParseTags(const std::string& html, CachedPage& page){
 	}
 }
 static char* MakeJson(const std::string& s){
-	const auto out = static_cast<char*>(std::malloc(s.size()+1));
-	if(out) std::memcpy(out, s.c_str(), s.size()+1);
-	return out;
+        const auto out = static_cast<char*>(std::malloc(s.size()+1));
+        if(out) std::memcpy(out, s.c_str(), s.size()+1);
+        return out;
+}
+
+static std::string TagsToJson(const std::string& url, const CachedPage& page){
+        std::string json = "{\n  \"url\": \"" + JsonEscape(url) + "\",\n  \"tags\": [\n";
+        for(size_t i = 0; i < page.tags.size(); ++i){
+                const auto& sec = page.tags[i];
+                std::string preview = sec.text.substr(0, 80);
+                if(sec.text.size() > 80) preview += "...";
+                json += "    {\"id\": " + std::to_string(i) +
+                        ", \"tag\": \"" + sec.tag +
+                        "\", \"preview\": \"" + JsonEscape(preview) +
+                        "\", \"length\": " + std::to_string(sec.text.size()) + "}";
+                if(i + 1 < page.tags.size()) json += ",";
+                json += "\n";
+        }
+        json += "  ]\n}";
+        return json;
 }
 const char* GetWebpage(const char* argsJson){
-	std::string url = GetJsonValue(argsJson, "url");
-	if(url.empty()) url = argsJson ? argsJson : "";
-	const auto res = PerformHttpGet(url.c_str());
-	if(!res) return nullptr;
-	const std::string html(res);
-	FreeMemory(res);
-	CachedPage page;
-	ParseTags(html, page);
-	_webCache[url] = page;
-	std::string json = "{\n  \"url\": \""+JsonEscape(url)+"\",\n  \"tags\": [\n";
-	for(size_t i = 0; i<page.tags.size(); ++i){
-		auto& sec = page.tags[i];
-		std::string preview = sec.text.substr(0, 80);
-		if(sec.text.size()>80) preview += "...";
-		json += "    {\"id\": "+std::to_string(i)+", \"tag\": \""+sec.tag+"\", \"preview\": \""+JsonEscape(preview)+"\"}";
-		if(i+1<page.tags.size()) json += ",";
-		json += "\n";
-	}
-	json += "  ]\n}";
-	return MakeJson(json);
+        std::string url = GetJsonValue(argsJson, "url");
+        if(url.empty()) url = argsJson ? argsJson : "";
+        const auto res = PerformHttpGet(url.c_str());
+        if(!res) return nullptr;
+        const std::string html(res);
+        FreeMemory(res);
+        CachedPage page;
+        ParseTags(html, page);
+        _webCache[url] = page;
+        return MakeJson(TagsToJson(url, page));
 }
 const char* GetWebTag(const char* argsJson){
 	std::string url = GetJsonValue(argsJson, "url");
@@ -146,21 +153,11 @@ const char* GetWebTag(const char* argsJson){
 	return MakeJson(JsonEscape(it->second.tags[id].text));
 }
 const char* ListWebTags(const char* argsJson){
-	std::string url = GetJsonValue(argsJson, "url");
-	if(url.empty()) url = argsJson ? argsJson : "";
-	const auto it = _webCache.find(url);
-	if(it==_webCache.end()) return MakeJson("{\"error\":\"not cached\"}");
-	const auto& page = it->second;
-	std::string json = "{\n  \"url\": \""+JsonEscape(url)+"\",\n  \"tags\": [\n";
-	for(size_t i = 0; i<page.tags.size(); ++i){
-		auto& sec = page.tags[i];
-		std::string preview = sec.text.substr(0, 80);
-		if(sec.text.size()>80) preview += "...";
-		json += "    {\"id\": "+std::to_string(i)+", \"tag\": \""+sec.tag+"\", \"preview\": \""+JsonEscape(preview)+"\"}";
-		if(i+1<page.tags.size()) json += ",";
-		json += "\n";
-	}
-	json += "  ]\n}";
-	return MakeJson(json);
+        std::string url = GetJsonValue(argsJson, "url");
+        if(url.empty()) url = argsJson ? argsJson : "";
+        const auto it = _webCache.find(url);
+        if(it==_webCache.end()) return MakeJson("{\"error\":\"not cached\"}");
+        const auto& page = it->second;
+        return MakeJson(TagsToJson(url, page));
 }
 void ClearWebCache(){ _webCache.clear(); }
