@@ -35,7 +35,5 @@ extern "C"{
 	EXPORT void UnloadWhisperModel();
 	EXPORT void SetWakeCommand(const char* wakeCmd);
 	EXPORT void SetVADThresholds(float vadThreshold, float freqThreshold);
-	EXPORT inline void SetVoiceDuration(const int voiceDuration){
-		_gVoiceDuration = voiceDuration;
-	}
+	EXPORT void SetVoiceDuration(int voiceDuration);
 }

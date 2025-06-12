@@ -165,3 +165,6 @@ void SetVADThresholds(const float vadThreshold, const float freqThreshold){
 	_gVadThreshold = vadThreshold;
 	_gFreqThreshold = freqThreshold;
 }
+void SetVoiceDuration(const int voiceDuration){
+	_gVoiceDuration = voiceDuration;
+}
