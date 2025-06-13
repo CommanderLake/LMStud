@@ -59,15 +59,9 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void ClearTools();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void RegisterTools(bool googleSearch, bool webpageFetch);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopGeneration();
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern IntPtr GoogleSearch([MarshalAs(UnmanagedType.LPUTF8Str)] string query);
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern IntPtr GetWebpage([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern IntPtr ListWebTags([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern IntPtr GetWebTag([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void ClearWebCache();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

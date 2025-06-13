@@ -3,6 +3,7 @@
 #include <charconv>
 #include <regex>
 #include <curl\curl.h>
+#include "stud.h"
 static std::unordered_map<std::string, CachedPage> _webCache;
 static std::string UrlEncode(const char* text){
 	CURL* curl = curl_easy_init();
@@ -13,18 +14,10 @@ static std::string UrlEncode(const char* text){
 	return out;
 }
 void SetGoogle(const char* apiKey, const char* searchEngineId){
-	if(apiKey){
-		googleAPIKey = apiKey;
-	} else{
-		googleAPIKey.clear();
-	}
-	if(searchEngineId){
-		googleSearchID = searchEngineId;
-	} else{
-		googleSearchID.clear();
-	}
+	if(apiKey){ googleAPIKey = apiKey; } else{ googleAPIKey.clear(); }
+	if(searchEngineId){ googleSearchID = searchEngineId; } else{ googleSearchID.clear(); }
 }
-const char* GoogleSearch(const char* argsJson){
+std::string GoogleSearch(const char* argsJson){
 	const char* queryStart = nullptr;
 	const char* queryEnd = nullptr;
 	if(argsJson){
@@ -43,7 +36,7 @@ const char* GoogleSearch(const char* argsJson){
 	}
 	std::string query;
 	if(queryStart&&queryEnd&&queryEnd>queryStart){ query.assign(queryStart, queryEnd); } else{ query = argsJson ? argsJson : ""; }
-	return PerformHttpGet(("https://customsearch.googleapis.com/customsearch/v1?key="+googleAPIKey+"&cx="+googleSearchID+"&num=5&fields=items(title,link,snippet)&prettyPrint=true&q="+UrlEncode(query.c_str())).c_str());
+	return std::string(PerformHttpGet(("https://customsearch.googleapis.com/customsearch/v1?key="+googleAPIKey+"&cx="+googleSearchID+"&num=5&fields=items(title,link,snippet)&prettyPrint=true&q="+UrlEncode(query.c_str())).c_str()));
 }
 static std::string JsonEscape(const std::string& in){
 	std::string out;
@@ -105,59 +98,67 @@ static void ParseTags(const std::string& html, CachedPage& page){
 		it = m.suffix().first;
 	}
 }
-static char* MakeJson(const std::string& s){
-        const auto out = static_cast<char*>(std::malloc(s.size()+1));
-        if(out) std::memcpy(out, s.c_str(), s.size()+1);
-        return out;
-}
-
 static std::string TagsToJson(const std::string& url, const CachedPage& page){
-        std::string json = "{\n  \"url\": \"" + JsonEscape(url) + "\",\n  \"tags\": [\n";
-        for(size_t i = 0; i < page.tags.size(); ++i){
-                const auto& sec = page.tags[i];
-                std::string preview = sec.text.substr(0, 80);
-                if(sec.text.size() > 80) preview += "...";
-                json += "    {\"id\": " + std::to_string(i) +
-                        ", \"tag\": \"" + sec.tag +
-                        "\", \"preview\": \"" + JsonEscape(preview) +
-                        "\", \"length\": " + std::to_string(sec.text.size()) + "}";
-                if(i + 1 < page.tags.size()) json += ",";
-                json += "\n";
-        }
-        json += "  ]\n}";
-        return json;
+	std::string json = "{\n  \"url\": \""+JsonEscape(url)+"\",\n  \"tags\": [\n";
+	for(size_t i = 0; i<page.tags.size(); ++i){
+		const auto& sec = page.tags[i];
+		std::string preview = sec.text.substr(0, 80);
+		if(sec.text.size()>80) preview += "...";
+		json += "    {\"id\": "+std::to_string(i)+", \"tag\": \""+sec.tag+"\", \"preview\": \""+JsonEscape(preview)+"\", \"length\": "+std::to_string(sec.text.size())+"}";
+		if(i+1<page.tags.size()) json += ",";
+		json += "\n";
+	}
+	json += "  ]\n}";
+	return json;
 }
-const char* GetWebpage(const char* argsJson){
-        std::string url = GetJsonValue(argsJson, "url");
-        if(url.empty()) url = argsJson ? argsJson : "";
-        const auto res = PerformHttpGet(url.c_str());
-        if(!res) return nullptr;
-        const std::string html(res);
-        FreeMemory(res);
-        CachedPage page;
-        ParseTags(html, page);
-        _webCache[url] = page;
-        return MakeJson(TagsToJson(url, page));
+std::string GetWebpage(const char* argsJson){
+	std::string url = GetJsonValue(argsJson, "url");
+	if(url.empty()) url = argsJson ? argsJson : "";
+	const auto res = PerformHttpGet(url.c_str());
+	if(!res) return std::string();
+	const std::string html(res);
+	FreeMemory(res);
+	CachedPage page;
+	ParseTags(html, page);
+	_webCache[url] = page;
+	return TagsToJson(url, page);
 }
-const char* GetWebTag(const char* argsJson){
+std::string GetWebTag(const char* argsJson){
 	std::string url = GetJsonValue(argsJson, "url");
 	const std::string idStr = GetJsonValue(argsJson, "id");
 	if(url.empty()) url = argsJson ? argsJson : "";
 	int id = -1;
 	if(!idStr.empty()){
-		const auto res = std::from_chars(idStr.data(), idStr.data() + idStr.size(), id);
-		if(res.ec != std::errc()) id = -1;
+		const auto res = std::from_chars(idStr.data(), idStr.data()+idStr.size(), id);
+		if(res.ec!=std::errc()) id = -1;
 	}
 	const auto it = _webCache.find(url);
-	if(it==_webCache.end()||id<0||id>=static_cast<int>(it->second.tags.size())) return MakeJson("{\"error\":\"not found\"}");
-	return MakeJson(JsonEscape(it->second.tags[id].text));
+	if(it==_webCache.end()||id<0||id>=static_cast<int>(it->second.tags.size())) return "{\"error\":\"not found\"}";
+	return JsonEscape(it->second.tags[id].text);
 }
-const char* ListWebTags(const char* argsJson){
-        std::string url = GetJsonValue(argsJson, "url");
-        if(url.empty()) url = argsJson ? argsJson : "";
-        const auto it = _webCache.find(url);
-        if(it==_webCache.end()) return MakeJson("{\"error\":\"not cached\"}");
-        const auto& page = it->second;
-        return MakeJson(TagsToJson(url, page));
+std::string ListWebTags(const char* argsJson){
+	std::string url = GetJsonValue(argsJson, "url");
+	if(url.empty()) url = argsJson ? argsJson : "";
+	const auto it = _webCache.find(url);
+	if(it==_webCache.end()) return "{\"error\":\"not cached\"}";
+	const auto& page = it->second;
+	return TagsToJson(url, page);
 }
 void ClearWebCache(){ _webCache.clear(); }
+std::string GetLongDateTime(const char* argsJson){
+	const auto now = std::time(nullptr);
+	const std::tm* localTime = std::localtime(&now);
+	char buffer[80];
+	std::strftime(buffer, sizeof buffer, "%A, %d %B %Y, %H:%M:%S", localTime);
+	return std::string(buffer);
+}
+void RegisterTools(const bool googleSearch, const bool webpageFetch){
+	ClearTools();
+	AddTool("get_datetime", "Get the date and time in long format.", "{\"type\":\"object\"}", GetLongDateTime);
+	if(googleSearch){ AddTool("web_search", "Search Google and return the top results in JSON format.", "{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]}", GoogleSearch); }
+	if(webpageFetch){
+		AddTool("browse_webpage", "Download the webpage at url and preview the text in all <p>, <article> and <section> tags.", "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", GetWebpage);
+		AddTool("expand_tag", "Expand a tag preview listed by the browse_webpage tool.", "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"},\"id\":{\"type\":\"string\"}},\"required\":[\"url\",\"id\"]}", GetWebTag);
+		//AddTool("list_tags", "List the tags of a previously fetched webpage.", "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", ListWebTags);
+	}
+}

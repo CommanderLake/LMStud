@@ -8,7 +8,7 @@ namespace LMStud{
 	internal partial class Form1{
 		private const string DefaultPrompt = "Assist the user to the best of your ability.";
 		private const string FetchPrompt =
-			"\nIf using the web_search tool you must subsequently:\n 1. Use the browse_webpage tool with a url to display previews of each <p>, <article> and <section> tag on the webpage.\n 2. For any tag you wish to expand, call the expand_tag tool.";
+			"\nIf using the web_search tool you must subsequently use the browse_webpage tool with a url to display previews of each <p>, <article> and <section> tag on the webpage, then for any tag you wish to expand call the expand_tag tool.";
 		private volatile bool _modelLoaded;
 		private volatile bool _populating;
 		private int _cntCtxMax;

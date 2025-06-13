@@ -76,7 +76,7 @@ bool LoadModel(const char* filename, const int nCtx, const float temp, const flo
 	if(!_smpl) return false;
 	return true;
 }
-void AddTool(const char* name, const char* description, const char* parameters, char*(*handler)(const char* args)){
+void AddTool(const char* name, const char* description, const char* parameters, std::string(*handler)(const char* args)){
 	if(!name || !_hasTools) return;
 	common_chat_tool t;
 	t.name = name;
@@ -198,6 +198,7 @@ int Generate(const unsigned int nPredict, const bool callback){
 	return i;
 }
 int GenerateWithTools(const unsigned int nPredict, const bool callback){
+	if(!_hasTools) return Generate(nPredict, callback);
 	int res;
 	bool toolCalled;
 	const TokenCallbackFn cb = _tokenCb;
@@ -215,12 +216,9 @@ int GenerateWithTools(const unsigned int nPredict, const bool callback){
 				auto it = _toolHandlers.find(tc.name);
 				if(it!=_toolHandlers.end()){
 					const auto result = it->second(tc.arguments.c_str());
-					const bool gotResult = result!=nullptr;
-					std::string resultStr = gotResult ? result : "";
-					FreeMemory(result);
-					AddMessage(std::string("tool"), resultStr);
-					if(cb&&callback) cb(resultStr.c_str(), static_cast<int>(resultStr.length()), 0, static_cast<int>(_tokens.size()), 0, 1);
-					if(gotResult){ toolCalled = true; }
+					AddMessage(std::string("tool"), result);
+					if(cb&&callback) cb(result.c_str(), static_cast<int>(result.length()), 0, static_cast<int>(_tokens.size()), 0, 1);
+					toolCalled = true;
 				}
 			}
 		} catch(...){break;}

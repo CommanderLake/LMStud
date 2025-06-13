@@ -25,7 +25,7 @@ using TokenCallbackFn = void(*)(const char* strPtr, int strLen, int tokenCount, 
 inline TokenCallbackFn _tokenCb = nullptr;
 inline int _nConsumed = 0;
 inline std::vector<common_chat_tool> _tools;
-inline std::unordered_map<std::string, char*(*)(const char*)> _toolHandlers;
+inline std::unordered_map<std::string, std::string(*)(const char*)> _toolHandlers;
 inline common_chat_format _chatFormat = COMMON_CHAT_FORMAT_CONTENT_ONLY;
 inline bool _hasTools;
 extern "C" {
@@ -33,7 +33,7 @@ extern "C" {
 	EXPORT void ResetChat();
 	EXPORT void FreeModel();
 	EXPORT bool LoadModel(const char* filename, int nCtx, float temp, float repeatPenalty, int topK, int topP, int nThreads, bool strictCPU, int nThreadsBatch, bool strictCPUBatch, int nGPULayers, int nBatch, bool mMap, bool mLock, ggml_numa_strategy numaStrategy, bool flashAttn);
-	EXPORT void AddTool(const char* name, const char* description, const char* parameters, char*(*handler)(const char* args));
+	EXPORT void AddTool(const char* name, const char* description, const char* parameters, std::string(*handler)(const char* args));
 	EXPORT void ClearTools();
 	EXPORT bool HasTool(const char* name);
 	EXPORT void SetTokenCallback(TokenCallbackFn cb);

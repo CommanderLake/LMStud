@@ -12,9 +12,11 @@ struct CachedPage{
 };
 extern "C" {
 	EXPORT void SetGoogle(const char* apiKey, const char* searchEngineId);
-	EXPORT const char* GoogleSearch(const char* query);
-	EXPORT const char* GetWebpage(const char* argsJson);
-	EXPORT const char* GetWebTag(const char* argsJson);
-	EXPORT const char* ListWebTags(const char* argsJson);
+	EXPORT std::string GoogleSearch(const char* query);
+	EXPORT std::string GetWebpage(const char* argsJson);
+	EXPORT std::string GetWebTag(const char* argsJson);
+	EXPORT std::string ListWebTags(const char* argsJson);
 	EXPORT void ClearWebCache();
+	EXPORT std::string GetLongDateTime(const char* argsJson);
+	EXPORT void RegisterTools(bool googleSearch, bool webpageFetch);
 }
