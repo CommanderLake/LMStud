@@ -221,7 +221,7 @@ namespace LMStud{
 				NativeMethods.AddMessage(true, msg);
 			}
 			_cntAssMsg = null;
-			NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
+			_this.panelChat.ScrollToEnd();
 			foreach(var message in _chatMessages) message.Generating = true;
 			textInput.Text = "";
 			_tts.SpeakAsyncCancelAll();
@@ -273,7 +273,7 @@ namespace LMStud{
 						cm.Width = _this.panelChat.ClientSize.Width;
 						_this._cntAssMsg = null;
 						_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
-						NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
+						_this.panelChat.ScrollToEnd();
 					}));
 				} catch(ObjectDisposedException){}
 				return;
@@ -311,7 +311,7 @@ namespace LMStud{
 							}
 						}
 						_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
-						NativeMethods.SendMessage(_this.panelChat.Handle, NativeMethods.WM_VSCROLL, (IntPtr)NativeMethods.SB_BOTTOM, IntPtr.Zero);
+						_this.panelChat.ScrollToEnd();
 					} catch(ObjectDisposedException){} finally{ _this._rendering = false; }
 				}));
 			} catch(ObjectDisposedException){}

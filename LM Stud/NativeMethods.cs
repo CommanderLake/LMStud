@@ -19,11 +19,14 @@ namespace LMStud{
 			Count
 		}
 		private const string DLLName = "stud";
-		public const int WM_USER = 0x400;
-		public const int EM_SETSCROLLPOS = WM_USER + 222;
-		public const int WM_VSCROLL = 0x115;
-		public const int SB_BOTTOM = 7;
-		public const int EM_SETSEL = 0xB1;
+		internal const int WmUser = 0x400;
+		internal const int EmSetscrollpos = WmUser + 222;
+		internal const int WmVscroll = 0x115;
+		internal const int SbBottom = 7;
+		internal const int EmSetsel = 0xB1;
+		internal const int WmSetfocus = 0x0007;
+		internal const int WmKillfocus = 0x0008;
+		internal const int WmLbuttondown = 0x0201;
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void BackendInit();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
