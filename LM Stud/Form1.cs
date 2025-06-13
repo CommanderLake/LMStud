@@ -81,6 +81,8 @@ namespace LMStud{
 				NativeMethods.StopSpeechTranscription();
 				NativeMethods.UnloadWhisperModel();
 			}
+			ButReset_Click(null, null);
+			_tts.Dispose();
 			NativeMethods.CurlGlobalCleanup();
 		}
 		private void Form1_KeyDown(object sender, KeyEventArgs e){
