@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 namespace LMStud{
 	internal partial class ChatMessage : UserControl{
@@ -16,11 +18,21 @@ namespace LMStud{
 			InitializeComponent();
 			richTextMsg.ContentsResized += RichTextMsgOnContentsResized;
 			label1.Text = user ? "User" : "Assistant";
-			AppendText(message, true);
+			_msgBuilder.Append(message);
+			_message = _msgBuilder.ToString();
+		}
+		private void ChatMessage_Load(object sender, EventArgs e) {
+			if(_msgBuilder.Length > 0) AppendText("", true);
 		}
 		internal void SetRoleText(string role){label1.Text = role;}
 		private void RichTextMsgOnContentsResized(object sender, ContentsResizedEventArgs e){
-			Height = e.NewRectangle.Height + 32;
+			ThreadPool.QueueUserWorkItem(o => {//Layout issue workaround
+				Invoke(new MethodInvoker(() => {
+					var newHeight = e.NewRectangle.Height + 32;
+					if(Height == newHeight) return;
+					Height = newHeight;
+				}));
+			});
 		}
 		internal bool Markdown{
 			get => _markdown;
@@ -76,13 +88,13 @@ namespace LMStud{
 			}
 		}
 		internal void AppendText(string text, bool render){
-			if(User){
+			if(text.Length > 0){
 				_msgBuilder.Append(text);
 				_message = _msgBuilder.ToString();
+			}
+			if(User){
 				if(render) RenderText();
 			} else{
-				_msgBuilder.Append(text);
-				_message = _msgBuilder.ToString();
 				var thinking = ExtractThink(ref _message, out _think);
 				if(!string.IsNullOrEmpty(_think) && checkThink.Visible == false) checkThink.Visible = true;
 				if(thinking && !checkThink.Checked) checkThink.Checked = true;

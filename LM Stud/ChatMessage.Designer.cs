@@ -167,6 +167,7 @@
 			this.Margin = new System.Windows.Forms.Padding(0);
 			this.Name = "ChatMessage";
 			this.Size = new System.Drawing.Size(200, 64);
+			this.Load += new System.EventHandler(this.ChatMessage_Load);
 			this.panel1.ResumeLayout(false);
 			this.panel1.PerformLayout();
 			this.ResumeLayout(false);

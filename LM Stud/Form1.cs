@@ -195,8 +195,7 @@ namespace LMStud{
 		}
 		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)(((e.Delta/8) << 16) & 0xffff0000), IntPtr.Zero);}
 		private ChatMessage AddMessage(bool user, string message){
-			var cm = new ChatMessage(user, message, checkMarkdown.Checked);
-			cm.Width = panelChat.ClientSize.Width;
+			var cm = new ChatMessage(user, message, checkMarkdown.Checked){ Parent = panelChat, Width = panelChat.ClientSize.Width };
 			cm.butDelete.Click += (o, args) => MsgButDeleteOnClick(cm);
 			cm.butRegen.Click += (o, args) => MsgButRegenOnClick(cm);
 			cm.butEdit.Click += (o, args) => MsgButEditOnClick(cm);
@@ -218,8 +217,6 @@ namespace LMStud{
 			if(!regenerating){
 				var msg = textInput.Text.Trim();
 				var cm = AddMessage(true, msg);
-				cm.Width -= 1;//Workaround for resize issue
-				cm.Width = panelChat.ClientSize.Width;
 				NativeMethods.AddMessage(true, msg);
 			}
 			_cntAssMsg = null;
@@ -271,8 +268,6 @@ namespace LMStud{
 					_this.Invoke(new MethodInvoker(() => {
 						var cm = _this.AddMessage(false, tokenStr);
 						cm.SetRoleText("Tool");
-						cm.Width -= 1;//Workaround for resize issue
-						cm.Width = _this.panelChat.ClientSize.Width;
 						_this._cntAssMsg = null;
 						_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
 						_this.panelChat.ScrollToEnd();
@@ -297,8 +292,6 @@ namespace LMStud{
 						}
 						if(_this._cntAssMsg == null){
 							_this._cntAssMsg = _this.AddMessage(false, "");
-							_this._cntAssMsg.Width -= 1;//Workaround for resize issue
-							_this._cntAssMsg.Width = _this.panelChat.ClientSize.Width;
 						}
 						var lastThink = _this._cntAssMsg.checkThink.Checked;
 						_this._cntAssMsg.AppendText(tokenStr, renderToken);
