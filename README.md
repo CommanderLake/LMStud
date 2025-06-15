@@ -1,68 +1,90 @@
-# LM Stud
+# 🦙 LM Stud – Local LLMs Minus the Lard
 
-LM Stud is a lightweight chat application for interacting with LLMs (Large Language Models) on Windows. Built using Windows Forms and llama.cpp, LM Stud avoids the bloat and high memory usage associated with embedded web-based interfaces, providing a streamlined, efficient and responsive GUI.
+> **TL;DR**  
+> A WinForms chat client for `llama.cpp`, `whisper.cpp` and your questionable life choices.  
+> **Zero Electron. Zero telemetry. Zero regrets.**
 
-## Motivation
-
-This project was born out of frustration with slow bloated embedded web-based GUIs that unnecessarily consume excessive resources. LM Stud offers a clean, efficient alternative, leveraging the power of Windows Forms in C# to minimize memory usage and maximize performance.
+---
 
 ## Features
 
-- Simple, intuitive Windows Forms-based chat interface
-- Basic Markdown to RTF conversion for the RichTextBox
-- Seperate display of the thinking process for thinking models
-- Minimal resource usage compared to embedded web based GUIs
-- NEW! Huggingface model search and download!
-- EVEN NEWER! Voice prompting with Whisper.cpp and TTS!
-- EVEN NEWERER!! Google search and webpage browsing tools!
+| ☑️ | What It Does |
+| --- | --- |
+| ✅ | Launches in milliseconds—your GPU blinks and it’s already chatting. |
+| ✅ | Edit / regenerate / yeet messages. |
+| ✅ | Shows the model’s “thinking” stream (fun for prompt nerds). |
+| ✅ | Drag-drop files → instant code blocks. |
+| ✅ | One-click Hugging Face search & download. |
+| ✅ | **Built-in Google Search + webpage fetch** (super-visible setup below). |
+| ✅ | Optional speech I/O with `whisper.cpp`—talk smack to your computer. |
+| ✅ | Tiny memory footprint—smaller than RGB keyboard driver. |
 
-(Out of date screenshot but you get the idea)
-![LM Stud Chat Interface](./screenshots/LMStud_Chat.png)
+---
 
-## Getting Started
+## Google Search – **READ ME FIRST** ⚠️
 
-### Prerequisites
+```text
+1)  Grab an API key
+    https://console.cloud.google.com/apis/dashboard
+    → new project → enable “Custom Search API” → copy the key.
 
-- Visual Studio with C# and C++ development tools
-- llama.cpp repository
+2)  Create a Search Engine ID
+    https://programmablesearchengine.google.com/controlpanel/overview
+    → “Add” → “Search the entire web” → grab the cx ID.
 
-### Building llama.cpp
+3)  Paste both values in  Settings → Tools → Google Search.
+    Congrats—~100 free queries per day. Abuse responsibly.
+```
+---
 
-1. Clone the [llama.cpp repository](https://github.com/ggerganov/llama.cpp).
-2. Build llama.cpp with the following modules:
-   - common
-   - llama
-   - ggml
-   - ggml-base
-   - Any additional backend you wish to include.
+## Screenshots
 
-### Setting Up LM Stud
+|             Chat Tab            |               Settings Tab              |              Models Tab             |                Hugging Face Tab               |
+| :-----------------------------: | :-------------------------------------: | :---------------------------------: | :-------------------------------------------: |
+| ![Chat](./screenshots/Chat.png) | ![Settings](./screenshots/Settings.png) | ![Models](./screenshots/Models.png) | ![Huggingface](./screenshots/Huggingface.png) |
 
-1. After building llama.cpp, gather the following generated `.lib` files from your build intermediate directory...
-   - common.lib
-   - llama.lib
-   - ggml-base.lib
+---
 
-2. Place these `.lib` files in a directory such as `lib\release` or `lib\debug` within the LM Stud solution folder, matching your build configuration.
-3. Modify the LM Stud project's VC++ Directories settings to include the paths to llama.cpp's include folders.
-4. Copy the generated llama.cpp DLL files into the LM Stud project's output directory (`bin` folder), alongside the `LMStud.exe` file.
-5. Do a similar thing for whisper.cpp (you only need whisper.dll and lib/includes it can use the llama.cpp backends).
-6. Use vcpkg to install SDL2 and Curl with OpenSSL (`vcpkg install SDL2:x64-windows-static`, `vcpkg install curl[openssl]:x64-windows-static`) and set the Stud VC++ Directories to your vcpkg repository location.
+## Quick-Start Build
 
-### Running LM Stud
+```text
+> clone https://github.com/CommanderLake/LMStud - obviously
+> from a Visual Studio x64 native tools command prompt...
+> E:\llama.cpp\build> cmake .. -DGGML_NATIVE=OFF -DGGML_BACKEND_DL=ON -DGGML_NATIVE=OFF -DGGML_AVX2=ON -DGGML_BMI2=ON -DGGML_CUDA=ON -DGGML_CUDA_F16=ON -DLLAMA_CURL=OFF -DLLAMA_ALL_WARNINGS=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_TOOLS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_SERVER=OFF
+> or whatever bits and bobs you want
+> copy common.lib llama.lib ggml.lib ggml-base.lib → $(SolutionDir)\lib\{Debug|Release}
+> drop llama.dll, ggml*.dll & whisper.dll into the C# x64 bin folder
+> vcpkg install SDL2:x64-windows-static
+> vcpkg install curl[openssl]:x64-windows-static
+> open LM Stud.sln in Visual Studio
+> adjust VC++ Directories in Stud project
+> build
+```
 
-Once set up:
+---
 
-- Build and run the LM Stud project from Visual Studio.
-- Ensure the necessary llama.cpp DLLs are present in the output directory.
-- If you wish to use the Google Search Tool, configure these on the Settings tab:
-1. Get your Google API key here for 100 free searches per day: https://console.cloud.google.com/apis/dashboard
-2. Also required is a "Search engine ID" from Programmable Search Engine: https://programmablesearchengine.google.com/controlpanel/overview
+## Settings Cheat-Sheet
+
+| Section                | Knobs & Dials                                                  |
+| ---------------------- | -------------------------------------------------------------- |
+| **CPU Params / Batch** | Threads, strict pinning, batch threads.                        |
+| **Common**             | Context size, GPU layers, temperature, tokens to generate.     |
+| **Advanced**           | NUMA strategy, repeat penalty, top-k/p, batch size.            |
+| **Voice**              | Model picker, wake word, VAD, frequency threshold, GPU toggle. |
+| **Tools**              | Enable Google Search (API key + cx), enable webpage fetch.     |
+
+---
 
 ## Contributing
 
-Contributions to improve performance, usability and features are welcomed. Feel free to fork, enhance and submit pull requests!
+* Fork it.
+* Break it.
+* PR it.
+* Get internet points.
+  (Memes optional but encouraged.)
+
+---
 
 ## License
 
-This project is released under the MIT License.
+MIT—short, sweet and almost readable.
