@@ -41,7 +41,7 @@
 
 |             Chat Tab            |               Settings Tab              |              Models Tab             |                Hugging Face Tab               |
 | :-----------------------------: | :-------------------------------------: | :---------------------------------: | :-------------------------------------------: |
-| ![Chat](./screenshots/Chat.png) | ![Settings](./screenshots/Settings.png) | ![Models](./screenshots/Models.png) | ![Huggingface](./screenshots/Huggingface.png) |
+| ![Chat](./screenshots/Chat.PNG) | ![Settings](./screenshots/Settings.PNG) | ![Models](./screenshots/Models.PNG) | ![Huggingface](./screenshots/Huggingface.PNG) |
 
 ---
 
