@@ -33,7 +33,7 @@
     https://programmablesearchengine.google.com/controlpanel/overview
     → “Add” → “Search the entire web” → grab the cx ID.
 
-3)  Paste both values in  Settings → Tools → Google Search.
+3)  Paste both values in  Settings → Google Search Tool.
     Congrats—~100 free queries per day. Abuse responsibly.
 ```
 </details>
