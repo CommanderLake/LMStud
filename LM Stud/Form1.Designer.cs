@@ -133,6 +133,8 @@
 			this.labelTPS = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+			this.numGoogleResults = new System.Windows.Forms.NumericUpDown();
+			this.label21 = new System.Windows.Forms.Label();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -170,6 +172,7 @@
 			this.splitContainer3.Panel2.SuspendLayout();
 			this.splitContainer3.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numGoogleResults)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// textInput
@@ -373,7 +376,7 @@
 			// groupBox3
 			// 
 			this.groupBox3.Controls.Add(this.checkWebpageFetchEnable);
-			this.groupBox3.Location = new System.Drawing.Point(209, 434);
+			this.groupBox3.Location = new System.Drawing.Point(209, 459);
 			this.groupBox3.Name = "groupBox3";
 			this.groupBox3.Size = new System.Drawing.Size(200, 52);
 			this.groupBox3.TabIndex = 39;
@@ -393,6 +396,8 @@
 			// 
 			// groupBox2
 			// 
+			this.groupBox2.Controls.Add(this.label21);
+			this.groupBox2.Controls.Add(this.numGoogleResults);
 			this.groupBox2.Controls.Add(this.checkGoogleEnable);
 			this.groupBox2.Controls.Add(this.label20);
 			this.groupBox2.Controls.Add(this.label19);
@@ -400,7 +405,7 @@
 			this.groupBox2.Controls.Add(this.textGoogleApiKey);
 			this.groupBox2.Location = new System.Drawing.Point(209, 336);
 			this.groupBox2.Name = "groupBox2";
-			this.groupBox2.Size = new System.Drawing.Size(200, 92);
+			this.groupBox2.Size = new System.Drawing.Size(200, 117);
 			this.groupBox2.TabIndex = 38;
 			this.groupBox2.TabStop = false;
 			this.groupBox2.Text = "Google Search Tool";
@@ -1469,6 +1474,32 @@
 			this.toolTip1.UseAnimation = false;
 			this.toolTip1.UseFading = false;
 			// 
+			// numGoogleResults
+			// 
+			this.numGoogleResults.Location = new System.Drawing.Point(107, 90);
+			this.numGoogleResults.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+			this.numGoogleResults.Name = "numGoogleResults";
+			this.numGoogleResults.Size = new System.Drawing.Size(87, 20);
+			this.numGoogleResults.TabIndex = 5;
+			this.numGoogleResults.Value = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+			// 
+			// label21
+			// 
+			this.label21.AutoSize = true;
+			this.label21.Location = new System.Drawing.Point(8, 92);
+			this.label21.Name = "label21";
+			this.label21.Size = new System.Drawing.Size(92, 13);
+			this.label21.TabIndex = 6;
+			this.label21.Text = "Number of results:";
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -1534,6 +1565,7 @@
 			this.splitContainer3.ResumeLayout(false);
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numGoogleResults)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -1646,6 +1678,8 @@
 		private System.Windows.Forms.CheckBox checkGoogleEnable;
 		private System.Windows.Forms.GroupBox groupBox3;
 		private System.Windows.Forms.CheckBox checkWebpageFetchEnable;
+		private System.Windows.Forms.Label label21;
+		private System.Windows.Forms.NumericUpDown numGoogleResults;
 	}
 }
 

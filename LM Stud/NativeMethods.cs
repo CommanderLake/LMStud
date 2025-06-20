@@ -56,7 +56,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int GenerateWithTools(int nPredict, bool callback);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void SetGoogle(string apiKey, string searchEngineID);
+		public static extern void SetGoogle(string apiKey, string searchEngineID, int resultCount);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void AddTool([MarshalAs(UnmanagedType.LPUTF8Str)] string name, [MarshalAs(UnmanagedType.LPUTF8Str)] string description, [MarshalAs(UnmanagedType.LPUTF8Str)] string parameters, ToolHandler handler);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

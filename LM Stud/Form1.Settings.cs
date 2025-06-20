@@ -31,6 +31,7 @@ namespace LMStud{
 		private bool _flashAttn = true;
 		private string _googleAPIKey;
 		private string _googleSearchID;
+		private int _googleSearchResultCount = 5;
 		private bool _googleSearchEnable;
 		private bool _webpageFetchEnable;
 		private void LoadConfig(){
@@ -59,11 +60,12 @@ namespace LMStud{
 			_flashAttn = checkFlashAttn.Checked = Settings.Default.FlashAttn;
 			_googleAPIKey = textGoogleApiKey.Text = Settings.Default.GoogleAPIKey;
 			_googleSearchID = textGoogleSearchID.Text = Settings.Default.GoogleSearchID;
+			_googleSearchResultCount = (int)(numGoogleResults.Value = Settings.Default.GoogleSearchResultCount);
 			_googleSearchEnable = checkGoogleEnable.Checked = Settings.Default.GoogleSearchEnable;
 			_webpageFetchEnable = checkWebpageFetchEnable.Checked = Settings.Default.WebpageFetchEnable;
 			NativeMethods.SetWakeCommand(_wakeWord);
 			NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
-			NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID);
+			NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID, _googleSearchResultCount);
 		}
 		private void UpdateSetting<T>(ref T currentValue, T newValue, Action<T> updateAction){
 			if(!EqualityComparer<T>.Default.Equals(currentValue, newValue)){
@@ -117,11 +119,15 @@ namespace LMStud{
 			UpdateSetting(ref _flashAttn, checkFlashAttn.Checked, value => {Settings.Default.FlashAttn = value;});
 			UpdateSetting(ref _googleAPIKey, textGoogleApiKey.Text, value => {
 				Settings.Default.GoogleAPIKey = value;
-				NativeMethods.SetGoogle(value, _googleSearchID);
+				NativeMethods.SetGoogle(value, _googleSearchID, _googleSearchResultCount);
 			});
 			UpdateSetting(ref _googleSearchID, textGoogleSearchID.Text, value => {
 				Settings.Default.GoogleSearchID = value;
-				NativeMethods.SetGoogle(_googleAPIKey, value);
+				NativeMethods.SetGoogle(_googleAPIKey, value, _googleSearchResultCount);
+			});
+			UpdateSetting(ref _googleSearchResultCount, (int)numGoogleResults.Value, value => {
+				Settings.Default.GoogleSearchResultCount = value;
+				NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID, value);
 			});
 			UpdateSetting(ref _googleSearchEnable, checkGoogleEnable.Checked, value => {
 				Settings.Default.GoogleSearchEnable = value;

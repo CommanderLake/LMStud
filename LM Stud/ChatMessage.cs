@@ -27,11 +27,13 @@ namespace LMStud{
 		internal void SetRoleText(string role){label1.Text = role;}
 		private void RichTextMsgOnContentsResized(object sender, ContentsResizedEventArgs e){
 			ThreadPool.QueueUserWorkItem(o => {//Layout issue workaround
-				Invoke(new MethodInvoker(() => {
-					var newHeight = e.NewRectangle.Height + 32;
-					if(Height == newHeight) return;
-					Height = newHeight;
-				}));
+				try{
+					Invoke(new MethodInvoker(() => {
+						var newHeight = e.NewRectangle.Height + 32;
+						if(Height == newHeight) return;
+						Height = newHeight;
+					}));
+				} catch(ObjectDisposedException){}
 			});
 		}
 		internal bool Markdown{

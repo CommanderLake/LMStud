@@ -13,9 +13,10 @@ static std::string UrlEncode(const char* text){
 	curl_easy_cleanup(curl);
 	return out;
 }
-void SetGoogle(const char* apiKey, const char* searchEngineId){
+void SetGoogle(const char* apiKey, const char* searchEngineId, const int resultCount){
 	if(apiKey){ googleAPIKey = apiKey; } else{ googleAPIKey.clear(); }
 	if(searchEngineId){ googleSearchID = searchEngineId; } else{ googleSearchID.clear(); }
+	if(resultCount >= 1 && resultCount <= 100) googleResultCount = resultCount;
 }
 std::string GoogleSearch(const char* argsJson){
 	const char* queryStart = nullptr;
@@ -36,7 +37,7 @@ std::string GoogleSearch(const char* argsJson){
 	}
 	std::string query;
 	if(queryStart&&queryEnd&&queryEnd>queryStart){ query.assign(queryStart, queryEnd); } else{ query = argsJson ? argsJson : ""; }
-	return std::string(PerformHttpGet(("https://customsearch.googleapis.com/customsearch/v1?key="+googleAPIKey+"&cx="+googleSearchID+"&num=5&fields=items(title,link,snippet)&prettyPrint=true&q="+UrlEncode(query.c_str())).c_str()));
+	return std::string(PerformHttpGet(("https://customsearch.googleapis.com/customsearch/v1?key="+googleAPIKey+"&cx="+googleSearchID+"&num="+std::to_string(googleResultCount)+"&fields=items(title,link,snippet)&prettyPrint=true&q="+UrlEncode(query.c_str())).c_str()));
 }
 static std::string JsonEscape(const std::string& in){
 	std::string out;
