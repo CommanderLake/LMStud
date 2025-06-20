@@ -22,6 +22,7 @@
 ---
 
 ## Google Search – **READ ME FIRST** ⚠️
+<details>
 
 ```text
 1)  Grab an API key
@@ -32,28 +33,31 @@
     https://programmablesearchengine.google.com/controlpanel/overview
     → “Add” → “Search the entire web” → grab the cx ID.
 
-3)  Paste both values in  Settings → Tools → Google Search.
+3)  Paste both values in  Settings → Google Search Tool.
     Congrats—~100 free queries per day. Abuse responsibly.
 ```
+</details>
+
 ---
 
 ## Screenshots
 
 |             Chat Tab            |               Settings Tab              |              Models Tab             |                Hugging Face Tab               |
 | :-----------------------------: | :-------------------------------------: | :---------------------------------: | :-------------------------------------------: |
-| ![Chat](./screenshots/Chat.png) | ![Settings](./screenshots/Settings.png) | ![Models](./screenshots/Models.png) | ![Huggingface](./screenshots/Huggingface.png) |
+| ![Chat](./screenshots/Chat.PNG) | ![Settings](./screenshots/Settings.PNG) | ![Models](./screenshots/Models.PNG) | ![Huggingface](./screenshots/Huggingface.PNG) |
 
 ---
 
 ## Quick-Start Build
 
 ```text
-> clone https://github.com/CommanderLake/LMStud - obviously
-> from a Visual Studio x64 native tools command prompt...
+> clone https://github.com/ggml-org/llama.cpp then from a Visual Studio x64 native tools command prompt...
 > E:\llama.cpp\build> cmake .. -DGGML_NATIVE=OFF -DGGML_BACKEND_DL=ON -DGGML_NATIVE=OFF -DGGML_AVX2=ON -DGGML_BMI2=ON -DGGML_CUDA=ON -DGGML_CUDA_F16=ON -DLLAMA_CURL=OFF -DLLAMA_ALL_WARNINGS=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_TOOLS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_SERVER=OFF
 > or whatever bits and bobs you want
 > copy common.lib llama.lib ggml.lib ggml-base.lib → $(SolutionDir)\lib\{Debug|Release}
-> drop llama.dll, ggml*.dll & whisper.dll into the C# x64 bin folder
+> drop llama.dll & ggml*.dll etc. into the C# x64 bin folder
+> do a similar thing for https://github.com/ggml-org/whisper.cpp
+> clone https://github.com/CommanderLake/LMStud
 > vcpkg install SDL2:x64-windows-static
 > vcpkg install curl[openssl]:x64-windows-static
 > open LM Stud.sln in Visual Studio
@@ -87,4 +91,4 @@
 
 ## License
 
-MIT—short, sweet and almost readable.
+MIT—short, sweet, almost readable.
