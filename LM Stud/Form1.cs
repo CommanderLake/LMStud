@@ -22,6 +22,7 @@ namespace LMStud{
 		private bool _first = true;
 		private volatile bool _generating;
 		private int _msgTokenCount;
+		private int _genTokenTotal;
 		private volatile bool _rendering;
 		private bool _whisperInited;
 		internal Form1(){
@@ -227,9 +228,11 @@ namespace LMStud{
 			_first = true;
 			var hWnd = Handle;
 			ThreadPool.QueueUserWorkItem(o => {
+				_msgTokenCount = 0;
+				_genTokenTotal = 0;
 				_swTot.Restart();
 				_swRate.Restart();
-				var toks = NativeMethods.GenerateWithTools(hWnd, newMsg, _nGen, checkStream.Checked);
+				NativeMethods.GenerateWithTools(hWnd, newMsg, _nGen, checkStream.Checked);
 				_swTot.Stop();
 				_swRate.Stop();
 				if(_speechBuffer.Length > 0){
@@ -240,8 +243,8 @@ namespace LMStud{
 				try{
 					Invoke(new MethodInvoker(() => {
 						var elapsed = _swTot.Elapsed.TotalSeconds;
-						if(toks > 0 && elapsed > 0.0){
-							var callsPerSecond = toks/elapsed;
+						if(_genTokenTotal > 0 && elapsed > 0.0){
+							var callsPerSecond = _genTokenTotal/elapsed;
 							labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
 							_swTot.Reset();
 							_swRate.Reset();
@@ -278,6 +281,7 @@ namespace LMStud{
 				return;
 			}
 			_this._msgTokenCount += tokenCount;
+			_this._genTokenTotal += tokenCount;
 			var renderToken = !_this._rendering;
 			try{
 				_this.BeginInvoke((MethodInvoker)(() => {
