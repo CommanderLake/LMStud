@@ -134,7 +134,7 @@ namespace LMStud{
 		}
 		private void ButGen_Click(object sender, EventArgs e){
 			if(_generating) NativeMethods.StopGeneration();
-			else Generate(false);
+			else Generate();
 		}
 		private void ButReset_Click(object sender, EventArgs e){
 			NativeMethods.ResetChat();
@@ -165,15 +165,17 @@ namespace LMStud{
 		}
 		private void MsgButRegenOnClick(ChatMessage cm){
 			if(!_modelLoaded || _generating) return;
-			var id = _chatMessages.IndexOf(cm);
-			if(_chatMessages[id].User) ++id;
-			if(id < _chatMessages.Count){
-				var count = _chatMessages.Count - id;
-				for(var i = _chatMessages.Count - 1; i >= id; i--) _chatMessages[i].Dispose();
-				_chatMessages.RemoveRange(id, count);
-				NativeMethods.RemoveMessagesStartingAt(id);
-			}
-			Generate(true);
+			var idx = _chatMessages.IndexOf(cm);
+			if(idx < 0) return;
+			// determine the user message associated with this regeneration
+			var userIdx = _chatMessages[idx].User ? idx : idx - 1;
+			if(userIdx < 0 || !_chatMessages[userIdx].User) return;
+			var userMsg = _chatMessages[userIdx].Content;
+			var count = _chatMessages.Count - userIdx;
+			for(var i = _chatMessages.Count - 1; i >= userIdx; i--) _chatMessages[i].Dispose();
+			_chatMessages.RemoveRange(userIdx, count);
+			NativeMethods.RemoveMessagesStartingAt(userIdx);
+			Generate(userMsg);
 		}
 		private void MsgButEditOnClick(ChatMessage cm){
 			if(_generating || cm.Editing) return;
@@ -208,22 +210,24 @@ namespace LMStud{
 			_chatMessages.Add(cm);
 			return cm;
 		}
-		private void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){Process.Start(e.LinkText);}
-		private void Generate(bool regenerating){
-			if(!_modelLoaded || _generating || (!regenerating && string.IsNullOrWhiteSpace(textInput.Text))) return;
+		private static void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){Process.Start(e.LinkText);}
+		private void Generate(){
+			var prompt = textInput.Text;
+			textInput.Text = "";
+			Generate(prompt);
+		}
+		private void Generate(string prompt){
+			if(!_modelLoaded || _generating || string.IsNullOrWhiteSpace(prompt)) return;
 			_generating = true;
 			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
 			butGen.Text = "Stop";
 			butReset.Enabled = butApply.Enabled = false;
-			var newMsg = textInput.Text.Trim();
-			if(!regenerating){
-				var cm = AddMessage(true, newMsg);
-				//NativeMethods.AddMessage(true, msg);
-			}
+			var newMsg = prompt.Trim();
+			var cm = AddMessage(true, newMsg);
+			//NativeMethods.AddMessage(true, msg);
 			_cntAssMsg = null;
 			_this.panelChat.ScrollToEnd();
 			foreach(var message in _chatMessages) message.Generating = true;
-			textInput.Text = "";
 			_tts.SpeakAsyncCancelAll();
 			_first = true;
 			var hWnd = Handle;
@@ -323,7 +327,7 @@ namespace LMStud{
 			_this.BeginInvoke((MethodInvoker)(() => {
 				if(thisform.IsDisposed) return;
 				_this.textInput.AppendText(transcription);
-				if(_this.checkVoiceInput.CheckState == CheckState.Checked) _this.Generate(false);
+				if(_this.checkVoiceInput.CheckState == CheckState.Checked) _this.Generate();
 			}));
 		}
 		private void TextInput_DragEnter(object sender, DragEventArgs e){
