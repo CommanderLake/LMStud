@@ -214,10 +214,10 @@ namespace LMStud{
 			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
 			butGen.Text = "Stop";
 			butReset.Enabled = butApply.Enabled = false;
+			var newMsg = textInput.Text.Trim();
 			if(!regenerating){
-				var msg = textInput.Text.Trim();
-				var cm = AddMessage(true, msg);
-				NativeMethods.AddMessage(true, msg);
+				var cm = AddMessage(true, newMsg);
+				//NativeMethods.AddMessage(true, msg);
 			}
 			_cntAssMsg = null;
 			_this.panelChat.ScrollToEnd();
@@ -225,10 +225,11 @@ namespace LMStud{
 			textInput.Text = "";
 			_tts.SpeakAsyncCancelAll();
 			_first = true;
+			var hWnd = Handle;
 			ThreadPool.QueueUserWorkItem(o => {
 				_swTot.Restart();
 				_swRate.Restart();
-				var toks = NativeMethods.GenerateWithTools(_nGen, checkStream.Checked);
+				var toks = NativeMethods.GenerateWithTools(hWnd, newMsg, _nGen, checkStream.Checked);
 				_swTot.Stop();
 				_swRate.Stop();
 				if(_speechBuffer.Length > 0){
@@ -250,6 +251,7 @@ namespace LMStud{
 						_generating = false;
 						foreach(var message in _chatMessages) message.Generating = false;
 					}));
+					//Debugger.Log(1, "Info", NativeMethods.GetContextText());
 				} catch(ObjectDisposedException){}
 			});
 		}

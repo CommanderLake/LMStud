@@ -1,4 +1,6 @@
 #pragma once
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 #include <llama.h>
 #include <chat.h>
 #include <sampling.h>
@@ -15,9 +17,9 @@
 inline common_params _params;
 inline llama_model* _llModel = nullptr;
 inline llama_context* _ctx = nullptr;
-inline common_sampler* _smpl = nullptr;
+inline llama_sampler* _smpl = nullptr;
 inline const llama_vocab* _vocab = nullptr;
-inline std::vector<llama_token> _tokens;
+//inline std::vector<llama_token> _tokens;
 inline std::vector<common_chat_msg> _chatMsgs;
 inline std::atomic_bool _stop{false};
 inline common_chat_templates_ptr _chatTemplates;
@@ -38,13 +40,14 @@ extern "C" {
 	EXPORT bool HasTool(const char* name);
 	EXPORT void SetTokenCallback(TokenCallbackFn cb);
 	EXPORT void SetThreadCount(int n, int nBatch);
-	EXPORT int AddMessage(bool user, const char* message);
 	EXPORT void RetokenizeChat();
 	EXPORT void SetSystemPrompt(const char* prompt);
 	EXPORT void SetMessageAt(int index, const char* message);
 	EXPORT void RemoveMessageAt(int index);
 	EXPORT void RemoveMessagesStartingAt(int index);
-	EXPORT int Generate(unsigned int nPredict, bool callback);
-	EXPORT int GenerateWithTools(unsigned int nPredict, bool callback);
+	//EXPORT int Generate(unsigned int nPredict, bool callback);
+	EXPORT std::string Generate(HWND hWnd, std::string role, const std::string& prompt, unsigned int nPredict, bool callback);
+	EXPORT int GenerateWithTools(HWND hWnd, char* prompt, unsigned int nGen, bool callback);
 	EXPORT void StopGeneration();
+	EXPORT char* GetContextAsText();
 }

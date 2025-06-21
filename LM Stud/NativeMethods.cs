@@ -54,7 +54,9 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int Generate(int nPredict, bool callback);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern int GenerateWithTools(int nPredict, bool callback);
+		public static extern IntPtr Generate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern int GenerateWithTools(IntPtr hWnd, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetGoogle(string apiKey, string searchEngineID, int resultCount);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -65,6 +67,8 @@ namespace LMStud{
 		public static extern void RegisterTools(bool googleSearch, bool webpageFetch);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopGeneration();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern IntPtr GetContextAsText();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void ClearWebCache();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -99,5 +103,12 @@ namespace LMStud{
 		public static extern void CurlGlobalCleanup();
 		[DllImport("user32.dll")]
 		public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wp, IntPtr lp);
+		public static string GetContextText(){
+			var ptr = GetContextAsText();
+			if(ptr == IntPtr.Zero) return string.Empty;
+			var text = Marshal.PtrToStringUni(ptr);
+			FreeMemory(ptr);
+			return text ?? string.Empty;
+		}
 	}
 }
