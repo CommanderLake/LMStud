@@ -82,7 +82,6 @@ namespace LMStud{
 				NativeMethods.StopSpeechTranscription();
 				NativeMethods.UnloadWhisperModel();
 			}
-			ButReset_Click(null, null);
 			_tts.Dispose();
 			NativeMethods.CurlGlobalCleanup();
 		}
@@ -258,7 +257,6 @@ namespace LMStud{
 						_generating = false;
 						foreach(var message in _chatMessages) message.Generating = false;
 					}));
-					//Debugger.Log(1, "Info", NativeMethods.GetContextText());
 				} catch(ObjectDisposedException){}
 			});
 		}

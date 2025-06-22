@@ -19,7 +19,6 @@ inline llama_model* _llModel = nullptr;
 inline llama_context* _ctx = nullptr;
 inline llama_sampler* _smpl = nullptr;
 inline const llama_vocab* _vocab = nullptr;
-//inline std::vector<llama_token> _tokens;
 inline std::vector<common_chat_msg> _chatMsgs;
 inline std::atomic_bool _stop{false};
 inline common_chat_templates_ptr _chatTemplates;
@@ -45,9 +44,7 @@ extern "C" {
 	EXPORT void SetMessageAt(int index, const char* message);
 	EXPORT void RemoveMessageAt(int index);
 	EXPORT void RemoveMessagesStartingAt(int index);
-	//EXPORT int Generate(unsigned int nPredict, bool callback);
 	EXPORT std::string Generate(HWND hWnd, std::string role, const std::string& prompt, unsigned int nPredict, bool callback);
 	EXPORT int GenerateWithTools(HWND hWnd, char* prompt, unsigned int nGen, bool callback);
 	EXPORT void StopGeneration();
-	EXPORT char* GetContextAsText();
 }

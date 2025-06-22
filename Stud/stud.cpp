@@ -71,7 +71,6 @@ bool LoadModel(const char* filename, const int nCtx, const float temp, const flo
 		_hasTools = tmpl.original_caps().supports_tools;
 	}
 	if(!llama_model_has_encoder(_llModel)&&llama_vocab_get_add_eos(_vocab)) return false;
-	//_smpl = common_sampler_init(_llModel, _params.sampling);
 	_smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
 	llama_sampler_chain_add(_smpl, llama_sampler_init_min_p(0.05f, 1));
 	llama_sampler_chain_add(_smpl, llama_sampler_init_top_p(topP, 1));
@@ -109,7 +108,6 @@ void AddMessage(const std::string role, const std::string message, std::vector<l
 	newMsg.role = role;
 	newMsg.content = message;
 	_chatMsgs.push_back(newMsg);
-	//OutputDebugStringA((std::string(GetContextAsText()) + "\n\n---\n\n").c_str());
 }
 void RetokenizeChat(){
 	if(!_ctx||!_vocab) return;
@@ -158,50 +156,6 @@ void RemoveMessagesStartingAt(int index){
 	_chatMsgs.erase(_chatMsgs.begin()+index, _chatMsgs.end());
 	RetokenizeChat();
 }
-/*int Generate(const unsigned int nPredict, const bool callback){
-	const auto prepStart = HrClock::now();
-	_stop.store(false);
-	const TokenCallbackFn cb = _tokenCb;
-	std::vector<llama_token> batch;
-	std::ostringstream assMsg;
-	double ftTime = 0.0;
-	unsigned i = 0;
-	while(i<nPredict&&!_stop.load()){
-		bool sampled = false;
-		if(_nConsumed>=static_cast<int>(_tokens.size())){
-			llama_token id = common_sampler_sample(_smpl, _ctx, -1);
-			common_sampler_accept(_smpl, id, true);
-			batch.push_back(id);
-			sampled = true;
-		} else{
-			while(_nConsumed<static_cast<int>(_tokens.size())&&batch.size()<_params.n_batch){
-				batch.push_back(_tokens[_nConsumed]);
-				common_sampler_accept(_smpl, batch.back(), false);
-				++_nConsumed;
-			}
-		}
-		for(int j = 0; j<static_cast<int>(batch.size()); j += _params.n_batch){
-			int nEval = static_cast<int>(batch.size())-j;
-			if(nEval>_params.n_batch) nEval = _params.n_batch;
-			if(llama_decode(_ctx, llama_batch_get_one(&batch[j], nEval))) return i;
-		}
-		if(sampled){
-			++i;
-			const llama_token id = common_sampler_last(_smpl);
-			if(ftTime==0.0) ftTime = std::chrono::duration<double, std::ratio<1, 1>>(HrClock::now()-prepStart).count();
-			if(llama_vocab_is_eog(_vocab, id)) break;
-			std::string tokenStr = common_token_to_piece(_ctx, id, false);
-			if(!tokenStr.empty()){
-				assMsg<<tokenStr;
-				if(cb&&callback) cb(tokenStr.c_str(), static_cast<int>(tokenStr.length()), 1, static_cast<int>(_tokens.size()+i), ftTime, 0);
-			}
-		}
-		batch.clear();
-	}
-	AddMessage(false, assMsg.str().c_str());
-	if(cb&&!callback) cb(assMsg.str().c_str(), assMsg.str().length(), i, static_cast<int>(_tokens.size()), ftTime, 0);
-	return i;
-}*/
 std::string Generate(const HWND hWnd, const std::string role, const std::string& prompt, const unsigned int nPredict, const bool callback){
 	const auto prepStart = HrClock::now();
 	_stop.store(false);
@@ -284,14 +238,3 @@ int GenerateWithTools(const HWND hWnd, char* userPrompt, const unsigned int nGen
 	return response.length();
 }
 void StopGeneration(){ _stop.store(true); }
-//char* GetContextAsText(){
-//	if(!_ctx) return nullptr;
-//	std::string outStr;
-//	outStr.reserve(_tokens.size()*4);
-//	for(const llama_token tok : _tokens){
-//		outStr += common_token_to_piece(_ctx, tok, true);
-//	}
-//	auto* out = static_cast<char*>(std::malloc(outStr.size() + 1));
-//	if(out) std::memcpy(out, outStr.c_str(), outStr.size() + 1);
-//	return out;
-//}
