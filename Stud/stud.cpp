@@ -16,6 +16,7 @@ void BackendInit(){
 }
 void ResetChat(){
 	_chatMsgs.clear();
+	_cachedTokens.clear();
 	RetokenizeChat();
 }
 void FreeModel(){
@@ -31,6 +32,7 @@ void FreeModel(){
 		llama_model_free(_llModel);
 		_llModel = nullptr;
 	}
+	_cachedTokens.clear();
 	llama_backend_free();
 }
 bool LoadModel(const char* filename, const int nCtx, const float temp, const float repeatPenalty, const int topK, const int topP, const int nThreads, const bool strictCPU, const int nThreadsBatch, const bool strictCPUBatch, const int nGPULayers, const int nBatch, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy, const bool flashAttn){
@@ -111,8 +113,6 @@ void AddMessage(const std::string role, const std::string message, std::vector<l
 }
 void RetokenizeChat(){
 	if(!_ctx||!_vocab) return;
-	llama_memory_clear(llama_get_memory(_ctx), true);
-	llama_sampler_reset(_smpl);
 	std::vector<common_chat_msg> msgs;
 	if(!_params.prompt.empty()){ msgs.push_back({"system", _params.prompt}); }
 	msgs.insert(msgs.end(), _chatMsgs.begin(), _chatMsgs.end());
@@ -127,14 +127,19 @@ void RetokenizeChat(){
 	const int nPrompt = -llama_tokenize(_vocab, chatData.prompt.c_str(), chatData.prompt.size(), nullptr, 0, true, true);
 	std::vector<llama_token> promptTokens(nPrompt);
 	llama_tokenize(_vocab, chatData.prompt.c_str(), chatData.prompt.size(), promptTokens.data(), promptTokens.size(), true, true);
-	for(size_t i = 0; i<promptTokens.size(); i += _params.n_batch){
+	size_t prefix = 0;
+	while(prefix<_cachedTokens.size()&&prefix<promptTokens.size()&&_cachedTokens[prefix]==promptTokens[prefix]){ ++prefix; }
+	llama_memory_t mem = llama_get_memory(_ctx);
+	if(prefix<_cachedTokens.size()){ llama_memory_seq_rm(mem, 0, prefix, -1); } else if(prefix==0){ llama_memory_clear(mem, true); }
+	llama_sampler_reset(_smpl);
+	for(size_t i = 0; i<prefix; ++i){ llama_sampler_accept(_smpl, promptTokens[i]); }
+	for(size_t i = prefix; i<promptTokens.size(); i += _params.n_batch){
 		const int nEval = std::min<int>(_params.n_batch, promptTokens.size()-i);
 		llama_batch batch = llama_batch_get_one(&promptTokens[i], nEval);
-		if(llama_decode(_ctx, batch)!=0){
-			return;
-		}
+		if(llama_decode(_ctx, batch)!=0){ return; }
 		for(int j = 0; j<nEval; ++j){ llama_sampler_accept(_smpl, promptTokens[i+j]); }
 	}
+	_cachedTokens = std::move(promptTokens);
 }
 void SetSystemPrompt(const char* prompt){
 	_params.prompt = std::string(prompt);
@@ -206,6 +211,8 @@ std::string Generate(const HWND hWnd, const std::string role, const std::string&
 		batch = llama_batch_get_one(&newTokenId, 1);
 	}
 	AddMessage("assistant", response, &newTokens);
+	_cachedTokens.insert(_cachedTokens.end(), promptTokens.begin(), promptTokens.end());
+	_cachedTokens.insert(_cachedTokens.end(), newTokens.begin(), newTokens.end());
 	if(cb&&!callback) cb(response.c_str(), response.length(), i, llama_memory_seq_pos_max(llMem, 0), ftTime, 0);
 	return response;
 }
