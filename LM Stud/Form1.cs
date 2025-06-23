@@ -166,15 +166,15 @@ namespace LMStud{
 			if(!_modelLoaded || _generating) return;
 			var idx = _chatMessages.IndexOf(cm);
 			if(idx < 0) return;
-			// determine the user message associated with this regeneration
-			var userIdx = _chatMessages[idx].User ? idx : idx - 1;
-			if(userIdx < 0 || !_chatMessages[userIdx].User) return;
-			var userMsg = _chatMessages[userIdx].Content;
-			var count = _chatMessages.Count - userIdx;
-			for(var i = _chatMessages.Count - 1; i >= userIdx; i--) _chatMessages[i].Dispose();
-			_chatMessages.RemoveRange(userIdx, count);
-			NativeMethods.RemoveMessagesStartingAt(userIdx);
-			Generate(userMsg);
+			while(_chatMessages[idx].Role == MessageRole.Assistant) if(--idx < 0) return;
+			var role = _chatMessages[idx].Role;
+			var msg = _chatMessages[idx].Content;
+			for(var i = _chatMessages.Count - 1; i >= idx; i--){
+				_chatMessages[i].Dispose();
+				_chatMessages.RemoveAt(i);
+			}
+			NativeMethods.RemoveMessagesStartingAt(idx);
+			Generate(role, msg);
 		}
 		private void MsgButEditOnClick(ChatMessage cm){
 			if(_generating || cm.Editing) return;
@@ -196,8 +196,8 @@ namespace LMStud{
 			cm.Markdown = checkMarkdown.Checked;
 		}
 		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)(((e.Delta/8) << 16) & 0xffff0000), IntPtr.Zero);}
-		private ChatMessage AddMessage(bool user, string message){
-			var cm = new ChatMessage(user, message, checkMarkdown.Checked){ Parent = panelChat, Width = panelChat.ClientSize.Width };
+		private ChatMessage AddMessage(MessageRole role, string message){
+			var cm = new ChatMessage(role, message, checkMarkdown.Checked){ Parent = panelChat, Width = panelChat.ClientSize.Width };
 			cm.butDelete.Click += (o, args) => MsgButDeleteOnClick(cm);
 			cm.butRegen.Click += (o, args) => MsgButRegenOnClick(cm);
 			cm.butEdit.Click += (o, args) => MsgButEditOnClick(cm);
@@ -213,16 +213,16 @@ namespace LMStud{
 		private void Generate(){
 			var prompt = textInput.Text;
 			textInput.Text = "";
-			Generate(prompt);
+			Generate(MessageRole.User, prompt);
 		}
-		private void Generate(string prompt){
+		private void Generate(MessageRole role, string prompt){
 			if(!_modelLoaded || _generating || string.IsNullOrWhiteSpace(prompt)) return;
 			_generating = true;
 			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
 			butGen.Text = "Stop";
 			butReset.Enabled = butApply.Enabled = false;
 			var newMsg = prompt.Trim();
-			var cm = AddMessage(true, newMsg);
+			var cm = AddMessage(role, newMsg);
 			//NativeMethods.AddMessage(true, msg);
 			_cntAssMsg = null;
 			_this.panelChat.ScrollToEnd();
@@ -235,7 +235,7 @@ namespace LMStud{
 				_genTokenTotal = 0;
 				_swTot.Restart();
 				_swRate.Restart();
-				NativeMethods.GenerateWithTools(hWnd, newMsg, _nGen, checkStream.Checked);
+				NativeMethods.GenerateWithTools(hWnd, role, newMsg, _nGen, checkStream.Checked);
 				_swTot.Stop();
 				_swRate.Stop();
 				if(_speechBuffer.Length > 0){
@@ -273,7 +273,7 @@ namespace LMStud{
 			if(tool == 1){
 				try{
 					_this.Invoke(new MethodInvoker(() => {
-						var cm = _this.AddMessage(false, tokenStr);
+						var cm = _this.AddMessage(MessageRole.Tool, tokenStr);
 						cm.SetRoleText("Tool");
 						_this._cntAssMsg = null;
 						_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
@@ -298,9 +298,7 @@ namespace LMStud{
 							_this.labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
 							_this._msgTokenCount = 0;
 						}
-						if(_this._cntAssMsg == null){
-							_this._cntAssMsg = _this.AddMessage(false, "");
-						}
+						if(_this._cntAssMsg == null) _this._cntAssMsg = _this.AddMessage(MessageRole.Assistant, "");
 						var lastThink = _this._cntAssMsg.checkThink.Checked;
 						_this._cntAssMsg.AppendText(tokenStr, renderToken);
 						if(_this._speak && !_this._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(tokenStr)){

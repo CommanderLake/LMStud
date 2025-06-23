@@ -14,6 +14,11 @@
 #pragma comment(lib, "ggml.lib")
 #pragma comment(lib, "ggml-base.lib")
 #define EXPORT __declspec(dllexport)
+enum class MessageRole{
+	User,
+	Assistant,
+	Tool
+};
 inline common_params _params;
 inline llama_model* _llModel = nullptr;
 inline llama_context* _ctx = nullptr;
@@ -45,6 +50,6 @@ extern "C" {
 	EXPORT void RemoveMessageAt(int index);
 	EXPORT void RemoveMessagesStartingAt(int index);
 	EXPORT std::string Generate(HWND hWnd, std::string role, const std::string& prompt, unsigned int nPredict, bool callback);
-	EXPORT int GenerateWithTools(HWND hWnd, char* prompt, unsigned int nGen, bool callback);
+	EXPORT int GenerateWithTools(HWND hWnd, MessageRole role, char* prompt, unsigned int nGen, bool callback);
 	EXPORT void StopGeneration();
 }

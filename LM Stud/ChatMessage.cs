@@ -4,20 +4,25 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 namespace LMStud{
+	internal enum MessageRole{
+		User,
+		Assistant,
+		Tool
+	}
 	internal partial class ChatMessage : UserControl{
 		private readonly StringBuilder _msgBuilder = new StringBuilder();
-		internal readonly bool User;
+		internal readonly MessageRole Role;
 		private bool _markdown;
 		private string _message;
 		private string _think;
 		private bool _generating;
 		private bool _editing;
-		internal ChatMessage(bool user, string message, bool markdown){
-			User = user;
+		internal ChatMessage(MessageRole role, string message, bool markdown){
+			Role = role;
 			_markdown = markdown;
 			InitializeComponent();
 			richTextMsg.ContentsResized += RichTextMsgOnContentsResized;
-			label1.Text = user ? "User" : "Assistant";
+			label1.Text = role.ToString();
 			_msgBuilder.Append(message);
 			_message = _msgBuilder.ToString();
 		}
@@ -94,7 +99,7 @@ namespace LMStud{
 				_msgBuilder.Append(text);
 				_message = _msgBuilder.ToString();
 			}
-			if(User){
+			if(Role == MessageRole.User){
 				if(render) RenderText();
 			} else{
 				var thinking = ExtractThink(ref _message, out _think);
@@ -158,7 +163,7 @@ namespace LMStud{
 		}
 		private void RebuildMsgBuilder(){
 			_msgBuilder.Clear();
-			if(!User && !string.IsNullOrEmpty(_think)){
+			if(Role == MessageRole.Assistant && !string.IsNullOrEmpty(_think)){
 				_msgBuilder.AppendLine("<think>");
 				_msgBuilder.AppendLine(_think);
 				_msgBuilder.AppendLine("</think>");

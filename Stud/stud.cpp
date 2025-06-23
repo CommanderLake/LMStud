@@ -216,15 +216,15 @@ std::string Generate(const HWND hWnd, const std::string role, const std::string&
 	if(cb&&!callback) cb(response.c_str(), response.length(), i, llama_memory_seq_pos_max(llMem, 0), ftTime, 0);
 	return response;
 }
-int GenerateWithTools(const HWND hWnd, char* userPrompt, const unsigned int nGen, const bool callback){
-	auto prompt = std::string(userPrompt);
-	if(!_hasTools) return Generate(hWnd, "user", prompt, nGen, callback).length();
+int GenerateWithTools(const HWND hWnd, const MessageRole role, char* prompt, const unsigned int nGen, const bool callback){
+	auto promptStr = std::string(prompt);
+	if(!_hasTools) return Generate(hWnd, "user", promptStr, nGen, callback).length();
 	std::string response;
-	bool toolCalled = false;
+	bool toolCalled = role == MessageRole::Tool;
 	const TokenCallbackFn cb = _tokenCb;
 	const auto llMem = llama_get_memory(_ctx);
 	do{
-		response = Generate(hWnd, toolCalled ? "tool" : "user", prompt, nGen, callback);
+		response = Generate(hWnd, toolCalled ? "tool" : "user", promptStr, nGen, callback);
 		toolCalled = false;
 		if(_chatMsgs.empty()) return response.length();
 		common_chat_syntax syntax;
@@ -235,8 +235,8 @@ int GenerateWithTools(const HWND hWnd, char* userPrompt, const unsigned int nGen
 			for(const auto& tc : parsed.tool_calls){
 				auto it = _toolHandlers.find(tc.name);
 				if(it!=_toolHandlers.end()){
-					prompt = it->second(tc.arguments.c_str());
-					if(cb&&callback) cb(prompt.c_str(), static_cast<int>(prompt.length()), 0, llama_memory_seq_pos_max(llMem, 0), 0, 1);
+					promptStr = it->second(tc.arguments.c_str());
+					if(cb&&callback) cb(promptStr.c_str(), static_cast<int>(promptStr.length()), 0, llama_memory_seq_pos_max(llMem, 0), 0, 1);
 					toolCalled = true;
 				}
 			}

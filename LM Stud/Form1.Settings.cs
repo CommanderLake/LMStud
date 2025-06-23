@@ -76,7 +76,7 @@ namespace LMStud{
 		private void ButApply_Click(object sender, EventArgs e){
 			UpdateSetting(ref _systemPrompt, textSystemPrompt.Text, value => {
 				Settings.Default.SystemPrompt = value;
-				if(_modelLoaded) NativeMethods.SetSystemPrompt(value);
+				SetSystemPrompt();
 			});
 			UpdateSetting(ref _modelsPath, textModelsPath.Text, value => {
 				Settings.Default.ModelsDir = value;
