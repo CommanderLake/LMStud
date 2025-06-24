@@ -32,9 +32,6 @@
     <Setting Name="GPULayers" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">-1</Value>
     </Setting>
-    <Setting Name="StrictCPU" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
-    </Setting>
     <Setting Name="BatchSize" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">512</Value>
     </Setting>
@@ -49,9 +46,6 @@
     </Setting>
     <Setting Name="ThreadsBatch" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">8</Value>
-    </Setting>
-    <Setting Name="StrictCPUBatch" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="MMap" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>

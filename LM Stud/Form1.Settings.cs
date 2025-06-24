@@ -20,8 +20,6 @@ namespace LMStud{
 		private bool _mLock;
 		private int _nThreads = 8;
 		private int _nThreadsBatch = 8;
-		private bool _strictCPU;
-		private bool _strictCPUBatch;
 		private int _whisperModelIndex;
 		private string _wakeWord;
 		private float _vadThreshold = 0.6f;
@@ -49,9 +47,7 @@ namespace LMStud{
 			_mMap = checkMMap.Checked = Settings.Default.MMap;
 			_mLock = checkMLock.Checked = Settings.Default.MLock;
 			_nThreads = (int)(numThreads.Value = Settings.Default.Threads);
-			_strictCPU = checkStrictCPU.Checked = Settings.Default.StrictCPU;
 			_nThreadsBatch = (int)(numThreadsBatch.Value = Settings.Default.ThreadsBatch);
-			_strictCPUBatch = checkStrictCPUBatch.Checked = Settings.Default.StrictCPUBatch;
 			_wakeWord = textWakeWord.Text = Settings.Default.WakeWord;
 			_vadThreshold = (float)(numVadThreshold.Value = Settings.Default.VadThreshold);
 			_freqThreshold = (float)(numFreqThreshold.Value = Settings.Default.FreqThreshold);
@@ -99,8 +95,6 @@ namespace LMStud{
 				UpdateSetting(ref _nThreadsBatch, (int)numThreadsBatch.Value, value => {Settings.Default.ThreadsBatch = value;});
 				NativeMethods.SetThreadCount((int)numThreads.Value, (int)numThreadsBatch.Value);
 			}
-			UpdateSetting(ref _strictCPU, checkStrictCPU.Checked, value => {Settings.Default.StrictCPU = value;});
-			UpdateSetting(ref _strictCPUBatch, checkStrictCPUBatch.Checked, value => {Settings.Default.StrictCPUBatch = value;});
 			UpdateSetting(ref _whisperModelIndex, comboWhisperModel.SelectedIndex, value => {Settings.Default.WhisperModel = comboWhisperModel.Text;});
 			UpdateSetting(ref _wakeWord, textWakeWord.Text, value => {
 				Settings.Default.WakeWord = value;

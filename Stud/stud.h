@@ -3,7 +3,6 @@
 #include <Windows.h>
 #include <llama.h>
 #include <chat.h>
-#include <sampling.h>
 #include <mutex>
 #include <vector>
 #include <unordered_map>
@@ -19,7 +18,6 @@ enum class MessageRole{
 	Assistant,
 	Tool
 };
-inline common_params _params;
 inline llama_model* _llModel = nullptr;
 inline llama_context* _ctx = nullptr;
 inline llama_sampler* _smpl = nullptr;
@@ -34,16 +32,20 @@ inline std::vector<common_chat_tool> _tools;
 inline std::unordered_map<std::string, std::string(*)(const char*)> _toolHandlers;
 inline common_chat_format _chatFormat = COMMON_CHAT_FORMAT_CONTENT_ONLY;
 inline bool _hasTools;
+inline bool _useJinja;
+inline std::string _prompt;
+inline int _nBatch;
 extern "C" {
 	EXPORT void BackendInit();
 	EXPORT void ResetChat();
 	EXPORT void FreeModel();
-	EXPORT bool LoadModel(const char* filename, int nCtx, float temp, float repeatPenalty, int topK, int topP, int nThreads, bool strictCPU, int nThreadsBatch, bool strictCPUBatch, int nGPULayers, int nBatch, bool mMap, bool mLock, ggml_numa_strategy numaStrategy, bool flashAttn);
+	EXPORT bool LoadModel(HWND hWnd, const char* filename, int nCtx, float temp, float repeatPenalty, int topK, int topP, int nThreads, int nThreadsBatch, int nGPULayers, int nBatch, bool mMap, bool mLock, ggml_numa_strategy numaStrategy, bool flashAttn);
 	EXPORT void AddTool(const char* name, const char* description, const char* parameters, std::string(*handler)(const char* args));
 	EXPORT void ClearTools();
 	EXPORT bool HasTool(const char* name);
 	EXPORT void SetTokenCallback(TokenCallbackFn cb);
 	EXPORT void SetThreadCount(int n, int nBatch);
+	EXPORT void AddMessage(std::string role, std::string message);
 	EXPORT void RetokenizeChat();
 	EXPORT void SetSystemPrompt(const char* prompt);
 	EXPORT void SetMessageAt(int index, const char* message);
@@ -52,4 +54,5 @@ extern "C" {
 	EXPORT std::string Generate(HWND hWnd, std::string role, const std::string& prompt, unsigned int nPredict, bool callback);
 	EXPORT int GenerateWithTools(HWND hWnd, MessageRole role, char* prompt, unsigned int nGen, bool callback);
 	EXPORT void StopGeneration();
+	EXPORT char* GetContextAsText();
 }

@@ -145,18 +145,6 @@ namespace LMStud.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool StrictCPU {
-            get {
-                return ((bool)(this["StrictCPU"]));
-            }
-            set {
-                this["StrictCPU"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("512")]
         public decimal BatchSize {
             get {
@@ -212,18 +200,6 @@ namespace LMStud.Properties {
             }
             set {
                 this["ThreadsBatch"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool StrictCPUBatch {
-            get {
-                return ((bool)(this["StrictCPUBatch"]));
-            }
-            set {
-                this["StrictCPUBatch"] = value;
             }
         }
         
