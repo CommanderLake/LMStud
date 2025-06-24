@@ -54,5 +54,5 @@ extern "C" {
 	EXPORT std::string Generate(HWND hWnd, std::string role, const std::string& prompt, unsigned int nPredict, bool callback);
 	EXPORT int GenerateWithTools(HWND hWnd, MessageRole role, char* prompt, unsigned int nGen, bool callback);
 	EXPORT void StopGeneration();
-	EXPORT char* GetContextAsText();
+	//EXPORT char* GetContextAsText();
 }

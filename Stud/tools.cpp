@@ -37,7 +37,10 @@ std::string GoogleSearch(const char* argsJson){
 	}
 	std::string query;
 	if(queryStart&&queryEnd&&queryEnd>queryStart){ query.assign(queryStart, queryEnd); } else{ query = argsJson ? argsJson : ""; }
-	return std::string(PerformHttpGet(("https://customsearch.googleapis.com/customsearch/v1?key="+googleAPIKey+"&cx="+googleSearchID+"&num="+std::to_string(googleResultCount)+"&fields=items(title,link,snippet)&prettyPrint=true&q="+UrlEncode(query.c_str())).c_str()));
+	const auto result = PerformHttpGet(("https://customsearch.googleapis.com/customsearch/v1?key="+googleAPIKey+"&cx="+googleSearchID+"&num="+std::to_string(googleResultCount)+"&fields=items(title,link,snippet)&prettyPrint=true&q="+UrlEncode(query.c_str())).c_str());
+	auto resultStr = std::string(result);
+	std::free(result);
+	return resultStr;
 }
 static std::string JsonEscape(const std::string& in){
 	std::string out;

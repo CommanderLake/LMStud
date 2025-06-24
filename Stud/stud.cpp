@@ -131,7 +131,7 @@ void RetokenizeChat(){
 		for(int j = 0; j<nEval; ++j){ llama_sampler_accept(_smpl, promptTokens[i+j]); }
 	}
 	_cachedTokens = std::move(promptTokens);
-	OutputDebugStringA((std::string(GetContextAsText()) + "\n\n---\n\n").c_str());
+	//OutputDebugStringA((std::string(GetContextAsText()) + "\n\n---\n\n").c_str());
 }
 void SetSystemPrompt(const char* prompt){
 	_prompt = std::string(prompt);
@@ -275,12 +275,12 @@ int GenerateWithTools(const HWND hWnd, const MessageRole role, char* prompt, con
 	return response.length();
 }
 void StopGeneration(){ _stop.store(true); }
-char* GetContextAsText(){
-	if(!_ctx) return nullptr;
-	std::string outStr;
-	outStr.reserve(_cachedTokens.size()*4);
-	for(const llama_token tok : _cachedTokens){ outStr += common_token_to_piece(_ctx, tok, true); }
-	auto* out = static_cast<char*>(std::malloc(outStr.size()+1));
-	if(out) std::memcpy(out, outStr.c_str(), outStr.size()+1);
-	return out;
-}
+//char* GetContextAsText(){
+//	if(!_ctx) return nullptr;
+//	std::string outStr;
+//	outStr.reserve(_cachedTokens.size()*4);
+//	for(const llama_token tok : _cachedTokens){ outStr += common_token_to_piece(_ctx, tok, true); }
+//	auto* out = static_cast<char*>(std::malloc(outStr.size()+1));
+//	if(out) std::memcpy(out, outStr.c_str(), outStr.size()+1);
+//	return out;
+//}
