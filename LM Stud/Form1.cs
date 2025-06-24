@@ -48,10 +48,8 @@ namespace LMStud{
 			toolTip1.SetToolTip(numThreads, "CPU threads for token generation. Typically, around 75% of your physical cores is optimal to prevent oversaturating the memory controller.");
 			toolTip1.SetToolTip(checkMMap, "Map the model file to memory for on-demand loading, may improve model load times.");
 			toolTip1.SetToolTip(checkMLock, "Lock the model in RAM.");
-			toolTip1.SetToolTip(checkStrictCPU, "Sets thread affinities on supported backends to isolate threads to specific logical cores.");
 			toolTip1.SetToolTip(groupCPUParamsBatch, "Parameters for the pre-generation step (batch preparation).");
 			toolTip1.SetToolTip(numThreadsBatch, "CPU threads used for batch preparation.");
-			toolTip1.SetToolTip(checkStrictCPUBatch, "Sets thread affinities on supported backends to isolate threads to specific logical cores for batch preparation.");
 			toolTip1.SetToolTip(numVadThreshold, "Voice Activity Detection, higher values increase sensitivity to speech (0.1-1.0).");
 			toolTip1.SetToolTip(numFreqThreshold, "High-pass filter cutoff frequency. Higher values reduce background noise.");
 			toolTip1.SetToolTip(checkSpeak, "Speak the generated responses using the computers default voice.");

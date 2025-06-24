@@ -16,7 +16,6 @@ void BackendInit(){
 }
 void ResetChat(){
 	_chatMsgs.clear();
-	_cachedTokens.clear();
 	RetokenizeChat();
 }
 void FreeModel(){
