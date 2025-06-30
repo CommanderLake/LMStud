@@ -31,6 +31,7 @@
 			this.textInput = new System.Windows.Forms.TextBox();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
 			this.panelChat = new LMStud.MyFlowLayoutPanel();
+			this.comboSessions = new System.Windows.Forms.ComboBox();
 			this.checkStream = new System.Windows.Forms.CheckBox();
 			this.checkSpeak = new System.Windows.Forms.CheckBox();
 			this.checkVoiceInput = new System.Windows.Forms.CheckBox();
@@ -207,6 +208,7 @@
 			// 
 			// splitContainer1.Panel2
 			// 
+			this.splitContainer1.Panel2.Controls.Add(this.comboSessions);
 			this.splitContainer1.Panel2.Controls.Add(this.checkStream);
 			this.splitContainer1.Panel2.Controls.Add(this.checkSpeak);
 			this.splitContainer1.Panel2.Controls.Add(this.checkVoiceInput);
@@ -231,6 +233,16 @@
 			this.panelChat.TabIndex = 0;
 			this.panelChat.WrapContents = false;
 			this.panelChat.Layout += new System.Windows.Forms.LayoutEventHandler(this.PanelChat_Layout);
+			// 
+			// comboSessions
+			// 
+			this.comboSessions.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+			this.comboSessions.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.comboSessions.FormattingEnabled = true;
+			this.comboSessions.Location = new System.Drawing.Point(730, 152);
+			this.comboSessions.Name = "comboSessions";
+			this.comboSessions.Size = new System.Drawing.Size(121, 21);
+			this.comboSessions.TabIndex = 13;
 			// 
 			// checkStream
 			// 
@@ -1650,6 +1662,7 @@
 		private System.Windows.Forms.CheckBox checkWebpageFetchEnable;
 		private System.Windows.Forms.Label label21;
 		private System.Windows.Forms.NumericUpDown numGoogleResults;
+		private System.Windows.Forms.ComboBox comboSessions;
 	}
 }
 

@@ -14,7 +14,7 @@ namespace LMStud{
 		private int _cntCtxMax;
 		private readonly List<ModelInfo> _models = new List<ModelInfo>();
 		private readonly List<string> _whisperModels = new List<string>();
-		private List<int> _sessions = new List<int>();
+		private readonly List<int> _sessions = new List<int>();
 		private struct ModelInfo{
 			public readonly string FilePath;
 			public readonly List<GGUFMetadataManager.GGUFMetadataEntry> Meta;
@@ -24,13 +24,9 @@ namespace LMStud{
 			}
 		}
 		private void CheckLoadAuto_CheckedChanged(object sender, EventArgs e){
-			if(checkLoadAuto.Checked && File.Exists(Settings.Default.LastModel)){
-				Settings.Default.LoadAuto = true;
-				Settings.Default.Save();
-			} else{
-				Settings.Default.LoadAuto = false;
-				Settings.Default.Save();
-			}
+			if(checkLoadAuto.Checked && File.Exists(Settings.Default.LastModel)) Settings.Default.LoadAuto = true;
+			else Settings.Default.LoadAuto = false;
+			Settings.Default.Save();
 		}
 		private void ListViewModels_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e){
 			if(listViewModels.SelectedItems.Count < 1) return;
