@@ -19,7 +19,7 @@ namespace LMStud{
 			Count
 		}
 		private const string DLLName = "stud";
-		internal const int WmUser = 0x400;
+		private const int WmUser = 0x400;
 		internal const int EmSetscrollpos = WmUser + 222;
 		internal const int WmVscroll = 0x115;
 		internal const int SbBottom = 7;
@@ -30,7 +30,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void BackendInit();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern bool LoadModel(IntPtr hWnd, string filename, int nCtx, float temp, float repeatPenalty, int topK, float topP, int nThreads, int nThreadsBatch, int nGPULayers, int nBatch, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy, bool flashAttn);
+		public static extern int LoadModel(IntPtr hWnd, string filename, int nCtx, float temp, float repeatPenalty, int topK, float topP, int nThreads, int nThreadsBatch, int nGPULayers, int nBatch, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy, bool flashAttn);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void FreeModel();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -66,16 +66,27 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopGeneration();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern int CreateSession(int nCtx, float temp, float repeatPenalty, int topK, float topP, int nThreads, int nThreadsBatch, int nBatch, bool flashAttn);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void DestroySession(int id);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		[return: MarshalAs(UnmanagedType.I1)]
+		public static extern bool SetActiveSession(int id);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern int GetActiveSession();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void ClearWebCache();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern unsafe void ConvertMarkdownToRtf([MarshalAs(UnmanagedType.LPUTF8Str)] string markdown, ref byte* rtfOut, ref int rtfLen);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetWhisperCallback(WhisperCallback cb);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		[return: MarshalAs(UnmanagedType.I1)]
 		public static extern bool LoadWhisperModel(string modelPath, int nThreads, bool useGPU);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void UnloadWhisperModel();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		[return: MarshalAs(UnmanagedType.I1)]
 		public static extern bool StartSpeechTranscription();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopSpeechTranscription();

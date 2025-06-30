@@ -14,6 +14,7 @@ namespace LMStud{
 		private int _cntCtxMax;
 		private readonly List<ModelInfo> _models = new List<ModelInfo>();
 		private readonly List<string> _whisperModels = new List<string>();
+		private List<int> _sessions = new List<int>();
 		private struct ModelInfo{
 			public readonly string FilePath;
 			public readonly List<GGUFMetadataManager.GGUFMetadataEntry> Meta;
@@ -111,13 +112,13 @@ namespace LMStud{
 						var modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
 						if(modelCtxMax <= 0) _cntCtxMax = _ctxSize;
 						else _cntCtxMax = _ctxSize > modelCtxMax ? modelCtxMax : _ctxSize;
-						var success = NativeMethods.LoadModel(handle, modelPath, _cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _nThreadsBatch, _gpuLayers,
-							_batchSize, _mMap, _mLock, _numaStrat, _flashAttn);
-						if(!success){
+						var sessId = NativeMethods.LoadModel(handle, modelPath, _cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _nThreadsBatch, _gpuLayers, _batchSize, _mMap, _mLock, _numaStrat, _flashAttn);
+						if(sessId < 0){
 							Settings.Default.LoadAuto = false;
 							Settings.Default.Save();
 							return;
 						}
+						_sessions.Add(sessId);
 						_tokenCallback = TokenCallback;
 						NativeMethods.SetTokenCallback(_tokenCallback);
 						RegisterTools();
@@ -154,6 +155,7 @@ namespace LMStud{
 				}
 				ClearRegisteredTools();
 				NativeMethods.FreeModel();
+				_sessions.Clear();
 				try{
 					BeginInvoke(new MethodInvoker(() => {
 						toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.");
