@@ -30,7 +30,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void BackendInit();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern int LoadModel(IntPtr hWnd, string filename, int nCtx, float temp, float repeatPenalty, int topK, float topP, int nThreads, int nThreadsBatch, int nGPULayers, int nBatch, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy, bool flashAttn);
+		public static extern int LoadModel(IntPtr hWnd, string filename, int nGPULayers, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void FreeModel();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

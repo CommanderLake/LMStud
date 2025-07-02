@@ -12,6 +12,7 @@ namespace LMStud{
 		private volatile bool _modelLoaded;
 		private volatile bool _populating;
 		private int _cntCtxMax;
+		private int _modelCtxMax;
 		private readonly List<ModelInfo> _models = new List<ModelInfo>();
 		private readonly List<string> _whisperModels = new List<string>();
 		private readonly List<int> _sessions = new List<int>();
@@ -56,6 +57,23 @@ namespace LMStud{
 				return false;
 			}
 			return true;
+		}
+		private int AddSession(int item){
+			_sessions.Add(item);
+			return comboSessions.Items.Add("Session " + item);
+		}
+		private void CreateSession(){
+			if(_modelCtxMax <= 0) _cntCtxMax = _ctxSize;
+			else _cntCtxMax = _ctxSize > _modelCtxMax ? _modelCtxMax : _ctxSize;
+			var sessId = NativeMethods.CreateSession(_cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _nThreadsBatch, _batchSize, _flashAttn);
+			Invoke(new MethodInvoker(() => {
+				comboSessions.SelectedIndex = AddSession(sessId);
+				toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.\r\nThe model last loaded has a maximum context size of " + _modelCtxMax);
+			}));
+		}
+		private void RemoveSession(int id){
+			NativeMethods.DestroySession(id);
+			_sessions.Remove(id);
 		}
 		private void PopulateModels(){
 			if(_populating || !ModelsFolderExists(true)) return;
@@ -105,16 +123,14 @@ namespace LMStud{
 							while(_generating) Thread.Sleep(10);
 						}
 						if(_whisperInited) NativeMethods.StopSpeechTranscription();
-						var modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
-						if(modelCtxMax <= 0) _cntCtxMax = _ctxSize;
-						else _cntCtxMax = _ctxSize > modelCtxMax ? modelCtxMax : _ctxSize;
-						var sessId = NativeMethods.LoadModel(handle, modelPath, _cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _nThreadsBatch, _gpuLayers, _batchSize, _mMap, _mLock, _numaStrat, _flashAttn);
+						var sessId = NativeMethods.LoadModel(handle, modelPath, _gpuLayers, _mMap, _mLock, _numaStrat);
 						if(sessId < 0){
 							Settings.Default.LoadAuto = false;
 							Settings.Default.Save();
 							return;
 						}
-						_sessions.Add(sessId);
+						_modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
+						if(_sessions.Count == 0) CreateSession();
 						_tokenCallback = TokenCallback;
 						NativeMethods.SetTokenCallback(_tokenCallback);
 						RegisterTools();
@@ -125,8 +141,6 @@ namespace LMStud{
 						}
 						try{
 							Invoke(new MethodInvoker(() => {
-								toolTip1.SetToolTip(numCtxSize,
-									"Context size (max tokens). Higher values improve memory but use more RAM.\r\nThe model last loaded has a maximum context size of " + modelCtxMax);
 								Settings.Default.LastModel = modelPath;
 								if(checkLoadAuto.Checked && !autoLoad){
 									Settings.Default.LoadAuto = true;
@@ -151,7 +165,6 @@ namespace LMStud{
 				}
 				ClearRegisteredTools();
 				NativeMethods.FreeModel();
-				_sessions.Clear();
 				try{
 					BeginInvoke(new MethodInvoker(() => {
 						toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.");

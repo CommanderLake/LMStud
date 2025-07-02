@@ -83,8 +83,7 @@ void FreeModel(){
 		_llModel = nullptr;
 	}
 }
-int LoadModel(const HWND hWnd, const char* filename, const int nCtx, const float temp, const float repeatPenalty, const int topK, const int topP, const int nThreads, const int nThreadsBatch, const int nGPULayers, const int nBatch, const bool mMap,
-				const bool mLock, const ggml_numa_strategy numaStrategy, const bool flashAttn){
+int LoadModel(const HWND hWnd, const char* filename, const int nGPULayers, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy){
 	auto params = llama_model_default_params();
 	params.n_gpu_layers = nGPULayers;
 	params.use_mlock = mLock;
@@ -106,7 +105,7 @@ int LoadModel(const HWND hWnd, const char* filename, const int nCtx, const float
 	}
 	_sessions.clear();
 	_activeSession = -1;
-	return CreateSession(nCtx, temp, repeatPenalty, topK, topP, nThreads, nThreadsBatch, nBatch, flashAttn);
+	return 0;
 }
 void AddTool(const char* name, const char* description, const char* parameters, std::string (*handler)(const char* args)){
 	if(!name||!_hasTools) return;

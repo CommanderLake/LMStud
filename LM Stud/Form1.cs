@@ -21,9 +21,10 @@ namespace LMStud{
 		private ChatMessage _cntAssMsg;
 		private bool _first = true;
 		private volatile bool _generating;
-		private int _msgTokenCount;
 		private int _genTokenTotal;
+		private int _msgTokenCount;
 		private volatile bool _rendering;
+		private int _sessIdLast = -1;
 		private bool _whisperInited;
 		internal Form1(){
 			_this = this;
@@ -164,7 +165,9 @@ namespace LMStud{
 			if(!_modelLoaded || _generating) return;
 			var idx = _chatMessages.IndexOf(cm);
 			if(idx < 0) return;
-			while(_chatMessages[idx].Role == MessageRole.Assistant) if(--idx < 0) return;
+			while(_chatMessages[idx].Role == MessageRole.Assistant)
+				if(--idx < 0)
+					return;
 			var role = _chatMessages[idx].Role;
 			var msg = _chatMessages[idx].Content;
 			for(var i = _chatMessages.Count - 1; i >= idx; i--){
@@ -208,6 +211,34 @@ namespace LMStud{
 			return cm;
 		}
 		private static void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){Process.Start(e.LinkText);}
+		private void ComboSessionsSelectedIndexChanged(object sender, EventArgs e){
+			comboSessions.SelectedIndexChanged -= ComboSessionsSelectedIndexChanged;
+			try{
+				if(comboSessions.SelectedIndex == 0){
+					comboSessions.SelectedIndex = _sessIdLast;
+					if(MessageBox.Show(this, "Create new chat session?", "LM Stud", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
+					CreateSession();
+				} else if(comboSessions.SelectedIndex == 1){
+					if(_sessIdLast < 2){
+						comboSessions.SelectedIndex = _sessIdLast = -1;
+						return;
+					}
+					comboSessions.SelectedIndex = _sessIdLast;
+					var idStr = ((string)comboSessions.Items[_sessIdLast]).Substring(8);
+					var id = int.Parse(idStr);
+					if(!_sessions.Contains(id)){
+						comboSessions.Items.RemoveAt(_sessIdLast);
+						_sessIdLast = -1;
+						return;
+					}
+					if(MessageBox.Show(this, "Remove session " + idStr + "?", "LM Stud", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK){
+						RemoveSession(id);
+						comboSessions.Items.RemoveAt(_sessIdLast);
+						_sessIdLast = -1;
+					}
+				} else if(comboSessions.SelectedIndex >= 2){ _sessIdLast = comboSessions.SelectedIndex; }
+			} finally{ comboSessions.SelectedIndexChanged += ComboSessionsSelectedIndexChanged; }
+		}
 		private void Generate(){
 			var prompt = textInput.Text;
 			textInput.Text = "";

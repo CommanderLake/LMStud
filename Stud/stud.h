@@ -32,7 +32,7 @@ struct ChatSession{
 };
 inline std::unordered_map<int, ChatSession> _sessions;
 inline int _activeSession = -1;
-inline int _nextSessionId = 1;
+inline int _nextSessionId = 0;
 inline std::atomic_bool _stop{false};
 inline common_chat_templates_ptr _chatTemplates;
 using TokenCallbackFn = void(*)(const char* strPtr, int strLen, int tokenCount, int tokensTotal, double ftTime, int tool);
@@ -44,7 +44,7 @@ extern "C" {
 EXPORT void BackendInit();
 EXPORT void ResetChat();
 EXPORT void FreeModel();
-EXPORT int LoadModel(HWND hWnd, const char* filename, int nCtx, float temp, float repeatPenalty, int topK, int topP, int nThreads, int nThreadsBatch, int nGPULayers, int nBatch, bool mMap, bool mLock, ggml_numa_strategy numaStrategy, bool flashAttn);
+EXPORT int LoadModel(HWND hWnd, const char* filename, int nGPULayers, bool mMap, bool mLock, ggml_numa_strategy numaStrategy);
 EXPORT void AddTool(const char* name, const char* description, const char* parameters, std::string (*handler)(const char* args));
 EXPORT void ClearTools();
 EXPORT bool HasTool(const char* name);
