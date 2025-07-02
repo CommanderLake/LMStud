@@ -57,6 +57,27 @@ bool SetActiveSession(const int id){
 	return true;
 }
 int GetActiveSession(){ return _activeSession; }
+int GetMessageCount(){
+	const auto* s = CurrSession();
+	if(!s) return 0;
+	return static_cast<int>(s->chatMsgs.size());
+}
+MessageRole GetMessageRole(const int index){
+	const auto* s = CurrSession();
+	if(!s||index<0||index>=static_cast<int>(s->chatMsgs.size())) return MessageRole::User;
+	const auto& role = s->chatMsgs[index].role;
+	if(_stricmp(role.c_str(), "assistant")==0) return MessageRole::Assistant;
+	if(_stricmp(role.c_str(), "tool")==0) return MessageRole::Tool;
+	return MessageRole::User;
+}
+char* GetMessageText(const int index){
+	const auto* s = CurrSession();
+	if(!s||index<0||index>=static_cast<int>(s->chatMsgs.size())) return nullptr;
+	const auto& msg = s->chatMsgs[index].content;
+	auto* out = static_cast<char*>(std::malloc(msg.size()+1));
+	if(out) std::memcpy(out, msg.c_str(), msg.size()+1);
+	return out;
+}
 void ResetChat(){
 	auto* s = CurrSession();
 	if(!s) return;

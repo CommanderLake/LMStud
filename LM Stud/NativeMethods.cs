@@ -75,6 +75,12 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int GetActiveSession();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern int GetMessageCount();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern MessageRole GetMessageRole(int index);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern IntPtr GetMessageText(int index);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void ClearWebCache();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern unsafe void ConvertMarkdownToRtf([MarshalAs(UnmanagedType.LPUTF8Str)] string markdown, ref byte* rtfOut, ref int rtfLen);

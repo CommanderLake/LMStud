@@ -67,7 +67,8 @@ namespace LMStud{
 			else _cntCtxMax = _ctxSize > _modelCtxMax ? _modelCtxMax : _ctxSize;
 			var sessId = NativeMethods.CreateSession(_cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _nThreadsBatch, _batchSize, _flashAttn);
 			Invoke(new MethodInvoker(() => {
-				comboSessions.SelectedIndex = AddSession(sessId);
+				var id = AddSession(sessId);
+				if(_sessions.Count == 1) comboSessions.SelectedIndex = id;
 				toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.\r\nThe model last loaded has a maximum context size of " + _modelCtxMax);
 			}));
 		}

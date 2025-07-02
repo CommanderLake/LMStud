@@ -63,5 +63,8 @@ EXPORT int CreateSession(int nCtx, float temp, float repeatPenalty, int topK, in
 EXPORT void DestroySession(int id);
 EXPORT bool SetActiveSession(int id);
 EXPORT int GetActiveSession();
+EXPORT int GetMessageCount();
+EXPORT MessageRole GetMessageRole(int index);
+EXPORT char* GetMessageText(int index);
 //EXPORT char* GetContextAsText();
 }

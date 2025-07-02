@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Speech.Synthesis;
 using System.Text;
 using System.Threading;
@@ -210,6 +211,21 @@ namespace LMStud{
 			_chatMessages.Add(cm);
 			return cm;
 		}
+		private void LoadSessionMessages(){
+			panelChat.SuspendLayout();
+			foreach(var msg in _chatMessages) msg.Dispose();
+			_chatMessages.Clear();
+			var count = NativeMethods.GetMessageCount();
+			for(var i = 0; i < count; i++){
+				var role = NativeMethods.GetMessageRole(i);
+				var ptr = NativeMethods.GetMessageText(i);
+				var text = Marshal.PtrToStringAnsi(ptr);
+				NativeMethods.FreeMemory(ptr);
+				AddMessage(role, text ?? string.Empty);
+			}
+			panelChat.ResumeLayout();
+			panelChat.ScrollToEnd();
+		}
 		private static void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){Process.Start(e.LinkText);}
 		private void ComboSessionsSelectedIndexChanged(object sender, EventArgs e){
 			comboSessions.SelectedIndexChanged -= ComboSessionsSelectedIndexChanged;
@@ -236,7 +252,17 @@ namespace LMStud{
 						comboSessions.Items.RemoveAt(_sessIdLast);
 						_sessIdLast = -1;
 					}
-				} else if(comboSessions.SelectedIndex >= 2){ _sessIdLast = comboSessions.SelectedIndex; }
+				} else if(comboSessions.SelectedIndex >= 2){
+					var idStr = ((string)comboSessions.Items[comboSessions.SelectedIndex]).Substring(8);
+					var id = int.Parse(idStr);
+					if(NativeMethods.SetActiveSession(id)){
+						_sessIdLast = comboSessions.SelectedIndex;
+						LoadSessionMessages();
+					} else{
+						comboSessions.Items.RemoveAt(comboSessions.SelectedIndex);
+						_sessIdLast = -1;
+					}
+				}
 			} finally{ comboSessions.SelectedIndexChanged += ComboSessionsSelectedIndexChanged; }
 		}
 		private void Generate(){
