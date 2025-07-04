@@ -9,13 +9,13 @@ namespace LMStud{
 		private const string DefaultPrompt = "Assist the user to the best of your ability.";
 		private const string DateTimePrompt = "\nUse the get_datetime tool to get the date and time when required.";
 		private const string FetchPrompt = "\nAfter calling the web_search tool you must subsequently call the get_webpage tool with a url followed by the get_webpage_text tool with the id of any relevant preview.";
-		private volatile bool _modelLoaded;
+		private volatile bool _llModelLoaded;
 		private volatile bool _populating;
 		private int _cntCtxMax;
 		private int _modelCtxMax;
+		private int _modelIndex;
 		private readonly List<ModelInfo> _models = new List<ModelInfo>();
 		private readonly List<string> _whisperModels = new List<string>();
-		private readonly List<int> _sessions = new List<int>();
 		private struct ModelInfo{
 			public readonly string FilePath;
 			public readonly List<GGUFMetadataManager.GGUFMetadataEntry> Meta;
@@ -58,24 +58,6 @@ namespace LMStud{
 			}
 			return true;
 		}
-		private int AddSession(int item){
-			_sessions.Add(item);
-			return comboSessions.Items.Add("Session " + item);
-		}
-		private void CreateSession(){
-			if(_modelCtxMax <= 0) _cntCtxMax = _ctxSize;
-			else _cntCtxMax = _ctxSize > _modelCtxMax ? _modelCtxMax : _ctxSize;
-			var sessId = NativeMethods.CreateSession(_cntCtxMax, _temp, _repPen, _topK, _topP, _nThreads, _nThreadsBatch, _batchSize, _flashAttn);
-			Invoke(new MethodInvoker(() => {
-				var id = AddSession(sessId);
-				if(_sessions.Count == 1) comboSessions.SelectedIndex = id;
-				toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.\r\nThe model last loaded has a maximum context size of " + _modelCtxMax);
-			}));
-		}
-		private void RemoveSession(int id){
-			NativeMethods.DestroySession(id);
-			_sessions.Remove(id);
-		}
 		private void PopulateModels(){
 			if(_populating || !ModelsFolderExists(true)) return;
 			_populating = true;
@@ -106,10 +88,11 @@ namespace LMStud{
 		private void SetSystemPrompt(){NativeMethods.SetSystemPrompt((_systemPrompt.Length > 0 ? _systemPrompt : DefaultPrompt) + DateTimePrompt + (_webpageFetchEnable ? FetchPrompt : ""));}
 		private void LoadModel(int modelIndex, bool autoLoad){
 			var handle = Handle;
+			var whisperOn = checkVoiceInput.CheckState != CheckState.Unchecked;
 			ThreadPool.QueueUserWorkItem(o => {
-				if(_modelLoaded){
+				if(_llModelLoaded){
 					Invoke(new MethodInvoker(UnloadModel));
-					while(_modelLoaded) Thread.Sleep(10);
+					while(_llModelLoaded) Thread.Sleep(10);
 				}
 				var modelPath = _models[modelIndex].FilePath;
 				var fileName = Path.GetFileName(modelPath);
@@ -123,23 +106,23 @@ namespace LMStud{
 							NativeMethods.StopGeneration();
 							while(_generating) Thread.Sleep(10);
 						}
-						if(_whisperInited) NativeMethods.StopSpeechTranscription();
-						var sessId = NativeMethods.LoadModel(handle, modelPath, _gpuLayers, _mMap, _mLock, _numaStrat);
-						if(sessId < 0){
+						if(whisperOn) NativeMethods.StopSpeechTranscription();
+						var result = NativeMethods.LoadModel(handle, modelPath, _gpuLayers, _mMap, _mLock, _numaStrat);
+						if(result < 0){
 							Settings.Default.LoadAuto = false;
 							Settings.Default.Save();
 							return;
 						}
+						_modelIndex = modelIndex;
 						_modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
-						if(_sessions.Count == 0) CreateSession();
+						if(_modelCtxMax <= 0) _cntCtxMax = _ctxSize;
+						else _cntCtxMax = _ctxSize > _modelCtxMax ? _modelCtxMax : _ctxSize;
+						NativeMethods.CreateSession(_cntCtxMax, _batchSize, _flashAttn, _nThreads, _nThreadsBatch, _topP, _topK, _temp, _repPen);
 						_tokenCallback = TokenCallback;
 						NativeMethods.SetTokenCallback(_tokenCallback);
 						RegisterTools();
 						SetSystemPrompt();
-						if(checkVoiceInput.Checked){
-							NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);
-							NativeMethods.StartSpeechTranscription();
-						}
+						if(whisperOn) NativeMethods.StartSpeechTranscription();
 						try{
 							Invoke(new MethodInvoker(() => {
 								Settings.Default.LastModel = modelPath;
@@ -147,10 +130,11 @@ namespace LMStud{
 									Settings.Default.LoadAuto = true;
 									Settings.Default.Save();
 								}
+								toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.\r\nThe model last loaded has a maximum context size of " + _modelCtxMax);
 								toolStripStatusLabel1.Text = "Loaded model: " + fileName;
 							}));
 						} catch(ObjectDisposedException){}
-						_modelLoaded = true;
+						_llModelLoaded = true;
 					}
 				} finally{
 					Invoke(new MethodInvoker(() => {butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = true;}));
@@ -172,7 +156,7 @@ namespace LMStud{
 						toolStripStatusLabel1.Text = "Model unloaded";
 					}));
 				} catch(ObjectDisposedException){}
-				_modelLoaded = false;
+				_llModelLoaded = false;
 			});
 		}
 		private string ConvertValueToString(GGUFMetadataManager.GGUFMetaValue metaVal){

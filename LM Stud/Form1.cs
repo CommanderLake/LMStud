@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Speech.Synthesis;
 using System.Text;
 using System.Threading;
@@ -25,8 +24,7 @@ namespace LMStud{
 		private int _genTokenTotal;
 		private int _msgTokenCount;
 		private volatile bool _rendering;
-		private int _sessIdLast = -1;
-		private bool _whisperInited;
+		private bool _whisperLoaded;
 		internal Form1(){
 			_this = this;
 			InitializeComponent();
@@ -78,7 +76,7 @@ namespace LMStud{
 		}
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e){
 			if(_generating) NativeMethods.StopGeneration();
-			if(_whisperInited){
+			if(_whisperLoaded){
 				NativeMethods.StopSpeechTranscription();
 				NativeMethods.UnloadWhisperModel();
 			}
@@ -98,18 +96,21 @@ namespace LMStud{
 		private void CheckVoiceInput_CheckedChanged(object sender, EventArgs e){
 			if(checkVoiceInput.CheckState != CheckState.Unchecked){
 				if(_whisperModelIndex < 0 || !File.Exists(_whisperModels[_whisperModelIndex])){
+					checkVoiceInput.Checked = false;
 					MessageBox.Show(this, "Invalid whisper model selection", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 					tabControl1.SelectTab(1);
-					checkVoiceInput.Checked = false;
+					comboWhisperModel.Focus();
 					return;
 				}
-				if(_modelLoaded){
-					if(!_whisperInited){
-						_whisperInited = NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);
-						if(_whisperInited){
+				if(_llModelLoaded){
+					if(!_whisperLoaded){
+						var result = NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);
+						if(result){
+							_whisperLoaded = true;
 							_whisperCallback = WhisperCallback;
 							NativeMethods.SetWhisperCallback(_whisperCallback);
 						} else{
+							_whisperLoaded = false;
 							MessageBox.Show(this, "Error initialising whisper", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 							checkVoiceInput.Checked = false;
 							return;
@@ -124,7 +125,6 @@ namespace LMStud{
 				}
 			} else{
 				NativeMethods.StopSpeechTranscription();
-				_whisperInited = false;
 			}
 		}
 		private void CheckSpeak_CheckedChanged(object sender, EventArgs e){
@@ -163,7 +163,7 @@ namespace LMStud{
 			_chatMessages.RemoveAt(id);
 		}
 		private void MsgButRegenOnClick(ChatMessage cm){
-			if(!_modelLoaded || _generating) return;
+			if(!_llModelLoaded || _generating) return;
 			var idx = _chatMessages.IndexOf(cm);
 			if(idx < 0) return;
 			while(_chatMessages[idx].Role == MessageRole.Assistant)
@@ -211,74 +211,20 @@ namespace LMStud{
 			_chatMessages.Add(cm);
 			return cm;
 		}
-		private void LoadSessionMessages(){
-			panelChat.SuspendLayout();
-			foreach(var msg in _chatMessages) msg.Dispose();
-			_chatMessages.Clear();
-			var count = NativeMethods.GetMessageCount();
-			for(var i = 0; i < count; i++){
-				var role = NativeMethods.GetMessageRole(i);
-				var ptr = NativeMethods.GetMessageText(i);
-				var text = Marshal.PtrToStringAnsi(ptr);
-				NativeMethods.FreeMemory(ptr);
-				AddMessage(role, text ?? string.Empty);
-			}
-			panelChat.ResumeLayout();
-			panelChat.ScrollToEnd();
-		}
 		private static void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){Process.Start(e.LinkText);}
-		private void ComboSessionsSelectedIndexChanged(object sender, EventArgs e){
-			comboSessions.SelectedIndexChanged -= ComboSessionsSelectedIndexChanged;
-			try{
-				if(comboSessions.SelectedIndex == 0){
-					comboSessions.SelectedIndex = _sessIdLast;
-					if(MessageBox.Show(this, "Create new chat session?", "LM Stud", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
-					CreateSession();
-				} else if(comboSessions.SelectedIndex == 1){
-					if(_sessIdLast < 2){
-						comboSessions.SelectedIndex = _sessIdLast = -1;
-						return;
-					}
-					comboSessions.SelectedIndex = _sessIdLast;
-					var idStr = ((string)comboSessions.Items[_sessIdLast]).Substring(8);
-					var id = int.Parse(idStr);
-					if(!_sessions.Contains(id)){
-						comboSessions.Items.RemoveAt(_sessIdLast);
-						_sessIdLast = -1;
-						return;
-					}
-					if(MessageBox.Show(this, "Remove session " + idStr + "?", "LM Stud", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK){
-						RemoveSession(id);
-						comboSessions.Items.RemoveAt(_sessIdLast);
-						_sessIdLast = -1;
-					}
-				} else if(comboSessions.SelectedIndex >= 2){
-					var idStr = ((string)comboSessions.Items[comboSessions.SelectedIndex]).Substring(8);
-					var id = int.Parse(idStr);
-					if(NativeMethods.SetActiveSession(id)){
-						_sessIdLast = comboSessions.SelectedIndex;
-						LoadSessionMessages();
-					} else{
-						comboSessions.Items.RemoveAt(comboSessions.SelectedIndex);
-						_sessIdLast = -1;
-					}
-				}
-			} finally{ comboSessions.SelectedIndexChanged += ComboSessionsSelectedIndexChanged; }
-		}
 		private void Generate(){
 			var prompt = textInput.Text;
 			textInput.Text = "";
 			Generate(MessageRole.User, prompt);
 		}
 		private void Generate(MessageRole role, string prompt){
-			if(!_modelLoaded || _generating || string.IsNullOrWhiteSpace(prompt)) return;
+			if(!_llModelLoaded || _generating || string.IsNullOrWhiteSpace(prompt)) return;
 			_generating = true;
 			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
 			butGen.Text = "Stop";
 			butReset.Enabled = butApply.Enabled = false;
 			var newMsg = prompt.Trim();
 			var cm = AddMessage(role, newMsg);
-			//NativeMethods.AddMessage(true, msg);
 			_cntAssMsg = null;
 			_this.panelChat.ScrollToEnd();
 			foreach(var message in _chatMessages) message.Generating = true;

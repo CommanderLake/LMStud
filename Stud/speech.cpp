@@ -13,6 +13,7 @@ static std::string trim(const std::string& s){
 	return s.substr(start, end-start+1);
 }
 bool LoadWhisperModel(const char* modelPath, const int nThreads, const bool useGPU){
+	UnloadWhisperModel();
 	whisper_context_params cparams = whisper_context_default_params();
 	cparams.use_gpu = useGPU;
 	_whisperCtx = whisper_init_from_file_with_params(modelPath, cparams);
@@ -23,6 +24,17 @@ bool LoadWhisperModel(const char* modelPath, const int nThreads, const bool useG
 	_audioCapture = new audio_async(30000);
 	if(!_audioCapture->init(-1, WHISPER_SAMPLE_RATE)){ return false; }
 	return true;
+}
+void UnloadWhisperModel(){
+	if(_audioCapture){
+		_audioCapture->pause();
+		delete _audioCapture;
+		_audioCapture = nullptr;
+	}
+	if(_whisperCtx){
+		whisper_free(_whisperCtx);
+		_whisperCtx = nullptr;
+	}
 }
 void HighPassFilter(std::vector<float>& data, const float cutoff, const float sampleRate){
 	const float rc = 1.0f/(2.0f*M_PI*cutoff);
@@ -147,17 +159,6 @@ bool StartSpeechTranscription(){
 void StopSpeechTranscription(){
 	_transcriptionRunning.store(false);
 	if(_transcriptionThread.joinable()){ _transcriptionThread.join(); }
-}
-void UnloadWhisperModel(){
-	if(_audioCapture){
-		_audioCapture->pause();
-		delete _audioCapture;
-		_audioCapture = nullptr;
-	}
-	if(_whisperCtx){
-		whisper_free(_whisperCtx);
-		_whisperCtx = nullptr;
-	}
 }
 void SetWhisperCallback(WhisperCallbackFn cb){ _whisperCallback = cb; }
 void SetWakeCommand(const char* wakeCmd){ if(wakeCmd){ _gWakeCommand = wakeCmd; } else{ _gWakeCommand.clear(); } }

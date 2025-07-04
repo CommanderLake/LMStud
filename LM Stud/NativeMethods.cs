@@ -40,9 +40,9 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetThreadCount(int n, int nBatch);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern int AddMessage(bool user, [MarshalAs(UnmanagedType.LPUTF8Str)] string text);
+		public static extern void AddMessage(MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string text);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void RetokenizeChat();
+		public static extern void RetokenizeChat(bool rebuildMemory);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetSystemPrompt([MarshalAs(UnmanagedType.LPUTF8Str)] string prompt);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -66,20 +66,13 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopGeneration();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern int CreateSession(int nCtx, float temp, float repeatPenalty, int topK, float topP, int nThreads, int nThreadsBatch, int nBatch, bool flashAttn);
+		public static extern int CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void DestroySession(int id);
+		public static extern int CreateSampler(float topP, int topK, float temp, float repeatPenalty);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		[return: MarshalAs(UnmanagedType.I1)]
-		public static extern bool SetActiveSession(int id);
+		public static extern int CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float topP, int topK, float temp, float repeatPenalty);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern int GetActiveSession();
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern int GetMessageCount();
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern MessageRole GetMessageRole(int index);
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern IntPtr GetMessageText(int index);
+		public static extern void DestroySession();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void ClearWebCache();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
