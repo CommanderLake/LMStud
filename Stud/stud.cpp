@@ -278,12 +278,12 @@ int GenerateWithTools(const HWND hWnd, const MessageRole role, char* prompt, con
 		out.reserve(text.size());
 		bool inThink = false;
 		for(size_t i = 0; i < text.size(); ++i){
-			if(!inThink && _strnicmp(text.c_str() + i, "<think>", 7) == 0){
+			if(!inThink && i + 7 <= text.size() && _strnicmp(text.c_str() + i, "<think>", 7) == 0){
 				inThink = true;
 				i += 6;
 				continue;
 			}
-			if(inThink && _strnicmp(text.c_str() + i, "</think>", 8) == 0){
+			if(inThink && i + 8 <= text.size() && _strnicmp(text.c_str() + i, "</think>", 8) == 0){
 				inThink = false;
 				i += 7;
 				continue;
@@ -305,11 +305,11 @@ int GenerateWithTools(const HWND hWnd, const MessageRole role, char* prompt, con
 				auto it = _toolHandlers.find(tc.name);
 				if(it != _toolHandlers.end()){
 					promptStr = it->second(tc.arguments.c_str());
-					if(cb && callback) cb(promptStr.c_str(), static_cast<int>(promptStr.length()), 0, llama_memory_seq_pos_max(llMem, 0), 0, 1);
+					if(cb) cb(promptStr.c_str(), static_cast<int>(promptStr.length()), 0, llama_memory_seq_pos_max(llMem, 0), 0, 1);
 					toolCalled = true;
 				}
 			}
-		} catch(...){ break; }
+		}catch(std::exception& e){ MessageBoxA(nullptr, e.what(), "LM Stud", MB_ICONEXCLAMATION); }
 	} while(toolCalled);
 	return response.length();
 }
