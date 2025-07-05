@@ -214,7 +214,7 @@ std::string Generate(const HWND hWnd, const std::string role, const std::string&
 	double ftTime = 0.0;
 	int i = 0;
 	size_t p = 0;
-	while(p < promptTokens.size()){
+	while(p < promptTokens.size() && !_stop.load()){
 		const int nEval = std::min<int>(_session.nBatch, promptTokens.size() - p);
 		llama_batch batch = llama_batch_get_one(&promptTokens[p], nEval);
 		const int nCtx = llama_n_ctx(_session.ctx);
@@ -279,9 +279,15 @@ int GenerateWithTools(const HWND hWnd, const MessageRole role, char* prompt, con
 		bool inThink = false;
 		for(size_t i = 0; i < text.size(); ++i){
 			if(!inThink && i + 7 <= text.size() && _strnicmp(text.c_str() + i, "<think>", 7) == 0){
-				inThink = true;
-				i += 6;
-				continue;
+				if(text.find("</think>", i + 7) != std::string::npos){
+					inThink = true;
+					i += 6;
+					continue;
+				}
+				else{
+					i += 6;
+					continue;
+				}
 			}
 			if(inThink && i + 8 <= text.size() && _strnicmp(text.c_str() + i, "</think>", 8) == 0){
 				inThink = false;
