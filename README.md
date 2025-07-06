@@ -83,7 +83,7 @@
 
 | Section                | Knobs & Dials                                                  |
 | ---------------------- | -------------------------------------------------------------- |
-| **CPU Params / Batch** | Threads, strict pinning, batch threads.                        |
+| **CPU Params / Batch** | Generation threads, batch threads.                             |
 | **Common**             | Context size, GPU layers, temperature, tokens to generate.     |
 | **Advanced**           | NUMA strategy, repeat penalty, top-k/p, batch size.            |
 | **Voice**              | Model picker, wake word, VAD, frequency threshold, GPU toggle. |
