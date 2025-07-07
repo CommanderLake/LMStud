@@ -2,6 +2,7 @@
 #include "hug.h"
 #include <filesystem>
 #include <chrono>
+#include <deque>
 #include <regex>
 #include <unordered_map>
 #include <minja\minja.hpp>
@@ -259,6 +260,7 @@ int GenerateWithTools(const HWND hWnd, const MessageRole role, char* prompt, con
 	auto promptStr = std::string(prompt);
 	if(!_hasTools) return Generate(hWnd, "user", promptStr, nGen, callback).length();
 	std::string response;
+	std::deque<common_chat_tool_call> pending;
 	bool toolCalled = role == MessageRole::Tool;
 	const TokenCallbackFn cb = _tokenCb;
 	const auto llMem = llama_get_memory(_session.ctx);
@@ -267,15 +269,22 @@ int GenerateWithTools(const HWND hWnd, const MessageRole role, char* prompt, con
 		toolCalled = false;
 		if(!_session.chatMsgs.size()) return response.length();
 		try{
-			const auto parsed = common_chat_parse(response, false, _session.syntax);
-			for(const auto& tc : parsed.tool_calls){
-				auto it = _toolHandlers.find(tc.name);
+			std::string rest = response;
+			while(true){
+				const auto parsed = common_chat_parse(rest, false, _session.syntax);
+				rest = parsed.content;
+				pending.insert(pending.end(), parsed.tool_calls.begin(), parsed.tool_calls.end());
+				if(parsed.tool_calls.empty()) break;
+			}
+			for(auto tool : pending){
+				auto it = _toolHandlers.find(tool.name);
 				if(it != _toolHandlers.end()){
-					promptStr = it->second(tc.arguments.c_str());
+					promptStr = it->second(tool.arguments.c_str());
 					if(cb) cb(promptStr.c_str(), static_cast<int>(promptStr.length()), 0, llama_memory_seq_pos_max(llMem, 0), 0, 1);
 					toolCalled = true;
 				}
 			}
+			pending.clear();
 		} catch(std::exception& e){ MessageBoxA(nullptr, e.what(), "LM Stud", MB_ICONEXCLAMATION); }
 	} while(toolCalled);
 	return response.length();
