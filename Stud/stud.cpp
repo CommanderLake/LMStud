@@ -99,19 +99,6 @@ int LoadModel(const HWND hWnd, const char* filename, const int nGPULayers, const
 	}
 	return 0;
 }
-void AddTool(const char* name, const char* description, const char* parameters, std::string (*handler)(const char* args)){
-	if(!name || !_hasTools) return;
-	common_chat_tool t;
-	t.name = name;
-	if(description) t.description = description;
-	if(parameters) t.parameters = parameters;
-	_tools.push_back(t);
-	if(handler) _toolHandlers[name] = handler;
-}
-void ClearTools(){
-	_tools.clear();
-	_toolHandlers.clear();
-}
 bool HasTool(const char* name){
 	for(const auto& tool : _tools){ if(tool.name._Equal(name)) return true; }
 	return false;
@@ -284,10 +271,8 @@ int GenerateWithTools(const HWND hWnd, const MessageRole role, char* prompt, con
 					i += 6;
 					continue;
 				}
-				else{
-					i += 6;
-					continue;
-				}
+				i += 6;
+				continue;
 			}
 			if(inThink && i + 8 <= text.size() && _strnicmp(text.c_str() + i, "</think>", 8) == 0){
 				inThink = false;

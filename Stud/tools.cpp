@@ -1,10 +1,32 @@
 #include "tools.h"
 #include "hug.h"
+#include "stud.h"
 #include <charconv>
+#include <filesystem>
+#include <fstream>
 #include <regex>
 #include <curl\curl.h>
-#include "stud.h"
 static std::unordered_map<std::string, CachedPage> _webCache;
+static std::filesystem::path _baseFolder;
+static bool IsPathAllowed(const std::filesystem::path& p){
+	if(_baseFolder.empty()) return false;
+	std::error_code ec;
+	const auto abs = weakly_canonical(p, ec);
+	const auto base = weakly_canonical(_baseFolder, ec);
+	if(ec) return false;
+	const auto absStr = abs.native();
+	const auto baseStr = base.native();
+	return absStr.rfind(baseStr, 0) == 0;
+}
+void SetFileBaseDir(const char* dir){
+	if(dir && *dir){
+		std::error_code ec;
+		_baseFolder = std::filesystem::weakly_canonical(dir, ec);
+		if(ec) _baseFolder.clear();
+	} else{
+		_baseFolder.clear();
+	}
+}
 static std::string UrlEncode(const char* text){
 	CURL* curl = curl_easy_init();
 	char* enc = curl_easy_escape(curl, text, 0);
@@ -12,6 +34,19 @@ static std::string UrlEncode(const char* text){
 	curl_free(enc);
 	curl_easy_cleanup(curl);
 	return out;
+}
+void AddTool(const char* name, const char* description, const char* parameters, std::string(*handler)(const char* args)){
+	if(!name || !_hasTools) return;
+	common_chat_tool t;
+	t.name = name;
+	if(description) t.description = description;
+	if(parameters) t.parameters = parameters;
+	_tools.push_back(t);
+	if(handler) _toolHandlers[name] = handler;
+}
+void ClearTools(){
+	_tools.clear();
+	_toolHandlers.clear();
 }
 void SetGoogle(const char* apiKey, const char* searchEngineId, const int resultCount){
 	if(apiKey){ googleAPIKey = apiKey; } else{ googleAPIKey.clear(); }
@@ -156,13 +191,119 @@ std::string GetLongDateTime(const char* argsJson){
 	std::strftime(buffer, sizeof buffer, "%A, %d %B %Y, %H:%M:%S", localTime);
 	return std::string(buffer);
 }
-void RegisterTools(const bool googleSearch, const bool webpageFetch){
+std::string ListFilesTool(const char* argsJson){
+	std::string path = GetJsonValue(argsJson, "path");
+	const std::string recStr = GetJsonValue(argsJson, "recursive");
+	const bool recursive = recStr=="true"||recStr=="1";
+	if(path.empty()) path = ".";
+	const std::filesystem::path p = _baseFolder / path;
+	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
+	std::vector<std::string> files;
+	std::error_code ec;
+	if(recursive){
+		for(const auto& entry : std::filesystem::recursive_directory_iterator(p, ec)){
+			if(ec) break;
+			files.push_back(relative(entry.path(), _baseFolder, ec).generic_string());
+		}
+	} else{
+		for(const auto& entry : std::filesystem::directory_iterator(p, ec)){
+			if(ec) break;
+			files.push_back(relative(entry.path(), _baseFolder, ec).generic_string());
+		}
+	}
+	if(ec) return "{\"error\":\"io error\"}";
+	std::string json = "{\"files\":[";
+	for(size_t i = 0; i<files.size(); ++i){
+		json += "\"" + JsonEscape(files[i]) + "\"";
+		if(i+1<files.size()) json += ",";
+	}
+	json += "]}";
+	return json;
+}
+std::string ReadFileTool(const char* argsJson){
+	std::string path = GetJsonValue(argsJson, "path");
+	const std::string startStr = GetJsonValue(argsJson, "start");
+	const std::string endStr = GetJsonValue(argsJson, "end");
+	int start = -1, end = -1;
+	if(!startStr.empty()) std::from_chars(startStr.data(), startStr.data()+startStr.size(), start);
+	if(!endStr.empty()) std::from_chars(endStr.data(), endStr.data()+endStr.size(), end);
+	std::filesystem::path p = _baseFolder / path;
+	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
+	std::ifstream f(p, std::ios::binary);
+	if(!f.is_open()) return "{\"error\":\"open failed\"}";
+	std::string line, out;
+	int lineNo = 1;
+	while(std::getline(f, line)){
+		if((start==-1||lineNo>=start) && (end==-1||lineNo<=end)){
+			out += line;
+			out += '\n';
+		}
+		if(end!=-1 && lineNo>=end) break;
+		++lineNo;
+	}
+	return out;
+}
+std::string CreateFileTool(const char* argsJson){
+	const std::string path = GetJsonValue(argsJson, "path");
+	const std::string text = GetJsonValue(argsJson, "text");
+	const std::string overwriteStr = GetJsonValue(argsJson, "overwrite");
+	const bool overwrite = overwriteStr=="true"||overwriteStr=="1";
+	const std::filesystem::path p = _baseFolder / path;
+	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
+	if(exists(p) && !overwrite) return "{\"error\":\"exists\"}";
+	create_directories(p.parent_path());
+	std::ofstream f(p, std::ios::binary);
+	if(!f.is_open()) return "{\"error\":\"open failed\"}";
+	f << text;
+	return "{\"result\":\"success\"}";
+}
+std::string ReplaceLinesTool(const char* argsJson){
+	std::string path = GetJsonValue(argsJson, "path");
+	const std::string startStr = GetJsonValue(argsJson, "start");
+	const std::string endStr = GetJsonValue(argsJson, "end");
+	std::string text = GetJsonValue(argsJson, "text");
+	int start = -1, end = -1;
+	if(!startStr.empty()) std::from_chars(startStr.data(), startStr.data()+startStr.size(), start);
+	if(!endStr.empty()) std::from_chars(endStr.data(), endStr.data()+endStr.size(), end);
+	if(start<1||end<start) return "{\"error\":\"range\"}";
+	std::filesystem::path p = _baseFolder / path;
+	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
+	std::ifstream in(p, std::ios::binary);
+	if(!in.is_open()) return "{\"error\":\"open failed\"}";
+	std::vector<std::string> lines;
+	std::string line;
+	while(std::getline(in, line)){ lines.push_back(line); }
+	in.close();
+	if(start-1>static_cast<int>(lines.size())||end-1>static_cast<int>(lines.size())) return "{\"error\":\"range\"}";
+	std::vector<std::string> newLines;
+	std::stringstream ss(text);
+	while(std::getline(ss, line)){ newLines.push_back(line); }
+	lines.erase(lines.begin()+start-1, lines.begin()+end);
+	lines.insert(lines.begin()+start-1, newLines.begin(), newLines.end());
+	std::ofstream out(p, std::ios::binary|std::ios::trunc);
+	if(!out.is_open()) return "{\"error\":\"open failed\"}";
+	for(size_t i = 0; i<lines.size(); ++i){ out<<lines[i]; if(i+1<lines.size()) out<<'\n'; }
+	return "{\"result\":\"success\"}";
+}
+void RegisterTools(const bool googleSearch, const bool webpageFetch, const bool fileList, const bool fileCreate, const bool fileRead, const bool fileWrite){
 	ClearTools();
-	AddTool("get_datetime", "Return local date and time.", "{\"type\":\"object\"}", GetLongDateTime);
+	AddTool("get_datetime", "Return local date and time", "{\"type\":\"object\"}", GetLongDateTime);
 	if(googleSearch){ AddTool("web_search", "Google search, JSON results, call get_webpage next.", "{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]}", GoogleSearch); }
 	if(webpageFetch){
-		AddTool("get_webpage", "Fetch page and preview <p>, <article> and <section> text, call get_webpage_text next.", "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", GetWebpage);
-		AddTool("get_webpage_text", "Get full text for a get_webpage preview.", "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"},\"id\":{\"type\":\"string\"}},\"required\":[\"url\",\"id\"]}", GetWebTag);
+		AddTool("get_webpage", "Fetch page and preview <p>, <article> and <section> text, call get_webpage_text next", "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", GetWebpage);
+		AddTool("get_webpage_text", "Get full text for a get_webpage preview", "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"},\"id\":{\"type\":\"string\"}},\"required\":[\"url\",\"id\"]}", GetWebTag);
 		//AddTool("list_tags", "List the tags of a previously fetched webpage.", "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", ListWebTags);
+	}
+	if(fileList){
+		AddTool("list_files", "List files in path on the users PC", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"recursive\":{\"type\":\"boolean\"}},\"required\":[\"path\"]}", ListFilesTool);
+	}
+	if(fileCreate){
+		AddTool("create_file", "Create a new file and fill it with text", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"text\":{\"type\":\"string\"},\"overwrite\":{\"type\":\"boolean\"}},\"required\":[\"path\",\"text\"]}", CreateFileTool);
+	}
+	if(fileRead){
+		AddTool("read_file_lines", "Read range of lines from a text file", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"}},\"required\":[\"path\"]}", ReadFileTool);
+	}
+	if(fileWrite){
+		AddTool("replace_file_lines", "Replace range of lines in a text file", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"},\"text\":{\"type\":\"string\"}},\"required\":[\"path\",\"start\",\"end\",\"text\"]}", ReplaceLinesTool);
 	}
 }

@@ -58,11 +58,13 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetGoogle(string apiKey, string searchEngineID, int resultCount);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void SetFileBaseDir(string dir);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void AddTool([MarshalAs(UnmanagedType.LPUTF8Str)] string name, [MarshalAs(UnmanagedType.LPUTF8Str)] string description, [MarshalAs(UnmanagedType.LPUTF8Str)] string parameters, ToolHandler handler);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void ClearTools();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void RegisterTools(bool googleSearch, bool webpageFetch);
+		public static extern void RegisterTools(bool googleSearch, bool webpageFetch, bool fileList, bool fileCreate, bool fileRead, bool fileWrite);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopGeneration();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

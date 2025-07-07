@@ -370,5 +370,65 @@ namespace LMStud.Properties {
                 this["GoogleSearchResultCount"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string FileBaseDir {
+            get {
+                return ((string)(this["FileBaseDir"]));
+            }
+            set {
+                this["FileBaseDir"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool FileListEnable {
+            get {
+                return ((bool)(this["FileListEnable"]));
+            }
+            set {
+                this["FileListEnable"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool FileCreateEnable {
+            get {
+                return ((bool)(this["FileCreateEnable"]));
+            }
+            set {
+                this["FileCreateEnable"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool FileReadEnable {
+            get {
+                return ((bool)(this["FileReadEnable"]));
+            }
+            set {
+                this["FileReadEnable"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool FileWriteEnable {
+            get {
+                return ((bool)(this["FileWriteEnable"]));
+            }
+            set {
+                this["FileWriteEnable"] = value;
+            }
+        }
     }
 }

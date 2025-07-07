@@ -47,8 +47,6 @@ EXPORT void DestroySession();
 EXPORT void ResetChat();
 EXPORT void FreeModel();
 EXPORT int LoadModel(HWND hWnd, const char* filename, int nGPULayers, bool mMap, bool mLock, ggml_numa_strategy numaStrategy);
-EXPORT void AddTool(const char* name, const char* description, const char* parameters, std::string (*handler)(const char* args));
-EXPORT void ClearTools();
 EXPORT bool HasTool(const char* name);
 EXPORT void SetTokenCallback(TokenCallbackFn cb);
 EXPORT void SetThreadCount(int n, int nBatch);

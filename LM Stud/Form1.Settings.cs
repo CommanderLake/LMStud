@@ -32,6 +32,11 @@ namespace LMStud{
 		private int _googleSearchResultCount = 5;
 		private bool _googleSearchEnable;
 		private bool _webpageFetchEnable;
+		private string _fileBaseDir;
+		private bool _fileListEnable;
+		private bool _fileCreateEnable;
+		private bool _fileReadEnable;
+		private bool _fileWriteEnable;
 		private void LoadConfig(){
 			_systemPrompt = textSystemPrompt.Text = Settings.Default.SystemPrompt;
 			_modelsPath = textModelsPath.Text = Settings.Default.ModelsDir;
@@ -59,6 +64,12 @@ namespace LMStud{
 			_googleSearchResultCount = (int)(numGoogleResults.Value = Settings.Default.GoogleSearchResultCount);
 			_googleSearchEnable = checkGoogleEnable.Checked = Settings.Default.GoogleSearchEnable;
 			_webpageFetchEnable = checkWebpageFetchEnable.Checked = Settings.Default.WebpageFetchEnable;
+			_fileBaseDir = textFileBasePath.Text = Settings.Default.FileBaseDir;
+			_fileListEnable = checkFileListEnable.Checked = Settings.Default.FileListEnable;
+			_fileCreateEnable = checkFileCreateEnable.Checked = Settings.Default.FileCreateEnable;
+			_fileReadEnable = checkFileReadEnable.Checked = Settings.Default.FileReadEnable;
+			_fileWriteEnable = checkFileWriteEnable.Checked = Settings.Default.FileWriteEnable;
+			NativeMethods.SetFileBaseDir(_fileBaseDir);
 			NativeMethods.SetWakeCommand(_wakeWord);
 			NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
 			NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID, _googleSearchResultCount);
@@ -73,6 +84,9 @@ namespace LMStud{
 			var reloadCtx = false;
 			var reloadSmpl = false;
 			var reloadWhisper = false;
+			var setVAD = false;
+			var setGoogle = false;
+			var registerTools = false;
 			UpdateSetting(ref _systemPrompt, textSystemPrompt.Text, value => {
 				Settings.Default.SystemPrompt = value;
 				SetSystemPrompt();
@@ -86,45 +100,45 @@ namespace LMStud{
 				if(!_llModelLoaded) return;
 				if(_modelCtxMax <= 0) _cntCtxMax = _ctxSize;
 				else _cntCtxMax = _ctxSize > _modelCtxMax ? _modelCtxMax : _ctxSize;
-				if(_llModelLoaded) reloadCtx = true;
+				reloadCtx = true;
 			});
 			UpdateSetting(ref _gpuLayers, (int)numGPULayers.Value, value => {
 				Settings.Default.GPULayers = value;
-				if(_llModelLoaded) reloadModel = true;
+				reloadModel = true;
 			});
 			UpdateSetting(ref _temp, (float)numTemp.Value, value => {
 				Settings.Default.Temp = numTemp.Value;
-				if(_llModelLoaded) reloadSmpl = true;
+				reloadSmpl = true;
 			});
 			UpdateSetting(ref _nGen, (int)numNGen.Value, value => {Settings.Default.NGen = value;});
 			var newNumaIndex = comboNUMAStrat.SelectedIndex;
 			UpdateSetting(ref _numaStrat, (NativeMethods.GgmlNumaStrategy)newNumaIndex, value => {
 				Settings.Default.NUMAStrat = newNumaIndex;
-				if(_llModelLoaded) reloadModel = true;
+				reloadModel = true;
 			});
 			UpdateSetting(ref _repPen, (float)numRepPen.Value, value => {
 				Settings.Default.RepPen = numRepPen.Value;
-				if(_llModelLoaded) reloadSmpl = true;
+				reloadSmpl = true;
 			});
 			UpdateSetting(ref _topK, (int)numTopK.Value, value => {
 				Settings.Default.TopK = value;
-				if(_llModelLoaded) reloadSmpl = true;
+				reloadSmpl = true;
 			});
 			UpdateSetting(ref _topP, (float)numTopP.Value, value => {
 				Settings.Default.TopP = numTopP.Value;
-				if(_llModelLoaded) reloadSmpl = true;
+				reloadSmpl = true;
 			});
 			UpdateSetting(ref _batchSize, (int)numBatchSize.Value, value => {
 				Settings.Default.BatchSize = value;
-				if(_llModelLoaded) reloadCtx = true;
+				reloadCtx = true;
 			});
 			UpdateSetting(ref _mMap, checkMMap.Checked, value => {
 				Settings.Default.MMap = value;
-				if(_llModelLoaded) reloadModel = true;
+				reloadModel = true;
 			});
 			UpdateSetting(ref _mLock, checkMLock.Checked, value => {
 				Settings.Default.MLock = value;
-				if(_llModelLoaded) reloadModel = true;
+				reloadModel = true;
 			});
 			if(_nThreads != (int)numThreads.Value || _nThreadsBatch != (int)numThreadsBatch.Value){
 				UpdateSetting(ref _nThreads, (int)numThreads.Value, value => {Settings.Default.Threads = value;});
@@ -133,7 +147,7 @@ namespace LMStud{
 			}
 			UpdateSetting(ref _whisperModelIndex, comboWhisperModel.SelectedIndex, value => {
 				Settings.Default.WhisperModel = comboWhisperModel.Text;
-				if(_whisperLoaded) reloadWhisper = true;
+				reloadWhisper = true;
 			});
 			UpdateSetting(ref _wakeWord, textWakeWord.Text, value => {
 				Settings.Default.WakeWord = value;
@@ -141,44 +155,60 @@ namespace LMStud{
 			});
 			UpdateSetting(ref _whisperUseGPU, checkWhisperUseGPU.Checked, value => {
 				Settings.Default.whisperUseGPU = value;
-				if(_whisperLoaded) reloadWhisper = true;
+				reloadWhisper = true;
 			});
 			UpdateSetting(ref _vadThreshold, (float)numVadThreshold.Value, value => {
 				Settings.Default.VadThreshold = numVadThreshold.Value;
-				NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
+				setVAD = true;
 			});
 			UpdateSetting(ref _freqThreshold, (float)numFreqThreshold.Value, value => {
 				Settings.Default.FreqThreshold = numFreqThreshold.Value;
-				NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
+				setVAD = true;
 			});
 			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			UpdateSetting(ref _flashAttn, checkFlashAttn.Checked, value => {
 				Settings.Default.FlashAttn = value;
-				if(_llModelLoaded) reloadCtx = true;
+				reloadCtx = true;
 			});
 			UpdateSetting(ref _googleAPIKey, textGoogleApiKey.Text, value => {
 				Settings.Default.GoogleAPIKey = value;
-				NativeMethods.SetGoogle(value, _googleSearchID, _googleSearchResultCount);
+				setGoogle = true;
 			});
 			UpdateSetting(ref _googleSearchID, textGoogleSearchID.Text, value => {
 				Settings.Default.GoogleSearchID = value;
-				NativeMethods.SetGoogle(_googleAPIKey, value, _googleSearchResultCount);
+				setGoogle = true;
 			});
 			UpdateSetting(ref _googleSearchResultCount, (int)numGoogleResults.Value, value => {
 				Settings.Default.GoogleSearchResultCount = value;
-				NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID, value);
+				setGoogle = true;
 			});
 			UpdateSetting(ref _googleSearchEnable, checkGoogleEnable.Checked, value => {
 				Settings.Default.GoogleSearchEnable = value;
-				if(!_llModelLoaded) return;
-				RegisterTools();
-				NativeMethods.RetokenizeChat(false);
+				registerTools = true;
 			});
 			UpdateSetting(ref _webpageFetchEnable, checkWebpageFetchEnable.Checked, value => {
 				Settings.Default.WebpageFetchEnable = value;
-				if(!_llModelLoaded) return;
-				RegisterTools();
-				SetSystemPrompt();
+				registerTools = true;
+			});
+			UpdateSetting(ref _fileBaseDir, textFileBasePath.Text, value => {
+				Settings.Default.FileBaseDir = value;
+				NativeMethods.SetFileBaseDir(value);
+			});
+			UpdateSetting(ref _fileListEnable, checkFileListEnable.Checked, value => {
+				Settings.Default.FileListEnable = value;
+				registerTools = true;
+			});
+			UpdateSetting(ref _fileCreateEnable, checkFileCreateEnable.Checked, value => {
+				Settings.Default.FileCreateEnable = value;
+				registerTools = true;
+			});
+			UpdateSetting(ref _fileReadEnable, checkFileReadEnable.Checked, value => {
+				Settings.Default.FileReadEnable = value;
+				registerTools = true;
+			});
+			UpdateSetting(ref _fileWriteEnable, checkFileWriteEnable.Checked, value => {
+				Settings.Default.FileWriteEnable = value;
+				registerTools = true;
 			});
 			Settings.Default.Save();
 			if(reloadModel && _llModelLoaded && MessageBox.Show(this, "A changed setting requires the model to be reloaded, reload now?", "LM Stud", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
@@ -190,10 +220,16 @@ namespace LMStud{
 				}
 				if(reloadSmpl) NativeMethods.CreateSampler(_topP, _topK, _temp, _repPen);
 			}
+			if(setVAD) NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
 			if(reloadWhisper){
 				if(checkVoiceInput.CheckState != CheckState.Unchecked) NativeMethods.StopSpeechTranscription();
 				NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);
 				if(checkVoiceInput.CheckState != CheckState.Unchecked) NativeMethods.StartSpeechTranscription();
+			}
+			if(setGoogle) NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID, _googleSearchResultCount);
+			if(registerTools){
+				RegisterTools();
+				SetSystemPrompt();
 			}
 		}
 		private void ButBrowse_Click(object sender, EventArgs e){
