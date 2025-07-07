@@ -56,6 +56,11 @@ namespace LMStud{
 			toolTip1.SetToolTip(checkVoiceInput, "An intermediate check state (filled in) means it will transcribe spoken words without generating, when checked it will automatically generate.");
 			toolTip1.SetToolTip(textGoogleApiKey, "A Google API key is required to use the search tool, you can get a free one for 100 searches per day.");
 			toolTip1.SetToolTip(textGoogleSearchID, "Create your own Google Programmable Search Engine and copy its \"Search engine ID\" here.");
+			toolTip1.SetToolTip(checkFileListEnable, "Enable the tool for listing the contents of a folder under the base path.");
+			toolTip1.SetToolTip(checkFileCreateEnable, "Enable the tool for creating new files under the base path.");
+			toolTip1.SetToolTip(checkFileReadEnable, "Enable the tool for reading the contents of files under the base path.");
+			toolTip1.SetToolTip(checkFileWriteEnable, "Enable the tool for writing to files under the base path.");
+			toolTip1.SetToolTip(textFileBasePath, "Set the base path where all file tools will be restricted to, file access is relative to this path and restricted to files and folders under this path only.");
 		}
 		private void Form1_Load(object sender, EventArgs e){
 			NativeMethods.CurlGlobalInit();
@@ -97,7 +102,7 @@ namespace LMStud{
 			if(checkVoiceInput.CheckState != CheckState.Unchecked){
 				if(_whisperModelIndex < 0 || !File.Exists(_whisperModels[_whisperModelIndex])){
 					checkVoiceInput.Checked = false;
-					MessageBox.Show(this, "Invalid whisper model selection", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					MessageBox.Show(this, "Whisper model not found", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 					tabControl1.SelectTab(1);
 					comboWhisperModel.Focus();
 					return;

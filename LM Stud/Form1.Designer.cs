@@ -41,6 +41,13 @@
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabPage1 = new System.Windows.Forms.TabPage();
 			this.tabPage2 = new System.Windows.Forms.TabPage();
+			this.groupBox4 = new System.Windows.Forms.GroupBox();
+			this.label22 = new System.Windows.Forms.Label();
+			this.textFileBasePath = new System.Windows.Forms.TextBox();
+			this.checkFileWriteEnable = new System.Windows.Forms.CheckBox();
+			this.checkFileCreateEnable = new System.Windows.Forms.CheckBox();
+			this.checkFileReadEnable = new System.Windows.Forms.CheckBox();
+			this.checkFileListEnable = new System.Windows.Forms.CheckBox();
 			this.groupBox3 = new System.Windows.Forms.GroupBox();
 			this.checkWebpageFetchEnable = new System.Windows.Forms.CheckBox();
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
@@ -133,13 +140,6 @@
 			this.labelTPS = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-			this.groupBox4 = new System.Windows.Forms.GroupBox();
-			this.checkFileListEnable = new System.Windows.Forms.CheckBox();
-			this.checkFileReadEnable = new System.Windows.Forms.CheckBox();
-			this.checkFileCreateEnable = new System.Windows.Forms.CheckBox();
-			this.checkFileWriteEnable = new System.Windows.Forms.CheckBox();
-			this.textFileBasePath = new System.Windows.Forms.TextBox();
-			this.label22 = new System.Windows.Forms.Label();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -147,6 +147,7 @@
 			this.tabControl1.SuspendLayout();
 			this.tabPage1.SuspendLayout();
 			this.tabPage2.SuspendLayout();
+			this.groupBox4.SuspendLayout();
 			this.groupBox3.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numGoogleResults)).BeginInit();
@@ -178,7 +179,6 @@
 			this.splitContainer3.Panel2.SuspendLayout();
 			this.splitContainer3.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
-			this.groupBox4.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// textInput
@@ -379,6 +379,83 @@
 			this.tabPage2.TabIndex = 1;
 			this.tabPage2.Text = "Settings";
 			this.tabPage2.UseVisualStyleBackColor = true;
+			// 
+			// groupBox4
+			// 
+			this.groupBox4.Controls.Add(this.label22);
+			this.groupBox4.Controls.Add(this.textFileBasePath);
+			this.groupBox4.Controls.Add(this.checkFileWriteEnable);
+			this.groupBox4.Controls.Add(this.checkFileCreateEnable);
+			this.groupBox4.Controls.Add(this.checkFileReadEnable);
+			this.groupBox4.Controls.Add(this.checkFileListEnable);
+			this.groupBox4.Location = new System.Drawing.Point(209, 517);
+			this.groupBox4.Name = "groupBox4";
+			this.groupBox4.Size = new System.Drawing.Size(200, 91);
+			this.groupBox4.TabIndex = 40;
+			this.groupBox4.TabStop = false;
+			this.groupBox4.Text = "File Tools";
+			// 
+			// label22
+			// 
+			this.label22.AutoSize = true;
+			this.label22.Location = new System.Drawing.Point(8, 68);
+			this.label22.Name = "label22";
+			this.label22.Size = new System.Drawing.Size(59, 13);
+			this.label22.TabIndex = 5;
+			this.label22.Text = "Base Path:";
+			// 
+			// textFileBasePath
+			// 
+			this.textFileBasePath.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+			this.textFileBasePath.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.FileSystemDirectories;
+			this.textFileBasePath.Location = new System.Drawing.Point(73, 65);
+			this.textFileBasePath.Name = "textFileBasePath";
+			this.textFileBasePath.Size = new System.Drawing.Size(121, 20);
+			this.textFileBasePath.TabIndex = 4;
+			// 
+			// checkFileWriteEnable
+			// 
+			this.checkFileWriteEnable.AutoSize = true;
+			this.checkFileWriteEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkFileWriteEnable.Location = new System.Drawing.Point(124, 42);
+			this.checkFileWriteEnable.Name = "checkFileWriteEnable";
+			this.checkFileWriteEnable.Size = new System.Drawing.Size(70, 17);
+			this.checkFileWriteEnable.TabIndex = 3;
+			this.checkFileWriteEnable.Text = "Write File";
+			this.checkFileWriteEnable.UseVisualStyleBackColor = true;
+			// 
+			// checkFileCreateEnable
+			// 
+			this.checkFileCreateEnable.AutoSize = true;
+			this.checkFileCreateEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkFileCreateEnable.Location = new System.Drawing.Point(41, 42);
+			this.checkFileCreateEnable.Name = "checkFileCreateEnable";
+			this.checkFileCreateEnable.Size = new System.Drawing.Size(76, 17);
+			this.checkFileCreateEnable.TabIndex = 2;
+			this.checkFileCreateEnable.Text = "Create File";
+			this.checkFileCreateEnable.UseVisualStyleBackColor = true;
+			// 
+			// checkFileReadEnable
+			// 
+			this.checkFileReadEnable.AutoSize = true;
+			this.checkFileReadEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkFileReadEnable.Location = new System.Drawing.Point(123, 19);
+			this.checkFileReadEnable.Name = "checkFileReadEnable";
+			this.checkFileReadEnable.Size = new System.Drawing.Size(71, 17);
+			this.checkFileReadEnable.TabIndex = 1;
+			this.checkFileReadEnable.Text = "Read File";
+			this.checkFileReadEnable.UseVisualStyleBackColor = true;
+			// 
+			// checkFileListEnable
+			// 
+			this.checkFileListEnable.AutoSize = true;
+			this.checkFileListEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.checkFileListEnable.Location = new System.Drawing.Point(51, 19);
+			this.checkFileListEnable.Name = "checkFileListEnable";
+			this.checkFileListEnable.Size = new System.Drawing.Size(66, 17);
+			this.checkFileListEnable.TabIndex = 0;
+			this.checkFileListEnable.Text = "List Files";
+			this.checkFileListEnable.UseVisualStyleBackColor = true;
 			// 
 			// groupBox3
 			// 
@@ -1475,88 +1552,11 @@
 			// 
 			// toolTip1
 			// 
-			this.toolTip1.AutoPopDelay = 10000;
+			this.toolTip1.AutoPopDelay = 30000;
 			this.toolTip1.InitialDelay = 500;
 			this.toolTip1.ReshowDelay = 0;
 			this.toolTip1.UseAnimation = false;
 			this.toolTip1.UseFading = false;
-			// 
-			// groupBox4
-			// 
-			this.groupBox4.Controls.Add(this.label22);
-			this.groupBox4.Controls.Add(this.textFileBasePath);
-			this.groupBox4.Controls.Add(this.checkFileWriteEnable);
-			this.groupBox4.Controls.Add(this.checkFileCreateEnable);
-			this.groupBox4.Controls.Add(this.checkFileReadEnable);
-			this.groupBox4.Controls.Add(this.checkFileListEnable);
-			this.groupBox4.Location = new System.Drawing.Point(209, 517);
-			this.groupBox4.Name = "groupBox4";
-			this.groupBox4.Size = new System.Drawing.Size(200, 91);
-			this.groupBox4.TabIndex = 40;
-			this.groupBox4.TabStop = false;
-			this.groupBox4.Text = "File Tools";
-			// 
-			// checkFileListEnable
-			// 
-			this.checkFileListEnable.AutoSize = true;
-			this.checkFileListEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkFileListEnable.Location = new System.Drawing.Point(51, 19);
-			this.checkFileListEnable.Name = "checkFileListEnable";
-			this.checkFileListEnable.Size = new System.Drawing.Size(66, 17);
-			this.checkFileListEnable.TabIndex = 0;
-			this.checkFileListEnable.Text = "List Files";
-			this.checkFileListEnable.UseVisualStyleBackColor = true;
-			// 
-			// checkFileReadEnable
-			// 
-			this.checkFileReadEnable.AutoSize = true;
-			this.checkFileReadEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkFileReadEnable.Location = new System.Drawing.Point(123, 19);
-			this.checkFileReadEnable.Name = "checkFileReadEnable";
-			this.checkFileReadEnable.Size = new System.Drawing.Size(71, 17);
-			this.checkFileReadEnable.TabIndex = 1;
-			this.checkFileReadEnable.Text = "Read File";
-			this.checkFileReadEnable.UseVisualStyleBackColor = true;
-			// 
-			// checkFileCreateEnable
-			// 
-			this.checkFileCreateEnable.AutoSize = true;
-			this.checkFileCreateEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkFileCreateEnable.Location = new System.Drawing.Point(41, 42);
-			this.checkFileCreateEnable.Name = "checkFileCreateEnable";
-			this.checkFileCreateEnable.Size = new System.Drawing.Size(76, 17);
-			this.checkFileCreateEnable.TabIndex = 2;
-			this.checkFileCreateEnable.Text = "Create File";
-			this.checkFileCreateEnable.UseVisualStyleBackColor = true;
-			// 
-			// checkFileWriteEnable
-			// 
-			this.checkFileWriteEnable.AutoSize = true;
-			this.checkFileWriteEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkFileWriteEnable.Location = new System.Drawing.Point(124, 42);
-			this.checkFileWriteEnable.Name = "checkFileWriteEnable";
-			this.checkFileWriteEnable.Size = new System.Drawing.Size(70, 17);
-			this.checkFileWriteEnable.TabIndex = 3;
-			this.checkFileWriteEnable.Text = "Write File";
-			this.checkFileWriteEnable.UseVisualStyleBackColor = true;
-			// 
-			// textFileBasePath
-			// 
-			this.textFileBasePath.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
-			this.textFileBasePath.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.FileSystemDirectories;
-			this.textFileBasePath.Location = new System.Drawing.Point(73, 65);
-			this.textFileBasePath.Name = "textFileBasePath";
-			this.textFileBasePath.Size = new System.Drawing.Size(121, 20);
-			this.textFileBasePath.TabIndex = 4;
-			// 
-			// label22
-			// 
-			this.label22.AutoSize = true;
-			this.label22.Location = new System.Drawing.Point(8, 68);
-			this.label22.Name = "label22";
-			this.label22.Size = new System.Drawing.Size(59, 13);
-			this.label22.TabIndex = 5;
-			this.label22.Text = "Base Path:";
 			// 
 			// Form1
 			// 
@@ -1583,6 +1583,8 @@
 			this.tabPage1.ResumeLayout(false);
 			this.tabPage2.ResumeLayout(false);
 			this.tabPage2.PerformLayout();
+			this.groupBox4.ResumeLayout(false);
+			this.groupBox4.PerformLayout();
 			this.groupBox3.ResumeLayout(false);
 			this.groupBox3.PerformLayout();
 			this.groupBox2.ResumeLayout(false);
@@ -1624,8 +1626,6 @@
 			this.splitContainer3.ResumeLayout(false);
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();
-			this.groupBox4.ResumeLayout(false);
-			this.groupBox4.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 

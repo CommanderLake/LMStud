@@ -94,6 +94,7 @@ namespace LMStud{
 			UpdateSetting(ref _modelsPath, textModelsPath.Text, value => {
 				Settings.Default.ModelsDir = value;
 				PopulateModels();
+				PopulateWhisperModels();
 			});
 			UpdateSetting(ref _ctxSize, (int)numCtxSize.Value, value => {
 				Settings.Default.CtxSize = value;
@@ -221,10 +222,15 @@ namespace LMStud{
 				if(reloadSmpl) NativeMethods.CreateSampler(_topP, _topK, _temp, _repPen);
 			}
 			if(setVAD) NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
-			if(reloadWhisper){
-				if(checkVoiceInput.CheckState != CheckState.Unchecked) NativeMethods.StopSpeechTranscription();
-				NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);
-				if(checkVoiceInput.CheckState != CheckState.Unchecked) NativeMethods.StartSpeechTranscription();
+			if(reloadWhisper && _whisperLoaded){
+				if(_whisperModelIndex < 0 || !File.Exists(_whisperModels[_whisperModelIndex])){
+					checkVoiceInput.Checked = false;
+					MessageBox.Show(this, "Whisper model not found", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				} else{
+					if(checkVoiceInput.CheckState != CheckState.Unchecked) NativeMethods.StopSpeechTranscription();
+					NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);
+					if(checkVoiceInput.CheckState != CheckState.Unchecked) NativeMethods.StartSpeechTranscription();
+				}
 			}
 			if(setGoogle) NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID, _googleSearchResultCount);
 			if(registerTools){
