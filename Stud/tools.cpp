@@ -108,8 +108,24 @@ static std::string GetJsonValue(const char* json, const char* key){
 	while(*p==' '||*p=='\t') ++p;
 	if(*p=='\"'){
 		++p;
-		const char* end = strchr(p, '\"');
-		if(end&&end>p) return std::string(p, end);
+		std::string val;
+		bool esc = false;
+		while(*p){
+			char c = *p++;
+			if(esc){
+				switch(c){
+					case 'n': val += '\n'; break;
+					case 'r': val += '\r'; break;
+					case 't': val += '\t'; break;
+					case '"': val += '"'; break;
+					case '\\': val += '\\'; break;
+					default: val += c; break;
+				}
+				esc = false;
+			} else if(c=='\\'){ esc = true; } else if(c=='\"') break;
+			else val += c;
+		}
+		return val;
 	} else{
 		const char* end = p;
 		while(*end&&*end!=','&&*end!='}'&&*end!=' ') ++end;
@@ -241,7 +257,7 @@ std::string ReadFileTool(const char* argsJson){
 		if(end!=-1 && lineNo>=end) break;
 		++lineNo;
 	}
-	return out;
+	return JsonEscape(out);
 }
 std::string CreateFileTool(const char* argsJson){
 	const std::string path = GetJsonValue(argsJson, "path");
