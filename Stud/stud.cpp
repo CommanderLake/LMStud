@@ -291,16 +291,29 @@ int GenerateWithTools(const HWND hWnd, const MessageRole role, char* prompt, con
 		syntax.format = _session.chatFormat;
 		syntax.parse_tool_calls = true;
 		try{
-			const auto parsed = common_chat_parse(StripThink(response), false, syntax);
-			for(const auto& tc : parsed.tool_calls){
-				auto it = _toolHandlers.find(tc.name);
-				if(it != _toolHandlers.end()){
-					promptStr = it->second(tc.arguments.c_str());
-					if(cb) cb(promptStr.c_str(), static_cast<int>(promptStr.length()), 0, llama_memory_seq_pos_max(llMem, 0), 0, 1);
-					toolCalled = true;
+			const auto cleaned = StripThink(response);
+			size_t start = 0;
+			while(start < cleaned.size()){
+				size_t end = cleaned.find_first_of("\r\n", start);
+				auto line = cleaned.substr(start, end == std::string::npos ? std::string::npos : end - start);
+				const auto first = line.find_first_not_of(" \t");
+				const auto last = line.find_last_not_of(" \t");
+				if(first != std::string::npos) line = line.substr(first, last - first + 1);
+				if(!line.empty()){
+					const auto parsed = common_chat_parse(line, false, syntax);
+					for(const auto& tc : parsed.tool_calls){
+						auto it = _toolHandlers.find(tc.name);
+						if(it != _toolHandlers.end()){
+							promptStr = it->second(tc.arguments.c_str());
+							if(cb) cb(promptStr.c_str(), static_cast<int>(promptStr.length()), 0, llama_memory_seq_pos_max(llMem, 0), 0, 1);
+							toolCalled = true;
+						}
+					}
 				}
+				if(end == std::string::npos) break;
+				start = end + 1;
 			}
-		}catch(std::exception& e){ MessageBoxA(nullptr, e.what(), "LM Stud", MB_ICONEXCLAMATION); }
+		} catch(std::exception& e){ MessageBoxA(nullptr, e.what(), "LM Stud", MB_ICONEXCLAMATION); }
 	} while(toolCalled);
 	return response.length();
 }
