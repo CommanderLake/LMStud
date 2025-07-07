@@ -26,7 +26,7 @@ struct ChatSession{
 	std::vector<common_chat_msg> chatMsgs;
 	std::vector<llama_token> cachedTokens;
 	std::string prompt;
-	common_chat_format chatFormat = COMMON_CHAT_FORMAT_CONTENT_ONLY;
+	common_chat_syntax syntax;
 	bool useJinja = true;
 	int nBatch = 1;
 };

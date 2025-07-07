@@ -16,7 +16,9 @@ static bool IsPathAllowed(const std::filesystem::path& p){
 	if(ec) return false;
 	const auto absStr = abs.native();
 	const auto baseStr = base.native();
-	return absStr.rfind(baseStr, 0) == 0;
+	if(absStr.rfind(baseStr, 0) != 0) return false;
+	if(absStr.size() == baseStr.size()) return true;
+	return absStr[baseStr.size()] == '\\';
 }
 void SetFileBaseDir(const char* dir){
 	if(dir && *dir){
@@ -111,7 +113,7 @@ static std::string GetJsonValue(const char* json, const char* key){
 		std::string val;
 		bool esc = false;
 		while(*p){
-			char c = *p++;
+			const char c = *p++;
 			if(esc){
 				switch(c){
 					case 'n': val += '\n'; break;
@@ -245,6 +247,7 @@ std::string ReadFileTool(const char* argsJson){
 	if(!endStr.empty()) std::from_chars(endStr.data(), endStr.data()+endStr.size(), end);
 	std::filesystem::path p = _baseFolder / path;
 	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
+	if(is_directory(p)) return "{\"error\":\"path is a folder\"}";
 	std::ifstream f(p, std::ios::binary);
 	if(!f.is_open()) return "{\"error\":\"open failed\"}";
 	std::string line, out;
@@ -311,7 +314,7 @@ void RegisterTools(const bool googleSearch, const bool webpageFetch, const bool 
 		//AddTool("list_tags", "List the tags of a previously fetched webpage.", "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", ListWebTags);
 	}
 	if(fileList){
-		AddTool("list_files", "List files in path on the users PC", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"recursive\":{\"type\":\"boolean\"}},\"required\":[\"path\"]}", ListFilesTool);
+		AddTool("list_directory", "List files in path, path is relative to a base folder", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"recursive\":{\"type\":\"boolean\"}}}", ListFilesTool);
 	}
 	if(fileCreate){
 		AddTool("create_file", "Create a new file and fill it with text", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"text\":{\"type\":\"string\"},\"overwrite\":{\"type\":\"boolean\"}},\"required\":[\"path\",\"text\"]}", CreateFileTool);
