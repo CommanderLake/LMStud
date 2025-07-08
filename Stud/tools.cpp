@@ -309,7 +309,7 @@ std::string ReplaceLinesTool(const char* argsJson){
 	int start = -1, end = -1;
 	if(!startStr.empty()) std::from_chars(startStr.data(), startStr.data()+startStr.size(), start);
 	if(!endStr.empty()) std::from_chars(endStr.data(), endStr.data()+endStr.size(), end);
-	if(start<0||end<start) return "{\"error\":\"range, check line numbers using read_file_lines\"}";
+	if(start<1||end<start) return "{\"error\":\"range, check line numbers using read_file_lines\"}";
 	std::filesystem::path p = _baseFolder / path;
 	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
 	std::ifstream in(p, std::ios::binary);
@@ -322,8 +322,8 @@ std::string ReplaceLinesTool(const char* argsJson){
 	std::vector<std::string> newLines;
 	std::stringstream ss(text);
 	while(std::getline(ss, line)){ newLines.push_back(line); }
-	lines.erase(lines.begin()+start, lines.begin()+end);
-	lines.insert(lines.begin()+start, newLines.begin(), newLines.end());
+	lines.erase(lines.begin()+start+1, lines.begin()+end);
+	lines.insert(lines.begin()+start+1, newLines.begin(), newLines.end());
 	std::ofstream out(p, std::ios::binary|std::ios::trunc);
 	if(!out.is_open()) return "{\"error\":\"open failed\"}";
 	for(size_t i = 0; i<lines.size(); ++i){ out<<lines[i]; if(i+1<lines.size()) out<<'\n'; }
@@ -408,10 +408,10 @@ void RegisterTools(const bool googleSearch, const bool webpageFetch, const bool 
 		AddTool("create_file", "Create a new file and fill it with text", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"text\":{\"type\":\"string\"},\"overwrite\":{\"type\":\"boolean\"}},\"required\":[\"path\",\"text\"]}", CreateFileTool);
 	}
 	if(fileRead){
-		AddTool("read_file_lines", "Display 0 based range of lines from a text file in a code block", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"}},\"required\":[\"path\"]}", ReadFileTool);
+		AddTool("read_file_lines", "Display range of lines from a text file in a code block with line numbers", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"}},\"required\":[\"path\"]}", ReadFileTool);
 	}
 	if(fileWrite){
-		AddTool("replace_file_lines", "Replace 0 based range of lines in a text file", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"},\"text\":{\"type\":\"string\"}},\"required\":[\"path\",\"start\",\"end\",\"text\"]}", ReplaceLinesTool);
+		AddTool("replace_file_lines", "Replace range of lines in a text file (1 based)", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"},\"text\":{\"type\":\"string\"}},\"required\":[\"path\",\"start\",\"end\",\"text\"]}", ReplaceLinesTool);
 		AddTool("apply_file_patch", "Apply unified diff patch to a file", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"patch\":{\"type\":\"string\"}},\"required\":[\"path\",\"patch\"]}", ApplyPatchTool);
 	}
 }
