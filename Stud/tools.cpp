@@ -250,16 +250,39 @@ std::string ReadFileTool(const char* argsJson){
 	if(is_directory(p)) return "{\"error\":\"path is a folder\"}";
 	std::ifstream f(p, std::ios::binary);
 	if(!f.is_open()) return "{\"error\":\"open failed\"}";
-	std::string line, out;
+	std::string line, body;
 	int lineNo = 1;
 	while(std::getline(f, line)){
-		if((start==-1||lineNo>=start) && (end==-1||lineNo<=end)){
-			out += line;
-			out += '\n';
+		if((start == -1 || lineNo >= start) && (end == -1 || lineNo <= end)){
+			body += line;
+			body += '\n';
 		}
-		if(end!=-1 && lineNo>=end) break;
+		if(end != -1 && lineNo >= end) break;
 		++lineNo;
 	}
+	const std::string fileName = p.filename().string();
+	const std::string ext = p.extension().string();
+	std::string contentType;
+	if(ext == ".h" || ext == ".cpp" || ext == ".cc" || ext == ".cxx" || ext == ".c") contentType = "cpp";
+	else if(ext == ".cs") contentType = "csharp";
+	else if(ext == ".py") contentType = "python";
+	else if(ext == ".java") contentType = "java";
+	else if(ext == ".js" || ext == ".jsx") contentType = "javascript";
+	else if(ext == ".html" || ext == ".htm") contentType = "html";
+	else if(ext == ".css") contentType = "css";
+	else if(ext == ".xml") contentType = "xml";
+	else if(ext == ".json") contentType = "json";
+	else if(ext == ".md") contentType = "markdown";
+	else if(ext == ".rb") contentType = "ruby";
+	else if(ext == ".php") contentType = "php";
+	else if(ext == ".swift") contentType = "swift";
+	else if(ext == ".go") contentType = "go";
+	else if(ext == ".rs") contentType = "rust";
+	else if(ext == ".ts" || ext == ".tsx") contentType = "typescript";
+	else if(ext == ".sql") contentType = "sql";
+	else if(ext == ".sh") contentType = "bash";
+	else contentType = "";
+	std::string out = "[FILE] " + fileName + "\n```" + contentType + "\n" + body + "```\n";
 	return out;
 }
 std::string CreateFileTool(const char* argsJson){
@@ -284,7 +307,7 @@ std::string ReplaceLinesTool(const char* argsJson){
 	int start = -1, end = -1;
 	if(!startStr.empty()) std::from_chars(startStr.data(), startStr.data()+startStr.size(), start);
 	if(!endStr.empty()) std::from_chars(endStr.data(), endStr.data()+endStr.size(), end);
-	if(start<1||end<start) return "{\"error\":\"range\"}";
+	if(start<0||end<start) return "{\"error\":\"range\"}";
 	std::filesystem::path p = _baseFolder / path;
 	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
 	std::ifstream in(p, std::ios::binary);
@@ -293,12 +316,12 @@ std::string ReplaceLinesTool(const char* argsJson){
 	std::string line;
 	while(std::getline(in, line)){ lines.push_back(line); }
 	in.close();
-	if(start-1>static_cast<int>(lines.size())||end-1>static_cast<int>(lines.size())) return "{\"error\":\"range\"}";
+	if(start>static_cast<int>(lines.size())||end-1>static_cast<int>(lines.size())) return "{\"error\":\"range\"}";
 	std::vector<std::string> newLines;
 	std::stringstream ss(text);
 	while(std::getline(ss, line)){ newLines.push_back(line); }
-	lines.erase(lines.begin()+start-1, lines.begin()+end);
-	lines.insert(lines.begin()+start-1, newLines.begin(), newLines.end());
+	lines.erase(lines.begin()+start, lines.begin()+end);
+	lines.insert(lines.begin()+start, newLines.begin(), newLines.end());
 	std::ofstream out(p, std::ios::binary|std::ios::trunc);
 	if(!out.is_open()) return "{\"error\":\"open failed\"}";
 	for(size_t i = 0; i<lines.size(); ++i){ out<<lines[i]; if(i+1<lines.size()) out<<'\n'; }
@@ -320,9 +343,9 @@ void RegisterTools(const bool googleSearch, const bool webpageFetch, const bool 
 		AddTool("create_file", "Create a new file and fill it with text", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"text\":{\"type\":\"string\"},\"overwrite\":{\"type\":\"boolean\"}},\"required\":[\"path\",\"text\"]}", CreateFileTool);
 	}
 	if(fileRead){
-		AddTool("read_file_lines", "Read range of lines from a text file", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"}},\"required\":[\"path\"]}", ReadFileTool);
+		AddTool("read_file_lines", "Display 0 based range of lines from a text file in a code block", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"}},\"required\":[\"path\"]}", ReadFileTool);
 	}
 	if(fileWrite){
-		AddTool("replace_file_lines", "Replace range of lines in a text file", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"},\"text\":{\"type\":\"string\"}},\"required\":[\"path\",\"start\",\"end\",\"text\"]}", ReplaceLinesTool);
+		AddTool("replace_file_lines", "Replace 0 based range of lines in a text file", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"},\"text\":{\"type\":\"string\"}},\"required\":[\"path\",\"start\",\"end\",\"text\"]}", ReplaceLinesTool);
 	}
 }
