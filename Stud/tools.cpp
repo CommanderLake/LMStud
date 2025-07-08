@@ -254,6 +254,8 @@ std::string ReadFileTool(const char* argsJson){
 	int lineNo = 1;
 	while(std::getline(f, line)){
 		if((start == -1 || lineNo >= start) && (end == -1 || lineNo <= end)){
+			body += std::to_string(lineNo);
+			body += ":";
 			body += line;
 			body += '\n';
 		}
@@ -307,7 +309,7 @@ std::string ReplaceLinesTool(const char* argsJson){
 	int start = -1, end = -1;
 	if(!startStr.empty()) std::from_chars(startStr.data(), startStr.data()+startStr.size(), start);
 	if(!endStr.empty()) std::from_chars(endStr.data(), endStr.data()+endStr.size(), end);
-	if(start<0||end<start) return "{\"error\":\"range\"}";
+	if(start<0||end<start) return "{\"error\":\"range, check line numbers using read_file_lines\"}";
 	std::filesystem::path p = _baseFolder / path;
 	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
 	std::ifstream in(p, std::ios::binary);
@@ -316,7 +318,7 @@ std::string ReplaceLinesTool(const char* argsJson){
 	std::string line;
 	while(std::getline(in, line)){ lines.push_back(line); }
 	in.close();
-	if(start>static_cast<int>(lines.size())||end>static_cast<int>(lines.size())) return "{\"error\":\"range\"}";
+	if(start>static_cast<int>(lines.size())||end>static_cast<int>(lines.size())) return "{\"error\":\"range, check line numbers using read_file_lines\"}";
 	std::vector<std::string> newLines;
 	std::stringstream ss(text);
 	while(std::getline(ss, line)){ newLines.push_back(line); }
