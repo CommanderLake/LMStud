@@ -55,7 +55,7 @@ EXPORT void SetSystemPrompt(const char* prompt);
 EXPORT void SetMessageAt(int index, const char* message);
 EXPORT void RemoveMessageAt(int index);
 EXPORT void RemoveMessagesStartingAt(int index);
-EXPORT common_chat_msg Generate(HWND hWnd, std::string role, const std::string& prompt, unsigned int nPredict, bool callback);
+EXPORT common_chat_msg Generate(HWND hWnd, const std::vector<common_chat_msg> messages, unsigned int nPredict, bool callback);
 EXPORT void GenerateWithTools(HWND hWnd, MessageRole role, const char* prompt, unsigned int nGen, bool callback);
 EXPORT void StopGeneration();
 //EXPORT char* GetContextAsText();
