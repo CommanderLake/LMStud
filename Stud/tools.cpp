@@ -260,7 +260,7 @@ std::string ReadFileTool(const char* argsJson){
 		if(end!=-1 && lineNo>=end) break;
 		++lineNo;
 	}
-	return JsonEscape(out);
+	return out;
 }
 std::string CreateFileTool(const char* argsJson){
 	const std::string path = GetJsonValue(argsJson, "path");
