@@ -256,15 +256,6 @@ std::string Generate(const HWND hWnd, const std::string role, const std::string&
 	if(cb && !callback) cb(response.c_str(), response.length(), i, llama_memory_seq_pos_max(llMem, 0), ftTime, 0);
 	return response;
 }
-static common_chat_msg parse_with_reasoning_fallback(const std::string& in, const common_chat_syntax& syntax){
-	auto msg = common_chat_parse(in, false, syntax);
-	if(!msg.tool_calls.empty() || syntax.reasoning_format == COMMON_REASONING_FORMAT_NONE){
-		return msg;
-	}
-	auto no_reasoning = syntax;
-	no_reasoning.reasoning_format = COMMON_REASONING_FORMAT_NONE;
-	return common_chat_parse(in, false, no_reasoning);
-}
 int GenerateWithTools(const HWND hWnd, const MessageRole role, char* prompt, const unsigned int nGen, const bool callback){
 	auto promptStr = std::string(prompt);
 	if(!_hasTools) return Generate(hWnd, "user", promptStr, nGen, callback).length();
@@ -280,7 +271,7 @@ int GenerateWithTools(const HWND hWnd, const MessageRole role, char* prompt, con
 		try{
 			std::string rest = response;
 			while(true){
-				const auto parsed = parse_with_reasoning_fallback(rest, _session.syntax);
+				const auto parsed = common_chat_parse(rest, false, _session.syntax);
 				rest = parsed.content;
 				pending.insert(pending.end(), parsed.tool_calls.begin(), parsed.tool_calls.end());
 				if(parsed.tool_calls.empty()) break;
