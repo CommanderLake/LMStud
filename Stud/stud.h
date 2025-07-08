@@ -50,14 +50,13 @@ EXPORT int LoadModel(HWND hWnd, const char* filename, int nGPULayers, bool mMap,
 EXPORT bool HasTool(const char* name);
 EXPORT void SetTokenCallback(TokenCallbackFn cb);
 EXPORT void SetThreadCount(int n, int nBatch);
-EXPORT void AddMessage(MessageRole role, const char* message);
 EXPORT void RetokenizeChat(bool rebuildMemory);
 EXPORT void SetSystemPrompt(const char* prompt);
 EXPORT void SetMessageAt(int index, const char* message);
 EXPORT void RemoveMessageAt(int index);
 EXPORT void RemoveMessagesStartingAt(int index);
-EXPORT std::string Generate(HWND hWnd, std::string role, const std::string& prompt, unsigned int nPredict, bool callback);
-EXPORT int GenerateWithTools(HWND hWnd, MessageRole role, char* prompt, unsigned int nGen, bool callback);
+EXPORT common_chat_msg Generate(HWND hWnd, std::string role, const std::string& prompt, unsigned int nPredict, bool callback);
+EXPORT void GenerateWithTools(HWND hWnd, MessageRole role, const char* prompt, unsigned int nGen, bool callback);
 EXPORT void StopGeneration();
 //EXPORT char* GetContextAsText();
 }

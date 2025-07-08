@@ -40,8 +40,6 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetThreadCount(int n, int nBatch);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void AddMessage(MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string text);
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void RetokenizeChat(bool rebuildMemory);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetSystemPrompt([MarshalAs(UnmanagedType.LPUTF8Str)] string prompt);
@@ -54,7 +52,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr Generate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern int GenerateWithTools(IntPtr hWnd, MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
+		public static extern void GenerateWithTools(IntPtr hWnd, MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetGoogle(string apiKey, string searchEngineID, int resultCount);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

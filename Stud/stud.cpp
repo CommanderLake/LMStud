@@ -109,20 +109,6 @@ void SetTokenCallback(const TokenCallbackFn cb){ _tokenCb = cb; }
 void SetThreadCount(const int n, const int nBatch){
 	if(_session.ctx) llama_set_n_threads(_session.ctx, n, nBatch);
 }
-void AddMessage(const MessageRole role, const char* message){
-	if(!_vocab || !message) return;
-	common_chat_msg newMsg;
-	switch(role){
-		case MessageRole::Assistant: newMsg.role = "assistant";
-			break;
-		case MessageRole::Tool: newMsg.role = "tool";
-			break;
-		default: newMsg.role = "user";
-			break;
-	}
-	newMsg.content = message;
-	_session.chatMsgs.push_back(newMsg);
-}
 void RetokenizeChat(bool rebuildMemory = false){
 	if(!_session.ctx || !_session.smpl || !_vocab) return;
 	std::vector<common_chat_msg> msgs;
@@ -179,30 +165,22 @@ void RemoveMessagesStartingAt(int index){
 	_session.chatMsgs.erase(_session.chatMsgs.begin() + index, _session.chatMsgs.end());
 	RetokenizeChat();
 }
-std::string Generate(const HWND hWnd, const std::string role, const std::string& prompt, const unsigned int nPredict, const bool callback){
+common_chat_msg Generate(const HWND hWnd, const std::string role, const std::string& prompt, const unsigned int nPredict, const bool callback){
 	const auto prepStart = HrClock::now();
 	_stop.store(false);
 	const TokenCallbackFn cb = _tokenCb;
-	std::string response;
 	common_chat_msg newMsg;
 	newMsg.role = role;
 	newMsg.content = prompt;
-	const auto formatted = common_chat_format_single(_chatTemplates.get(), _session.chatMsgs, newMsg, !role._Equal("assistant"), _session.useJinja && role._Equal("assistant"));
+	const auto formatted = common_chat_format_single(_chatTemplates.get(), _session.chatMsgs, newMsg, !newMsg.role._Equal("assistant"), _session.useJinja && newMsg.role._Equal("assistant"));
 	const int nPromptTokens = -llama_tokenize(_vocab, formatted.c_str(), formatted.size(), nullptr, 0, true, true);
 	std::vector<llama_token> promptTokens(nPromptTokens);
 	if(llama_tokenize(_vocab, formatted.c_str(), formatted.size(), promptTokens.data(), promptTokens.size(), true, true) < 0){
 		MessageBoxA(hWnd, "Failed to tokenize the prompt", "LM Stud", MB_ICONERROR);
-		return std::string();
+		return common_chat_msg();
 	}
-	auto mRole = MessageRole::User;
-	if(_stricmp(role.c_str(), "assistant") == 0) mRole = MessageRole::Assistant;
-	else if(_stricmp(role.c_str(), "tool") == 0) mRole = MessageRole::Tool;
-	AddMessage(mRole, prompt.c_str());
-	llama_token newTokenId;
-	std::vector<llama_token> newTokens;
+	_session.chatMsgs.push_back(newMsg);
 	const auto llMem = llama_get_memory(_session.ctx);
-	double ftTime = 0.0;
-	int i = 0;
 	size_t p = 0;
 	while(p < promptTokens.size() && !_stop.load()){
 		const int nEval = std::min<int>(_session.nBatch, promptTokens.size() - p);
@@ -211,16 +189,23 @@ std::string Generate(const HWND hWnd, const std::string role, const std::string&
 		const int nCtxUsed = llama_memory_seq_pos_max(llMem, 0);
 		if(nCtxUsed + batch.n_tokens > nCtx){
 			MessageBoxA(hWnd, "Context size exceeded", "LM Stud", MB_ICONEXCLAMATION);
-			return std::string();
+			return common_chat_msg();
 		}
 		auto result = llama_decode(_session.ctx, batch);
 		if(result != 0){
 			MessageBoxA(hWnd, (std::string("llama_decode failed with error number: ") + std::to_string(result)).c_str(), "LM Stud", MB_ICONERROR);
-			return std::string();
+			return common_chat_msg();
 		}
 		for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl, promptTokens[p + j]); }
 		p += nEval;
 	}
+	_session.cachedTokens.insert(_session.cachedTokens.end(), promptTokens.begin(), promptTokens.end());
+
+	llama_token newTokenId;
+	std::vector<llama_token> newTokens;
+	std::string response;
+	double ftTime = 0.0;
+	int i = 0;
 	while(i < nPredict && !_stop.load()){
 		newTokenId = llama_sampler_sample(_session.smpl, _session.ctx, -1);
 		if(llama_vocab_is_eog(_vocab, newTokenId)){ break; }
@@ -228,7 +213,7 @@ std::string Generate(const HWND hWnd, const std::string role, const std::string&
 		const int n = llama_token_to_piece(_vocab, newTokenId, buf, sizeof buf, 0, true);
 		if(n < 0){
 			MessageBoxA(hWnd, "Failed to convert token to piece", "LM Stud", MB_ICONERROR);
-			return std::string();
+			return common_chat_msg();
 		}
 		newTokens.push_back(newTokenId);
 		if(ftTime == 0.0) ftTime = std::chrono::duration<double, std::ratio<1, 1>>(HrClock::now() - prepStart).count();
@@ -241,42 +226,43 @@ std::string Generate(const HWND hWnd, const std::string role, const std::string&
 		const int nCtxUsed = llama_memory_seq_pos_max(llMem, 0);
 		if(nCtxUsed + batch.n_tokens > nCtx){
 			MessageBoxA(hWnd, "Context size exceeded", "LM Stud", MB_ICONEXCLAMATION);
-			return std::string();
+			return common_chat_msg();
 		}
 		auto result = llama_decode(_session.ctx, batch);
 		if(result != 0){
 			MessageBoxA(hWnd, (std::string("llama_decode failed with error number: ") + std::to_string(result)).c_str(), "LM Stud", MB_ICONERROR);
-			return std::string();
+			return common_chat_msg();
 		}
 		llama_sampler_accept(_session.smpl, newTokenId);
 	}
-	AddMessage(MessageRole::Assistant, response.c_str());
-	_session.cachedTokens.insert(_session.cachedTokens.end(), promptTokens.begin(), promptTokens.end());
+	const auto responseMsg = common_chat_parse(response, false, _session.syntax);
+	_session.chatMsgs.push_back(responseMsg);
 	_session.cachedTokens.insert(_session.cachedTokens.end(), newTokens.begin(), newTokens.end());
 	if(cb && !callback) cb(response.c_str(), response.length(), i, llama_memory_seq_pos_max(llMem, 0), ftTime, 0);
-	return response;
+	return responseMsg;
 }
-int GenerateWithTools(const HWND hWnd, const MessageRole role, char* prompt, const unsigned int nGen, const bool callback){
+void GenerateWithTools(const HWND hWnd, const MessageRole role, const char* prompt, const unsigned int nGen, const bool callback){
 	auto promptStr = std::string(prompt);
-	if(!_hasTools) return Generate(hWnd, "user", promptStr, nGen, callback).length();
-	std::string response;
-	std::deque<common_chat_tool_call> pending;
+	if(!_hasTools){
+		Generate(hWnd, "user", promptStr, nGen, callback);
+		return;
+	}
 	bool toolCalled = role == MessageRole::Tool;
 	const TokenCallbackFn cb = _tokenCb;
 	const auto llMem = llama_get_memory(_session.ctx);
 	do{
-		response = Generate(hWnd, toolCalled ? "tool" : "user", promptStr, nGen, callback);
+		auto response = Generate(hWnd, toolCalled ? "tool" : "user", promptStr, nGen, callback);
 		toolCalled = false;
-		if(!_session.chatMsgs.size()) return response.length();
+		if(!_session.chatMsgs.size()) return;
 		try{
-			std::string rest = response;
+			std::string rest = response.content;
 			while(true){
 				const auto parsed = common_chat_parse(rest, false, _session.syntax);
 				rest = parsed.content;
-				pending.insert(pending.end(), parsed.tool_calls.begin(), parsed.tool_calls.end());
+				response.tool_calls.insert(response.tool_calls.end(), parsed.tool_calls.begin(), parsed.tool_calls.end());
 				if(parsed.tool_calls.empty()) break;
 			}
-			for(auto tool : pending){
+			for(auto tool : response.tool_calls){
 				auto it = _toolHandlers.find(tool.name);
 				if(it != _toolHandlers.end()){
 					promptStr = it->second(tool.arguments.c_str());
@@ -284,10 +270,9 @@ int GenerateWithTools(const HWND hWnd, const MessageRole role, char* prompt, con
 					toolCalled = true;
 				}
 			}
-			pending.clear();
 		} catch(std::exception& e){ MessageBoxA(nullptr, e.what(), "LM Stud", MB_ICONEXCLAMATION); }
 	} while(toolCalled);
-	return response.length();
+	return;
 }
 void StopGeneration(){ _stop.store(true); }
 //char* GetContextAsText(){
