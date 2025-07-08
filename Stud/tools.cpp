@@ -316,7 +316,7 @@ std::string ReplaceLinesTool(const char* argsJson){
 	std::string line;
 	while(std::getline(in, line)){ lines.push_back(line); }
 	in.close();
-	if(start>static_cast<int>(lines.size())||end-1>static_cast<int>(lines.size())) return "{\"error\":\"range\"}";
+	if(start>static_cast<int>(lines.size())||end>static_cast<int>(lines.size())) return "{\"error\":\"range\"}";
 	std::vector<std::string> newLines;
 	std::stringstream ss(text);
 	while(std::getline(ss, line)){ newLines.push_back(line); }
@@ -325,6 +325,69 @@ std::string ReplaceLinesTool(const char* argsJson){
 	std::ofstream out(p, std::ios::binary|std::ios::trunc);
 	if(!out.is_open()) return "{\"error\":\"open failed\"}";
 	for(size_t i = 0; i<lines.size(); ++i){ out<<lines[i]; if(i+1<lines.size()) out<<'\n'; }
+	return "{\"result\":\"success\"}";
+}
+std::string ApplyPatchTool(const char* argsJson){
+	const std::string path = GetJsonValue(argsJson, "path");
+	const std::string patchStr = GetJsonValue(argsJson, "patch");
+	if(path.empty() || patchStr.empty()) return "{\"error\":\"args\"}";
+	std::filesystem::path p = _baseFolder / path;
+	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
+	std::ifstream in(p, std::ios::binary);
+	if(!in.is_open()) return "{\"error\":\"open failed\"}";
+	std::vector<std::string> lines;
+	std::string line;
+	while(std::getline(in, line)){
+		if(!line.empty() && line.back() == '\r') line.pop_back();
+		lines.push_back(line);
+	}
+	in.close();
+	struct Hunk{ int startOld; std::vector<std::string> lines; };
+	std::vector<Hunk> hunks;
+	std::istringstream patchStream(patchStr);
+	Hunk cur; bool inHunk = false;
+	std::regex hunkRe("@@ -([0-9]+)(?:,([0-9]+))? \\+([0-9]+)(?:,([0-9]+))? @@");
+	while(std::getline(patchStream, line)){
+		if(!line.empty() && line.back() == '\r') line.pop_back();
+		std::smatch m;
+		if(std::regex_match(line, m, hunkRe)){
+			if(inHunk){ hunks.push_back(cur); cur.lines.clear(); }
+			inHunk = true;
+			cur.startOld = std::stoi(m[1]) - 1;
+		}
+		else if(inHunk){
+			cur.lines.push_back(line);
+		}
+	}
+	if(inHunk) hunks.push_back(cur);
+	auto out = lines;
+	int offset = 0;
+	for(const auto& h : hunks){
+		int idx = h.startOld + offset;
+		if(idx<0 || idx>static_cast<int>(out.size())) return "{\"error\":\"range\"}";
+		int orig = idx;
+		for(const auto& pl : h.lines){
+			if(pl.empty()) continue;
+			char tag = pl[0];
+			std::string text = pl.substr(1);
+			if(tag == ' '){
+				if(idx >= static_cast<int>(out.size()) || out[idx] != text) return "{\"error\":\"context\"}";
+				++idx;
+			}
+			else if(tag == '-'){
+				if(idx >= static_cast<int>(out.size()) || out[idx] != text) return "{\"error\":\"context\"}";
+				out.erase(out.begin() + idx);
+				--offset;
+			}
+			else if(tag == '+'){
+				out.insert(out.begin() + idx, text);
+				++idx; ++offset;
+			}
+		}
+	}
+	std::ofstream outFile(p, std::ios::binary | std::ios::trunc);
+	if(!outFile.is_open()) return "{\"error\":\"open failed\"}";
+	for(size_t i = 0; i < out.size(); ++i){ outFile << out[i]; if(i + 1 < out.size()) outFile << "\n"; }
 	return "{\"result\":\"success\"}";
 }
 void RegisterTools(const bool googleSearch, const bool webpageFetch, const bool fileList, const bool fileCreate, const bool fileRead, const bool fileWrite){
@@ -347,5 +410,6 @@ void RegisterTools(const bool googleSearch, const bool webpageFetch, const bool 
 	}
 	if(fileWrite){
 		AddTool("replace_file_lines", "Replace 0 based range of lines in a text file", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"},\"text\":{\"type\":\"string\"}},\"required\":[\"path\",\"start\",\"end\",\"text\"]}", ReplaceLinesTool);
+		AddTool("apply_patch", "Apply unified diff patch to a file", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"patch\":{\"type\":\"string\"}},\"required\":[\"path\",\"patch\"]}", ApplyPatchTool);
 	}
 }

@@ -26,5 +26,6 @@ extern "C" {
 	EXPORT std::string ReadFileTool(const char* argsJson);
 	EXPORT std::string CreateFileTool(const char* argsJson);
 	EXPORT std::string ReplaceLinesTool(const char* argsJson);
+	EXPORT std::string ApplyPatchTool(const char* argsJson);
 	EXPORT void RegisterTools(bool googleSearch, bool webpageFetch, bool fileList, bool fileCreate, bool fileRead, bool fileWrite);
 }
