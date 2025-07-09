@@ -112,7 +112,9 @@ void SetThreadCount(const int n, const int nBatch){
 void RetokenizeChat(bool rebuildMemory = false){
 	if(!_session.ctx || !_session.smpl || !_vocab) return;
 	std::vector<common_chat_msg> msgs;
-	if(!_session.prompt.empty()){ msgs.push_back({"system", _session.prompt}); }
+	std::string prompt(_session.prompt);
+	if(_hasTools && !_session.toolsPrompt.empty()) prompt += _session.toolsPrompt;
+	msgs.push_back({"system", prompt});
 	msgs.insert(msgs.end(), _session.chatMsgs.begin(), _session.chatMsgs.end());
 	common_chat_templates_inputs in;
 	in.use_jinja = _session.useJinja;
@@ -139,14 +141,15 @@ void RetokenizeChat(bool rebuildMemory = false){
 		for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl, promptTokens[i + j]); }
 	}
 	_session.cachedTokens = std::move(promptTokens);
-	//OutputDebugStringA((std::string(GetContextAsText()) + "\n\n---\n\n").c_str());
+	//OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
 }
 void ResetChat(){
 	_session.chatMsgs.clear();
 	RetokenizeChat();
 }
-void SetSystemPrompt(const char* prompt){
+void SetSystemPrompt(const char* prompt, const char* toolsPrompt){
 	_session.prompt = std::string(prompt);
+	_session.toolsPrompt = std::string(toolsPrompt);
 	RetokenizeChat();
 }
 void SetMessageAt(const int index, const char* message){
@@ -283,12 +286,12 @@ void GenerateWithTools(const HWND hWnd, const MessageRole role, const char* prom
 	return;
 }
 void StopGeneration(){ _stop.store(true); }
-//char* GetContextAsText(){
-//	if(!_ctx) return nullptr;
-//	std::string outStr;
-//	outStr.reserve(_cachedTokens.size()*4);
-//	for(const llama_token tok : _cachedTokens){ outStr += common_token_to_piece(_ctx, tok, true); }
-//	auto* out = static_cast<char*>(std::malloc(outStr.size()+1));
-//	if(out) std::memcpy(out, outStr.c_str(), outStr.size()+1);
-//	return out;
-//}
+char* GetContextAsText(){
+	if(!_session.ctx) return nullptr;
+	std::string outStr;
+	outStr.reserve(_session.cachedTokens.size()*4);
+	for(const llama_token tok : _session.cachedTokens){ outStr += common_token_to_piece(_session.ctx, tok, true); }
+	auto* out = static_cast<char*>(std::malloc(outStr.size()+1));
+	if(out) std::memcpy(out, outStr.c_str(), outStr.size()+1);
+	return out;
+}

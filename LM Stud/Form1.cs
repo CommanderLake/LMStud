@@ -60,7 +60,8 @@ namespace LMStud{
 			toolTip1.SetToolTip(checkFileCreateEnable, "Enable the tool for creating new files under the base path.");
 			toolTip1.SetToolTip(checkFileReadEnable, "Enable the tool for reading the contents of files under the base path.");
 			toolTip1.SetToolTip(checkFileWriteEnable, "Enable the tool for writing to files under the base path.");
-			toolTip1.SetToolTip(textFileBasePath, "Set the base path where all file tools will be restricted to, file access is relative to this path and restricted to files and folders under this path only.");
+			toolTip1.SetToolTip(textFileBasePath, "File access is relative to this path and canonically restricted to files and folders under this path only.");
+			toolTip1.SetToolTip(linkFileInstruction, "Set an instruction to optimize the way the assistant uses the file tools.");
 		}
 		private void Form1_Load(object sender, EventArgs e){
 			NativeMethods.CurlGlobalInit();
@@ -102,7 +103,7 @@ namespace LMStud{
 			if(checkVoiceInput.CheckState != CheckState.Unchecked){
 				if(_whisperModelIndex < 0 || !File.Exists(_whisperModels[_whisperModelIndex])){
 					checkVoiceInput.Checked = false;
-					MessageBox.Show(this, "Whisper model not found", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					MessageBox.Show(this, "Whisper model not found", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Error);
 					tabControl1.SelectTab(1);
 					comboWhisperModel.Focus();
 					return;
@@ -116,13 +117,13 @@ namespace LMStud{
 							NativeMethods.SetWhisperCallback(_whisperCallback);
 						} else{
 							_whisperLoaded = false;
-							MessageBox.Show(this, "Error initialising whisper", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+							MessageBox.Show(this, "Error initialising whisper", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Error);
 							checkVoiceInput.Checked = false;
 							return;
 						}
 					}
 					if(NativeMethods.StartSpeechTranscription()) return;
-					MessageBox.Show(this, "Error starting whisper transcription", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					MessageBox.Show(this, "Error starting whisper transcription", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Error);
 					checkVoiceInput.Checked = false;
 				} else{
 					MessageBox.Show(this, "Load a model on the Models tab first", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
@@ -411,5 +412,5 @@ namespace LMStud{
 					textInput.AppendText($"[FILE] {fileName}\r\n```{contentType}\r\n{fileContent}\r\n```\r\n\r\n");
 				} catch(Exception ex){ MessageBox.Show($"Error reading file: {ex.Message}"); }
 		}
-	}
+    }
 }

@@ -85,7 +85,7 @@ namespace LMStud{
 				}
 			});
 		}
-		private void SetSystemPrompt(){NativeMethods.SetSystemPrompt((_systemPrompt.Length > 0 ? _systemPrompt : DefaultPrompt) + DateTimePrompt + (_webpageFetchEnable ? FetchPrompt : ""));}
+		private void SetSystemPrompt(){NativeMethods.SetSystemPrompt(_systemPrompt.Length > 0 ? _systemPrompt : DefaultPrompt, DateTimePrompt + (_googleSearchEnable && _webpageFetchEnable ? FetchPrompt : ""));}
 		private void LoadModel(int modelIndex, bool autoLoad){
 			var handle = Handle;
 			var whisperOn = checkVoiceInput.CheckState != CheckState.Unchecked;

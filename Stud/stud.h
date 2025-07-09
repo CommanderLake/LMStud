@@ -18,18 +18,19 @@ enum class MessageRole{
 	Assistant,
 	Tool
 };
-inline llama_model* _llModel = nullptr;
-inline const llama_vocab* _vocab = nullptr;
 struct ChatSession{
 	llama_context* ctx = nullptr;
 	llama_sampler* smpl = nullptr;
 	std::vector<common_chat_msg> chatMsgs;
 	std::vector<llama_token> cachedTokens;
 	std::string prompt;
+	std::string toolsPrompt;
 	common_chat_syntax syntax;
 	bool useJinja = true;
 	int nBatch = 1;
 };
+inline llama_model* _llModel = nullptr;
+inline const llama_vocab* _vocab = nullptr;
 inline ChatSession _session;
 inline std::atomic_bool _stop{false};
 inline common_chat_templates_ptr _chatTemplates;
@@ -51,12 +52,12 @@ EXPORT bool HasTool(const char* name);
 EXPORT void SetTokenCallback(TokenCallbackFn cb);
 EXPORT void SetThreadCount(int n, int nBatch);
 EXPORT void RetokenizeChat(bool rebuildMemory);
-EXPORT void SetSystemPrompt(const char* prompt);
+EXPORT void SetSystemPrompt(const char* prompt, const char* toolsPrompt);
 EXPORT void SetMessageAt(int index, const char* message);
 EXPORT void RemoveMessageAt(int index);
 EXPORT void RemoveMessagesStartingAt(int index);
-EXPORT common_chat_msg Generate(HWND hWnd, const std::vector<common_chat_msg> messages, unsigned int nPredict, bool callback);
+common_chat_msg Generate(HWND hWnd, std::vector<common_chat_msg> messages, unsigned int nPredict, bool callback);
 EXPORT void GenerateWithTools(HWND hWnd, MessageRole role, const char* prompt, unsigned int nGen, bool callback);
 EXPORT void StopGeneration();
-//EXPORT char* GetContextAsText();
+char* GetContextAsText();
 }

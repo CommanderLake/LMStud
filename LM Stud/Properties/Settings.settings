@@ -9,7 +9,7 @@
       <Value Profile="(Default)">8</Value>
     </Setting>
     <Setting Name="ModelsDir" Type="System.String" Scope="User">
-      <Value Profile="(Default)">E:\models</Value>
+      <Value Profile="(Default)">C:\models</Value>
     </Setting>
     <Setting Name="RepPen" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">1.1</Value>
@@ -27,7 +27,7 @@
       <Value Profile="(Default)">-1</Value>
     </Setting>
     <Setting Name="CtxSize" Type="System.Decimal" Scope="User">
-      <Value Profile="(Default)">4096</Value>
+      <Value Profile="(Default)">8192</Value>
     </Setting>
     <Setting Name="GPULayers" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">-1</Value>
@@ -48,7 +48,7 @@
       <Value Profile="(Default)">8</Value>
     </Setting>
     <Setting Name="MMap" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
+      <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="MLock" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>

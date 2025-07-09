@@ -87,9 +87,10 @@ namespace LMStud{
 			var setVAD = false;
 			var setGoogle = false;
 			var registerTools = false;
+			var setSystemPrompt = false;
 			UpdateSetting(ref _systemPrompt, textSystemPrompt.Text, value => {
 				Settings.Default.SystemPrompt = value;
-				SetSystemPrompt();
+				setSystemPrompt = true;
 			});
 			UpdateSetting(ref _modelsPath, textModelsPath.Text, value => {
 				Settings.Default.ModelsDir = value;
@@ -233,10 +234,8 @@ namespace LMStud{
 				}
 			}
 			if(setGoogle) NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID, _googleSearchResultCount);
-			if(registerTools){
-				RegisterTools();
-				SetSystemPrompt();
-			}
+			if(registerTools) RegisterTools();
+			if(registerTools || setSystemPrompt) SetSystemPrompt();
 		}
 		private void ButBrowse_Click(object sender, EventArgs e){
 			if(folderBrowserDialog1.ShowDialog(this) == DialogResult.OK) textModelsPath.Text = folderBrowserDialog1.SelectedPath;
@@ -254,6 +253,9 @@ namespace LMStud{
 		private void ButWhispDown_Click(object sender, EventArgs e){
 			HugLoadFiles("ggerganov", "whisper.cpp", ".bin");
 			tabControl1.SelectTab(3);
+		}
+		private void LinkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e){
+			textSystemPrompt.Text = "The list directory and file tools are restricted to a base directory.\r\nUse list directory starting in the base directory before using the file tools to help with coding tasks throughout my project.\r\nAlways read files to verify changes.";
 		}
 		private void PopulateWhisperModels(){
 			if (!ModelsFolderExists(false)) return;

@@ -49,7 +49,7 @@ namespace LMStud.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("E:\\models")]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\models")]
         public string ModelsDir {
             get {
                 return ((string)(this["ModelsDir"]));
@@ -121,7 +121,7 @@ namespace LMStud.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("4096")]
+        [global::System.Configuration.DefaultSettingValueAttribute("8192")]
         public decimal CtxSize {
             get {
                 return ((decimal)(this["CtxSize"]));
@@ -205,7 +205,7 @@ namespace LMStud.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool MMap {
             get {
                 return ((bool)(this["MMap"]));

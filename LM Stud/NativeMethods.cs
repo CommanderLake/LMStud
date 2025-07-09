@@ -42,7 +42,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void RetokenizeChat(bool rebuildMemory);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void SetSystemPrompt([MarshalAs(UnmanagedType.LPUTF8Str)] string prompt);
+		public static extern void SetSystemPrompt([MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, [MarshalAs(UnmanagedType.LPUTF8Str)] string toolsPrompt);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetMessageAt(int index, [MarshalAs(UnmanagedType.LPUTF8Str)] string message);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -50,15 +50,11 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void RemoveMessagesStartingAt(int index);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern IntPtr Generate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void GenerateWithTools(IntPtr hWnd, MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetGoogle(string apiKey, string searchEngineID, int resultCount);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetFileBaseDir(string dir);
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void AddTool([MarshalAs(UnmanagedType.LPUTF8Str)] string name, [MarshalAs(UnmanagedType.LPUTF8Str)] string description, [MarshalAs(UnmanagedType.LPUTF8Str)] string parameters, ToolHandler handler);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void ClearTools();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -71,8 +67,6 @@ namespace LMStud{
 		public static extern int CreateSampler(float topP, int topK, float temp, float repeatPenalty);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float topP, int topK, float temp, float repeatPenalty);
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void DestroySession();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void ClearWebCache();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
