@@ -123,6 +123,7 @@ void RetokenizeChat(bool rebuildMemory = false){
 	in.tools = _tools;
 	in.tool_choice = COMMON_CHAT_TOOL_CHOICE_AUTO;
 	in.parallel_tool_calls = true;
+	in.reasoning_format = _session.syntax.reasoning_format;
 	auto chatData = common_chat_templates_apply(_chatTemplates.get(), in);
 	_session.syntax.format = chatData.format;
 	const int nPrompt = -llama_tokenize(_vocab, chatData.prompt.c_str(), chatData.prompt.size(), nullptr, 0, true, true);

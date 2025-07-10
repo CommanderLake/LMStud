@@ -255,7 +255,7 @@ namespace LMStud{
 			tabControl1.SelectTab(3);
 		}
 		private void LinkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e){
-			textSystemPrompt.Text = "The list directory and file tools are restricted to a base directory.\r\nUse list directory starting in the base directory before using the file tools to help with coding tasks throughout my project.\r\nAlways read files to verify changes.";
+			textSystemPrompt.Text = "The list directory and file tools operate relative to a base directory.\r\nUse list directory with an empty path before using the file tools to help with coding tasks throughout my project.\r\nAlways read files to verify changes.";
 		}
 		private void PopulateWhisperModels(){
 			if (!ModelsFolderExists(false)) return;

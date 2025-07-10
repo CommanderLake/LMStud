@@ -230,7 +230,7 @@ std::string ListFilesTool(const char* argsJson){
 		}
 	}
 	if(ec) return "{\"error\":\"io error\"}";
-	std::string json = "{\"files\":[";
+	std::string json = "{\"entries\":[";
 	for(size_t i = 0; i<files.size(); ++i){
 		json += "\"" + JsonEscape(files[i]) + "\"";
 		if(i+1<files.size()) json += ",";
@@ -318,12 +318,12 @@ std::string ReplaceLinesTool(const char* argsJson){
 	std::string line;
 	while(std::getline(in, line)){ lines.push_back(line); }
 	in.close();
-	if(start>static_cast<int>(lines.size())||end>static_cast<int>(lines.size())) return "{\"error\":\"range, check line numbers using read_file_lines\"}";
+	if(start>static_cast<int>(lines.size())||end>static_cast<int>(lines.size())) return "{\"error\":\"range, check line numbers using file_read_lines\"}";
 	std::vector<std::string> newLines;
 	std::stringstream ss(text);
 	while(std::getline(ss, line)){ newLines.push_back(line); }
-	lines.erase(lines.begin()+start+1, lines.begin()+end);
-	lines.insert(lines.begin()+start+1, newLines.begin(), newLines.end());
+	lines.erase(lines.begin()+(start-1), lines.begin()+end);
+	lines.insert(lines.begin()+(start-1), newLines.begin(), newLines.end());
 	std::ofstream out(p, std::ios::binary|std::ios::trunc);
 	if(!out.is_open()) return "{\"error\":\"open failed\"}";
 	for(size_t i = 0; i<lines.size(); ++i){ out<<lines[i]; if(i+1<lines.size()) out<<'\n'; }
@@ -348,7 +348,7 @@ std::string ApplyPatchTool(const char* argsJson){
 	std::vector<Hunk> hunks;
 	std::istringstream patchStream(patchStr);
 	Hunk cur; bool inHunk = false;
-	std::regex hunkRe("@@ -([0-9]+)(?:,([0-9]+))? \\+([0-9]+)(?:,([0-9]+))? @@");
+	std::regex hunkRe(R"(@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@.*)");
 	while(std::getline(patchStream, line)){
 		if(!line.empty() && line.back() == '\r') line.pop_back();
 		std::smatch m;
@@ -362,31 +362,41 @@ std::string ApplyPatchTool(const char* argsJson){
 		}
 	}
 	if(inHunk) hunks.push_back(cur);
+	auto trim = [](const std::string& s)->std::string {
+		const auto b = s.find_first_not_of(" \t");
+		const auto e = s.find_last_not_of(" \t");
+		if(b == std::string::npos) return {};
+		return s.substr(b, e - b + 1);
+	};
 	auto out = lines;
 	int offset = 0;
 	for(const auto& h : hunks){
 		int idx = h.startOld + offset;
 		if(idx<0 || idx>static_cast<int>(out.size())) return "{\"error\":\"range\"}";
-		int orig = idx;
 		for(const auto& pl : h.lines){
-			if(pl.empty()) continue;
+			if(pl.empty()){
+				if(idx >= static_cast<int>(out.size())) return "{\"error\":\"context\"}";
+				++idx;
+				continue;
+			}
 			char tag = pl[0];
 			std::string text = pl.substr(1);
-			if(tag == ' '){
-				if(idx >= static_cast<int>(out.size()) || out[idx] != text) return "{\"error\":\"context\"}";
-				++idx;
-			}
-			else if(tag == '-'){
-				if(idx >= static_cast<int>(out.size()) || out[idx] != text) return "{\"error\":\"context\"}";
-				out.erase(out.begin() + idx);
-				--offset;
+			if(tag == ' ' || tag == '-') {
+				if(idx >= static_cast<int>(out.size()) || trim(out[idx]) != trim(text)) return "{\"error\":\"context\"}";
+				if(tag == '-'){ out.erase(out.begin() + idx); --offset; }
+				else{ ++idx; }
 			}
 			else if(tag == '+'){
 				out.insert(out.begin() + idx, text);
 				++idx; ++offset;
+			}else{
+				if(idx >= static_cast<int>(out.size()) || trim(out[idx]) != trim(pl))
+					return "{\"error\":\"context\"}";
+				++idx;
 			}
 		}
 	}
+	if(out == lines) return "{\"error\":\"no changes\"}";
 	std::ofstream outFile(p, std::ios::binary | std::ios::trunc);
 	if(!outFile.is_open()) return "{\"error\":\"open failed\"}";
 	for(size_t i = 0; i < out.size(); ++i){ outFile << out[i]; if(i + 1 < out.size()) outFile << "\n"; }
