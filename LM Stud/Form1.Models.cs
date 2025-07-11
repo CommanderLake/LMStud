@@ -89,18 +89,18 @@ namespace LMStud{
 		private void LoadModel(int modelIndex, bool autoLoad){
 			var handle = Handle;
 			var whisperOn = checkVoiceInput.CheckState != CheckState.Unchecked;
+			var modelPath = _models[modelIndex].FilePath;
+			var fileName = Path.GetFileName(modelPath);
+			butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = false;
 			ThreadPool.QueueUserWorkItem(o => {
-				if(_llModelLoaded){
-					Invoke(new MethodInvoker(UnloadModel));
-					while(_llModelLoaded) Thread.Sleep(10);
-				}
-				var modelPath = _models[modelIndex].FilePath;
-				var fileName = Path.GetFileName(modelPath);
-				Invoke(new MethodInvoker(() => {
-					butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = false;
-					toolStripStatusLabel1.Text = "Loading: " + fileName;
-				}));
 				try{
+					if(_llModelLoaded){
+						Invoke(new MethodInvoker(UnloadModel));
+						while(_llModelLoaded) Thread.Sleep(10);
+					}
+					Invoke(new MethodInvoker(() => {
+						toolStripStatusLabel1.Text = "Loading: " + fileName;
+					}));
 					unsafe{
 						if(_generating){
 							NativeMethods.StopGeneration();
@@ -130,15 +130,14 @@ namespace LMStud{
 									Settings.Default.LoadAuto = true;
 									Settings.Default.Save();
 								}
-								toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.\r\nThe model last loaded has a maximum context size of " + _modelCtxMax);
+								toolTip1.SetToolTip(numCtxSize,
+									"Context size (max tokens). Higher values improve memory but use more RAM.\r\nThe model last loaded has a maximum context size of " + _modelCtxMax);
 								toolStripStatusLabel1.Text = "Loaded model: " + fileName;
 							}));
 						} catch(ObjectDisposedException){}
 						_llModelLoaded = true;
 					}
-				} finally{
-					Invoke(new MethodInvoker(() => {butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = true;}));
-				}
+				} finally{ Invoke(new MethodInvoker(() => {butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = true;})); }
 			});
 		}
 		private void UnloadModel(){

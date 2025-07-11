@@ -229,7 +229,7 @@ std::string ListFilesTool(const char* argsJson){
 			files.push_back(relative(entry.path(), _baseFolder, ec).generic_string());
 		}
 	}
-	if(ec) return "{\"error\":\"io error\"}";
+	if(ec) return "{\"error\":\"io error, list the directory first\"}";
 	std::string json = "{\"entries\":[";
 	for(size_t i = 0; i<files.size(); ++i){
 		json += "\"" + JsonEscape(files[i]) + "\"";
@@ -362,36 +362,44 @@ std::string ApplyPatchTool(const char* argsJson){
 		}
 	}
 	if(inHunk) hunks.push_back(cur);
-	auto trim = [](const std::string& s)->std::string {
+	auto trim = [](const std::string& s)->std::string{
 		const auto b = s.find_first_not_of(" \t");
 		const auto e = s.find_last_not_of(" \t");
 		if(b == std::string::npos) return {};
 		return s.substr(b, e - b + 1);
 	};
+	auto shorten = [](std::string s){
+		if(s.size()>40) s = s.substr(0, 37)+"...";
+		return s;
+	};
+	auto makeError = [](const std::string& msg)->std::string{
+		return "{\"error\":\"" + JsonEscape(msg) + "\"}";
+	};
 	auto out = lines;
 	int offset = 0;
 	for(const auto& h : hunks){
 		int idx = h.startOld + offset;
-		if(idx<0 || idx>static_cast<int>(out.size())) return "{\"error\":\"range\"}";
+		if(idx<0 || idx>static_cast<int>(out.size())) return makeError("range");
 		for(const auto& pl : h.lines){
 			if(pl.empty()){
-				if(idx >= static_cast<int>(out.size())) return "{\"error\":\"context\"}";
+				if(idx >= static_cast<int>(out.size())) return makeError("context end-of-file at line " + std::to_string(idx+1));
 				++idx;
 				continue;
 			}
 			char tag = pl[0];
 			std::string text = pl.substr(1);
-			if(tag == ' ' || tag == '-') {
-				if(idx >= static_cast<int>(out.size()) || trim(out[idx]) != trim(text)) return "{\"error\":\"context\"}";
-				if(tag == '-'){ out.erase(out.begin() + idx); --offset; }
-				else{ ++idx; }
-			}
-			else if(tag == '+'){
+			if(tag == ' ' || tag == '-'){
+				if(idx >= static_cast<int>(out.size())) return makeError("context end-of-file at line " + std::to_string(idx+1));
+				if(trim(out[idx]) != trim(text))
+					return makeError("context mismatch at line " + std::to_string(idx+1) + ", file='" + shorten(trim(out[idx])) + "', patch='" + shorten(trim(text)) + "'");
+				if(tag == '-'){ out.erase(out.begin() + idx); --offset; } else{ ++idx; }
+			} else if(tag == '+'){
 				out.insert(out.begin() + idx, text);
 				++idx; ++offset;
-			}else{
-				if(idx >= static_cast<int>(out.size()) || trim(out[idx]) != trim(pl))
-					return "{\"error\":\"context\"}";
+			} else{
+				if(idx >= static_cast<int>(out.size())) return makeError("context end-of-file at line " + std::to_string(idx+1));
+				if(trim(out[idx]) != trim(pl))
+					return makeError("context mismatch at line " + std::to_string(idx+1) + ", file='" + shorten(trim(out[idx])) + "', patch='" + shorten(trim(pl)) + "'");
 				++idx;
 			}
 		}
