@@ -1,13 +1,40 @@
-#include "stud.h"
+﻿#include "stud.h"
 #include "hug.h"
 #include <filesystem>
 #include <chrono>
-#include <deque>
 #include <regex>
 #include <unordered_map>
 #include <minja\minja.hpp>
 #include <minja\chat-template.hpp>
 using HrClock = std::chrono::high_resolution_clock;
+enum class ToolIoStyle{ CHATML, DEEPSEEK, GRANITE, LLAMA3_JSON };
+static ToolIoStyle gToolStyle = ToolIoStyle::CHATML;
+static bool IsOpenToolResp(std::string_view tok){
+	switch(gToolStyle){
+		case ToolIoStyle::DEEPSEEK: return tok == "<｜tool▁outputs▁begin｜>";
+		case ToolIoStyle::GRANITE: return tok == "<|start_of_role|>tool_response<|end_of_role|>";
+		case ToolIoStyle::LLAMA3_JSON: return tok == "<|start_header_id|>ipython<|end_header_id|>";
+		default: return tok == "<tool_response>";
+	}
+}
+static std::string CloseToolResponseTag(){
+	switch(gToolStyle){
+		case ToolIoStyle::DEEPSEEK: return "<｜tool▁outputs▁end｜>";
+		case ToolIoStyle::GRANITE: return "<|end_of_text|>";
+		case ToolIoStyle::LLAMA3_JSON: return "<|eot_id|>";
+		default: return "</tool_response>";
+	}
+}
+static bool IsOpenToolCall(std::string_view tok){
+	auto lower = std::string(tok);
+	std::transform(lower.begin(), lower.end(), lower.begin(), tolower);
+	return lower.find("tool_call") != std::string::npos || lower == "[tool_calls]" || lower == "<functioncall>" || lower == "<tool_use>";
+}
+static bool IsCloseToolCall(std::string_view tok){
+	auto lower = std::string(tok);
+	std::transform(lower.begin(), lower.end(), lower.begin(), tolower);
+	return lower == "</tool_call>" || lower == "[/tool_calls]";
+}
 void SetHWnd(HWND hWnd){ _hWnd = hWnd; }
 void BackendInit(){
 	_putenv("OMP_PROC_BIND=close");
@@ -95,10 +122,14 @@ int LoadModel(const char* filename, const int nGPULayers, const bool mMap, const
 	_chatTemplates = common_chat_templates_init(_llModel, "");
 	const auto bosStr = llama_vocab_get_text(_vocab, llama_vocab_bos(_vocab));
 	const auto eosStr = llama_vocab_get_text(_vocab, llama_vocab_eos(_vocab));
-	const char* tmplSrc = llama_model_chat_template(_llModel, nullptr);
-	if(tmplSrc){
+	const std::string tmplSrc = llama_model_chat_template(_llModel, nullptr);
+	if(!tmplSrc.empty()){
 		const minja::chat_template tmpl(std::string(tmplSrc), bosStr, eosStr);
 		_hasTools = tmpl.original_caps().supports_tools;
+		if(tmplSrc.find("deepseek") != std::string::npos) gToolStyle = ToolIoStyle::DEEPSEEK;
+		else if(tmplSrc.find("granite") != std::string::npos) gToolStyle = ToolIoStyle::GRANITE;
+		else if(tmplSrc.find("llama3") != std::string::npos && tmplSrc.find("_json") != std::string::npos) gToolStyle = ToolIoStyle::LLAMA3_JSON;
+		else gToolStyle = ToolIoStyle::CHATML;
 	}
 	return 0;
 }
@@ -215,6 +246,8 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const unsi
 	std::string response;
 	common_chat_msg msg;
 	_session.syntax.parse_tool_calls = false;
+	static std::string gPendingJson;
+	static bool gInsideCall = false;
 	double ftTime = 0.0;
 	int i = 0;
 	while(i < nPredict && !_stop.load()){
@@ -249,7 +282,30 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const unsi
 			return msg;
 		}
 		llama_sampler_accept(_session.smpl, newTokenId);
-		if(tokenStr == std::string("<tool_response>")) break;
+		if(!_hasTools) continue;
+		if(IsOpenToolCall(tokenStr)){
+			gInsideCall = true;
+			gPendingJson.clear();
+			continue;
+		}
+		if(gInsideCall){
+			if(IsCloseToolCall(tokenStr) || IsOpenToolResp(tokenStr)){
+				gInsideCall = false;
+			} else{
+				gPendingJson += tokenStr;
+			}
+		}
+		if(IsOpenToolResp(tokenStr)){
+			auto toolMsg = common_chat_parse(gPendingJson, true, _session.syntax);
+			if(toolMsg.tool_calls.size() > 0){
+				auto tool = toolMsg.tool_calls.back();
+				auto it = _toolHandlers.find(tool.name);
+				if(it != _toolHandlers.end()){
+					auto toolResponse = it->second(tool.arguments.c_str());
+				}
+			}
+			gPendingJson.clear();
+		}
 	}
 	msg = common_chat_parse(response, false, _session.syntax);
 	_session.chatMsgs.push_back(msg);
