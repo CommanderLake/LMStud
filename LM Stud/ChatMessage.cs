@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -10,24 +9,23 @@ namespace LMStud{
 		Tool
 	}
 	internal partial class ChatMessage : UserControl{
-		private readonly StringBuilder _msgBuilder = new StringBuilder();
 		internal readonly MessageRole Role;
 		private bool _markdown;
 		private string _message;
-		private string _think;
+		private string _think = "";
 		private bool _generating;
 		private bool _editing;
+		internal int TTSPosition = 0;
 		internal ChatMessage(MessageRole role, string message, bool markdown){
 			Role = role;
 			_markdown = markdown;
 			InitializeComponent();
 			richTextMsg.ContentsResized += RichTextMsgOnContentsResized;
 			label1.Text = role.ToString();
-			_msgBuilder.Append(message);
-			_message = _msgBuilder.ToString();
+			_message = message;
 		}
 		private void ChatMessage_Load(object sender, EventArgs e) {
-			if(_msgBuilder.Length > 0) AppendText("", true);
+			if(_message.Length > 0) UpdateText("", _message, true);
 		}
 		internal void SetRoleText(string role){label1.Text = role;}
 		private void RichTextMsgOnContentsResized(object sender, ContentsResizedEventArgs e){
@@ -52,7 +50,6 @@ namespace LMStud{
 			get => _think;
 			set{
 				_think = value;
-				RebuildMsgBuilder();
 				RenderText();
 			}
 		}
@@ -60,11 +57,9 @@ namespace LMStud{
 			get => _message;
 			set{
 				_message = value;
-				RebuildMsgBuilder();
 				RenderText();
 			}
 		}
-		internal string Content => _msgBuilder.ToString();
 		internal bool Editing{
 			get => _editing;
 			set{
@@ -94,19 +89,25 @@ namespace LMStud{
 				checkThink.Enabled = !value;
 			}
 		}
-		internal void AppendText(string text, bool render){
-			if(text.Length > 0){
-				_msgBuilder.Append(text);
-				_message = _msgBuilder.ToString();
-			}
+		internal void UpdateText(string think, string message, bool render){
+			var thinking = think.Length != _think.Length;
+			if(message.Length != _message.Length) thinking = false;
+			_think = think;
+			_message = message;
 			if(Role == MessageRole.User){
 				if(render) RenderText();
 			} else{
-				var thinking = ExtractThink(ref _message, out _think);
 				if(!string.IsNullOrEmpty(_think) && checkThink.Visible == false) checkThink.Visible = true;
-				if(thinking && !checkThink.Checked) checkThink.Checked = true;
-				else if(!thinking && checkThink.Checked) checkThink.Checked = false;
-				else if(render) RenderText();
+				switch(thinking){
+					case true when !checkThink.Checked: checkThink.Checked = true;
+						break;
+					case false when checkThink.Checked: checkThink.Checked = false;
+						break;
+					default:{
+						if(render) RenderText();
+						break;
+					}
+				}
 			}
 		}
 		private void CheckThink_CheckedChanged(object sender, EventArgs e){RenderText();}
@@ -124,51 +125,6 @@ namespace LMStud{
 				if(_markdown) richTextMsg.Rtf = MarkdownToRtf(_message);
 				else richTextMsg.Text = _message;
 			}
-		}
-		private static bool ExtractThink(ref string message, out string think){
-			var inCodeBlock = false;
-			var capturingThink = false;
-			var mainBuilder = new StringBuilder();
-			var thinkBuilder = new StringBuilder();
-			var lines = message.Replace("\r\n", "\n").Split('\n');
-			foreach(var line in lines){
-				var trimmed = line.Trim();
-				if(trimmed.StartsWith("```")){
-					inCodeBlock = !inCodeBlock;
-					if(!capturingThink){
-						if(mainBuilder.Length > 0) mainBuilder.AppendLine();
-						mainBuilder.Append(line);
-					}
-					continue;
-				}
-				if(!inCodeBlock && !capturingThink && trimmed.Equals("<think>", StringComparison.OrdinalIgnoreCase)){
-					capturingThink = true;
-					continue;
-				}
-				if(capturingThink && trimmed.Equals("</think>", StringComparison.OrdinalIgnoreCase)){
-					capturingThink = false;
-					continue;
-				}
-				if(capturingThink){
-					if(thinkBuilder.Length > 0) thinkBuilder.AppendLine();
-					thinkBuilder.Append(line);
-				} else{
-					if(mainBuilder.Length > 0) mainBuilder.AppendLine();
-					mainBuilder.Append(line);
-				}
-			}
-			think = thinkBuilder.ToString();
-			message = mainBuilder.ToString();
-			return capturingThink;
-		}
-		private void RebuildMsgBuilder(){
-			_msgBuilder.Clear();
-			if(Role == MessageRole.Assistant && !string.IsNullOrEmpty(_think)){
-				_msgBuilder.AppendLine("<think>");
-				_msgBuilder.AppendLine(_think);
-				_msgBuilder.AppendLine("</think>");
-			}
-			if(!string.IsNullOrEmpty(_message)) _msgBuilder.Append(_message);
 		}
 	}
 }

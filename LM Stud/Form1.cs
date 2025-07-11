@@ -176,7 +176,7 @@ namespace LMStud{
 				if(--idx < 0)
 					return;
 			var role = _chatMessages[idx].Role;
-			var msg = _chatMessages[idx].Content;
+			var msg = _chatMessages[idx].Message;
 			for(var i = _chatMessages.Count - 1; i >= idx; i--){
 				_chatMessages[i].Dispose();
 				_chatMessages.RemoveAt(i);
@@ -199,7 +199,7 @@ namespace LMStud{
 			if(_generating || !cm.Editing) return;
 			if(cm.checkThink.Checked) cm.Think = cm.richTextMsg.Text;
 			else cm.Message = cm.richTextMsg.Text;
-			NativeMethods.SetMessageAt(_chatMessages.IndexOf(cm), cm.Content);
+			NativeMethods.SetMessageAt(_chatMessages.IndexOf(cm), cm.Think, cm.Message);
 			cm.Editing = false;
 			cm.Markdown = checkMarkdown.Checked;
 		}
@@ -273,14 +273,17 @@ namespace LMStud{
 					return i;
 			return -1;
 		}
-		private static unsafe void TokenCallback(byte* strPtr, int strLen, int tokenCount, int tokensTotal, double ftTime, int tool){
+		private static unsafe void TokenCallback(byte* thinkPtr, int thinkLen, byte* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool){
 			var elapsed = _this._swRate.Elapsed.TotalSeconds;
 			if(elapsed >= 1.0) _this._swRate.Restart();
-			var tokenStr = Encoding.UTF8.GetString(strPtr, strLen);
+			var think = "";
+			if(thinkLen > 0) think = Encoding.UTF8.GetString(thinkPtr, thinkLen);
+			var message = "";
+			if(messageLen > 0) message = Encoding.UTF8.GetString(messagePtr, messageLen);
 			if(tool == 1){
 				try{
 					_this.Invoke(new MethodInvoker(() => {
-						var cm = _this.AddMessage(MessageRole.Tool, tokenStr);
+						var cm = _this.AddMessage(MessageRole.Tool, message);
 						cm.SetRoleText("Tool");
 						_this._cntAssMsg = null;
 						_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
@@ -307,14 +310,18 @@ namespace LMStud{
 						}
 						if(_this._cntAssMsg == null) _this._cntAssMsg = _this.AddMessage(MessageRole.Assistant, "");
 						var lastThink = _this._cntAssMsg.checkThink.Checked;
-						_this._cntAssMsg.AppendText(tokenStr, renderToken);
-						if(_this._speak && !_this._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(tokenStr)){
-							foreach(var ch in tokenStr.Where(ch => ch != '`' && ch != '*' && ch != '_' && ch != '#')) _this._speechBuffer.Append(ch);
-							int idx;
-							while((idx = FindSentenceEnd(_this._speechBuffer)) >= 0){
-								var sentence = _this._speechBuffer.ToString(0, idx + 1).Trim();
+						_this._cntAssMsg.UpdateText(think, message, renderToken);
+						if(_this._speak && !_this._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(message)){
+							var i = _this._cntAssMsg.TTSPosition;
+							for(; i < _this._cntAssMsg.Message.Length; i++){
+								var ch = _this._cntAssMsg.Message[i];
+								if(ch != '`' && ch != '*' && ch != '_' && ch != '#') _this._speechBuffer.Append(ch);
+							}
+							_this._cntAssMsg.TTSPosition = i;
+							while((i = FindSentenceEnd(_this._speechBuffer)) >= 0){
+								var sentence = _this._speechBuffer.ToString(0, i + 1).Trim();
 								if(!string.IsNullOrWhiteSpace(sentence)) _this._tts.SpeakAsync(sentence);
-								_this._speechBuffer.Remove(0, idx + 1);
+								_this._speechBuffer.Remove(0, i + 1);
 								while(_this._speechBuffer.Length > 0 && char.IsWhiteSpace(_this._speechBuffer[0])) _this._speechBuffer.Remove(0, 1);
 							}
 						}

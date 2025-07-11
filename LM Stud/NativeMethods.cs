@@ -5,7 +5,7 @@ namespace LMStud{
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate int ProgressCallback(long totalBytes, long downloadedBytes);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-		public unsafe delegate void TokenCallback(byte* strPtr, int strLen, int tokenCount, int tokensTotal, double ftTime, int tool);
+		public unsafe delegate void TokenCallback(byte* thinkPtr, int thinkLen, byte* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate IntPtr ToolHandler([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -44,7 +44,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetSystemPrompt([MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, [MarshalAs(UnmanagedType.LPUTF8Str)] string toolsPrompt);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void SetMessageAt(int index, [MarshalAs(UnmanagedType.LPUTF8Str)] string message);
+		public static extern void SetMessageAt(int index, [MarshalAs(UnmanagedType.LPUTF8Str)] string think, [MarshalAs(UnmanagedType.LPUTF8Str)] string message);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void RemoveMessageAt(int index);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
