@@ -229,7 +229,7 @@ std::string ListFilesTool(const char* argsJson){
 			files.push_back(relative(entry.path(), _baseFolder, ec).generic_string());
 		}
 	}
-	if(ec) return "{\"error\":\"io error, list the directory first\"}";
+	if(ec) return "{\"error\":\"not found\"}";
 	std::string json = "{\"entries\":[";
 	for(size_t i = 0; i<files.size(); ++i){
 		json += "\"" + JsonEscape(files[i]) + "\"";

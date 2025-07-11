@@ -87,7 +87,6 @@ namespace LMStud{
 		}
 		private void SetSystemPrompt(){NativeMethods.SetSystemPrompt(_systemPrompt.Length > 0 ? _systemPrompt : DefaultPrompt, DateTimePrompt + (_googleSearchEnable && _webpageFetchEnable ? FetchPrompt : ""));}
 		private void LoadModel(int modelIndex, bool autoLoad){
-			var handle = Handle;
 			var whisperOn = checkVoiceInput.CheckState != CheckState.Unchecked;
 			var modelPath = _models[modelIndex].FilePath;
 			var fileName = Path.GetFileName(modelPath);
@@ -107,7 +106,7 @@ namespace LMStud{
 							while(_generating) Thread.Sleep(10);
 						}
 						if(whisperOn) NativeMethods.StopSpeechTranscription();
-						var result = NativeMethods.LoadModel(handle, modelPath, _gpuLayers, _mMap, _mLock, _numaStrat);
+						var result = NativeMethods.LoadModel(modelPath, _gpuLayers, _mMap, _mLock, _numaStrat);
 						if(result < 0){
 							Settings.Default.LoadAuto = false;
 							Settings.Default.Save();

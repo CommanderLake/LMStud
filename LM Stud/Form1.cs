@@ -64,6 +64,7 @@ namespace LMStud{
 			toolTip1.SetToolTip(linkFileInstruction, "Set an instruction to optimize the way the assistant uses the file tools.");
 		}
 		private void Form1_Load(object sender, EventArgs e){
+			NativeMethods.SetHWnd(Handle);
 			NativeMethods.CurlGlobalInit();
 			PopulateModels();
 			PopulateWhisperModels();
@@ -236,13 +237,12 @@ namespace LMStud{
 			foreach(var message in _chatMessages) message.Generating = true;
 			_tts.SpeakAsyncCancelAll();
 			_first = true;
-			var hWnd = Handle;
 			ThreadPool.QueueUserWorkItem(o => {
 				_msgTokenCount = 0;
 				_genTokenTotal = 0;
 				_swTot.Restart();
 				_swRate.Restart();
-				NativeMethods.GenerateWithTools(hWnd, role, newMsg, _nGen, checkStream.Checked);
+				NativeMethods.GenerateWithTools(role, newMsg, _nGen, checkStream.Checked);
 				_swTot.Stop();
 				_swRate.Stop();
 				if(_speechBuffer.Length > 0){

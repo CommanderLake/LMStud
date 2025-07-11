@@ -90,23 +90,20 @@ namespace LMStud{
 			}
 		}
 		internal void UpdateText(string think, string message, bool render){
-			var thinking = think.Length != _think.Length;
-			if(message.Length != _message.Length) thinking = false;
 			_think = think;
 			_message = message;
 			if(Role == MessageRole.User){
 				if(render) RenderText();
 			} else{
 				if(!string.IsNullOrEmpty(_think) && checkThink.Visible == false) checkThink.Visible = true;
-				switch(thinking){
-					case true when !checkThink.Checked: checkThink.Checked = true;
-						break;
-					case false when checkThink.Checked: checkThink.Checked = false;
-						break;
-					default:{
-						if(render) RenderText();
-						break;
-					}
+				if(!string.IsNullOrEmpty(_think) && string.IsNullOrEmpty(_message) && !checkThink.Checked){
+					checkThink.Checked = true;
+				}
+				else if(!string.IsNullOrEmpty(_message) && checkThink.Checked){
+					checkThink.Checked = false;
+				}
+				else{
+					if(render) RenderText();
 				}
 			}
 		}

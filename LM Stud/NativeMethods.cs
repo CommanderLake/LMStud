@@ -28,9 +28,11 @@ namespace LMStud{
 		internal const int WmKillfocus = 0x0008;
 		internal const int WmLbuttondown = 0x0201;
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void SetHWnd(IntPtr hWnd);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void BackendInit();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern int LoadModel(IntPtr hWnd, string filename, int nGPULayers, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy);
+		public static extern int LoadModel(string filename, int nGPULayers, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void FreeModel();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -50,7 +52,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void RemoveMessagesStartingAt(int index);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void GenerateWithTools(IntPtr hWnd, MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
+		public static extern void GenerateWithTools(MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetGoogle(string apiKey, string searchEngineID, int resultCount);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
