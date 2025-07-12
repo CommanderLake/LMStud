@@ -209,7 +209,7 @@ std::string GetLongDateTime(const char* argsJson){
 	std::strftime(buffer, sizeof buffer, "%A, %d %B %Y, %H:%M:%S", localTime);
 	return std::string(buffer);
 }
-std::string ListFilesTool(const char* argsJson){
+std::string ListDirectoryTool(const char* argsJson){
 	std::string path = GetJsonValue(argsJson, "path");
 	const std::string recStr = GetJsonValue(argsJson, "recursive");
 	const bool recursive = recStr=="true"||recStr=="1";
@@ -229,7 +229,7 @@ std::string ListFilesTool(const char* argsJson){
 			files.push_back(relative(entry.path(), _baseFolder, ec).generic_string());
 		}
 	}
-	if(ec) return "{\"error\":\"not found\"}";
+	if(ec) return "{\"error\":\"folder not found, maybe its a file\"}";
 	std::string json = "{\"entries\":[";
 	for(size_t i = 0; i<files.size(); ++i){
 		json += "\"" + JsonEscape(files[i]) + "\"";
@@ -309,10 +309,11 @@ std::string ReplaceLinesTool(const char* argsJson){
 	int start = -1, end = -1;
 	if(!startStr.empty()) std::from_chars(startStr.data(), startStr.data()+startStr.size(), start);
 	if(!endStr.empty()) std::from_chars(endStr.data(), endStr.data()+endStr.size(), end);
-	if(start<1||end<start) return "{\"error\":\"range, check line numbers using read_file_lines\"}";
+	else end = start;
+	if(start<1||end<start) return "{\"error\":\"range, check line numbers using file_read_lines\"}";
 	std::filesystem::path p = _baseFolder / path;
 	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
-	std::ifstream in(p, std::ios::binary);
+	std::ifstream in(p);
 	if(!in.is_open()) return "{\"error\":\"open failed\"}";
 	std::vector<std::string> lines;
 	std::string line;
@@ -335,7 +336,7 @@ std::string ApplyPatchTool(const char* argsJson){
 	if(path.empty() || patchStr.empty()) return "{\"error\":\"args\"}";
 	std::filesystem::path p = _baseFolder / path;
 	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
-	std::ifstream in(p, std::ios::binary);
+	std::ifstream in(p);
 	if(!in.is_open()) return "{\"error\":\"open failed\"}";
 	std::vector<std::string> lines;
 	std::string line;
@@ -420,7 +421,7 @@ void RegisterTools(const bool googleSearch, const bool webpageFetch, const bool 
 		//AddTool("list_tags", "List the tags of a previously fetched webpage.", "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", ListWebTags);
 	}
 	if(fileList){
-		AddTool("list_directory", "List files in path, path is relative to a base folder", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"recursive\":{\"type\":\"boolean\"}}}", ListFilesTool);
+		AddTool("list_directory", "List files in path, path is relative to a base folder", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"recursive\":{\"type\":\"boolean\"}}}", ListDirectoryTool);
 	}
 	if(fileCreate){
 		AddTool("file_create", "Create a new file and fill it with text", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"text\":{\"type\":\"string\"},\"overwrite\":{\"type\":\"boolean\"}},\"required\":[\"path\",\"text\"]}", CreateFileTool);
@@ -429,7 +430,7 @@ void RegisterTools(const bool googleSearch, const bool webpageFetch, const bool 
 		AddTool("file_read_lines", "Display range of lines from a text file in a code block with line numbers", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"}},\"required\":[\"path\"]}", ReadFileTool);
 	}
 	if(fileWrite){
-		//AddTool("file_replace_lines", "Replace range of lines in a text file (1 based)", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"},\"text\":{\"type\":\"string\"}},\"required\":[\"path\",\"start\",\"end\",\"text\"]}", ReplaceLinesTool);
+		AddTool("file_replace_lines", "Replace range of lines in a text file (1 based)", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"},\"text\":{\"type\":\"string\"}},\"required\":[\"path\",\"start\",\"end\",\"text\"]}", ReplaceLinesTool);
 		AddTool("file_apply_diff_patch", "Apply unified diff patch to a file", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"patch\":{\"type\":\"string\"}},\"required\":[\"path\",\"patch\"]}", ApplyPatchTool);
 	}
 }

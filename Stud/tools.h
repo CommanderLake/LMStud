@@ -22,7 +22,7 @@ extern "C" {
 	EXPORT void ClearWebCache();
 	EXPORT std::string GetLongDateTime(const char* argsJson);
 	EXPORT void SetFileBaseDir(const char* dir);
-	EXPORT std::string ListFilesTool(const char* argsJson);
+	EXPORT std::string ListDirectoryTool(const char* argsJson);
 	EXPORT std::string ReadFileTool(const char* argsJson);
 	EXPORT std::string CreateFileTool(const char* argsJson);
 	EXPORT std::string ReplaceLinesTool(const char* argsJson);

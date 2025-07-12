@@ -29,6 +29,13 @@ struct ChatSession{
 	bool useJinja = true;
 	int nBatch = 1;
 };
+struct ToolCtx{
+	bool inThink = false;
+	bool inCall = false;
+	std::string buf;
+};
+enum class ToolIoStyle{ CHATML, DEEPSEEK, GRANITE, LLAMA3_JSON };
+inline ToolIoStyle _toolStyle = ToolIoStyle::CHATML;
 inline HWND _hWnd;
 inline llama_model* _llModel = nullptr;
 inline const llama_vocab* _vocab = nullptr;

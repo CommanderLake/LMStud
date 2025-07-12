@@ -7,34 +7,6 @@
 #include <minja\minja.hpp>
 #include <minja\chat-template.hpp>
 using HrClock = std::chrono::high_resolution_clock;
-enum class ToolIoStyle{ CHATML, DEEPSEEK, GRANITE, LLAMA3_JSON };
-static ToolIoStyle gToolStyle = ToolIoStyle::CHATML;
-static bool IsOpenToolResp(std::string_view tok){
-	switch(gToolStyle){
-		case ToolIoStyle::DEEPSEEK: return tok == "<｜tool▁outputs▁begin｜>";
-		case ToolIoStyle::GRANITE: return tok == "<|start_of_role|>tool_response<|end_of_role|>";
-		case ToolIoStyle::LLAMA3_JSON: return tok == "<|start_header_id|>ipython<|end_header_id|>";
-		default: return tok == "<tool_response>";
-	}
-}
-static std::string CloseToolResponseTag(){
-	switch(gToolStyle){
-		case ToolIoStyle::DEEPSEEK: return "<｜tool▁outputs▁end｜>";
-		case ToolIoStyle::GRANITE: return "<|end_of_text|>";
-		case ToolIoStyle::LLAMA3_JSON: return "<|eot_id|>";
-		default: return "</tool_response>";
-	}
-}
-static bool IsOpenToolCall(std::string_view tok){
-	auto lower = std::string(tok);
-	std::transform(lower.begin(), lower.end(), lower.begin(), tolower);
-	return lower.find("tool_call") != std::string::npos || lower == "[tool_calls]" || lower == "<functioncall>" || lower == "<tool_use>";
-}
-static bool IsCloseToolCall(std::string_view tok){
-	auto lower = std::string(tok);
-	std::transform(lower.begin(), lower.end(), lower.begin(), tolower);
-	return lower == "</tool_call>" || lower == "[/tool_calls]";
-}
 void SetHWnd(HWND hWnd){ _hWnd = hWnd; }
 void BackendInit(){
 	_putenv("OMP_PROC_BIND=close");
@@ -126,10 +98,10 @@ int LoadModel(const char* filename, const int nGPULayers, const bool mMap, const
 	if(!tmplSrc.empty()){
 		const minja::chat_template tmpl(std::string(tmplSrc), bosStr, eosStr);
 		_hasTools = tmpl.original_caps().supports_tools;
-		if(tmplSrc.find("deepseek") != std::string::npos) gToolStyle = ToolIoStyle::DEEPSEEK;
-		else if(tmplSrc.find("granite") != std::string::npos) gToolStyle = ToolIoStyle::GRANITE;
-		else if(tmplSrc.find("llama3") != std::string::npos && tmplSrc.find("_json") != std::string::npos) gToolStyle = ToolIoStyle::LLAMA3_JSON;
-		else gToolStyle = ToolIoStyle::CHATML;
+		if(tmplSrc.find("deepseek") != std::string::npos) _toolStyle = ToolIoStyle::DEEPSEEK;
+		else if(tmplSrc.find("granite") != std::string::npos) _toolStyle = ToolIoStyle::GRANITE;
+		else if(tmplSrc.find("_json") != std::string::npos) _toolStyle = ToolIoStyle::LLAMA3_JSON;
+		else _toolStyle = ToolIoStyle::CHATML;
 	}
 	return 0;
 }
@@ -148,6 +120,7 @@ void RetokenizeChat(bool rebuildMemory = false){
 	if(_hasTools && !_session.toolsPrompt.empty()) prompt += _session.toolsPrompt;
 	msgs.push_back({"system", prompt});
 	msgs.insert(msgs.end(), _session.chatMsgs.begin(), _session.chatMsgs.end());
+	for(auto& msg : msgs) if(msg.content.empty()) msg.content = " ";
 	common_chat_templates_inputs in;
 	in.use_jinja = _session.useJinja;
 	in.messages = msgs;
@@ -179,7 +152,6 @@ void RetokenizeChat(bool rebuildMemory = false){
 		for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl, promptTokens[i + j]); }
 	}
 	_session.cachedTokens = std::move(promptTokens);
-	//OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
 }
 void ResetChat(){
 	_session.chatMsgs.clear();
@@ -207,12 +179,122 @@ void RemoveMessagesStartingAt(int index){
 	_session.chatMsgs.erase(_session.chatMsgs.begin() + index, _session.chatMsgs.end());
 	RetokenizeChat();
 }
+static std::string OpenToolResponseTag(){
+	switch(_toolStyle){
+	case ToolIoStyle::DEEPSEEK: return "<｜tool▁outputs▁begin｜>";
+	case ToolIoStyle::GRANITE: return "<|start_of_role|>tool_response<|end_of_role|>";
+	case ToolIoStyle::LLAMA3_JSON: return "<|start_header_id|>ipython<|end_header_id|>";
+	default: return "<tool_response>";
+	}
+}
+static std::string CloseToolResponseTag(){
+	switch(_toolStyle){
+	case ToolIoStyle::DEEPSEEK: return "<｜tool▁outputs▁end｜>";
+	case ToolIoStyle::GRANITE: return "<|end_of_text|>";
+	case ToolIoStyle::LLAMA3_JSON: return "<|eot_id|>";
+	default: return "</tool_response>";
+	}
+}
+static std::string OpenToolCallTag(){
+	switch(_toolStyle){
+	case ToolIoStyle::GRANITE: return "<|tool_call|>";
+	default: return "<tool_call>";
+	}
+}
+static std::string CloseToolCallTag(){
+	switch(_toolStyle){
+	case ToolIoStyle::GRANITE: return "";
+	default: return "</tool_call>";
+	}
+}
+static std::string OpenThinkTag(){
+	switch(_toolStyle){
+	case ToolIoStyle::DEEPSEEK: return "<｜assistant▁thoughts▁begin｜>";
+	case ToolIoStyle::GRANITE: return "<|start_of_role|>assistant_thought<|end_of_role|>";
+	case ToolIoStyle::LLAMA3_JSON: return "<|start_header_id|>analysis<|end_header_id|>";
+	default: return "<assistant_thoughts>";
+	}
+}
+static std::string CloseThinkTag(){
+	switch(_toolStyle){
+	case ToolIoStyle::DEEPSEEK: return "<｜assistant▁thoughts▁end｜>";
+	case ToolIoStyle::GRANITE: return "<|start_of_role|>assistant_response<|end_of_role|>";
+	case ToolIoStyle::LLAMA3_JSON: return "<|eot_id|>";
+	default: return "</assistant_thoughts>";
+	}
+}
+static bool IsOpenToolResp(std::string_view s){ return s == OpenToolResponseTag(); }
+static bool IsOpenToolCall(std::string_view s){ return s == OpenToolCallTag(); }
+static bool IsCloseToolCall(std::string_view s){
+	const auto t = CloseToolCallTag();
+	return !t.empty() && s == t;
+}
+static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft, const HrClock::time_point& t0, llama_memory_t mem) {
+	if(tok == OpenThinkTag()){
+		s.inThink = true;
+		return true;
+	}
+	if(tok == CloseThinkTag()){
+		s.inThink = false;
+		return true;
+	}
+	if(!_hasTools || !s.inThink) return false;
+	if(tok == OpenToolCallTag()){
+		s.inCall = true;
+		s.buf.clear();
+		return true;
+	}
+	if(s.inCall){
+		if((!CloseToolCallTag().empty() && tok == CloseToolCallTag()) || tok == OpenToolResponseTag()) s.inCall = false;
+		else{
+			s.buf += tok;
+			return true;
+		}
+	}
+	if(tok != OpenToolResponseTag()) return false;
+	auto p = common_chat_parse(s.buf, true, _session.syntax);
+	if(p.tool_calls.empty()){
+		s.buf.clear();
+		return true;
+	}
+	auto& c = p.tool_calls.back();
+	if(auto h = _toolHandlers.find(c.name); h != _toolHandlers.end()){
+		std::string out = h->second(c.arguments.c_str());
+		if(!out.empty()){
+			if(_tokenCb && cbOn){
+				if(!ft) ft = std::chrono::duration<double>(HrClock::now() - t0).count();
+				_tokenCb("", 0, out.c_str(), (int)out.size(), 1, llama_memory_seq_pos_max(mem, 0), ft, 0);
+			}
+			int n = -llama_tokenize(_vocab, out.c_str(), out.size(), nullptr, 0, true, true);
+			std::vector<llama_token> v(n);
+			llama_tokenize(_vocab, out.c_str(), out.size(), v.data(), n, true, true);
+			for(size_t i = 0; i < v.size();){
+				int b = std::min<int>(_session.nBatch, v.size() - i);
+				llama_batch lb = llama_batch_get_one(&v[i], b);
+				llama_decode(_session.ctx, lb);
+				for(int k = 0; k < b; ++k) llama_sampler_accept(_session.smpl, v[i + k]);
+				i += b;
+			}
+		}
+		std::string close = CloseToolResponseTag();
+		if(!close.empty()){
+			int m = -llama_tokenize(_vocab, close.c_str(), close.size(), nullptr, 0, true, true);
+			std::vector<llama_token> v2(m);
+			llama_tokenize(_vocab, close.c_str(), close.size(), v2.data(), m, true, true);
+			llama_batch lb = llama_batch_get_one(v2.data(), m);
+			llama_decode(_session.ctx, lb);
+			for(auto t : v2) llama_sampler_accept(_session.smpl, t);
+		}
+	}
+	s.buf.clear();
+	return true;
+}
 common_chat_msg Generate(const std::vector<common_chat_msg> messages, const unsigned int nPredict, const bool callback){
 	const auto prepStart = HrClock::now();
 	_stop.store(false);
 	const TokenCallbackFn cb = _tokenCb;
 	const auto llMem = llama_get_memory(_session.ctx);
-	for(auto message : messages){
+	for(auto& message : messages){
 		const auto formatted = common_chat_format_single(_chatTemplates.get(), _session.chatMsgs, message, !message.role._Equal("assistant"), _session.useJinja && message.role._Equal("assistant"));
 		const int nPromptTokens = -llama_tokenize(_vocab, formatted.c_str(), formatted.size(), nullptr, 0, true, true);
 		std::vector<llama_token> promptTokens(nPromptTokens);
@@ -246,13 +328,16 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const unsi
 	std::string response;
 	common_chat_msg msg;
 	_session.syntax.parse_tool_calls = false;
-	static std::string gPendingJson;
-	static bool gInsideCall = false;
+	bool insideThink = false, insideCall = false;
+	std::string pendingJson;
+	ToolCtx tool;
 	double ftTime = 0.0;
 	int i = 0;
 	while(i < nPredict && !_stop.load()){
 		newTokenId = llama_sampler_sample(_session.smpl, _session.ctx, -1);
-		if(llama_vocab_is_eog(_vocab, newTokenId)){ break; }
+		if(llama_vocab_is_eog(_vocab, newTokenId)){
+			break;
+		}
 		char buf[256];
 		const int n = llama_token_to_piece(_vocab, newTokenId, buf, sizeof buf, 0, false);
 		if(n < 0){
@@ -282,30 +367,7 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const unsi
 			return msg;
 		}
 		llama_sampler_accept(_session.smpl, newTokenId);
-		if(!_hasTools) continue;
-		if(IsOpenToolCall(tokenStr)){
-			gInsideCall = true;
-			gPendingJson.clear();
-			continue;
-		}
-		if(gInsideCall){
-			if(IsCloseToolCall(tokenStr) || IsOpenToolResp(tokenStr)){
-				gInsideCall = false;
-			} else{
-				gPendingJson += tokenStr;
-			}
-		}
-		if(IsOpenToolResp(tokenStr)){
-			auto toolMsg = common_chat_parse(gPendingJson, true, _session.syntax);
-			if(toolMsg.tool_calls.size() > 0){
-				auto tool = toolMsg.tool_calls.back();
-				auto it = _toolHandlers.find(tool.name);
-				if(it != _toolHandlers.end()){
-					auto toolResponse = it->second(tool.arguments.c_str());
-				}
-			}
-			gPendingJson.clear();
-		}
+		if(_hasTools) doTool(tokenStr, tool, callback, ftTime, prepStart, llMem);
 	}
 	msg = common_chat_parse(response, false, _session.syntax);
 	_session.chatMsgs.push_back(msg);
@@ -340,9 +402,9 @@ void GenerateWithTools(const MessageRole role, const char* prompt, const unsigne
 				msg.tool_calls.insert(msg.tool_calls.end(), parsed.tool_calls.begin(), parsed.tool_calls.end());
 				if(parsed.tool_calls.empty()) break;
 			}
-			msg.content = std::string();
-			msg.reasoning_content = std::string();
-			for(auto tool : msg.tool_calls){
+			msg.content = "";
+			msg.reasoning_content = "";
+			for(auto& tool : msg.tool_calls){
 				auto it = _toolHandlers.find(tool.name);
 				if(it != _toolHandlers.end()){
 					auto toolMsg = it->second(tool.arguments.c_str());
