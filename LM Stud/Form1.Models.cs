@@ -124,6 +124,8 @@ namespace LMStud{
 							if(result == -2){
 								Invoke(new MethodInvoker(() => MessageBox.Show(this, "Error creating sampler chain", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Error)));
 							}
+							Settings.Default.LoadAuto = false;
+							Settings.Default.Save();
 							_llModelLoaded = true;
 							Invoke(new MethodInvoker(UnloadModel));
 							while(_llModelLoaded) Thread.Sleep(10);
@@ -143,7 +145,7 @@ namespace LMStud{
 								}
 								toolTip1.SetToolTip(numCtxSize,
 									"Context size (max tokens). Higher values improve memory but use more RAM.\r\nThe model last loaded has a maximum context size of " + _modelCtxMax);
-								toolStripStatusLabel1.Text = "Loaded model: " + fileName;
+								toolStripStatusLabel1.Text = "Done loading: " + fileName;
 							}));
 						} catch(ObjectDisposedException){}
 						_llModelLoaded = true;

@@ -229,7 +229,7 @@ static bool IsCloseToolCall(std::string_view s){
 	const auto t = CloseToolCallTag();
 	return !t.empty() && s == t;
 }
-static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft, const HrClock::time_point& t0, llama_memory_t mem, std::string& response, std::vector<llama_token>& newTokens) {
+static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ftTime, const HrClock::time_point& t0, llama_memory_t llMem, std::string& response, std::vector<llama_token>& newTokens, const TokenCallbackFn cb) {
 	if(tok == OpenThinkTag()){
 		s.inThink = true;
 		return true;
@@ -241,57 +241,70 @@ static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft
 	if(!_hasTools || !s.inThink) return false;
 	if(tok == OpenToolCallTag()){
 		s.inCall = true;
-		s.buf.clear();
+		s.buf = tok;
 		return true;
 	}
 	if(s.inCall){
-		if((!CloseToolCallTag().empty() && tok == CloseToolCallTag()) || tok == OpenToolResponseTag()) s.inCall = false;
-		else{
+		if(tok != CloseToolCallTag() && tok != OpenToolResponseTag()){
 			s.buf += tok;
 			return true;
 		}
-	}
-	if(tok != OpenToolResponseTag()) return false;
-	auto p = common_chat_parse(s.buf, true, _session.syntax);
-	if(p.tool_calls.empty()){
+		else if(tok == CloseToolCallTag()) s.buf += CloseToolCallTag();
+		s.inCall = false;
+		_session.syntax.parse_tool_calls = true;
+		auto p = common_chat_parse(s.buf, true, _session.syntax);
 		s.buf.clear();
-		return true;
-	}
-	auto& c = p.tool_calls.back();
-	if(auto h = _toolHandlers.find(c.name); h != _toolHandlers.end()){
-		std::string out = h->second(c.arguments.c_str());
-		if(!out.empty()){
-			if(_tokenCb && cbOn){
-				if(!ft) ft = std::chrono::duration<double>(HrClock::now() - t0).count();
-				_tokenCb("", 0, out.c_str(), (int)out.size(), 1, llama_memory_seq_pos_max(mem, 0), ft, 0);
+		if(p.tool_calls.empty()) return true;
+		auto& c = p.tool_calls.back();
+		if(auto h = _toolHandlers.find(c.name); h != _toolHandlers.end()){
+			if(tok == CloseToolCallTag()){
+				std::string open = "\n" + OpenToolResponseTag();
+				if(!open.empty()){
+					int m = -llama_tokenize(_vocab, open.c_str(), open.size(), nullptr, 0, true, true);
+					std::vector<llama_token> v2(m);
+					llama_tokenize(_vocab, open.c_str(), open.size(), v2.data(), m, true, true);
+					llama_batch lb = llama_batch_get_one(v2.data(), m);
+					llama_decode(_session.ctx, lb);
+					for(auto t2 : v2) llama_sampler_accept(_session.smpl, t2);
+					newTokens.insert(newTokens.end(), v2.begin(), v2.end());
+					response += open;
+				}
 			}
-			int n = -llama_tokenize(_vocab, out.c_str(), out.size(), nullptr, 0, true, true);
-			std::vector<llama_token> v(n);
-			llama_tokenize(_vocab, out.c_str(), out.size(), v.data(), n, true, true);
-			for(size_t i = 0; i < v.size();){
-				int b = std::min<int>(_session.nBatch, v.size() - i);
-				llama_batch lb = llama_batch_get_one(&v[i], b);
+			std::string out = "\n" + h->second(c.arguments.c_str());
+			if(!out.empty()){
+				int n = -llama_tokenize(_vocab, out.c_str(), out.size(), nullptr, 0, true, true);
+				std::vector<llama_token> v(n);
+				llama_tokenize(_vocab, out.c_str(), out.size(), v.data(), n, true, true);
+				for(size_t i = 0; i < v.size();){
+					int b = std::min<int>(_session.nBatch, v.size() - i);
+					llama_batch lb = llama_batch_get_one(&v[i], b);
+					llama_decode(_session.ctx, lb);
+					for(int k = 0; k < b; ++k) llama_sampler_accept(_session.smpl, v[i + k]);
+					i += b;
+				}
+				newTokens.insert(newTokens.end(), v.begin(), v.end());
+				response += out;
+			}
+			std::string close = "\n" + CloseToolResponseTag();
+			if(!close.empty()){
+				int m = -llama_tokenize(_vocab, close.c_str(), close.size(), nullptr, 0, true, true);
+				std::vector<llama_token> v2(m);
+				llama_tokenize(_vocab, close.c_str(), close.size(), v2.data(), m, true, true);
+				llama_batch lb = llama_batch_get_one(v2.data(), m);
 				llama_decode(_session.ctx, lb);
-				for(int k = 0; k < b; ++k) llama_sampler_accept(_session.smpl, v[i + k]);
-				i += b;
+				for(auto t2 : v2) llama_sampler_accept(_session.smpl, t2);
+				newTokens.insert(newTokens.end(), v2.begin(), v2.end());
+				response += close;
 			}
-			newTokens.insert(newTokens.end(), v.begin(), v.end());
-			response += out;
 		}
-		std::string close = CloseToolResponseTag();
-		if(!close.empty()){
-			int m = -llama_tokenize(_vocab, close.c_str(), close.size(), nullptr, 0, true, true);
-			std::vector<llama_token> v2(m);
-			llama_tokenize(_vocab, close.c_str(), close.size(), v2.data(), m, true, true);
-			llama_batch lb = llama_batch_get_one(v2.data(), m);
-			llama_decode(_session.ctx, lb);
-			for(auto t : v2) llama_sampler_accept(_session.smpl, t);
-			newTokens.insert(newTokens.end(), v2.begin(), v2.end());
-			response += close;
+		if(_tokenCb && cbOn){
+			_session.syntax.parse_tool_calls = false;
+			auto msg = common_chat_parse(response, true, _session.syntax);
+			cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), 1, llama_memory_seq_pos_max(llMem, 0), ftTime, 0);
+			return true;
 		}
 	}
-	s.buf.clear();
-	return true;
+	return false;
 }
 common_chat_msg Generate(const std::vector<common_chat_msg> messages, const unsigned int nPredict, const bool callback){
 	const auto prepStart = HrClock::now();
@@ -331,7 +344,6 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const unsi
 	std::vector<llama_token> newTokens;
 	std::string response;
 	common_chat_msg msg;
-	_session.syntax.parse_tool_calls = false;
 	bool insideThink = false, insideCall = false;
 	std::string pendingJson;
 	ToolCtx tool;
@@ -354,6 +366,7 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const unsi
 		response += tokenStr;
 		++i;
 		if(cb && callback && !tokenStr.empty()){
+			_session.syntax.parse_tool_calls = false;
 			msg = common_chat_parse(response, true, _session.syntax);
 			cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), 1, llama_memory_seq_pos_max(llMem, 0), ftTime, 0);
 		}
@@ -371,8 +384,9 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const unsi
 			return msg;
 		}
 		llama_sampler_accept(_session.smpl, newTokenId);
-		if(_hasTools) doTool(tokenStr, tool, callback, ftTime, prepStart, llMem, response, newTokens);
+		if(_hasTools) doTool(tokenStr, tool, callback, ftTime, prepStart, llMem, response, newTokens, cb);
 	}
+	_session.syntax.parse_tool_calls = false;
 	msg = common_chat_parse(response, false, _session.syntax);
 	_session.chatMsgs.push_back(msg);
 	_session.cachedTokens.insert(_session.cachedTokens.end(), newTokens.begin(), newTokens.end());
@@ -392,7 +406,6 @@ void GenerateWithTools(const MessageRole role, const char* prompt, const unsigne
 	const TokenCallbackFn cb = _tokenCb;
 	const auto llMem = llama_get_memory(_session.ctx);
 	do{
-		msg.role = toolCalled ? "tool" : "user";
 		msg = Generate(msgs, nGen, callback);
 		toolCalled = false;
 		if(!_session.chatMsgs.size()) return;
