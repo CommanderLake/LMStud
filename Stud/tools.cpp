@@ -248,8 +248,8 @@ std::string ReadFileTool(const char* argsJson){
 	std::filesystem::path p = _baseFolder / path;
 	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
 	if(is_directory(p)) return "{\"error\":\"path is a folder\"}";
-	std::ifstream f(p, std::ios::binary);
-	if(!f.is_open()) return "{\"error\":\"open failed\"}";
+	std::ifstream f(p);
+	if(!f.is_open()) return "{\"error\":\"open failed, try the list_directory tool\"}";
 	std::string line, body;
 	int lineNo = 1;
 	while(std::getline(f, line)){
@@ -296,7 +296,7 @@ std::string CreateFileTool(const char* argsJson){
 	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
 	if(exists(p) && !overwrite) return "{\"error\":\"exists\"}";
 	create_directories(p.parent_path());
-	std::ofstream f(p, std::ios::binary);
+	std::ofstream f(p);
 	if(!f.is_open()) return "{\"error\":\"open failed\"}";
 	f << text;
 	return "{\"result\":\"success\"}";
@@ -325,7 +325,7 @@ std::string ReplaceLinesTool(const char* argsJson){
 	while(std::getline(ss, line)){ newLines.push_back(line); }
 	lines.erase(lines.begin()+(start-1), lines.begin()+end);
 	lines.insert(lines.begin()+(start-1), newLines.begin(), newLines.end());
-	std::ofstream out(p, std::ios::binary|std::ios::trunc);
+	std::ofstream out(p, std::ios::trunc);
 	if(!out.is_open()) return "{\"error\":\"open failed\"}";
 	for(size_t i = 0; i<lines.size(); ++i){ out<<lines[i]; if(i+1<lines.size()) out<<'\n'; }
 	return "{\"result\":\"success\"}";
@@ -406,7 +406,7 @@ std::string ApplyPatchTool(const char* argsJson){
 		}
 	}
 	if(out == lines) return "{\"error\":\"no changes\"}";
-	std::ofstream outFile(p, std::ios::binary | std::ios::trunc);
+	std::ofstream outFile(p, std::ios::trunc);
 	if(!outFile.is_open()) return "{\"error\":\"open failed\"}";
 	for(size_t i = 0; i < out.size(); ++i){ outFile << out[i]; if(i + 1 < out.size()) outFile << "\n"; }
 	return "{\"result\":\"success\"}";

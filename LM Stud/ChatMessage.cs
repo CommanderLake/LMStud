@@ -25,7 +25,10 @@ namespace LMStud{
 			_message = message;
 		}
 		private void ChatMessage_Load(object sender, EventArgs e) {
-			if(_message.Length > 0) UpdateText("", _message, true);
+			if(_message.Length > 0){
+				UpdateText("", _message, true);
+				((MyFlowLayoutPanel)Parent).ScrollToEnd();
+			}
 		}
 		internal void SetRoleText(string role){label1.Text = role;}
 		private void RichTextMsgOnContentsResized(object sender, ContentsResizedEventArgs e){
@@ -106,6 +109,7 @@ namespace LMStud{
 					if(render) RenderText();
 				}
 			}
+			((MyFlowLayoutPanel)Parent).ScrollToEnd();
 		}
 		private void CheckThink_CheckedChanged(object sender, EventArgs e){RenderText();}
 		private unsafe string MarkdownToRtf(string markdown){

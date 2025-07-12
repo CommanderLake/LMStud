@@ -116,7 +116,19 @@ namespace LMStud{
 						_modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
 						if(_modelCtxMax <= 0) _cntCtxMax = _ctxSize;
 						else _cntCtxMax = _ctxSize > _modelCtxMax ? _modelCtxMax : _ctxSize;
-						NativeMethods.CreateSession(_cntCtxMax, _batchSize, _flashAttn, _nThreads, _nThreadsBatch, _topP, _topK, _temp, _repPen);
+						result = NativeMethods.CreateSession(_cntCtxMax, _batchSize, _flashAttn, _nThreads, _nThreadsBatch, _topP, _topK, _temp, _repPen);
+						if(result < 0){
+							if(result == -1){
+								Invoke(new MethodInvoker(() => MessageBox.Show(this, "Error creating llama context", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Error)));
+							}
+							if(result == -2){
+								Invoke(new MethodInvoker(() => MessageBox.Show(this, "Error creating sampler chain", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Error)));
+							}
+							_llModelLoaded = true;
+							Invoke(new MethodInvoker(UnloadModel));
+							while(_llModelLoaded) Thread.Sleep(10);
+							return;
+						}
 						_tokenCallback = TokenCallback;
 						NativeMethods.SetTokenCallback(_tokenCallback);
 						RegisterTools();

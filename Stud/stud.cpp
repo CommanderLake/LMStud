@@ -35,7 +35,7 @@ int CreateSampler(const int topP, const int topK, const float temp, const float 
 		_session.smpl = nullptr;
 	}
 	_session.smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
-	if(!_session.smpl) return -1;
+	if(!_session.smpl) return -2;
 	llama_sampler_chain_add(_session.smpl, llama_sampler_init_min_p(0.05f, 1));
 	llama_sampler_chain_add(_session.smpl, llama_sampler_init_top_p(topP, 1));
 	llama_sampler_chain_add(_session.smpl, llama_sampler_init_top_k(topK));
@@ -229,7 +229,7 @@ static bool IsCloseToolCall(std::string_view s){
 	const auto t = CloseToolCallTag();
 	return !t.empty() && s == t;
 }
-static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft, const HrClock::time_point& t0, llama_memory_t mem) {
+static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft, const HrClock::time_point& t0, llama_memory_t mem, std::string& response, std::vector<llama_token>& newTokens) {
 	if(tok == OpenThinkTag()){
 		s.inThink = true;
 		return true;
@@ -275,6 +275,8 @@ static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft
 				for(int k = 0; k < b; ++k) llama_sampler_accept(_session.smpl, v[i + k]);
 				i += b;
 			}
+			newTokens.insert(newTokens.end(), v.begin(), v.end());
+			response += out;
 		}
 		std::string close = CloseToolResponseTag();
 		if(!close.empty()){
@@ -284,6 +286,8 @@ static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft
 			llama_batch lb = llama_batch_get_one(v2.data(), m);
 			llama_decode(_session.ctx, lb);
 			for(auto t : v2) llama_sampler_accept(_session.smpl, t);
+			newTokens.insert(newTokens.end(), v2.begin(), v2.end());
+			response += close;
 		}
 	}
 	s.buf.clear();
@@ -367,7 +371,7 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const unsi
 			return msg;
 		}
 		llama_sampler_accept(_session.smpl, newTokenId);
-		if(_hasTools) doTool(tokenStr, tool, callback, ftTime, prepStart, llMem);
+		if(_hasTools) doTool(tokenStr, tool, callback, ftTime, prepStart, llMem, response, newTokens);
 	}
 	msg = common_chat_parse(response, false, _session.syntax);
 	_session.chatMsgs.push_back(msg);

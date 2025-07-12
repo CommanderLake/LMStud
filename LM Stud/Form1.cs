@@ -233,7 +233,6 @@ namespace LMStud{
 			var newMsg = prompt.Trim();
 			var cm = AddMessage(role, newMsg);
 			_cntAssMsg = null;
-			_this.panelChat.ScrollToEnd();
 			foreach(var message in _chatMessages) message.Generating = true;
 			_tts.SpeakAsyncCancelAll();
 			_first = true;
@@ -287,7 +286,6 @@ namespace LMStud{
 						cm.SetRoleText("Tool");
 						_this._cntAssMsg = null;
 						_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
-						_this.panelChat.ScrollToEnd();
 					}));
 				} catch(ObjectDisposedException){}
 				return;
@@ -326,7 +324,6 @@ namespace LMStud{
 							}
 						}
 						_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
-						_this.panelChat.ScrollToEnd();
 					} catch(ObjectDisposedException){} finally{ _this._rendering = false; }
 				}));
 			} catch(ObjectDisposedException){}
