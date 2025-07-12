@@ -395,7 +395,11 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const unsi
 }
 void GenerateWithTools(const MessageRole role, const char* prompt, const unsigned int nGen, const bool callback){
 	common_chat_msg msg;
-	msg.role = "user";
+	switch(role){
+		case MessageRole::User: msg.role = "user"; break;
+		case MessageRole::Assistant: msg.role = "assistant"; break;
+		case MessageRole::Tool: msg.role = "tool"; break;
+	}
 	msg.content = std::string(prompt);
 	std::vector<common_chat_msg> msgs{msg};
 	if(!_hasTools){
