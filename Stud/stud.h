@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <llama.h>
@@ -34,8 +34,6 @@ struct ToolCtx{
 	bool inCall = false;
 	std::string buf;
 };
-enum class ToolIoStyle{ CHATML, DEEPSEEK, GRANITE, LLAMA3_JSON };
-inline ToolIoStyle _toolStyle = ToolIoStyle::CHATML;
 inline HWND _hWnd;
 inline llama_model* _llModel = nullptr;
 inline const llama_vocab* _vocab = nullptr;

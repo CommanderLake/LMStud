@@ -96,12 +96,8 @@ int LoadModel(const char* filename, const int nGPULayers, const bool mMap, const
 	const auto eosStr = llama_vocab_get_text(_vocab, llama_vocab_eos(_vocab));
 	const std::string tmplSrc = llama_model_chat_template(_llModel, nullptr);
 	if(!tmplSrc.empty()){
-		const minja::chat_template tmpl(std::string(tmplSrc), bosStr, eosStr);
+		const minja::chat_template tmpl(tmplSrc, bosStr, eosStr);
 		_hasTools = tmpl.original_caps().supports_tools;
-		if(tmplSrc.find("deepseek") != std::string::npos) _toolStyle = ToolIoStyle::DEEPSEEK;
-		else if(tmplSrc.find("granite") != std::string::npos) _toolStyle = ToolIoStyle::GRANITE;
-		else if(tmplSrc.find("_json") != std::string::npos) _toolStyle = ToolIoStyle::LLAMA3_JSON;
-		else _toolStyle = ToolIoStyle::CHATML;
 	}
 	return 0;
 }
@@ -128,6 +124,7 @@ void RetokenizeChat(bool rebuildMemory = false){
 	in.tools = _tools;
 	in.tool_choice = COMMON_CHAT_TOOL_CHOICE_AUTO;
 	in.parallel_tool_calls = true;
+	in.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
 	common_chat_params chatData;
 	try{
 		chatData = common_chat_templates_apply(_chatTemplates.get(), in);
@@ -180,47 +177,57 @@ void RemoveMessagesStartingAt(int index){
 	RetokenizeChat();
 }
 static std::string OpenToolResponseTag(){
-	switch(_toolStyle){
-	case ToolIoStyle::DEEPSEEK: return "<｜tool▁outputs▁begin｜>";
-	case ToolIoStyle::GRANITE: return "<|start_of_role|>tool_response<|end_of_role|>";
-	case ToolIoStyle::LLAMA3_JSON: return "<|start_header_id|>ipython<|end_header_id|>";
-	default: return "<tool_response>";
+	switch(_session.syntax.format){
+		case COMMON_CHAT_FORMAT_DEEPSEEK_R1: return "<｜tool▁outputs▁begin｜>";
+		case COMMON_CHAT_FORMAT_COMMAND_R7B: return "<|START_RESPONSE|>";
+		case COMMON_CHAT_FORMAT_LLAMA_3_X:
+		case COMMON_CHAT_FORMAT_LLAMA_3_X_WITH_BUILTIN_TOOLS: return "<|start_header_id|>ipython<|end_header_id|>";
+		default: return "<tool_response>";
 	}
 }
 static std::string CloseToolResponseTag(){
-	switch(_toolStyle){
-	case ToolIoStyle::DEEPSEEK: return "<｜tool▁outputs▁end｜>";
-	case ToolIoStyle::GRANITE: return "<|end_of_text|>";
-	case ToolIoStyle::LLAMA3_JSON: return "<|eot_id|>";
-	default: return "</tool_response>";
+	switch(_session.syntax.format){
+		case COMMON_CHAT_FORMAT_DEEPSEEK_R1: return "<｜tool▁outputs▁end｜>";
+		case COMMON_CHAT_FORMAT_COMMAND_R7B: return "<|END_RESPONSE|>";
+		case COMMON_CHAT_FORMAT_LLAMA_3_X:
+		case COMMON_CHAT_FORMAT_LLAMA_3_X_WITH_BUILTIN_TOOLS: return "<|eot_id|>";
+		default: return "</tool_response>";
 	}
 }
+
 static std::string OpenToolCallTag(){
-	switch(_toolStyle){
-	case ToolIoStyle::GRANITE: return "<|tool_call|>";
-	default: return "<tool_call>";
+	switch(_session.syntax.format){
+		case COMMON_CHAT_FORMAT_COMMAND_R7B: return "<|START_ACTION|>";
+		case COMMON_CHAT_FORMAT_MISTRAL_NEMO: return "[TOOL_CALLS]";
+		case COMMON_CHAT_FORMAT_FIREFUNCTION_V2: return "functools[";
+		case COMMON_CHAT_FORMAT_FUNCTIONARY_V3_1_LLAMA_3_1: return "<function=";
+		default: return "<tool_call>";
 	}
 }
 static std::string CloseToolCallTag(){
-	switch(_toolStyle){
-	case ToolIoStyle::GRANITE: return "";
-	default: return "</tool_call>";
+	switch(_session.syntax.format){
+		case COMMON_CHAT_FORMAT_COMMAND_R7B: return "<|END_ACTION|>";
+		case COMMON_CHAT_FORMAT_FIREFUNCTION_V2: return "]";
+		case COMMON_CHAT_FORMAT_FUNCTIONARY_V3_1_LLAMA_3_1: return "</function>";
+		case COMMON_CHAT_FORMAT_MISTRAL_NEMO: return "";
+		default: return "</tool_call>";
 	}
 }
+
 static std::string OpenThinkTag(){
-	switch(_toolStyle){
-	case ToolIoStyle::DEEPSEEK: return "<｜assistant▁thoughts▁begin｜>";
-	case ToolIoStyle::GRANITE: return "<|start_of_role|>assistant_thought<|end_of_role|>";
-	case ToolIoStyle::LLAMA3_JSON: return "<|start_header_id|>analysis<|end_header_id|>";
-	default: return "<assistant_thoughts>";
+	switch(_session.syntax.format){
+		case COMMON_CHAT_FORMAT_COMMAND_R7B: return "<|START_THINKING|>";
+		case COMMON_CHAT_FORMAT_LLAMA_3_X:
+		case COMMON_CHAT_FORMAT_LLAMA_3_X_WITH_BUILTIN_TOOLS: return "<|start_header_id|>analysis<|end_header_id|>";
+		default: return "<think>";
 	}
 }
 static std::string CloseThinkTag(){
-	switch(_toolStyle){
-	case ToolIoStyle::DEEPSEEK: return "<｜assistant▁thoughts▁end｜>";
-	case ToolIoStyle::GRANITE: return "<|start_of_role|>assistant_response<|end_of_role|>";
-	case ToolIoStyle::LLAMA3_JSON: return "<|eot_id|>";
-	default: return "</assistant_thoughts>";
+	switch(_session.syntax.format){
+		case COMMON_CHAT_FORMAT_COMMAND_R7B: return "<|END_THINKING|>";
+		case COMMON_CHAT_FORMAT_LLAMA_3_X:
+		case COMMON_CHAT_FORMAT_LLAMA_3_X_WITH_BUILTIN_TOOLS: return "<|eot_id|>";
+		default: return "</think>";
 	}
 }
 static bool IsOpenToolResp(std::string_view s){ return s == OpenToolResponseTag(); }
@@ -249,7 +256,7 @@ static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft
 			s.buf += tok;
 			return true;
 		}
-		else if(tok == CloseToolCallTag()) s.buf += CloseToolCallTag();
+		if(tok == CloseToolCallTag()) s.buf += CloseToolCallTag();
 		s.inCall = false;
 		_session.syntax.parse_tool_calls = true;
 		auto p = common_chat_parse(s.buf, true, _session.syntax);
@@ -352,7 +359,7 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const unsi
 	while(i < nPredict && !_stop.load()){
 		newTokenId = llama_sampler_sample(_session.smpl, _session.ctx, -1);
 		if(llama_vocab_is_eog(_vocab, newTokenId)){
-			break;
+			_stop.store(true);
 		}
 		char buf[256];
 		const int n = llama_token_to_piece(_vocab, newTokenId, buf, sizeof buf, 0, false);
@@ -391,6 +398,7 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const unsi
 	_session.chatMsgs.push_back(msg);
 	_session.cachedTokens.insert(_session.cachedTokens.end(), newTokens.begin(), newTokens.end());
 	if(cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, llama_memory_seq_pos_max(llMem, 0), ftTime, 0);
+	OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
 	return msg;
 }
 void GenerateWithTools(const MessageRole role, const char* prompt, const unsigned int nGen, const bool callback){
