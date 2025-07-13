@@ -197,6 +197,7 @@ static std::string CloseToolResponseTag(){
 
 static std::string OpenToolCallTag(){
 	switch(_session.syntax.format){
+		case COMMON_CHAT_FORMAT_DEEPSEEK_R1: return "<｜tool▁call▁begin｜>";
 		case COMMON_CHAT_FORMAT_COMMAND_R7B: return "<|START_ACTION|>";
 		case COMMON_CHAT_FORMAT_MISTRAL_NEMO: return "[TOOL_CALLS]";
 		case COMMON_CHAT_FORMAT_FIREFUNCTION_V2: return "functools[";
@@ -206,6 +207,7 @@ static std::string OpenToolCallTag(){
 }
 static std::string CloseToolCallTag(){
 	switch(_session.syntax.format){
+		case COMMON_CHAT_FORMAT_DEEPSEEK_R1: return "<｜tool▁call▁end｜>";
 		case COMMON_CHAT_FORMAT_COMMAND_R7B: return "<|END_ACTION|>";
 		case COMMON_CHAT_FORMAT_FIREFUNCTION_V2: return "]";
 		case COMMON_CHAT_FORMAT_FUNCTIONARY_V3_1_LLAMA_3_1: return "</function>";
