@@ -167,6 +167,10 @@ void RetokenizeChat(bool rebuildMemory = false){
 	}
 	const size_t oldSize = _session.cachedTokens.size();
 	const size_t newSize = promptTokens.size();
+	if(newSize > static_cast<size_t>(llama_n_ctx(_session.ctx))){
+		MessageBoxA(_hWnd, "Conversation too long for context", "LM Stud", MB_ICONEXCLAMATION);
+		return;
+	}
 	if(canShift && suffix > 0){
 		if(prefix < oldSize - suffix){
 			llama_memory_seq_rm(mem, 0, prefix, oldSize - suffix);
@@ -312,7 +316,8 @@ static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft
 					std::vector<llama_token> v2(m);
 					llama_tokenize(_vocab, open.c_str(), open.size(), v2.data(), m, true, true);
 					llama_batch lb = llama_batch_get_one(v2.data(), m);
-					llama_decode(_session.ctx, lb);
+					if(llama_memory_seq_pos_max(llMem, 0) + lb.n_tokens > llama_n_ctx(_session.ctx)) return true;
+					if(llama_decode(_session.ctx, lb) != 0) return true;
 					for(auto t2 : v2) llama_sampler_accept(_session.smpl, t2);
 					newTokens.insert(newTokens.end(), v2.begin(), v2.end());
 					response += open;
@@ -326,7 +331,8 @@ static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft
 				for(size_t i = 0; i < v.size();){
 					int b = std::min<int>(_session.nBatch, v.size() - i);
 					llama_batch lb = llama_batch_get_one(&v[i], b);
-					llama_decode(_session.ctx, lb);
+					if(llama_memory_seq_pos_max(llMem, 0) + lb.n_tokens > llama_n_ctx(_session.ctx)) return true;
+					if(llama_decode(_session.ctx, lb) != 0) return true;
 					for(int k = 0; k < b; ++k) llama_sampler_accept(_session.smpl, v[i + k]);
 					i += b;
 				}
@@ -339,7 +345,8 @@ static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft
 				std::vector<llama_token> v2(m);
 				llama_tokenize(_vocab, close.c_str(), close.size(), v2.data(), m, true, true);
 				llama_batch lb = llama_batch_get_one(v2.data(), m);
-				llama_decode(_session.ctx, lb);
+				if(llama_memory_seq_pos_max(llMem, 0) + lb.n_tokens > llama_n_ctx(_session.ctx)) return true;
+				if(llama_decode(_session.ctx, lb) != 0) return true;
 				for(auto t2 : v2) llama_sampler_accept(_session.smpl, t2);
 				newTokens.insert(newTokens.end(), v2.begin(), v2.end());
 				response += close;
