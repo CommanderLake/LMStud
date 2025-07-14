@@ -77,6 +77,8 @@
 			this.numThreads = new System.Windows.Forms.NumericUpDown();
 			this.label2 = new System.Windows.Forms.Label();
 			this.groupAdvanced = new System.Windows.Forms.GroupBox();
+			this.label23 = new System.Windows.Forms.Label();
+			this.numMinP = new System.Windows.Forms.NumericUpDown();
 			this.checkFlashAttn = new System.Windows.Forms.CheckBox();
 			this.checkMLock = new System.Windows.Forms.CheckBox();
 			this.checkMMap = new System.Windows.Forms.CheckBox();
@@ -141,8 +143,6 @@
 			this.labelTPS = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-			this.numMinP = new System.Windows.Forms.NumericUpDown();
-			this.label23 = new System.Windows.Forms.Label();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -162,6 +162,7 @@
 			this.groupCPUParams.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numThreads)).BeginInit();
 			this.groupAdvanced.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numMinP)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numRepPen)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numBatchSize)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTopK)).BeginInit();
@@ -182,7 +183,6 @@
 			this.splitContainer3.Panel2.SuspendLayout();
 			this.splitContainer3.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.numMinP)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// textInput
@@ -850,6 +850,35 @@
 			this.groupAdvanced.TabStop = false;
 			this.groupAdvanced.Text = "Advanced";
 			// 
+			// label23
+			// 
+			this.label23.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.label23.AutoSize = true;
+			this.label23.Location = new System.Drawing.Point(76, 126);
+			this.label23.Name = "label23";
+			this.label23.Size = new System.Drawing.Size(37, 13);
+			this.label23.TabIndex = 37;
+			this.label23.Text = "Min P:";
+			// 
+			// numMinP
+			// 
+			this.numMinP.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.numMinP.DecimalPlaces = 2;
+			this.numMinP.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            131072});
+			this.numMinP.Location = new System.Drawing.Point(119, 124);
+			this.numMinP.Maximum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+			this.numMinP.Name = "numMinP";
+			this.numMinP.Size = new System.Drawing.Size(75, 20);
+			this.numMinP.TabIndex = 36;
+			// 
 			// checkFlashAttn
 			// 
 			this.checkFlashAttn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -1231,9 +1260,9 @@
 			this.label1.AutoSize = true;
 			this.label1.Location = new System.Drawing.Point(3, 3);
 			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(59, 13);
+			this.label1.Size = new System.Drawing.Size(79, 13);
 			this.label1.TabIndex = 1;
-			this.label1.Text = "Instruction:";
+			this.label1.Text = "System prompt:";
 			// 
 			// textSystemPrompt
 			// 
@@ -1603,35 +1632,6 @@
 			this.toolTip1.UseAnimation = false;
 			this.toolTip1.UseFading = false;
 			// 
-			// numMinP
-			// 
-			this.numMinP.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numMinP.DecimalPlaces = 2;
-			this.numMinP.Increment = new decimal(new int[] {
-            1,
-            0,
-            0,
-            131072});
-			this.numMinP.Location = new System.Drawing.Point(119, 124);
-			this.numMinP.Maximum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-			this.numMinP.Name = "numMinP";
-			this.numMinP.Size = new System.Drawing.Size(75, 20);
-			this.numMinP.TabIndex = 36;
-			// 
-			// label23
-			// 
-			this.label23.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label23.AutoSize = true;
-			this.label23.Location = new System.Drawing.Point(76, 126);
-			this.label23.Name = "label23";
-			this.label23.Size = new System.Drawing.Size(37, 13);
-			this.label23.TabIndex = 37;
-			this.label23.Text = "Min P:";
-			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -1676,6 +1676,7 @@
 			((System.ComponentModel.ISupportInitialize)(this.numThreads)).EndInit();
 			this.groupAdvanced.ResumeLayout(false);
 			this.groupAdvanced.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numMinP)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numRepPen)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numBatchSize)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTopK)).EndInit();
@@ -1700,7 +1701,6 @@
 			this.splitContainer3.ResumeLayout(false);
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();
-			((System.ComponentModel.ISupportInitialize)(this.numMinP)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 

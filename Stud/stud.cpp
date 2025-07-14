@@ -117,8 +117,8 @@ void SetTokenCallback(const TokenCallbackFn cb){ _tokenCb = cb; }
 void SetThreadCount(const int n, const int nBatch){
 	if(_session.ctx) llama_set_n_threads(_session.ctx, n, nBatch);
 }
-void RetokenizeChat(bool rebuildMemory = false){
-	if(!_session.ctx || !_session.smpl || !_vocab) return;
+bool RetokenizeChat(bool rebuildMemory = false){
+	if(!_session.ctx || !_session.smpl || !_vocab) return false;
 	std::vector<common_chat_msg> msgs;
 	std::string prompt(_session.prompt);
 	if(_hasTools && !_session.toolsPrompt.empty()) prompt += _session.toolsPrompt;
@@ -138,7 +138,7 @@ void RetokenizeChat(bool rebuildMemory = false){
 		chatData = common_chat_templates_apply(_chatTemplates.get(), in);
 	} catch(std::exception& e){
 		MessageBoxA(_hWnd, ("Failed to apply template, chat state inconsistent!\n\n" + std::string(e.what())).c_str(), "LM Stud", MB_ICONERROR);
-		return;
+		return false;
 	}
 	_session.syntax.format = chatData.format;
 	const int nPrompt = -llama_tokenize(_vocab, chatData.prompt.c_str(), chatData.prompt.size(), nullptr, 0, true, true);
@@ -160,8 +160,7 @@ void RetokenizeChat(bool rebuildMemory = false){
 	if(canShift){
 		const size_t oldSz = _session.cachedTokens.size();
 		const size_t newSz = promptTokens.size();
-		while(suffix + prefix < oldSz && suffix + prefix < newSz &&
-			_session.cachedTokens[oldSz - 1 - suffix] == promptTokens[newSz - 1 - suffix]){
+		while(suffix + prefix < oldSz && suffix + prefix < newSz && _session.cachedTokens[oldSz - 1 - suffix] == promptTokens[newSz - 1 - suffix]){
 			++suffix;
 		}
 	}
@@ -169,7 +168,7 @@ void RetokenizeChat(bool rebuildMemory = false){
 	const size_t newSize = promptTokens.size();
 	if(newSize > static_cast<size_t>(llama_n_ctx(_session.ctx))){
 		MessageBoxA(_hWnd, "Conversation too long for context", "LM Stud", MB_ICONEXCLAMATION);
-		return;
+		return false;
 	}
 	if(canShift && suffix > 0){
 		if(prefix < oldSize - suffix){
@@ -193,37 +192,38 @@ void RetokenizeChat(bool rebuildMemory = false){
 	for(size_t i = prefix; i < decodeEnd; i += _session.nBatch){
 		const int nEval = std::min<int>(_session.nBatch, decodeEnd - i);
 		auto batch = llama_batch_get_one(&promptTokens[i], nEval);
-		if(llama_decode(_session.ctx, batch) != 0){ return; }
+		if(llama_decode(_session.ctx, batch) != 0) return false;
 		for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl, promptTokens[i + j]); }
 	}
 	for(size_t i = decodeEnd; i < newSize; ++i){ llama_sampler_accept(_session.smpl, promptTokens[i]); }
 	_session.cachedTokens = std::move(promptTokens);
+	return true;
 }
 void ResetChat(){
 	_session.chatMsgs.clear();
 	RetokenizeChat(true);
 }
-void SetSystemPrompt(const char* prompt, const char* toolsPrompt){
+bool SetSystemPrompt(const char* prompt, const char* toolsPrompt){
 	_session.prompt = std::string(prompt);
 	_session.toolsPrompt = std::string(toolsPrompt);
-	RetokenizeChat();
+	return RetokenizeChat();
 }
-void SetMessageAt(const int index, const char* think, const char* message){
-	if(index < 0 || index >= static_cast<int>(_session.chatMsgs.size())) return;
+bool SetMessageAt(const int index, const char* think, const char* message){
+	if(index < 0 || index >= static_cast<int>(_session.chatMsgs.size())) return false;
 	_session.chatMsgs[index].reasoning_content = think;
 	_session.chatMsgs[index].content = std::string(message);
-	RetokenizeChat();
+	return RetokenizeChat();
 }
-void RemoveMessageAt(const int index){
-	if(index < 0 || index >= static_cast<int>(_session.chatMsgs.size())) return;
+bool RemoveMessageAt(const int index){
+	if(index < 0 || index >= static_cast<int>(_session.chatMsgs.size())) return false;
 	_session.chatMsgs.erase(_session.chatMsgs.begin() + index);
-	RetokenizeChat();
+	return RetokenizeChat();
 }
-void RemoveMessagesStartingAt(int index){
+bool RemoveMessagesStartingAt(int index){
 	if(index < 0) index = 0;
 	if(index > static_cast<int>(_session.chatMsgs.size())) index = static_cast<int>(_session.chatMsgs.size());
 	_session.chatMsgs.erase(_session.chatMsgs.begin() + index, _session.chatMsgs.end());
-	RetokenizeChat();
+	return RetokenizeChat();
 }
 static std::string OpenToolResponseTag(){
 	switch(_session.syntax.format){

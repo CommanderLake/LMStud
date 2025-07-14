@@ -85,7 +85,10 @@ namespace LMStud{
 				}
 			});
 		}
-		private void SetSystemPrompt(){NativeMethods.SetSystemPrompt(_systemPrompt.Length > 0 ? _systemPrompt : DefaultPrompt, DateTimePrompt + (_googleSearchEnable && _webpageFetchEnable ? FetchPrompt : ""));}
+		private void SetSystemPrompt(){
+			if(!NativeMethods.SetSystemPrompt(_systemPrompt.Length > 0 ? _systemPrompt : DefaultPrompt, DateTimePrompt + (_googleSearchEnable && _webpageFetchEnable ? FetchPrompt : "")))
+				MessageBox.Show(this, "Conversation too long for context while setting system prompt", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+		}
 		private void LoadModel(int modelIndex, bool autoLoad){
 			var whisperOn = checkVoiceInput.CheckState != CheckState.Unchecked;
 			var modelPath = _models[modelIndex].FilePath;

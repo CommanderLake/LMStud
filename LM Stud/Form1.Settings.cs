@@ -222,10 +222,7 @@ namespace LMStud{
 			if(reloadModel && _llModelLoaded && MessageBox.Show(this, "A changed setting requires the model to be reloaded, reload now?", "LM Stud", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
 				LoadModel(_modelIndex, false);
 			else{
-				if(reloadCtx){
-					NativeMethods.CreateContext(_cntCtxMax, _batchSize, _flashAttn, _nThreads, _nThreadsBatch);
-					//NativeMethods.RetokenizeChat(true);
-				}
+				if(reloadCtx) NativeMethods.CreateContext(_cntCtxMax, _batchSize, _flashAttn, _nThreads, _nThreadsBatch);
 				if(reloadSmpl) NativeMethods.CreateSampler(_minP, _topP, _topK, _temp, _repPen);
 			}
 			if(setVAD) NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);

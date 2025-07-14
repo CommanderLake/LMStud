@@ -42,15 +42,15 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetThreadCount(int n, int nBatch);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void RetokenizeChat(bool rebuildMemory);
+		public static extern bool RetokenizeChat(bool rebuildMemory);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void SetSystemPrompt([MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, [MarshalAs(UnmanagedType.LPUTF8Str)] string toolsPrompt);
+		public static extern bool SetSystemPrompt([MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, [MarshalAs(UnmanagedType.LPUTF8Str)] string toolsPrompt);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void SetMessageAt(int index, [MarshalAs(UnmanagedType.LPUTF8Str)] string think, [MarshalAs(UnmanagedType.LPUTF8Str)] string message);
+		public static extern bool SetMessageAt(int index, [MarshalAs(UnmanagedType.LPUTF8Str)] string think, [MarshalAs(UnmanagedType.LPUTF8Str)] string message);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void RemoveMessageAt(int index);
+		public static extern bool RemoveMessageAt(int index);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void RemoveMessagesStartingAt(int index);
+		public static extern bool RemoveMessagesStartingAt(int index);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void GenerateWithTools(MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

@@ -166,9 +166,10 @@ namespace LMStud{
 		private void MsgButDeleteOnClick(ChatMessage cm){
 			if(_generating) return;
 			var id = _chatMessages.IndexOf(cm);
-			NativeMethods.RemoveMessageAt(id);
+			var ok = NativeMethods.RemoveMessageAt(id);
 			_chatMessages[id].Dispose();
 			_chatMessages.RemoveAt(id);
+			if(!ok) MessageBox.Show(this, "Conversation too long for context", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 		}
 		private void MsgButRegenOnClick(ChatMessage cm){
 			if(!_llModelLoaded || _generating) return;
@@ -179,11 +180,15 @@ namespace LMStud{
 					return;
 			var role = _chatMessages[idx].Role;
 			var msg = _chatMessages[idx].Message;
+			var ok = NativeMethods.RemoveMessagesStartingAt(idx);
 			for(var i = _chatMessages.Count - 1; i >= idx; i--){
 				_chatMessages[i].Dispose();
 				_chatMessages.RemoveAt(i);
 			}
-			NativeMethods.RemoveMessagesStartingAt(idx);
+			if(!ok){
+				MessageBox.Show(this, "Conversation too long for context", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+				return;
+			}
 			Generate(role, msg);
 		}
 		private void MsgButEditOnClick(ChatMessage cm){
@@ -199,9 +204,10 @@ namespace LMStud{
 		}
 		private void MsgButEditApplyOnClick(ChatMessage cm){
 			if(_generating || !cm.Editing) return;
+			var idx = _chatMessages.IndexOf(cm);
 			if(cm.checkThink.Checked) cm.Think = cm.richTextMsg.Text;
 			else cm.Message = cm.richTextMsg.Text;
-			NativeMethods.SetMessageAt(_chatMessages.IndexOf(cm), cm.Think, cm.Message);
+			if(!NativeMethods.SetMessageAt(idx, cm.Think, cm.Message)) MessageBox.Show(this, "Conversation too long for context", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 			cm.Editing = false;
 			cm.Markdown = checkMarkdown.Checked;
 		}
