@@ -197,7 +197,7 @@ void RetokenizeChat(bool rebuildMemory = false){
 }
 void ResetChat(){
 	_session.chatMsgs.clear();
-	RetokenizeChat();
+	RetokenizeChat(true);
 }
 void SetSystemPrompt(const char* prompt, const char* toolsPrompt){
 	_session.prompt = std::string(prompt);
@@ -359,6 +359,7 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const int 
 	_stop.store(false);
 	const TokenCallbackFn cb = _tokenCb;
 	const auto llMem = llama_get_memory(_session.ctx);
+	const size_t chatStart = _session.chatMsgs.size();
 	for(auto& message : messages){
 		const auto formatted = common_chat_format_single(_chatTemplates.get(), _session.chatMsgs, message, !message.role._Equal("assistant"), _session.useJinja && message.role._Equal("assistant"));
 		const int nPromptTokens = -llama_tokenize(_vocab, formatted.c_str(), formatted.size(), nullptr, 0, true, true);
@@ -376,11 +377,15 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const int 
 			const int nCtxUsed = llama_memory_seq_pos_max(llMem, 0);
 			if(nCtxUsed + batch.n_tokens > nCtx){
 				MessageBoxA(_hWnd, "Context size exceeded", "LM Stud", MB_ICONEXCLAMATION);
+				_session.chatMsgs.pop_back();
+				RetokenizeChat(true);
 				return common_chat_msg();
 			}
 			auto result = llama_decode(_session.ctx, batch);
 			if(result != 0){
 				MessageBoxA(_hWnd, (std::string("llama_decode failed with error number: ") + std::to_string(result)).c_str(), "LM Stud", MB_ICONERROR);
+				_session.chatMsgs.pop_back();
+				RetokenizeChat(true);
 				return common_chat_msg();
 			}
 			for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl, promptTokens[p + j]); }
@@ -406,6 +411,8 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const int 
 		const int n = llama_token_to_piece(_vocab, newTokenId, buf, sizeof buf, 0, false);
 		if(n < 0){
 			MessageBoxA(_hWnd, "Failed to convert token to piece", "LM Stud", MB_ICONERROR);
+			_session.chatMsgs.resize(chatStart + messages.size());
+			RetokenizeChat(true);
 			return msg;
 		}
 		newTokens.push_back(newTokenId);
@@ -423,12 +430,16 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const int 
 		const int nCtxUsed = llama_memory_seq_pos_max(llMem, 0);
 		if(nCtxUsed + batch.n_tokens > nCtx){
 			MessageBoxA(_hWnd, "Context size exceeded", "LM Stud", MB_ICONEXCLAMATION);
+			_session.chatMsgs.resize(chatStart + messages.size());
+			RetokenizeChat(true);
 			return msg;
 		}
 		auto result = llama_decode(_session.ctx, batch);
 		if(result != 0){
 			if(result == 1) MessageBoxA(_hWnd, "Context full", "LM Stud", MB_ICONEXCLAMATION);
 			else MessageBoxA(_hWnd, (std::string("llama_decode failed with error number: ") + std::to_string(result)).c_str(), "LM Stud", MB_ICONERROR);
+			_session.chatMsgs.resize(chatStart + messages.size());
+			RetokenizeChat(true);
 			return msg;
 		}
 		llama_sampler_accept(_session.smpl, newTokenId);
