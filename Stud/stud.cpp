@@ -27,6 +27,8 @@ int CreateContext(const int nCtx, const int nBatch, const bool flashAttn, const 
 	ctxParams.n_threads = nThreads;
 	ctxParams.n_threads_batch = nThreadsBatch;
 	_session.ctx = llama_init_from_model(_llModel, ctxParams);
+	if(!_session.ctx) MessageBoxA(_hWnd, "Unable to create context", "LM Stud", MB_ICONERROR);
+	RetokenizeChat(true);
 	return _session.ctx ? 0 : -1;
 }
 int CreateSampler(const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
@@ -35,10 +37,13 @@ int CreateSampler(const float minP, const float topP, const int topK, const floa
 		_session.smpl = nullptr;
 	}
 	_session.smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
-	if(!_session.smpl) return -2;
+	if(!_session.smpl){
+		MessageBoxA(_hWnd, "Unable to create sampler", "LM Stud", MB_ICONERROR);
+		return -2;
+	}
 	llama_sampler_chain_add(_session.smpl, llama_sampler_init_penalties(128, repeatPenalty, 0.0f, 0.0f));
 	// Optional: DRY (sequence) penalty immediately after penalties
-	// llama_sampler_chain_add(_session.smpl, llama_sampler_init_dry(/*mult*/0.8f, 1.8f, -1));
+	// llama_sampler_chain_add(_session.smpl, llama_sampler_init_dry(0.8f, 1.8f, -1));
 	if(topK > 0) llama_sampler_chain_add(_session.smpl, llama_sampler_init_top_k(topK));
 	if(topP < 1.0f) llama_sampler_chain_add(_session.smpl, llama_sampler_init_top_p(topP, 1));
 	if(minP > 0.0f) llama_sampler_chain_add(_session.smpl, llama_sampler_init_min_p(minP, 1));
@@ -140,38 +145,75 @@ void RetokenizeChat(bool rebuildMemory = false){
 	std::vector<llama_token> promptTokens(nPrompt);
 	llama_tokenize(_vocab, chatData.prompt.c_str(), chatData.prompt.size(), promptTokens.data(), promptTokens.size(), true, true);
 	size_t prefix = 0;
-	if(!rebuildMemory) while(prefix < _session.cachedTokens.size() && prefix < promptTokens.size() && _session.cachedTokens[prefix] == promptTokens[prefix]){ ++prefix; }
+	while(prefix < _session.cachedTokens.size() && prefix < promptTokens.size() && _session.cachedTokens[prefix] == promptTokens[prefix]){
+		++prefix;
+	}
 	llama_memory_t mem = llama_get_memory(_session.ctx);
-	if(prefix < _session.cachedTokens.size()){ llama_memory_seq_rm(mem, 0, prefix, -1); } else if(prefix == 0){ llama_memory_clear(mem, true); }
+	const bool canShift = llama_memory_can_shift(mem);
+	if(rebuildMemory){
+		if(llama_memory_seq_pos_max(mem, 0) < static_cast<llama_pos>(prefix - 1)){
+			prefix = 0;
+			llama_memory_clear(mem, true);
+		}
+	}
+	size_t suffix = 0;
+	if(canShift){
+		const size_t oldSz = _session.cachedTokens.size();
+		const size_t newSz = promptTokens.size();
+		while(suffix + prefix < oldSz && suffix + prefix < newSz &&
+			_session.cachedTokens[oldSz - 1 - suffix] == promptTokens[newSz - 1 - suffix]){
+			++suffix;
+		}
+	}
+	const size_t oldSize = _session.cachedTokens.size();
+	const size_t newSize = promptTokens.size();
+	if(canShift && suffix > 0){
+		if(prefix < oldSize - suffix){
+			llama_memory_seq_rm(mem, 0, prefix, oldSize - suffix);
+		}
+		if(oldSize != newSize){
+			const int delta = static_cast<int>(newSize) - static_cast<int>(oldSize);
+			llama_memory_seq_add(mem, 0, oldSize - suffix, -1, delta);
+		}
+	} else{
+		suffix = 0;
+		if(prefix < oldSize){
+			llama_memory_seq_rm(mem, 0, prefix, -1);
+		} else if(prefix == 0){
+			llama_memory_clear(mem, true);
+		}
+	}
 	llama_sampler_reset(_session.smpl);
 	for(size_t i = 0; i < prefix; ++i){ llama_sampler_accept(_session.smpl, promptTokens[i]); }
-	for(size_t i = prefix; i < promptTokens.size(); i += _session.nBatch){
-		const int nEval = std::min<int>(_session.nBatch, promptTokens.size() - i);
+	const size_t decodeEnd = newSize - suffix;
+	for(size_t i = prefix; i < decodeEnd; i += _session.nBatch){
+		const int nEval = std::min<int>(_session.nBatch, decodeEnd - i);
 		auto batch = llama_batch_get_one(&promptTokens[i], nEval);
 		if(llama_decode(_session.ctx, batch) != 0){ return; }
 		for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl, promptTokens[i + j]); }
 	}
+	for(size_t i = decodeEnd; i < newSize; ++i){ llama_sampler_accept(_session.smpl, promptTokens[i]); }
 	_session.cachedTokens = std::move(promptTokens);
 }
 void ResetChat(){
 	_session.chatMsgs.clear();
-	RetokenizeChat(true);
+	RetokenizeChat();
 }
 void SetSystemPrompt(const char* prompt, const char* toolsPrompt){
 	_session.prompt = std::string(prompt);
 	_session.toolsPrompt = std::string(toolsPrompt);
-	RetokenizeChat(true);
+	RetokenizeChat();
 }
 void SetMessageAt(const int index, const char* think, const char* message){
 	if(index < 0 || index >= static_cast<int>(_session.chatMsgs.size())) return;
 	_session.chatMsgs[index].reasoning_content = think;
 	_session.chatMsgs[index].content = std::string(message);
-	RetokenizeChat(true);
+	RetokenizeChat();
 }
 void RemoveMessageAt(const int index){
 	if(index < 0 || index >= static_cast<int>(_session.chatMsgs.size())) return;
 	_session.chatMsgs.erase(_session.chatMsgs.begin() + index);
-	RetokenizeChat(true);
+	RetokenizeChat();
 }
 void RemoveMessagesStartingAt(int index){
 	if(index < 0) index = 0;

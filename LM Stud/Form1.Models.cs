@@ -118,12 +118,6 @@ namespace LMStud{
 						else _cntCtxMax = _ctxSize > _modelCtxMax ? _modelCtxMax : _ctxSize;
 						result = NativeMethods.CreateSession(_cntCtxMax, _batchSize, _flashAttn, _nThreads, _nThreadsBatch, _minP, _topP, _topK, _temp, _repPen);
 						if(result < 0){
-							if(result == -1){
-								Invoke(new MethodInvoker(() => MessageBox.Show(this, "Error creating llama context", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Error)));
-							}
-							if(result == -2){
-								Invoke(new MethodInvoker(() => MessageBox.Show(this, "Error creating sampler chain", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Error)));
-							}
 							Settings.Default.LoadAuto = false;
 							Settings.Default.Save();
 							_llModelLoaded = true;

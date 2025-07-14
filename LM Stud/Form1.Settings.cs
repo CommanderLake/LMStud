@@ -224,7 +224,7 @@ namespace LMStud{
 			else{
 				if(reloadCtx){
 					NativeMethods.CreateContext(_cntCtxMax, _batchSize, _flashAttn, _nThreads, _nThreadsBatch);
-					NativeMethods.RetokenizeChat(true);
+					//NativeMethods.RetokenizeChat(true);
 				}
 				if(reloadSmpl) NativeMethods.CreateSampler(_minP, _topP, _topK, _temp, _repPen);
 			}
