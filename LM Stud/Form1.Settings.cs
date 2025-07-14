@@ -15,6 +15,7 @@ namespace LMStud{
 		private float _repPen = 1.1f;
 		private int _topK = 40;
 		private float _topP = 0.95f;
+		private float _minP = 0.0f;
 		private int _batchSize = 512;
 		private bool _mMap = true;
 		private bool _mLock;
@@ -48,6 +49,7 @@ namespace LMStud{
 			_repPen = (float)(numRepPen.Value = Settings.Default.RepPen);
 			_topK = (int)(numTopK.Value = Settings.Default.TopK);
 			_topP = (float)(numTopP.Value = Settings.Default.TopP);
+			_minP = (float)(numMinP.Value = Settings.Default.MinP);
 			_batchSize = (int)(numBatchSize.Value = Settings.Default.BatchSize);
 			_mMap = checkMMap.Checked = Settings.Default.MMap;
 			_mLock = checkMLock.Checked = Settings.Default.MLock;
@@ -128,6 +130,10 @@ namespace LMStud{
 			});
 			UpdateSetting(ref _topP, (float)numTopP.Value, value => {
 				Settings.Default.TopP = numTopP.Value;
+				reloadSmpl = true;
+			});
+			UpdateSetting(ref _minP, (float)numMinP.Value, value => {
+				Settings.Default.MinP = numMinP.Value;
 				reloadSmpl = true;
 			});
 			UpdateSetting(ref _batchSize, (int)numBatchSize.Value, value => {
@@ -220,7 +226,7 @@ namespace LMStud{
 					NativeMethods.CreateContext(_cntCtxMax, _batchSize, _flashAttn, _nThreads, _nThreadsBatch);
 					NativeMethods.RetokenizeChat(true);
 				}
-				if(reloadSmpl) NativeMethods.CreateSampler(_topP, _topK, _temp, _repPen);
+				if(reloadSmpl) NativeMethods.CreateSampler(_minP, _topP, _topK, _temp, _repPen);
 			}
 			if(setVAD) NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
 			if(reloadWhisper && _whisperLoaded){
@@ -256,7 +262,7 @@ namespace LMStud{
 		}
 		private void LinkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e){
 			textSystemPrompt.SelectAll();
-			textSystemPrompt.Paste("The list directory and file tools operate relative to a base directory.\r\nUse list directory with an empty path before using the file tools to help with coding tasks throughout my project.");
+			textSystemPrompt.Paste("The list directory and file tools operate relative to a base directory.\r\nUse list directory with an empty path before using the file tools to help with coding tasks throughout my project.\r\nAlways read a file and verify its contents before making changes.");
 		}
 		private void PopulateWhisperModels(){
 			if (!ModelsFolderExists(false)) return;

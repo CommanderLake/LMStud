@@ -43,6 +43,7 @@ namespace LMStud{
 			toolTip1.SetToolTip(numRepPen, "Repetition penalty reduces repetitive outputs. Higher values strongly discourage repeated phrases.");
 			toolTip1.SetToolTip(numTopK, "Top-K sampling: limits token choice to the K most probable tokens, improving coherency.");
 			toolTip1.SetToolTip(numTopP, "Top-P sampling: controls diversity by choosing from the smallest possible set of tokens whose cumulative probability exceeds this threshold.");
+			toolTip1.SetToolTip(numMinP, "Min-P sampling: keeps only tokens whose individual probability is at least this fraction of the top token’s probability, trimming unlikely options and reducing noise.\r\nIf Min-P is non zero it is recommended to set Top-P to 1.0 and Top-K to 0.");
 			toolTip1.SetToolTip(numBatchSize, "Batch size for processing tokens during generation. Higher values can improve performance at the cost of higher RAM usage.");
 			toolTip1.SetToolTip(groupCPUParams, "Parameters controlling text generation on CPU.");
 			toolTip1.SetToolTip(numThreads, "CPU threads for token generation. Typically, around 75% of your physical cores is optimal to prevent oversaturating the memory controller.");

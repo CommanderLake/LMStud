@@ -49,8 +49,8 @@ extern "C" {
 	EXPORT void SetHWnd(HWND hWnd);
 	EXPORT void BackendInit();
 	EXPORT int CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch);
-	EXPORT int CreateSampler(int topP, int topK, float temp, float repeatPenalty);
-	EXPORT int CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, int topP, int topK, float temp, float repeatPenalty);
+	EXPORT int CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty);
+	EXPORT int CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
 	EXPORT void DestroySession();
 	EXPORT void ResetChat();
 	EXPORT void FreeModel();
@@ -63,8 +63,8 @@ extern "C" {
 	EXPORT void SetMessageAt(int index, const char* think, const char* message);
 	EXPORT void RemoveMessageAt(int index);
 	EXPORT void RemoveMessagesStartingAt(int index);
-	common_chat_msg Generate(std::vector<common_chat_msg> messages, unsigned int nPredict, bool callback);
-	EXPORT void GenerateWithTools(MessageRole role, const char* prompt, unsigned int nGen, bool callback);
+	EXPORT void GenerateWithTools(MessageRole role, const char* prompt, int nPredict, bool callback);
 	EXPORT void StopGeneration();
 	char* GetContextAsText();
 }
+common_chat_msg Generate(std::vector<common_chat_msg> messages, int nPredict, bool callback);

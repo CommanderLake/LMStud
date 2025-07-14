@@ -141,6 +141,8 @@
 			this.labelTPS = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+			this.numMinP = new System.Windows.Forms.NumericUpDown();
+			this.label23 = new System.Windows.Forms.Label();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -180,6 +182,7 @@
 			this.splitContainer3.Panel2.SuspendLayout();
 			this.splitContainer3.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numMinP)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// textInput
@@ -392,7 +395,7 @@
 			this.groupBox4.Controls.Add(this.checkFileListEnable);
 			this.groupBox4.Location = new System.Drawing.Point(209, 506);
 			this.groupBox4.Name = "groupBox4";
-			this.groupBox4.Size = new System.Drawing.Size(200, 102);
+			this.groupBox4.Size = new System.Drawing.Size(200, 104);
 			this.groupBox4.TabIndex = 40;
 			this.groupBox4.TabStop = false;
 			this.groupBox4.Text = "File Tools";
@@ -825,6 +828,8 @@
 			// 
 			// groupAdvanced
 			// 
+			this.groupAdvanced.Controls.Add(this.label23);
+			this.groupAdvanced.Controls.Add(this.numMinP);
 			this.groupAdvanced.Controls.Add(this.checkFlashAttn);
 			this.groupAdvanced.Controls.Add(this.checkMLock);
 			this.groupAdvanced.Controls.Add(this.checkMMap);
@@ -840,7 +845,7 @@
 			this.groupAdvanced.Controls.Add(this.numTopP);
 			this.groupAdvanced.Location = new System.Drawing.Point(3, 390);
 			this.groupAdvanced.Name = "groupAdvanced";
-			this.groupAdvanced.Size = new System.Drawing.Size(200, 218);
+			this.groupAdvanced.Size = new System.Drawing.Size(200, 243);
 			this.groupAdvanced.TabIndex = 34;
 			this.groupAdvanced.TabStop = false;
 			this.groupAdvanced.Text = "Advanced";
@@ -852,7 +857,7 @@
 			this.checkFlashAttn.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
 			this.checkFlashAttn.Checked = true;
 			this.checkFlashAttn.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkFlashAttn.Location = new System.Drawing.Point(98, 196);
+			this.checkFlashAttn.Location = new System.Drawing.Point(98, 222);
 			this.checkFlashAttn.Name = "checkFlashAttn";
 			this.checkFlashAttn.Size = new System.Drawing.Size(96, 17);
 			this.checkFlashAttn.TabIndex = 35;
@@ -864,7 +869,7 @@
 			this.checkMLock.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.checkMLock.AutoSize = true;
 			this.checkMLock.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkMLock.Location = new System.Drawing.Point(135, 173);
+			this.checkMLock.Location = new System.Drawing.Point(135, 199);
 			this.checkMLock.Name = "checkMLock";
 			this.checkMLock.Size = new System.Drawing.Size(59, 17);
 			this.checkMLock.TabIndex = 34;
@@ -876,7 +881,7 @@
 			this.checkMMap.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.checkMMap.AutoSize = true;
 			this.checkMMap.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkMMap.Location = new System.Drawing.Point(138, 150);
+			this.checkMMap.Location = new System.Drawing.Point(138, 176);
 			this.checkMMap.Name = "checkMMap";
 			this.checkMMap.Size = new System.Drawing.Size(56, 17);
 			this.checkMMap.TabIndex = 33;
@@ -948,7 +953,7 @@
 			// 
 			this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label11.AutoSize = true;
-			this.label11.Location = new System.Drawing.Point(54, 126);
+			this.label11.Location = new System.Drawing.Point(54, 152);
 			this.label11.Name = "label11";
 			this.label11.Size = new System.Drawing.Size(59, 13);
 			this.label11.TabIndex = 30;
@@ -957,7 +962,7 @@
 			// numBatchSize
 			// 
 			this.numBatchSize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numBatchSize.Location = new System.Drawing.Point(119, 124);
+			this.numBatchSize.Location = new System.Drawing.Point(119, 150);
 			this.numBatchSize.Maximum = new decimal(new int[] {
             1048576,
             0,
@@ -1213,7 +1218,7 @@
 			// 
 			// butApply
 			// 
-			this.butApply.Location = new System.Drawing.Point(3, 614);
+			this.butApply.Location = new System.Drawing.Point(3, 639);
 			this.butApply.Name = "butApply";
 			this.butApply.Size = new System.Drawing.Size(75, 23);
 			this.butApply.TabIndex = 4;
@@ -1598,6 +1603,35 @@
 			this.toolTip1.UseAnimation = false;
 			this.toolTip1.UseFading = false;
 			// 
+			// numMinP
+			// 
+			this.numMinP.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.numMinP.DecimalPlaces = 2;
+			this.numMinP.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            131072});
+			this.numMinP.Location = new System.Drawing.Point(119, 124);
+			this.numMinP.Maximum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+			this.numMinP.Name = "numMinP";
+			this.numMinP.Size = new System.Drawing.Size(75, 20);
+			this.numMinP.TabIndex = 36;
+			// 
+			// label23
+			// 
+			this.label23.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.label23.AutoSize = true;
+			this.label23.Location = new System.Drawing.Point(76, 126);
+			this.label23.Name = "label23";
+			this.label23.Size = new System.Drawing.Size(37, 13);
+			this.label23.TabIndex = 37;
+			this.label23.Text = "Min P:";
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -1666,6 +1700,7 @@
 			this.splitContainer3.ResumeLayout(false);
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numMinP)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -1786,6 +1821,8 @@
 		private System.Windows.Forms.Label label22;
 		private System.Windows.Forms.TextBox textFileBasePath;
         private System.Windows.Forms.LinkLabel linkFileInstruction;
-    }
+		private System.Windows.Forms.Label label23;
+		private System.Windows.Forms.NumericUpDown numMinP;
+	}
 }
 

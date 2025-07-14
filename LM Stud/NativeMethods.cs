@@ -66,9 +66,9 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern int CreateSampler(float topP, int topK, float temp, float repeatPenalty);
+		public static extern int CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern int CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float topP, int topK, float temp, float repeatPenalty);
+		public static extern int CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void ClearWebCache();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
