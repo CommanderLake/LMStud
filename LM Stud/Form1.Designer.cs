@@ -1029,7 +1029,7 @@
 			this.numTopK.Size = new System.Drawing.Size(75, 20);
 			this.numTopK.TabIndex = 18;
 			this.numTopK.Value = new decimal(new int[] {
-            40,
+            20,
             0,
             0,
             0});
@@ -1198,7 +1198,7 @@
 			this.numTemp.Size = new System.Drawing.Size(75, 20);
 			this.numTemp.TabIndex = 16;
 			this.numTemp.Value = new decimal(new int[] {
-            7,
+            6,
             0,
             0,
             65536});

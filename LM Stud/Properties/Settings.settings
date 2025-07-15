@@ -15,10 +15,10 @@
       <Value Profile="(Default)">1.1</Value>
     </Setting>
     <Setting Name="Temp" Type="System.Decimal" Scope="User">
-      <Value Profile="(Default)">0.7</Value>
+      <Value Profile="(Default)">0.6</Value>
     </Setting>
     <Setting Name="TopK" Type="System.Decimal" Scope="User">
-      <Value Profile="(Default)">40</Value>
+      <Value Profile="(Default)">20</Value>
     </Setting>
     <Setting Name="TopP" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">0.95</Value>

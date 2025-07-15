@@ -73,7 +73,7 @@ namespace LMStud.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.7")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.6")]
         public decimal Temp {
             get {
                 return ((decimal)(this["Temp"]));
@@ -85,7 +85,7 @@ namespace LMStud.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("40")]
+        [global::System.Configuration.DefaultSettingValueAttribute("20")]
         public decimal TopK {
             get {
                 return ((decimal)(this["TopK"]));
