@@ -14,6 +14,7 @@ namespace LMStud{
 		private readonly IntPtr _sbBottom = (IntPtr)7;
 		private readonly IntPtr _sbEndscroll = (IntPtr)8;
 		private bool _scrollable = true;
+		private bool _userScrolling;
 		protected override CreateParams CreateParams{
 			get{
 				var cp = base.CreateParams;
@@ -45,17 +46,22 @@ namespace LMStud{
 		private void UpdateScrollState(){
 			if(!IsHandleCreated) return;
 			var canScrollNow = DisplayRectangle.Height > ClientSize.Height;
-			if(_scrollable != canScrollNow){
-				_scrollable = canScrollNow;
+			var desiredScrollable = canScrollNow && !_userScrolling;
+			if(_scrollable != desiredScrollable){
+				_scrollable = desiredScrollable;
 				if(!_scrollable && AutoScrollPosition != Point.Empty) AutoScrollPosition = new Point(0, 0);
 			}
 			NativeMethods.EnableScrollBar(new HandleRef(this, Handle), SbVert, _scrollable ? EsbEnableBoth : EsbDisableBoth);
 		}
 		protected override void WndProc(ref Message m){
-			if(m.Msg == WmLbuttondown || m.Msg == WmVscroll && m.WParam != _sbBottom) _scrollable = false;
+			if(m.Msg == WmLbuttondown || (m.Msg == WmVscroll && m.WParam != _sbBottom)){
+				_userScrolling = true;
+				_scrollable = false;
+			}
 			switch(m.Msg){
 				case WmVscroll when m.WParam == _sbEndscroll:
-					_scrollable = true;
+					_userScrolling = false;
+					UpdateScrollState();
 					break;
 			}
 			base.WndProc(ref m);
