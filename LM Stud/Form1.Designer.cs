@@ -234,6 +234,7 @@
 			// panelChat
 			// 
 			this.panelChat.AutoScroll = true;
+			this.panelChat.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
 			this.panelChat.CausesValidation = false;
 			this.panelChat.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.panelChat.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;

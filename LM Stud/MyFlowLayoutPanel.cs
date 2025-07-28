@@ -1,28 +1,69 @@
 ﻿using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 namespace LMStud{
 	internal class MyFlowLayoutPanel : FlowLayoutPanel{
+		private const int WmVscroll = 0x0115;
+		private const int WsHscroll = 0x00100000;
+		private const int WsVscroll = 0x00200000;
+		private const int SbVert = 1;
+		private const int EsbEnableBoth = 0x0000;
+		private const int EsbDisableBoth = 0x0003;
+		private const int WmLbuttondown = 0x0201;
 		private readonly IntPtr _sbBottom = (IntPtr)7;
 		private readonly IntPtr _sbEndscroll = (IntPtr)8;
 		private bool _scrollable = true;
-		internal void ScrollToEnd(){
-			if(!_scrollable || Handle == IntPtr.Zero) return;
-			var m = Message.Create(Handle, NativeMethods.WmVscroll, _sbBottom, IntPtr.Zero);
-			base.WndProc(ref m);
+		protected override CreateParams CreateParams{
+			get{
+				var cp = base.CreateParams;
+				cp.Style &= ~(WsHscroll | WsVscroll);
+				cp.Style |= WsVscroll;
+				return cp;
+			}
+		}
+		protected override void OnHandleCreated(EventArgs e){
+			base.OnHandleCreated(e);
+			UpdateScrollState();
+		}
+		protected override void OnLayout(LayoutEventArgs e){
+			base.OnLayout(e);
+			UpdateScrollState();
+		}
+		protected override void OnSizeChanged(EventArgs e){
+			base.OnSizeChanged(e);
+			UpdateScrollState();
+		}
+		protected override void OnControlAdded(ControlEventArgs e){
+			base.OnControlAdded(e);
+			UpdateScrollState();
+		}
+		protected override void OnControlRemoved(ControlEventArgs e){
+			base.OnControlRemoved(e);
+			UpdateScrollState();
+		}
+		private void UpdateScrollState(){
+			if(!IsHandleCreated) return;
+			var canScrollNow = DisplayRectangle.Height > ClientSize.Height;
+			if(_scrollable != canScrollNow){
+				_scrollable = canScrollNow;
+				if(!_scrollable && AutoScrollPosition != Point.Empty) AutoScrollPosition = new Point(0, 0);
+			}
+			NativeMethods.EnableScrollBar(new HandleRef(this, Handle), SbVert, _scrollable ? EsbEnableBoth : EsbDisableBoth);
 		}
 		protected override void WndProc(ref Message m){
-			if(m.Msg == NativeMethods.WmLbuttondown || m.Msg == NativeMethods.WmVscroll && m.WParam != _sbBottom) _scrollable = false;
+			if(m.Msg == WmLbuttondown || m.Msg == WmVscroll && m.WParam != _sbBottom) _scrollable = false;
 			switch(m.Msg){
-				case NativeMethods.WmVscroll when m.WParam == _sbEndscroll:
+				case WmVscroll when m.WParam == _sbEndscroll:
 					_scrollable = true;
 					break;
 			}
 			base.WndProc(ref m);
 		}
-		protected override Point ScrollToControl(Control activeControl){
-			//return base.ScrollToControl(activeControl);
-			return AutoScrollPosition;
+		internal void ScrollToEnd(){
+			if(!_scrollable || Handle == IntPtr.Zero) return;
+			var m = Message.Create(Handle, WmVscroll, _sbBottom, IntPtr.Zero);
+			base.WndProc(ref m);
 		}
 	}
 }

@@ -19,14 +19,6 @@ namespace LMStud{
 			Count
 		}
 		private const string DLLName = "stud";
-		private const int WmUser = 0x400;
-		internal const int EmSetscrollpos = WmUser + 222;
-		internal const int WmVscroll = 0x115;
-		internal const int SbBottom = 7;
-		internal const int EmSetsel = 0xB1;
-		internal const int WmSetfocus = 0x0007;
-		internal const int WmKillfocus = 0x0008;
-		internal const int WmLbuttondown = 0x0201;
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetHWnd(IntPtr hWnd);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -105,5 +97,7 @@ namespace LMStud{
 		public static extern void CurlGlobalCleanup();
 		[DllImport("user32.dll")]
 		public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wp, IntPtr lp);
+		[DllImport("user32.dll")]
+		internal static extern bool EnableScrollBar(HandleRef hWnd, int wSBflags, int wArrows);
 	}
 }

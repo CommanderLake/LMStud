@@ -7,7 +7,6 @@ using LMStud.Properties;
 namespace LMStud{
 	internal partial class Form1{
 		private const string DefaultPrompt = "Assist the user to the best of your ability.";
-		private const string DateTimePrompt = "\nUse the get_datetime tool to get the date and time when required.";
 		private const string FetchPrompt = "\nAfter calling the web_search tool you must subsequently call the get_webpage tool with a url followed by the get_webpage_text tool with the id of any relevant preview.";
 		private volatile bool _llModelLoaded;
 		private volatile bool _populating;
@@ -86,7 +85,7 @@ namespace LMStud{
 			});
 		}
 		private void SetSystemPrompt(){
-			if(!NativeMethods.SetSystemPrompt(_systemPrompt.Length > 0 ? _systemPrompt : DefaultPrompt, DateTimePrompt + (_googleSearchEnable && _webpageFetchEnable ? FetchPrompt : "")))
+			if(!NativeMethods.SetSystemPrompt(_systemPrompt.Length > 0 ? _systemPrompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : ""))
 				MessageBox.Show(this, "Conversation too long for context while setting system prompt", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 		}
 		private void LoadModel(int modelIndex, bool autoLoad){
