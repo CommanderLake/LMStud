@@ -71,5 +71,9 @@ namespace LMStud{
 			var m = Message.Create(Handle, WmVscroll, _sbBottom, IntPtr.Zero);
 			base.WndProc(ref m);
 		}
+		protected override Point ScrollToControl(Control activeControl){
+			//return base.ScrollToControl(activeControl);
+			return AutoScrollPosition;
+		}
 	}
 }
