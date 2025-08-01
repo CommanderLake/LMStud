@@ -60,19 +60,19 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\llama.cpp\vendor;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
+    <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\llama.cpp\vendor;I:\whisper.cpp\include;I:\whisper.cpp\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)lib\$(Configuration);I:\vcpkg-2025.04.09\installed\x64-windows-static\debug\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\llama.cpp\vendor;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
+    <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\llama.cpp\vendor;I:\whisper.cpp\include;I:\whisper.cpp\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)lib\$(Configuration);I:\vcpkg-2025.04.09\installed\x64-windows-static\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCUDA12|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>I:\llama.cpp-cu12\include;I:\llama.cpp-cu12\common;I:\llama.cpp-cu12\ggml\include;I:\llama.cpp-cu12\src;I:\llama.cpp-cu12\vendor;I:\whisper.cpp-1.7.5\include;I:\whisper.cpp-1.7.5\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
+    <IncludePath>I:\llama.cpp-cu12\include;I:\llama.cpp-cu12\common;I:\llama.cpp-cu12\ggml\include;I:\llama.cpp-cu12\src;I:\llama.cpp-cu12\vendor;I:\whisper.cpp\include;I:\whisper.cpp\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)lib\$(Configuration);I:\vcpkg-2025.04.09\installed\x64-windows-static\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -80,7 +80,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;STUD_EXPORTS;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;WHISPER_SHARED;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <OpenMP>GenerateParallelCode</OpenMP>
@@ -105,7 +105,7 @@ xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;STUD_EXPORTS;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;WHISPER_SHARED;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <OpenMP>GenerateParallelCode</OpenMP>
@@ -128,7 +128,7 @@ xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;STUD_EXPORTS;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;WHISPER_SHARED;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <OpenMP>GenerateParallelCode</OpenMP>

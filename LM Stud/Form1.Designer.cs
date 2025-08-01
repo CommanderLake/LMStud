@@ -673,11 +673,6 @@
             0,
             0,
             0});
-			this.numVadThreshold.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            65536});
 			this.numVadThreshold.Name = "numVadThreshold";
 			this.numVadThreshold.Size = new System.Drawing.Size(70, 20);
 			this.numVadThreshold.TabIndex = 6;

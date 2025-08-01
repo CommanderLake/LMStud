@@ -51,8 +51,8 @@ namespace LMStud{
 			toolTip1.SetToolTip(checkMLock, "Lock the model in RAM.");
 			toolTip1.SetToolTip(groupCPUParamsBatch, "Parameters for the pre-generation step (batch preparation).");
 			toolTip1.SetToolTip(numThreadsBatch, "CPU threads used for batch preparation.");
-			toolTip1.SetToolTip(numVadThreshold, "Voice Activity Detection, higher values increase sensitivity to speech (0.1-1.0).");
-			toolTip1.SetToolTip(numFreqThreshold, "High-pass filter cutoff frequency. Higher values reduce background noise.");
+			toolTip1.SetToolTip(numVadThreshold, "Voice Activity Detection threashold, lower values increase sensitivity to speech activation.");
+			toolTip1.SetToolTip(numFreqThreshold, "High-pass filter cutoff frequency. Higher values reduce low frequency noise.");
 			toolTip1.SetToolTip(checkSpeak, "Speak the generated responses using the computers default voice.");
 			toolTip1.SetToolTip(checkVoiceInput, "An intermediate check state (filled in) means it will transcribe spoken words without generating, when checked it will automatically generate.");
 			toolTip1.SetToolTip(textGoogleApiKey, "A Google API key is required to use the search tool, you can get a free one for 100 searches per day.");
