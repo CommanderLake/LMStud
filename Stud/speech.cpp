@@ -1,25 +1,29 @@
 #define _USE_MATH_DEFINES
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#ifdef max
+#undef max
+#endif
+#ifdef min
+#undef min
+#endif
 #include "speech.h"
 #include <algorithm>
 #include <sstream>
 #include <regex>
 #include <cmath>
-// SpeechRecognizer implementation
-SpeechRecognizer::~SpeechRecognizer(){
+SpeechInput::~SpeechInput(){
 	stopTranscription();
 	unloadModel();
 }
-void SpeechRecognizer::log(const std::string& message){
+void SpeechInput::log(const std::string& message){
 	std::lock_guard<std::mutex> lock(_callbackMutex);
-	if(_logCallback){ _logCallback(message.c_str()); }
+	//OutputDebugStringA((message + "\n").c_str());
+	if(_logCallback){
+		_logCallback(message.c_str());
+	}
 }
-std::string SpeechRecognizer::trim(const std::string& s){
-	const size_t start = s.find_first_not_of(" \t\n\r");
-	if(start == std::string::npos) return "";
-	const size_t end = s.find_last_not_of(" \t\n\r");
-	return s.substr(start, end - start + 1);
-}
-void SpeechRecognizer::normalizeAudio(std::vector<float>& data){
+void SpeechInput::normalizeAudio(std::vector<float>& data){
 	if(data.empty()) return;
 	const auto [min_it, max_it] = std::minmax_element(data.begin(), data.end());
 	const float max_abs = std::max(std::abs(*min_it), std::abs(*max_it));
@@ -29,7 +33,7 @@ void SpeechRecognizer::normalizeAudio(std::vector<float>& data){
 		std::transform(data.begin(), data.end(), data.begin(), [scale](float sample){ return sample * scale; });
 	}
 }
-bool SpeechRecognizer::vadSimple(std::vector<float>& pcmf32, int sampleRate, int lastMs, float vadThold, float freqThold){
+bool SpeechInput::vadSimple(std::vector<float>& pcmf32, int sampleRate, int lastMs, float vadThold, float freqThold){
 	const int nSamples = static_cast<int>(pcmf32.size());
 	const int nSamplesLast = (sampleRate * lastMs) / 1000;
 	if(nSamplesLast >= nSamples || nSamples == 0){ return false; }
@@ -48,7 +52,7 @@ bool SpeechRecognizer::vadSimple(std::vector<float>& pcmf32, int sampleRate, int
 	// Voice activity detected if recent energy is significantly higher
 	return energyLast > vadThold*energyAll;
 }
-float SpeechRecognizer::calculateSimilarity(const std::string& s0, const std::string& s1){
+float SpeechInput::calculateSimilarity(const std::string& s0, const std::string& s1){
 	if(s0.empty() && s1.empty()) return 1.0f;
 	if(s0.empty() || s1.empty()) return 0.0f;
 	const size_t len0 = s0.size() + 1;
@@ -74,7 +78,7 @@ float SpeechRecognizer::calculateSimilarity(const std::string& s0, const std::st
 	const float maxLen = static_cast<float>(std::max(s0.size(), s1.size()));
 	return 1.0f - (dist / maxLen);
 }
-std::vector<std::string> SpeechRecognizer::getWords(const std::string& s){
+std::vector<std::string> SpeechInput::getWords(const std::string& s){
 	std::istringstream iss(s);
 	std::vector<std::string> words;
 	words.reserve(16); // Reserve some space to avoid reallocations
@@ -82,11 +86,11 @@ std::vector<std::string> SpeechRecognizer::getWords(const std::string& s){
 	while(iss >> word){ words.push_back(std::move(word)); }
 	return words;
 }
-std::string SpeechRecognizer::getWakeCommand(){
+std::string SpeechInput::getWakeCommand(){
 	std::lock_guard<std::mutex> lock(_configMutex);
 	return _wakeCommand;
 }
-bool SpeechRecognizer::loadModel(const char* modelPath, int nThreads, bool useGPU){
+bool SpeechInput::loadModel(const char* modelPath, int nThreads, bool useGPU){
 	if(!modelPath){
 		log("Error: Model path is null");
 		return false;
@@ -109,7 +113,7 @@ bool SpeechRecognizer::loadModel(const char* modelPath, int nThreads, bool useGP
 		_wparams.print_timestamps = false;
 		_wparams.print_realtime = false;
 		_wparams.translate = false;
-		_wparams.no_context = true;
+		_wparams.no_context = false;
 		_wparams.single_segment = false;
 		_wparams.suppress_blank = true;
 		_wparams.suppress_nst = true;
@@ -128,7 +132,7 @@ bool SpeechRecognizer::loadModel(const char* modelPath, int nThreads, bool useGP
 		return false;
 	}
 }
-void SpeechRecognizer::unloadModel(){
+void SpeechInput::unloadModel(){
 	stopTranscription();
 	if(_audioCapture){
 		_audioCapture->pause();
@@ -138,25 +142,15 @@ void SpeechRecognizer::unloadModel(){
 	_highPassFilter.reset();
 	log("Whisper model unloaded");
 }
-void SpeechRecognizer::transcriptionLoop(){
+void SpeechInput::transcriptionLoop(){
 	log("Transcription thread started");
 	// Pre-allocate buffers
 	std::vector<float> pcmDataShort;
 	std::vector<float> pcmDataLong;
 	pcmDataShort.reserve(DEFAULT_SAMPLE_RATE * VAD_CHECK_DURATION / 1000);
-	std::string lastOutput;
-	lastOutput.reserve(256);
-	_audioCapture->clear();
 	_audioCapture->resume();
-	const auto startTime = std::chrono::steady_clock::now();
 	while(_transcriptionRunning.load()){
 		try{
-			// Check for timeout
-			const auto elapsed = std::chrono::steady_clock::now() - startTime;
-			if(elapsed > std::chrono::seconds(MAX_TRANSCRIPTION_TIMEOUT_S)){
-				log("Transcription timeout reached");
-				break;
-			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(THREAD_SLEEP_MS));
 			// Get current configuration values
 			const int voiceDuration = _voiceDuration.load();
@@ -191,7 +185,6 @@ void SpeechRecognizer::transcriptionLoop(){
 				const char* text = whisper_full_get_segment_text(_whisperCtx.get(), i);
 				if(text){ transcriptionResult += text; }
 			}
-			transcriptionResult = trim(transcriptionResult);
 			if(transcriptionResult.empty()){ continue; }
 			log("Raw transcription: " + transcriptionResult);
 			// Process wake command if configured
@@ -202,7 +195,7 @@ void SpeechRecognizer::transcriptionLoop(){
 				// Extract potential wake words and remaining text
 				std::string heardWake;
 				std::string remaining;
-				for(size_t i = 0; i < transWords.size(); i++){
+				for(size_t i = 0; i < transWords.size(); ++i){
 					if(i < wakeWords.size()){
 						if(!heardWake.empty()) heardWake += " ";
 						heardWake += transWords[i];
@@ -217,8 +210,7 @@ void SpeechRecognizer::transcriptionLoop(){
 				transcriptionResult = remaining;
 			}
 			// Fire callback if transcription is new and non-empty
-			if(!transcriptionResult.empty() && transcriptionResult != lastOutput){
-				lastOutput = transcriptionResult;
+			if(!transcriptionResult.empty()){
 				log("Final transcription: " + transcriptionResult);
 				std::lock_guard<std::mutex> lock(_callbackMutex);
 				if(_whisperCallback){ _whisperCallback(transcriptionResult.c_str()); }
@@ -232,7 +224,7 @@ void SpeechRecognizer::transcriptionLoop(){
 	_audioCapture->pause();
 	log("Transcription thread stopped");
 }
-bool SpeechRecognizer::startTranscription(){
+bool SpeechInput::startTranscription(){
 	if(!_whisperCtx || !_audioCapture){
 		log("Error: Model not loaded or audio capture not initialized");
 		return false;
@@ -242,22 +234,22 @@ bool SpeechRecognizer::startTranscription(){
 		return true;
 	}
 	_transcriptionRunning.store(true);
-	_transcriptionThread = std::thread(&SpeechRecognizer::transcriptionLoop, this);
+	_transcriptionThread = std::thread(&SpeechInput::transcriptionLoop, this);
 	return true;
 }
-void SpeechRecognizer::stopTranscription(){
+void SpeechInput::stopTranscription(){
 	_transcriptionRunning.store(false);
 	if(_transcriptionThread.joinable()){ _transcriptionThread.join(); }
 }
-void SpeechRecognizer::setCallback(WhisperCallbackFn cb){
+void SpeechInput::setCallback(WhisperCallbackFn cb){
 	std::lock_guard<std::mutex> lock(_callbackMutex);
 	_whisperCallback = cb;
 }
-void SpeechRecognizer::setLogCallback(LogCallbackFn cb){
+void SpeechInput::setLogCallback(LogCallbackFn cb){
 	std::lock_guard<std::mutex> lock(_callbackMutex);
 	_logCallback = cb;
 }
-void SpeechRecognizer::setWakeCommand(const char* wakeCmd){
+void SpeechInput::setWakeCommand(const char* wakeCmd){
 	std::lock_guard<std::mutex> lock(_configMutex);
 	if(wakeCmd){
 		_wakeCommand = wakeCmd;
@@ -267,30 +259,30 @@ void SpeechRecognizer::setWakeCommand(const char* wakeCmd){
 		log("Wake command cleared");
 	}
 }
-void SpeechRecognizer::setVADThresholds(float vadThreshold, float freqThreshold){
+void SpeechInput::setVADThresholds(float vadThreshold, float freqThreshold){
 	_vadThreshold.store(vadThreshold);
 	_freqThreshold.store(freqThreshold);
 	log("VAD thresholds updated - VAD: " + std::to_string(vadThreshold) + ", Freq: " + std::to_string(freqThreshold));
 }
-void SpeechRecognizer::setWakeWordThreshold(float threshold){
+void SpeechInput::setWakeWordThreshold(float threshold){
 	_wakeWordThreshold.store(threshold);
 	log("Wake word threshold set to: " + std::to_string(threshold));
 }
-void SpeechRecognizer::setVoiceDuration(int voiceDuration){
+void SpeechInput::setVoiceDuration(int voiceDuration){
 	_voiceDuration.store(voiceDuration);
 	log("Voice duration set to: " + std::to_string(voiceDuration) + "ms");
 }
 // C API Implementation
 void SetWhisperCallback(WhisperCallbackFn cb){
-	if(!g_speechRecognizer){ g_speechRecognizer = std::make_unique<SpeechRecognizer>(); }
+	if(!g_speechRecognizer){ g_speechRecognizer = std::make_unique<SpeechInput>(); }
 	g_speechRecognizer->setCallback(cb);
 }
 void SetLogCallback(LogCallbackFn cb){
-	if(!g_speechRecognizer){ g_speechRecognizer = std::make_unique<SpeechRecognizer>(); }
+	if(!g_speechRecognizer){ g_speechRecognizer = std::make_unique<SpeechInput>(); }
 	g_speechRecognizer->setLogCallback(cb);
 }
 bool LoadWhisperModel(const char* modelPath, int nThreads, bool useGPU){
-	if(!g_speechRecognizer){ g_speechRecognizer = std::make_unique<SpeechRecognizer>(); }
+	if(!g_speechRecognizer){ g_speechRecognizer = std::make_unique<SpeechInput>(); }
 	return g_speechRecognizer->loadModel(modelPath, nThreads, useGPU);
 }
 bool StartSpeechTranscription(){
@@ -300,19 +292,19 @@ bool StartSpeechTranscription(){
 void StopSpeechTranscription(){ if(g_speechRecognizer){ g_speechRecognizer->stopTranscription(); } }
 void UnloadWhisperModel(){ if(g_speechRecognizer){ g_speechRecognizer->unloadModel(); } }
 void SetWakeCommand(const char* wakeCmd){
-	if(!g_speechRecognizer){ g_speechRecognizer = std::make_unique<SpeechRecognizer>(); }
+	if(!g_speechRecognizer){ g_speechRecognizer = std::make_unique<SpeechInput>(); }
 	g_speechRecognizer->setWakeCommand(wakeCmd);
 }
 void SetVADThresholds(float vadThreshold, float freqThreshold){
-	if(!g_speechRecognizer){ g_speechRecognizer = std::make_unique<SpeechRecognizer>(); }
+	if(!g_speechRecognizer){ g_speechRecognizer = std::make_unique<SpeechInput>(); }
 	g_speechRecognizer->setVADThresholds(vadThreshold, freqThreshold);
 }
 void SetWakeWordThreshold(float threshold){
-	if(!g_speechRecognizer){ g_speechRecognizer = std::make_unique<SpeechRecognizer>(); }
+	if(!g_speechRecognizer){ g_speechRecognizer = std::make_unique<SpeechInput>(); }
 	g_speechRecognizer->setWakeWordThreshold(threshold);
 }
 void SetVoiceDuration(int voiceDuration){
-	if(!g_speechRecognizer){ g_speechRecognizer = std::make_unique<SpeechRecognizer>(); }
+	if(!g_speechRecognizer){ g_speechRecognizer = std::make_unique<SpeechInput>(); }
 	g_speechRecognizer->setVoiceDuration(voiceDuration);
 }
 bool IsTranscriptionRunning(){

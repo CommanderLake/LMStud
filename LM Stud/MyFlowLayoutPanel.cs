@@ -10,9 +10,9 @@ namespace LMStud{
 		private const int SbVert = 1;
 		private const int EsbEnableBoth = 0x0000;
 		private const int EsbDisableBoth = 0x0003;
-		private const int WmLbuttondown = 0x0201;
+		private const int SbThumbtrack = 5;
+		private const int SbEndscroll = 8;
 		private readonly IntPtr _sbBottom = (IntPtr)7;
-		private readonly IntPtr _sbEndscroll = (IntPtr)8;
 		private bool _scrollable = true;
 		private bool _userScrolling;
 		protected override CreateParams CreateParams{
@@ -46,7 +46,7 @@ namespace LMStud{
 		private void UpdateScrollState(){
 			if(!IsHandleCreated) return;
 			var canScrollNow = DisplayRectangle.Height > ClientSize.Height;
-			var desiredScrollable = canScrollNow && !_userScrolling;
+			var desiredScrollable = canScrollNow;
 			if(_scrollable != desiredScrollable){
 				_scrollable = desiredScrollable;
 				if(!_scrollable && AutoScrollPosition != Point.Empty) AutoScrollPosition = new Point(0, 0);
@@ -54,26 +54,21 @@ namespace LMStud{
 			NativeMethods.EnableScrollBar(new HandleRef(this, Handle), SbVert, _scrollable ? EsbEnableBoth : EsbDisableBoth);
 		}
 		protected override void WndProc(ref Message m){
-			if(m.Msg == WmLbuttondown || (m.Msg == WmVscroll && m.WParam != _sbBottom)){
-				_userScrolling = true;
-				_scrollable = false;
-			}
-			switch(m.Msg){
-				case WmVscroll when m.WParam == _sbEndscroll:
+			if(m.Msg == WmVscroll){
+				var code = (int)m.WParam & 0xFFFF;
+				if(code == SbThumbtrack){ _userScrolling = true; } else if(code == SbEndscroll){
 					_userScrolling = false;
 					UpdateScrollState();
-					break;
+				}
 			}
 			base.WndProc(ref m);
 		}
 		internal void ScrollToEnd(){
 			if(!_scrollable || Handle == IntPtr.Zero) return;
+			if(_userScrolling) return;
 			var m = Message.Create(Handle, WmVscroll, _sbBottom, IntPtr.Zero);
 			base.WndProc(ref m);
 		}
-		protected override Point ScrollToControl(Control activeControl){
-			//return base.ScrollToControl(activeControl);
-			return AutoScrollPosition;
-		}
+		protected override Point ScrollToControl(Control activeControl){return AutoScrollPosition;}
 	}
 }

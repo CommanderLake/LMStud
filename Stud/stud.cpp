@@ -49,7 +49,6 @@ int CreateSampler(const float minP, const float topP, const int topK, const floa
 	if(minP > 0.0f) llama_sampler_chain_add(_session.smpl, llama_sampler_init_min_p(minP, 1));
 	llama_sampler_chain_add(_session.smpl, llama_sampler_init_temp(temp));
 	llama_sampler_chain_add(_session.smpl, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
-
 	return 0;
 }
 int CreateSession(const int nCtx, const int nBatch, const bool flashAttn, const int nThreads, const int nThreadsBatch, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
@@ -103,6 +102,7 @@ int LoadModel(const char* filename, const int nGPULayers, const bool mMap, const
 	const auto bosStr = llama_vocab_get_text(_vocab, llama_vocab_bos(_vocab));
 	const auto eosStr = llama_vocab_get_text(_vocab, llama_vocab_eos(_vocab));
 	const std::string tmplSrc = llama_model_chat_template(_llModel, nullptr);
+	//OutputDebugStringA(tmplSrc.c_str());
 	if(!tmplSrc.empty()){
 		const minja::chat_template tmpl(tmplSrc, bosStr, eosStr);
 		_hasTools = tmpl.original_caps().supports_tools;
@@ -114,9 +114,7 @@ bool HasTool(const char* name){
 	return false;
 }
 void SetTokenCallback(const TokenCallbackFn cb){ _tokenCb = cb; }
-void SetThreadCount(const int n, const int nBatch){
-	if(_session.ctx) llama_set_n_threads(_session.ctx, n, nBatch);
-}
+void SetThreadCount(const int n, const int nBatch){ if(_session.ctx) llama_set_n_threads(_session.ctx, n, nBatch); }
 int LlamaMemSize(llama_memory_t llMem, llama_seq_id seqId){
 	const int nCtxPosMin = llama_memory_seq_pos_min(llMem, seqId);
 	const int nCtxPosMax = llama_memory_seq_pos_max(llMem, seqId);
@@ -139,9 +137,7 @@ bool RetokenizeChat(bool rebuildMemory = false){
 	in.parallel_tool_calls = true;
 	in.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
 	common_chat_params chatData;
-	try{
-		chatData = common_chat_templates_apply(_chatTemplates.get(), in);
-	} catch(std::exception& e){
+	try{ chatData = common_chat_templates_apply(_chatTemplates.get(), in); } catch(std::exception& e){
 		MessageBoxA(_hWnd, ("Failed to apply template, chat state inconsistent!\n\n" + std::string(e.what())).c_str(), "LM Stud", MB_ICONERROR);
 		return false;
 	}
@@ -150,9 +146,7 @@ bool RetokenizeChat(bool rebuildMemory = false){
 	std::vector<llama_token> promptTokens(nPrompt);
 	llama_tokenize(_vocab, chatData.prompt.c_str(), chatData.prompt.size(), promptTokens.data(), promptTokens.size(), true, true);
 	size_t prefix = 0;
-	while(prefix < _session.cachedTokens.size() && prefix < promptTokens.size() && _session.cachedTokens[prefix] == promptTokens[prefix]){
-		++prefix;
-	}
+	while(prefix < _session.cachedTokens.size() && prefix < promptTokens.size() && _session.cachedTokens[prefix] == promptTokens[prefix]){ ++prefix; }
 	llama_memory_t mem = llama_get_memory(_session.ctx);
 	const bool canShift = llama_memory_can_shift(mem);
 	if(rebuildMemory){
@@ -164,34 +158,23 @@ bool RetokenizeChat(bool rebuildMemory = false){
 	const size_t oldSz = _session.cachedTokens.size();
 	const size_t newSz = promptTokens.size();
 	size_t suffix = 0;
-	if(canShift && oldSz > 0 && newSz > 0){
-		while(suffix + prefix < oldSz && suffix + prefix < newSz && suffix < oldSz && suffix < newSz &&
-			_session.cachedTokens[oldSz - 1 - suffix] == promptTokens[newSz - 1 - suffix]){
-			++suffix;
-		}
-	}
+	if(canShift && oldSz > 0 && newSz > 0){ while(suffix + prefix < oldSz && suffix + prefix < newSz && suffix < oldSz && suffix < newSz && _session.cachedTokens[oldSz - 1 - suffix] == promptTokens[newSz - 1 - suffix]){ ++suffix; } }
 	const size_t oldSize = _session.cachedTokens.size();
 	const size_t newSize = promptTokens.size();
 	if(newSize > static_cast<size_t>(llama_n_ctx(_session.ctx))){
 		MessageBoxA(_hWnd, "Conversation too long for context", "LM Stud", MB_ICONEXCLAMATION);
 		return false;
 	}
-	if(prefix == oldSize && oldSize == newSize){
-		return true;
-	}
+	if(prefix == oldSize && oldSize == newSize){ return true; }
 	if(canShift && suffix > 0){
-		if(prefix < oldSize - suffix){
-			llama_memory_seq_rm(mem, 0, prefix, oldSize - suffix);
-		}
+		if(prefix < oldSize - suffix){ llama_memory_seq_rm(mem, 0, prefix, oldSize - suffix); }
 		if(oldSize != newSize){
 			const int delta = static_cast<int>(newSize) - static_cast<int>(oldSize);
 			llama_memory_seq_add(mem, 0, oldSize - suffix, -1, delta);
 		}
 	} else{
 		suffix = 0;
-		if(prefix < oldSize){
-			llama_memory_seq_rm(mem, 0, prefix, -1);
-		}
+		if(prefix < oldSize){ llama_memory_seq_rm(mem, 0, prefix, -1); }
 	}
 	llama_sampler_reset(_session.smpl);
 	for(size_t i = 0; i < prefix; ++i){ llama_sampler_accept(_session.smpl, promptTokens[i]); }
@@ -252,7 +235,6 @@ static std::string CloseToolResponseTag(){
 		default: return "</tool_response>";
 	}
 }
-
 static std::string OpenToolCallTag(){
 	switch(_session.syntax.format){
 		case COMMON_CHAT_FORMAT_DEEPSEEK_R1: return "<｜tool▁call▁begin｜>";
@@ -273,7 +255,6 @@ static std::string CloseToolCallTag(){
 		default: return "</tool_call>";
 	}
 }
-
 static std::string OpenThinkTag(){
 	switch(_session.syntax.format){
 		case COMMON_CHAT_FORMAT_COMMAND_R7B: return "<|START_THINKING|>";
@@ -290,7 +271,7 @@ static std::string CloseThinkTag(){
 		default: return "</think>";
 	}
 }
-static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ftTime, const HrClock::time_point& t0, llama_memory_t llMem, std::string& response, std::vector<llama_token>& newTokens, const TokenCallbackFn cb) {
+static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ftTime, const HrClock::time_point& t0, llama_memory_t llMem, std::string& response, std::vector<llama_token>& newTokens, const TokenCallbackFn cb){
 	if(tok == OpenThinkTag()){
 		s.inThink = true;
 		return true;
@@ -419,9 +400,7 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const int 
 	int i = 0;
 	while((nPredict < 0 || i < nPredict) && !_stop.load()){
 		newTokenId = llama_sampler_sample(_session.smpl, _session.ctx, -1);
-		if(llama_vocab_is_eog(_vocab, newTokenId)){
-			_stop.store(true);
-		}
+		if(llama_vocab_is_eog(_vocab, newTokenId)){ _stop.store(true); }
 		char buf[256];
 		const int n = llama_token_to_piece(_vocab, newTokenId, buf, sizeof buf, 0, false);
 		if(n < 0){
@@ -471,9 +450,12 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const int 
 void GenerateWithTools(const MessageRole role, const char* prompt, const int nPredict, const bool callback){
 	common_chat_msg msg;
 	switch(role){
-		case MessageRole::User: msg.role = "user"; break;
-		case MessageRole::Assistant: msg.role = "assistant"; break;
-		case MessageRole::Tool: msg.role = "tool"; break;
+		case MessageRole::User: msg.role = "user";
+			break;
+		case MessageRole::Assistant: msg.role = "assistant";
+			break;
+		case MessageRole::Tool: msg.role = "tool";
+			break;
 	}
 	msg.content = std::string(prompt);
 	std::vector<common_chat_msg> msgs{msg};
@@ -500,7 +482,7 @@ void GenerateWithTools(const MessageRole role, const char* prompt, const int nPr
 			}
 			msg.content = "";
 			msg.reasoning_content = "";
-			for(auto& tool : msg.tool_calls){
+			for(common_chat_tool_call& tool : msg.tool_calls){
 				auto it = _toolHandlers.find(tool.name);
 				if(it != _toolHandlers.end()){
 					auto toolMsg = it->second(tool.arguments.c_str());
@@ -518,9 +500,9 @@ void StopGeneration(){ _stop.store(true); }
 char* GetContextAsText(){
 	if(!_session.ctx) return nullptr;
 	std::string outStr;
-	outStr.reserve(_session.cachedTokens.size()*4);
+	outStr.reserve(_session.cachedTokens.size() * 4);
 	for(const llama_token tok : _session.cachedTokens){ outStr += common_token_to_piece(_session.ctx, tok, true); }
-	auto* out = static_cast<char*>(std::malloc(outStr.size()+1));
-	if(out) std::memcpy(out, outStr.c_str(), outStr.size()+1);
+	auto* out = static_cast<char*>(std::malloc(outStr.size() + 1));
+	if(out) std::memcpy(out, outStr.c_str(), outStr.size() + 1);
 	return out;
 }

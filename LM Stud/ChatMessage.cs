@@ -27,7 +27,6 @@ namespace LMStud{
 		private void ChatMessage_Load(object sender, EventArgs e) {
 			if(_message.Length > 0){
 				UpdateText("", _message, true);
-				((MyFlowLayoutPanel)Parent).ScrollToEnd();
 			}
 		}
 		internal void SetRoleText(string role){label1.Text = role;}

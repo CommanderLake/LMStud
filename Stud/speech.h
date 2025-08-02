@@ -37,7 +37,6 @@ using WhisperCallbackFn = void(*)(const char* transcription);
 using LogCallbackFn = void(*)(const char* message);
 // High-pass filter with state
 class HighPassFilter{
-private:
 	float _y = 0.0f;
 	bool _initialized = false;
 	float _lastInput = 0.0f;
@@ -66,8 +65,7 @@ public:
 	}
 };
 // Thread safe speech recognizer class
-class SpeechRecognizer{
-private:
+class SpeechInput{
 	// Thread safety
 	std::mutex _configMutex;
 	std::mutex _callbackMutex;
@@ -93,7 +91,6 @@ private:
 	HighPassFilter _highPassFilter;
 	// Helper methods
 	void log(const std::string& message);
-	std::string trim(const std::string& s);
 	bool vadSimple(std::vector<float>& pcmf32, int sampleRate, int lastMs, float vadThold, float freqThold);
 	void normalizeAudio(std::vector<float>& data);
 	float calculateSimilarity(const std::string& s0, const std::string& s1);
@@ -101,13 +98,13 @@ private:
 	void transcriptionLoop();
 	std::string getWakeCommand();
 public:
-	SpeechRecognizer() = default;
-	~SpeechRecognizer();
+	SpeechInput() = default;
+	~SpeechInput();
 	// Non-copyable, non-movable
-	SpeechRecognizer(const SpeechRecognizer&) = delete;
-	SpeechRecognizer& operator=(const SpeechRecognizer&) = delete;
-	SpeechRecognizer(SpeechRecognizer&&) = delete;
-	SpeechRecognizer& operator=(SpeechRecognizer&&) = delete;
+	SpeechInput(const SpeechInput&) = delete;
+	SpeechInput& operator=(const SpeechInput&) = delete;
+	SpeechInput(SpeechInput&&) = delete;
+	SpeechInput& operator=(SpeechInput&&) = delete;
 	bool loadModel(const char* modelPath, int nThreads, bool useGPU);
 	void unloadModel();
 	bool startTranscription();
@@ -121,7 +118,7 @@ public:
 	bool isRunning() const{ return _transcriptionRunning.load(); }
 };
 // Global instance
-inline std::unique_ptr<SpeechRecognizer> g_speechRecognizer;
+inline std::unique_ptr<SpeechInput> g_speechRecognizer;
 // C API
 extern "C" {
 EXPORT void SetWhisperCallback(WhisperCallbackFn cb);
