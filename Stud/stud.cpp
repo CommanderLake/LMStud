@@ -46,9 +46,9 @@ int CreateSampler(const float minP, const float topP, const int topK, const floa
 	// llama_sampler_chain_add(_session.smpl, llama_sampler_init_dry(0.8f, 1.8f, -1));
 	if(topK > 0) llama_sampler_chain_add(_session.smpl, llama_sampler_init_top_k(topK));
 	if(topP < 1.0f) llama_sampler_chain_add(_session.smpl, llama_sampler_init_top_p(topP, 1));
-	if(minP > 0.0f) llama_sampler_chain_add(_session.smpl, llama_sampler_init_min_p(minP, 1));
 	llama_sampler_chain_add(_session.smpl, llama_sampler_init_temp(temp));
 	llama_sampler_chain_add(_session.smpl, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
+	if(minP > 0.0f) llama_sampler_chain_add(_session.smpl, llama_sampler_init_min_p(minP, 1));
 	return 0;
 }
 int CreateSession(const int nCtx, const int nBatch, const bool flashAttn, const int nThreads, const int nThreadsBatch, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){

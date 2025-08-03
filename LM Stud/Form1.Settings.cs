@@ -22,14 +22,16 @@ namespace LMStud{
 		private int _nThreads = 8;
 		private int _nThreadsBatch = 8;
 		private int _whisperModelIndex;
+		private int _vadModelIndex;
 		private string _wakeWord;
 		private float _wakeWordSimilarity = 0.8f;
-		private float _vadThreshold = 1.5f;
+		private float _vadThreshold = 0.5f;
 		private float _freqThreshold = 100.0f;
-		private bool _whisperUseGPU;
 		private float _whisperTemp = 0.2f;
+		private bool _whisperUseGPU;
+		private bool _useWhisperVAD;
 		private bool _speak;
-		private bool _flashAttn = true;
+		private bool _flashAttn;
 		private string _googleAPIKey;
 		private string _googleSearchID;
 		private int _googleSearchResultCount = 5;
@@ -64,6 +66,7 @@ namespace LMStud{
 			_freqThreshold = (float)(numFreqThreshold.Value = Settings.Default.FreqThreshold);
 			_whisperUseGPU = checkWhisperUseGPU.Checked = Settings.Default.whisperUseGPU;
 			_whisperTemp = (float)(numWhisperTemp.Value = Settings.Default.WhisperTemp);
+			_useWhisperVAD = radioWhisperVAD.Checked = Settings.Default.UseWhisperVAD;
 			_speak = checkSpeak.Checked = Settings.Default.Speak;
 			_flashAttn = checkFlashAttn.Checked = Settings.Default.FlashAttn;
 			_googleAPIKey = textGoogleApiKey.Text = Settings.Default.GoogleAPIKey;
@@ -106,7 +109,7 @@ namespace LMStud{
 			UpdateSetting(ref _modelsPath, textModelsPath.Text, value => {
 				Settings.Default.ModelsDir = value;
 				PopulateModels();
-				PopulateWhisperModels();
+				PopulateWhisperModels(true, true);
 			});
 			UpdateSetting(ref _ctxSize, (int)numCtxSize.Value, value => {
 				Settings.Default.CtxSize = value;
@@ -174,14 +177,6 @@ namespace LMStud{
 				Settings.Default.WakeWordSimilarity = numWakeWordSimilarity.Value;
 				setWWS = true;
 			});
-			UpdateSetting(ref _whisperUseGPU, checkWhisperUseGPU.Checked, value => {
-				Settings.Default.whisperUseGPU = value;
-				reloadWhisper = true;
-			});
-			UpdateSetting(ref _vadThreshold, (float)numVadThreshold.Value, value => {
-				Settings.Default.VadThreshold = numVadThreshold.Value;
-				setVAD = true;
-			});
 			UpdateSetting(ref _freqThreshold, (float)numFreqThreshold.Value, value => {
 				Settings.Default.FreqThreshold = numFreqThreshold.Value;
 				setVAD = true;
@@ -189,6 +184,22 @@ namespace LMStud{
 			UpdateSetting(ref _whisperTemp, (float)numWhisperTemp.Value, value => {
 				Settings.Default.WhisperTemp = numWhisperTemp.Value;
 				reloadWhisper = true;
+			});
+			UpdateSetting(ref _whisperUseGPU, checkWhisperUseGPU.Checked, value => {
+				Settings.Default.whisperUseGPU = value;
+				reloadWhisper = true;
+			});
+			UpdateSetting(ref _useWhisperVAD, radioWhisperVAD.Checked, value => {
+				Settings.Default.UseWhisperVAD = value;
+				reloadWhisper = true;
+			});
+			UpdateSetting(ref _vadModelIndex, comboVADModel.SelectedIndex, value => {
+				Settings.Default.VADModel = comboVADModel.Text;
+				reloadWhisper = true;
+			});
+			UpdateSetting(ref _vadThreshold, (float)numVadThreshold.Value, value => {
+				Settings.Default.VadThreshold = numVadThreshold.Value;
+				setVAD = true;
 			});
 			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			UpdateSetting(ref _flashAttn, checkFlashAttn.Checked, value => {
@@ -239,7 +250,6 @@ namespace LMStud{
 				Settings.Default.DateTimeEnable = value;
 				registerTools = true;
 			});
-			Settings.Default.Save();
 			if(reloadModel && _llModelLoaded && MessageBox.Show(this, "A changed setting requires the model to be reloaded, reload now?", "LM Stud", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
 				LoadModel(_modelIndex, false);
 			else{
@@ -254,13 +264,14 @@ namespace LMStud{
 					MessageBox.Show(this, "Whisper model not found", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				} else{
 					if(checkVoiceInput.CheckState != CheckState.Unchecked) NativeMethods.StopSpeechTranscription();
-					NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);
+					NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU, _useWhisperVAD, _whisperModels[_vadModelIndex]);
 					if(checkVoiceInput.CheckState != CheckState.Unchecked) NativeMethods.StartSpeechTranscription();
 				}
 			}
 			if(setGoogle) NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID, _googleSearchResultCount);
 			if(registerTools) RegisterTools();
 			if(registerTools || setSystemPrompt) SetSystemPrompt();
+			Settings.Default.Save();
 		}
 		private void ButBrowse_Click(object sender, EventArgs e){
 			if(folderBrowserDialog1.ShowDialog(this) == DialogResult.OK) textModelsPath.Text = folderBrowserDialog1.SelectedPath;
@@ -273,7 +284,7 @@ namespace LMStud{
 		}
 		private void ComboWhisperModel_DropDown(object sender, EventArgs e){
 			if(!Directory.Exists(_modelsPath)) return;
-			PopulateWhisperModels();
+			PopulateWhisperModels(true, false);
 		}
 		private void ButWhispDown_Click(object sender, EventArgs e){
 			HugLoadFiles("ggerganov", "whisper.cpp", ".bin");
@@ -283,12 +294,21 @@ namespace LMStud{
 			textSystemPrompt.SelectAll();
 			textSystemPrompt.Paste("The list directory and file tools operate relative to a base directory.\r\nUse list directory with an empty path before using the file tools to help with coding tasks throughout my project.\r\nAlways read a file and verify its contents before making changes.");
 		}
-		private void PopulateWhisperModels(){
+        private void butDownloadVADModel_Click(object sender, EventArgs e){
+			HugLoadFiles("ggml-org", "whisper-vad", ".bin");
+			tabControl1.SelectTab(3);
+		}
+		private void ComboVADModel_DropDown(object sender, EventArgs e){
+			if(!Directory.Exists(_modelsPath)) return;
+			PopulateWhisperModels(false, true);
+		}
+		private void PopulateWhisperModels(bool whisper, bool vad){
 			if (!ModelsFolderExists(false)) return;
 			UseWaitCursor = true;
 			try{
 				_whisperModels.Clear();
-				comboWhisperModel.Items.Clear();
+				if(whisper) comboWhisperModel.Items.Clear();
+				if(vad) comboVADModel.Items.Clear();
 				var files = Directory.GetFiles(_modelsPath, "*.bin", SearchOption.AllDirectories);
 				foreach(var file in files){
 					using(var fs = new FileStream(file, FileMode.Open, FileAccess.Read))
@@ -298,10 +318,17 @@ namespace LMStud{
 							continue;
 					}
 					_whisperModels.Add(file);
-					comboWhisperModel.Items.Add(Path.GetFileName(file));
+					if(whisper) comboWhisperModel.Items.Add(Path.GetFileName(file));
+					if(vad) comboVADModel.Items.Add(Path.GetFileName(file));
 				}
-				comboWhisperModel.SelectedIndex = comboWhisperModel.Items.IndexOf(Settings.Default.WhisperModel);
-				_whisperModelIndex = comboWhisperModel.SelectedIndex;
+				if(whisper){
+					comboWhisperModel.SelectedIndex = comboWhisperModel.Items.IndexOf(Settings.Default.WhisperModel);
+					_whisperModelIndex = comboWhisperModel.SelectedIndex;
+				}
+				if(vad){
+					comboVADModel.SelectedIndex = comboVADModel.Items.IndexOf(Settings.Default.VADModel);
+					_vadModelIndex = comboVADModel.SelectedIndex;
+				}
 			} finally{ UseWaitCursor = false; }
 		}
 	}

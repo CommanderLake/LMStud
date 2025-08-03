@@ -2,13 +2,6 @@
 #define SDL_MAIN_HANDLED
 #include "common-sdl.h"
 #include <whisper.h>
-#include <memory>
-#include <atomic>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <chrono>
-#include <functional>
 #pragma comment(lib, "winmm.lib")
 #pragma comment(lib, "imm32.lib")
 #pragma comment(lib, "version.lib")
@@ -23,115 +16,31 @@
 #endif
 #pragma comment(lib, "whisper.lib")
 #define EXPORT __declspec(dllexport)
-// Constants
-constexpr int DEFAULT_VOICE_DURATION = 10000;
-constexpr float DEFAULT_VAD_THRESHOLD = 1.5f;
-constexpr float DEFAULT_FREQ_THRESHOLD = 100.0f;
-constexpr float DEFAULT_WAKE_WORD_SIMILARITY = 0.8f;
-constexpr float DEFAULT_WHISPER_TEMP = 0.2f;
-constexpr int DEFAULT_SAMPLE_RATE = WHISPER_SAMPLE_RATE;
-constexpr int VAD_CHECK_DURATION = 2000;
-constexpr int VAD_LAST_MS = 1250;
-constexpr int MAX_TRANSCRIPTION_TIMEOUT_S = 30;
-using WhisperCallbackFn = void(*)(const char* transcription);
-using LogCallbackFn = void(*)(const char* message);
-// High-pass filter with state
-class HighPassFilter{
-	float _y = 0.0f;
-	bool _initialized = false;
-	float _lastInput = 0.0f;
-public:
-	void reset(){
-		_y = 0.0f;
-		_initialized = false;
-		_lastInput = 0.0f;
-	}
-	void process(std::vector<float>& data, float cutoff, float sampleRate){
-		if(data.empty()) return;
-		const float rc = 1.0f / (2.0f * M_PI * cutoff);
-		const float dt = 1.0f / sampleRate;
-		const float alpha = dt / (rc + dt);
-		if(!_initialized){
-			_y = data[0];
-			_lastInput = data[0];
-			_initialized = true;
-		}
-		for(size_t i = 0; i < data.size(); i++){
-			const float currentInput = data[i];
-			_y = alpha * (_y + currentInput - _lastInput);
-			data[i] = _y;
-			_lastInput = currentInput;
-		}
-	}
-};
-// Thread safe speech recognizer class
-class SpeechInput{
-	// Thread safety
-	std::mutex _configMutex;
-	std::mutex _callbackMutex;
-	std::atomic<bool> _transcriptionRunning{false};
-	std::thread _transcriptionThread;
-	std::condition_variable _configChanged;
-	// Whisper context and parameters
-	std::unique_ptr<whisper_context, decltype(&whisper_free)> _whisperCtx{nullptr, whisper_free};
-	whisper_full_params _wparams{};
-	// Audio capture
-	std::unique_ptr<audio_async> _audioCapture;
-	// Configuration (atomic for lock-free access)
-	std::atomic<int> _voiceDuration{DEFAULT_VOICE_DURATION};
-	std::atomic<float> _vadThreshold{DEFAULT_VAD_THRESHOLD};
-	std::atomic<float> _freqThreshold{DEFAULT_FREQ_THRESHOLD};
-	std::atomic<float> _wakeWordSimilarity{DEFAULT_WAKE_WORD_SIMILARITY};
-	std::atomic<float> _whisperTemp{DEFAULT_WHISPER_TEMP};
-	// Thread-safe string configuration
-	std::string _wakeCommand;
-	// Callbacks
-	WhisperCallbackFn _whisperCallback = nullptr;
-	LogCallbackFn _logCallback = nullptr;
-	// Audio processing
-	HighPassFilter _highPassFilter;
-	// Helper methods
-	void log(const std::string& message);
-	bool vadSimple(std::vector<float>& pcmf32, int sampleRate, int lastMs, float vadThold, float freqThold);
-	float calculateSimilarity(const std::string& s0, const std::string& s1);
-	std::vector<std::string> getWords(const std::string& s);
-	void transcriptionLoop();
-	std::string getWakeCommand();
-public:
-	SpeechInput() = default;
-	~SpeechInput();
-	// Non-copyable, non-movable
-	SpeechInput(const SpeechInput&) = delete;
-	SpeechInput& operator=(const SpeechInput&) = delete;
-	SpeechInput(SpeechInput&&) = delete;
-	SpeechInput& operator=(SpeechInput&&) = delete;
-	bool loadModel(const char* modelPath, int nThreads, bool useGPU);
-	void unloadModel();
-	bool startTranscription();
-	void stopTranscription();
-	void setCallback(WhisperCallbackFn cb);
-	void setLogCallback(LogCallbackFn cb);
-	void setWakeCommand(const char* wakeCmd);
-	void setVADThresholds(float vad, float freq);
-	void setWakeWordSimilarity(float similarity);
-	void setVoiceDuration(int voiceDuration);
-	void setWhisperTemp(float temp);
-	bool isRunning() const{ return _transcriptionRunning.load(); }
-};
-// Global instance
-inline std::unique_ptr<SpeechInput> gSpeechInput;
-// C API
-extern "C" {
-EXPORT void SetWhisperCallback(WhisperCallbackFn cb);
-EXPORT void SetLogCallback(LogCallbackFn cb);
-EXPORT bool LoadWhisperModel(const char* modelPath, int nThreads, bool useGPU);
-EXPORT bool StartSpeechTranscription();
-EXPORT void StopSpeechTranscription();
-EXPORT void UnloadWhisperModel();
-EXPORT void SetWakeCommand(const char* wakeCmd);
-EXPORT void SetVADThresholds(float vad, float freq);
-EXPORT void SetWakeWordSimilarity(float similarity);
-EXPORT void SetVoiceDuration(int voiceDuration);
-EXPORT void SetWhisperTemp(float temp);
-EXPORT bool IsTranscriptionRunning();
+inline int _voiceDuration = 10000;
+inline std::string _wakeCommand = "";
+inline float _vadThreshold = 0.5f;
+inline float _freqThreshold = 100.0f;
+inline float _wakeWordSim = 0.8f;
+inline float _temp = 0.2f;
+inline std::string _vadModel;
+inline std::atomic<bool> _transcriptionRunning(false);
+inline std::thread _transcriptionThread;
+typedef void(*WhisperCallbackFn)(const char* transcription);
+inline WhisperCallbackFn _whisperCallback = nullptr;
+inline whisper_context* _whisperCtx = nullptr;
+inline whisper_full_params _wparams = {};
+inline whisper_vad_context* _vadCtx = nullptr;
+inline whisper_vad_context_params _vadParams = {};
+inline audio_async* _audioCapture = nullptr;
+extern "C"{
+	EXPORT void SetWhisperCallback(WhisperCallbackFn cb);
+	EXPORT bool LoadWhisperModel(const char* modelPath, int nThreads, bool useGPU, bool useVAD, const char* vadModel);
+	EXPORT bool StartSpeechTranscription();
+	EXPORT void StopSpeechTranscription();
+	EXPORT void UnloadWhisperModel();
+	EXPORT void SetWakeCommand(const char* wakeCmd);
+	EXPORT void SetVADThresholds(float vad, float freq);
+	EXPORT void SetVoiceDuration(int voiceDuration);
+	EXPORT void SetWakeWordSimilarity(float similarity);
+	EXPORT void SetWhisperTemp(float temp);
 }

@@ -69,7 +69,7 @@ namespace LMStud{
 			NativeMethods.SetHWnd(Handle);
 			NativeMethods.CurlGlobalInit();
 			PopulateModels();
-			PopulateWhisperModels();
+			PopulateWhisperModels(true, true);
 			NativeMethods.BackendInit();
 			if(!Settings.Default.LoadAuto) return;
 			checkLoadAuto.Checked = true;
@@ -104,34 +104,40 @@ namespace LMStud{
 		}
 		private void CheckVoiceInput_CheckedChanged(object sender, EventArgs e){
 			if(checkVoiceInput.CheckState != CheckState.Unchecked){
-				if(_whisperModelIndex < 0 || !File.Exists(_whisperModels[_whisperModelIndex])){
+				if(_whisperModelIndex < 0 || _whisperModelIndex >= _whisperModels.Count || !File.Exists(_whisperModels[_whisperModelIndex])){
 					checkVoiceInput.Checked = false;
 					MessageBox.Show(this, "Whisper model not found", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Error);
 					tabControl1.SelectTab(1);
 					comboWhisperModel.Focus();
 					return;
 				}
-				if(_llModelLoaded){
-					if(!_whisperLoaded){
-						var result = NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU);
-						if(result){
-							_whisperLoaded = true;
-							_whisperCallback = WhisperCallback;
-							NativeMethods.SetWhisperCallback(_whisperCallback);
-						} else{
-							_whisperLoaded = false;
-							MessageBox.Show(this, "Error initialising whisper", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				if(_useWhisperVAD){
+					if(_vadModelIndex < 0 || _vadModelIndex >= _whisperModels.Count || !File.Exists(_whisperModels[_vadModelIndex])){
+						if(MessageBox.Show(this, "VAD model not found, use Basic VAD?", "LM Stud", MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation) != DialogResult.OK){
 							checkVoiceInput.Checked = false;
 							return;
 						}
+						radioBasicVAD.Checked = true;
+						_useWhisperVAD = Settings.Default.UseWhisperVAD = false;
+						Settings.Default.Save();
 					}
-					if(NativeMethods.StartSpeechTranscription()) return;
-					MessageBox.Show(this, "Error starting whisper transcription", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Error);
-					checkVoiceInput.Checked = false;
-				} else{
-					MessageBox.Show(this, "Load a model on the Models tab first", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-					checkVoiceInput.Checked = false;
 				}
+				if(!_whisperLoaded){
+					var result = NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU, _useWhisperVAD, _useWhisperVAD ? _whisperModels[_vadModelIndex] : "");
+					if(result){
+						_whisperLoaded = true;
+						_whisperCallback = WhisperCallback;
+						NativeMethods.SetWhisperCallback(_whisperCallback);
+					} else{
+						_whisperLoaded = false;
+						MessageBox.Show(this, "Error initialising whisper", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Error);
+						checkVoiceInput.Checked = false;
+						return;
+					}
+				}
+				if(NativeMethods.StartSpeechTranscription()) return;
+				MessageBox.Show(this, "Error starting whisper transcription", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				checkVoiceInput.Checked = false;
 			} else{
 				NativeMethods.StopSpeechTranscription();
 			}

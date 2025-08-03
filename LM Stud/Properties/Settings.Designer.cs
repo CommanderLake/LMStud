@@ -265,7 +265,7 @@ namespace LMStud.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1.5")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.5")]
         public decimal VadThreshold {
             get {
                 return ((decimal)(this["VadThreshold"]));
@@ -476,6 +476,30 @@ namespace LMStud.Properties {
             }
             set {
                 this["DateTimeEnable"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string VADModel {
+            get {
+                return ((string)(this["VADModel"]));
+            }
+            set {
+                this["VADModel"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool UseWhisperVAD {
+            get {
+                return ((bool)(this["UseWhisperVAD"]));
+            }
+            set {
+                this["UseWhisperVAD"] = value;
             }
         }
     }
