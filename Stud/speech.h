@@ -24,14 +24,14 @@
 #pragma comment(lib, "whisper.lib")
 #define EXPORT __declspec(dllexport)
 // Constants
-constexpr int DEFAULT_VOICE_DURATION = 60000;
-constexpr float DEFAULT_VAD_THRESHOLD = 0.6f;
+constexpr int DEFAULT_VOICE_DURATION = 10000;
+constexpr float DEFAULT_VAD_THRESHOLD = 1.5f;
 constexpr float DEFAULT_FREQ_THRESHOLD = 100.0f;
-constexpr float DEFAULT_WAKE_WORD_THRESHOLD = 0.8f;
+constexpr float DEFAULT_WAKE_WORD_SIMILARITY = 0.8f;
+constexpr float DEFAULT_WHISPER_TEMP = 0.2f;
 constexpr int DEFAULT_SAMPLE_RATE = WHISPER_SAMPLE_RATE;
 constexpr int VAD_CHECK_DURATION = 2000;
 constexpr int VAD_LAST_MS = 1250;
-constexpr int THREAD_SLEEP_MS = 100;
 constexpr int MAX_TRANSCRIPTION_TIMEOUT_S = 30;
 using WhisperCallbackFn = void(*)(const char* transcription);
 using LogCallbackFn = void(*)(const char* message);
@@ -81,7 +81,8 @@ class SpeechInput{
 	std::atomic<int> _voiceDuration{DEFAULT_VOICE_DURATION};
 	std::atomic<float> _vadThreshold{DEFAULT_VAD_THRESHOLD};
 	std::atomic<float> _freqThreshold{DEFAULT_FREQ_THRESHOLD};
-	std::atomic<float> _wakeWordThreshold{DEFAULT_WAKE_WORD_THRESHOLD};
+	std::atomic<float> _wakeWordSimilarity{DEFAULT_WAKE_WORD_SIMILARITY};
+	std::atomic<float> _whisperTemp{DEFAULT_WHISPER_TEMP};
 	// Thread-safe string configuration
 	std::string _wakeCommand;
 	// Callbacks
@@ -92,7 +93,6 @@ class SpeechInput{
 	// Helper methods
 	void log(const std::string& message);
 	bool vadSimple(std::vector<float>& pcmf32, int sampleRate, int lastMs, float vadThold, float freqThold);
-	void normalizeAudio(std::vector<float>& data);
 	float calculateSimilarity(const std::string& s0, const std::string& s1);
 	std::vector<std::string> getWords(const std::string& s);
 	void transcriptionLoop();
@@ -112,13 +112,14 @@ public:
 	void setCallback(WhisperCallbackFn cb);
 	void setLogCallback(LogCallbackFn cb);
 	void setWakeCommand(const char* wakeCmd);
-	void setVADThresholds(float vadThreshold, float freqThreshold);
-	void setWakeWordThreshold(float threshold);
+	void setVADThresholds(float vad, float freq);
+	void setWakeWordSimilarity(float similarity);
 	void setVoiceDuration(int voiceDuration);
+	void setWhisperTemp(float temp);
 	bool isRunning() const{ return _transcriptionRunning.load(); }
 };
 // Global instance
-inline std::unique_ptr<SpeechInput> g_speechRecognizer;
+inline std::unique_ptr<SpeechInput> gSpeechInput;
 // C API
 extern "C" {
 EXPORT void SetWhisperCallback(WhisperCallbackFn cb);
@@ -128,8 +129,9 @@ EXPORT bool StartSpeechTranscription();
 EXPORT void StopSpeechTranscription();
 EXPORT void UnloadWhisperModel();
 EXPORT void SetWakeCommand(const char* wakeCmd);
-EXPORT void SetVADThresholds(float vadThreshold, float freqThreshold);
-EXPORT void SetWakeWordThreshold(float threshold);
+EXPORT void SetVADThresholds(float vad, float freq);
+EXPORT void SetWakeWordSimilarity(float similarity);
 EXPORT void SetVoiceDuration(int voiceDuration);
+EXPORT void SetWhisperTemp(float temp);
 EXPORT bool IsTranscriptionRunning();
 }

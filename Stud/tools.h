@@ -17,7 +17,7 @@ extern "C" {
 	EXPORT void SetGoogle(const char* apiKey, const char* searchEngineId, int resultCount);
 	EXPORT void ClearWebCache();
 	EXPORT void SetFileBaseDir(const char* dir);
-	EXPORT void RegisterTools(bool googleSearch, bool webpageFetch, bool fileList, bool fileCreate, bool fileRead, bool fileWrite);
+	EXPORT void RegisterTools(bool dateTime, bool googleSearch, bool webpageFetch, bool fileList, bool fileCreate, bool fileRead, bool fileWrite);
 }
 std::string GoogleSearch(const char* query);
 std::string GetWebpage(const char* argsJson);

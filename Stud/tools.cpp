@@ -438,9 +438,9 @@ std::string ApplyPatchTool(const char* argsJson){
 	}
 	return "{\"result\":\"success\"}";
 }
-void RegisterTools(const bool googleSearch, const bool webpageFetch, const bool fileList, const bool fileCreate, const bool fileRead, const bool fileWrite){
+void RegisterTools(const bool dateTime, const bool googleSearch, const bool webpageFetch, const bool fileList, const bool fileCreate, const bool fileRead, const bool fileWrite){
 	ClearTools();
-	AddTool("get_datetime", "Return local date and time", "{\"type\":\"object\"}", GetLongDateTime);
+	if(dateTime) AddTool("get_datetime", "Return local date and time", "{\"type\":\"object\"}", GetLongDateTime);
 	if(googleSearch){ AddTool("web_search", "Google search, JSON results, call get_webpage next.", "{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]}", GoogleSearch); }
 	if(webpageFetch){
 		AddTool("get_webpage", "Fetch page and preview <p>, <article> and <section> text, call get_webpage_text next", "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", GetWebpage);

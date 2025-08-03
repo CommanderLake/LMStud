@@ -36,9 +36,9 @@ namespace LMStud{
 			toolTip1.SetToolTip(textSystemPrompt, "Tell the AI who or what to be, how to respond, or provide initial context.");
 			toolTip1.SetToolTip(textModelsPath, "Path to the folder containing your .gguf model files.");
 			toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.");
-			toolTip1.SetToolTip(numGPULayers, "Number of layers to offload to GPU. More layers improve performance but increase GPU memory usage.");
+			toolTip1.SetToolTip(numGPULayers, "Number of layers to offload to GPU, more layers improve performance but increase GPU memory usage.");
 			toolTip1.SetToolTip(numTemp, "Temperature controls randomness. Lower values make responses more deterministic; higher values produce more creative outputs.");
-			toolTip1.SetToolTip(numNGen, "Number of tokens to generate per response (max length of the AI's reply).");
+			toolTip1.SetToolTip(numNGen, "Number of tokens to generate per response (max length of the AI's reply), -1 = no limit.");
 			toolTip1.SetToolTip(comboNUMAStrat, "NUMA (Non-Uniform Memory Access) strategy. Adjust if using multi-socket CPUs or specific memory configurations.");
 			toolTip1.SetToolTip(numRepPen, "Repetition penalty reduces repetitive outputs. Higher values strongly discourage repeated phrases.");
 			toolTip1.SetToolTip(numTopK, "Top-K sampling: limits token choice to the K most probable tokens, improving coherency.");
@@ -63,6 +63,7 @@ namespace LMStud{
 			toolTip1.SetToolTip(checkFileWriteEnable, "Enable the tool for writing to files under the base path.");
 			toolTip1.SetToolTip(textFileBasePath, "File access is relative to this path and canonically restricted to files and folders under this path only.");
 			toolTip1.SetToolTip(linkFileInstruction, "Set an instruction to optimize the way the assistant uses the file tools.");
+			toolTip1.SetToolTip(numWakeWordSimilarity, "Set how similar the detected wake word must be to activate transcription.");
 		}
 		private void Form1_Load(object sender, EventArgs e){
 			NativeMethods.SetHWnd(Handle);

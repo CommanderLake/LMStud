@@ -7,9 +7,9 @@ namespace LMStud{
 	internal partial class Form1{
 		private string _systemPrompt = "";
 		private string _modelsPath = "";
-		private int _ctxSize = 4096;
+		private int _ctxSize = 8192;
 		private int _gpuLayers = 32;
-		private float _temp = 0.7f;
+		private float _temp = 0.6f;
 		private int _nGen = -1;
 		private NativeMethods.GgmlNumaStrategy _numaStrat = 0;
 		private float _repPen = 1.1f;
@@ -23,9 +23,11 @@ namespace LMStud{
 		private int _nThreadsBatch = 8;
 		private int _whisperModelIndex;
 		private string _wakeWord;
-		private float _vadThreshold = 0.6f;
+		private float _wakeWordSimilarity = 0.8f;
+		private float _vadThreshold = 1.5f;
 		private float _freqThreshold = 100.0f;
 		private bool _whisperUseGPU;
+		private float _whisperTemp = 0.2f;
 		private bool _speak;
 		private bool _flashAttn = true;
 		private string _googleAPIKey;
@@ -38,6 +40,7 @@ namespace LMStud{
 		private bool _fileCreateEnable;
 		private bool _fileReadEnable;
 		private bool _fileWriteEnable;
+		private bool _dateTimeEnable;
 		private void LoadConfig(){
 			_systemPrompt = textSystemPrompt.Text = Settings.Default.SystemPrompt;
 			_modelsPath = textModelsPath.Text = Settings.Default.ModelsDir;
@@ -56,9 +59,11 @@ namespace LMStud{
 			_nThreads = (int)(numThreads.Value = Settings.Default.Threads);
 			_nThreadsBatch = (int)(numThreadsBatch.Value = Settings.Default.ThreadsBatch);
 			_wakeWord = textWakeWord.Text = Settings.Default.WakeWord;
+			_wakeWordSimilarity = (float)(numWakeWordSimilarity.Value = Settings.Default.WakeWordSimilarity);
 			_vadThreshold = (float)(numVadThreshold.Value = Settings.Default.VadThreshold);
 			_freqThreshold = (float)(numFreqThreshold.Value = Settings.Default.FreqThreshold);
 			_whisperUseGPU = checkWhisperUseGPU.Checked = Settings.Default.whisperUseGPU;
+			_whisperTemp = (float)(numWhisperTemp.Value = Settings.Default.WhisperTemp);
 			_speak = checkSpeak.Checked = Settings.Default.Speak;
 			_flashAttn = checkFlashAttn.Checked = Settings.Default.FlashAttn;
 			_googleAPIKey = textGoogleApiKey.Text = Settings.Default.GoogleAPIKey;
@@ -71,9 +76,12 @@ namespace LMStud{
 			_fileCreateEnable = checkFileCreateEnable.Checked = Settings.Default.FileCreateEnable;
 			_fileReadEnable = checkFileReadEnable.Checked = Settings.Default.FileReadEnable;
 			_fileWriteEnable = checkFileWriteEnable.Checked = Settings.Default.FileWriteEnable;
+			_dateTimeEnable = checkDateTimeEnable.Checked = Settings.Default.DateTimeEnable;
 			NativeMethods.SetFileBaseDir(_fileBaseDir);
 			NativeMethods.SetWakeCommand(_wakeWord);
 			NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
+			NativeMethods.SetWakeWordSimilarity(_wakeWordSimilarity);
+			NativeMethods.SetWhisperTemp(_whisperTemp);
 			NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID, _googleSearchResultCount);
 		}
 		private void UpdateSetting<T>(ref T currentValue, T newValue, Action<T> updateAction){
@@ -87,6 +95,7 @@ namespace LMStud{
 			var reloadSmpl = false;
 			var reloadWhisper = false;
 			var setVAD = false;
+			var setWWS = false;
 			var setGoogle = false;
 			var registerTools = false;
 			var setSystemPrompt = false;
@@ -161,6 +170,10 @@ namespace LMStud{
 				Settings.Default.WakeWord = value;
 				NativeMethods.SetWakeCommand(value);
 			});
+			UpdateSetting(ref _wakeWordSimilarity, (float)numWakeWordSimilarity.Value, value => {
+				Settings.Default.WakeWordSimilarity = numWakeWordSimilarity.Value;
+				setWWS = true;
+			});
 			UpdateSetting(ref _whisperUseGPU, checkWhisperUseGPU.Checked, value => {
 				Settings.Default.whisperUseGPU = value;
 				reloadWhisper = true;
@@ -172,6 +185,10 @@ namespace LMStud{
 			UpdateSetting(ref _freqThreshold, (float)numFreqThreshold.Value, value => {
 				Settings.Default.FreqThreshold = numFreqThreshold.Value;
 				setVAD = true;
+			});
+			UpdateSetting(ref _whisperTemp, (float)numWhisperTemp.Value, value => {
+				Settings.Default.WhisperTemp = numWhisperTemp.Value;
+				reloadWhisper = true;
 			});
 			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			UpdateSetting(ref _flashAttn, checkFlashAttn.Checked, value => {
@@ -218,6 +235,10 @@ namespace LMStud{
 				Settings.Default.FileWriteEnable = value;
 				registerTools = true;
 			});
+			UpdateSetting(ref _dateTimeEnable, checkDateTimeEnable.Checked, value => {
+				Settings.Default.DateTimeEnable = value;
+				registerTools = true;
+			});
 			Settings.Default.Save();
 			if(reloadModel && _llModelLoaded && MessageBox.Show(this, "A changed setting requires the model to be reloaded, reload now?", "LM Stud", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
 				LoadModel(_modelIndex, false);
@@ -226,6 +247,7 @@ namespace LMStud{
 				if(reloadSmpl) NativeMethods.CreateSampler(_minP, _topP, _topK, _temp, _repPen);
 			}
 			if(setVAD) NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
+			if(setWWS) NativeMethods.SetWakeWordSimilarity(_wakeWordSimilarity);
 			if(reloadWhisper && _whisperLoaded){
 				if(_whisperModelIndex < 0 || !File.Exists(_whisperModels[_whisperModelIndex])){
 					checkVoiceInput.Checked = false;
