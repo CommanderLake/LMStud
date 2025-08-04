@@ -28,6 +28,7 @@ int CreateContext(const int nCtx, const int nBatch, const bool flashAttn, const 
 	ctxParams.n_threads_batch = nThreadsBatch;
 	_session.ctx = llama_init_from_model(_llModel, ctxParams);
 	if(!_session.ctx) MessageBoxA(_hWnd, "Unable to create context", "LM Stud", MB_ICONERROR);
+	_session.llMem = llama_get_memory(_session.ctx);
 	RetokenizeChat(true);
 	return _session.ctx ? 0 : -1;
 }
@@ -115,9 +116,9 @@ bool HasTool(const char* name){
 }
 void SetTokenCallback(const TokenCallbackFn cb){ _tokenCb = cb; }
 void SetThreadCount(const int n, const int nBatch){ if(_session.ctx) llama_set_n_threads(_session.ctx, n, nBatch); }
-int LlamaMemSize(llama_memory_t llMem, llama_seq_id seqId){
-	const int nCtxPosMin = llama_memory_seq_pos_min(llMem, seqId);
-	const int nCtxPosMax = llama_memory_seq_pos_max(llMem, seqId);
+int LlamaMemSize(){
+	const int nCtxPosMin = llama_memory_seq_pos_min(_session.llMem, 0);
+	const int nCtxPosMax = llama_memory_seq_pos_max(_session.llMem, 0);
 	return nCtxPosMax - nCtxPosMin + 1;
 }
 bool RetokenizeChat(bool rebuildMemory = false){
@@ -147,12 +148,11 @@ bool RetokenizeChat(bool rebuildMemory = false){
 	llama_tokenize(_vocab, chatData.prompt.c_str(), chatData.prompt.size(), promptTokens.data(), promptTokens.size(), true, true);
 	size_t prefix = 0;
 	while(prefix < _session.cachedTokens.size() && prefix < promptTokens.size() && _session.cachedTokens[prefix] == promptTokens[prefix]){ ++prefix; }
-	llama_memory_t mem = llama_get_memory(_session.ctx);
-	const bool canShift = llama_memory_can_shift(mem);
+	const bool canShift = llama_memory_can_shift(_session.llMem);
 	if(rebuildMemory){
-		if(prefix == 0 || LlamaMemSize(mem, 0) < static_cast<llama_pos>(prefix - 1)){
+		if(prefix == 0 || LlamaMemSize() < static_cast<llama_pos>(prefix - 1)){
 			prefix = 0;
-			llama_memory_clear(mem, true);
+			llama_memory_clear(_session.llMem, true);
 		}
 	}
 	const size_t oldSz = _session.cachedTokens.size();
@@ -167,14 +167,14 @@ bool RetokenizeChat(bool rebuildMemory = false){
 	}
 	if(prefix == oldSize && oldSize == newSize){ return true; }
 	if(canShift && suffix > 0){
-		if(prefix < oldSize - suffix){ llama_memory_seq_rm(mem, 0, prefix, oldSize - suffix); }
+		if(prefix < oldSize - suffix){ llama_memory_seq_rm(_session.llMem, 0, prefix, oldSize - suffix); }
 		if(oldSize != newSize){
 			const int delta = static_cast<int>(newSize) - static_cast<int>(oldSize);
-			llama_memory_seq_add(mem, 0, oldSize - suffix, -1, delta);
+			llama_memory_seq_add(_session.llMem, 0, oldSize - suffix, -1, delta);
 		}
 	} else{
 		suffix = 0;
-		if(prefix < oldSize){ llama_memory_seq_rm(mem, 0, prefix, -1); }
+		if(prefix < oldSize){ llama_memory_seq_rm(_session.llMem, 0, prefix, -1); }
 	}
 	llama_sampler_reset(_session.smpl);
 	for(size_t i = 0; i < prefix; ++i){ llama_sampler_accept(_session.smpl, promptTokens[i]); }
@@ -306,7 +306,7 @@ static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft
 					std::vector<llama_token> v2(m);
 					llama_tokenize(_vocab, open.c_str(), open.size(), v2.data(), m, true, true);
 					llama_batch lb = llama_batch_get_one(v2.data(), m);
-					if(LlamaMemSize(llMem, 0) + lb.n_tokens > llama_n_ctx(_session.ctx)) return true;
+					if(LlamaMemSize() + lb.n_tokens > llama_n_ctx(_session.ctx)) return true;
 					if(llama_decode(_session.ctx, lb) != 0) return true;
 					for(auto t2 : v2) llama_sampler_accept(_session.smpl, t2);
 					newTokens.insert(newTokens.end(), v2.begin(), v2.end());
@@ -321,7 +321,7 @@ static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft
 				for(size_t i = 0; i < v.size();){
 					int b = std::min<int>(_session.nBatch, v.size() - i);
 					llama_batch lb = llama_batch_get_one(&v[i], b);
-					if(LlamaMemSize(llMem, 0) + lb.n_tokens > llama_n_ctx(_session.ctx)) return true;
+					if(LlamaMemSize() + lb.n_tokens > llama_n_ctx(_session.ctx)) return true;
 					if(llama_decode(_session.ctx, lb) != 0) return true;
 					for(int k = 0; k < b; ++k) llama_sampler_accept(_session.smpl, v[i + k]);
 					i += b;
@@ -335,7 +335,7 @@ static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft
 				std::vector<llama_token> v2(m);
 				llama_tokenize(_vocab, close.c_str(), close.size(), v2.data(), m, true, true);
 				llama_batch lb = llama_batch_get_one(v2.data(), m);
-				if(LlamaMemSize(llMem, 0) + lb.n_tokens > llama_n_ctx(_session.ctx)) return true;
+				if(LlamaMemSize() + lb.n_tokens > llama_n_ctx(_session.ctx)) return true;
 				if(llama_decode(_session.ctx, lb) != 0) return true;
 				for(auto t2 : v2) llama_sampler_accept(_session.smpl, t2);
 				newTokens.insert(newTokens.end(), v2.begin(), v2.end());
@@ -345,7 +345,7 @@ static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft
 		if(_tokenCb && cbOn){
 			_session.syntax.parse_tool_calls = false;
 			auto msg = common_chat_parse(response, true, _session.syntax);
-			cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), 1, LlamaMemSize(llMem, 0), ftTime, 0);
+			cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), 1, LlamaMemSize(), ftTime, 0);
 			return true;
 		}
 	}
@@ -355,7 +355,6 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const int 
 	const auto prepStart = HrClock::now();
 	_stop.store(false);
 	const TokenCallbackFn cb = _tokenCb;
-	const auto llMem = llama_get_memory(_session.ctx);
 	const size_t chatStart = _session.chatMsgs.size();
 	for(auto& message : messages){
 		const auto formatted = common_chat_format_single(_chatTemplates.get(), _session.chatMsgs, message, !message.role._Equal("assistant"), _session.useJinja && message.role._Equal("assistant"));
@@ -371,7 +370,7 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const int 
 			const int nEval = std::min<int>(_session.nBatch, promptTokens.size() - p);
 			llama_batch batch = llama_batch_get_one(&promptTokens[p], nEval);
 			const int nCtx = llama_n_ctx(_session.ctx);
-			const int nCtxUsed = LlamaMemSize(llMem, 0);
+			const int nCtxUsed = LlamaMemSize();
 			if(nCtxUsed + batch.n_tokens > nCtx){
 				MessageBoxA(_hWnd, "Context size exceeded", "LM Stud", MB_ICONEXCLAMATION);
 				_session.chatMsgs.pop_back();
@@ -417,11 +416,11 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const int 
 		if(cb && callback && !tokenStr.empty()){
 			_session.syntax.parse_tool_calls = false;
 			msg = common_chat_parse(response, true, _session.syntax);
-			cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), 1, LlamaMemSize(llMem, 0), ftTime, 0);
+			cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), 1, LlamaMemSize(), ftTime, 0);
 		}
 		auto batch = llama_batch_get_one(&newTokenId, 1);
 		const int nCtx = llama_n_ctx(_session.ctx);
-		const int nCtxUsed = LlamaMemSize(llMem, 0);
+		const int nCtxUsed = LlamaMemSize();
 		if(nCtxUsed + batch.n_tokens > nCtx){
 			MessageBoxA(_hWnd, "Context size exceeded", "LM Stud", MB_ICONEXCLAMATION);
 			_session.chatMsgs.resize(chatStart + messages.size());
@@ -437,13 +436,13 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const int 
 			return msg;
 		}
 		llama_sampler_accept(_session.smpl, newTokenId);
-		if(_hasTools) doTool(tokenStr, tool, callback, ftTime, prepStart, llMem, response, newTokens, cb);
+		if(_hasTools) doTool(tokenStr, tool, callback, ftTime, prepStart, _session.llMem, response, newTokens, cb);
 	}
 	_session.syntax.parse_tool_calls = false;
 	msg = common_chat_parse(response, false, _session.syntax);
 	_session.chatMsgs.push_back(msg);
 	_session.cachedTokens.insert(_session.cachedTokens.end(), newTokens.begin(), newTokens.end());
-	if(cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(llMem, 0), ftTime, 0);
+	if(cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(), ftTime, 0);
 	//OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
 	return msg;
 }
@@ -465,7 +464,6 @@ void GenerateWithTools(const MessageRole role, const char* prompt, const int nPr
 	}
 	bool toolCalled = role == MessageRole::Tool;
 	const TokenCallbackFn cb = _tokenCb;
-	const auto llMem = llama_get_memory(_session.ctx);
 	do{
 		msg = Generate(msgs, nPredict, callback);
 		toolCalled = false;
@@ -486,7 +484,7 @@ void GenerateWithTools(const MessageRole role, const char* prompt, const int nPr
 				auto it = _toolHandlers.find(tool.name);
 				if(it != _toolHandlers.end()){
 					auto toolMsg = it->second(tool.arguments.c_str());
-					if(cb) cb(nullptr, 0, toolMsg.c_str(), static_cast<int>(toolMsg.length()), 0, LlamaMemSize(llMem, 0), 0, 1);
+					if(cb) cb(nullptr, 0, toolMsg.c_str(), static_cast<int>(toolMsg.length()), 0, LlamaMemSize(), 0, 1);
 					msgs.push_back(common_chat_msg());
 					msgs.back().role = "tool";
 					msgs.back().content = toolMsg;

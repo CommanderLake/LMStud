@@ -21,6 +21,7 @@ enum class MessageRole{
 struct ChatSession{
 	llama_context* ctx = nullptr;
 	llama_sampler* smpl = nullptr;
+	llama_memory_t llMem;
 	std::vector<common_chat_msg> chatMsgs;
 	std::vector<llama_token> cachedTokens;
 	std::string prompt;
@@ -58,6 +59,7 @@ extern "C" {
 	EXPORT bool HasTool(const char* name);
 	EXPORT void SetTokenCallback(TokenCallbackFn cb);
 	EXPORT void SetThreadCount(int n, int nBatch);
+	EXPORT int LlamaMemSize();
 	EXPORT bool RetokenizeChat(bool rebuildMemory);
 	EXPORT bool SetSystemPrompt(const char* prompt, const char* toolsPrompt);
 	EXPORT bool SetMessageAt(int index, const char* think, const char* message);

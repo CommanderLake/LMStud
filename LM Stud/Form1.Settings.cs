@@ -15,7 +15,7 @@ namespace LMStud{
 		private float _repPen = 1.1f;
 		private int _topK = 40;
 		private float _topP = 0.95f;
-		private float _minP = 0.0f;
+		private float _minP;
 		private int _batchSize = 512;
 		private bool _mMap = true;
 		private bool _mLock;
@@ -250,7 +250,7 @@ namespace LMStud{
 				Settings.Default.DateTimeEnable = value;
 				registerTools = true;
 			});
-			if(reloadModel && _llModelLoaded && MessageBox.Show(this, "A changed setting requires the model to be reloaded, reload now?", "LM Stud", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+			if(reloadModel && _llModelLoaded && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
 				LoadModel(_modelIndex, false);
 			else{
 				if(reloadCtx) NativeMethods.CreateContext(_cntCtxMax, _batchSize, _flashAttn, _nThreads, _nThreadsBatch);
@@ -261,7 +261,7 @@ namespace LMStud{
 			if(reloadWhisper && _whisperLoaded){
 				if(_whisperModelIndex < 0 || !File.Exists(_whisperModels[_whisperModelIndex])){
 					checkVoiceInput.Checked = false;
-					MessageBox.Show(this, "Whisper model not found", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					MessageBox.Show(this, Resources.Whisper_model_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 				} else{
 					if(checkVoiceInput.CheckState != CheckState.Unchecked) NativeMethods.StopSpeechTranscription();
 					NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU, _useWhisperVAD, _whisperModels[_vadModelIndex]);
@@ -280,7 +280,7 @@ namespace LMStud{
 			if(e.KeyCode != Keys.Enter) return;
 			var path = textModelsPath.Text.Trim();
 			if(Directory.Exists(path)) textModelsPath.Text = path;
-			else MessageBox.Show(this, "Folder not found", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			else MessageBox.Show(this, Resources.Folder_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}
 		private void ComboWhisperModel_DropDown(object sender, EventArgs e){
 			if(!Directory.Exists(_modelsPath)) return;
@@ -294,7 +294,7 @@ namespace LMStud{
 			textSystemPrompt.SelectAll();
 			textSystemPrompt.Paste("The list directory and file tools operate relative to a base directory.\r\nUse list directory with an empty path before using the file tools to help with coding tasks throughout my project.\r\nAlways read a file and verify its contents before making changes.");
 		}
-        private void butDownloadVADModel_Click(object sender, EventArgs e){
+		private void butDownloadVADModel_Click(object sender, EventArgs e){
 			HugLoadFiles("ggml-org", "whisper-vad", ".bin");
 			tabControl1.SelectTab(3);
 		}

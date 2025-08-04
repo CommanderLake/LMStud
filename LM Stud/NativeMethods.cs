@@ -34,6 +34,8 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetThreadCount(int n, int nBatch);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern int LlamaMemSize();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern bool RetokenizeChat(bool rebuildMemory);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern bool SetSystemPrompt([MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, [MarshalAs(UnmanagedType.LPUTF8Str)] string toolsPrompt);

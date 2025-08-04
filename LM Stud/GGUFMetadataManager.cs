@@ -31,9 +31,9 @@ namespace LMStud{
 				if(magic != 0x46554747)// "GGUF" in little-endian
 					return null;
 				// Read version (not used here, but must be consumed)
-				var version = br.ReadUInt32();
+				br.ReadUInt32();
 				// Read counts
-				var tensorCount = br.ReadUInt64();// not used here, but must be consumed
+				br.ReadUInt64();
 				var metadataCount = br.ReadUInt64();
 				metadata.Capacity = (int)metadataCount;
 				// Read each metadata entry

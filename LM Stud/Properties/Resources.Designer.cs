@@ -61,12 +61,301 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0}/{1}{2}.
+        /// </summary>
+        internal static string _0___1__2_ {
+            get {
+                return ResourceManager.GetString("_0___1__2_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0:F2} Tok/s.
+        /// </summary>
+        internal static string _0_F2__Tok_s {
+            get {
+                return ResourceManager.GetString("_0_F2__Tok_s", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  s.
+        /// </summary>
+        internal static string _s {
+            get {
+                return ResourceManager.GetString("_s", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  Tokens.
+        /// </summary>
+        internal static string _Tokens {
+            get {
+                return ResourceManager.GetString("_Tokens", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A changed setting requires the model to be reloaded, reload now?.
+        /// </summary>
+        internal static string A_changed_setting_requires_the_model_to_be_reloaded__reload_now_ {
+            get {
+                return ResourceManager.GetString("A_changed_setting_requires_the_model_to_be_reloaded__reload_now_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cancel.
+        /// </summary>
+        internal static string Cancel {
+            get {
+                return ResourceManager.GetString("Cancel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Conversation too long for context.
+        /// </summary>
+        internal static string Conversation_too_long_for_context {
+            get {
+                return ResourceManager.GetString("Conversation_too_long_for_context", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Done loading: .
+        /// </summary>
+        internal static string Done_loading__ {
+            get {
+                return ResourceManager.GetString("Done_loading__", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Download.
+        /// </summary>
+        internal static string Download {
+            get {
+                return ResourceManager.GetString("Download", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Download failed: {0}.
+        /// </summary>
+        internal static string Download_failed___0_ {
+            get {
+                return ResourceManager.GetString("Download_failed___0_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Download failed with error code: {0}.
+        /// </summary>
+        internal static string Download_failed_with_error_code___0_ {
+            get {
+                return ResourceManager.GetString("Download_failed_with_error_code___0_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Downloaded {0} to:
+        ///{1}.
+        /// </summary>
+        internal static string Downloaded__0__to___1_ {
+            get {
+                return ResourceManager.GetString("Downloaded__0__to___1_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error initialising whisper.
+        /// </summary>
+        internal static string Error_initialising_whisper {
+            get {
+                return ResourceManager.GetString("Error_initialising_whisper", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error loading files for {0}: {1}.
+        /// </summary>
+        internal static string Error_loading_files_for__0____1_ {
+            get {
+                return ResourceManager.GetString("Error_loading_files_for__0____1_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error reading file: {0}.
+        /// </summary>
+        internal static string Error_reading_file___0_ {
+            get {
+                return ResourceManager.GetString("Error_reading_file___0_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error setting system prompt, maybe the context is too big.
+        /// </summary>
+        internal static string Error_setting_system_prompt__maybe_the_context_is_too_big {
+            get {
+                return ResourceManager.GetString("Error_setting_system_prompt__maybe_the_context_is_too_big", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error starting whisper transcription.
+        /// </summary>
+        internal static string Error_starting_whisper_transcription {
+            get {
+                return ResourceManager.GetString("Error_starting_whisper_transcription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to create directory: {0}.
+        /// </summary>
+        internal static string Failed_to_create_directory___0_ {
+            get {
+                return ResourceManager.GetString("Failed_to_create_directory___0_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to First token time: .
+        /// </summary>
+        internal static string First_token_time__ {
+            get {
+                return ResourceManager.GetString("First_token_time__", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Folder not found.
+        /// </summary>
+        internal static string Folder_not_found {
+            get {
+                return ResourceManager.GetString("Folder_not_found", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Generate.
+        /// </summary>
+        internal static string Generate {
+            get {
+                return ResourceManager.GetString("Generate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to HTTP Error loading files for {0}: {1}.
+        /// </summary>
+        internal static string HTTP_Error_loading_files_for__0____1_ {
+            get {
+                return ResourceManager.GetString("HTTP_Error_loading_files_for__0____1_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to JSON Parse Error for {0}: {1}.
+        /// </summary>
+        internal static string JSON_Parse_Error_for__0____1_ {
+            get {
+                return ResourceManager.GetString("JSON_Parse_Error_for__0____1_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LM Stud.
+        /// </summary>
+        internal static string LM_Stud {
+            get {
+                return ResourceManager.GetString("LM_Stud", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
         internal static System.Drawing.Icon LM_Stud_256 {
             get {
                 object obj = ResourceManager.GetObject("LM_Stud_256", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Loading: .
+        /// </summary>
+        internal static string Loading__ {
+            get {
+                return ResourceManager.GetString("Loading__", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Model search error: {0}.
+        /// </summary>
+        internal static string Model_search_error___0_ {
+            get {
+                return ResourceManager.GetString("Model_search_error___0_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Model unloaded.
+        /// </summary>
+        internal static string Model_unloaded {
+            get {
+                return ResourceManager.GetString("Model_unloaded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Models folder not found, please specify a valid folder in the Settings tab.
+        /// </summary>
+        internal static string Models_folder_not_found__please_specify_a_valid_folder_in_the_Settings_tab {
+            get {
+                return ResourceManager.GetString("Models_folder_not_found__please_specify_a_valid_folder_in_the_Settings_tab", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please select an item from both lists..
+        /// </summary>
+        internal static string Please_select_an_item_from_both_lists_ {
+            get {
+                return ResourceManager.GetString("Please_select_an_item_from_both_lists_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Stop.
+        /// </summary>
+        internal static string Stop {
+            get {
+                return ResourceManager.GetString("Stop", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to VAD model not found, use Basic VAD?.
+        /// </summary>
+        internal static string VAD_model_not_found__use_Basic_VAD_ {
+            get {
+                return ResourceManager.GetString("VAD_model_not_found__use_Basic_VAD_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Whisper model not found.
+        /// </summary>
+        internal static string Whisper_model_not_found {
+            get {
+                return ResourceManager.GetString("Whisper_model_not_found", resourceCulture);
             }
         }
     }

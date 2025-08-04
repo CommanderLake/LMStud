@@ -121,4 +121,104 @@
   <data name="LM_Stud_256" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\LM Stud 256.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+<data name="LM_Stud" xml:space="preserve">
+	<value>LM Stud</value>
+</data>
+<data name="Whisper_model_not_found" xml:space="preserve">
+	<value>Whisper model not found</value>
+</data>
+<data name="VAD_model_not_found__use_Basic_VAD_" xml:space="preserve">
+	<value>VAD model not found, use Basic VAD?</value>
+</data>
+<data name="Error_initialising_whisper" xml:space="preserve">
+	<value>Error initialising whisper</value>
+</data>
+<data name="Error_starting_whisper_transcription" xml:space="preserve">
+	<value>Error starting whisper transcription</value>
+</data>
+<data name="Conversation_too_long_for_context" xml:space="preserve">
+	<value>Conversation too long for context</value>
+</data>
+<data name="Generate" xml:space="preserve">
+	<value>Generate</value>
+</data>
+<data name="_0_F2__Tok_s" xml:space="preserve">
+	<value>{0:F2} Tok/s</value>
+	<comment>Tokens per second</comment>
+</data>
+<data name="First_token_time__" xml:space="preserve">
+	<value>First token time: </value>
+	<comment>aka. time to first token</comment>
+</data>
+<data name="_Tokens" xml:space="preserve">
+	<value> Tokens</value>
+</data>
+<data name="_s" xml:space="preserve">
+	<value> s</value>
+	<comment>Short for seconds</comment>
+</data>
+<data name="Error_reading_file___0_" xml:space="preserve">
+	<value>Error reading file: {0}</value>
+</data>
+<data name="Stop" xml:space="preserve">
+	<value>Stop</value>
+</data>
+<data name="Please_select_an_item_from_both_lists_" xml:space="preserve">
+	<value>Please select an item from both lists.</value>
+</data>
+<data name="Cancel" xml:space="preserve">
+	<value>Cancel</value>
+</data>
+<data name="Model_search_error___0_" xml:space="preserve">
+	<value>Model search error: {0}</value>
+</data>
+<data name="HTTP_Error_loading_files_for__0____1_" xml:space="preserve">
+	<value>HTTP Error loading files for {0}: {1}</value>
+</data>
+<data name="JSON_Parse_Error_for__0____1_" xml:space="preserve">
+	<value>JSON Parse Error for {0}: {1}</value>
+</data>
+<data name="Error_loading_files_for__0____1_" xml:space="preserve">
+	<value>Error loading files for {0}: {1}</value>
+</data>
+<data name="Failed_to_create_directory___0_" xml:space="preserve">
+	<value>Failed to create directory: {0}</value>
+</data>
+<data name="Downloaded__0__to___1_" xml:space="preserve">
+	<value>Downloaded {0} to:
+{1}</value>
+</data>
+<data name="Download_failed_with_error_code___0_" xml:space="preserve">
+	<value>Download failed with error code: {0}</value>
+</data>
+<data name="Download_failed___0_" xml:space="preserve">
+	<value>Download failed: {0}</value>
+</data>
+<data name="Download" xml:space="preserve">
+	<value>Download</value>
+</data>
+<data name="_0___1__2_" xml:space="preserve">
+	<value>{0}/{1}{2}</value>
+</data>
+<data name="Models_folder_not_found__please_specify_a_valid_folder_in_the_Settings_tab" xml:space="preserve">
+	<value>Models folder not found, please specify a valid folder in the Settings tab</value>
+</data>
+<data name="Error_setting_system_prompt__maybe_the_context_is_too_big" xml:space="preserve">
+	<value>Error setting system prompt, maybe the context is too big</value>
+</data>
+<data name="Loading__" xml:space="preserve">
+	<value>Loading: </value>
+</data>
+<data name="Done_loading__" xml:space="preserve">
+	<value>Done loading: </value>
+</data>
+<data name="Model_unloaded" xml:space="preserve">
+	<value>Model unloaded</value>
+</data>
+<data name="A_changed_setting_requires_the_model_to_be_reloaded__reload_now_" xml:space="preserve">
+	<value>A changed setting requires the model to be reloaded, reload now?</value>
+</data>
+<data name="Folder_not_found" xml:space="preserve">
+	<value>Folder not found</value>
+</data>
 </root>

@@ -1,4 +1,5 @@
-﻿namespace LMStud
+﻿using LMStud.Properties;
+namespace LMStud
 {
 	internal partial class Form1
     {
@@ -346,7 +347,7 @@
 			this.butGen.Name = "butGen";
 			this.butGen.Size = new System.Drawing.Size(75, 23);
 			this.butGen.TabIndex = 1;
-			this.butGen.Text = "Generate";
+			this.butGen.Text = Resources.Generate;
 			this.butGen.UseVisualStyleBackColor = true;
 			this.butGen.Click += new System.EventHandler(this.ButGen_Click);
 			// 
@@ -1725,7 +1726,7 @@
 			this.butDownload.Name = "butDownload";
 			this.butDownload.Size = new System.Drawing.Size(75, 23);
 			this.butDownload.TabIndex = 2;
-			this.butDownload.Text = "Download";
+			this.butDownload.Text = Resources.Download;
 			this.butDownload.UseVisualStyleBackColor = true;
 			this.butDownload.Click += new System.EventHandler(this.ButDownload_Click);
 			// 
@@ -1821,7 +1822,7 @@
 			this.KeyPreview = true;
 			this.Name = "Form1";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-			this.Text = "LM Stud";
+			this.Text = Resources.LM_Stud;
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
 			this.Load += new System.EventHandler(this.Form1_Load);
 			this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);

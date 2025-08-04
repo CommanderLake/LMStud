@@ -111,14 +111,14 @@ namespace LMStud{
 			if(checkVoiceInput.CheckState != CheckState.Unchecked){
 				if(_whisperModelIndex < 0 || _whisperModelIndex >= _whisperModels.Count || !File.Exists(_whisperModels[_whisperModelIndex])){
 					checkVoiceInput.Checked = false;
-					MessageBox.Show(this, "Whisper model not found", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					MessageBox.Show(this, Resources.Whisper_model_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 					tabControl1.SelectTab(1);
 					comboWhisperModel.Focus();
 					return;
 				}
-				if(_useWhisperVAD){
+				if(_useWhisperVAD)
 					if(_vadModelIndex < 0 || _vadModelIndex >= _whisperModels.Count || !File.Exists(_whisperModels[_vadModelIndex])){
-						if(MessageBox.Show(this, "VAD model not found, use Basic VAD?", "LM Stud", MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation) != DialogResult.OK){
+						if(MessageBox.Show(this, Resources.VAD_model_not_found__use_Basic_VAD_, Resources.LM_Stud, MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation) != DialogResult.OK){
 							checkVoiceInput.Checked = false;
 							return;
 						}
@@ -126,7 +126,6 @@ namespace LMStud{
 						_useWhisperVAD = Settings.Default.UseWhisperVAD = false;
 						Settings.Default.Save();
 					}
-				}
 				if(!_whisperLoaded){
 					var result = NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU, _useWhisperVAD, _useWhisperVAD ? _whisperModels[_vadModelIndex] : "");
 					if(result){
@@ -135,13 +134,13 @@ namespace LMStud{
 						NativeMethods.SetWhisperCallback(_whisperCallback);
 					} else{
 						_whisperLoaded = false;
-						MessageBox.Show(this, "Error initialising whisper", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Error);
+						MessageBox.Show(this, Resources.Error_initialising_whisper, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 						checkVoiceInput.Checked = false;
 						return;
 					}
 				}
 				if(NativeMethods.StartSpeechTranscription()) return;
-				MessageBox.Show(this, "Error starting whisper transcription", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				MessageBox.Show(this, Resources.Error_starting_whisper_transcription, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 				checkVoiceInput.Checked = false;
 			} else{
 				NativeMethods.StopSpeechTranscription();
@@ -162,7 +161,7 @@ namespace LMStud{
 			foreach(var message in _chatMessages) message.Dispose();
 			panelChat.ResumeLayout();
 			_chatMessages.Clear();
-			labelTokens.Text = "0 Tokens";
+			labelTokens.Text = NativeMethods.LlamaMemSize() + Resources._Tokens;
 		}
 		private void TextInput_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.Enter || e.Control || e.Shift || !butGen.Enabled) return;
@@ -181,7 +180,7 @@ namespace LMStud{
 			var ok = NativeMethods.RemoveMessageAt(id);
 			_chatMessages[id].Dispose();
 			_chatMessages.RemoveAt(id);
-			if(!ok) MessageBox.Show(this, "Conversation too long for context", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+			if(!ok) MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 		}
 		private void MsgButRegenOnClick(ChatMessage cm){
 			if(!_llModelLoaded || _generating) return;
@@ -198,7 +197,7 @@ namespace LMStud{
 				_chatMessages.RemoveAt(i);
 			}
 			if(!ok){
-				MessageBox.Show(this, "Conversation too long for context", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+				MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 				return;
 			}
 			Generate(role, msg);
@@ -219,7 +218,7 @@ namespace LMStud{
 			var idx = _chatMessages.IndexOf(cm);
 			if(cm.checkThink.Checked) cm.Think = cm.richTextMsg.Text;
 			else cm.Message = cm.richTextMsg.Text;
-			if(!NativeMethods.SetMessageAt(idx, cm.Think, cm.Message)) MessageBox.Show(this, "Conversation too long for context", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+			if(!NativeMethods.SetMessageAt(idx, cm.Think, cm.Message)) MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 			cm.Editing = false;
 			cm.Markdown = checkMarkdown.Checked;
 		}
@@ -248,10 +247,10 @@ namespace LMStud{
 			if(!_llModelLoaded || _generating || string.IsNullOrWhiteSpace(prompt)) return;
 			_generating = true;
 			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
-			butGen.Text = "Stop";
+			butGen.Text = Resources.Stop;
 			butReset.Enabled = butApply.Enabled = false;
 			var newMsg = prompt.Trim();
-			var cm = AddMessage(role, newMsg);
+			AddMessage(role, newMsg);
 			_cntAssMsg = null;
 			foreach(var message in _chatMessages) message.Generating = true;
 			_tts.SpeakAsyncCancelAll();
@@ -274,11 +273,11 @@ namespace LMStud{
 						var elapsed = _swTot.Elapsed.TotalSeconds;
 						if(_genTokenTotal > 0 && elapsed > 0.0){
 							var callsPerSecond = _genTokenTotal/elapsed;
-							labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
+							labelTPS.Text = string.Format(Resources._0_F2__Tok_s, callsPerSecond);
 							_swTot.Reset();
 							_swRate.Reset();
 						}
-						butGen.Text = "Generate";
+						butGen.Text = Resources.Generate;
 						butReset.Enabled = butApply.Enabled = true;
 						_generating = false;
 						foreach(var message in _chatMessages) message.Generating = false;
@@ -305,7 +304,7 @@ namespace LMStud{
 						var cm = _this.AddMessage(MessageRole.Tool, message);
 						cm.SetRoleText("Tool");
 						_this._cntAssMsg = null;
-						_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
+						_this.labelTokens.Text = string.Format(Resources._0___1__2_, tokensTotal, _this._cntCtxMax, Resources._Tokens);
 					}));
 				} catch(ObjectDisposedException){}
 				return;
@@ -318,12 +317,12 @@ namespace LMStud{
 					try{
 						_this._rendering = true;
 						if(_this._first){
-							_this.labelPreGen.Text = "First token time: " + ftTime + " s";
+							_this.labelPreGen.Text = Resources.First_token_time__ + ftTime + Resources._s;
 							_this._first = false;
 						}
 						if(elapsed >= 1.0){
 							var callsPerSecond = _this._msgTokenCount/elapsed;
-							_this.labelTPS.Text = $"{callsPerSecond:F2} Tok/s";
+							_this.labelTPS.Text = string.Format(Resources._0_F2__Tok_s, callsPerSecond);
 							_this._msgTokenCount = 0;
 						}
 						if(_this._cntAssMsg == null) _this._cntAssMsg = _this.AddMessage(MessageRole.Assistant, "");
@@ -343,7 +342,7 @@ namespace LMStud{
 								while(_this._speechBuffer.Length > 0 && char.IsWhiteSpace(_this._speechBuffer[0])) _this._speechBuffer.Remove(0, 1);
 							}
 						}
-						_this.labelTokens.Text = tokensTotal + "/" + _this._cntCtxMax + " Tokens";
+						_this.labelTokens.Text = string.Format(Resources._0___1__2_, tokensTotal, _this._cntCtxMax, Resources._Tokens);
 					} catch(ObjectDisposedException){} finally{ _this._rendering = false; }
 				}));
 			} catch(ObjectDisposedException){}
@@ -434,7 +433,7 @@ namespace LMStud{
 							break;
 					}
 					textInput.AppendText($"[FILE] {fileName}\r\n```{contentType}\r\n{fileContent}\r\n```\r\n\r\n");
-				} catch(Exception ex){ MessageBox.Show($"Error reading file: {ex.Message}"); }
+				} catch(Exception ex){ MessageBox.Show(string.Format(Resources.Error_reading_file___0_, ex.Message)); }
 		}
-    }
+	}
 }

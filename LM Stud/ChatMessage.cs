@@ -25,9 +25,7 @@ namespace LMStud{
 			_message = message;
 		}
 		private void ChatMessage_Load(object sender, EventArgs e) {
-			if(_message.Length > 0){
-				UpdateText("", _message, true);
-			}
+			if(_message.Length > 0) UpdateText("", _message, true);
 		}
 		internal void SetRoleText(string role){label1.Text = role;}
 		private void RichTextMsgOnContentsResized(object sender, ContentsResizedEventArgs e){

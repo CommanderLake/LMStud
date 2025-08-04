@@ -5,14 +5,13 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using LMStud.Properties;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 namespace LMStud{
 	internal partial class Form1{
 		private const string ApiUrl = "https://huggingface.co/api/models";
-		private const string PipelineTag = "text-generation";
 		private const string Filter = "gguf";
-		private const int Limit = 50;
 		private volatile bool _downloading;
 		private string _modelName;
 		private string _uploader;
@@ -24,11 +23,11 @@ namespace LMStud{
 		private void ButDownload_Click(object sender, EventArgs e){
 			if(!_downloading){
 				if(listViewHugFiles.SelectedItems.Count == 0 || string.IsNullOrEmpty(_uploader) || string.IsNullOrEmpty(_modelName)){
-					MessageBox.Show("Please select an item from both lists.", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					MessageBox.Show(Resources.Please_select_an_item_from_both_lists_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Warning);
 					return;
 				}
 				var variantLabel = listViewHugFiles.SelectedItems[0].SubItems[0].Text;
-				butDownload.Text = "Cancel";
+				butDownload.Text = Resources.Cancel;
 				HugDownloadFile(_uploader, _modelName, variantLabel);
 			} else _downloading = false;
 		}
@@ -62,7 +61,7 @@ namespace LMStud{
 					}
 					if(items.Count > 0) Invoke(new MethodInvoker(() => {listViewHugSearch.Items.AddRange(items.ToArray());}));
 				} catch(Exception ex){
-					Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"Model search error: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+					Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.Model_search_error___0_, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 				} finally{
 					Invoke(new MethodInvoker(() => {
 						listViewHugSearch.EndUpdate();
@@ -106,11 +105,11 @@ namespace LMStud{
 					}
 					if(items.Count > 0) Invoke(new MethodInvoker(() => {listViewHugFiles.Items.AddRange(items.ToArray());}));
 				} catch(HttpRequestException ex){
-					Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"HTTP Error loading files for {repoId}: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+					Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.HTTP_Error_loading_files_for__0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 				} catch(JsonException ex){
-					Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"JSON Parse Error for {repoId}: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+					Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.JSON_Parse_Error_for__0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 				} catch(Exception ex){
-					Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"Error loading files for {repoId}: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+					Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.Error_loading_files_for__0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 				} finally{ Invoke(new MethodInvoker(() => {listViewHugFiles.EndUpdate();})); }
 			});
 		}
@@ -118,7 +117,7 @@ namespace LMStud{
 			var downloadUrl = $"https://huggingface.co/{uploader}/{modelName}/resolve/main/{variantLabel}";
 			var targetDir = Path.Combine(_modelsPath, uploader, modelName);
 			try{ Directory.CreateDirectory(targetDir); } catch(Exception ex){
-				MessageBox.Show($"Failed to create directory: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				MessageBox.Show(string.Format(Resources.Failed_to_create_directory___0_, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 				return;
 			}
 			var targetPath = Path.Combine(targetDir, variantLabel);
@@ -137,21 +136,21 @@ namespace LMStud{
 				try{
 					var result = NativeMethods.DownloadFileWithProgress(downloadUrl, targetPath, ProgressCb);
 					if(result == 0){
-						if(_downloading){
+						if(_downloading)
 							Invoke(new MethodInvoker(() => {
-								MessageBox.Show(this, $"Downloaded {variantLabel} to:\n{targetPath}", "Download Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+								MessageBox.Show(this, string.Format(Resources.Downloaded__0__to___1_, variantLabel, targetPath), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 								PopulateModels();
 							}));
-						} else{ File.Delete(targetPath); }
+						else File.Delete(targetPath);
 					} else{
-						Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"Download failed with error code: {result}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+						Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.Download_failed_with_error_code___0_, result), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 					}
 				} catch(Exception ex){
-					if(_downloading) Invoke(new MethodInvoker(() => {MessageBox.Show(this, $"Download failed: {ex.Message}", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+					if(_downloading) Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.Download_failed___0_, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 				} finally{
 					Invoke(new MethodInvoker(() => {
 						progressBar1.Value = 0;
-						butDownload.Text = "Download";
+						butDownload.Text = Resources.Download;
 						_downloading = false;
 					}));
 				}

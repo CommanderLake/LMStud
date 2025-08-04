@@ -50,7 +50,7 @@ namespace LMStud{
 		}
 		private bool ModelsFolderExists(bool showError){
 			if(!Directory.Exists(_modelsPath)){
-				if(showError) MessageBox.Show(this, "Models folder not found, please specify a valid folder in the Settings tab", "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				if(showError) MessageBox.Show(this, Resources.Models_folder_not_found__please_specify_a_valid_folder_in_the_Settings_tab, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 				tabControl1.SelectTab(1);
 				textModelsPath.Focus();
 				return false;
@@ -76,9 +76,9 @@ namespace LMStud{
 						items.Add(lvi);
 					}
 					Invoke(new MethodInvoker(() => {listViewModels.Items.AddRange(items.ToArray());}));
-				} catch(Exception ex){ Invoke(new MethodInvoker(() => {MessageBox.Show(this, ex.ToString(), "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);})); } finally{
+				} catch(Exception ex){ Invoke(new MethodInvoker(() => {MessageBox.Show(this, ex.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);})); } finally{
 					try{ Invoke(new MethodInvoker(() => {listViewModels.EndUpdate();})); } catch(Exception e){
-						MessageBox.Show(this, e.ToString(), "LM Stud Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+						MessageBox.Show(this, e.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 					}
 					_populating = false;
 				}
@@ -86,7 +86,7 @@ namespace LMStud{
 		}
 		private void SetSystemPrompt(){
 			if(!NativeMethods.SetSystemPrompt(_systemPrompt.Length > 0 ? _systemPrompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : ""))
-				MessageBox.Show(this, "Conversation too long for context while setting system prompt", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+				MessageBox.Show(this, Resources.Error_setting_system_prompt__maybe_the_context_is_too_big, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 		}
 		private void LoadModel(int modelIndex, bool autoLoad){
 			var whisperOn = checkVoiceInput.CheckState != CheckState.Unchecked;
@@ -100,7 +100,7 @@ namespace LMStud{
 						while(_llModelLoaded) Thread.Sleep(10);
 					}
 					Invoke(new MethodInvoker(() => {
-						toolStripStatusLabel1.Text = "Loading: " + fileName;
+						toolStripStatusLabel1.Text = Resources.Loading__ + fileName;
 					}));
 					unsafe{
 						if(_generating){
@@ -141,7 +141,7 @@ namespace LMStud{
 								}
 								toolTip1.SetToolTip(numCtxSize,
 									"Context size (max tokens). Higher values improve memory but use more RAM.\r\nThe model last loaded has a maximum context size of " + _modelCtxMax);
-								toolStripStatusLabel1.Text = "Done loading: " + fileName;
+								toolStripStatusLabel1.Text = Resources.Done_loading__ + fileName;
 							}));
 						} catch(ObjectDisposedException){}
 						_llModelLoaded = true;
@@ -161,7 +161,7 @@ namespace LMStud{
 				try{
 					BeginInvoke(new MethodInvoker(() => {
 						toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.");
-						toolStripStatusLabel1.Text = "Model unloaded";
+						toolStripStatusLabel1.Text = Resources.Model_unloaded;
 					}));
 				} catch(ObjectDisposedException){}
 				_llModelLoaded = false;
