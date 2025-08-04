@@ -64,6 +64,11 @@ namespace LMStud{
 			toolTip1.SetToolTip(textFileBasePath, "File access is relative to this path and canonically restricted to files and folders under this path only.");
 			toolTip1.SetToolTip(linkFileInstruction, "Set an instruction to optimize the way the assistant uses the file tools.");
 			toolTip1.SetToolTip(numWakeWordSimilarity, "Set how similar the detected wake word must be to activate transcription.");
+			toolTip1.SetToolTip(textWakeWord, "Optional wake word phrase required before transcription begins.");
+			toolTip1.SetToolTip(radioBasicVAD, "Use simple energy-based voice activity detection.");
+			toolTip1.SetToolTip(radioWhisperVAD, "Use Whisper's neural VAD model for speech detection.");
+			toolTip1.SetToolTip(comboVADModel, "Select the Whisper VAD model used for speech detection.");
+			toolTip1.SetToolTip(butVADDown, "Download Whisper VAD models.");
 		}
 		private void Form1_Load(object sender, EventArgs e){
 			NativeMethods.SetHWnd(Handle);

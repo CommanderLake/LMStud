@@ -26,11 +26,11 @@ bool LoadWhisperModel(const char* modelPath, const int nThreads, const bool useG
 	_wparams.print_timestamps = false;
 	_wparams.no_timestamps = true;
 	_wparams.suppress_nst = true;
-	if(useVAD && vadModel != nullptr && vadModel != ""){
+	if(useVAD && vadModel && std::strlen(vadModel) > 0){
 		_wparams.vad = useVAD;
 		_vadModel = vadModel;
 		_wparams.vad_model_path = _vadModel.c_str();
-		_wparams.vad_params.max_speech_duration_s = _voiceDuration;
+		_wparams.vad_params.max_speech_duration_s = _voiceDuration/1000.0f;
 		_wparams.vad_params.threshold = _vadThreshold;
 		whisper_vad_context_params vadCParams = whisper_vad_default_context_params();
 		vadCParams.n_threads = nThreads;
@@ -39,7 +39,11 @@ bool LoadWhisperModel(const char* modelPath, const int nThreads, const bool useG
 		if(!_vadCtx) return false;
 	}
 	_audioCapture = new audio_async(_voiceDuration);
-	if(!_audioCapture->init(-1, WHISPER_SAMPLE_RATE)){ return false; }
+	if(!_audioCapture->init(-1, WHISPER_SAMPLE_RATE)){
+		delete _audioCapture;
+		_audioCapture = nullptr;
+		return false;
+	}
 	return true;
 }
 void UnloadWhisperModel(){
@@ -121,7 +125,7 @@ bool StartSpeechTranscription(){
 		while(_transcriptionRunning.load()){
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			_audioCapture->get(2000, pcmDataShort);
-			if(_vadCtx){ if(!whisper_vad_detect_speech(_vadCtx, pcmDataShort.data(), pcmDataShort.size() / sizeof(float))) continue; }
+			if(_vadCtx){ if(!whisper_vad_detect_speech(_vadCtx, pcmDataShort.data(), pcmDataShort.size())) continue; }
 			else if(!VadSimple(pcmDataShort, WHISPER_SAMPLE_RATE, 1250, _vadThreshold, _freqThreshold)) continue;
 			_audioCapture->get(voiceDuration, pcmDataLong);
 			if(whisper_full(_whisperCtx, _wparams, pcmDataLong.data(), static_cast<int>(pcmDataLong.size())) != 0){
