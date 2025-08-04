@@ -29,6 +29,7 @@ namespace LMStud
         private void InitializeComponent()
         {
 			this.components = new System.ComponentModel.Container();
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
 			this.textInput = new System.Windows.Forms.TextBox();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
 			this.panelChat = new LMStud.MyFlowLayoutPanel();
@@ -205,17 +206,8 @@ namespace LMStud
 			// textInput
 			// 
 			this.textInput.AllowDrop = true;
-			this.textInput.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-			this.textInput.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.textInput.Location = new System.Drawing.Point(0, 0);
-			this.textInput.Margin = new System.Windows.Forms.Padding(0);
-			this.textInput.Multiline = true;
+			resources.ApplyResources(this.textInput, "textInput");
 			this.textInput.Name = "textInput";
-			this.textInput.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-			this.textInput.Size = new System.Drawing.Size(1004, 150);
-			this.textInput.TabIndex = 0;
 			this.textInput.DragDrop += new System.Windows.Forms.DragEventHandler(this.TextInput_DragDrop);
 			this.textInput.DragEnter += new System.Windows.Forms.DragEventHandler(this.TextInput_DragEnter);
 			this.textInput.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextInput_KeyDown);
@@ -223,12 +215,9 @@ namespace LMStud
 			// splitContainer1
 			// 
 			this.splitContainer1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-			this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+			resources.ApplyResources(this.splitContainer1, "splitContainer1");
 			this.splitContainer1.FixedPanel = System.Windows.Forms.FixedPanel.Panel2;
-			this.splitContainer1.Location = new System.Drawing.Point(0, 0);
-			this.splitContainer1.Margin = new System.Windows.Forms.Padding(0);
 			this.splitContainer1.Name = "splitContainer1";
-			this.splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
 			// 
 			// splitContainer1.Panel1
 			// 
@@ -244,138 +233,84 @@ namespace LMStud
 			this.splitContainer1.Panel2.Controls.Add(this.butReset);
 			this.splitContainer1.Panel2.Controls.Add(this.butGen);
 			this.splitContainer1.Panel2.Controls.Add(this.textInput);
-			this.splitContainer1.Size = new System.Drawing.Size(1008, 949);
-			this.splitContainer1.SplitterDistance = 768;
-			this.splitContainer1.TabIndex = 1;
 			// 
 			// panelChat
 			// 
-			this.panelChat.AutoScroll = true;
+			resources.ApplyResources(this.panelChat, "panelChat");
 			this.panelChat.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
 			this.panelChat.CausesValidation = false;
-			this.panelChat.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.panelChat.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-			this.panelChat.Location = new System.Drawing.Point(0, 0);
 			this.panelChat.Name = "panelChat";
-			this.panelChat.Size = new System.Drawing.Size(1004, 764);
-			this.panelChat.TabIndex = 0;
-			this.panelChat.WrapContents = false;
 			this.panelChat.Layout += new System.Windows.Forms.LayoutEventHandler(this.PanelChat_Layout);
 			// 
 			// checkStream
 			// 
-			this.checkStream.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.checkStream.AutoSize = true;
+			resources.ApplyResources(this.checkStream, "checkStream");
 			this.checkStream.Checked = true;
 			this.checkStream.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkStream.Location = new System.Drawing.Point(106, 154);
 			this.checkStream.Name = "checkStream";
-			this.checkStream.Size = new System.Drawing.Size(92, 17);
-			this.checkStream.TabIndex = 12;
-			this.checkStream.Text = "Stream output";
 			this.checkStream.UseVisualStyleBackColor = true;
 			// 
 			// checkSpeak
 			// 
-			this.checkSpeak.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.checkSpeak.AutoSize = true;
-			this.checkSpeak.Location = new System.Drawing.Point(371, 154);
+			resources.ApplyResources(this.checkSpeak, "checkSpeak");
 			this.checkSpeak.Name = "checkSpeak";
-			this.checkSpeak.Size = new System.Drawing.Size(108, 17);
-			this.checkSpeak.TabIndex = 11;
-			this.checkSpeak.Text = "Speak responses";
 			this.checkSpeak.UseVisualStyleBackColor = true;
 			this.checkSpeak.CheckedChanged += new System.EventHandler(this.CheckSpeak_CheckedChanged);
 			// 
 			// checkVoiceInput
 			// 
-			this.checkVoiceInput.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.checkVoiceInput.AutoSize = true;
-			this.checkVoiceInput.Location = new System.Drawing.Point(286, 154);
+			resources.ApplyResources(this.checkVoiceInput, "checkVoiceInput");
 			this.checkVoiceInput.Name = "checkVoiceInput";
-			this.checkVoiceInput.Size = new System.Drawing.Size(79, 17);
-			this.checkVoiceInput.TabIndex = 5;
-			this.checkVoiceInput.Text = "Voice input";
 			this.checkVoiceInput.ThreeState = true;
 			this.checkVoiceInput.UseVisualStyleBackColor = true;
 			this.checkVoiceInput.CheckedChanged += new System.EventHandler(this.CheckVoiceInput_CheckedChanged);
 			// 
 			// butCodeBlock
 			// 
-			this.butCodeBlock.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.butCodeBlock.Location = new System.Drawing.Point(0, 150);
+			resources.ApplyResources(this.butCodeBlock, "butCodeBlock");
 			this.butCodeBlock.Name = "butCodeBlock";
-			this.butCodeBlock.Size = new System.Drawing.Size(100, 23);
-			this.butCodeBlock.TabIndex = 4;
-			this.butCodeBlock.Text = "Insert code block";
 			this.butCodeBlock.UseVisualStyleBackColor = true;
 			this.butCodeBlock.Click += new System.EventHandler(this.ButCodeBlock_Click);
 			// 
 			// checkMarkdown
 			// 
-			this.checkMarkdown.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.checkMarkdown.AutoSize = true;
+			resources.ApplyResources(this.checkMarkdown, "checkMarkdown");
 			this.checkMarkdown.Checked = true;
 			this.checkMarkdown.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkMarkdown.Location = new System.Drawing.Point(204, 154);
 			this.checkMarkdown.Name = "checkMarkdown";
-			this.checkMarkdown.Size = new System.Drawing.Size(76, 17);
-			this.checkMarkdown.TabIndex = 3;
-			this.checkMarkdown.Text = "Markdown";
 			this.checkMarkdown.UseVisualStyleBackColor = true;
 			this.checkMarkdown.CheckedChanged += new System.EventHandler(this.CheckMarkdown_CheckedChanged);
 			// 
 			// butReset
 			// 
-			this.butReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.butReset.Enabled = false;
-			this.butReset.Location = new System.Drawing.Point(929, 150);
-			this.butReset.Margin = new System.Windows.Forms.Padding(0);
+			resources.ApplyResources(this.butReset, "butReset");
 			this.butReset.Name = "butReset";
-			this.butReset.Size = new System.Drawing.Size(75, 23);
-			this.butReset.TabIndex = 2;
-			this.butReset.Text = "Reset";
 			this.butReset.UseVisualStyleBackColor = true;
 			this.butReset.Click += new System.EventHandler(this.ButReset_Click);
 			// 
 			// butGen
 			// 
-			this.butGen.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.butGen.Enabled = false;
-			this.butGen.Location = new System.Drawing.Point(854, 150);
-			this.butGen.Margin = new System.Windows.Forms.Padding(0);
+			resources.ApplyResources(this.butGen, "butGen");
 			this.butGen.Name = "butGen";
-			this.butGen.Size = new System.Drawing.Size(75, 23);
-			this.butGen.TabIndex = 1;
-			this.butGen.Text = Resources.Generate;
+			this.butGen.Text = global::LMStud.Properties.Resources.Generate;
 			this.butGen.UseVisualStyleBackColor = true;
 			this.butGen.Click += new System.EventHandler(this.ButGen_Click);
 			// 
 			// tabControl1
 			// 
-			this.tabControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.tabControl1, "tabControl1");
 			this.tabControl1.Controls.Add(this.tabPage1);
 			this.tabControl1.Controls.Add(this.tabPage2);
 			this.tabControl1.Controls.Add(this.tabPage3);
 			this.tabControl1.Controls.Add(this.tabPage4);
-			this.tabControl1.Location = new System.Drawing.Point(0, 0);
-			this.tabControl1.Margin = new System.Windows.Forms.Padding(0);
 			this.tabControl1.Name = "tabControl1";
 			this.tabControl1.SelectedIndex = 0;
-			this.tabControl1.Size = new System.Drawing.Size(1016, 975);
-			this.tabControl1.TabIndex = 3;
 			// 
 			// tabPage1
 			// 
 			this.tabPage1.Controls.Add(this.splitContainer1);
-			this.tabPage1.Location = new System.Drawing.Point(4, 22);
-			this.tabPage1.Margin = new System.Windows.Forms.Padding(0);
+			resources.ApplyResources(this.tabPage1, "tabPage1");
 			this.tabPage1.Name = "tabPage1";
-			this.tabPage1.Size = new System.Drawing.Size(1008, 949);
-			this.tabPage1.TabIndex = 0;
-			this.tabPage1.Text = "Chat";
 			this.tabPage1.UseVisualStyleBackColor = true;
 			// 
 			// tabPage2
@@ -396,12 +331,8 @@ namespace LMStud
 			this.tabPage2.Controls.Add(this.butApply);
 			this.tabPage2.Controls.Add(this.label1);
 			this.tabPage2.Controls.Add(this.textSystemPrompt);
-			this.tabPage2.Location = new System.Drawing.Point(4, 22);
-			this.tabPage2.Margin = new System.Windows.Forms.Padding(0);
+			resources.ApplyResources(this.tabPage2, "tabPage2");
 			this.tabPage2.Name = "tabPage2";
-			this.tabPage2.Size = new System.Drawing.Size(1008, 949);
-			this.tabPage2.TabIndex = 1;
-			this.tabPage2.Text = "Settings";
 			this.tabPage2.UseVisualStyleBackColor = true;
 			// 
 			// groupBox6
@@ -413,66 +344,46 @@ namespace LMStud
 			this.groupBox6.Controls.Add(this.label17);
 			this.groupBox6.Controls.Add(this.comboVADModel);
 			this.groupBox6.Controls.Add(this.label26);
-			this.groupBox6.Location = new System.Drawing.Point(209, 377);
+			resources.ApplyResources(this.groupBox6, "groupBox6");
 			this.groupBox6.Name = "groupBox6";
-			this.groupBox6.Size = new System.Drawing.Size(200, 162);
-			this.groupBox6.TabIndex = 42;
 			this.groupBox6.TabStop = false;
-			this.groupBox6.Text = "Voice Audio Detection";
 			// 
 			// butVADDown
 			// 
-			this.butVADDown.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.butVADDown.Location = new System.Drawing.Point(6, 105);
+			resources.ApplyResources(this.butVADDown, "butVADDown");
 			this.butVADDown.Name = "butVADDown";
-			this.butVADDown.Size = new System.Drawing.Size(188, 23);
-			this.butVADDown.TabIndex = 19;
-			this.butVADDown.Text = "Download VAD Model...";
 			this.butVADDown.UseVisualStyleBackColor = true;
 			this.butVADDown.Click += new System.EventHandler(this.butDownloadVADModel_Click);
 			// 
 			// radioBasicVAD
 			// 
-			this.radioBasicVAD.AutoSize = true;
-			this.radioBasicVAD.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			resources.ApplyResources(this.radioBasicVAD, "radioBasicVAD");
 			this.radioBasicVAD.Checked = true;
-			this.radioBasicVAD.Location = new System.Drawing.Point(96, 19);
 			this.radioBasicVAD.Name = "radioBasicVAD";
-			this.radioBasicVAD.Size = new System.Drawing.Size(98, 17);
-			this.radioBasicVAD.TabIndex = 17;
 			this.radioBasicVAD.TabStop = true;
-			this.radioBasicVAD.Text = "Use Basic VAD";
 			this.radioBasicVAD.UseVisualStyleBackColor = true;
 			// 
 			// radioWhisperVAD
 			// 
-			this.radioWhisperVAD.AutoSize = true;
-			this.radioWhisperVAD.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.radioWhisperVAD.Location = new System.Drawing.Point(83, 42);
+			resources.ApplyResources(this.radioWhisperVAD, "radioWhisperVAD");
 			this.radioWhisperVAD.Name = "radioWhisperVAD";
-			this.radioWhisperVAD.Size = new System.Drawing.Size(111, 17);
-			this.radioWhisperVAD.TabIndex = 18;
-			this.radioWhisperVAD.Text = "Use Whisper VAD";
 			this.radioWhisperVAD.UseVisualStyleBackColor = true;
 			// 
 			// numVadThreshold
 			// 
-			this.numVadThreshold.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.numVadThreshold, "numVadThreshold");
 			this.numVadThreshold.DecimalPlaces = 2;
 			this.numVadThreshold.Increment = new decimal(new int[] {
             5,
             0,
             0,
             131072});
-			this.numVadThreshold.Location = new System.Drawing.Point(124, 134);
 			this.numVadThreshold.Maximum = new decimal(new int[] {
             1,
             0,
             0,
             0});
 			this.numVadThreshold.Name = "numVadThreshold";
-			this.numVadThreshold.Size = new System.Drawing.Size(70, 20);
-			this.numVadThreshold.TabIndex = 6;
 			this.numVadThreshold.Value = new decimal(new int[] {
             5,
             0,
@@ -481,55 +392,33 @@ namespace LMStud
 			// 
 			// label17
 			// 
-			this.label17.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label17.AutoSize = true;
-			this.label17.Location = new System.Drawing.Point(36, 136);
+			resources.ApplyResources(this.label17, "label17");
 			this.label17.Name = "label17";
-			this.label17.Size = new System.Drawing.Size(82, 13);
-			this.label17.TabIndex = 7;
-			this.label17.Text = "VAD Threshold:";
 			// 
 			// comboVADModel
 			// 
-			this.comboVADModel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.comboVADModel, "comboVADModel");
 			this.comboVADModel.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 			this.comboVADModel.FormattingEnabled = true;
-			this.comboVADModel.Location = new System.Drawing.Point(6, 78);
 			this.comboVADModel.Name = "comboVADModel";
-			this.comboVADModel.Size = new System.Drawing.Size(188, 21);
-			this.comboVADModel.TabIndex = 16;
 			this.comboVADModel.DropDown += new System.EventHandler(this.ComboVADModel_DropDown);
 			// 
 			// label26
 			// 
-			this.label26.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label26.AutoSize = true;
-			this.label26.Location = new System.Drawing.Point(88, 62);
+			resources.ApplyResources(this.label26, "label26");
 			this.label26.Name = "label26";
-			this.label26.Size = new System.Drawing.Size(106, 13);
-			this.label26.TabIndex = 15;
-			this.label26.Text = "Whisper VAD Model:";
 			// 
 			// groupBox5
 			// 
 			this.groupBox5.Controls.Add(this.checkDateTimeEnable);
-			this.groupBox5.Location = new System.Drawing.Point(415, 156);
+			resources.ApplyResources(this.groupBox5, "groupBox5");
 			this.groupBox5.Name = "groupBox5";
-			this.groupBox5.Size = new System.Drawing.Size(200, 37);
-			this.groupBox5.TabIndex = 41;
 			this.groupBox5.TabStop = false;
-			this.groupBox5.Text = "Date Time Tool";
 			// 
 			// checkDateTimeEnable
 			// 
-			this.checkDateTimeEnable.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.checkDateTimeEnable.AutoSize = true;
-			this.checkDateTimeEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkDateTimeEnable.Location = new System.Drawing.Point(135, 14);
+			resources.ApplyResources(this.checkDateTimeEnable, "checkDateTimeEnable");
 			this.checkDateTimeEnable.Name = "checkDateTimeEnable";
-			this.checkDateTimeEnable.Size = new System.Drawing.Size(59, 17);
-			this.checkDateTimeEnable.TabIndex = 1;
-			this.checkDateTimeEnable.Text = "Enable";
 			this.checkDateTimeEnable.UseVisualStyleBackColor = true;
 			// 
 			// groupBox4
@@ -541,114 +430,65 @@ namespace LMStud
 			this.groupBox4.Controls.Add(this.checkFileCreateEnable);
 			this.groupBox4.Controls.Add(this.checkFileReadEnable);
 			this.groupBox4.Controls.Add(this.checkFileListEnable);
-			this.groupBox4.Location = new System.Drawing.Point(415, 365);
+			resources.ApplyResources(this.groupBox4, "groupBox4");
 			this.groupBox4.Name = "groupBox4";
-			this.groupBox4.Size = new System.Drawing.Size(200, 104);
-			this.groupBox4.TabIndex = 40;
 			this.groupBox4.TabStop = false;
-			this.groupBox4.Text = "File Tools";
 			// 
 			// linkFileInstruction
 			// 
-			this.linkFileInstruction.Anchor = System.Windows.Forms.AnchorStyles.Top;
-			this.linkFileInstruction.AutoSize = true;
+			resources.ApplyResources(this.linkFileInstruction, "linkFileInstruction");
 			this.linkFileInstruction.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(255)))));
-			this.linkFileInstruction.Location = new System.Drawing.Point(25, 86);
 			this.linkFileInstruction.Name = "linkFileInstruction";
-			this.linkFileInstruction.Size = new System.Drawing.Size(147, 13);
-			this.linkFileInstruction.TabIndex = 41;
 			this.linkFileInstruction.TabStop = true;
-			this.linkFileInstruction.Text = "Use recommended instruction";
 			this.linkFileInstruction.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.LinkLabel1_LinkClicked);
 			// 
 			// label22
 			// 
-			this.label22.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label22.AutoSize = true;
-			this.label22.Location = new System.Drawing.Point(8, 68);
+			resources.ApplyResources(this.label22, "label22");
 			this.label22.Name = "label22";
-			this.label22.Size = new System.Drawing.Size(59, 13);
-			this.label22.TabIndex = 5;
-			this.label22.Text = "Base Path:";
 			// 
 			// textFileBasePath
 			// 
-			this.textFileBasePath.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.textFileBasePath, "textFileBasePath");
 			this.textFileBasePath.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
 			this.textFileBasePath.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.FileSystemDirectories;
-			this.textFileBasePath.Location = new System.Drawing.Point(73, 65);
 			this.textFileBasePath.Name = "textFileBasePath";
-			this.textFileBasePath.Size = new System.Drawing.Size(121, 20);
-			this.textFileBasePath.TabIndex = 4;
 			// 
 			// checkFileWriteEnable
 			// 
-			this.checkFileWriteEnable.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.checkFileWriteEnable.AutoSize = true;
-			this.checkFileWriteEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkFileWriteEnable.Location = new System.Drawing.Point(124, 42);
+			resources.ApplyResources(this.checkFileWriteEnable, "checkFileWriteEnable");
 			this.checkFileWriteEnable.Name = "checkFileWriteEnable";
-			this.checkFileWriteEnable.Size = new System.Drawing.Size(70, 17);
-			this.checkFileWriteEnable.TabIndex = 3;
-			this.checkFileWriteEnable.Text = "Write File";
 			this.checkFileWriteEnable.UseVisualStyleBackColor = true;
 			// 
 			// checkFileCreateEnable
 			// 
-			this.checkFileCreateEnable.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.checkFileCreateEnable.AutoSize = true;
-			this.checkFileCreateEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkFileCreateEnable.Location = new System.Drawing.Point(41, 42);
+			resources.ApplyResources(this.checkFileCreateEnable, "checkFileCreateEnable");
 			this.checkFileCreateEnable.Name = "checkFileCreateEnable";
-			this.checkFileCreateEnable.Size = new System.Drawing.Size(76, 17);
-			this.checkFileCreateEnable.TabIndex = 2;
-			this.checkFileCreateEnable.Text = "Create File";
 			this.checkFileCreateEnable.UseVisualStyleBackColor = true;
 			// 
 			// checkFileReadEnable
 			// 
-			this.checkFileReadEnable.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.checkFileReadEnable.AutoSize = true;
-			this.checkFileReadEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkFileReadEnable.Location = new System.Drawing.Point(123, 19);
+			resources.ApplyResources(this.checkFileReadEnable, "checkFileReadEnable");
 			this.checkFileReadEnable.Name = "checkFileReadEnable";
-			this.checkFileReadEnable.Size = new System.Drawing.Size(71, 17);
-			this.checkFileReadEnable.TabIndex = 1;
-			this.checkFileReadEnable.Text = "Read File";
 			this.checkFileReadEnable.UseVisualStyleBackColor = true;
 			// 
 			// checkFileListEnable
 			// 
-			this.checkFileListEnable.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.checkFileListEnable.AutoSize = true;
-			this.checkFileListEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkFileListEnable.Location = new System.Drawing.Point(30, 19);
+			resources.ApplyResources(this.checkFileListEnable, "checkFileListEnable");
 			this.checkFileListEnable.Name = "checkFileListEnable";
-			this.checkFileListEnable.Size = new System.Drawing.Size(87, 17);
-			this.checkFileListEnable.TabIndex = 0;
-			this.checkFileListEnable.Text = "List Directory";
 			this.checkFileListEnable.UseVisualStyleBackColor = true;
 			// 
 			// groupBox3
 			// 
 			this.groupBox3.Controls.Add(this.checkWebpageFetchEnable);
-			this.groupBox3.Location = new System.Drawing.Point(415, 322);
+			resources.ApplyResources(this.groupBox3, "groupBox3");
 			this.groupBox3.Name = "groupBox3";
-			this.groupBox3.Size = new System.Drawing.Size(200, 37);
-			this.groupBox3.TabIndex = 39;
 			this.groupBox3.TabStop = false;
-			this.groupBox3.Text = "Webpage Fetch Tool";
 			// 
 			// checkWebpageFetchEnable
 			// 
-			this.checkWebpageFetchEnable.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.checkWebpageFetchEnable.AutoSize = true;
-			this.checkWebpageFetchEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkWebpageFetchEnable.Location = new System.Drawing.Point(135, 14);
+			resources.ApplyResources(this.checkWebpageFetchEnable, "checkWebpageFetchEnable");
 			this.checkWebpageFetchEnable.Name = "checkWebpageFetchEnable";
-			this.checkWebpageFetchEnable.Size = new System.Drawing.Size(59, 17);
-			this.checkWebpageFetchEnable.TabIndex = 0;
-			this.checkWebpageFetchEnable.Text = "Enable";
 			this.checkWebpageFetchEnable.UseVisualStyleBackColor = true;
 			// 
 			// groupBox2
@@ -660,35 +500,24 @@ namespace LMStud
 			this.groupBox2.Controls.Add(this.label19);
 			this.groupBox2.Controls.Add(this.textGoogleSearchID);
 			this.groupBox2.Controls.Add(this.textGoogleApiKey);
-			this.groupBox2.Location = new System.Drawing.Point(415, 199);
+			resources.ApplyResources(this.groupBox2, "groupBox2");
 			this.groupBox2.Name = "groupBox2";
-			this.groupBox2.Size = new System.Drawing.Size(200, 117);
-			this.groupBox2.TabIndex = 38;
 			this.groupBox2.TabStop = false;
-			this.groupBox2.Text = "Google Search Tool";
 			// 
 			// label21
 			// 
-			this.label21.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label21.AutoSize = true;
-			this.label21.Location = new System.Drawing.Point(8, 92);
+			resources.ApplyResources(this.label21, "label21");
 			this.label21.Name = "label21";
-			this.label21.Size = new System.Drawing.Size(92, 13);
-			this.label21.TabIndex = 6;
-			this.label21.Text = "Number of results:";
 			// 
 			// numGoogleResults
 			// 
-			this.numGoogleResults.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numGoogleResults.Location = new System.Drawing.Point(107, 90);
+			resources.ApplyResources(this.numGoogleResults, "numGoogleResults");
 			this.numGoogleResults.Minimum = new decimal(new int[] {
             1,
             0,
             0,
             0});
 			this.numGoogleResults.Name = "numGoogleResults";
-			this.numGoogleResults.Size = new System.Drawing.Size(87, 20);
-			this.numGoogleResults.TabIndex = 5;
 			this.numGoogleResults.Value = new decimal(new int[] {
             5,
             0,
@@ -697,51 +526,29 @@ namespace LMStud
 			// 
 			// checkGoogleEnable
 			// 
-			this.checkGoogleEnable.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.checkGoogleEnable.AutoSize = true;
-			this.checkGoogleEnable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkGoogleEnable.Location = new System.Drawing.Point(135, 14);
+			resources.ApplyResources(this.checkGoogleEnable, "checkGoogleEnable");
 			this.checkGoogleEnable.Name = "checkGoogleEnable";
-			this.checkGoogleEnable.Size = new System.Drawing.Size(59, 17);
-			this.checkGoogleEnable.TabIndex = 4;
-			this.checkGoogleEnable.Text = "Enable";
 			this.checkGoogleEnable.UseVisualStyleBackColor = true;
 			// 
 			// label20
 			// 
-			this.label20.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label20.AutoSize = true;
-			this.label20.Location = new System.Drawing.Point(8, 67);
+			resources.ApplyResources(this.label20, "label20");
 			this.label20.Name = "label20";
-			this.label20.Size = new System.Drawing.Size(93, 13);
-			this.label20.TabIndex = 3;
-			this.label20.Text = "Search engine ID:";
 			// 
 			// label19
 			// 
-			this.label19.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label19.AutoSize = true;
-			this.label19.Location = new System.Drawing.Point(8, 41);
+			resources.ApplyResources(this.label19, "label19");
 			this.label19.Name = "label19";
-			this.label19.Size = new System.Drawing.Size(48, 13);
-			this.label19.TabIndex = 2;
-			this.label19.Text = "API Key:";
 			// 
 			// textGoogleSearchID
 			// 
-			this.textGoogleSearchID.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.textGoogleSearchID.Location = new System.Drawing.Point(107, 64);
+			resources.ApplyResources(this.textGoogleSearchID, "textGoogleSearchID");
 			this.textGoogleSearchID.Name = "textGoogleSearchID";
-			this.textGoogleSearchID.Size = new System.Drawing.Size(87, 20);
-			this.textGoogleSearchID.TabIndex = 1;
 			// 
 			// textGoogleApiKey
 			// 
-			this.textGoogleApiKey.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.textGoogleApiKey.Location = new System.Drawing.Point(62, 38);
+			resources.ApplyResources(this.textGoogleApiKey, "textGoogleApiKey");
 			this.textGoogleApiKey.Name = "textGoogleApiKey";
-			this.textGoogleApiKey.Size = new System.Drawing.Size(132, 20);
-			this.textGoogleApiKey.TabIndex = 0;
 			// 
 			// groupBox1
 			// 
@@ -757,41 +564,30 @@ namespace LMStud
 			this.groupBox1.Controls.Add(this.butWhispDown);
 			this.groupBox1.Controls.Add(this.comboWhisperModel);
 			this.groupBox1.Controls.Add(this.label15);
-			this.groupBox1.Location = new System.Drawing.Point(209, 156);
+			resources.ApplyResources(this.groupBox1, "groupBox1");
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(200, 215);
-			this.groupBox1.TabIndex = 37;
 			this.groupBox1.TabStop = false;
-			this.groupBox1.Text = "Voice Input";
 			// 
 			// label25
 			// 
-			this.label25.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label25.AutoSize = true;
-			this.label25.Location = new System.Drawing.Point(7, 117);
+			resources.ApplyResources(this.label25, "label25");
 			this.label25.Name = "label25";
-			this.label25.Size = new System.Drawing.Size(111, 13);
-			this.label25.TabIndex = 13;
-			this.label25.Text = "Wake Word Similarity:";
 			// 
 			// numWakeWordSimilarity
 			// 
-			this.numWakeWordSimilarity.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.numWakeWordSimilarity, "numWakeWordSimilarity");
 			this.numWakeWordSimilarity.DecimalPlaces = 1;
 			this.numWakeWordSimilarity.Increment = new decimal(new int[] {
             1,
             0,
             0,
             65536});
-			this.numWakeWordSimilarity.Location = new System.Drawing.Point(124, 114);
 			this.numWakeWordSimilarity.Maximum = new decimal(new int[] {
             1,
             0,
             0,
             0});
 			this.numWakeWordSimilarity.Name = "numWakeWordSimilarity";
-			this.numWakeWordSimilarity.Size = new System.Drawing.Size(70, 20);
-			this.numWakeWordSimilarity.TabIndex = 12;
 			this.numWakeWordSimilarity.Value = new decimal(new int[] {
             8,
             0,
@@ -800,31 +596,24 @@ namespace LMStud
 			// 
 			// label24
 			// 
-			this.label24.AutoSize = true;
-			this.label24.Location = new System.Drawing.Point(48, 168);
+			resources.ApplyResources(this.label24, "label24");
 			this.label24.Name = "label24";
-			this.label24.Size = new System.Drawing.Size(70, 13);
-			this.label24.TabIndex = 11;
-			this.label24.Text = "Temperature:";
 			// 
 			// numWhisperTemp
 			// 
-			this.numWhisperTemp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.numWhisperTemp, "numWhisperTemp");
 			this.numWhisperTemp.DecimalPlaces = 1;
 			this.numWhisperTemp.Increment = new decimal(new int[] {
             1,
             0,
             0,
             65536});
-			this.numWhisperTemp.Location = new System.Drawing.Point(124, 166);
 			this.numWhisperTemp.Maximum = new decimal(new int[] {
             10,
             0,
             0,
             0});
 			this.numWhisperTemp.Name = "numWhisperTemp";
-			this.numWhisperTemp.Size = new System.Drawing.Size(70, 20);
-			this.numWhisperTemp.TabIndex = 10;
 			this.numWhisperTemp.Value = new decimal(new int[] {
             2,
             0,
@@ -833,31 +622,23 @@ namespace LMStud
 			// 
 			// label18
 			// 
-			this.label18.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label18.AutoSize = true;
-			this.label18.Location = new System.Drawing.Point(8, 142);
+			resources.ApplyResources(this.label18, "label18");
 			this.label18.Name = "label18";
-			this.label18.Size = new System.Drawing.Size(110, 13);
-			this.label18.TabIndex = 9;
-			this.label18.Text = "Frequency Threshold:";
 			// 
 			// numFreqThreshold
 			// 
-			this.numFreqThreshold.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.numFreqThreshold, "numFreqThreshold");
 			this.numFreqThreshold.Increment = new decimal(new int[] {
             10,
             0,
             0,
             0});
-			this.numFreqThreshold.Location = new System.Drawing.Point(124, 140);
 			this.numFreqThreshold.Maximum = new decimal(new int[] {
             300,
             0,
             0,
             0});
 			this.numFreqThreshold.Name = "numFreqThreshold";
-			this.numFreqThreshold.Size = new System.Drawing.Size(70, 20);
-			this.numFreqThreshold.TabIndex = 8;
 			this.numFreqThreshold.Value = new decimal(new int[] {
             100,
             0,
@@ -866,89 +647,57 @@ namespace LMStud
 			// 
 			// checkWhisperUseGPU
 			// 
-			this.checkWhisperUseGPU.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.checkWhisperUseGPU.AutoSize = true;
-			this.checkWhisperUseGPU.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkWhisperUseGPU.Location = new System.Drawing.Point(123, 192);
+			resources.ApplyResources(this.checkWhisperUseGPU, "checkWhisperUseGPU");
 			this.checkWhisperUseGPU.Name = "checkWhisperUseGPU";
-			this.checkWhisperUseGPU.Size = new System.Drawing.Size(71, 17);
-			this.checkWhisperUseGPU.TabIndex = 5;
-			this.checkWhisperUseGPU.Text = "Use GPU";
 			this.checkWhisperUseGPU.UseVisualStyleBackColor = true;
 			// 
 			// label16
 			// 
-			this.label16.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label16.AutoSize = true;
-			this.label16.Location = new System.Drawing.Point(6, 91);
+			resources.ApplyResources(this.label16, "label16");
 			this.label16.Name = "label16";
-			this.label16.Size = new System.Drawing.Size(65, 13);
-			this.label16.TabIndex = 4;
-			this.label16.Text = "Wake word:";
 			// 
 			// textWakeWord
 			// 
-			this.textWakeWord.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.textWakeWord.Location = new System.Drawing.Point(77, 88);
+			resources.ApplyResources(this.textWakeWord, "textWakeWord");
 			this.textWakeWord.Name = "textWakeWord";
-			this.textWakeWord.Size = new System.Drawing.Size(117, 20);
-			this.textWakeWord.TabIndex = 3;
 			// 
 			// butWhispDown
 			// 
-			this.butWhispDown.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.butWhispDown.Location = new System.Drawing.Point(6, 59);
+			resources.ApplyResources(this.butWhispDown, "butWhispDown");
 			this.butWhispDown.Name = "butWhispDown";
-			this.butWhispDown.Size = new System.Drawing.Size(188, 23);
-			this.butWhispDown.TabIndex = 2;
-			this.butWhispDown.Text = "Download Whisper.cpp Model...";
 			this.butWhispDown.UseVisualStyleBackColor = true;
 			this.butWhispDown.Click += new System.EventHandler(this.ButWhispDown_Click);
 			// 
 			// comboWhisperModel
 			// 
-			this.comboWhisperModel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.comboWhisperModel, "comboWhisperModel");
 			this.comboWhisperModel.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 			this.comboWhisperModel.FormattingEnabled = true;
-			this.comboWhisperModel.Location = new System.Drawing.Point(6, 32);
 			this.comboWhisperModel.Name = "comboWhisperModel";
-			this.comboWhisperModel.Size = new System.Drawing.Size(188, 21);
-			this.comboWhisperModel.TabIndex = 1;
 			this.comboWhisperModel.DropDown += new System.EventHandler(this.ComboWhisperModel_DropDown);
 			// 
 			// label15
 			// 
-			this.label15.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label15.AutoSize = true;
-			this.label15.Location = new System.Drawing.Point(92, 16);
+			resources.ApplyResources(this.label15, "label15");
 			this.label15.Name = "label15";
-			this.label15.Size = new System.Drawing.Size(102, 13);
-			this.label15.TabIndex = 0;
-			this.label15.Text = "Whisper.cpp Model:";
 			// 
 			// groupCPUParamsBatch
 			// 
 			this.groupCPUParamsBatch.Controls.Add(this.numThreadsBatch);
 			this.groupCPUParamsBatch.Controls.Add(this.label14);
-			this.groupCPUParamsBatch.Location = new System.Drawing.Point(3, 208);
+			resources.ApplyResources(this.groupCPUParamsBatch, "groupCPUParamsBatch");
 			this.groupCPUParamsBatch.Name = "groupCPUParamsBatch";
-			this.groupCPUParamsBatch.Size = new System.Drawing.Size(200, 46);
-			this.groupCPUParamsBatch.TabIndex = 36;
 			this.groupCPUParamsBatch.TabStop = false;
-			this.groupCPUParamsBatch.Text = "CPU Params Batch";
 			// 
 			// numThreadsBatch
 			// 
-			this.numThreadsBatch.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numThreadsBatch.Location = new System.Drawing.Point(119, 19);
+			resources.ApplyResources(this.numThreadsBatch, "numThreadsBatch");
 			this.numThreadsBatch.Maximum = new decimal(new int[] {
             512,
             0,
             0,
             0});
 			this.numThreadsBatch.Name = "numThreadsBatch";
-			this.numThreadsBatch.Size = new System.Drawing.Size(75, 20);
-			this.numThreadsBatch.TabIndex = 30;
 			this.numThreadsBatch.Value = new decimal(new int[] {
             8,
             0,
@@ -957,37 +706,26 @@ namespace LMStud
 			// 
 			// label14
 			// 
-			this.label14.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label14.AutoSize = true;
-			this.label14.Location = new System.Drawing.Point(64, 21);
+			resources.ApplyResources(this.label14, "label14");
 			this.label14.Name = "label14";
-			this.label14.Size = new System.Drawing.Size(49, 13);
-			this.label14.TabIndex = 29;
-			this.label14.Text = "Threads:";
 			// 
 			// groupCPUParams
 			// 
 			this.groupCPUParams.Controls.Add(this.numThreads);
 			this.groupCPUParams.Controls.Add(this.label2);
-			this.groupCPUParams.Location = new System.Drawing.Point(3, 156);
+			resources.ApplyResources(this.groupCPUParams, "groupCPUParams");
 			this.groupCPUParams.Name = "groupCPUParams";
-			this.groupCPUParams.Size = new System.Drawing.Size(200, 46);
-			this.groupCPUParams.TabIndex = 35;
 			this.groupCPUParams.TabStop = false;
-			this.groupCPUParams.Text = "CPU Params";
 			// 
 			// numThreads
 			// 
-			this.numThreads.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numThreads.Location = new System.Drawing.Point(119, 19);
+			resources.ApplyResources(this.numThreads, "numThreads");
 			this.numThreads.Maximum = new decimal(new int[] {
             512,
             0,
             0,
             0});
 			this.numThreads.Name = "numThreads";
-			this.numThreads.Size = new System.Drawing.Size(75, 20);
-			this.numThreads.TabIndex = 3;
 			this.numThreads.Value = new decimal(new int[] {
             8,
             0,
@@ -996,13 +734,8 @@ namespace LMStud
 			// 
 			// label2
 			// 
-			this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label2.AutoSize = true;
-			this.label2.Location = new System.Drawing.Point(64, 21);
+			resources.ApplyResources(this.label2, "label2");
 			this.label2.Name = "label2";
-			this.label2.Size = new System.Drawing.Size(49, 13);
-			this.label2.TabIndex = 2;
-			this.label2.Text = "Threads:";
 			// 
 			// groupAdvanced
 			// 
@@ -1021,135 +754,90 @@ namespace LMStud
 			this.groupAdvanced.Controls.Add(this.numTopK);
 			this.groupAdvanced.Controls.Add(this.label9);
 			this.groupAdvanced.Controls.Add(this.numTopP);
-			this.groupAdvanced.Location = new System.Drawing.Point(3, 390);
+			resources.ApplyResources(this.groupAdvanced, "groupAdvanced");
 			this.groupAdvanced.Name = "groupAdvanced";
-			this.groupAdvanced.Size = new System.Drawing.Size(200, 245);
-			this.groupAdvanced.TabIndex = 34;
 			this.groupAdvanced.TabStop = false;
-			this.groupAdvanced.Text = "Advanced";
 			// 
 			// label23
 			// 
-			this.label23.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label23.AutoSize = true;
-			this.label23.Location = new System.Drawing.Point(76, 126);
+			resources.ApplyResources(this.label23, "label23");
 			this.label23.Name = "label23";
-			this.label23.Size = new System.Drawing.Size(37, 13);
-			this.label23.TabIndex = 37;
-			this.label23.Text = "Min P:";
 			// 
 			// numMinP
 			// 
-			this.numMinP.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.numMinP, "numMinP");
 			this.numMinP.DecimalPlaces = 2;
 			this.numMinP.Increment = new decimal(new int[] {
             1,
             0,
             0,
             131072});
-			this.numMinP.Location = new System.Drawing.Point(119, 124);
 			this.numMinP.Maximum = new decimal(new int[] {
             1,
             0,
             0,
             0});
 			this.numMinP.Name = "numMinP";
-			this.numMinP.Size = new System.Drawing.Size(75, 20);
-			this.numMinP.TabIndex = 36;
 			// 
 			// checkFlashAttn
 			// 
-			this.checkFlashAttn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.checkFlashAttn.AutoSize = true;
-			this.checkFlashAttn.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			resources.ApplyResources(this.checkFlashAttn, "checkFlashAttn");
 			this.checkFlashAttn.Checked = true;
 			this.checkFlashAttn.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkFlashAttn.Location = new System.Drawing.Point(98, 222);
 			this.checkFlashAttn.Name = "checkFlashAttn";
-			this.checkFlashAttn.Size = new System.Drawing.Size(96, 17);
-			this.checkFlashAttn.TabIndex = 35;
-			this.checkFlashAttn.Text = "Flash Attention";
 			this.checkFlashAttn.UseVisualStyleBackColor = true;
 			// 
 			// checkMLock
 			// 
-			this.checkMLock.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.checkMLock.AutoSize = true;
-			this.checkMLock.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkMLock.Location = new System.Drawing.Point(135, 199);
+			resources.ApplyResources(this.checkMLock, "checkMLock");
 			this.checkMLock.Name = "checkMLock";
-			this.checkMLock.Size = new System.Drawing.Size(59, 17);
-			this.checkMLock.TabIndex = 34;
-			this.checkMLock.Text = "MLock";
 			this.checkMLock.UseVisualStyleBackColor = true;
 			// 
 			// checkMMap
 			// 
-			this.checkMMap.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.checkMMap.AutoSize = true;
-			this.checkMMap.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.checkMMap.Location = new System.Drawing.Point(138, 176);
+			resources.ApplyResources(this.checkMMap, "checkMMap");
 			this.checkMMap.Name = "checkMMap";
-			this.checkMMap.Size = new System.Drawing.Size(56, 17);
-			this.checkMMap.TabIndex = 33;
-			this.checkMMap.Text = "MMap";
 			this.checkMMap.UseVisualStyleBackColor = true;
 			// 
 			// comboNUMAStrat
 			// 
-			this.comboNUMAStrat.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.comboNUMAStrat, "comboNUMAStrat");
 			this.comboNUMAStrat.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 			this.comboNUMAStrat.FormattingEnabled = true;
 			this.comboNUMAStrat.Items.AddRange(new object[] {
-            "Disabled",
-            "Distribute",
-            "Isolate",
-            "Numactl",
-            "Mirror",
-            "Count"});
-			this.comboNUMAStrat.Location = new System.Drawing.Point(119, 19);
+            resources.GetString("comboNUMAStrat.Items"),
+            resources.GetString("comboNUMAStrat.Items1"),
+            resources.GetString("comboNUMAStrat.Items2"),
+            resources.GetString("comboNUMAStrat.Items3"),
+            resources.GetString("comboNUMAStrat.Items4"),
+            resources.GetString("comboNUMAStrat.Items5")});
 			this.comboNUMAStrat.Name = "comboNUMAStrat";
-			this.comboNUMAStrat.Size = new System.Drawing.Size(75, 21);
-			this.comboNUMAStrat.TabIndex = 31;
 			// 
 			// label6
 			// 
-			this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label6.AutoSize = true;
-			this.label6.Location = new System.Drawing.Point(31, 48);
+			resources.ApplyResources(this.label6, "label6");
 			this.label6.Name = "label6";
-			this.label6.Size = new System.Drawing.Size(82, 13);
-			this.label6.TabIndex = 13;
-			this.label6.Text = "Repeat penalty:";
 			// 
 			// label12
 			// 
-			this.label12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label12.AutoSize = true;
-			this.label12.Location = new System.Drawing.Point(29, 22);
+			resources.ApplyResources(this.label12, "label12");
 			this.label12.Name = "label12";
-			this.label12.Size = new System.Drawing.Size(84, 13);
-			this.label12.TabIndex = 32;
-			this.label12.Text = "NUMA Strategy:";
 			// 
 			// numRepPen
 			// 
-			this.numRepPen.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.numRepPen, "numRepPen");
 			this.numRepPen.DecimalPlaces = 2;
 			this.numRepPen.Increment = new decimal(new int[] {
             1,
             0,
             0,
             131072});
-			this.numRepPen.Location = new System.Drawing.Point(119, 46);
 			this.numRepPen.Maximum = new decimal(new int[] {
             10,
             0,
             0,
             0});
 			this.numRepPen.Name = "numRepPen";
-			this.numRepPen.Size = new System.Drawing.Size(75, 20);
-			this.numRepPen.TabIndex = 14;
 			this.numRepPen.Value = new decimal(new int[] {
             11,
             0,
@@ -1158,26 +846,18 @@ namespace LMStud
 			// 
 			// label11
 			// 
-			this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label11.AutoSize = true;
-			this.label11.Location = new System.Drawing.Point(54, 152);
+			resources.ApplyResources(this.label11, "label11");
 			this.label11.Name = "label11";
-			this.label11.Size = new System.Drawing.Size(59, 13);
-			this.label11.TabIndex = 30;
-			this.label11.Text = "Batch size:";
 			// 
 			// numBatchSize
 			// 
-			this.numBatchSize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numBatchSize.Location = new System.Drawing.Point(119, 150);
+			resources.ApplyResources(this.numBatchSize, "numBatchSize");
 			this.numBatchSize.Maximum = new decimal(new int[] {
             1048576,
             0,
             0,
             0});
 			this.numBatchSize.Name = "numBatchSize";
-			this.numBatchSize.Size = new System.Drawing.Size(75, 20);
-			this.numBatchSize.TabIndex = 29;
 			this.numBatchSize.Value = new decimal(new int[] {
             512,
             0,
@@ -1186,26 +866,18 @@ namespace LMStud
 			// 
 			// label8
 			// 
-			this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label8.AutoSize = true;
-			this.label8.Location = new System.Drawing.Point(74, 74);
+			resources.ApplyResources(this.label8, "label8");
 			this.label8.Name = "label8";
-			this.label8.Size = new System.Drawing.Size(39, 13);
-			this.label8.TabIndex = 17;
-			this.label8.Text = "Top K:";
 			// 
 			// numTopK
 			// 
-			this.numTopK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numTopK.Location = new System.Drawing.Point(119, 72);
+			resources.ApplyResources(this.numTopK, "numTopK");
 			this.numTopK.Maximum = new decimal(new int[] {
             100000,
             0,
             0,
             0});
 			this.numTopK.Name = "numTopK";
-			this.numTopK.Size = new System.Drawing.Size(75, 20);
-			this.numTopK.TabIndex = 18;
 			this.numTopK.Value = new decimal(new int[] {
             20,
             0,
@@ -1214,32 +886,24 @@ namespace LMStud
 			// 
 			// label9
 			// 
-			this.label9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label9.AutoSize = true;
-			this.label9.Location = new System.Drawing.Point(74, 100);
+			resources.ApplyResources(this.label9, "label9");
 			this.label9.Name = "label9";
-			this.label9.Size = new System.Drawing.Size(39, 13);
-			this.label9.TabIndex = 19;
-			this.label9.Text = "Top P:";
 			// 
 			// numTopP
 			// 
-			this.numTopP.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.numTopP, "numTopP");
 			this.numTopP.DecimalPlaces = 2;
 			this.numTopP.Increment = new decimal(new int[] {
             1,
             0,
             0,
             131072});
-			this.numTopP.Location = new System.Drawing.Point(119, 98);
 			this.numTopP.Maximum = new decimal(new int[] {
             1,
             0,
             0,
             0});
 			this.numTopP.Name = "numTopP";
-			this.numTopP.Size = new System.Drawing.Size(75, 20);
-			this.numTopP.TabIndex = 20;
 			this.numTopP.Value = new decimal(new int[] {
             95,
             0,
@@ -1256,25 +920,19 @@ namespace LMStud
 			this.groupCommon.Controls.Add(this.numNGen);
 			this.groupCommon.Controls.Add(this.numTemp);
 			this.groupCommon.Controls.Add(this.label4);
-			this.groupCommon.Location = new System.Drawing.Point(3, 260);
+			resources.ApplyResources(this.groupCommon, "groupCommon");
 			this.groupCommon.Name = "groupCommon";
-			this.groupCommon.Size = new System.Drawing.Size(200, 124);
-			this.groupCommon.TabIndex = 33;
 			this.groupCommon.TabStop = false;
-			this.groupCommon.Text = "Common";
 			// 
 			// numCtxSize
 			// 
-			this.numCtxSize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numCtxSize.Location = new System.Drawing.Point(119, 19);
+			resources.ApplyResources(this.numCtxSize, "numCtxSize");
 			this.numCtxSize.Maximum = new decimal(new int[] {
             1048576,
             0,
             0,
             0});
 			this.numCtxSize.Name = "numCtxSize";
-			this.numCtxSize.Size = new System.Drawing.Size(75, 20);
-			this.numCtxSize.TabIndex = 24;
 			this.numCtxSize.Value = new decimal(new int[] {
             8192,
             0,
@@ -1283,18 +941,12 @@ namespace LMStud
 			// 
 			// label5
 			// 
-			this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label5.AutoSize = true;
-			this.label5.Location = new System.Drawing.Point(46, 21);
+			resources.ApplyResources(this.label5, "label5");
 			this.label5.Name = "label5";
-			this.label5.Size = new System.Drawing.Size(67, 13);
-			this.label5.TabIndex = 25;
-			this.label5.Text = "Context size:";
 			// 
 			// numGPULayers
 			// 
-			this.numGPULayers.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numGPULayers.Location = new System.Drawing.Point(119, 45);
+			resources.ApplyResources(this.numGPULayers, "numGPULayers");
 			this.numGPULayers.Maximum = new decimal(new int[] {
             1024,
             0,
@@ -1306,8 +958,6 @@ namespace LMStud
             0,
             -2147483648});
 			this.numGPULayers.Name = "numGPULayers";
-			this.numGPULayers.Size = new System.Drawing.Size(75, 20);
-			this.numGPULayers.TabIndex = 26;
 			this.numGPULayers.Value = new decimal(new int[] {
             1,
             0,
@@ -1316,28 +966,17 @@ namespace LMStud
 			// 
 			// label7
 			// 
-			this.label7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label7.AutoSize = true;
-			this.label7.Location = new System.Drawing.Point(43, 73);
+			resources.ApplyResources(this.label7, "label7");
 			this.label7.Name = "label7";
-			this.label7.Size = new System.Drawing.Size(70, 13);
-			this.label7.TabIndex = 15;
-			this.label7.Text = "Temperature:";
 			// 
 			// label10
 			// 
-			this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label10.AutoSize = true;
-			this.label10.Location = new System.Drawing.Point(50, 47);
+			resources.ApplyResources(this.label10, "label10");
 			this.label10.Name = "label10";
-			this.label10.Size = new System.Drawing.Size(63, 13);
-			this.label10.TabIndex = 27;
-			this.label10.Text = "GPU layers:";
 			// 
 			// numNGen
 			// 
-			this.numNGen.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.numNGen.Location = new System.Drawing.Point(119, 97);
+			resources.ApplyResources(this.numNGen, "numNGen");
 			this.numNGen.Maximum = new decimal(new int[] {
             131072,
             0,
@@ -1349,8 +988,6 @@ namespace LMStud
             0,
             -2147483648});
 			this.numNGen.Name = "numNGen";
-			this.numNGen.Size = new System.Drawing.Size(75, 20);
-			this.numNGen.TabIndex = 23;
 			this.numNGen.Value = new decimal(new int[] {
             1,
             0,
@@ -1359,22 +996,19 @@ namespace LMStud
 			// 
 			// numTemp
 			// 
-			this.numTemp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.numTemp, "numTemp");
 			this.numTemp.DecimalPlaces = 2;
 			this.numTemp.Increment = new decimal(new int[] {
             1,
             0,
             0,
             65536});
-			this.numTemp.Location = new System.Drawing.Point(119, 71);
 			this.numTemp.Maximum = new decimal(new int[] {
             1,
             0,
             0,
             0});
 			this.numTemp.Name = "numTemp";
-			this.numTemp.Size = new System.Drawing.Size(75, 20);
-			this.numTemp.TabIndex = 16;
 			this.numTemp.Value = new decimal(new int[] {
             6,
             0,
@@ -1383,75 +1017,45 @@ namespace LMStud
 			// 
 			// label4
 			// 
-			this.label4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.label4.AutoSize = true;
-			this.label4.Location = new System.Drawing.Point(10, 99);
+			resources.ApplyResources(this.label4, "label4");
 			this.label4.Name = "label4";
-			this.label4.Size = new System.Drawing.Size(103, 13);
-			this.label4.TabIndex = 22;
-			this.label4.Text = "Tokens to generate:";
 			// 
 			// label3
 			// 
-			this.label3.AutoSize = true;
-			this.label3.Location = new System.Drawing.Point(3, 133);
+			resources.ApplyResources(this.label3, "label3");
 			this.label3.Name = "label3";
-			this.label3.Size = new System.Drawing.Size(73, 13);
-			this.label3.TabIndex = 21;
-			this.label3.Text = "Models folder:";
 			// 
 			// butBrowse
 			// 
-			this.butBrowse.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.butBrowse.Location = new System.Drawing.Point(930, 128);
+			resources.ApplyResources(this.butBrowse, "butBrowse");
 			this.butBrowse.Name = "butBrowse";
-			this.butBrowse.Size = new System.Drawing.Size(75, 23);
-			this.butBrowse.TabIndex = 12;
-			this.butBrowse.Text = "Browse";
 			this.butBrowse.UseVisualStyleBackColor = true;
 			this.butBrowse.Click += new System.EventHandler(this.ButBrowse_Click);
 			// 
 			// textModelsPath
 			// 
-			this.textModelsPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.textModelsPath, "textModelsPath");
 			this.textModelsPath.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
 			this.textModelsPath.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.FileSystem;
-			this.textModelsPath.Location = new System.Drawing.Point(82, 130);
 			this.textModelsPath.Name = "textModelsPath";
-			this.textModelsPath.Size = new System.Drawing.Size(842, 20);
-			this.textModelsPath.TabIndex = 11;
 			this.textModelsPath.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextModelsPath_KeyDown);
 			// 
 			// butApply
 			// 
-			this.butApply.Location = new System.Drawing.Point(3, 639);
+			resources.ApplyResources(this.butApply, "butApply");
 			this.butApply.Name = "butApply";
-			this.butApply.Size = new System.Drawing.Size(75, 23);
-			this.butApply.TabIndex = 4;
-			this.butApply.Text = "Apply";
 			this.butApply.UseVisualStyleBackColor = true;
 			this.butApply.Click += new System.EventHandler(this.ButApply_Click);
 			// 
 			// label1
 			// 
-			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(3, 3);
+			resources.ApplyResources(this.label1, "label1");
 			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(79, 13);
-			this.label1.TabIndex = 1;
-			this.label1.Text = "System prompt:";
 			// 
 			// textSystemPrompt
 			// 
-			this.textSystemPrompt.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-			this.textSystemPrompt.Location = new System.Drawing.Point(0, 16);
-			this.textSystemPrompt.Margin = new System.Windows.Forms.Padding(0);
-			this.textSystemPrompt.Multiline = true;
+			resources.ApplyResources(this.textSystemPrompt, "textSystemPrompt");
 			this.textSystemPrompt.Name = "textSystemPrompt";
-			this.textSystemPrompt.Size = new System.Drawing.Size(1008, 109);
-			this.textSystemPrompt.TabIndex = 0;
 			// 
 			// tabPage3
 			// 
@@ -1459,23 +1063,15 @@ namespace LMStud
 			this.tabPage3.Controls.Add(this.checkLoadAuto);
 			this.tabPage3.Controls.Add(this.butUnload);
 			this.tabPage3.Controls.Add(this.butLoad);
-			this.tabPage3.Location = new System.Drawing.Point(4, 22);
-			this.tabPage3.Margin = new System.Windows.Forms.Padding(0);
+			resources.ApplyResources(this.tabPage3, "tabPage3");
 			this.tabPage3.Name = "tabPage3";
-			this.tabPage3.Size = new System.Drawing.Size(1008, 949);
-			this.tabPage3.TabIndex = 2;
-			this.tabPage3.Text = "Models";
 			this.tabPage3.UseVisualStyleBackColor = true;
 			// 
 			// splitContainer2
 			// 
-			this.splitContainer2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.splitContainer2, "splitContainer2");
 			this.splitContainer2.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-			this.splitContainer2.Location = new System.Drawing.Point(3, 0);
 			this.splitContainer2.Name = "splitContainer2";
-			this.splitContainer2.Orientation = System.Windows.Forms.Orientation.Horizontal;
 			// 
 			// splitContainer2.Panel1
 			// 
@@ -1484,24 +1080,17 @@ namespace LMStud
 			// splitContainer2.Panel2
 			// 
 			this.splitContainer2.Panel2.Controls.Add(this.listViewMeta);
-			this.splitContainer2.Size = new System.Drawing.Size(1005, 923);
-			this.splitContainer2.SplitterDistance = 461;
-			this.splitContainer2.TabIndex = 4;
 			// 
 			// listViewModels
 			// 
 			this.listViewModels.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1,
             this.columnHeader2});
-			this.listViewModels.Dock = System.Windows.Forms.DockStyle.Fill;
+			resources.ApplyResources(this.listViewModels, "listViewModels");
 			this.listViewModels.GridLines = true;
 			this.listViewModels.HideSelection = false;
-			this.listViewModels.Location = new System.Drawing.Point(0, 0);
-			this.listViewModels.Margin = new System.Windows.Forms.Padding(0);
 			this.listViewModels.MultiSelect = false;
 			this.listViewModels.Name = "listViewModels";
-			this.listViewModels.Size = new System.Drawing.Size(1001, 457);
-			this.listViewModels.TabIndex = 0;
 			this.listViewModels.UseCompatibleStateImageBehavior = false;
 			this.listViewModels.View = System.Windows.Forms.View.Details;
 			this.listViewModels.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.ListViewModels_ItemSelectionChanged);
@@ -1510,97 +1099,66 @@ namespace LMStud
 			// 
 			// columnHeader1
 			// 
-			this.columnHeader1.Text = "Name";
-			this.columnHeader1.Width = 250;
+			resources.ApplyResources(this.columnHeader1, "columnHeader1");
 			// 
 			// columnHeader2
 			// 
-			this.columnHeader2.Text = "Full Path";
-			this.columnHeader2.Width = 746;
+			resources.ApplyResources(this.columnHeader2, "columnHeader2");
 			// 
 			// listViewMeta
 			// 
 			this.listViewMeta.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader3,
             this.columnHeader4});
-			this.listViewMeta.Dock = System.Windows.Forms.DockStyle.Fill;
+			resources.ApplyResources(this.listViewMeta, "listViewMeta");
 			this.listViewMeta.GridLines = true;
 			this.listViewMeta.HideSelection = false;
-			this.listViewMeta.Location = new System.Drawing.Point(0, 0);
 			this.listViewMeta.MultiSelect = false;
 			this.listViewMeta.Name = "listViewMeta";
-			this.listViewMeta.Size = new System.Drawing.Size(1001, 454);
-			this.listViewMeta.TabIndex = 0;
 			this.listViewMeta.UseCompatibleStateImageBehavior = false;
 			this.listViewMeta.View = System.Windows.Forms.View.Details;
 			// 
 			// columnHeader3
 			// 
-			this.columnHeader3.Text = "Metadata Entry";
-			this.columnHeader3.Width = 250;
+			resources.ApplyResources(this.columnHeader3, "columnHeader3");
 			// 
 			// columnHeader4
 			// 
-			this.columnHeader4.Text = "Value";
-			this.columnHeader4.Width = 746;
+			resources.ApplyResources(this.columnHeader4, "columnHeader4");
 			// 
 			// checkLoadAuto
 			// 
-			this.checkLoadAuto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.checkLoadAuto.AutoSize = true;
-			this.checkLoadAuto.Location = new System.Drawing.Point(3, 930);
+			resources.ApplyResources(this.checkLoadAuto, "checkLoadAuto");
 			this.checkLoadAuto.Name = "checkLoadAuto";
-			this.checkLoadAuto.Size = new System.Drawing.Size(147, 17);
-			this.checkLoadAuto.TabIndex = 3;
-			this.checkLoadAuto.Text = "Load last model at startup";
 			this.checkLoadAuto.UseVisualStyleBackColor = true;
 			this.checkLoadAuto.CheckedChanged += new System.EventHandler(this.CheckLoadAuto_CheckedChanged);
 			// 
 			// butUnload
 			// 
-			this.butUnload.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.butUnload.Enabled = false;
-			this.butUnload.Location = new System.Drawing.Point(933, 926);
-			this.butUnload.Margin = new System.Windows.Forms.Padding(0);
+			resources.ApplyResources(this.butUnload, "butUnload");
 			this.butUnload.Name = "butUnload";
-			this.butUnload.Size = new System.Drawing.Size(75, 23);
-			this.butUnload.TabIndex = 2;
-			this.butUnload.Text = "Unload";
 			this.butUnload.UseVisualStyleBackColor = true;
 			this.butUnload.Click += new System.EventHandler(this.ButUnload_Click);
 			// 
 			// butLoad
 			// 
-			this.butLoad.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.butLoad.Location = new System.Drawing.Point(858, 926);
-			this.butLoad.Margin = new System.Windows.Forms.Padding(0);
+			resources.ApplyResources(this.butLoad, "butLoad");
 			this.butLoad.Name = "butLoad";
-			this.butLoad.Size = new System.Drawing.Size(75, 23);
-			this.butLoad.TabIndex = 1;
-			this.butLoad.Text = "Load";
 			this.butLoad.UseVisualStyleBackColor = true;
 			this.butLoad.Click += new System.EventHandler(this.ButLoad_Click);
 			// 
 			// tabPage4
 			// 
 			this.tabPage4.Controls.Add(this.splitContainer3);
-			this.tabPage4.Location = new System.Drawing.Point(4, 22);
+			resources.ApplyResources(this.tabPage4, "tabPage4");
 			this.tabPage4.Name = "tabPage4";
-			this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPage4.Size = new System.Drawing.Size(1008, 949);
-			this.tabPage4.TabIndex = 3;
-			this.tabPage4.Text = "Huggingface";
 			this.tabPage4.UseVisualStyleBackColor = true;
 			// 
 			// splitContainer3
 			// 
-			this.splitContainer3.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.splitContainer3, "splitContainer3");
 			this.splitContainer3.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-			this.splitContainer3.Location = new System.Drawing.Point(3, 3);
 			this.splitContainer3.Name = "splitContainer3";
-			this.splitContainer3.Orientation = System.Windows.Forms.Orientation.Horizontal;
 			// 
 			// splitContainer3.Panel1
 			// 
@@ -1614,47 +1172,28 @@ namespace LMStud
 			this.splitContainer3.Panel2.Controls.Add(this.progressBar1);
 			this.splitContainer3.Panel2.Controls.Add(this.butDownload);
 			this.splitContainer3.Panel2.Controls.Add(this.listViewHugFiles);
-			this.splitContainer3.Size = new System.Drawing.Size(1002, 943);
-			this.splitContainer3.SplitterDistance = 469;
-			this.splitContainer3.TabIndex = 2;
 			// 
 			// butSearch
 			// 
-			this.butSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.butSearch.Location = new System.Drawing.Point(923, 0);
-			this.butSearch.Margin = new System.Windows.Forms.Padding(0);
+			resources.ApplyResources(this.butSearch, "butSearch");
 			this.butSearch.Name = "butSearch";
-			this.butSearch.Size = new System.Drawing.Size(75, 23);
-			this.butSearch.TabIndex = 3;
-			this.butSearch.Text = "Go";
 			this.butSearch.UseVisualStyleBackColor = true;
 			this.butSearch.Click += new System.EventHandler(this.ButSearch_Click);
 			// 
 			// textSearchTerm
 			// 
-			this.textSearchTerm.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-			this.textSearchTerm.Location = new System.Drawing.Point(84, 2);
-			this.textSearchTerm.Margin = new System.Windows.Forms.Padding(0);
+			resources.ApplyResources(this.textSearchTerm, "textSearchTerm");
 			this.textSearchTerm.Name = "textSearchTerm";
-			this.textSearchTerm.Size = new System.Drawing.Size(839, 20);
-			this.textSearchTerm.TabIndex = 2;
 			this.textSearchTerm.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextSearchTerm_KeyDown);
 			// 
 			// label13
 			// 
-			this.label13.AutoSize = true;
-			this.label13.Location = new System.Drawing.Point(1, 5);
+			resources.ApplyResources(this.label13, "label13");
 			this.label13.Name = "label13";
-			this.label13.Size = new System.Drawing.Size(80, 13);
-			this.label13.TabIndex = 1;
-			this.label13.Text = "Search models:";
 			// 
 			// listViewHugSearch
 			// 
-			this.listViewHugSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.listViewHugSearch, "listViewHugSearch");
 			this.listViewHugSearch.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader5,
             this.columnHeader6,
@@ -1665,98 +1204,71 @@ namespace LMStud
             this.columnHeader14});
 			this.listViewHugSearch.GridLines = true;
 			this.listViewHugSearch.HideSelection = false;
-			this.listViewHugSearch.Location = new System.Drawing.Point(0, 24);
-			this.listViewHugSearch.Margin = new System.Windows.Forms.Padding(0);
 			this.listViewHugSearch.Name = "listViewHugSearch";
-			this.listViewHugSearch.Size = new System.Drawing.Size(998, 441);
-			this.listViewHugSearch.TabIndex = 0;
 			this.listViewHugSearch.UseCompatibleStateImageBehavior = false;
 			this.listViewHugSearch.View = System.Windows.Forms.View.Details;
 			this.listViewHugSearch.SelectedIndexChanged += new System.EventHandler(this.ListViewHugSearch_SelectedIndexChanged);
 			// 
 			// columnHeader5
 			// 
-			this.columnHeader5.Text = "Name";
-			this.columnHeader5.Width = 250;
+			resources.ApplyResources(this.columnHeader5, "columnHeader5");
 			// 
 			// columnHeader6
 			// 
-			this.columnHeader6.Text = "Uploader";
-			this.columnHeader6.Width = 230;
+			resources.ApplyResources(this.columnHeader6, "columnHeader6");
 			// 
 			// columnHeader7
 			// 
-			this.columnHeader7.Text = "Likes";
-			this.columnHeader7.Width = 85;
+			resources.ApplyResources(this.columnHeader7, "columnHeader7");
 			// 
 			// columnHeader11
 			// 
-			this.columnHeader11.Text = "Downloads";
-			this.columnHeader11.Width = 86;
+			resources.ApplyResources(this.columnHeader11, "columnHeader11");
 			// 
 			// columnHeader12
 			// 
-			this.columnHeader12.Text = "Trending Score";
-			this.columnHeader12.Width = 87;
+			resources.ApplyResources(this.columnHeader12, "columnHeader12");
 			// 
 			// columnHeader13
 			// 
-			this.columnHeader13.Text = "Created";
-			this.columnHeader13.Width = 120;
+			resources.ApplyResources(this.columnHeader13, "columnHeader13");
 			// 
 			// columnHeader14
 			// 
-			this.columnHeader14.Text = "Modified";
-			this.columnHeader14.Width = 120;
+			resources.ApplyResources(this.columnHeader14, "columnHeader14");
 			// 
 			// progressBar1
 			// 
-			this.progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-			this.progressBar1.Location = new System.Drawing.Point(0, 443);
+			resources.ApplyResources(this.progressBar1, "progressBar1");
 			this.progressBar1.Name = "progressBar1";
-			this.progressBar1.Size = new System.Drawing.Size(923, 23);
-			this.progressBar1.TabIndex = 3;
 			// 
 			// butDownload
 			// 
-			this.butDownload.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.butDownload.Location = new System.Drawing.Point(923, 443);
-			this.butDownload.Margin = new System.Windows.Forms.Padding(0);
+			resources.ApplyResources(this.butDownload, "butDownload");
 			this.butDownload.Name = "butDownload";
-			this.butDownload.Size = new System.Drawing.Size(75, 23);
-			this.butDownload.TabIndex = 2;
-			this.butDownload.Text = Resources.Download;
+			this.butDownload.Text = global::LMStud.Properties.Resources.Download;
 			this.butDownload.UseVisualStyleBackColor = true;
 			this.butDownload.Click += new System.EventHandler(this.ButDownload_Click);
 			// 
 			// listViewHugFiles
 			// 
-			this.listViewHugFiles.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			resources.ApplyResources(this.listViewHugFiles, "listViewHugFiles");
 			this.listViewHugFiles.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader8,
             this.columnHeader10});
 			this.listViewHugFiles.GridLines = true;
 			this.listViewHugFiles.HideSelection = false;
-			this.listViewHugFiles.Location = new System.Drawing.Point(0, 0);
-			this.listViewHugFiles.Margin = new System.Windows.Forms.Padding(0);
 			this.listViewHugFiles.Name = "listViewHugFiles";
-			this.listViewHugFiles.Size = new System.Drawing.Size(998, 443);
-			this.listViewHugFiles.TabIndex = 1;
 			this.listViewHugFiles.UseCompatibleStateImageBehavior = false;
 			this.listViewHugFiles.View = System.Windows.Forms.View.Details;
 			// 
 			// columnHeader8
 			// 
-			this.columnHeader8.Text = "Filename";
-			this.columnHeader8.Width = 878;
+			resources.ApplyResources(this.columnHeader8, "columnHeader8");
 			// 
 			// columnHeader10
 			// 
-			this.columnHeader10.Text = "Size";
-			this.columnHeader10.Width = 100;
+			resources.ApplyResources(this.columnHeader10, "columnHeader10");
 			// 
 			// statusStrip1
 			// 
@@ -1766,41 +1278,34 @@ namespace LMStud
             this.labelTPS,
             this.labelPreGen});
 			this.statusStrip1.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.HorizontalStackWithOverflow;
-			this.statusStrip1.Location = new System.Drawing.Point(0, 973);
+			resources.ApplyResources(this.statusStrip1, "statusStrip1");
 			this.statusStrip1.Name = "statusStrip1";
-			this.statusStrip1.Size = new System.Drawing.Size(1016, 24);
-			this.statusStrip1.TabIndex = 4;
-			this.statusStrip1.Text = "statusStrip1";
 			// 
 			// toolStripStatusLabel1
 			// 
 			this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-			this.toolStripStatusLabel1.Size = new System.Drawing.Size(99, 19);
-			this.toolStripStatusLabel1.Text = "No model loaded";
+			resources.ApplyResources(this.toolStripStatusLabel1, "toolStripStatusLabel1");
 			// 
 			// labelTokens
 			// 
 			this.labelTokens.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
 			this.labelTokens.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
 			this.labelTokens.Name = "labelTokens";
-			this.labelTokens.Size = new System.Drawing.Size(56, 19);
-			this.labelTokens.Text = "0 Tokens";
+			resources.ApplyResources(this.labelTokens, "labelTokens");
 			// 
 			// labelTPS
 			// 
 			this.labelTPS.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
 			this.labelTPS.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
 			this.labelTPS.Name = "labelTPS";
-			this.labelTPS.Size = new System.Drawing.Size(48, 19);
-			this.labelTPS.Text = "0 Tok/s";
+			resources.ApplyResources(this.labelTPS, "labelTPS");
 			// 
 			// labelPreGen
 			// 
 			this.labelPreGen.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
 			this.labelPreGen.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
 			this.labelPreGen.Name = "labelPreGen";
-			this.labelPreGen.Size = new System.Drawing.Size(120, 19);
-			this.labelPreGen.Text = "Pre-generation time:";
+			resources.ApplyResources(this.labelPreGen, "labelPreGen");
 			// 
 			// toolTip1
 			// 
@@ -1812,17 +1317,14 @@ namespace LMStud
 			// 
 			// Form1
 			// 
-			this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+			resources.ApplyResources(this, "$this");
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
 			this.AutoValidate = System.Windows.Forms.AutoValidate.Disable;
-			this.ClientSize = new System.Drawing.Size(1016, 997);
 			this.Controls.Add(this.statusStrip1);
 			this.Controls.Add(this.tabControl1);
 			this.DoubleBuffered = true;
 			this.KeyPreview = true;
 			this.Name = "Form1";
-			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-			this.Text = Resources.LM_Stud;
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
 			this.Load += new System.EventHandler(this.Form1_Load);
 			this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);

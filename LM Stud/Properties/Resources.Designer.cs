@@ -342,6 +342,330 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Download Whisper VAD models..
+        /// </summary>
+        internal static string ToolTip_butVADDown {
+            get {
+                return ResourceManager.GetString("ToolTip_butVADDown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable the tool for creating new files under the base path..
+        /// </summary>
+        internal static string ToolTip_checkFileCreateEnable {
+            get {
+                return ResourceManager.GetString("ToolTip_checkFileCreateEnable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable the tool for listing the contents of a folder under the base path..
+        /// </summary>
+        internal static string ToolTip_checkFileListEnable {
+            get {
+                return ResourceManager.GetString("ToolTip_checkFileListEnable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable the tool for reading the contents of files under the base path..
+        /// </summary>
+        internal static string ToolTip_checkFileReadEnable {
+            get {
+                return ResourceManager.GetString("ToolTip_checkFileReadEnable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable the tool for writing to files under the base path..
+        /// </summary>
+        internal static string ToolTip_checkFileWriteEnable {
+            get {
+                return ResourceManager.GetString("ToolTip_checkFileWriteEnable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Lock the model in RAM..
+        /// </summary>
+        internal static string ToolTip_checkMLock {
+            get {
+                return ResourceManager.GetString("ToolTip_checkMLock", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Map the model file to memory for on-demand loading, may improve model load times..
+        /// </summary>
+        internal static string ToolTip_checkMMap {
+            get {
+                return ResourceManager.GetString("ToolTip_checkMMap", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Speak the generated responses using the computers default voice..
+        /// </summary>
+        internal static string ToolTip_checkSpeak {
+            get {
+                return ResourceManager.GetString("ToolTip_checkSpeak", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An intermediate check state (filled in) means it will transcribe spoken words without generating, when checked it will automatically generate..
+        /// </summary>
+        internal static string ToolTip_checkVoiceInput {
+            get {
+                return ResourceManager.GetString("ToolTip_checkVoiceInput", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to NUMA (Non-Uniform Memory Access) strategy. Adjust if using multi-socket CPUs or specific memory configurations..
+        /// </summary>
+        internal static string ToolTip_comboNUMAStrat {
+            get {
+                return ResourceManager.GetString("ToolTip_comboNUMAStrat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the Whisper VAD model used for speech detection..
+        /// </summary>
+        internal static string ToolTip_comboVADModel {
+            get {
+                return ResourceManager.GetString("ToolTip_comboVADModel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Parameters controlling text generation on CPU..
+        /// </summary>
+        internal static string ToolTip_groupCPUParams {
+            get {
+                return ResourceManager.GetString("ToolTip_groupCPUParams", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Parameters for the pre-generation step (batch preparation)..
+        /// </summary>
+        internal static string ToolTip_groupCPUParamsBatch {
+            get {
+                return ResourceManager.GetString("ToolTip_groupCPUParamsBatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set an instruction to optimize the way the assistant uses the file tools..
+        /// </summary>
+        internal static string ToolTip_linkFileInstruction {
+            get {
+                return ResourceManager.GetString("ToolTip_linkFileInstruction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Batch size for processing tokens during generation. Higher values can improve performance at the cost of higher RAM usage..
+        /// </summary>
+        internal static string ToolTip_numBatchSize {
+            get {
+                return ResourceManager.GetString("ToolTip_numBatchSize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Context size (max tokens). Higher values improve memory but use more RAM..
+        /// </summary>
+        internal static string ToolTip_numCtxSize {
+            get {
+                return ResourceManager.GetString("ToolTip_numCtxSize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to High-pass filter cutoff frequency. Higher values reduce low frequency noise..
+        /// </summary>
+        internal static string ToolTip_numFreqThreshold {
+            get {
+                return ResourceManager.GetString("ToolTip_numFreqThreshold", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Number of layers to offload to GPU, more layers improve performance but increase GPU memory usage..
+        /// </summary>
+        internal static string ToolTip_numGPULayers {
+            get {
+                return ResourceManager.GetString("ToolTip_numGPULayers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Min-P sampling: keeps only tokens whose individual probability is at least this fraction of the top token’s probability, trimming unlikely options and reducing noise..
+        /// </summary>
+        internal static string ToolTip_numMinP {
+            get {
+                return ResourceManager.GetString("ToolTip_numMinP", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Number of tokens to generate per response (max length of the AI&apos;s reply), -1 = no limit..
+        /// </summary>
+        internal static string ToolTip_numNGen {
+            get {
+                return ResourceManager.GetString("ToolTip_numNGen", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Repetition penalty reduces repetitive outputs. Higher values strongly discourage repeated phrases..
+        /// </summary>
+        internal static string ToolTip_numRepPen {
+            get {
+                return ResourceManager.GetString("ToolTip_numRepPen", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Temperature controls randomness. Lower values make responses more deterministic; higher values produce more creative outputs..
+        /// </summary>
+        internal static string ToolTip_numTemp {
+            get {
+                return ResourceManager.GetString("ToolTip_numTemp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to CPU threads for token generation. Typically, around 75% of your physical cores is optimal to prevent oversaturating the memory controller..
+        /// </summary>
+        internal static string ToolTip_numThreads {
+            get {
+                return ResourceManager.GetString("ToolTip_numThreads", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to CPU threads used for batch preparation..
+        /// </summary>
+        internal static string ToolTip_numThreadsBatch {
+            get {
+                return ResourceManager.GetString("ToolTip_numThreadsBatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Top-K sampling: limits token choice to the K most probable tokens, improving coherency..
+        /// </summary>
+        internal static string ToolTip_numTopK {
+            get {
+                return ResourceManager.GetString("ToolTip_numTopK", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Top-P sampling: controls diversity by choosing from the smallest possible set of tokens whose cumulative probability exceeds this threshold..
+        /// </summary>
+        internal static string ToolTip_numTopP {
+            get {
+                return ResourceManager.GetString("ToolTip_numTopP", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Voice Activity Detection threashold, lower values increase sensitivity to speech activation..
+        /// </summary>
+        internal static string ToolTip_numVadThreshold {
+            get {
+                return ResourceManager.GetString("ToolTip_numVadThreshold", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set how similar the detected wake word must be to activate transcription..
+        /// </summary>
+        internal static string ToolTip_numWakeWordSimilarity {
+            get {
+                return ResourceManager.GetString("ToolTip_numWakeWordSimilarity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use simple energy-based voice activity detection..
+        /// </summary>
+        internal static string ToolTip_radioBasicVAD {
+            get {
+                return ResourceManager.GetString("ToolTip_radioBasicVAD", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use Whisper&apos;s neural VAD model for speech detection..
+        /// </summary>
+        internal static string ToolTip_radioWhisperVAD {
+            get {
+                return ResourceManager.GetString("ToolTip_radioWhisperVAD", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to File access is relative to this path and canonically restricted to files and folders under this path only..
+        /// </summary>
+        internal static string ToolTip_textFileBasePath {
+            get {
+                return ResourceManager.GetString("ToolTip_textFileBasePath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A Google API key is required to use the search tool, you can get a free one for 100 searches per day..
+        /// </summary>
+        internal static string ToolTip_textGoogleApiKey {
+            get {
+                return ResourceManager.GetString("ToolTip_textGoogleApiKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create your own Google Programmable Search Engine and copy its &quot;Search engine ID&quot; here..
+        /// </summary>
+        internal static string ToolTip_textGoogleSearchID {
+            get {
+                return ResourceManager.GetString("ToolTip_textGoogleSearchID", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Path to the folder containing your .gguf model files..
+        /// </summary>
+        internal static string ToolTip_textModelsPath {
+            get {
+                return ResourceManager.GetString("ToolTip_textModelsPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tell the AI who or what to be, how to respond, or provide initial context..
+        /// </summary>
+        internal static string ToolTip_textSystemPrompt {
+            get {
+                return ResourceManager.GetString("ToolTip_textSystemPrompt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Optional wake word phrase required before transcription begins..
+        /// </summary>
+        internal static string ToolTip_textWakeWord {
+            get {
+                return ResourceManager.GetString("ToolTip_textWakeWord", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to VAD model not found, use Basic VAD?.
         /// </summary>
         internal static string VAD_model_not_found__use_Basic_VAD_ {
