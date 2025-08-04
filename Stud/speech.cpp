@@ -34,7 +34,7 @@ bool LoadWhisperModel(const char* modelPath, const int nThreads, const bool useG
 		_wparams.vad_params.threshold = _vadThreshold;
 		whisper_vad_context_params vadCParams = whisper_vad_default_context_params();
 		vadCParams.n_threads = nThreads;
-		vadCParams.use_gpu = useGPU;
+		vadCParams.use_gpu = false;
 		_vadCtx = whisper_vad_init_from_file_with_params(_vadModel.c_str(), vadCParams);
 		if(!_vadCtx) return false;
 	}
@@ -48,9 +48,11 @@ void UnloadWhisperModel(){
 		delete _audioCapture;
 		_audioCapture = nullptr;
 	}
-	if(_whisperCtx){
+	if(_vadCtx){
 		whisper_vad_free(_vadCtx);
 		_vadCtx = nullptr;
+	}
+	if(_whisperCtx){
 		whisper_free(_whisperCtx);
 		_whisperCtx = nullptr;
 	}
@@ -67,7 +69,7 @@ void HighPassFilter(std::vector<float>& data, const float cutoff, const float sa
 }
 bool VadSimple(std::vector<float>& pcmf32, const int sampleRate, const int lastMs, const float vadThold, const float freqThold){
 	const int nSamples = pcmf32.size();
-	const int nSamplesLast = (sampleRate*lastMs)/1000;
+	const int nSamplesLast = (sampleRate * lastMs) / 1000;
 	if(nSamplesLast >= nSamples){ return false; }
 	if(freqThold > 0.0f){ HighPassFilter(pcmf32, freqThold, sampleRate); }
 	float energyAll = 0.0f;
@@ -99,10 +101,10 @@ bool StartSpeechTranscription(){
 	if(!_whisperCtx || !_audioCapture){ return false; }
 	_transcriptionRunning.store(true);
 	_transcriptionThread = std::thread([](){
-		constexpr int nShortSamples = WHISPER_SAMPLE_RATE*2;
+		constexpr int nShortSamples = WHISPER_SAMPLE_RATE * 2;
 		std::vector<float> pcmDataShort(nShortSamples, 0.0f);
 		const auto voiceDuration = _voiceDuration;
-		const int nInitialSamples = (WHISPER_SAMPLE_RATE*voiceDuration)/1000;
+		const int nInitialSamples = (WHISPER_SAMPLE_RATE * voiceDuration) / 1000;
 		std::vector<float> pcmDataLong(nInitialSamples, 0.0f);
 		// Helper lambda to split a string into words.
 		auto getWords = [](const std::string& s) -> std::vector<std::string>{
@@ -119,7 +121,7 @@ bool StartSpeechTranscription(){
 		while(_transcriptionRunning.load()){
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			_audioCapture->get(2000, pcmDataShort);
-			if(_vadCtx && !whisper_vad_detect_speech(_vadCtx, pcmDataShort.data(), pcmDataShort.size()/sizeof(float))) continue;
+			if(_vadCtx){ if(!whisper_vad_detect_speech(_vadCtx, pcmDataShort.data(), pcmDataShort.size() / sizeof(float))) continue; }
 			else if(!VadSimple(pcmDataShort, WHISPER_SAMPLE_RATE, 1250, _vadThreshold, _freqThreshold)) continue;
 			_audioCapture->get(voiceDuration, pcmDataLong);
 			if(whisper_full(_whisperCtx, _wparams, pcmDataLong.data(), static_cast<int>(pcmDataLong.size())) != 0){
@@ -169,7 +171,7 @@ bool StartSpeechTranscription(){
 			pcmDataLong.resize(nInitialSamples, 0.0f);
 		}
 		_audioCapture->pause();
-		});
+	});
 	return true;
 }
 void StopSpeechTranscription(){
@@ -182,12 +184,6 @@ void SetVADThresholds(const float vad, const float freq){
 	_vadThreshold = vad;
 	_freqThreshold = freq;
 }
-void SetVoiceDuration(const int voiceDuration){
-	_voiceDuration = voiceDuration;
-}
-void SetWakeWordSimilarity(float similarity){
-	_wakeWordSim = similarity;
-}
-void SetWhisperTemp(float temp){
-	_temp = temp;
-}
+void SetVoiceDuration(const int voiceDuration){ _voiceDuration = voiceDuration; }
+void SetWakeWordSimilarity(float similarity){ _wakeWordSim = similarity; }
+void SetWhisperTemp(float temp){ _temp = temp; }
