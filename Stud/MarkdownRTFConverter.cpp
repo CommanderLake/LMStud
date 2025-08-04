@@ -7,6 +7,11 @@
 #include <iostream>
 #include <array>
 #include <charconv>
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#ifdef max
+#undef max
+#endif
 struct MarkdownState{
 	bool inCodeBlock = false;
 	bool firstLine = true;
@@ -21,7 +26,7 @@ std::string EscapeRtf(const std::string& utf8){
     out.reserve(utf8.size() * 4);
     for(std::size_t i = 0; i < utf8.size(); ){
         uint32_t cp = 0;
-        unsigned char b = utf8[i];
+		const unsigned char b = utf8[i];
         if(b < 0x80){
             cp = b;
             ++i;
@@ -42,7 +47,7 @@ std::string EscapeRtf(const std::string& utf8){
             out += kHex[cp & 0xF];
         }
         else if (cp < 0x80){
-            char ch = static_cast<char>(cp);
+			const char ch = static_cast<char>(cp);
             if (ch == '\\' || ch == '{' || ch == '}') out += '\\';
             out += ch;
         }
@@ -81,7 +86,7 @@ static std::string ProcessInlineMarkdown(const std::string& text){
         }
     };
     const auto utf8CharLen = [&](size_t i)->size_t {
-        unsigned char b = static_cast<unsigned char>(text[i]);
+		const unsigned char b = static_cast<unsigned char>(text[i]);
         if (b < 0x80) return 1;
         if ((b & 0xE0) == 0xC0) return 2;
         if ((b & 0xF0) == 0xE0) return 3;
@@ -89,8 +94,8 @@ static std::string ProcessInlineMarkdown(const std::string& text){
         return 1;
     };
     const auto isValidEmph = [&](size_t p, char m)->bool {
-        bool left = (p == 0 || std::isspace((unsigned char)text[p - 1]) || std::ispunct((unsigned char)text[p - 1]));
-        bool right = (p + 1 < text.size() && !std::isspace((unsigned char)text[p + 1]));
+		const bool left = (p == 0 || std::isspace((unsigned char)text[p - 1]) || std::ispunct((unsigned char)text[p - 1]));
+		const bool right = (p + 1 < text.size() && !std::isspace((unsigned char)text[p + 1]));
         return left && right;
     };
     while (pos < text.size()){
@@ -247,7 +252,7 @@ static void ProcessLine(const std::string& line, std::stringstream& rtf, Markdow
 	if(!state.firstLine){ rtf<<R"(\line )"; }
 	state.firstLine = false;
 	if(state.inCodeBlock){
-		rtf<<EscapeRtf(line);
+		rtf<<"{\\highlight1 "<<EscapeRtf(line)<<"}";
 		return;
 	}
 	ProcessMarkdownLine(line, rtf);
@@ -255,7 +260,18 @@ static void ProcessLine(const std::string& line, std::stringstream& rtf, Markdow
 std::stringstream rtf;
 std::string rtfStr;
 extern "C" __declspec(dllexport) void ConvertMarkdownToRtf(const char* markdown, const char* & rtfOut, int& rtfLen){
-	const std::string rtfHeader = R"({\rtf1\ansi\ansicpg1252\deff0\nouicompat{\fonttbl{\f0\fnil Segoe UI;}}\viewkind4\uc1\pard\sa0\sl0\slmult1\f0\fs20 )";
+	const COLORREF bg = GetSysColor(COLOR_WINDOW);
+	int r = GetRValue(bg);
+	int g = GetGValue(bg);
+	int b = GetBValue(bg);
+	const int luminance = (299*r + 587*g + 114*b) / 1000;
+	const int delta = luminance < 128 ? 30 : -std::max(40, luminance / 4);
+	r = std::clamp(r + delta, 0, 255);
+	g = std::clamp(g + delta, 0, 255);
+	b = std::clamp(b + delta, 0, 255);
+	std::ostringstream header;
+	header<<"{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat{\\fonttbl{\\f0\\fnil Segoe UI;}}{\\colortbl ;\\red"<<r<<"\\green"<<g<<"\\blue"<<b<<";}\\viewkind4\\uc1\\pard\\sa0\\sl0\\slmult1\\f0\\fs20 ";
+	const std::string rtfHeader = header.str();
 	rtf.str(std::string());
 	rtf.clear();
 	rtfStr.clear();
