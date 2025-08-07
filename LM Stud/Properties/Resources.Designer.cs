@@ -61,6 +61,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0}: {1}.
+        /// </summary>
+        internal static string _0____1_ {
+            get {
+                return ResourceManager.GetString("_0____1_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0}/{1}{2}.
         /// </summary>
         internal static string _0___1__2_ {
@@ -106,6 +115,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to An index was out of range..
+        /// </summary>
+        internal static string An_index_was_out_of_range_ {
+            get {
+                return ResourceManager.GetString("An_index_was_out_of_range_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cancel.
         /// </summary>
         internal static string Cancel {
@@ -115,7 +133,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Conversation too long for context.
+        ///   Looks up a localized string similar to Conversation too long for context..
         /// </summary>
         internal static string Conversation_too_long_for_context {
             get {
@@ -170,7 +188,34 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error initialising whisper.
+        ///   Looks up a localized string similar to Error creating context.
+        /// </summary>
+        internal static string Error_creating_context {
+            get {
+                return ResourceManager.GetString("Error_creating_context", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error creating sampler.
+        /// </summary>
+        internal static string Error_creating_sampler {
+            get {
+                return ResourceManager.GetString("Error_creating_sampler", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error creating session.
+        /// </summary>
+        internal static string Error_creating_session {
+            get {
+                return ResourceManager.GetString("Error_creating_session", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error initialising whisper..
         /// </summary>
         internal static string Error_initialising_whisper {
             get {
@@ -179,11 +224,20 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error loading files for {0}: {1}.
+        ///   Looks up a localized string similar to Error loading files for .
         /// </summary>
-        internal static string Error_loading_files_for__0____1_ {
+        internal static string Error_loading_files_for_ {
             get {
-                return ResourceManager.GetString("Error_loading_files_for__0____1_", resourceCulture);
+                return ResourceManager.GetString("Error_loading_files_for_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error loading model.
+        /// </summary>
+        internal static string Error_loading_model {
+            get {
+                return ResourceManager.GetString("Error_loading_model", resourceCulture);
             }
         }
         
@@ -197,20 +251,38 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error setting system prompt, maybe the context is too big.
+        ///   Looks up a localized string similar to Error setting system prompt.
         /// </summary>
-        internal static string Error_setting_system_prompt__maybe_the_context_is_too_big {
+        internal static string Error_setting_system_prompt {
             get {
-                return ResourceManager.GetString("Error_setting_system_prompt__maybe_the_context_is_too_big", resourceCulture);
+                return ResourceManager.GetString("Error_setting_system_prompt", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error starting whisper transcription.
+        ///   Looks up a localized string similar to Error starting whisper transcription..
         /// </summary>
         internal static string Error_starting_whisper_transcription {
             get {
                 return ResourceManager.GetString("Error_starting_whisper_transcription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error Whisper model not found..
+        /// </summary>
+        internal static string Error_Whisper_model_not_found {
+            get {
+                return ResourceManager.GetString("Error_Whisper_model_not_found", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to convert a token..
+        /// </summary>
+        internal static string Failed_to_convert_a_token_ {
+            get {
+                return ResourceManager.GetString("Failed_to_convert_a_token_", resourceCulture);
             }
         }
         
@@ -220,6 +292,33 @@ namespace LMStud.Properties {
         internal static string Failed_to_create_directory___0_ {
             get {
                 return ResourceManager.GetString("Failed_to_create_directory___0_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to create the model context..
+        /// </summary>
+        internal static string Failed_to_create_the_model_context_ {
+            get {
+                return ResourceManager.GetString("Failed_to_create_the_model_context_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to create the sampler..
+        /// </summary>
+        internal static string Failed_to_create_the_sampler_ {
+            get {
+                return ResourceManager.GetString("Failed_to_create_the_sampler_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to tokenize the prompt..
+        /// </summary>
+        internal static string Failed_to_tokenize_the_prompt_ {
+            get {
+                return ResourceManager.GetString("Failed_to_tokenize_the_prompt_", resourceCulture);
             }
         }
         
@@ -251,20 +350,20 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to HTTP Error loading files for {0}: {1}.
+        ///   Looks up a localized string similar to HTTP Error loading files for .
         /// </summary>
-        internal static string HTTP_Error_loading_files_for__0____1_ {
+        internal static string HTTP_Error_loading_files_for_ {
             get {
-                return ResourceManager.GetString("HTTP_Error_loading_files_for__0____1_", resourceCulture);
+                return ResourceManager.GetString("HTTP_Error_loading_files_for_", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to JSON Parse Error for {0}: {1}.
+        ///   Looks up a localized string similar to JSON Parse Error for .
         /// </summary>
-        internal static string JSON_Parse_Error_for__0____1_ {
+        internal static string JSON_Parse_Error_for_ {
             get {
-                return ResourceManager.GetString("JSON_Parse_Error_for__0____1_", resourceCulture);
+                return ResourceManager.GetString("JSON_Parse_Error_for_", resourceCulture);
             }
         }
         
@@ -315,11 +414,20 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Models folder not found, please specify a valid folder in the Settings tab.
+        ///   Looks up a localized string similar to Models folder not found, please specify a valid folder in the Settings tab..
         /// </summary>
         internal static string Models_folder_not_found__please_specify_a_valid_folder_in_the_Settings_tab {
             get {
                 return ResourceManager.GetString("Models_folder_not_found__please_specify_a_valid_folder_in_the_Settings_tab", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No model has been loaded..
+        /// </summary>
+        internal static string No_model_has_been_loaded_ {
+            get {
+                return ResourceManager.GetString("No_model_has_been_loaded_", resourceCulture);
             }
         }
         
@@ -338,6 +446,42 @@ namespace LMStud.Properties {
         internal static string Stop {
             get {
                 return ResourceManager.GetString("Stop", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The chat template could not be applied..
+        /// </summary>
+        internal static string The_chat_template_could_not_be_applied_ {
+            get {
+                return ResourceManager.GetString("The_chat_template_could_not_be_applied_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The conversation is too long for the context window..
+        /// </summary>
+        internal static string The_conversation_is_too_long_for_the_context_window_ {
+            get {
+                return ResourceManager.GetString("The_conversation_is_too_long_for_the_context_window_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The model backend returned a decode error..
+        /// </summary>
+        internal static string The_model_backend_returned_a_decode_error_ {
+            get {
+                return ResourceManager.GetString("The_model_backend_returned_a_decode_error_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The model could not be loaded..
+        /// </summary>
+        internal static string The_model_could_not_be_loaded_ {
+            get {
+                return ResourceManager.GetString("The_model_could_not_be_loaded_", resourceCulture);
             }
         }
         
@@ -666,20 +810,20 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unable to parse the chat message..
+        /// </summary>
+        internal static string Unable_to_parse_the_chat_message_ {
+            get {
+                return ResourceManager.GetString("Unable_to_parse_the_chat_message_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to VAD model not found, use Basic VAD?.
         /// </summary>
         internal static string VAD_model_not_found__use_Basic_VAD_ {
             get {
                 return ResourceManager.GetString("VAD_model_not_found__use_Basic_VAD_", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Whisper model not found.
-        /// </summary>
-        internal static string Whisper_model_not_found {
-            get {
-                return ResourceManager.GetString("Whisper_model_not_found", resourceCulture);
             }
         }
     }

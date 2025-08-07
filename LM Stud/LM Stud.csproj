@@ -107,6 +107,7 @@
     <Compile Include="ChatMessage.Designer.cs">
       <DependentUpon>ChatMessage.cs</DependentUpon>
     </Compile>
+    <Compile Include="LVColumnClickHandler.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -126,6 +127,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="GGUFMetadataManager.cs" />
+    <Compile Include="LVISorter.cs" />
     <Compile Include="MyFlowLayoutPanel.cs">
       <SubType>Component</SubType>
     </Compile>

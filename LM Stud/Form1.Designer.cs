@@ -14,8 +14,12 @@ namespace LMStud
 		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
 		protected override void Dispose(bool disposing)
 		{
-			if (disposing && (components != null)) {
-				components.Dispose();
+			if (disposing){
+				_columnClickHandler?.UnregisterListView(listViewModels);
+				_columnClickHandler?.UnregisterListView(listViewMeta);
+				_columnClickHandler?.UnregisterListView(listViewHugSearch);
+				_columnClickHandler?.UnregisterListView(listViewHugFiles);
+				if(components != null){ components.Dispose(); }
 			}
 			base.Dispose(disposing);
 		}
@@ -33,30 +37,31 @@ namespace LMStud
 			this.textInput = new System.Windows.Forms.TextBox();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
 			this.panelChat = new LMStud.MyFlowLayoutPanel();
-			this.checkStream = new System.Windows.Forms.CheckBox();
 			this.checkSpeak = new System.Windows.Forms.CheckBox();
 			this.checkVoiceInput = new System.Windows.Forms.CheckBox();
-			this.butCodeBlock = new System.Windows.Forms.Button();
 			this.checkMarkdown = new System.Windows.Forms.CheckBox();
+			this.checkStream = new System.Windows.Forms.CheckBox();
+			this.butCodeBlock = new System.Windows.Forms.Button();
 			this.butReset = new System.Windows.Forms.Button();
 			this.butGen = new System.Windows.Forms.Button();
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabPage1 = new System.Windows.Forms.TabPage();
 			this.tabPage2 = new System.Windows.Forms.TabPage();
+			this.textModelsPath = new System.Windows.Forms.TextBox();
 			this.groupBox6 = new System.Windows.Forms.GroupBox();
+			this.numVadThreshold = new System.Windows.Forms.NumericUpDown();
 			this.butVADDown = new System.Windows.Forms.Button();
 			this.radioBasicVAD = new System.Windows.Forms.RadioButton();
 			this.radioWhisperVAD = new System.Windows.Forms.RadioButton();
-			this.numVadThreshold = new System.Windows.Forms.NumericUpDown();
 			this.label17 = new System.Windows.Forms.Label();
 			this.comboVADModel = new System.Windows.Forms.ComboBox();
 			this.label26 = new System.Windows.Forms.Label();
 			this.groupBox5 = new System.Windows.Forms.GroupBox();
 			this.checkDateTimeEnable = new System.Windows.Forms.CheckBox();
 			this.groupBox4 = new System.Windows.Forms.GroupBox();
+			this.textFileBasePath = new System.Windows.Forms.TextBox();
 			this.linkFileInstruction = new System.Windows.Forms.LinkLabel();
 			this.label22 = new System.Windows.Forms.Label();
-			this.textFileBasePath = new System.Windows.Forms.TextBox();
 			this.checkFileWriteEnable = new System.Windows.Forms.CheckBox();
 			this.checkFileCreateEnable = new System.Windows.Forms.CheckBox();
 			this.checkFileReadEnable = new System.Windows.Forms.CheckBox();
@@ -64,23 +69,23 @@ namespace LMStud
 			this.groupBox3 = new System.Windows.Forms.GroupBox();
 			this.checkWebpageFetchEnable = new System.Windows.Forms.CheckBox();
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
-			this.label21 = new System.Windows.Forms.Label();
 			this.numGoogleResults = new System.Windows.Forms.NumericUpDown();
+			this.textGoogleSearchID = new System.Windows.Forms.TextBox();
+			this.textGoogleApiKey = new System.Windows.Forms.TextBox();
+			this.label21 = new System.Windows.Forms.Label();
 			this.checkGoogleEnable = new System.Windows.Forms.CheckBox();
 			this.label20 = new System.Windows.Forms.Label();
 			this.label19 = new System.Windows.Forms.Label();
-			this.textGoogleSearchID = new System.Windows.Forms.TextBox();
-			this.textGoogleApiKey = new System.Windows.Forms.TextBox();
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
-			this.label25 = new System.Windows.Forms.Label();
 			this.numWakeWordSimilarity = new System.Windows.Forms.NumericUpDown();
-			this.label24 = new System.Windows.Forms.Label();
 			this.numWhisperTemp = new System.Windows.Forms.NumericUpDown();
-			this.label18 = new System.Windows.Forms.Label();
 			this.numFreqThreshold = new System.Windows.Forms.NumericUpDown();
+			this.textWakeWord = new System.Windows.Forms.TextBox();
+			this.label25 = new System.Windows.Forms.Label();
+			this.label24 = new System.Windows.Forms.Label();
+			this.label18 = new System.Windows.Forms.Label();
 			this.checkWhisperUseGPU = new System.Windows.Forms.CheckBox();
 			this.label16 = new System.Windows.Forms.Label();
-			this.textWakeWord = new System.Windows.Forms.TextBox();
 			this.butWhispDown = new System.Windows.Forms.Button();
 			this.comboWhisperModel = new System.Windows.Forms.ComboBox();
 			this.label15 = new System.Windows.Forms.Label();
@@ -91,33 +96,32 @@ namespace LMStud
 			this.numThreads = new System.Windows.Forms.NumericUpDown();
 			this.label2 = new System.Windows.Forms.Label();
 			this.groupAdvanced = new System.Windows.Forms.GroupBox();
-			this.label23 = new System.Windows.Forms.Label();
 			this.numMinP = new System.Windows.Forms.NumericUpDown();
+			this.comboNUMAStrat = new System.Windows.Forms.ComboBox();
+			this.numRepPen = new System.Windows.Forms.NumericUpDown();
+			this.numBatchSize = new System.Windows.Forms.NumericUpDown();
+			this.numTopK = new System.Windows.Forms.NumericUpDown();
+			this.numTopP = new System.Windows.Forms.NumericUpDown();
+			this.label23 = new System.Windows.Forms.Label();
 			this.checkFlashAttn = new System.Windows.Forms.CheckBox();
 			this.checkMLock = new System.Windows.Forms.CheckBox();
 			this.checkMMap = new System.Windows.Forms.CheckBox();
-			this.comboNUMAStrat = new System.Windows.Forms.ComboBox();
 			this.label6 = new System.Windows.Forms.Label();
 			this.label12 = new System.Windows.Forms.Label();
-			this.numRepPen = new System.Windows.Forms.NumericUpDown();
 			this.label11 = new System.Windows.Forms.Label();
-			this.numBatchSize = new System.Windows.Forms.NumericUpDown();
 			this.label8 = new System.Windows.Forms.Label();
-			this.numTopK = new System.Windows.Forms.NumericUpDown();
 			this.label9 = new System.Windows.Forms.Label();
-			this.numTopP = new System.Windows.Forms.NumericUpDown();
 			this.groupCommon = new System.Windows.Forms.GroupBox();
 			this.numCtxSize = new System.Windows.Forms.NumericUpDown();
-			this.label5 = new System.Windows.Forms.Label();
 			this.numGPULayers = new System.Windows.Forms.NumericUpDown();
-			this.label7 = new System.Windows.Forms.Label();
-			this.label10 = new System.Windows.Forms.Label();
 			this.numNGen = new System.Windows.Forms.NumericUpDown();
 			this.numTemp = new System.Windows.Forms.NumericUpDown();
+			this.label5 = new System.Windows.Forms.Label();
+			this.label7 = new System.Windows.Forms.Label();
+			this.label10 = new System.Windows.Forms.Label();
 			this.label4 = new System.Windows.Forms.Label();
 			this.label3 = new System.Windows.Forms.Label();
 			this.butBrowse = new System.Windows.Forms.Button();
-			this.textModelsPath = new System.Windows.Forms.TextBox();
 			this.butApply = new System.Windows.Forms.Button();
 			this.label1 = new System.Windows.Forms.Label();
 			this.textSystemPrompt = new System.Windows.Forms.TextBox();
@@ -225,11 +229,11 @@ namespace LMStud
 			// 
 			// splitContainer1.Panel2
 			// 
-			this.splitContainer1.Panel2.Controls.Add(this.checkStream);
 			this.splitContainer1.Panel2.Controls.Add(this.checkSpeak);
 			this.splitContainer1.Panel2.Controls.Add(this.checkVoiceInput);
-			this.splitContainer1.Panel2.Controls.Add(this.butCodeBlock);
 			this.splitContainer1.Panel2.Controls.Add(this.checkMarkdown);
+			this.splitContainer1.Panel2.Controls.Add(this.checkStream);
+			this.splitContainer1.Panel2.Controls.Add(this.butCodeBlock);
 			this.splitContainer1.Panel2.Controls.Add(this.butReset);
 			this.splitContainer1.Panel2.Controls.Add(this.butGen);
 			this.splitContainer1.Panel2.Controls.Add(this.textInput);
@@ -241,14 +245,6 @@ namespace LMStud
 			this.panelChat.CausesValidation = false;
 			this.panelChat.Name = "panelChat";
 			this.panelChat.Layout += new System.Windows.Forms.LayoutEventHandler(this.PanelChat_Layout);
-			// 
-			// checkStream
-			// 
-			resources.ApplyResources(this.checkStream, "checkStream");
-			this.checkStream.Checked = true;
-			this.checkStream.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkStream.Name = "checkStream";
-			this.checkStream.UseVisualStyleBackColor = true;
 			// 
 			// checkSpeak
 			// 
@@ -265,13 +261,6 @@ namespace LMStud
 			this.checkVoiceInput.UseVisualStyleBackColor = true;
 			this.checkVoiceInput.CheckedChanged += new System.EventHandler(this.CheckVoiceInput_CheckedChanged);
 			// 
-			// butCodeBlock
-			// 
-			resources.ApplyResources(this.butCodeBlock, "butCodeBlock");
-			this.butCodeBlock.Name = "butCodeBlock";
-			this.butCodeBlock.UseVisualStyleBackColor = true;
-			this.butCodeBlock.Click += new System.EventHandler(this.ButCodeBlock_Click);
-			// 
 			// checkMarkdown
 			// 
 			resources.ApplyResources(this.checkMarkdown, "checkMarkdown");
@@ -280,6 +269,21 @@ namespace LMStud
 			this.checkMarkdown.Name = "checkMarkdown";
 			this.checkMarkdown.UseVisualStyleBackColor = true;
 			this.checkMarkdown.CheckedChanged += new System.EventHandler(this.CheckMarkdown_CheckedChanged);
+			// 
+			// checkStream
+			// 
+			resources.ApplyResources(this.checkStream, "checkStream");
+			this.checkStream.Checked = true;
+			this.checkStream.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkStream.Name = "checkStream";
+			this.checkStream.UseVisualStyleBackColor = true;
+			// 
+			// butCodeBlock
+			// 
+			resources.ApplyResources(this.butCodeBlock, "butCodeBlock");
+			this.butCodeBlock.Name = "butCodeBlock";
+			this.butCodeBlock.UseVisualStyleBackColor = true;
+			this.butCodeBlock.Click += new System.EventHandler(this.ButCodeBlock_Click);
 			// 
 			// butReset
 			// 
@@ -315,6 +319,7 @@ namespace LMStud
 			// 
 			// tabPage2
 			// 
+			this.tabPage2.Controls.Add(this.textModelsPath);
 			this.tabPage2.Controls.Add(this.groupBox6);
 			this.tabPage2.Controls.Add(this.groupBox5);
 			this.tabPage2.Controls.Add(this.groupBox4);
@@ -327,7 +332,6 @@ namespace LMStud
 			this.tabPage2.Controls.Add(this.groupCommon);
 			this.tabPage2.Controls.Add(this.label3);
 			this.tabPage2.Controls.Add(this.butBrowse);
-			this.tabPage2.Controls.Add(this.textModelsPath);
 			this.tabPage2.Controls.Add(this.butApply);
 			this.tabPage2.Controls.Add(this.label1);
 			this.tabPage2.Controls.Add(this.textSystemPrompt);
@@ -335,18 +339,47 @@ namespace LMStud
 			this.tabPage2.Name = "tabPage2";
 			this.tabPage2.UseVisualStyleBackColor = true;
 			// 
+			// textModelsPath
+			// 
+			resources.ApplyResources(this.textModelsPath, "textModelsPath");
+			this.textModelsPath.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+			this.textModelsPath.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.FileSystem;
+			this.textModelsPath.Name = "textModelsPath";
+			this.textModelsPath.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextModelsPath_KeyDown);
+			// 
 			// groupBox6
 			// 
+			this.groupBox6.Controls.Add(this.numVadThreshold);
 			this.groupBox6.Controls.Add(this.butVADDown);
 			this.groupBox6.Controls.Add(this.radioBasicVAD);
 			this.groupBox6.Controls.Add(this.radioWhisperVAD);
-			this.groupBox6.Controls.Add(this.numVadThreshold);
 			this.groupBox6.Controls.Add(this.label17);
 			this.groupBox6.Controls.Add(this.comboVADModel);
 			this.groupBox6.Controls.Add(this.label26);
 			resources.ApplyResources(this.groupBox6, "groupBox6");
 			this.groupBox6.Name = "groupBox6";
 			this.groupBox6.TabStop = false;
+			// 
+			// numVadThreshold
+			// 
+			resources.ApplyResources(this.numVadThreshold, "numVadThreshold");
+			this.numVadThreshold.DecimalPlaces = 2;
+			this.numVadThreshold.Increment = new decimal(new int[] {
+            5,
+            0,
+            0,
+            131072});
+			this.numVadThreshold.Maximum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+			this.numVadThreshold.Name = "numVadThreshold";
+			this.numVadThreshold.Value = new decimal(new int[] {
+            5,
+            0,
+            0,
+            65536});
 			// 
 			// butVADDown
 			// 
@@ -368,27 +401,6 @@ namespace LMStud
 			resources.ApplyResources(this.radioWhisperVAD, "radioWhisperVAD");
 			this.radioWhisperVAD.Name = "radioWhisperVAD";
 			this.radioWhisperVAD.UseVisualStyleBackColor = true;
-			// 
-			// numVadThreshold
-			// 
-			resources.ApplyResources(this.numVadThreshold, "numVadThreshold");
-			this.numVadThreshold.DecimalPlaces = 2;
-			this.numVadThreshold.Increment = new decimal(new int[] {
-			5,
-			0,
-			0,
-			131072});
-			this.numVadThreshold.Maximum = new decimal(new int[] {
-			1,
-			0,
-			0,
-			0});
-			this.numVadThreshold.Name = "numVadThreshold";
-			this.numVadThreshold.Value = new decimal(new int[] {
-			5,
-			0,
-			0,
-			65536});
 			// 
 			// label17
 			// 
@@ -423,9 +435,9 @@ namespace LMStud
 			// 
 			// groupBox4
 			// 
+			this.groupBox4.Controls.Add(this.textFileBasePath);
 			this.groupBox4.Controls.Add(this.linkFileInstruction);
 			this.groupBox4.Controls.Add(this.label22);
-			this.groupBox4.Controls.Add(this.textFileBasePath);
 			this.groupBox4.Controls.Add(this.checkFileWriteEnable);
 			this.groupBox4.Controls.Add(this.checkFileCreateEnable);
 			this.groupBox4.Controls.Add(this.checkFileReadEnable);
@@ -433,6 +445,13 @@ namespace LMStud
 			resources.ApplyResources(this.groupBox4, "groupBox4");
 			this.groupBox4.Name = "groupBox4";
 			this.groupBox4.TabStop = false;
+			// 
+			// textFileBasePath
+			// 
+			resources.ApplyResources(this.textFileBasePath, "textFileBasePath");
+			this.textFileBasePath.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+			this.textFileBasePath.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.FileSystemDirectories;
+			this.textFileBasePath.Name = "textFileBasePath";
 			// 
 			// linkFileInstruction
 			// 
@@ -446,13 +465,6 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.label22, "label22");
 			this.label22.Name = "label22";
-			// 
-			// textFileBasePath
-			// 
-			resources.ApplyResources(this.textFileBasePath, "textFileBasePath");
-			this.textFileBasePath.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
-			this.textFileBasePath.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.FileSystemDirectories;
-			this.textFileBasePath.Name = "textFileBasePath";
 			// 
 			// checkFileWriteEnable
 			// 
@@ -493,36 +505,46 @@ namespace LMStud
 			// 
 			// groupBox2
 			// 
-			this.groupBox2.Controls.Add(this.label21);
 			this.groupBox2.Controls.Add(this.numGoogleResults);
+			this.groupBox2.Controls.Add(this.textGoogleSearchID);
+			this.groupBox2.Controls.Add(this.textGoogleApiKey);
+			this.groupBox2.Controls.Add(this.label21);
 			this.groupBox2.Controls.Add(this.checkGoogleEnable);
 			this.groupBox2.Controls.Add(this.label20);
 			this.groupBox2.Controls.Add(this.label19);
-			this.groupBox2.Controls.Add(this.textGoogleSearchID);
-			this.groupBox2.Controls.Add(this.textGoogleApiKey);
 			resources.ApplyResources(this.groupBox2, "groupBox2");
 			this.groupBox2.Name = "groupBox2";
 			this.groupBox2.TabStop = false;
-			// 
-			// label21
-			// 
-			resources.ApplyResources(this.label21, "label21");
-			this.label21.Name = "label21";
 			// 
 			// numGoogleResults
 			// 
 			resources.ApplyResources(this.numGoogleResults, "numGoogleResults");
 			this.numGoogleResults.Minimum = new decimal(new int[] {
-			1,
-			0,
-			0,
-			0});
+            1,
+            0,
+            0,
+            0});
 			this.numGoogleResults.Name = "numGoogleResults";
 			this.numGoogleResults.Value = new decimal(new int[] {
-			5,
-			0,
-			0,
-			0});
+            5,
+            0,
+            0,
+            0});
+			// 
+			// textGoogleSearchID
+			// 
+			resources.ApplyResources(this.textGoogleSearchID, "textGoogleSearchID");
+			this.textGoogleSearchID.Name = "textGoogleSearchID";
+			// 
+			// textGoogleApiKey
+			// 
+			resources.ApplyResources(this.textGoogleApiKey, "textGoogleApiKey");
+			this.textGoogleApiKey.Name = "textGoogleApiKey";
+			// 
+			// label21
+			// 
+			resources.ApplyResources(this.label21, "label21");
+			this.label21.Name = "label21";
 			// 
 			// checkGoogleEnable
 			// 
@@ -540,27 +562,17 @@ namespace LMStud
 			resources.ApplyResources(this.label19, "label19");
 			this.label19.Name = "label19";
 			// 
-			// textGoogleSearchID
-			// 
-			resources.ApplyResources(this.textGoogleSearchID, "textGoogleSearchID");
-			this.textGoogleSearchID.Name = "textGoogleSearchID";
-			// 
-			// textGoogleApiKey
-			// 
-			resources.ApplyResources(this.textGoogleApiKey, "textGoogleApiKey");
-			this.textGoogleApiKey.Name = "textGoogleApiKey";
-			// 
 			// groupBox1
 			// 
-			this.groupBox1.Controls.Add(this.label25);
 			this.groupBox1.Controls.Add(this.numWakeWordSimilarity);
-			this.groupBox1.Controls.Add(this.label24);
 			this.groupBox1.Controls.Add(this.numWhisperTemp);
-			this.groupBox1.Controls.Add(this.label18);
 			this.groupBox1.Controls.Add(this.numFreqThreshold);
+			this.groupBox1.Controls.Add(this.textWakeWord);
+			this.groupBox1.Controls.Add(this.label25);
+			this.groupBox1.Controls.Add(this.label24);
+			this.groupBox1.Controls.Add(this.label18);
 			this.groupBox1.Controls.Add(this.checkWhisperUseGPU);
 			this.groupBox1.Controls.Add(this.label16);
-			this.groupBox1.Controls.Add(this.textWakeWord);
 			this.groupBox1.Controls.Add(this.butWhispDown);
 			this.groupBox1.Controls.Add(this.comboWhisperModel);
 			this.groupBox1.Controls.Add(this.label15);
@@ -568,82 +580,87 @@ namespace LMStud
 			this.groupBox1.Name = "groupBox1";
 			this.groupBox1.TabStop = false;
 			// 
-			// label25
-			// 
-			resources.ApplyResources(this.label25, "label25");
-			this.label25.Name = "label25";
-			// 
 			// numWakeWordSimilarity
 			// 
 			resources.ApplyResources(this.numWakeWordSimilarity, "numWakeWordSimilarity");
 			this.numWakeWordSimilarity.DecimalPlaces = 1;
 			this.numWakeWordSimilarity.Increment = new decimal(new int[] {
-			1,
-			0,
-			0,
-			65536});
+            1,
+            0,
+            0,
+            65536});
 			this.numWakeWordSimilarity.Maximum = new decimal(new int[] {
-			1,
-			0,
-			0,
-			0});
+            1,
+            0,
+            0,
+            0});
 			this.numWakeWordSimilarity.Name = "numWakeWordSimilarity";
 			this.numWakeWordSimilarity.Value = new decimal(new int[] {
-			8,
-			0,
-			0,
-			65536});
-			// 
-			// label24
-			// 
-			resources.ApplyResources(this.label24, "label24");
-			this.label24.Name = "label24";
+            8,
+            0,
+            0,
+            65536});
 			// 
 			// numWhisperTemp
 			// 
 			resources.ApplyResources(this.numWhisperTemp, "numWhisperTemp");
 			this.numWhisperTemp.DecimalPlaces = 1;
 			this.numWhisperTemp.Increment = new decimal(new int[] {
-			1,
-			0,
-			0,
-			65536});
+            1,
+            0,
+            0,
+            65536});
 			this.numWhisperTemp.Maximum = new decimal(new int[] {
-			10,
-			0,
-			0,
-			0});
+            10,
+            0,
+            0,
+            0});
 			this.numWhisperTemp.Name = "numWhisperTemp";
 			this.numWhisperTemp.Value = new decimal(new int[] {
-			2,
-			0,
-			0,
-			65536});
-			// 
-			// label18
-			// 
-			resources.ApplyResources(this.label18, "label18");
-			this.label18.Name = "label18";
+            2,
+            0,
+            0,
+            65536});
 			// 
 			// numFreqThreshold
 			// 
 			resources.ApplyResources(this.numFreqThreshold, "numFreqThreshold");
 			this.numFreqThreshold.Increment = new decimal(new int[] {
-			10,
-			0,
-			0,
-			0});
+            10,
+            0,
+            0,
+            0});
 			this.numFreqThreshold.Maximum = new decimal(new int[] {
-			300,
-			0,
-			0,
-			0});
+            300,
+            0,
+            0,
+            0});
 			this.numFreqThreshold.Name = "numFreqThreshold";
 			this.numFreqThreshold.Value = new decimal(new int[] {
-			100,
-			0,
-			0,
-			0});
+            100,
+            0,
+            0,
+            0});
+			// 
+			// textWakeWord
+			// 
+			resources.ApplyResources(this.textWakeWord, "textWakeWord");
+			this.textWakeWord.Name = "textWakeWord";
+			// 
+			// label25
+			// 
+			resources.ApplyResources(this.label25, "label25");
+			this.label25.Name = "label25";
+			// 
+			// label24
+			// 
+			resources.ApplyResources(this.label24, "label24");
+			this.label24.Name = "label24";
+			// 
+			// label18
+			// 
+			resources.ApplyResources(this.label18, "label18");
+			this.label18.Name = "label18";
 			// 
 			// checkWhisperUseGPU
 			// 
@@ -655,11 +672,6 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.label16, "label16");
 			this.label16.Name = "label16";
-			// 
-			// textWakeWord
-			// 
-			resources.ApplyResources(this.textWakeWord, "textWakeWord");
-			this.textWakeWord.Name = "textWakeWord";
 			// 
 			// butWhispDown
 			// 
@@ -693,16 +705,16 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.numThreadsBatch, "numThreadsBatch");
 			this.numThreadsBatch.Maximum = new decimal(new int[] {
-			512,
-			0,
-			0,
-			0});
+            512,
+            0,
+            0,
+            0});
 			this.numThreadsBatch.Name = "numThreadsBatch";
 			this.numThreadsBatch.Value = new decimal(new int[] {
-			8,
-			0,
-			0,
-			0});
+            8,
+            0,
+            0,
+            0});
 			// 
 			// label14
 			// 
@@ -721,16 +733,16 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.numThreads, "numThreads");
 			this.numThreads.Maximum = new decimal(new int[] {
-			512,
-			0,
-			0,
-			0});
+            512,
+            0,
+            0,
+            0});
 			this.numThreads.Name = "numThreads";
 			this.numThreads.Value = new decimal(new int[] {
-			8,
-			0,
-			0,
-			0});
+            8,
+            0,
+            0,
+            0});
 			// 
 			// label2
 			// 
@@ -739,45 +751,131 @@ namespace LMStud
 			// 
 			// groupAdvanced
 			// 
-			this.groupAdvanced.Controls.Add(this.label23);
 			this.groupAdvanced.Controls.Add(this.numMinP);
+			this.groupAdvanced.Controls.Add(this.comboNUMAStrat);
+			this.groupAdvanced.Controls.Add(this.numRepPen);
+			this.groupAdvanced.Controls.Add(this.numBatchSize);
+			this.groupAdvanced.Controls.Add(this.numTopK);
+			this.groupAdvanced.Controls.Add(this.numTopP);
+			this.groupAdvanced.Controls.Add(this.label23);
 			this.groupAdvanced.Controls.Add(this.checkFlashAttn);
 			this.groupAdvanced.Controls.Add(this.checkMLock);
 			this.groupAdvanced.Controls.Add(this.checkMMap);
-			this.groupAdvanced.Controls.Add(this.comboNUMAStrat);
 			this.groupAdvanced.Controls.Add(this.label6);
 			this.groupAdvanced.Controls.Add(this.label12);
-			this.groupAdvanced.Controls.Add(this.numRepPen);
 			this.groupAdvanced.Controls.Add(this.label11);
-			this.groupAdvanced.Controls.Add(this.numBatchSize);
 			this.groupAdvanced.Controls.Add(this.label8);
-			this.groupAdvanced.Controls.Add(this.numTopK);
 			this.groupAdvanced.Controls.Add(this.label9);
-			this.groupAdvanced.Controls.Add(this.numTopP);
 			resources.ApplyResources(this.groupAdvanced, "groupAdvanced");
 			this.groupAdvanced.Name = "groupAdvanced";
 			this.groupAdvanced.TabStop = false;
-			// 
-			// label23
-			// 
-			resources.ApplyResources(this.label23, "label23");
-			this.label23.Name = "label23";
 			// 
 			// numMinP
 			// 
 			resources.ApplyResources(this.numMinP, "numMinP");
 			this.numMinP.DecimalPlaces = 2;
 			this.numMinP.Increment = new decimal(new int[] {
-			1,
-			0,
-			0,
-			131072});
+            1,
+            0,
+            0,
+            131072});
 			this.numMinP.Maximum = new decimal(new int[] {
-			1,
-			0,
-			0,
-			0});
+            1,
+            0,
+            0,
+            0});
 			this.numMinP.Name = "numMinP";
+			// 
+			// comboNUMAStrat
+			// 
+			resources.ApplyResources(this.comboNUMAStrat, "comboNUMAStrat");
+			this.comboNUMAStrat.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.comboNUMAStrat.FormattingEnabled = true;
+			this.comboNUMAStrat.Items.AddRange(new object[] {
+            resources.GetString("comboNUMAStrat.Items"),
+            resources.GetString("comboNUMAStrat.Items1"),
+            resources.GetString("comboNUMAStrat.Items2"),
+            resources.GetString("comboNUMAStrat.Items3"),
+            resources.GetString("comboNUMAStrat.Items4"),
+            resources.GetString("comboNUMAStrat.Items5")});
+			this.comboNUMAStrat.Name = "comboNUMAStrat";
+			// 
+			// numRepPen
+			// 
+			resources.ApplyResources(this.numRepPen, "numRepPen");
+			this.numRepPen.DecimalPlaces = 2;
+			this.numRepPen.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            131072});
+			this.numRepPen.Maximum = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+			this.numRepPen.Name = "numRepPen";
+			this.numRepPen.Value = new decimal(new int[] {
+            11,
+            0,
+            0,
+            65536});
+			// 
+			// numBatchSize
+			// 
+			resources.ApplyResources(this.numBatchSize, "numBatchSize");
+			this.numBatchSize.Maximum = new decimal(new int[] {
+            1048576,
+            0,
+            0,
+            0});
+			this.numBatchSize.Name = "numBatchSize";
+			this.numBatchSize.Value = new decimal(new int[] {
+            512,
+            0,
+            0,
+            0});
+			// 
+			// numTopK
+			// 
+			resources.ApplyResources(this.numTopK, "numTopK");
+			this.numTopK.Maximum = new decimal(new int[] {
+            100000,
+            0,
+            0,
+            0});
+			this.numTopK.Name = "numTopK";
+			this.numTopK.Value = new decimal(new int[] {
+            20,
+            0,
+            0,
+            0});
+			// 
+			// numTopP
+			// 
+			resources.ApplyResources(this.numTopP, "numTopP");
+			this.numTopP.DecimalPlaces = 2;
+			this.numTopP.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            131072});
+			this.numTopP.Maximum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+			this.numTopP.Name = "numTopP";
+			this.numTopP.Value = new decimal(new int[] {
+            95,
+            0,
+            0,
+            131072});
+			// 
+			// label23
+			// 
+			resources.ApplyResources(this.label23, "label23");
+			this.label23.Name = "label23";
 			// 
 			// checkFlashAttn
 			// 
@@ -799,20 +897,6 @@ namespace LMStud
 			this.checkMMap.Name = "checkMMap";
 			this.checkMMap.UseVisualStyleBackColor = true;
 			// 
-			// comboNUMAStrat
-			// 
-			resources.ApplyResources(this.comboNUMAStrat, "comboNUMAStrat");
-			this.comboNUMAStrat.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-			this.comboNUMAStrat.FormattingEnabled = true;
-			this.comboNUMAStrat.Items.AddRange(new object[] {
-			resources.GetString("comboNUMAStrat.Items"),
-			resources.GetString("comboNUMAStrat.Items1"),
-			resources.GetString("comboNUMAStrat.Items2"),
-			resources.GetString("comboNUMAStrat.Items3"),
-			resources.GetString("comboNUMAStrat.Items4"),
-			resources.GetString("comboNUMAStrat.Items5")});
-			this.comboNUMAStrat.Name = "comboNUMAStrat";
-			// 
 			// label6
 			// 
 			resources.ApplyResources(this.label6, "label6");
@@ -823,102 +907,30 @@ namespace LMStud
 			resources.ApplyResources(this.label12, "label12");
 			this.label12.Name = "label12";
 			// 
-			// numRepPen
-			// 
-			resources.ApplyResources(this.numRepPen, "numRepPen");
-			this.numRepPen.DecimalPlaces = 2;
-			this.numRepPen.Increment = new decimal(new int[] {
-			1,
-			0,
-			0,
-			131072});
-			this.numRepPen.Maximum = new decimal(new int[] {
-			10,
-			0,
-			0,
-			0});
-			this.numRepPen.Name = "numRepPen";
-			this.numRepPen.Value = new decimal(new int[] {
-			11,
-			0,
-			0,
-			65536});
-			// 
 			// label11
 			// 
 			resources.ApplyResources(this.label11, "label11");
 			this.label11.Name = "label11";
-			// 
-			// numBatchSize
-			// 
-			resources.ApplyResources(this.numBatchSize, "numBatchSize");
-			this.numBatchSize.Maximum = new decimal(new int[] {
-			1048576,
-			0,
-			0,
-			0});
-			this.numBatchSize.Name = "numBatchSize";
-			this.numBatchSize.Value = new decimal(new int[] {
-			512,
-			0,
-			0,
-			0});
 			// 
 			// label8
 			// 
 			resources.ApplyResources(this.label8, "label8");
 			this.label8.Name = "label8";
 			// 
-			// numTopK
-			// 
-			resources.ApplyResources(this.numTopK, "numTopK");
-			this.numTopK.Maximum = new decimal(new int[] {
-			100000,
-			0,
-			0,
-			0});
-			this.numTopK.Name = "numTopK";
-			this.numTopK.Value = new decimal(new int[] {
-			20,
-			0,
-			0,
-			0});
-			// 
 			// label9
 			// 
 			resources.ApplyResources(this.label9, "label9");
 			this.label9.Name = "label9";
 			// 
-			// numTopP
-			// 
-			resources.ApplyResources(this.numTopP, "numTopP");
-			this.numTopP.DecimalPlaces = 2;
-			this.numTopP.Increment = new decimal(new int[] {
-			1,
-			0,
-			0,
-			131072});
-			this.numTopP.Maximum = new decimal(new int[] {
-			1,
-			0,
-			0,
-			0});
-			this.numTopP.Name = "numTopP";
-			this.numTopP.Value = new decimal(new int[] {
-			95,
-			0,
-			0,
-			131072});
-			// 
 			// groupCommon
 			// 
 			this.groupCommon.Controls.Add(this.numCtxSize);
-			this.groupCommon.Controls.Add(this.label5);
 			this.groupCommon.Controls.Add(this.numGPULayers);
-			this.groupCommon.Controls.Add(this.label7);
-			this.groupCommon.Controls.Add(this.label10);
 			this.groupCommon.Controls.Add(this.numNGen);
 			this.groupCommon.Controls.Add(this.numTemp);
+			this.groupCommon.Controls.Add(this.label5);
+			this.groupCommon.Controls.Add(this.label7);
+			this.groupCommon.Controls.Add(this.label10);
 			this.groupCommon.Controls.Add(this.label4);
 			resources.ApplyResources(this.groupCommon, "groupCommon");
 			this.groupCommon.Name = "groupCommon";
@@ -928,41 +940,82 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.numCtxSize, "numCtxSize");
 			this.numCtxSize.Maximum = new decimal(new int[] {
-			1048576,
-			0,
-			0,
-			0});
+            1048576,
+            0,
+            0,
+            0});
 			this.numCtxSize.Name = "numCtxSize";
 			this.numCtxSize.Value = new decimal(new int[] {
-			8192,
-			0,
-			0,
-			0});
-			// 
-			// label5
-			// 
-			resources.ApplyResources(this.label5, "label5");
-			this.label5.Name = "label5";
+            8192,
+            0,
+            0,
+            0});
 			// 
 			// numGPULayers
 			// 
 			resources.ApplyResources(this.numGPULayers, "numGPULayers");
 			this.numGPULayers.Maximum = new decimal(new int[] {
-			1024,
-			0,
-			0,
-			0});
+            1024,
+            0,
+            0,
+            0});
 			this.numGPULayers.Minimum = new decimal(new int[] {
-			1,
-			0,
-			0,
-			-2147483648});
+            1,
+            0,
+            0,
+            -2147483648});
 			this.numGPULayers.Name = "numGPULayers";
 			this.numGPULayers.Value = new decimal(new int[] {
-			1,
-			0,
-			0,
-			-2147483648});
+            1,
+            0,
+            0,
+            -2147483648});
+			// 
+			// numNGen
+			// 
+			resources.ApplyResources(this.numNGen, "numNGen");
+			this.numNGen.Maximum = new decimal(new int[] {
+            131072,
+            0,
+            0,
+            0});
+			this.numNGen.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            -2147483648});
+			this.numNGen.Name = "numNGen";
+			this.numNGen.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            -2147483648});
+			// 
+			// numTemp
+			// 
+			resources.ApplyResources(this.numTemp, "numTemp");
+			this.numTemp.DecimalPlaces = 2;
+			this.numTemp.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            65536});
+			this.numTemp.Maximum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+			this.numTemp.Name = "numTemp";
+			this.numTemp.Value = new decimal(new int[] {
+            6,
+            0,
+            0,
+            65536});
+			// 
+			// label5
+			// 
+			resources.ApplyResources(this.label5, "label5");
+			this.label5.Name = "label5";
 			// 
 			// label7
 			// 
@@ -973,47 +1026,6 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.label10, "label10");
 			this.label10.Name = "label10";
-			// 
-			// numNGen
-			// 
-			resources.ApplyResources(this.numNGen, "numNGen");
-			this.numNGen.Maximum = new decimal(new int[] {
-			131072,
-			0,
-			0,
-			0});
-			this.numNGen.Minimum = new decimal(new int[] {
-			1,
-			0,
-			0,
-			-2147483648});
-			this.numNGen.Name = "numNGen";
-			this.numNGen.Value = new decimal(new int[] {
-			1,
-			0,
-			0,
-			-2147483648});
-			// 
-			// numTemp
-			// 
-			resources.ApplyResources(this.numTemp, "numTemp");
-			this.numTemp.DecimalPlaces = 2;
-			this.numTemp.Increment = new decimal(new int[] {
-			1,
-			0,
-			0,
-			65536});
-			this.numTemp.Maximum = new decimal(new int[] {
-			1,
-			0,
-			0,
-			0});
-			this.numTemp.Name = "numTemp";
-			this.numTemp.Value = new decimal(new int[] {
-			6,
-			0,
-			0,
-			65536});
 			// 
 			// label4
 			// 
@@ -1031,14 +1043,6 @@ namespace LMStud
 			this.butBrowse.Name = "butBrowse";
 			this.butBrowse.UseVisualStyleBackColor = true;
 			this.butBrowse.Click += new System.EventHandler(this.ButBrowse_Click);
-			// 
-			// textModelsPath
-			// 
-			resources.ApplyResources(this.textModelsPath, "textModelsPath");
-			this.textModelsPath.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
-			this.textModelsPath.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.FileSystem;
-			this.textModelsPath.Name = "textModelsPath";
-			this.textModelsPath.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextModelsPath_KeyDown);
 			// 
 			// butApply
 			// 
@@ -1084,8 +1088,8 @@ namespace LMStud
 			// listViewModels
 			// 
 			this.listViewModels.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-			this.columnHeader1,
-			this.columnHeader2});
+            this.columnHeader1,
+            this.columnHeader2});
 			resources.ApplyResources(this.listViewModels, "listViewModels");
 			this.listViewModels.GridLines = true;
 			this.listViewModels.HideSelection = false;
@@ -1108,8 +1112,8 @@ namespace LMStud
 			// listViewMeta
 			// 
 			this.listViewMeta.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-			this.columnHeader3,
-			this.columnHeader4});
+            this.columnHeader3,
+            this.columnHeader4});
 			resources.ApplyResources(this.listViewMeta, "listViewMeta");
 			this.listViewMeta.GridLines = true;
 			this.listViewMeta.HideSelection = false;
@@ -1156,8 +1160,8 @@ namespace LMStud
 			// 
 			// splitContainer3
 			// 
-			resources.ApplyResources(this.splitContainer3, "splitContainer3");
 			this.splitContainer3.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+			resources.ApplyResources(this.splitContainer3, "splitContainer3");
 			this.splitContainer3.Name = "splitContainer3";
 			// 
 			// splitContainer3.Panel1
@@ -1195,13 +1199,13 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.listViewHugSearch, "listViewHugSearch");
 			this.listViewHugSearch.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-			this.columnHeader5,
-			this.columnHeader6,
-			this.columnHeader7,
-			this.columnHeader11,
-			this.columnHeader12,
-			this.columnHeader13,
-			this.columnHeader14});
+            this.columnHeader5,
+            this.columnHeader6,
+            this.columnHeader7,
+            this.columnHeader11,
+            this.columnHeader12,
+            this.columnHeader13,
+            this.columnHeader14});
 			this.listViewHugSearch.GridLines = true;
 			this.listViewHugSearch.HideSelection = false;
 			this.listViewHugSearch.Name = "listViewHugSearch";
@@ -1254,8 +1258,8 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.listViewHugFiles, "listViewHugFiles");
 			this.listViewHugFiles.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-			this.columnHeader8,
-			this.columnHeader10});
+            this.columnHeader8,
+            this.columnHeader10});
 			this.listViewHugFiles.GridLines = true;
 			this.listViewHugFiles.HideSelection = false;
 			this.listViewHugFiles.Name = "listViewHugFiles";
@@ -1273,10 +1277,10 @@ namespace LMStud
 			// statusStrip1
 			// 
 			this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-			this.toolStripStatusLabel1,
-			this.labelTokens,
-			this.labelTPS,
-			this.labelPreGen});
+            this.toolStripStatusLabel1,
+            this.labelTokens,
+            this.labelTPS,
+            this.labelPreGen});
 			this.statusStrip1.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.HorizontalStackWithOverflow;
 			resources.ApplyResources(this.statusStrip1, "statusStrip1");
 			this.statusStrip1.Name = "statusStrip1";

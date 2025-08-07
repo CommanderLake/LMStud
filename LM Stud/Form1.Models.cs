@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
@@ -84,25 +85,71 @@ namespace LMStud{
 				}
 			});
 		}
+		[Localizable(true)]
+		private void ShowErrorMessage(string action, NativeMethods.StudError error){
+			string detail;
+			switch(error){
+				case NativeMethods.StudError.CantLoadModel:
+					detail = Resources.The_model_could_not_be_loaded_;
+					break;
+				case NativeMethods.StudError.ModelNotLoaded:
+					detail = Resources.No_model_has_been_loaded_;
+					break;
+				case NativeMethods.StudError.CantCreateContext:
+					detail = Resources.Failed_to_create_the_model_context_;
+					break;
+				case NativeMethods.StudError.CantCreateSampler:
+					detail = Resources.Failed_to_create_the_sampler_;
+					break;
+				case NativeMethods.StudError.CantApplyTemplate:
+					detail = Resources.The_chat_template_could_not_be_applied_;
+					break;
+				case NativeMethods.StudError.ConvTooLong:
+					detail = Resources.The_conversation_is_too_long_for_the_context_window_;
+					break;
+				case NativeMethods.StudError.LlamaDecodeError:
+					detail = Resources.The_model_backend_returned_a_decode_error_;
+					break;
+				case NativeMethods.StudError.IndexOutOfRange:
+					detail = Resources.An_index_was_out_of_range_;
+					break;
+				case NativeMethods.StudError.CantTokenizePrompt:
+					detail = Resources.Failed_to_tokenize_the_prompt_;
+					break;
+				case NativeMethods.StudError.CantConvertToken:
+					detail = Resources.Failed_to_convert_a_token_;
+					break;
+				case NativeMethods.StudError.ChatParseError:
+					detail = Resources.Unable_to_parse_the_chat_message_;
+					break;
+				default:
+					detail = error.ToString();
+					break;
+			}
+			MessageBox.Show(this, string.Format(Resources._0____1_, action, detail), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+		}
 		private void SetSystemPrompt(){
 			var error = NativeMethods.SetSystemPrompt(_systemPrompt.Length > 0 ? _systemPrompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : "");
-			if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success)
-				MessageBox.Show(this, Resources.Error_setting_system_prompt__maybe_the_context_is_too_big, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+			if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_setting_system_prompt, error);
 		}
 		NativeMethods.StudError LoadModel(string filename, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){
 			var result = NativeMethods.LoadModel(filename, nGPULayers, mMap, mLock, numaStrategy);
+			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_loading_model, result);
 			return result;
 		}
 		NativeMethods.StudError CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
 			var result = NativeMethods.CreateSession(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty);
+			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_session, result);
 			return result;
 		}
 		NativeMethods.StudError CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch){
 			var result = NativeMethods.CreateContext(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch);
+			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_context, result);
 			return result;
 		}
 		NativeMethods.StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty){
 			var result = NativeMethods.CreateSampler(minP, topP, topK, temp, repeatPenalty);
+			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_sampler, result);
 			return result;
 		}
 		private void LoadModel(int modelIndex, bool autoLoad){

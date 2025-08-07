@@ -25,9 +25,11 @@ namespace LMStud{
 		private int _msgTokenCount;
 		private volatile bool _rendering;
 		private bool _whisperLoaded;
+		private LVColumnClickHandler _columnClickHandler;
 		internal Form1(){
 			_this = this;
 			InitializeComponent();
+			InitializeListViews();
 			Icon = Resources.LM_Stud_256;
 			SetToolTips();
 			LoadConfig();
@@ -88,6 +90,27 @@ namespace LMStud{
 					break;
 				}
 			});
+
+		}
+		private void InitializeListViews(){
+			_columnClickHandler = new LVColumnClickHandler();
+			var columnDataTypesHugSearch = new[]{
+				SortDataType.String,// Column 0: Name
+				SortDataType.String,// Column 1: Uploader
+				SortDataType.Integer,// Column 2: Likes
+				SortDataType.Integer,// Column 3: Downloads
+				SortDataType.Integer,// Column 4: Trending
+				SortDataType.DateTime,// Column 5: Created
+				SortDataType.DateTime// Column 6: Modified
+			};
+			var columnDataTypesHugFiles = new[]{
+				SortDataType.String,// Column 0: FileName
+				SortDataType.Double// Column 1: Size
+			};
+			_columnClickHandler.RegisterListView(listViewModels);
+			_columnClickHandler.RegisterListView(listViewMeta);
+			_columnClickHandler.RegisterListView(listViewHugSearch, columnDataTypesHugSearch);
+			_columnClickHandler.RegisterListView(listViewHugFiles, columnDataTypesHugFiles);
 		}
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e){
 			if(_generating) NativeMethods.StopGeneration();
@@ -112,7 +135,7 @@ namespace LMStud{
 			if(checkVoiceInput.CheckState != CheckState.Unchecked){
 				if(_whisperModelIndex < 0 || _whisperModelIndex >= _whisperModels.Count || !File.Exists(_whisperModels[_whisperModelIndex])){
 					checkVoiceInput.Checked = false;
-					MessageBox.Show(this, Resources.Whisper_model_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+					MessageBox.Show(this, Resources.Error_Whisper_model_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 					tabControl1.SelectTab(1);
 					comboWhisperModel.Focus();
 					return;

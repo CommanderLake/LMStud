@@ -261,7 +261,7 @@ namespace LMStud{
 			if(reloadWhisper && _whisperLoaded){
 				if(_whisperModelIndex < 0 || !File.Exists(_whisperModels[_whisperModelIndex])){
 					checkVoiceInput.Checked = false;
-					MessageBox.Show(this, Resources.Whisper_model_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+					MessageBox.Show(this, Resources.Error_Whisper_model_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 				} else{
 					if(checkVoiceInput.CheckState != CheckState.Unchecked) NativeMethods.StopSpeechTranscription();
 					NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU, _useWhisperVAD, _whisperModels[_vadModelIndex]);

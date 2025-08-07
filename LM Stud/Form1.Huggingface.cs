@@ -105,11 +105,11 @@ namespace LMStud{
 					}
 					if(items.Count > 0) Invoke(new MethodInvoker(() => {listViewHugFiles.Items.AddRange(items.ToArray());}));
 				} catch(HttpRequestException ex){
-					Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.HTTP_Error_loading_files_for__0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+					Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.HTTP_Error_loading_files_for_ + Resources._0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 				} catch(JsonException ex){
-					Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.JSON_Parse_Error_for__0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+					Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.JSON_Parse_Error_for_ + Resources._0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 				} catch(Exception ex){
-					Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.Error_loading_files_for__0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+					Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.Error_loading_files_for_ + Resources._0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 				} finally{ Invoke(new MethodInvoker(() => {listViewHugFiles.EndUpdate();})); }
 			});
 		}
