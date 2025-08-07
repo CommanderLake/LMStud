@@ -85,22 +85,22 @@ namespace LMStud{
 			});
 		}
 		private void SetSystemPrompt(){
-			if(!NativeMethods.SetSystemPrompt(_systemPrompt.Length > 0 ? _systemPrompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : ""))
+			if(NativeMethods.SetSystemPrompt(_systemPrompt.Length > 0 ? _systemPrompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : "") != NativeMethods.StudError.Success)
 				MessageBox.Show(this, Resources.Error_setting_system_prompt__maybe_the_context_is_too_big, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 		}
-		int LoadModel(string filename, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){
+		NativeMethods.StudError LoadModel(string filename, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){
 			var result = NativeMethods.LoadModel(filename, nGPULayers, mMap, mLock, numaStrategy);
 			return result;
 		}
-		int CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
+		NativeMethods.StudError CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
 			var result = NativeMethods.CreateSession(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty);
 			return result;
 		}
-		int CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch){
+		NativeMethods.StudError CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch){
 			var result = NativeMethods.CreateContext(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch);
 			return result;
 		}
-		int CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty){
+		NativeMethods.StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty){
 			var result = NativeMethods.CreateSampler(minP, topP, topK, temp, repeatPenalty);
 			return result;
 		}
@@ -125,7 +125,7 @@ namespace LMStud{
 						}
 						if(whisperOn) NativeMethods.StopSpeechTranscription();
 						var result = LoadModel(modelPath, _gpuLayers, _mMap, _mLock, _numaStrat);
-						if(result < 0){
+						if(result != NativeMethods.StudError.Success){
 							Settings.Default.LoadAuto = false;
 							Settings.Default.Save();
 							return;
@@ -135,7 +135,7 @@ namespace LMStud{
 						if(_modelCtxMax <= 0) _cntCtxMax = _ctxSize;
 						else _cntCtxMax = _ctxSize > _modelCtxMax ? _modelCtxMax : _ctxSize;
 						result = CreateSession(_cntCtxMax, _batchSize, _flashAttn, _nThreads, _nThreadsBatch, _minP, _topP, _topK, _temp, _repPen);
-						if(result < 0){
+						if(result != NativeMethods.StudError.Success){
 							Settings.Default.LoadAuto = false;
 							Settings.Default.Save();
 							_llModelLoaded = true;

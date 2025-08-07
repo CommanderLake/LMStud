@@ -295,49 +295,32 @@ static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft
 		s.buf.clear();
 		if(p.tool_calls.empty()) return true;
 		auto& c = p.tool_calls.back();
+		auto tokenizeAndRun = [&](const std::string& text){
+			if(text.empty()) return false;
+			const int n = -llama_tokenize(_vocab, text.c_str(), text.size(), nullptr, 0, true, true);
+			std::vector<llama_token> v(n);
+			llama_tokenize(_vocab, text.c_str(), text.size(), v.data(), n, true, true);
+			for(size_t i = 0; i < v.size();){
+				const int b = std::min<int>(_session.nBatch, v.size() - i);
+				const llama_batch lb = llama_batch_get_one(&v[i], b);
+				if(LlamaMemSize() + lb.n_tokens > llama_n_ctx(_session.ctx)) return true;
+				if(llama_decode(_session.ctx, lb) != 0) return true;
+				for(int k = 0; k < b; ++k) llama_sampler_accept(_session.smpl, v[i + k]);
+				i += b;
+			}
+			newTokens.insert(newTokens.end(), v.begin(), v.end());
+			response += text;
+			return false;
+		};
 		if(auto h = _toolHandlers.find(c.name); h != _toolHandlers.end()){
 			if(tok == CloseToolCallTag()){
 				std::string open = "\n" + OpenToolResponseTag();
-				if(!open.empty()){
-					int m = -llama_tokenize(_vocab, open.c_str(), open.size(), nullptr, 0, true, true);
-					std::vector<llama_token> v2(m);
-					llama_tokenize(_vocab, open.c_str(), open.size(), v2.data(), m, true, true);
-					llama_batch lb = llama_batch_get_one(v2.data(), m);
-					if(LlamaMemSize() + lb.n_tokens > llama_n_ctx(_session.ctx)) return true;
-					if(llama_decode(_session.ctx, lb) != 0) return true;
-					for(auto t2 : v2) llama_sampler_accept(_session.smpl, t2);
-					newTokens.insert(newTokens.end(), v2.begin(), v2.end());
-					response += open;
-				}
+				if(tokenizeAndRun(open)) return true;
 			}
 			std::string out = "\n" + h->second(c.arguments.c_str());
-			if(!out.empty()){
-				int n = -llama_tokenize(_vocab, out.c_str(), out.size(), nullptr, 0, true, true);
-				std::vector<llama_token> v(n);
-				llama_tokenize(_vocab, out.c_str(), out.size(), v.data(), n, true, true);
-				for(size_t i = 0; i < v.size();){
-					int b = std::min<int>(_session.nBatch, v.size() - i);
-					llama_batch lb = llama_batch_get_one(&v[i], b);
-					if(LlamaMemSize() + lb.n_tokens > llama_n_ctx(_session.ctx)) return true;
-					if(llama_decode(_session.ctx, lb) != 0) return true;
-					for(int k = 0; k < b; ++k) llama_sampler_accept(_session.smpl, v[i + k]);
-					i += b;
-				}
-				newTokens.insert(newTokens.end(), v.begin(), v.end());
-				response += out;
-			}
+			if(tokenizeAndRun(out)) return true;
 			std::string close = "\n" + CloseToolResponseTag();
-			if(!close.empty()){
-				int m = -llama_tokenize(_vocab, close.c_str(), close.size(), nullptr, 0, true, true);
-				std::vector<llama_token> v2(m);
-				llama_tokenize(_vocab, close.c_str(), close.size(), v2.data(), m, true, true);
-				llama_batch lb = llama_batch_get_one(v2.data(), m);
-				if(LlamaMemSize() + lb.n_tokens > llama_n_ctx(_session.ctx)) return true;
-				if(llama_decode(_session.ctx, lb) != 0) return true;
-				for(auto t2 : v2) llama_sampler_accept(_session.smpl, t2);
-				newTokens.insert(newTokens.end(), v2.begin(), v2.end());
-				response += close;
-			}
+			if(tokenizeAndRun(close)) return true;
 		}
 		if(_tokenCb && cbOn){
 			_session.syntax.parse_tool_calls = false;

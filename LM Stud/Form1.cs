@@ -178,10 +178,10 @@ namespace LMStud{
 		private void MsgButDeleteOnClick(ChatMessage cm){
 			if(_generating) return;
 			var id = _chatMessages.IndexOf(cm);
-			var ok = NativeMethods.RemoveMessageAt(id);
+			var result = NativeMethods.RemoveMessageAt(id);
 			_chatMessages[id].Dispose();
 			_chatMessages.RemoveAt(id);
-			if(!ok) MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+			if(result != NativeMethods.StudError.Success) MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 		}
 		private void MsgButRegenOnClick(ChatMessage cm){
 			if(!_llModelLoaded || _generating) return;
@@ -192,12 +192,12 @@ namespace LMStud{
 					return;
 			var role = _chatMessages[idx].Role;
 			var msg = _chatMessages[idx].Message;
-			var ok = NativeMethods.RemoveMessagesStartingAt(idx);
+			var result = NativeMethods.RemoveMessagesStartingAt(idx);
 			for(var i = _chatMessages.Count - 1; i >= idx; i--){
 				_chatMessages[i].Dispose();
 				_chatMessages.RemoveAt(i);
 			}
-			if(!ok){
+			if(result != NativeMethods.StudError.Success){
 				MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 				return;
 			}
@@ -219,7 +219,7 @@ namespace LMStud{
 			var idx = _chatMessages.IndexOf(cm);
 			if(cm.checkThink.Checked) cm.Think = cm.richTextMsg.Text;
 			else cm.Message = cm.richTextMsg.Text;
-			if(!NativeMethods.SetMessageAt(idx, cm.Think, cm.Message)) MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+			if(NativeMethods.SetMessageAt(idx, cm.Think, cm.Message) != NativeMethods.StudError.Success) MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 			cm.Editing = false;
 			cm.Markdown = checkMarkdown.Checked;
 		}
