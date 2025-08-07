@@ -268,68 +268,70 @@ static std::string CloseThinkTag(){
 		default: return "</think>";
 	}
 }
-static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ftTime, const HrClock::time_point& t0, llama_memory_t llMem, std::string& response, std::vector<llama_token>& newTokens, const TokenCallbackFn cb){
+static StudError doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ftTime, const HrClock::time_point& t0, llama_memory_t llMem, std::string& response, std::vector<llama_token>& newTokens, const TokenCallbackFn cb){
 	if(tok == OpenThinkTag()){
 		s.inThink = true;
-		return true;
+		return StudError::Success;
 	}
 	if(tok == CloseThinkTag()){
 		s.inThink = false;
-		return true;
+		return StudError::Success;
 	}
-	if(!_hasTools || !s.inThink) return false;
+	if(!_hasTools || !s.inThink) return StudError::Success;
 	if(tok == OpenToolCallTag()){
 		s.inCall = true;
 		s.buf = tok;
-		return true;
+		return StudError::Success;
 	}
 	if(s.inCall){
 		if(tok != CloseToolCallTag() && tok != OpenToolResponseTag()){
 			s.buf += tok;
-			return true;
+			return StudError::Success;
 		}
 		if(tok == CloseToolCallTag()) s.buf += CloseToolCallTag();
 		s.inCall = false;
 		_session.syntax.parse_tool_calls = true;
 		auto p = common_chat_parse(s.buf, true, _session.syntax);
 		s.buf.clear();
-		if(p.tool_calls.empty()) return true;
+		if(p.tool_calls.empty()) return StudError::Success;
 		auto& c = p.tool_calls.back();
 		auto tokenizeAndRun = [&](const std::string& text){
-			if(text.empty()) return false;
+			if(text.empty()) return StudError::Success;
 			const int n = -llama_tokenize(_vocab, text.c_str(), text.size(), nullptr, 0, true, true);
 			std::vector<llama_token> v(n);
 			llama_tokenize(_vocab, text.c_str(), text.size(), v.data(), n, true, true);
 			for(size_t i = 0; i < v.size();){
 				const int b = std::min<int>(_session.nBatch, v.size() - i);
 				const llama_batch lb = llama_batch_get_one(&v[i], b);
-				if(LlamaMemSize() + lb.n_tokens > llama_n_ctx(_session.ctx)) return true;
-				if(llama_decode(_session.ctx, lb) != 0) return true;
+				if(LlamaMemSize() + lb.n_tokens > llama_n_ctx(_session.ctx)) return StudError::ConvTooLong;
+				if(llama_decode(_session.ctx, lb) != 0) return StudError::LlamaDecodeError;
 				for(int k = 0; k < b; ++k) llama_sampler_accept(_session.smpl, v[i + k]);
 				i += b;
 			}
 			newTokens.insert(newTokens.end(), v.begin(), v.end());
 			response += text;
-			return false;
+			return StudError::Success;
 		};
 		if(auto h = _toolHandlers.find(c.name); h != _toolHandlers.end()){
 			if(tok == CloseToolCallTag()){
 				std::string open = "\n" + OpenToolResponseTag();
-				if(tokenizeAndRun(open)) return true;
+				auto err = tokenizeAndRun(open);
+				if(err != StudError::Success) return err;
 			}
 			std::string out = "\n" + h->second(c.arguments.c_str());
-			if(tokenizeAndRun(out)) return true;
+			auto err = tokenizeAndRun(out);
+			if(err != StudError::Success) return err;
 			std::string close = "\n" + CloseToolResponseTag();
-			if(tokenizeAndRun(close)) return true;
+			err = tokenizeAndRun(close);
+			if(err != StudError::Success) return err;
 		}
 		if(_tokenCb && cbOn){
 			_session.syntax.parse_tool_calls = false;
 			auto msg = common_chat_parse(response, true, _session.syntax);
 			cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), 1, LlamaMemSize(), ftTime, 0);
-			return true;
 		}
 	}
-	return false;
+	return StudError::Success;
 }
 StudError Generate(const std::vector<common_chat_msg>& messages, const int nPredict, const bool callback, common_chat_msg& outMsg){
 	const auto prepStart = HrClock::now();
@@ -370,6 +372,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 		}
 		_session.cachedTokens.insert(_session.cachedTokens.end(), promptTokens.begin(), promptTokens.end());
 	}
+	auto status = StudError::Success;
 	llama_token newTokenId;
 	std::vector<llama_token> newTokens;
 	std::string response;
@@ -379,7 +382,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	int i = 0;
 	while((nPredict < 0 || i < nPredict) && !_stop.load()){
 		newTokenId = llama_sampler_sample(_session.smpl, _session.ctx, -1);
-		if(llama_vocab_is_eog(_vocab, newTokenId)){ _stop.store(true); }
+		if(llama_vocab_is_eog(_vocab, newTokenId)) _stop.store(true);
 		char buf[256];
 		const int n = llama_token_to_piece(_vocab, newTokenId, buf, sizeof buf, 0, false);
 		if(n < 0){
@@ -407,16 +410,22 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 			outMsg = common_chat_msg();
 			return StudError::ConvTooLong;
 		}
-		auto result = llama_decode(_session.ctx, batch);
-		if(result != 0){
+		auto decodeErr = llama_decode(_session.ctx, batch);
+		if(decodeErr != 0){
 			_session.chatMsgs.resize(chatStart + messages.size());
 			RetokenizeChat(true);
 			outMsg = common_chat_msg();
-			if(result == 1) return StudError::ConvTooLong;
+			if(decodeErr == 1) return StudError::ConvTooLong;
 			return StudError::LlamaDecodeError;
 		}
 		llama_sampler_accept(_session.smpl, newTokenId);
-		if(_hasTools) doTool(tokenStr, tool, callback, ftTime, prepStart, _session.llMem, response, newTokens, cb);
+		if(_hasTools){
+			auto toolErr = doTool(tokenStr, tool, callback, ftTime, prepStart, _session.llMem, response, newTokens, cb);
+			if(toolErr != StudError::Success){
+				status = toolErr;
+				_stop.store(true);
+			}
+		}
 	}
 	_session.syntax.parse_tool_calls = false;
 	msg = common_chat_parse(response, false, _session.syntax);
@@ -425,7 +434,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	if(cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(), ftTime, 0);
 	outMsg = std::move(msg);
 	//OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
-	return StudError::Success;
+	return status;
 }
 StudError GenerateWithTools(const MessageRole role, const char* prompt, const int nPredict, const bool callback){
 	common_chat_msg msg;

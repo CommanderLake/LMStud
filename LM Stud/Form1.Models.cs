@@ -85,7 +85,8 @@ namespace LMStud{
 			});
 		}
 		private void SetSystemPrompt(){
-			if(NativeMethods.SetSystemPrompt(_systemPrompt.Length > 0 ? _systemPrompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : "") != NativeMethods.StudError.Success)
+			var error = NativeMethods.SetSystemPrompt(_systemPrompt.Length > 0 ? _systemPrompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : "");
+			if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success)
 				MessageBox.Show(this, Resources.Error_setting_system_prompt__maybe_the_context_is_too_big, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 		}
 		NativeMethods.StudError LoadModel(string filename, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){
