@@ -2,32 +2,32 @@
 namespace LMStud
 {
 	internal partial class Form1
-    {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
-        private System.ComponentModel.IContainer components = null;
+	{
+		/// <summary>
+		/// Required designer variable.
+		/// </summary>
+		private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && (components != null)) {
-                components.Dispose();
-            }
-            base.Dispose(disposing);
-        }
+		/// <summary>
+		/// Clean up any resources being used.
+		/// </summary>
+		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+		protected override void Dispose(bool disposing)
+		{
+			if (disposing && (components != null)) {
+				components.Dispose();
+			}
+			base.Dispose(disposing);
+		}
 
-        #region Windows Form Designer generated code
+		#region Windows Form Designer generated code
 
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
-        private void InitializeComponent()
-        {
+		/// <summary>
+		/// Required method for Designer support - do not modify
+		/// the contents of this method with the code editor.
+		/// </summary>
+		private void InitializeComponent()
+		{
 			this.components = new System.ComponentModel.Container();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
 			this.textInput = new System.Windows.Forms.TextBox();
@@ -374,21 +374,21 @@ namespace LMStud
 			resources.ApplyResources(this.numVadThreshold, "numVadThreshold");
 			this.numVadThreshold.DecimalPlaces = 2;
 			this.numVadThreshold.Increment = new decimal(new int[] {
-            5,
-            0,
-            0,
-            131072});
+			5,
+			0,
+			0,
+			131072});
 			this.numVadThreshold.Maximum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+			1,
+			0,
+			0,
+			0});
 			this.numVadThreshold.Name = "numVadThreshold";
 			this.numVadThreshold.Value = new decimal(new int[] {
-            5,
-            0,
-            0,
-            65536});
+			5,
+			0,
+			0,
+			65536});
 			// 
 			// label17
 			// 
@@ -513,16 +513,16 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.numGoogleResults, "numGoogleResults");
 			this.numGoogleResults.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+			1,
+			0,
+			0,
+			0});
 			this.numGoogleResults.Name = "numGoogleResults";
 			this.numGoogleResults.Value = new decimal(new int[] {
-            5,
-            0,
-            0,
-            0});
+			5,
+			0,
+			0,
+			0});
 			// 
 			// checkGoogleEnable
 			// 
@@ -578,21 +578,21 @@ namespace LMStud
 			resources.ApplyResources(this.numWakeWordSimilarity, "numWakeWordSimilarity");
 			this.numWakeWordSimilarity.DecimalPlaces = 1;
 			this.numWakeWordSimilarity.Increment = new decimal(new int[] {
-            1,
-            0,
-            0,
-            65536});
+			1,
+			0,
+			0,
+			65536});
 			this.numWakeWordSimilarity.Maximum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+			1,
+			0,
+			0,
+			0});
 			this.numWakeWordSimilarity.Name = "numWakeWordSimilarity";
 			this.numWakeWordSimilarity.Value = new decimal(new int[] {
-            8,
-            0,
-            0,
-            65536});
+			8,
+			0,
+			0,
+			65536});
 			// 
 			// label24
 			// 
@@ -604,21 +604,21 @@ namespace LMStud
 			resources.ApplyResources(this.numWhisperTemp, "numWhisperTemp");
 			this.numWhisperTemp.DecimalPlaces = 1;
 			this.numWhisperTemp.Increment = new decimal(new int[] {
-            1,
-            0,
-            0,
-            65536});
+			1,
+			0,
+			0,
+			65536});
 			this.numWhisperTemp.Maximum = new decimal(new int[] {
-            10,
-            0,
-            0,
-            0});
+			10,
+			0,
+			0,
+			0});
 			this.numWhisperTemp.Name = "numWhisperTemp";
 			this.numWhisperTemp.Value = new decimal(new int[] {
-            2,
-            0,
-            0,
-            65536});
+			2,
+			0,
+			0,
+			65536});
 			// 
 			// label18
 			// 
@@ -629,21 +629,21 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.numFreqThreshold, "numFreqThreshold");
 			this.numFreqThreshold.Increment = new decimal(new int[] {
-            10,
-            0,
-            0,
-            0});
+			10,
+			0,
+			0,
+			0});
 			this.numFreqThreshold.Maximum = new decimal(new int[] {
-            300,
-            0,
-            0,
-            0});
+			300,
+			0,
+			0,
+			0});
 			this.numFreqThreshold.Name = "numFreqThreshold";
 			this.numFreqThreshold.Value = new decimal(new int[] {
-            100,
-            0,
-            0,
-            0});
+			100,
+			0,
+			0,
+			0});
 			// 
 			// checkWhisperUseGPU
 			// 
@@ -693,16 +693,16 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.numThreadsBatch, "numThreadsBatch");
 			this.numThreadsBatch.Maximum = new decimal(new int[] {
-            512,
-            0,
-            0,
-            0});
+			512,
+			0,
+			0,
+			0});
 			this.numThreadsBatch.Name = "numThreadsBatch";
 			this.numThreadsBatch.Value = new decimal(new int[] {
-            8,
-            0,
-            0,
-            0});
+			8,
+			0,
+			0,
+			0});
 			// 
 			// label14
 			// 
@@ -721,16 +721,16 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.numThreads, "numThreads");
 			this.numThreads.Maximum = new decimal(new int[] {
-            512,
-            0,
-            0,
-            0});
+			512,
+			0,
+			0,
+			0});
 			this.numThreads.Name = "numThreads";
 			this.numThreads.Value = new decimal(new int[] {
-            8,
-            0,
-            0,
-            0});
+			8,
+			0,
+			0,
+			0});
 			// 
 			// label2
 			// 
@@ -768,15 +768,15 @@ namespace LMStud
 			resources.ApplyResources(this.numMinP, "numMinP");
 			this.numMinP.DecimalPlaces = 2;
 			this.numMinP.Increment = new decimal(new int[] {
-            1,
-            0,
-            0,
-            131072});
+			1,
+			0,
+			0,
+			131072});
 			this.numMinP.Maximum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+			1,
+			0,
+			0,
+			0});
 			this.numMinP.Name = "numMinP";
 			// 
 			// checkFlashAttn
@@ -805,12 +805,12 @@ namespace LMStud
 			this.comboNUMAStrat.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 			this.comboNUMAStrat.FormattingEnabled = true;
 			this.comboNUMAStrat.Items.AddRange(new object[] {
-            resources.GetString("comboNUMAStrat.Items"),
-            resources.GetString("comboNUMAStrat.Items1"),
-            resources.GetString("comboNUMAStrat.Items2"),
-            resources.GetString("comboNUMAStrat.Items3"),
-            resources.GetString("comboNUMAStrat.Items4"),
-            resources.GetString("comboNUMAStrat.Items5")});
+			resources.GetString("comboNUMAStrat.Items"),
+			resources.GetString("comboNUMAStrat.Items1"),
+			resources.GetString("comboNUMAStrat.Items2"),
+			resources.GetString("comboNUMAStrat.Items3"),
+			resources.GetString("comboNUMAStrat.Items4"),
+			resources.GetString("comboNUMAStrat.Items5")});
 			this.comboNUMAStrat.Name = "comboNUMAStrat";
 			// 
 			// label6
@@ -828,21 +828,21 @@ namespace LMStud
 			resources.ApplyResources(this.numRepPen, "numRepPen");
 			this.numRepPen.DecimalPlaces = 2;
 			this.numRepPen.Increment = new decimal(new int[] {
-            1,
-            0,
-            0,
-            131072});
+			1,
+			0,
+			0,
+			131072});
 			this.numRepPen.Maximum = new decimal(new int[] {
-            10,
-            0,
-            0,
-            0});
+			10,
+			0,
+			0,
+			0});
 			this.numRepPen.Name = "numRepPen";
 			this.numRepPen.Value = new decimal(new int[] {
-            11,
-            0,
-            0,
-            65536});
+			11,
+			0,
+			0,
+			65536});
 			// 
 			// label11
 			// 
@@ -853,16 +853,16 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.numBatchSize, "numBatchSize");
 			this.numBatchSize.Maximum = new decimal(new int[] {
-            1048576,
-            0,
-            0,
-            0});
+			1048576,
+			0,
+			0,
+			0});
 			this.numBatchSize.Name = "numBatchSize";
 			this.numBatchSize.Value = new decimal(new int[] {
-            512,
-            0,
-            0,
-            0});
+			512,
+			0,
+			0,
+			0});
 			// 
 			// label8
 			// 
@@ -873,16 +873,16 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.numTopK, "numTopK");
 			this.numTopK.Maximum = new decimal(new int[] {
-            100000,
-            0,
-            0,
-            0});
+			100000,
+			0,
+			0,
+			0});
 			this.numTopK.Name = "numTopK";
 			this.numTopK.Value = new decimal(new int[] {
-            20,
-            0,
-            0,
-            0});
+			20,
+			0,
+			0,
+			0});
 			// 
 			// label9
 			// 
@@ -894,21 +894,21 @@ namespace LMStud
 			resources.ApplyResources(this.numTopP, "numTopP");
 			this.numTopP.DecimalPlaces = 2;
 			this.numTopP.Increment = new decimal(new int[] {
-            1,
-            0,
-            0,
-            131072});
+			1,
+			0,
+			0,
+			131072});
 			this.numTopP.Maximum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+			1,
+			0,
+			0,
+			0});
 			this.numTopP.Name = "numTopP";
 			this.numTopP.Value = new decimal(new int[] {
-            95,
-            0,
-            0,
-            131072});
+			95,
+			0,
+			0,
+			131072});
 			// 
 			// groupCommon
 			// 
@@ -928,16 +928,16 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.numCtxSize, "numCtxSize");
 			this.numCtxSize.Maximum = new decimal(new int[] {
-            1048576,
-            0,
-            0,
-            0});
+			1048576,
+			0,
+			0,
+			0});
 			this.numCtxSize.Name = "numCtxSize";
 			this.numCtxSize.Value = new decimal(new int[] {
-            8192,
-            0,
-            0,
-            0});
+			8192,
+			0,
+			0,
+			0});
 			// 
 			// label5
 			// 
@@ -948,21 +948,21 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.numGPULayers, "numGPULayers");
 			this.numGPULayers.Maximum = new decimal(new int[] {
-            1024,
-            0,
-            0,
-            0});
+			1024,
+			0,
+			0,
+			0});
 			this.numGPULayers.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            -2147483648});
+			1,
+			0,
+			0,
+			-2147483648});
 			this.numGPULayers.Name = "numGPULayers";
 			this.numGPULayers.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            -2147483648});
+			1,
+			0,
+			0,
+			-2147483648});
 			// 
 			// label7
 			// 
@@ -978,42 +978,42 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.numNGen, "numNGen");
 			this.numNGen.Maximum = new decimal(new int[] {
-            131072,
-            0,
-            0,
-            0});
+			131072,
+			0,
+			0,
+			0});
 			this.numNGen.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            -2147483648});
+			1,
+			0,
+			0,
+			-2147483648});
 			this.numNGen.Name = "numNGen";
 			this.numNGen.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            -2147483648});
+			1,
+			0,
+			0,
+			-2147483648});
 			// 
 			// numTemp
 			// 
 			resources.ApplyResources(this.numTemp, "numTemp");
 			this.numTemp.DecimalPlaces = 2;
 			this.numTemp.Increment = new decimal(new int[] {
-            1,
-            0,
-            0,
-            65536});
+			1,
+			0,
+			0,
+			65536});
 			this.numTemp.Maximum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+			1,
+			0,
+			0,
+			0});
 			this.numTemp.Name = "numTemp";
 			this.numTemp.Value = new decimal(new int[] {
-            6,
-            0,
-            0,
-            65536});
+			6,
+			0,
+			0,
+			65536});
 			// 
 			// label4
 			// 
@@ -1084,8 +1084,8 @@ namespace LMStud
 			// listViewModels
 			// 
 			this.listViewModels.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.columnHeader1,
-            this.columnHeader2});
+			this.columnHeader1,
+			this.columnHeader2});
 			resources.ApplyResources(this.listViewModels, "listViewModels");
 			this.listViewModels.GridLines = true;
 			this.listViewModels.HideSelection = false;
@@ -1108,8 +1108,8 @@ namespace LMStud
 			// listViewMeta
 			// 
 			this.listViewMeta.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.columnHeader3,
-            this.columnHeader4});
+			this.columnHeader3,
+			this.columnHeader4});
 			resources.ApplyResources(this.listViewMeta, "listViewMeta");
 			this.listViewMeta.GridLines = true;
 			this.listViewMeta.HideSelection = false;
@@ -1195,13 +1195,13 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.listViewHugSearch, "listViewHugSearch");
 			this.listViewHugSearch.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.columnHeader5,
-            this.columnHeader6,
-            this.columnHeader7,
-            this.columnHeader11,
-            this.columnHeader12,
-            this.columnHeader13,
-            this.columnHeader14});
+			this.columnHeader5,
+			this.columnHeader6,
+			this.columnHeader7,
+			this.columnHeader11,
+			this.columnHeader12,
+			this.columnHeader13,
+			this.columnHeader14});
 			this.listViewHugSearch.GridLines = true;
 			this.listViewHugSearch.HideSelection = false;
 			this.listViewHugSearch.Name = "listViewHugSearch";
@@ -1254,8 +1254,8 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.listViewHugFiles, "listViewHugFiles");
 			this.listViewHugFiles.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.columnHeader8,
-            this.columnHeader10});
+			this.columnHeader8,
+			this.columnHeader10});
 			this.listViewHugFiles.GridLines = true;
 			this.listViewHugFiles.HideSelection = false;
 			this.listViewHugFiles.Name = "listViewHugFiles";
@@ -1273,10 +1273,10 @@ namespace LMStud
 			// statusStrip1
 			// 
 			this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripStatusLabel1,
-            this.labelTokens,
-            this.labelTPS,
-            this.labelPreGen});
+			this.toolStripStatusLabel1,
+			this.labelTokens,
+			this.labelTPS,
+			this.labelPreGen});
 			this.statusStrip1.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.HorizontalStackWithOverflow;
 			resources.ApplyResources(this.statusStrip1, "statusStrip1");
 			this.statusStrip1.Name = "statusStrip1";
@@ -1390,7 +1390,7 @@ namespace LMStud
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
-        }
+		}
 
 		#endregion
 
@@ -1506,21 +1506,21 @@ namespace LMStud
 		private System.Windows.Forms.CheckBox checkFileReadEnable;
 		private System.Windows.Forms.Label label22;
 		private System.Windows.Forms.TextBox textFileBasePath;
-        private System.Windows.Forms.LinkLabel linkFileInstruction;
+		private System.Windows.Forms.LinkLabel linkFileInstruction;
 		private System.Windows.Forms.Label label23;
 		private System.Windows.Forms.NumericUpDown numMinP;
-        private System.Windows.Forms.Label label24;
-        private System.Windows.Forms.NumericUpDown numWhisperTemp;
-        private System.Windows.Forms.Label label25;
-        private System.Windows.Forms.NumericUpDown numWakeWordSimilarity;
-        private System.Windows.Forms.GroupBox groupBox5;
-        private System.Windows.Forms.CheckBox checkDateTimeEnable;
-        private System.Windows.Forms.GroupBox groupBox6;
-        private System.Windows.Forms.Button butVADDown;
-        private System.Windows.Forms.RadioButton radioBasicVAD;
-        private System.Windows.Forms.RadioButton radioWhisperVAD;
-        private System.Windows.Forms.ComboBox comboVADModel;
-        private System.Windows.Forms.Label label26;
-    }
+		private System.Windows.Forms.Label label24;
+		private System.Windows.Forms.NumericUpDown numWhisperTemp;
+		private System.Windows.Forms.Label label25;
+		private System.Windows.Forms.NumericUpDown numWakeWordSimilarity;
+		private System.Windows.Forms.GroupBox groupBox5;
+		private System.Windows.Forms.CheckBox checkDateTimeEnable;
+		private System.Windows.Forms.GroupBox groupBox6;
+		private System.Windows.Forms.Button butVADDown;
+		private System.Windows.Forms.RadioButton radioBasicVAD;
+		private System.Windows.Forms.RadioButton radioWhisperVAD;
+		private System.Windows.Forms.ComboBox comboVADModel;
+		private System.Windows.Forms.Label label26;
+	}
 }
 

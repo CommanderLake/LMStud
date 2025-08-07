@@ -15,7 +15,7 @@ void BackendInit(){
 	if(hModule != nullptr) ggml_backend_load("ggml-cuda.dll");
 	llama_backend_init();
 }
-int CreateContext(const int nCtx, const int nBatch, const bool flashAttn, const int nThreads, const int nThreadsBatch){
+StudError CreateContext(const int nCtx, const int nBatch, const bool flashAttn, const int nThreads, const int nThreadsBatch){
 	if(_session.ctx){
 		llama_free(_session.ctx);
 		_session.ctx = nullptr;
@@ -27,20 +27,20 @@ int CreateContext(const int nCtx, const int nBatch, const bool flashAttn, const 
 	ctxParams.n_threads = nThreads;
 	ctxParams.n_threads_batch = nThreadsBatch;
 	_session.ctx = llama_init_from_model(_llModel, ctxParams);
-	if(!_session.ctx) MessageBoxA(_hWnd, "Unable to create context", "LM Stud", MB_ICONERROR);
+	if(!_session.ctx){
+		return StudError::CantCreateContext;
+	}
 	_session.llMem = llama_get_memory(_session.ctx);
-	RetokenizeChat(true);
-	return _session.ctx ? 0 : -1;
+	return RetokenizeChat(true);
 }
-int CreateSampler(const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
+StudError CreateSampler(const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
 	if(_session.smpl){
 		llama_sampler_free(_session.smpl);
 		_session.smpl = nullptr;
 	}
 	_session.smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
 	if(!_session.smpl){
-		MessageBoxA(_hWnd, "Unable to create sampler", "LM Stud", MB_ICONERROR);
-		return -2;
+		return StudError::CantCreateSampler;
 	}
 	llama_sampler_chain_add(_session.smpl, llama_sampler_init_penalties(128, repeatPenalty, 0.0f, 0.0f));
 	// Optional: DRY (sequence) penalty immediately after penalties
@@ -50,17 +50,17 @@ int CreateSampler(const float minP, const float topP, const int topK, const floa
 	llama_sampler_chain_add(_session.smpl, llama_sampler_init_temp(temp));
 	llama_sampler_chain_add(_session.smpl, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
 	if(minP > 0.0f) llama_sampler_chain_add(_session.smpl, llama_sampler_init_min_p(minP, 1));
-	return 0;
+	return StudError::Success;
 }
-int CreateSession(const int nCtx, const int nBatch, const bool flashAttn, const int nThreads, const int nThreadsBatch, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
-	if(!_llModel) return -1;
+StudError CreateSession(const int nCtx, const int nBatch, const bool flashAttn, const int nThreads, const int nThreadsBatch, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
+	if(!_llModel) return StudError::ModelNotLoaded;
 	_session.syntax.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
 	auto result = CreateContext(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch);
-	if(result != 0) return result;
+	if(result != StudError::Success) return result;
 	_session.nBatch = nBatch;
 	result = CreateSampler(minP, topP, topK, temp, repeatPenalty);
-	if(result != 0) return result;
-	return 0;
+	if(result != StudError::Success) return result;
+	return StudError::Success;
 }
 void DestroySession(){
 	if(_session.smpl){
@@ -87,7 +87,7 @@ void FreeModel(){
 		_llModel = nullptr;
 	}
 }
-int LoadModel(const char* filename, const int nGPULayers, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy){
+StudError LoadModel(const char* filename, const int nGPULayers, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy){
 	auto params = llama_model_default_params();
 	params.n_gpu_layers = nGPULayers;
 	params.use_mlock = mLock;
@@ -95,8 +95,7 @@ int LoadModel(const char* filename, const int nGPULayers, const bool mMap, const
 	llama_numa_init(numaStrategy);
 	_llModel = llama_model_load_from_file(filename, params);
 	if(!_llModel){
-		MessageBoxA(_hWnd, (std::string("Unable to load model:\n\n") + filename).c_str(), "LM Stud", MB_ICONERROR);
-		return -1;
+		return StudError::CantLoadModel;
 	}
 	_vocab = llama_model_get_vocab(_llModel);
 	_chatTemplates = common_chat_templates_init(_llModel, "");
@@ -108,7 +107,7 @@ int LoadModel(const char* filename, const int nGPULayers, const bool mMap, const
 		const minja::chat_template tmpl(tmplSrc, bosStr, eosStr);
 		_hasTools = tmpl.original_caps().supports_tools;
 	}
-	return 0;
+	return StudError::Success;
 }
 bool HasTool(const char* name){
 	for(const auto& tool : _tools){ if(tool.name._Equal(name)) return true; }
@@ -121,8 +120,8 @@ int LlamaMemSize(){
 	const int nCtxPosMax = llama_memory_seq_pos_max(_session.llMem, 0);
 	return nCtxPosMax - nCtxPosMin + 1;
 }
-bool RetokenizeChat(bool rebuildMemory = false){
-	if(!_session.ctx || !_session.smpl || !_vocab) return false;
+StudError RetokenizeChat(bool rebuildMemory = false){
+	if(!_session.ctx || !_session.smpl || !_vocab) return StudError::ModelNotLoaded;
 	std::vector<common_chat_msg> msgs;
 	std::string prompt(_session.prompt);
 	if(_hasTools && !_session.toolsPrompt.empty()) prompt += _session.toolsPrompt;
@@ -140,7 +139,7 @@ bool RetokenizeChat(bool rebuildMemory = false){
 	common_chat_params chatData;
 	try{ chatData = common_chat_templates_apply(_chatTemplates.get(), in); } catch(std::exception& e){
 		MessageBoxA(_hWnd, ("Failed to apply template, chat state inconsistent!\n\n" + std::string(e.what())).c_str(), "LM Stud", MB_ICONERROR);
-		return false;
+		return StudError::CantApplyTemplate;
 	}
 	_session.syntax.format = chatData.format;
 	const int nPrompt = -llama_tokenize(_vocab, chatData.prompt.c_str(), chatData.prompt.size(), nullptr, 0, true, true);
@@ -163,9 +162,9 @@ bool RetokenizeChat(bool rebuildMemory = false){
 	const size_t newSize = promptTokens.size();
 	if(newSize > static_cast<size_t>(llama_n_ctx(_session.ctx))){
 		MessageBoxA(_hWnd, "Conversation too long for context", "LM Stud", MB_ICONEXCLAMATION);
-		return false;
+		return StudError::ConvTooLong;
 	}
-	if(prefix == oldSize && oldSize == newSize){ return true; }
+	if(prefix == oldSize && oldSize == newSize) return StudError::Success;
 	if(canShift && suffix > 0){
 		if(prefix < oldSize - suffix){ llama_memory_seq_rm(_session.llMem, 0, prefix, oldSize - suffix); }
 		if(oldSize != newSize){
@@ -180,38 +179,38 @@ bool RetokenizeChat(bool rebuildMemory = false){
 	for(size_t i = 0; i < prefix; ++i){ llama_sampler_accept(_session.smpl, promptTokens[i]); }
 	const size_t decodeEnd = newSize - suffix;
 	const int batchSize = min(_session.nBatch, static_cast<int>(decodeEnd - prefix));
-	if(batchSize <= 0) return true;
+	if(batchSize <= 0) return StudError::Success;
 	for(size_t i = prefix; i < decodeEnd; i += _session.nBatch){
 		const int nEval = std::min<int>(_session.nBatch, decodeEnd - i);
 		auto batch = llama_batch_get_one(&promptTokens[i], nEval);
-		if(llama_decode(_session.ctx, batch) != 0) return false;
+		if(llama_decode(_session.ctx, batch) != 0) return StudError::LlamaDecodeError;
 		for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl, promptTokens[i + j]); }
 	}
 	for(size_t i = decodeEnd; i < newSize; ++i){ llama_sampler_accept(_session.smpl, promptTokens[i]); }
 	_session.cachedTokens = std::move(promptTokens);
-	return true;
+	return StudError::Success;
 }
 void ResetChat(){
 	_session.chatMsgs.clear();
 	RetokenizeChat(true);
 }
-bool SetSystemPrompt(const char* prompt, const char* toolsPrompt){
+StudError SetSystemPrompt(const char* prompt, const char* toolsPrompt){
 	_session.prompt = std::string(prompt);
 	_session.toolsPrompt = std::string(toolsPrompt);
 	return RetokenizeChat();
 }
-bool SetMessageAt(const int index, const char* think, const char* message){
-	if(index < 0 || index >= static_cast<int>(_session.chatMsgs.size())) return false;
+StudError SetMessageAt(const int index, const char* think, const char* message){
+	if(index < 0 || index >= static_cast<int>(_session.chatMsgs.size())) return StudError::IndexOutOfRange;
 	_session.chatMsgs[index].reasoning_content = think;
 	_session.chatMsgs[index].content = std::string(message);
 	return RetokenizeChat();
 }
-bool RemoveMessageAt(const int index){
-	if(index < 0 || index >= static_cast<int>(_session.chatMsgs.size())) return false;
+StudError RemoveMessageAt(const int index){
+	if(index < 0 || index >= static_cast<int>(_session.chatMsgs.size())) return StudError::IndexOutOfRange;
 	_session.chatMsgs.erase(_session.chatMsgs.begin() + index);
 	return RetokenizeChat();
 }
-bool RemoveMessagesStartingAt(int index){
+StudError RemoveMessagesStartingAt(int index){
 	if(index < 0) index = 0;
 	if(index > static_cast<int>(_session.chatMsgs.size())) index = static_cast<int>(_session.chatMsgs.size());
 	_session.chatMsgs.erase(_session.chatMsgs.begin() + index, _session.chatMsgs.end());

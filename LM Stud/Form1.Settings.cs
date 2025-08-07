@@ -253,8 +253,8 @@ namespace LMStud{
 			if(reloadModel && _llModelLoaded && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
 				LoadModel(_modelIndex, false);
 			else{
-				if(reloadCtx) NativeMethods.CreateContext(_cntCtxMax, _batchSize, _flashAttn, _nThreads, _nThreadsBatch);
-				if(reloadSmpl) NativeMethods.CreateSampler(_minP, _topP, _topK, _temp, _repPen);
+				if(reloadCtx) CreateContext(_cntCtxMax, _batchSize, _flashAttn, _nThreads, _nThreadsBatch);
+				if(reloadSmpl) CreateSampler(_minP, _topP, _topK, _temp, _repPen);
 			}
 			if(setVAD) NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
 			if(setWWS) NativeMethods.SetWakeWordSimilarity(_wakeWordSimilarity);

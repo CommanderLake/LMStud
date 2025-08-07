@@ -18,6 +18,18 @@ enum class MessageRole{
 	Assistant,
 	Tool
 };
+enum class StudError{
+	Success = 0,
+	CantLoadModel = -1,
+	ModelNotLoaded = -2,
+	CantCreateContext = -3,
+	CantCreateSampler = -4,
+	CantApplyTemplate = -5,
+	ConvTooLong = -6,
+	LlamaDecodeError = -7,
+	IndexOutOfRange = -8,
+
+};
 struct ChatSession{
 	llama_context* ctx = nullptr;
 	llama_sampler* smpl = nullptr;
@@ -49,22 +61,22 @@ inline bool _hasTools;
 extern "C" {
 	EXPORT void SetHWnd(HWND hWnd);
 	EXPORT void BackendInit();
-	EXPORT int CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch);
-	EXPORT int CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty);
-	EXPORT int CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
+	EXPORT StudError CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch);
+	EXPORT StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty);
+	EXPORT StudError CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
 	EXPORT void DestroySession();
 	EXPORT void ResetChat();
 	EXPORT void FreeModel();
-	EXPORT int LoadModel(const char* filename, int nGPULayers, bool mMap, bool mLock, ggml_numa_strategy numaStrategy);
+	EXPORT StudError LoadModel(const char* filename, int nGPULayers, bool mMap, bool mLock, ggml_numa_strategy numaStrategy);
 	EXPORT bool HasTool(const char* name);
 	EXPORT void SetTokenCallback(TokenCallbackFn cb);
 	EXPORT void SetThreadCount(int n, int nBatch);
 	EXPORT int LlamaMemSize();
-	EXPORT bool RetokenizeChat(bool rebuildMemory);
-	EXPORT bool SetSystemPrompt(const char* prompt, const char* toolsPrompt);
-	EXPORT bool SetMessageAt(int index, const char* think, const char* message);
-	EXPORT bool RemoveMessageAt(int index);
-	EXPORT bool RemoveMessagesStartingAt(int index);
+	EXPORT StudError RetokenizeChat(bool rebuildMemory);
+	EXPORT StudError SetSystemPrompt(const char* prompt, const char* toolsPrompt);
+	EXPORT StudError SetMessageAt(int index, const char* think, const char* message);
+	EXPORT StudError RemoveMessageAt(int index);
+	EXPORT StudError RemoveMessagesStartingAt(int index);
 	EXPORT void GenerateWithTools(MessageRole role, const char* prompt, int nPredict, bool callback);
 	EXPORT void StopGeneration();
 	char* GetContextAsText();
