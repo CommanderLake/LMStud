@@ -90,22 +90,21 @@ namespace LMStud{
 					break;
 				}
 			});
-
 		}
 		private void InitializeListViews(){
 			_columnClickHandler = new LVColumnClickHandler();
 			var columnDataTypesHugSearch = new[]{
-				SortDataType.String,// Column 0: Name
-				SortDataType.String,// Column 1: Uploader
-				SortDataType.Integer,// Column 2: Likes
-				SortDataType.Integer,// Column 3: Downloads
-				SortDataType.Integer,// Column 4: Trending
-				SortDataType.DateTime,// Column 5: Created
-				SortDataType.DateTime// Column 6: Modified
+				SortDataType.String,// Name
+				SortDataType.String,// Uploader
+				SortDataType.Integer,// Likes
+				SortDataType.Integer,// Downloads
+				SortDataType.Integer,// Trending
+				SortDataType.DateTime,// Created
+				SortDataType.DateTime// Modified
 			};
 			var columnDataTypesHugFiles = new[]{
-				SortDataType.String,// Column 0: FileName
-				SortDataType.Double// Column 1: Size
+				SortDataType.String,// FileName
+				SortDataType.Double// Size
 			};
 			_columnClickHandler.RegisterListView(listViewModels);
 			_columnClickHandler.RegisterListView(listViewMeta);

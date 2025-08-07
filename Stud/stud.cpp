@@ -31,7 +31,9 @@ StudError CreateContext(const int nCtx, const int nBatch, const bool flashAttn, 
 		return StudError::CantCreateContext;
 	}
 	_session.llMem = llama_get_memory(_session.ctx);
-	return RetokenizeChat(true);
+	auto result = StudError::Success;
+	if(_session.smpl) result = RetokenizeChat(true);
+	return result;
 }
 StudError CreateSampler(const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
 	if(_session.smpl){
