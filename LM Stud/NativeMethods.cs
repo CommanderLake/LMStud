@@ -18,13 +18,33 @@ namespace LMStud{
 			Mirror = 4,
 			Count
 		}
+		public enum StudError{
+			Success = 0,
+			CantLoadModel = -1,
+			ModelNotLoaded = -2,
+			CantCreateContext = -3,
+			CantCreateSampler = -4,
+			CantApplyTemplate = -5,
+			ConvTooLong = -6,
+			LlamaDecodeError = -7,
+			IndexOutOfRange = -8,
+			CantTokenizePrompt = -9,
+			CantConvertToken = -10,
+			ChatParseError = -11,
+		};
 		private const string DLLName = "stud";
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetHWnd(IntPtr hWnd);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void BackendInit();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern int LoadModel(string filename, int nGPULayers, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy);
+		public static extern StudError CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern StudError CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern StudError LoadModel(string filename, int nGPULayers, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void FreeModel();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -36,17 +56,17 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int LlamaMemSize();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern bool RetokenizeChat(bool rebuildMemory);
+		public static extern StudError RetokenizeChat(bool rebuildMemory);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern bool SetSystemPrompt([MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, [MarshalAs(UnmanagedType.LPUTF8Str)] string toolsPrompt);
+		public static extern StudError SetSystemPrompt([MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, [MarshalAs(UnmanagedType.LPUTF8Str)] string toolsPrompt);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern bool SetMessageAt(int index, [MarshalAs(UnmanagedType.LPUTF8Str)] string think, [MarshalAs(UnmanagedType.LPUTF8Str)] string message);
+		public static extern StudError SetMessageAt(int index, [MarshalAs(UnmanagedType.LPUTF8Str)] string think, [MarshalAs(UnmanagedType.LPUTF8Str)] string message);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern bool RemoveMessageAt(int index);
+		public static extern StudError RemoveMessageAt(int index);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern bool RemoveMessagesStartingAt(int index);
+		public static extern StudError RemoveMessagesStartingAt(int index);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void GenerateWithTools(MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
+		public static extern StudError GenerateWithTools(MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetGoogle(string apiKey, string searchEngineID, int resultCount);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -57,12 +77,6 @@ namespace LMStud{
 		public static extern void RegisterTools(bool dateTime, bool googleSearch, bool webpageFetch, bool fileList, bool fileCreate, bool fileRead, bool fileWrite);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopGeneration();
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern int CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch);
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern int CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty);
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern int CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void ClearWebCache();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

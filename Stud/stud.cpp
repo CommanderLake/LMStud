@@ -138,7 +138,6 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	in.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
 	common_chat_params chatData;
 	try{ chatData = common_chat_templates_apply(_chatTemplates.get(), in); } catch(std::exception& e){
-		MessageBoxA(_hWnd, ("Failed to apply template, chat state inconsistent!\n\n" + std::string(e.what())).c_str(), "LM Stud", MB_ICONERROR);
 		return StudError::CantApplyTemplate;
 	}
 	_session.syntax.format = chatData.format;
@@ -161,7 +160,6 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	const size_t oldSize = _session.cachedTokens.size();
 	const size_t newSize = promptTokens.size();
 	if(newSize > static_cast<size_t>(llama_n_ctx(_session.ctx))){
-		MessageBoxA(_hWnd, "Conversation too long for context", "LM Stud", MB_ICONEXCLAMATION);
 		return StudError::ConvTooLong;
 	}
 	if(prefix == oldSize && oldSize == newSize) return StudError::Success;
@@ -350,18 +348,18 @@ static bool doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ft
 	}
 	return false;
 }
-common_chat_msg Generate(const std::vector<common_chat_msg> messages, const int nPredict, const bool callback){
+StudError Generate(const std::vector<common_chat_msg>& messages, const int nPredict, const bool callback, common_chat_msg& outMsg){
 	const auto prepStart = HrClock::now();
 	_stop.store(false);
 	const TokenCallbackFn cb = _tokenCb;
 	const size_t chatStart = _session.chatMsgs.size();
-	for(auto& message : messages){
+	for(const auto& message : messages){
 		const auto formatted = common_chat_format_single(_chatTemplates.get(), _session.chatMsgs, message, !message.role._Equal("assistant"), _session.useJinja && message.role._Equal("assistant"));
 		const int nPromptTokens = -llama_tokenize(_vocab, formatted.c_str(), formatted.size(), nullptr, 0, true, true);
 		std::vector<llama_token> promptTokens(nPromptTokens);
 		if(llama_tokenize(_vocab, formatted.c_str(), formatted.size(), promptTokens.data(), promptTokens.size(), true, true) < 0){
-			MessageBoxA(_hWnd, "Failed to tokenize the prompt", "LM Stud", MB_ICONERROR);
-			return common_chat_msg();
+			outMsg = common_chat_msg();
+			return StudError::CantTokenizePrompt;
 		}
 		_session.chatMsgs.push_back(message);
 		size_t p = 0;
@@ -371,17 +369,18 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const int 
 			const int nCtx = llama_n_ctx(_session.ctx);
 			const int nCtxUsed = LlamaMemSize();
 			if(nCtxUsed + batch.n_tokens > nCtx){
-				MessageBoxA(_hWnd, "Context size exceeded", "LM Stud", MB_ICONEXCLAMATION);
 				_session.chatMsgs.pop_back();
 				RetokenizeChat(true);
-				return common_chat_msg();
+				outMsg = common_chat_msg();
+				return StudError::ConvTooLong;
 			}
 			auto result = llama_decode(_session.ctx, batch);
 			if(result != 0){
-				MessageBoxA(_hWnd, (std::string("llama_decode failed with error number: ") + std::to_string(result)).c_str(), "LM Stud", MB_ICONERROR);
 				_session.chatMsgs.pop_back();
 				RetokenizeChat(true);
-				return common_chat_msg();
+				outMsg = common_chat_msg();
+				if(result == 1) return StudError::ConvTooLong;
+				return StudError::LlamaDecodeError;
 			}
 			for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl, promptTokens[p + j]); }
 			p += nEval;
@@ -392,7 +391,6 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const int 
 	std::vector<llama_token> newTokens;
 	std::string response;
 	common_chat_msg msg;
-	std::string pendingJson;
 	ToolCtx tool;
 	double ftTime = 0.0;
 	int i = 0;
@@ -402,13 +400,13 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const int 
 		char buf[256];
 		const int n = llama_token_to_piece(_vocab, newTokenId, buf, sizeof buf, 0, false);
 		if(n < 0){
-			MessageBoxA(_hWnd, "Failed to convert token to piece", "LM Stud", MB_ICONERROR);
 			_session.chatMsgs.resize(chatStart + messages.size());
 			RetokenizeChat(true);
-			return msg;
+			outMsg = common_chat_msg();
+			return StudError::CantConvertToken;
 		}
 		newTokens.push_back(newTokenId);
-		if(ftTime == 0.0) ftTime = std::chrono::duration<double, std::ratio<1, 1>>(HrClock::now() - prepStart).count();
+		if(ftTime == 0.0) ftTime = std::chrono::duration<double>(HrClock::now() - prepStart).count();
 		std::string tokenStr(buf, n);
 		response += tokenStr;
 		++i;
@@ -421,18 +419,18 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const int 
 		const int nCtx = llama_n_ctx(_session.ctx);
 		const int nCtxUsed = LlamaMemSize();
 		if(nCtxUsed + batch.n_tokens > nCtx){
-			MessageBoxA(_hWnd, "Context size exceeded", "LM Stud", MB_ICONEXCLAMATION);
 			_session.chatMsgs.resize(chatStart + messages.size());
 			RetokenizeChat(true);
-			return msg;
+			outMsg = common_chat_msg();
+			return StudError::ConvTooLong;
 		}
 		auto result = llama_decode(_session.ctx, batch);
 		if(result != 0){
-			if(result == 1) MessageBoxA(_hWnd, "Context full", "LM Stud", MB_ICONEXCLAMATION);
-			else MessageBoxA(_hWnd, (std::string("llama_decode failed with error number: ") + std::to_string(result)).c_str(), "LM Stud", MB_ICONERROR);
 			_session.chatMsgs.resize(chatStart + messages.size());
 			RetokenizeChat(true);
-			return msg;
+			outMsg = common_chat_msg();
+			if(result == 1) return StudError::ConvTooLong;
+			return StudError::LlamaDecodeError;
 		}
 		llama_sampler_accept(_session.smpl, newTokenId);
 		if(_hasTools) doTool(tokenStr, tool, callback, ftTime, prepStart, _session.llMem, response, newTokens, cb);
@@ -442,10 +440,11 @@ common_chat_msg Generate(const std::vector<common_chat_msg> messages, const int 
 	_session.chatMsgs.push_back(msg);
 	_session.cachedTokens.insert(_session.cachedTokens.end(), newTokens.begin(), newTokens.end());
 	if(cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(), ftTime, 0);
+	outMsg = std::move(msg);
 	//OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
-	return msg;
+	return StudError::Success;
 }
-void GenerateWithTools(const MessageRole role, const char* prompt, const int nPredict, const bool callback){
+StudError GenerateWithTools(const MessageRole role, const char* prompt, const int nPredict, const bool callback){
 	common_chat_msg msg;
 	switch(role){
 		case MessageRole::User: msg.role = "user";
@@ -458,15 +457,16 @@ void GenerateWithTools(const MessageRole role, const char* prompt, const int nPr
 	msg.content = std::string(prompt);
 	std::vector<common_chat_msg> msgs{msg};
 	if(!_hasTools){
-		Generate(msgs, nPredict, callback);
-		return;
+		return Generate(msgs, nPredict, callback, msg);
 	}
 	bool toolCalled = role == MessageRole::Tool;
 	const TokenCallbackFn cb = _tokenCb;
+	StudError err = StudError::Success;
 	do{
-		msg = Generate(msgs, nPredict, callback);
+		err = Generate(msgs, nPredict, callback, msg);
+		if(err != StudError::Success) return err;
 		toolCalled = false;
-		if(!_session.chatMsgs.size()) return;
+		if(!_session.chatMsgs.size()) return StudError::Success;
 		msgs.clear();
 		_session.syntax.parse_tool_calls = true;
 		try{
@@ -490,8 +490,11 @@ void GenerateWithTools(const MessageRole role, const char* prompt, const int nPr
 					toolCalled = true;
 				}
 			}
-		} catch(std::exception& e){ MessageBoxA(nullptr, e.what(), "LM Stud", MB_ICONEXCLAMATION); }
+		} catch(std::exception&){
+			return StudError::ChatParseError;
+		}
 	} while(toolCalled);
+	return StudError::Success;
 }
 void StopGeneration(){ _stop.store(true); }
 char* GetContextAsText(){

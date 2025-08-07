@@ -28,7 +28,9 @@ enum class StudError{
 	ConvTooLong = -6,
 	LlamaDecodeError = -7,
 	IndexOutOfRange = -8,
-
+	CantTokenizePrompt = -9,
+	CantConvertToken = -10,
+	ChatParseError = -11,
 };
 struct ChatSession{
 	llama_context* ctx = nullptr;
@@ -77,8 +79,7 @@ extern "C" {
 	EXPORT StudError SetMessageAt(int index, const char* think, const char* message);
 	EXPORT StudError RemoveMessageAt(int index);
 	EXPORT StudError RemoveMessagesStartingAt(int index);
-	EXPORT void GenerateWithTools(MessageRole role, const char* prompt, int nPredict, bool callback);
+	EXPORT StudError GenerateWithTools(MessageRole role, const char* prompt, int nPredict, bool callback);
 	EXPORT void StopGeneration();
 	char* GetContextAsText();
 }
-common_chat_msg Generate(std::vector<common_chat_msg> messages, int nPredict, bool callback);
