@@ -124,13 +124,16 @@
     <value>tabPage2</value>
   </data>
   <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="groupBox2.TabIndex" type="System.Int32, mscorlib">
+    <value>38</value>
+  </data>
   <data name="groupBox3.TabIndex" type="System.Int32, mscorlib">
     <value>39</value>
   </data>
-  <data name="labelTPS.Text" xml:space="preserve">
-    <value>0 Tok/s</value>
-  </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="numThreads.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
   <data name="label8.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
@@ -159,14 +162,14 @@
   <data name="splitContainer3.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
   </data>
-  <data name="label17.ToolTip" xml:space="preserve">
-    <value />
+  <data name="labelTPS.Size" type="System.Drawing.Size, System.Drawing">
+    <value>46, 17</value>
   </data>
   <data name="panelChat.Size" type="System.Drawing.Size, System.Drawing">
     <value>1004, 764</value>
   </data>
-  <data name="butCodeBlock.Text" xml:space="preserve">
-    <value>Insert code block</value>
+  <data name="butReset.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="listViewModels.Size" type="System.Drawing.Size, System.Drawing">
     <value>1001, 457</value>
@@ -174,8 +177,11 @@
   <data name="&gt;&gt;butApply.Parent" xml:space="preserve">
     <value>tabPage2</value>
   </data>
-  <data name="&gt;&gt;textWakeWord.Type" xml:space="preserve">
-    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="butReset.Location" type="System.Drawing.Point, System.Drawing">
+    <value>925, 146</value>
+  </data>
+  <data name="radioWhisperVAD.CheckAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
   </data>
   <data name="checkFileReadEnable.Location" type="System.Drawing.Point, System.Drawing">
     <value>114, 19</value>
@@ -183,20 +189,17 @@
   <data name="splitContainer2.TabIndex" type="System.Int32, mscorlib">
     <value>4</value>
   </data>
-  <data name="checkWhisperUseGPU.Text" xml:space="preserve">
-    <value>Use GPU</value>
-  </data>
-  <data name="label20.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
-    <value>MiddleRight</value>
+  <data name="listViewHugFiles.Size" type="System.Drawing.Size, System.Drawing">
+    <value>994, 439</value>
   </data>
   <data name="numThreadsBatch.Size" type="System.Drawing.Size, System.Drawing">
     <value>75, 20</value>
   </data>
+  <data name="&gt;&gt;label8.Parent" xml:space="preserve">
+    <value>groupAdvanced</value>
+  </data>
   <data name="columnHeader11.Width" type="System.Int32, mscorlib">
     <value>86</value>
-  </data>
-  <data name="label4.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 99</value>
   </data>
   <data name="label20.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 0, 0, 0</value>
@@ -222,8 +225,8 @@
   <data name="checkGoogleEnable.Text" xml:space="preserve">
     <value>Enable</value>
   </data>
-  <data name="&gt;&gt;label2.Name" xml:space="preserve">
-    <value>label2</value>
+  <data name="groupBox6.Location" type="System.Drawing.Point, System.Drawing">
+    <value>209, 377</value>
   </data>
   <data name="numGPULayers.Location" type="System.Drawing.Point, System.Drawing">
     <value>119, 45</value>
@@ -234,8 +237,14 @@
   <data name="label19.Size" type="System.Drawing.Size, System.Drawing">
     <value>53, 13</value>
   </data>
+  <data name="numThreads.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 20</value>
+  </data>
   <data name="&gt;&gt;checkLoadAuto.Parent" xml:space="preserve">
     <value>tabPage3</value>
+  </data>
+  <data name="tabPage1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>1008, 949</value>
   </data>
   <data name="label22.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -252,11 +261,11 @@
   <data name="label18.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
-  <data name="numBatchSize.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Right</value>
+  <data name="groupBox5.Location" type="System.Drawing.Point, System.Drawing">
+    <value>415, 156</value>
   </data>
-  <data name="tabPage1.ToolTip" xml:space="preserve">
-    <value />
+  <data name="numNGen.Location" type="System.Drawing.Point, System.Drawing">
+    <value>119, 97</value>
   </data>
   <data name="&gt;&gt;label24.Type" xml:space="preserve">
     <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -282,9 +291,6 @@
   <data name="&gt;&gt;comboVADModel.Type" xml:space="preserve">
     <value>System.Windows.Forms.ComboBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="listViewHugSearch.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>0, 0, 0, 0</value>
-  </data>
   <data name="&gt;&gt;groupAdvanced.ZOrder" xml:space="preserve">
     <value>9</value>
   </data>
@@ -297,11 +303,14 @@
   <data name="checkStream.ToolTip" xml:space="preserve">
     <value />
   </data>
+  <data name="numCtxSize.Location" type="System.Drawing.Point, System.Drawing">
+    <value>119, 19</value>
+  </data>
   <data name="&gt;&gt;label4.Parent" xml:space="preserve">
     <value>groupCommon</value>
   </data>
-  <data name="&gt;&gt;numCtxSize.Name" xml:space="preserve">
-    <value>numCtxSize</value>
+  <data name="checkFileCreateEnable.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
   </data>
   <data name="comboWhisperModel.Location" type="System.Drawing.Point, System.Drawing">
     <value>6, 32</value>
@@ -342,9 +351,6 @@
   <data name="&gt;&gt;butSearch.Parent" xml:space="preserve">
     <value>splitContainer3.Panel1</value>
   </data>
-  <data name="&gt;&gt;label9.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="&gt;&gt;tabControl1.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
@@ -357,11 +363,17 @@
   <data name="groupCPUParams.Text" xml:space="preserve">
     <value>CPU Params</value>
   </data>
+  <data name="checkVoiceInput.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="checkFileListEnable.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 19</value>
+  </data>
   <data name="label21.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
-  <data name="butReset.Location" type="System.Drawing.Point, System.Drawing">
-    <value>929, 150</value>
+  <data name="checkStream.Text" xml:space="preserve">
+    <value>Stream output</value>
   </data>
   <data name="label2.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -378,14 +390,11 @@
   <data name="&gt;&gt;numVadThreshold.Name" xml:space="preserve">
     <value>numVadThreshold</value>
   </data>
-  <data name="&gt;&gt;butVADDown.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="listViewMeta.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
-  <data name="&gt;&gt;panelChat.Name" xml:space="preserve">
-    <value>panelChat</value>
+  <data name="&gt;&gt;listViewModels.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ListView, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;comboNUMAStrat.ZOrder" xml:space="preserve">
     <value>1</value>
@@ -405,14 +414,20 @@
   <data name="label1.Size" type="System.Drawing.Size, System.Drawing">
     <value>79, 13</value>
   </data>
-  <data name="checkFileCreateEnable.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
-    <value>MiddleRight</value>
+  <data name="&gt;&gt;linkFileInstruction.ZOrder" xml:space="preserve">
+    <value>1</value>
   </data>
   <data name="groupCPUParamsBatch.ToolTip" xml:space="preserve">
     <value />
   </data>
   <data name="checkFileCreateEnable.Size" type="System.Drawing.Size, System.Drawing">
     <value>102, 17</value>
+  </data>
+  <data name="label16.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 0, 0, 0</value>
+  </data>
+  <data name="label24.Size" type="System.Drawing.Size, System.Drawing">
+    <value>115, 13</value>
   </data>
   <data name="&gt;&gt;groupBox1.ZOrder" xml:space="preserve">
     <value>6</value>
@@ -423,8 +438,14 @@
   <data name="splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
     <value>768</value>
   </data>
+  <data name="checkMMap.CheckAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
+  </data>
   <data name="label8.Text" xml:space="preserve">
     <value>Top K:</value>
+  </data>
+  <data name="groupCommon.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="&gt;&gt;checkFileWriteEnable.ZOrder" xml:space="preserve">
     <value>3</value>
@@ -456,9 +477,6 @@
   <data name="&gt;&gt;toolTip1.Name" xml:space="preserve">
     <value>toolTip1</value>
   </data>
-  <data name="&gt;&gt;butUnload.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="&gt;&gt;label19.Type" xml:space="preserve">
     <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
@@ -474,6 +492,9 @@
   <data name="label10.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
+  <data name="columnHeader1.Text" xml:space="preserve">
+    <value>Name</value>
+  </data>
   <data name="&gt;&gt;butCodeBlock.Type" xml:space="preserve">
     <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
@@ -486,14 +507,17 @@
   <data name="&gt;&gt;progressBar1.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
+  <data name="checkDateTimeEnable.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 14</value>
+  </data>
   <data name="&gt;&gt;butDownload.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
-  <data name="&gt;&gt;label18.Parent" xml:space="preserve">
-    <value>groupBox1</value>
+  <data name="textModelsPath.ToolTip" xml:space="preserve">
+    <value />
   </data>
-  <data name="&gt;&gt;textInput.ZOrder" xml:space="preserve">
-    <value>7</value>
+  <data name="progressBar1.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
   </data>
   <data name="checkMLock.TabIndex" type="System.Int32, mscorlib">
     <value>34</value>
@@ -516,8 +540,8 @@
   <data name="label10.Size" type="System.Drawing.Size, System.Drawing">
     <value>111, 13</value>
   </data>
-  <data name="$this.ToolTip" xml:space="preserve">
-    <value />
+  <data name="label20.Text" xml:space="preserve">
+    <value>Search engine ID:</value>
   </data>
   <data name="label3.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 133</value>
@@ -528,11 +552,20 @@
   <data name="label6.ToolTip" xml:space="preserve">
     <value />
   </data>
+  <data name="tabPage4.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
   <data name="&gt;&gt;butBrowse.ZOrder" xml:space="preserve">
     <value>12</value>
   </data>
   <data name="numCtxSize.Size" type="System.Drawing.Size, System.Drawing">
     <value>75, 20</value>
+  </data>
+  <data name="groupCommon.Size" type="System.Drawing.Size, System.Drawing">
+    <value>200, 124</value>
+  </data>
+  <data name="&gt;&gt;checkSpeak.ZOrder" xml:space="preserve">
+    <value>0</value>
   </data>
   <data name="&gt;&gt;listViewHugFiles.ZOrder" xml:space="preserve">
     <value>2</value>
@@ -540,14 +573,11 @@
   <data name="label8.Location" type="System.Drawing.Point, System.Drawing">
     <value>6, 74</value>
   </data>
-  <data name="butDownload.Location" type="System.Drawing.Point, System.Drawing">
-    <value>923, 443</value>
-  </data>
   <data name="&gt;&gt;label4.ZOrder" xml:space="preserve">
     <value>7</value>
   </data>
-  <data name="&gt;&gt;checkMMap.Name" xml:space="preserve">
-    <value>checkMMap</value>
+  <data name="&gt;&gt;groupBox3.Type" xml:space="preserve">
+    <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="tabPage3.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -567,8 +597,14 @@
   <data name="&gt;&gt;label14.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
+  <data name="&gt;&gt;numCtxSize.Type" xml:space="preserve">
+    <value>System.Windows.Forms.NumericUpDown, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="butSearch.Size" type="System.Drawing.Size, System.Drawing">
     <value>75, 23</value>
+  </data>
+  <data name="checkSpeak.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Bottom, Left</value>
   </data>
   <data name="&gt;&gt;butWhispDown.Type" xml:space="preserve">
     <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -579,14 +615,17 @@
   <data name="checkWhisperUseGPU.Location" type="System.Drawing.Point, System.Drawing">
     <value>6, 192</value>
   </data>
-  <data name="&gt;&gt;numTopK.Parent" xml:space="preserve">
-    <value>groupAdvanced</value>
+  <data name="&gt;&gt;numCtxSize.Name" xml:space="preserve">
+    <value>numCtxSize</value>
+  </data>
+  <data name="checkFileWriteEnable.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="label24.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
-  <data name="&gt;&gt;label21.ZOrder" xml:space="preserve">
-    <value>3</value>
+  <data name="&gt;&gt;checkSpeak.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="label1.Text" xml:space="preserve">
     <value>System prompt:</value>
@@ -615,11 +654,8 @@
   <data name="&gt;&gt;label15.ZOrder" xml:space="preserve">
     <value>11</value>
   </data>
-  <data name="numTopP.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="&gt;&gt;textModelsPath.Type" xml:space="preserve">
-    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="label17.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 0, 0, 0</value>
   </data>
   <data name="&gt;&gt;label14.Name" xml:space="preserve">
     <value>label14</value>
@@ -654,8 +690,8 @@
   <data name="label4.Text" xml:space="preserve">
     <value>Tokens to generate:</value>
   </data>
-  <data name="groupBox6.Location" type="System.Drawing.Point, System.Drawing">
-    <value>209, 377</value>
+  <data name="checkMarkdown.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
   </data>
   <data name="&gt;&gt;splitContainer3.Name" xml:space="preserve">
     <value>splitContainer3</value>
@@ -669,14 +705,14 @@
   <data name="&gt;&gt;splitContainer3.Panel2.Parent" xml:space="preserve">
     <value>splitContainer3</value>
   </data>
-  <data name="label12.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
-    <value>MiddleRight</value>
-  </data>
   <data name="&gt;&gt;linkFileInstruction.Parent" xml:space="preserve">
     <value>groupBox4</value>
   </data>
   <data name="&gt;&gt;label5.ZOrder" xml:space="preserve">
     <value>4</value>
+  </data>
+  <data name="&gt;&gt;groupBox6.Name" xml:space="preserve">
+    <value>groupBox6</value>
   </data>
   <data name="tabPage3.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -687,20 +723,20 @@
   <data name="&gt;&gt;tabPage2.Type" xml:space="preserve">
     <value>System.Windows.Forms.TabPage, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="radioWhisperVAD.TabIndex" type="System.Int32, mscorlib">
-    <value>18</value>
+  <data name="&gt;&gt;listViewMeta.Name" xml:space="preserve">
+    <value>listViewMeta</value>
+  </data>
+  <data name="butGen.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Bottom, Right</value>
   </data>
   <data name="&gt;&gt;linkFileInstruction.Type" xml:space="preserve">
     <value>System.Windows.Forms.LinkLabel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="checkMarkdown.ToolTip" xml:space="preserve">
-    <value />
+  <data name="&gt;&gt;textWakeWord.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="numBatchSize.TabIndex" type="System.Int32, mscorlib">
     <value>29</value>
-  </data>
-  <data name="checkGoogleEnable.CheckAlign" type="System.Drawing.ContentAlignment, System.Drawing">
-    <value>MiddleRight</value>
   </data>
   <data name="panelChat.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
@@ -711,8 +747,8 @@
   <data name="label13.Text" xml:space="preserve">
     <value>Search models:</value>
   </data>
-  <data name="butUnload.Size" type="System.Drawing.Size, System.Drawing">
-    <value>75, 23</value>
+  <data name="&gt;&gt;splitContainer2.Name" xml:space="preserve">
+    <value>splitContainer2</value>
   </data>
   <data name="&gt;&gt;tabPage2.Parent" xml:space="preserve">
     <value>tabControl1</value>
@@ -725,6 +761,12 @@
   </data>
   <data name="groupAdvanced.ToolTip" xml:space="preserve">
     <value />
+  </data>
+  <data name="label25.TabIndex" type="System.Int32, mscorlib">
+    <value>13</value>
+  </data>
+  <data name="&gt;&gt;groupBox2.Parent" xml:space="preserve">
+    <value>tabPage2</value>
   </data>
   <data name="&gt;&gt;checkFileReadEnable.Name" xml:space="preserve">
     <value>checkFileReadEnable</value>
@@ -747,9 +789,6 @@
   <data name="&gt;&gt;numBatchSize.Parent" xml:space="preserve">
     <value>groupAdvanced</value>
   </data>
-  <data name="label7.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>3, 0, 0, 0</value>
-  </data>
   <data name="label22.Text" xml:space="preserve">
     <value>Base Path:</value>
   </data>
@@ -768,11 +807,11 @@
   <data name="&gt;&gt;butLoad.Name" xml:space="preserve">
     <value>butLoad</value>
   </data>
-  <data name="comboNUMAStrat.Items5" xml:space="preserve">
-    <value>Count</value>
-  </data>
   <data name="&gt;&gt;label10.ZOrder" xml:space="preserve">
     <value>6</value>
+  </data>
+  <data name="numWhisperTemp.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
   </data>
   <data name="&gt;&gt;checkFileWriteEnable.Name" xml:space="preserve">
     <value>checkFileWriteEnable</value>
@@ -792,8 +831,8 @@
   <data name="label13.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
-  <data name="&gt;&gt;columnHeader2.Type" xml:space="preserve">
-    <value>System.Windows.Forms.ColumnHeader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="checkFileWriteEnable.CheckAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
   </data>
   <data name="&gt;&gt;radioWhisperVAD.Parent" xml:space="preserve">
     <value>groupBox6</value>
@@ -801,17 +840,14 @@
   <data name="&gt;&gt;tabPage1.Type" xml:space="preserve">
     <value>System.Windows.Forms.TabPage, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="textSystemPrompt.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 16</value>
-  </data>
   <data name="&gt;&gt;numMinP.Name" xml:space="preserve">
     <value>numMinP</value>
   </data>
   <data name="&gt;&gt;splitContainer2.Panel2.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
-  <data name="checkStream.Text" xml:space="preserve">
-    <value>Stream output</value>
+  <data name="&gt;&gt;label22.Name" xml:space="preserve">
+    <value>label22</value>
   </data>
   <data name="tabPage3.Size" type="System.Drawing.Size, System.Drawing">
     <value>1008, 949</value>
@@ -822,8 +858,11 @@
   <data name="checkMMap.Text" xml:space="preserve">
     <value>MMap</value>
   </data>
-  <data name="&gt;&gt;groupBox6.Parent" xml:space="preserve">
-    <value>tabPage2</value>
+  <data name="label26.Text" xml:space="preserve">
+    <value>Whisper VAD Model:</value>
+  </data>
+  <data name="&gt;&gt;checkDateTimeEnable.Parent" xml:space="preserve">
+    <value>groupBox5</value>
   </data>
   <data name="&gt;&gt;label10.Name" xml:space="preserve">
     <value>label10</value>
@@ -831,14 +870,14 @@
   <data name="&gt;&gt;label11.ZOrder" xml:space="preserve">
     <value>12</value>
   </data>
-  <data name="comboWhisperModel.TabIndex" type="System.Int32, mscorlib">
-    <value>1</value>
-  </data>
   <data name="&gt;&gt;splitContainer1.Panel2.Type" xml:space="preserve">
     <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="checkVoiceInput.Location" type="System.Drawing.Point, System.Drawing">
-    <value>286, 154</value>
+    <value>286, 150</value>
+  </data>
+  <data name="groupBox3.Size" type="System.Drawing.Size, System.Drawing">
+    <value>200, 37</value>
   </data>
   <data name="numNGen.TabIndex" type="System.Int32, mscorlib">
     <value>23</value>
@@ -846,8 +885,11 @@
   <data name="textGoogleSearchID.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="numRepPen.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Right</value>
+  <data name="label8.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="splitContainer1.Panel1.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="&gt;&gt;textSystemPrompt.Type" xml:space="preserve">
     <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -855,20 +897,17 @@
   <data name="numWakeWordSimilarity.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="textModelsPath.ToolTip" xml:space="preserve">
-    <value />
+  <data name="numTemp.TabIndex" type="System.Int32, mscorlib">
+    <value>16</value>
   </data>
   <data name="label10.Location" type="System.Drawing.Point, System.Drawing">
     <value>6, 47</value>
   </data>
-  <data name="checkLoadAuto.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Bottom, Left</value>
+  <data name="label3.TabIndex" type="System.Int32, mscorlib">
+    <value>21</value>
   </data>
   <data name="checkFileCreateEnable.CheckAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
-  </data>
-  <data name="tabPage4.Text" xml:space="preserve">
-    <value>Huggingface</value>
   </data>
   <data name="&gt;&gt;label23.Type" xml:space="preserve">
     <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -876,8 +915,8 @@
   <data name="&gt;&gt;label11.Name" xml:space="preserve">
     <value>label11</value>
   </data>
-  <data name="&gt;&gt;listViewHugFiles.Type" xml:space="preserve">
-    <value>System.Windows.Forms.ListView, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="&gt;&gt;textGoogleApiKey.Parent" xml:space="preserve">
+    <value>groupBox2</value>
   </data>
   <data name="label11.TabIndex" type="System.Int32, mscorlib">
     <value>30</value>
@@ -903,9 +942,6 @@
   <data name="butReset.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
   </data>
-  <data name="checkMLock.Size" type="System.Drawing.Size, System.Drawing">
-    <value>188, 17</value>
-  </data>
   <data name="label19.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
@@ -930,11 +966,11 @@
   <data name="label15.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
-  <data name="checkFileReadEnable.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Right</value>
+  <data name="checkFileCreateEnable.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
   </data>
-  <data name="&gt;&gt;tabControl1.Parent" xml:space="preserve">
-    <value>$this</value>
+  <data name="&gt;&gt;butDownload.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;label17.ZOrder" xml:space="preserve">
     <value>4</value>
@@ -948,9 +984,6 @@
   <data name="groupCPUParamsBatch.Location" type="System.Drawing.Point, System.Drawing">
     <value>3, 208</value>
   </data>
-  <data name="&gt;&gt;splitContainer1.Panel2.ZOrder" xml:space="preserve">
-    <value>1</value>
-  </data>
   <data name="&gt;&gt;butWhispDown.Parent" xml:space="preserve">
     <value>groupBox1</value>
   </data>
@@ -959,6 +992,9 @@
   </data>
   <data name="&gt;&gt;groupAdvanced.Name" xml:space="preserve">
     <value>groupAdvanced</value>
+  </data>
+  <data name="&gt;&gt;tabControl1.Parent" xml:space="preserve">
+    <value>$this</value>
   </data>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
     <value>96, 96</value>
@@ -972,11 +1008,11 @@
   <data name="&gt;&gt;label3.ZOrder" xml:space="preserve">
     <value>11</value>
   </data>
+  <data name="groupBox4.TabIndex" type="System.Int32, mscorlib">
+    <value>40</value>
+  </data>
   <data name="butLoad.Text" xml:space="preserve">
     <value>Load</value>
-  </data>
-  <data name="&gt;&gt;columnHeader6.Name" xml:space="preserve">
-    <value>columnHeader6</value>
   </data>
   <data name="label20.TabIndex" type="System.Int32, mscorlib">
     <value>3</value>
@@ -986,9 +1022,6 @@
   </data>
   <data name="&gt;&gt;textGoogleApiKey.Name" xml:space="preserve">
     <value>textGoogleApiKey</value>
-  </data>
-  <data name="checkDateTimeEnable.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="textFileBasePath.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -1008,8 +1041,8 @@
   <data name="&gt;&gt;splitContainer2.Panel1.Parent" xml:space="preserve">
     <value>splitContainer2</value>
   </data>
-  <data name="&gt;&gt;numTopK.ZOrder" xml:space="preserve">
-    <value>4</value>
+  <data name="&gt;&gt;butSearch.Name" xml:space="preserve">
+    <value>butSearch</value>
   </data>
   <data name="label24.TabIndex" type="System.Int32, mscorlib">
     <value>11</value>
@@ -1041,8 +1074,11 @@
   <data name="groupBox5.TabIndex" type="System.Int32, mscorlib">
     <value>41</value>
   </data>
+  <data name="&gt;&gt;checkStream.Parent" xml:space="preserve">
+    <value>splitContainer1.Panel2</value>
+  </data>
   <data name="butGen.Location" type="System.Drawing.Point, System.Drawing">
-    <value>854, 150</value>
+    <value>850, 146</value>
   </data>
   <data name="numVadThreshold.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -1050,11 +1086,11 @@
   <data name="&gt;&gt;columnHeader11.Name" xml:space="preserve">
     <value>columnHeader11</value>
   </data>
-  <data name="numNGen.Size" type="System.Drawing.Size, System.Drawing">
-    <value>75, 20</value>
-  </data>
   <data name="label14.TabIndex" type="System.Int32, mscorlib">
     <value>29</value>
+  </data>
+  <data name="&gt;&gt;columnHeader6.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ColumnHeader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="butBrowse.Size" type="System.Drawing.Size, System.Drawing">
     <value>75, 23</value>
@@ -1074,14 +1110,17 @@
   <data name="linkFileInstruction.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
+  <data name="numTopP.TabIndex" type="System.Int32, mscorlib">
+    <value>20</value>
+  </data>
   <data name="label8.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
   <data name="listViewHugSearch.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Bottom, Left, Right</value>
   </data>
-  <data name="&gt;&gt;checkMLock.Name" xml:space="preserve">
-    <value>checkMLock</value>
+  <data name="&gt;&gt;textInput.Name" xml:space="preserve">
+    <value>textInput</value>
   </data>
   <data name="&gt;&gt;splitContainer1.ZOrder" xml:space="preserve">
     <value>0</value>
@@ -1095,11 +1134,8 @@
   <data name="numFreqThreshold.Location" type="System.Drawing.Point, System.Drawing">
     <value>124, 140</value>
   </data>
-  <data name="groupBox4.Size" type="System.Drawing.Size, System.Drawing">
-    <value>200, 104</value>
-  </data>
-  <data name="numTopK.Location" type="System.Drawing.Point, System.Drawing">
-    <value>119, 72</value>
+  <data name="&gt;&gt;textModelsPath.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="label7.Text" xml:space="preserve">
     <value>Temperature:</value>
@@ -1116,23 +1152,20 @@
   <data name="columnHeader10.Width" type="System.Int32, mscorlib">
     <value>100</value>
   </data>
-  <data name="label23.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
-    <value>MiddleRight</value>
-  </data>
-  <data name="numThreads.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Right</value>
+  <data name="&gt;&gt;numFreqThreshold.Parent" xml:space="preserve">
+    <value>groupBox1</value>
   </data>
   <data name="&gt;&gt;statusStrip1.Name" xml:space="preserve">
     <value>statusStrip1</value>
+  </data>
+  <data name="label22.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 0, 0, 0</value>
   </data>
   <data name="&gt;&gt;checkVoiceInput.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
   <data name="&gt;&gt;tabPage1.ZOrder" xml:space="preserve">
     <value>0</value>
-  </data>
-  <data name="tabPage2.Location" type="System.Drawing.Point, System.Drawing">
-    <value>4, 22</value>
   </data>
   <data name="checkLoadAuto.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -1146,14 +1179,11 @@
   <data name="&gt;&gt;numTemp.Name" xml:space="preserve">
     <value>numTemp</value>
   </data>
-  <data name="groupBox2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>200, 117</value>
-  </data>
   <data name="&gt;&gt;checkGoogleEnable.ZOrder" xml:space="preserve">
     <value>4</value>
   </data>
-  <data name="numWhisperTemp.Size" type="System.Drawing.Size, System.Drawing">
-    <value>70, 20</value>
+  <data name="label23.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
   </data>
   <data name="butReset.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Right</value>
@@ -1191,14 +1221,8 @@
   <data name="&gt;&gt;numCtxSize.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
-  <data name="numTemp.TabIndex" type="System.Int32, mscorlib">
-    <value>16</value>
-  </data>
-  <data name="label17.Size" type="System.Drawing.Size, System.Drawing">
-    <value>115, 13</value>
-  </data>
-  <data name="&gt;&gt;numNGen.Name" xml:space="preserve">
-    <value>numNGen</value>
+  <data name="label15.Text" xml:space="preserve">
+    <value>Whisper.cpp Model:</value>
   </data>
   <data name="label9.Size" type="System.Drawing.Size, System.Drawing">
     <value>111, 13</value>
@@ -1209,20 +1233,20 @@
   <data name="&gt;&gt;checkWebpageFetchEnable.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
+  <data name="columnHeader8.Width" type="System.Int32, mscorlib">
+    <value>878</value>
+  </data>
   <data name="&gt;&gt;checkWhisperUseGPU.Type" xml:space="preserve">
     <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="listViewHugSearch.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 23</value>
   </data>
   <data name="&gt;&gt;label13.ZOrder" xml:space="preserve">
     <value>2</value>
   </data>
-  <data name="checkWebpageFetchEnable.Size" type="System.Drawing.Size, System.Drawing">
-    <value>188, 17</value>
-  </data>
   <data name="tabPage1.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
+  </data>
+  <data name="checkSpeak.Text" xml:space="preserve">
+    <value>Speak responses</value>
   </data>
   <data name="&gt;&gt;splitContainer3.ZOrder" xml:space="preserve">
     <value>0</value>
@@ -1230,8 +1254,8 @@
   <data name="numTemp.Location" type="System.Drawing.Point, System.Drawing">
     <value>119, 71</value>
   </data>
-  <data name="label4.ToolTip" xml:space="preserve">
-    <value />
+  <data name="textInput.Multiline" type="System.Boolean, mscorlib">
+    <value>True</value>
   </data>
   <data name="&gt;&gt;butReset.Type" xml:space="preserve">
     <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -1241,9 +1265,6 @@
   </data>
   <data name="&gt;&gt;label11.Parent" xml:space="preserve">
     <value>groupAdvanced</value>
-  </data>
-  <data name="numGoogleResults.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="&gt;&gt;textSearchTerm.Name" xml:space="preserve">
     <value>textSearchTerm</value>
@@ -1263,14 +1284,14 @@
   <data name="checkGoogleEnable.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
-  <data name="tabPage4.TabIndex" type="System.Int32, mscorlib">
-    <value>3</value>
-  </data>
-  <data name="label15.TabIndex" type="System.Int32, mscorlib">
+  <data name="checkWebpageFetchEnable.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
   </data>
   <data name="&gt;&gt;folderBrowserDialog1.Type" xml:space="preserve">
     <value>System.Windows.Forms.FolderBrowserDialog, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="label24.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="&gt;&gt;numVadThreshold.Parent" xml:space="preserve">
     <value>groupBox6</value>
@@ -1286,6 +1307,9 @@
   </data>
   <data name="radioWhisperVAD.ToolTip" xml:space="preserve">
     <value />
+  </data>
+  <data name="&gt;&gt;groupBox6.Parent" xml:space="preserve">
+    <value>tabPage2</value>
   </data>
   <data name="&gt;&gt;splitContainer2.ZOrder" xml:space="preserve">
     <value>0</value>
@@ -1311,14 +1335,17 @@
   <data name="&gt;&gt;label16.Parent" xml:space="preserve">
     <value>groupBox1</value>
   </data>
+  <data name="checkFileCreateEnable.Text" xml:space="preserve">
+    <value>Create File</value>
+  </data>
   <data name="numTopK.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
   <data name="checkStream.TabIndex" type="System.Int32, mscorlib">
     <value>12</value>
   </data>
-  <data name="listViewModels.ToolTip" xml:space="preserve">
-    <value />
+  <data name="panelChat.FlowDirection" type="System.Windows.Forms.FlowDirection, System.Windows.Forms">
+    <value>TopDown</value>
   </data>
   <data name="progressBar1.ToolTip" xml:space="preserve">
     <value />
@@ -1329,26 +1356,20 @@
   <data name="&gt;&gt;groupBox3.ZOrder" xml:space="preserve">
     <value>4</value>
   </data>
-  <data name="checkMarkdown.Location" type="System.Drawing.Point, System.Drawing">
-    <value>204, 154</value>
-  </data>
   <data name="&gt;&gt;label18.Name" xml:space="preserve">
     <value>label18</value>
   </data>
   <data name="&gt;&gt;checkWebpageFetchEnable.Type" xml:space="preserve">
     <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="checkFileWriteEnable.Size" type="System.Drawing.Size, System.Drawing">
-    <value>80, 17</value>
-  </data>
-  <data name="textGoogleApiKey.ToolTip" xml:space="preserve">
-    <value />
+  <data name="&gt;&gt;tabPage2.Name" xml:space="preserve">
+    <value>tabPage2</value>
   </data>
   <data name="&gt;&gt;numMinP.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
-  <data name="&gt;&gt;groupCommon.Name" xml:space="preserve">
-    <value>groupCommon</value>
+  <data name="&gt;&gt;checkFileReadEnable.ZOrder" xml:space="preserve">
+    <value>5</value>
   </data>
   <data name="&gt;&gt;groupBox5.ZOrder" xml:space="preserve">
     <value>2</value>
@@ -1365,9 +1386,6 @@
   <data name="&gt;&gt;label17.Parent" xml:space="preserve">
     <value>groupBox6</value>
   </data>
-  <data name="&gt;&gt;statusStrip1.ZOrder" xml:space="preserve">
-    <value>0</value>
-  </data>
   <data name="&gt;&gt;label19.ZOrder" xml:space="preserve">
     <value>6</value>
   </data>
@@ -1382,6 +1400,9 @@
   </data>
   <data name="&gt;&gt;comboVADModel.Name" xml:space="preserve">
     <value>comboVADModel</value>
+  </data>
+  <data name="label5.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
   </data>
   <data name="&gt;&gt;label19.Name" xml:space="preserve">
     <value>label19</value>
@@ -1407,9 +1428,6 @@
   <data name="butUnload.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
   </data>
-  <data name="textFileBasePath.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="label15.ToolTip" xml:space="preserve">
     <value />
   </data>
@@ -1421,9 +1439,6 @@
   </data>
   <data name="$this.StartPosition" type="System.Windows.Forms.FormStartPosition, System.Windows.Forms">
     <value>CenterScreen</value>
-  </data>
-  <data name="&gt;&gt;groupCommon.Parent" xml:space="preserve">
-    <value>tabPage2</value>
   </data>
   <data name="&gt;&gt;checkFileListEnable.Name" xml:space="preserve">
     <value>checkFileListEnable</value>
@@ -1440,6 +1455,9 @@
   <data name="&gt;&gt;label21.Parent" xml:space="preserve">
     <value>groupBox2</value>
   </data>
+  <data name="&gt;&gt;butReset.Name" xml:space="preserve">
+    <value>butReset</value>
+  </data>
   <data name="textSystemPrompt.Size" type="System.Drawing.Size, System.Drawing">
     <value>1008, 109</value>
   </data>
@@ -1452,8 +1470,11 @@
   <data name="linkFileInstruction.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top</value>
   </data>
-  <data name="&gt;&gt;numTopK.Name" xml:space="preserve">
-    <value>numTopK</value>
+  <data name="&gt;&gt;numFreqThreshold.Name" xml:space="preserve">
+    <value>numFreqThreshold</value>
+  </data>
+  <data name="columnHeader7.Width" type="System.Int32, mscorlib">
+    <value>85</value>
   </data>
   <data name="label1.ToolTip" xml:space="preserve">
     <value />
@@ -1473,11 +1494,11 @@
   <data name="&gt;&gt;butApply.Name" xml:space="preserve">
     <value>butApply</value>
   </data>
+  <data name="label16.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
   <data name="&gt;&gt;numWhisperTemp.Name" xml:space="preserve">
     <value>numWhisperTemp</value>
-  </data>
-  <data name="checkFileListEnable.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="label26.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -1485,8 +1506,8 @@
   <data name="butWhispDown.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
-  <data name="&gt;&gt;butBrowse.Name" xml:space="preserve">
-    <value>butBrowse</value>
+  <data name="&gt;&gt;numFreqThreshold.ZOrder" xml:space="preserve">
+    <value>2</value>
   </data>
   <data name="&gt;&gt;label26.Parent" xml:space="preserve">
     <value>groupBox6</value>
@@ -1506,6 +1527,9 @@
   <data name="&gt;&gt;label8.ZOrder" xml:space="preserve">
     <value>13</value>
   </data>
+  <data name="&gt;&gt;columnHeader13.Name" xml:space="preserve">
+    <value>columnHeader13</value>
+  </data>
   <data name="&gt;&gt;groupCPUParams.Type" xml:space="preserve">
     <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
@@ -1520,9 +1544,6 @@
   </data>
   <data name="&gt;&gt;progressBar1.Parent" xml:space="preserve">
     <value>splitContainer3.Panel2</value>
-  </data>
-  <data name="numMinP.Location" type="System.Drawing.Point, System.Drawing">
-    <value>119, 124</value>
   </data>
   <data name="&gt;&gt;columnHeader12.Type" xml:space="preserve">
     <value>System.Windows.Forms.ColumnHeader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -1545,17 +1566,14 @@
   <data name="splitContainer3.Panel1.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="butBrowse.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Right</value>
+  <data name="&gt;&gt;textGoogleSearchID.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="label12.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
   <data name="textWakeWord.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
-  </data>
-  <data name="&gt;&gt;label11.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;label12.Parent" xml:space="preserve">
     <value>groupAdvanced</value>
@@ -1566,9 +1584,6 @@
   <data name="label26.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 0, 0, 0</value>
   </data>
-  <data name="label26.Text" xml:space="preserve">
-    <value>Whisper VAD Model:</value>
-  </data>
   <data name="numTemp.Size" type="System.Drawing.Size, System.Drawing">
     <value>75, 20</value>
   </data>
@@ -1577,6 +1592,9 @@
   </data>
   <data name="&gt;&gt;label1.Parent" xml:space="preserve">
     <value>tabPage2</value>
+  </data>
+  <data name="splitContainer3.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
   </data>
   <data name="&gt;&gt;checkStream.Name" xml:space="preserve">
     <value>checkStream</value>
@@ -1602,8 +1620,11 @@
   <data name="&gt;&gt;textSearchTerm.Parent" xml:space="preserve">
     <value>splitContainer3.Panel1</value>
   </data>
-  <data name="groupBox1.Text" xml:space="preserve">
-    <value>Voice Input</value>
+  <data name="textInput.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>0, 0, 0, 0</value>
+  </data>
+  <data name="checkVoiceInput.Text" xml:space="preserve">
+    <value>Voice input</value>
   </data>
   <data name="comboWhisperModel.Size" type="System.Drawing.Size, System.Drawing">
     <value>188, 21</value>
@@ -1611,8 +1632,8 @@
   <data name="&gt;&gt;label13.Parent" xml:space="preserve">
     <value>splitContainer3.Panel1</value>
   </data>
-  <data name="numTopP.TabIndex" type="System.Int32, mscorlib">
-    <value>20</value>
+  <data name="&gt;&gt;listViewHugSearch.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ListView, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="label19.Location" type="System.Drawing.Point, System.Drawing">
     <value>6, 41</value>
@@ -1626,17 +1647,14 @@
   <data name="checkMLock.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="numWhisperTemp.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Right</value>
+  <data name="&gt;&gt;numTopK.Name" xml:space="preserve">
+    <value>numTopK</value>
   </data>
   <data name="labelTokens.Text" xml:space="preserve">
     <value>0 Tokens</value>
   </data>
   <data name="&gt;&gt;checkFileCreateEnable.Name" xml:space="preserve">
     <value>checkFileCreateEnable</value>
-  </data>
-  <data name="butSearch.TabIndex" type="System.Int32, mscorlib">
-    <value>3</value>
   </data>
   <data name="label16.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -1646,9 +1664,6 @@
   </data>
   <data name="checkStream.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Left</value>
-  </data>
-  <data name="textInput.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Bottom, Left, Right</value>
   </data>
   <data name="comboVADModel.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -1665,8 +1680,8 @@
   <data name="&gt;&gt;butLoad.Type" xml:space="preserve">
     <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;textSystemPrompt.ZOrder" xml:space="preserve">
-    <value>15</value>
+  <data name="butVADDown.TabIndex" type="System.Int32, mscorlib">
+    <value>19</value>
   </data>
   <data name="numTemp.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -1683,8 +1698,8 @@
   <data name="label6.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
-  <data name="&gt;&gt;checkSpeak.Type" xml:space="preserve">
-    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="&gt;&gt;label18.Parent" xml:space="preserve">
+    <value>groupBox1</value>
   </data>
   <data name="checkLoadAuto.Text" xml:space="preserve">
     <value>Load last model at startup</value>
@@ -1713,9 +1728,6 @@
   <data name="&gt;&gt;splitContainer2.Panel1.Name" xml:space="preserve">
     <value>splitContainer2.Panel1</value>
   </data>
-  <data name="splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
-    <value>Horizontal</value>
-  </data>
   <data name="label22.Size" type="System.Drawing.Size, System.Drawing">
     <value>65, 13</value>
   </data>
@@ -1725,9 +1737,6 @@
   <data name="label18.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 0, 0, 0</value>
   </data>
-  <data name="label20.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="butWhispDown.ToolTip" xml:space="preserve">
     <value />
   </data>
@@ -1736,6 +1745,9 @@
   </data>
   <data name="&gt;&gt;groupBox4.Name" xml:space="preserve">
     <value>groupBox4</value>
+  </data>
+  <data name="&gt;&gt;butCodeBlock.ZOrder" xml:space="preserve">
+    <value>4</value>
   </data>
   <data name="label16.Location" type="System.Drawing.Point, System.Drawing">
     <value>6, 91</value>
@@ -1752,11 +1764,8 @@
   <data name="label19.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
   </data>
-  <data name="butCodeBlock.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="groupBox2.ToolTip" xml:space="preserve">
-    <value />
+  <data name="label25.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 0, 0, 0</value>
   </data>
   <data name="label19.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 0, 0, 0</value>
@@ -1776,17 +1785,23 @@
   <data name="butGen.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="radioWhisperVAD.CheckAlign" type="System.Drawing.ContentAlignment, System.Drawing">
-    <value>MiddleRight</value>
+  <data name="checkVoiceInput.ToolTip" xml:space="preserve">
+    <value />
   </data>
-  <data name="splitContainer1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
-    <value>Fill</value>
+  <data name="butWhispDown.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 59</value>
   </data>
-  <data name="tabPage3.Location" type="System.Drawing.Point, System.Drawing">
-    <value>4, 22</value>
+  <data name="checkVoiceInput.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Bottom, Left</value>
   </data>
-  <data name="label3.TabIndex" type="System.Int32, mscorlib">
-    <value>21</value>
+  <data name="splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
+    <value>461</value>
+  </data>
+  <data name="numWhisperTemp.TabIndex" type="System.Int32, mscorlib">
+    <value>10</value>
+  </data>
+  <data name="label23.Size" type="System.Drawing.Size, System.Drawing">
+    <value>111, 13</value>
   </data>
   <data name="listViewMeta.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
@@ -1821,9 +1836,6 @@
   <data name="label6.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
-  <data name="&gt;&gt;numCtxSize.Parent" xml:space="preserve">
-    <value>groupCommon</value>
-  </data>
   <data name="butSearch.Text" xml:space="preserve">
     <value>Go</value>
   </data>
@@ -1836,11 +1848,11 @@
   <data name="splitContainer2.Size" type="System.Drawing.Size, System.Drawing">
     <value>1005, 923</value>
   </data>
-  <data name="splitContainer3.Panel2.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="label25.Location" type="System.Drawing.Point, System.Drawing">
     <value>6, 116</value>
+  </data>
+  <data name="label20.Size" type="System.Drawing.Size, System.Drawing">
+    <value>98, 13</value>
   </data>
   <data name="label4.Size" type="System.Drawing.Size, System.Drawing">
     <value>111, 13</value>
@@ -1854,8 +1866,8 @@
   <data name="&gt;&gt;butWhispDown.Name" xml:space="preserve">
     <value>butWhispDown</value>
   </data>
-  <data name="textSystemPrompt.TabIndex" type="System.Int32, mscorlib">
-    <value>0</value>
+  <data name="progressBar1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>0, 0, 0, 0</value>
   </data>
   <data name="&gt;&gt;checkMMap.Type" xml:space="preserve">
     <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -1863,8 +1875,8 @@
   <data name="groupBox5.Text" xml:space="preserve">
     <value>Date Time Tool</value>
   </data>
-  <data name="label8.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>3, 0, 0, 0</value>
+  <data name="&gt;&gt;checkFlashAttn.ZOrder" xml:space="preserve">
+    <value>7</value>
   </data>
   <data name="butGen.Enabled" type="System.Boolean, mscorlib">
     <value>False</value>
@@ -1872,23 +1884,26 @@
   <data name="&gt;&gt;folderBrowserDialog1.Name" xml:space="preserve">
     <value>folderBrowserDialog1</value>
   </data>
-  <data name="butLoad.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Bottom, Right</value>
+  <data name="tabPage1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 22</value>
   </data>
   <data name="label4.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
-  <data name="checkFileWriteEnable.ToolTip" xml:space="preserve">
-    <value />
+  <data name="&gt;&gt;listViewHugSearch.ZOrder" xml:space="preserve">
+    <value>3</value>
   </data>
   <data name="label18.Size" type="System.Drawing.Size, System.Drawing">
     <value>115, 13</value>
   </data>
-  <data name="checkFileWriteEnable.CheckAlign" type="System.Drawing.ContentAlignment, System.Drawing">
-    <value>MiddleRight</value>
+  <data name="checkWebpageFetchEnable.Size" type="System.Drawing.Size, System.Drawing">
+    <value>188, 17</value>
   </data>
-  <data name="checkFileReadEnable.Size" type="System.Drawing.Size, System.Drawing">
-    <value>80, 17</value>
+  <data name="label21.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="butVADDown.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 105</value>
   </data>
   <data name="&gt;&gt;numRepPen.Parent" xml:space="preserve">
     <value>groupAdvanced</value>
@@ -1898,6 +1913,9 @@
   </data>
   <data name="&gt;&gt;checkFileReadEnable.Parent" xml:space="preserve">
     <value>groupBox4</value>
+  </data>
+  <data name="groupBox2.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="numThreadsBatch.ToolTip" xml:space="preserve">
     <value />
@@ -1935,11 +1953,11 @@
   <data name="comboNUMAStrat.Items2" xml:space="preserve">
     <value>Isolate</value>
   </data>
-  <data name="&gt;&gt;linkFileInstruction.ZOrder" xml:space="preserve">
-    <value>1</value>
+  <data name="&gt;&gt;checkDateTimeEnable.ZOrder" xml:space="preserve">
+    <value>0</value>
   </data>
-  <data name="groupCommon.Location" type="System.Drawing.Point, System.Drawing">
-    <value>3, 260</value>
+  <data name="&gt;&gt;numCtxSize.Parent" xml:space="preserve">
+    <value>groupCommon</value>
   </data>
   <data name="&gt;&gt;groupBox1.Parent" xml:space="preserve">
     <value>tabPage2</value>
@@ -1956,11 +1974,8 @@
   <data name="label26.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
-  <data name="label24.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>3, 0, 0, 0</value>
-  </data>
-  <data name="label23.Size" type="System.Drawing.Size, System.Drawing">
-    <value>111, 13</value>
+  <data name="&gt;&gt;splitContainer1.Parent" xml:space="preserve">
+    <value>tabPage1</value>
   </data>
   <data name="&gt;&gt;label6.Type" xml:space="preserve">
     <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -1968,14 +1983,14 @@
   <data name="&gt;&gt;comboNUMAStrat.Name" xml:space="preserve">
     <value>comboNUMAStrat</value>
   </data>
-  <data name="checkVoiceInput.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Bottom, Left</value>
-  </data>
   <data name="&gt;&gt;numTemp.Parent" xml:space="preserve">
     <value>groupCommon</value>
   </data>
   <data name="&gt;&gt;splitContainer3.Panel1.Parent" xml:space="preserve">
     <value>splitContainer3</value>
+  </data>
+  <data name="&gt;&gt;numWakeWordSimilarity.ZOrder" xml:space="preserve">
+    <value>0</value>
   </data>
   <data name="progressBar1.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Left, Right</value>
@@ -1995,11 +2010,11 @@
   <data name="splitContainer2.Location" type="System.Drawing.Point, System.Drawing">
     <value>3, 0</value>
   </data>
-  <data name="&gt;&gt;numCtxSize.Type" xml:space="preserve">
-    <value>System.Windows.Forms.NumericUpDown, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="&gt;&gt;numThreadsBatch.ZOrder" xml:space="preserve">
+    <value>0</value>
   </data>
   <data name="progressBar1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>923, 23</value>
+    <value>919, 23</value>
   </data>
   <data name="numTopP.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -2028,9 +2043,6 @@
   <data name="&gt;&gt;numTemp.Type" xml:space="preserve">
     <value>System.Windows.Forms.NumericUpDown, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;listViewModels.Parent" xml:space="preserve">
-    <value>splitContainer2.Panel1</value>
-  </data>
   <data name="statusStrip1.TabIndex" type="System.Int32, mscorlib">
     <value>4</value>
   </data>
@@ -2043,8 +2055,8 @@
   <data name="checkSpeak.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="groupBox2.TabIndex" type="System.Int32, mscorlib">
-    <value>38</value>
+  <data name="textSystemPrompt.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 16</value>
   </data>
   <data name="statusStrip1.ToolTip" xml:space="preserve">
     <value />
@@ -2076,8 +2088,8 @@
   <data name="&gt;&gt;splitContainer3.Parent" xml:space="preserve">
     <value>tabPage4</value>
   </data>
-  <data name="checkDateTimeEnable.TabIndex" type="System.Int32, mscorlib">
-    <value>1</value>
+  <data name="label18.Text" xml:space="preserve">
+    <value>Frequency Threshold:</value>
   </data>
   <data name="&gt;&gt;comboVADModel.ZOrder" xml:space="preserve">
     <value>5</value>
@@ -2085,23 +2097,17 @@
   <data name="label7.TabIndex" type="System.Int32, mscorlib">
     <value>15</value>
   </data>
-  <data name="&gt;&gt;splitContainer1.Parent" xml:space="preserve">
-    <value>tabPage1</value>
-  </data>
   <data name="&gt;&gt;checkGoogleEnable.Name" xml:space="preserve">
     <value>checkGoogleEnable</value>
   </data>
   <data name="label9.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
-  <data name="&gt;&gt;checkMMap.Parent" xml:space="preserve">
-    <value>groupAdvanced</value>
-  </data>
   <data name="textSystemPrompt.Multiline" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
-  <data name="label6.Size" type="System.Drawing.Size, System.Drawing">
-    <value>111, 13</value>
+  <data name="checkFileWriteEnable.Location" type="System.Drawing.Point, System.Drawing">
+    <value>114, 42</value>
   </data>
   <data name="panelChat.AutoScroll" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -2112,14 +2118,14 @@
   <data name="listViewModels.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
-  <data name="&gt;&gt;groupBox2.Parent" xml:space="preserve">
-    <value>tabPage2</value>
+  <data name="checkMarkdown.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="&gt;&gt;splitContainer2.Panel1.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
-  <data name="label15.Text" xml:space="preserve">
-    <value>Whisper.cpp Model:</value>
+  <data name="label17.Size" type="System.Drawing.Size, System.Drawing">
+    <value>115, 13</value>
   </data>
   <data name="tabPage3.ToolTip" xml:space="preserve">
     <value />
@@ -2163,14 +2169,8 @@
   <data name="listViewHugFiles.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="butVADDown.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="&gt;&gt;textGoogleSearchID.Type" xml:space="preserve">
-    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="progressBar1.TabIndex" type="System.Int32, mscorlib">
-    <value>3</value>
+  <data name="label12.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
   </data>
   <data name="&gt;&gt;label8.Type" xml:space="preserve">
     <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -2181,23 +2181,20 @@
   <data name="tabControl1.TabIndex" type="System.Int32, mscorlib">
     <value>3</value>
   </data>
-  <data name="checkFileListEnable.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 19</value>
+  <data name="listViewModels.ToolTip" xml:space="preserve">
+    <value />
   </data>
-  <data name="&gt;&gt;tabPage2.Name" xml:space="preserve">
-    <value>tabPage2</value>
+  <data name="tabPage4.Text" xml:space="preserve">
+    <value>Huggingface</value>
   </data>
   <data name="&gt;&gt;splitContainer1.Panel2.Name" xml:space="preserve">
     <value>splitContainer1.Panel2</value>
   </data>
-  <data name="panelChat.FlowDirection" type="System.Windows.Forms.FlowDirection, System.Windows.Forms">
-    <value>TopDown</value>
+  <data name="listViewHugSearch.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>0, 0, 0, 0</value>
   </data>
-  <data name="checkVoiceInput.TabIndex" type="System.Int32, mscorlib">
-    <value>5</value>
-  </data>
-  <data name="&gt;&gt;label3.Name" xml:space="preserve">
-    <value>label3</value>
+  <data name="&gt;&gt;label20.Parent" xml:space="preserve">
+    <value>groupBox2</value>
   </data>
   <data name="checkWebpageFetchEnable.ToolTip" xml:space="preserve">
     <value />
@@ -2211,9 +2208,6 @@
   <data name="textSearchTerm.Location" type="System.Drawing.Point, System.Drawing">
     <value>84, 2</value>
   </data>
-  <data name="&gt;&gt;butDownload.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="comboNUMAStrat.Items" xml:space="preserve">
     <value>Disabled</value>
   </data>
@@ -2226,14 +2220,14 @@
   <data name="radioBasicVAD.TabIndex" type="System.Int32, mscorlib">
     <value>17</value>
   </data>
-  <data name="checkMarkdown.AutoSize" type="System.Boolean, mscorlib">
-    <value>True</value>
+  <data name="checkGoogleEnable.CheckAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
   </data>
   <data name="&gt;&gt;checkWhisperUseGPU.Parent" xml:space="preserve">
     <value>groupBox1</value>
   </data>
-  <data name="&gt;&gt;butSearch.Name" xml:space="preserve">
-    <value>butSearch</value>
+  <data name="&gt;&gt;numTopK.ZOrder" xml:space="preserve">
+    <value>4</value>
   </data>
   <data name="numGoogleResults.Size" type="System.Drawing.Size, System.Drawing">
     <value>87, 20</value>
@@ -2247,8 +2241,8 @@
   <data name="&gt;&gt;tabPage4.ZOrder" xml:space="preserve">
     <value>3</value>
   </data>
-  <data name="label23.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Right</value>
+  <data name="listViewHugFiles.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Bottom, Left, Right</value>
   </data>
   <data name="&gt;&gt;tabPage3.Name" xml:space="preserve">
     <value>tabPage3</value>
@@ -2265,8 +2259,8 @@
   <data name="label3.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="&gt;&gt;groupBox3.Type" xml:space="preserve">
-    <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="checkMLock.Size" type="System.Drawing.Size, System.Drawing">
+    <value>188, 17</value>
   </data>
   <data name="numMinP.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -2274,8 +2268,8 @@
   <data name="checkGoogleEnable.TabIndex" type="System.Int32, mscorlib">
     <value>4</value>
   </data>
-  <data name="listViewModels.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
-    <value>Fill</value>
+  <data name="labelPreGen.Size" type="System.Drawing.Size, System.Drawing">
+    <value>110, 17</value>
   </data>
   <data name="&gt;&gt;label21.Type" xml:space="preserve">
     <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -2286,8 +2280,8 @@
   <data name="&gt;&gt;columnHeader7.Name" xml:space="preserve">
     <value>columnHeader7</value>
   </data>
-  <data name="&gt;&gt;numWakeWordSimilarity.ZOrder" xml:space="preserve">
-    <value>0</value>
+  <data name="label6.Size" type="System.Drawing.Size, System.Drawing">
+    <value>111, 13</value>
   </data>
   <data name="&gt;&gt;label9.ZOrder" xml:space="preserve">
     <value>14</value>
@@ -2295,8 +2289,8 @@
   <data name="label2.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
-  <data name="&gt;&gt;splitContainer2.Panel1.Type" xml:space="preserve">
-    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="&gt;&gt;splitContainer1.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
   </data>
   <data name="butApply.ToolTip" xml:space="preserve">
     <value />
@@ -2304,8 +2298,14 @@
   <data name="butDownload.Size" type="System.Drawing.Size, System.Drawing">
     <value>75, 23</value>
   </data>
-  <data name="butVADDown.TabIndex" type="System.Int32, mscorlib">
-    <value>19</value>
+  <data name="label7.Size" type="System.Drawing.Size, System.Drawing">
+    <value>111, 13</value>
+  </data>
+  <data name="checkFileWriteEnable.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;butVADDown.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;checkFlashAttn.Parent" xml:space="preserve">
     <value>groupAdvanced</value>
@@ -2313,17 +2313,20 @@
   <data name="label4.TabIndex" type="System.Int32, mscorlib">
     <value>22</value>
   </data>
-  <data name="numThreadsBatch.Location" type="System.Drawing.Point, System.Drawing">
-    <value>119, 19</value>
+  <data name="checkSpeak.TabIndex" type="System.Int32, mscorlib">
+    <value>11</value>
   </data>
   <data name="label4.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 0, 0, 0</value>
   </data>
+  <data name="numTopK.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 20</value>
+  </data>
   <data name="label12.Size" type="System.Drawing.Size, System.Drawing">
     <value>111, 13</value>
   </data>
-  <data name="label7.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
-    <value>MiddleRight</value>
+  <data name="butUnload.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 23</value>
   </data>
   <data name="splitContainer3.ToolTip" xml:space="preserve">
     <value />
@@ -2337,11 +2340,14 @@
   <data name="&gt;&gt;radioWhisperVAD.ZOrder" xml:space="preserve">
     <value>3</value>
   </data>
-  <data name="label24.ToolTip" xml:space="preserve">
-    <value />
+  <data name="&gt;&gt;tabControl1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabControl, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="groupCommon.ToolTip" xml:space="preserve">
-    <value />
+  <data name="label22.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
+  </data>
+  <data name="&gt;&gt;label9.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="label10.Text" xml:space="preserve">
     <value>GPU layers:</value>
@@ -2349,20 +2355,23 @@
   <data name="label10.ToolTip" xml:space="preserve">
     <value />
   </data>
+  <data name="&gt;&gt;label25.Name" xml:space="preserve">
+    <value>label25</value>
+  </data>
   <data name="textWakeWord.Size" type="System.Drawing.Size, System.Drawing">
     <value>117, 20</value>
   </data>
   <data name="checkMMap.Location" type="System.Drawing.Point, System.Drawing">
     <value>6, 176</value>
   </data>
-  <data name="label11.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>3, 0, 0, 0</value>
+  <data name="numTopK.Location" type="System.Drawing.Point, System.Drawing">
+    <value>119, 72</value>
   </data>
   <data name="numGPULayers.TabIndex" type="System.Int32, mscorlib">
     <value>26</value>
   </data>
-  <data name="listViewHugFiles.Size" type="System.Drawing.Size, System.Drawing">
-    <value>998, 443</value>
+  <data name="&gt;&gt;panelChat.Name" xml:space="preserve">
+    <value>panelChat</value>
   </data>
   <data name="tabControl1.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Bottom, Left, Right</value>
@@ -2373,26 +2382,23 @@
   <data name="&gt;&gt;splitContainer1.Type" xml:space="preserve">
     <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;label20.Name" xml:space="preserve">
-    <value>label20</value>
-  </data>
   <data name="groupCommon.Text" xml:space="preserve">
     <value>Common</value>
+  </data>
+  <data name="groupBox3.Text" xml:space="preserve">
+    <value>Webpage Fetch Tool</value>
   </data>
   <data name="&gt;&gt;numRepPen.ZOrder" xml:space="preserve">
     <value>2</value>
   </data>
-  <data name="&gt;&gt;numFreqThreshold.Parent" xml:space="preserve">
-    <value>groupBox1</value>
-  </data>
   <data name="&gt;&gt;label4.Name" xml:space="preserve">
     <value>label4</value>
   </data>
-  <data name="groupCommon.Size" type="System.Drawing.Size, System.Drawing">
-    <value>200, 124</value>
+  <data name="numWhisperTemp.Location" type="System.Drawing.Point, System.Drawing">
+    <value>124, 166</value>
   </data>
-  <data name="&gt;&gt;checkFileReadEnable.ZOrder" xml:space="preserve">
-    <value>5</value>
+  <data name="label7.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 0, 0, 0</value>
   </data>
   <data name="&gt;&gt;label15.Name" xml:space="preserve">
     <value>label15</value>
@@ -2406,14 +2412,23 @@
   <data name="&gt;&gt;groupBox5.Name" xml:space="preserve">
     <value>groupBox5</value>
   </data>
+  <data name="label7.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
+  </data>
+  <data name="textModelsPath.Size" type="System.Drawing.Size, System.Drawing">
+    <value>840, 20</value>
+  </data>
   <data name="&gt;&gt;checkVoiceInput.Parent" xml:space="preserve">
     <value>splitContainer1.Panel2</value>
+  </data>
+  <data name="groupBox6.TabIndex" type="System.Int32, mscorlib">
+    <value>42</value>
   </data>
   <data name="&gt;&gt;checkVoiceInput.Type" xml:space="preserve">
     <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="listViewMeta.TabIndex" type="System.Int32, mscorlib">
-    <value>0</value>
+  <data name="label15.Size" type="System.Drawing.Size, System.Drawing">
+    <value>186, 13</value>
   </data>
   <data name="label2.Location" type="System.Drawing.Point, System.Drawing">
     <value>6, 21</value>
@@ -2424,14 +2439,11 @@
   <data name="&gt;&gt;numVadThreshold.Type" xml:space="preserve">
     <value>System.Windows.Forms.NumericUpDown, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="numNGen.ToolTip" xml:space="preserve">
-    <value />
+  <data name="butBrowse.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
   </data>
-  <data name="textInput.Multiline" type="System.Boolean, mscorlib">
-    <value>True</value>
-  </data>
-  <data name="butLoad.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>0, 0, 0, 0</value>
+  <data name="&gt;&gt;numVadThreshold.ZOrder" xml:space="preserve">
+    <value>0</value>
   </data>
   <data name="label9.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -2466,10 +2478,13 @@
   <data name="numCtxSize.TabIndex" type="System.Int32, mscorlib">
     <value>24</value>
   </data>
-  <data name="numWhisperTemp.Location" type="System.Drawing.Point, System.Drawing">
-    <value>124, 166</value>
+  <data name="&gt;&gt;textModelsPath.ZOrder" xml:space="preserve">
+    <value>0</value>
   </data>
-  <data name="label22.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+  <data name="&gt;&gt;label6.Parent" xml:space="preserve">
+    <value>groupAdvanced</value>
+  </data>
+  <data name="label17.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
   <data name="checkMLock.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
@@ -2490,20 +2505,23 @@
   <data name="label17.Location" type="System.Drawing.Point, System.Drawing">
     <value>6, 136</value>
   </data>
-  <data name="label12.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 22</value>
+  <data name="label11.Size" type="System.Drawing.Size, System.Drawing">
+    <value>111, 13</value>
   </data>
   <data name="&gt;&gt;checkMarkdown.Type" xml:space="preserve">
     <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="groupBox5.Location" type="System.Drawing.Point, System.Drawing">
-    <value>415, 156</value>
+  <data name="comboWhisperModel.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="checkLoadAuto.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Bottom, Left</value>
   </data>
   <data name="butUnload.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Right</value>
   </data>
-  <data name="listViewHugSearch.ToolTip" xml:space="preserve">
-    <value />
+  <data name="radioWhisperVAD.TabIndex" type="System.Int32, mscorlib">
+    <value>18</value>
   </data>
   <data name="label16.ToolTip" xml:space="preserve">
     <value />
@@ -2511,20 +2529,26 @@
   <data name="panelChat.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="label22.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+  <data name="label9.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 0, 0, 0</value>
   </data>
   <data name="butUnload.Location" type="System.Drawing.Point, System.Drawing">
     <value>933, 926</value>
   </data>
-  <data name="numCtxSize.Location" type="System.Drawing.Point, System.Drawing">
-    <value>119, 19</value>
-  </data>
-  <data name="checkWebpageFetchEnable.TabIndex" type="System.Int32, mscorlib">
+  <data name="textSystemPrompt.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
+  </data>
+  <data name="$this.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="label2.Size" type="System.Drawing.Size, System.Drawing">
     <value>110, 13</value>
+  </data>
+  <data name="label23.TabIndex" type="System.Int32, mscorlib">
+    <value>37</value>
+  </data>
+  <data name="&gt;&gt;label3.Parent" xml:space="preserve">
+    <value>tabPage2</value>
   </data>
   <data name="&gt;&gt;numTopK.Type" xml:space="preserve">
     <value>System.Windows.Forms.NumericUpDown, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -2532,23 +2556,20 @@
   <data name="listViewHugFiles.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
   </data>
-  <data name="groupBox4.TabIndex" type="System.Int32, mscorlib">
-    <value>40</value>
-  </data>
-  <data name="&gt;&gt;textModelsPath.ZOrder" xml:space="preserve">
-    <value>0</value>
+  <data name="tabPage2.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
   </data>
   <data name="&gt;&gt;splitContainer2.Type" xml:space="preserve">
     <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;numVadThreshold.ZOrder" xml:space="preserve">
-    <value>0</value>
+  <data name="&gt;&gt;butBrowse.Name" xml:space="preserve">
+    <value>butBrowse</value>
   </data>
-  <data name="&gt;&gt;label8.Parent" xml:space="preserve">
-    <value>groupAdvanced</value>
+  <data name="checkDateTimeEnable.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
   </data>
-  <data name="checkFileWriteEnable.Location" type="System.Drawing.Point, System.Drawing">
-    <value>114, 42</value>
+  <data name="numNGen.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 20</value>
   </data>
   <data name="label13.Size" type="System.Drawing.Size, System.Drawing">
     <value>80, 13</value>
@@ -2556,20 +2577,23 @@
   <data name="label21.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="numVadThreshold.Location" type="System.Drawing.Point, System.Drawing">
-    <value>124, 134</value>
-  </data>
   <data name="label18.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
   <data name="&gt;&gt;label5.Parent" xml:space="preserve">
     <value>groupCommon</value>
   </data>
-  <data name="&gt;&gt;label6.Parent" xml:space="preserve">
-    <value>groupAdvanced</value>
+  <data name="splitContainer3.Size" type="System.Drawing.Size, System.Drawing">
+    <value>1002, 943</value>
+  </data>
+  <data name="label7.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="splitContainer1.Panel2.ToolTip" xml:space="preserve">
     <value />
+  </data>
+  <data name="checkWhisperUseGPU.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
   </data>
   <data name="textSearchTerm.ToolTip" xml:space="preserve">
     <value />
@@ -2577,8 +2601,11 @@
   <data name="&gt;&gt;columnHeader4.Type" xml:space="preserve">
     <value>System.Windows.Forms.ColumnHeader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="numNGen.Location" type="System.Drawing.Point, System.Drawing">
-    <value>119, 97</value>
+  <data name="&gt;&gt;numTopK.Parent" xml:space="preserve">
+    <value>groupAdvanced</value>
+  </data>
+  <data name="numWhisperTemp.Size" type="System.Drawing.Size, System.Drawing">
+    <value>70, 20</value>
   </data>
   <data name="&gt;&gt;columnHeader4.Name" xml:space="preserve">
     <value>columnHeader4</value>
@@ -2586,8 +2613,8 @@
   <data name="radioWhisperVAD.Text" xml:space="preserve">
     <value>Use Whisper VAD</value>
   </data>
-  <data name="&gt;&gt;groupBox3.Parent" xml:space="preserve">
-    <value>tabPage2</value>
+  <data name="&gt;&gt;checkFileReadEnable.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="checkGoogleEnable.Size" type="System.Drawing.Size, System.Drawing">
     <value>188, 17</value>
@@ -2613,14 +2640,11 @@
   <data name="butReset.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
   </data>
-  <data name="label24.Size" type="System.Drawing.Size, System.Drawing">
-    <value>115, 13</value>
+  <data name="tabPage1.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="&gt;&gt;splitContainer3.Panel1.ZOrder" xml:space="preserve">
     <value>0</value>
-  </data>
-  <data name="&gt;&gt;textGoogleApiKey.Type" xml:space="preserve">
-    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="tabPage1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -2628,11 +2652,8 @@
   <data name="&gt;&gt;checkVoiceInput.Name" xml:space="preserve">
     <value>checkVoiceInput</value>
   </data>
-  <data name="butReset.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer3.Location" type="System.Drawing.Point, System.Drawing">
-    <value>3, 3</value>
+  <data name="&gt;&gt;listViewHugFiles.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ListView, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="label25.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -2652,6 +2673,9 @@
   <data name="butCodeBlock.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Left</value>
   </data>
+  <data name="&gt;&gt;groupBox5.Type" xml:space="preserve">
+    <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="&gt;&gt;textFileBasePath.Name" xml:space="preserve">
     <value>textFileBasePath</value>
   </data>
@@ -2661,8 +2685,8 @@
   <data name="butBrowse.TabIndex" type="System.Int32, mscorlib">
     <value>12</value>
   </data>
-  <data name="&gt;&gt;checkLoadAuto.Type" xml:space="preserve">
-    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="butLoad.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Bottom, Right</value>
   </data>
   <data name="label24.Text" xml:space="preserve">
     <value>Temperature:</value>
@@ -2670,8 +2694,8 @@
   <data name="panelChat.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
   </data>
-  <data name="splitContainer1.Panel1.ToolTip" xml:space="preserve">
-    <value />
+  <data name="butCodeBlock.Text" xml:space="preserve">
+    <value>Insert code block</value>
   </data>
   <data name="columnHeader12.Width" type="System.Int32, mscorlib">
     <value>87</value>
@@ -2685,11 +2709,11 @@
   <data name="butDownload.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
   </data>
-  <data name="checkSpeak.Text" xml:space="preserve">
-    <value>Speak responses</value>
+  <data name="checkMMap.ToolTip" xml:space="preserve">
+    <value />
   </data>
-  <data name="label11.Size" type="System.Drawing.Size, System.Drawing">
-    <value>111, 13</value>
+  <data name="tabPage3.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 22</value>
   </data>
   <data name="checkFileReadEnable.CheckAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -2697,8 +2721,8 @@
   <data name="listViewHugSearch.Size" type="System.Drawing.Size, System.Drawing">
     <value>998, 442</value>
   </data>
-  <data name="textGoogleApiKey.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Right</value>
+  <data name="columnHeader12.Text" xml:space="preserve">
+    <value>Trending Score</value>
   </data>
   <data name="&gt;&gt;numGPULayers.Parent" xml:space="preserve">
     <value>groupCommon</value>
@@ -2716,10 +2740,10 @@
     <value>Top, Right</value>
   </data>
   <data name="butCodeBlock.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 150</value>
+    <value>0, 146</value>
   </data>
-  <data name="label21.TabIndex" type="System.Int32, mscorlib">
-    <value>6</value>
+  <data name="&gt;&gt;textInput.ZOrder" xml:space="preserve">
+    <value>7</value>
   </data>
   <data name="textSystemPrompt.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -2730,8 +2754,8 @@
   <data name="butSearch.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
   </data>
-  <data name="splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
-    <value>461</value>
+  <data name="checkWhisperUseGPU.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
   </data>
   <data name="splitContainer2.Panel1.ToolTip" xml:space="preserve">
     <value />
@@ -2742,8 +2766,8 @@
   <data name="&gt;&gt;checkWhisperUseGPU.ZOrder" xml:space="preserve">
     <value>7</value>
   </data>
-  <data name="checkMLock.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Right</value>
+  <data name="groupBox1.Text" xml:space="preserve">
+    <value>Voice Input</value>
   </data>
   <data name="label9.Location" type="System.Drawing.Point, System.Drawing">
     <value>6, 100</value>
@@ -2772,11 +2796,8 @@
   <data name="label23.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 0, 0, 0</value>
   </data>
-  <data name="&gt;&gt;checkFlashAttn.Name" xml:space="preserve">
-    <value>checkFlashAttn</value>
-  </data>
-  <data name="label11.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 152</value>
+  <data name="&gt;&gt;listViewMeta.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ListView, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="checkMLock.CheckAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -2784,11 +2805,14 @@
   <data name="textGoogleSearchID.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
+  <data name="&gt;&gt;columnHeader1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ColumnHeader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="&gt;&gt;radioBasicVAD.Parent" xml:space="preserve">
     <value>groupBox6</value>
   </data>
-  <data name="numWhisperTemp.TabIndex" type="System.Int32, mscorlib">
-    <value>10</value>
+  <data name="comboNUMAStrat.Items5" xml:space="preserve">
+    <value>Count</value>
   </data>
   <data name="&gt;&gt;butBrowse.Parent" xml:space="preserve">
     <value>tabPage2</value>
@@ -2802,17 +2826,14 @@
   <data name="&gt;&gt;textFileBasePath.Type" xml:space="preserve">
     <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="checkLoadAuto.Size" type="System.Drawing.Size, System.Drawing">
-    <value>147, 17</value>
-  </data>
-  <data name="label5.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Right</value>
+  <data name="&gt;&gt;groupCommon.Name" xml:space="preserve">
+    <value>groupCommon</value>
   </data>
   <data name="checkMMap.Size" type="System.Drawing.Size, System.Drawing">
     <value>188, 17</value>
   </data>
-  <data name="labelTPS.Size" type="System.Drawing.Size, System.Drawing">
-    <value>46, 17</value>
+  <data name="butLoad.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="&gt;&gt;labelTPS.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripStatusLabel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -2832,11 +2853,8 @@
   <data name="&gt;&gt;columnHeader13.Type" xml:space="preserve">
     <value>System.Windows.Forms.ColumnHeader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="splitContainer3.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1002, 943</value>
-  </data>
-  <data name="checkFileCreateEnable.Text" xml:space="preserve">
-    <value>Create File</value>
+  <data name="labelPreGen.Text" xml:space="preserve">
+    <value>Pre-generation time:</value>
   </data>
   <data name="numFreqThreshold.TabIndex" type="System.Int32, mscorlib">
     <value>8</value>
@@ -2856,14 +2874,17 @@
   <data name="&gt;&gt;numFreqThreshold.Type" xml:space="preserve">
     <value>System.Windows.Forms.NumericUpDown, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="&gt;&gt;label2.Name" xml:space="preserve">
+    <value>label2</value>
+  </data>
   <data name="butLoad.Size" type="System.Drawing.Size, System.Drawing">
     <value>75, 23</value>
   </data>
   <data name="&gt;&gt;textFileBasePath.Parent" xml:space="preserve">
     <value>groupBox4</value>
   </data>
-  <data name="tabPage1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>4, 22</value>
+  <data name="&gt;&gt;checkFlashAttn.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="butDownload.ToolTip" xml:space="preserve">
     <value />
@@ -2872,10 +2893,7 @@
     <value>Horizontal</value>
   </data>
   <data name="checkStream.Location" type="System.Drawing.Point, System.Drawing">
-    <value>106, 154</value>
-  </data>
-  <data name="textInput.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>0, 0, 0, 0</value>
+    <value>106, 150</value>
   </data>
   <data name="textGoogleSearchID.Size" type="System.Drawing.Size, System.Drawing">
     <value>87, 20</value>
@@ -2892,17 +2910,11 @@
   <data name="groupAdvanced.TabIndex" type="System.Int32, mscorlib">
     <value>34</value>
   </data>
-  <data name="&gt;&gt;groupBox4.ZOrder" xml:space="preserve">
-    <value>3</value>
-  </data>
   <data name="checkMLock.Location" type="System.Drawing.Point, System.Drawing">
     <value>6, 199</value>
   </data>
   <data name="label10.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
-  </data>
-  <data name="&gt;&gt;listViewMeta.Type" xml:space="preserve">
-    <value>System.Windows.Forms.ListView, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="listViewModels.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -2913,14 +2925,14 @@
   <data name="tabPage1.Text" xml:space="preserve">
     <value>Chat</value>
   </data>
-  <data name="&gt;&gt;groupBox5.Parent" xml:space="preserve">
-    <value>tabPage2</value>
+  <data name="label24.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 0, 0, 0</value>
   </data>
   <data name="columnHeader3.Text" xml:space="preserve">
     <value>Metadata Entry</value>
   </data>
-  <data name="&gt;&gt;checkFlashAttn.Type" xml:space="preserve">
-    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="&gt;&gt;groupBox4.ZOrder" xml:space="preserve">
+    <value>3</value>
   </data>
   <data name="&gt;&gt;groupCPUParamsBatch.ZOrder" xml:space="preserve">
     <value>7</value>
@@ -2928,8 +2940,8 @@
   <data name="splitContainer2.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Bottom, Left, Right</value>
   </data>
-  <data name="&gt;&gt;checkFileReadEnable.Type" xml:space="preserve">
-    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="butCodeBlock.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="&gt;&gt;tabPage1.Name" xml:space="preserve">
     <value>tabPage1</value>
@@ -2949,23 +2961,23 @@
   <data name="butCodeBlock.TabIndex" type="System.Int32, mscorlib">
     <value>4</value>
   </data>
+  <data name="checkMLock.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
   <data name="label25.Size" type="System.Drawing.Size, System.Drawing">
     <value>115, 13</value>
   </data>
   <data name="label19.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
-  <data name="&gt;&gt;checkSpeak.ZOrder" xml:space="preserve">
+  <data name="label15.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
   </data>
   <data name="&gt;&gt;label1.Name" xml:space="preserve">
     <value>label1</value>
   </data>
-  <data name="checkFileCreateEnable.TabIndex" type="System.Int32, mscorlib">
-    <value>2</value>
-  </data>
-  <data name="&gt;&gt;checkMarkdown.Parent" xml:space="preserve">
-    <value>splitContainer1.Panel2</value>
+  <data name="&gt;&gt;columnHeader6.Name" xml:space="preserve">
+    <value>columnHeader6</value>
   </data>
   <data name="&gt;&gt;numTopP.ZOrder" xml:space="preserve">
     <value>5</value>
@@ -2976,26 +2988,20 @@
   <data name="&gt;&gt;numTemp.ZOrder" xml:space="preserve">
     <value>3</value>
   </data>
-  <data name="tabPage1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1008, 949</value>
+  <data name="butVADDown.ToolTip" xml:space="preserve">
+    <value />
   </data>
-  <data name="label17.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
-    <value>MiddleRight</value>
-  </data>
-  <data name="&gt;&gt;textGoogleApiKey.Parent" xml:space="preserve">
-    <value>groupBox2</value>
+  <data name="listViewHugSearch.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="&gt;&gt;label9.Name" xml:space="preserve">
     <value>label9</value>
   </data>
-  <data name="&gt;&gt;label14.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="&gt;&gt;butLoad.Parent" xml:space="preserve">
     <value>tabPage3</value>
   </data>
-  <data name="&gt;&gt;label3.Parent" xml:space="preserve">
-    <value>tabPage2</value>
+  <data name="textGoogleApiKey.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
   </data>
   <data name="textSearchTerm.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Left, Right</value>
@@ -3024,14 +3030,11 @@
   <data name="&gt;&gt;label2.Parent" xml:space="preserve">
     <value>groupCPUParams</value>
   </data>
-  <data name="checkSpeak.TabIndex" type="System.Int32, mscorlib">
-    <value>11</value>
-  </data>
   <data name="&gt;&gt;listViewHugFiles.Name" xml:space="preserve">
     <value>listViewHugFiles</value>
   </data>
-  <data name="groupBox6.TabIndex" type="System.Int32, mscorlib">
-    <value>42</value>
+  <data name="label20.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
   </data>
   <data name="checkSpeak.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -3039,11 +3042,11 @@
   <data name="&gt;&gt;panelChat.Parent" xml:space="preserve">
     <value>splitContainer1.Panel1</value>
   </data>
-  <data name="&gt;&gt;label20.Parent" xml:space="preserve">
-    <value>groupBox2</value>
+  <data name="checkDateTimeEnable.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
   </data>
-  <data name="&gt;&gt;columnHeader13.Name" xml:space="preserve">
-    <value>columnHeader13</value>
+  <data name="butSearch.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
   </data>
   <data name="linkFileInstruction.TabIndex" type="System.Int32, mscorlib">
     <value>41</value>
@@ -3068,9 +3071,6 @@
   </data>
   <data name="numRepPen.Location" type="System.Drawing.Point, System.Drawing">
     <value>119, 46</value>
-  </data>
-  <data name="&gt;&gt;listViewModels.Type" xml:space="preserve">
-    <value>System.Windows.Forms.ListView, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="label12.TabIndex" type="System.Int32, mscorlib">
     <value>32</value>
@@ -3120,29 +3120,29 @@
   <data name="label19.Text" xml:space="preserve">
     <value>API Key:</value>
   </data>
-  <data name="label13.Location" type="System.Drawing.Point, System.Drawing">
-    <value>1, 5</value>
+  <data name="label4.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 99</value>
   </data>
   <data name="&gt;&gt;checkGoogleEnable.Parent" xml:space="preserve">
     <value>groupBox2</value>
   </data>
-  <data name="numThreads.Size" type="System.Drawing.Size, System.Drawing">
-    <value>75, 20</value>
+  <data name="numCtxSize.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
   </data>
-  <data name="checkMMap.CheckAlign" type="System.Drawing.ContentAlignment, System.Drawing">
-    <value>MiddleRight</value>
+  <data name="&gt;&gt;butUnload.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="progressBar1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 443</value>
+    <value>0, 439</value>
   </data>
   <data name="&gt;&gt;checkFileWriteEnable.Parent" xml:space="preserve">
     <value>groupBox4</value>
   </data>
-  <data name="numTopK.Size" type="System.Drawing.Size, System.Drawing">
-    <value>75, 20</value>
+  <data name="labelTPS.Text" xml:space="preserve">
+    <value>0 Tok/s</value>
   </data>
-  <data name="&gt;&gt;checkStream.Parent" xml:space="preserve">
-    <value>splitContainer1.Panel2</value>
+  <data name="textFileBasePath.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="&gt;&gt;butLoad.ZOrder" xml:space="preserve">
     <value>3</value>
@@ -3159,23 +3159,26 @@
   <data name="numWakeWordSimilarity.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
+  <data name="&gt;&gt;comboWhisperModel.ZOrder" xml:space="preserve">
+    <value>10</value>
+  </data>
   <data name="textWakeWord.TabIndex" type="System.Int32, mscorlib">
     <value>3</value>
   </data>
-  <data name="&gt;&gt;numFreqThreshold.Name" xml:space="preserve">
-    <value>numFreqThreshold</value>
+  <data name="&gt;&gt;numNGen.Name" xml:space="preserve">
+    <value>numNGen</value>
   </data>
-  <data name="&gt;&gt;label22.Name" xml:space="preserve">
-    <value>label22</value>
+  <data name="numBatchSize.ToolTip" xml:space="preserve">
+    <value />
   </data>
-  <data name="&gt;&gt;butReset.Name" xml:space="preserve">
-    <value>butReset</value>
+  <data name="tabPage2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 22</value>
   </data>
   <data name="numTopK.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="numBatchSize.ToolTip" xml:space="preserve">
-    <value />
+  <data name="&gt;&gt;comboWhisperModel.Parent" xml:space="preserve">
+    <value>groupBox1</value>
   </data>
   <data name="columnHeader10.Text" xml:space="preserve">
     <value>Size</value>
@@ -3193,7 +3196,7 @@
     <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="textInput.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1004, 150</value>
+    <value>1000, 146</value>
   </data>
   <data name="checkGoogleEnable.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -3201,14 +3204,8 @@
   <data name="&gt;&gt;numWakeWordSimilarity.Parent" xml:space="preserve">
     <value>groupBox1</value>
   </data>
-  <data name="checkWhisperUseGPU.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
-    <value>MiddleRight</value>
-  </data>
-  <data name="checkDateTimeEnable.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Right</value>
-  </data>
-  <data name="&gt;&gt;tabControl1.Name" xml:space="preserve">
-    <value>tabControl1</value>
+  <data name="label12.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 22</value>
   </data>
   <data name="&gt;&gt;tabPage4.Type" xml:space="preserve">
     <value>System.Windows.Forms.TabPage, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -3228,8 +3225,8 @@
   <data name="checkFileListEnable.CheckAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
-  <data name="groupBox3.Text" xml:space="preserve">
-    <value>Webpage Fetch Tool</value>
+  <data name="numGoogleResults.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="numRepPen.TabIndex" type="System.Int32, mscorlib">
     <value>14</value>
@@ -3240,26 +3237,23 @@
   <data name="&gt;&gt;label2.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
-  <data name="labelPreGen.Text" xml:space="preserve">
-    <value>Pre-generation time:</value>
+  <data name="&gt;&gt;groupCPUParams.Parent" xml:space="preserve">
+    <value>tabPage2</value>
   </data>
-  <data name="&gt;&gt;numThreadsBatch.ZOrder" xml:space="preserve">
-    <value>0</value>
-  </data>
-  <data name="groupBox3.Size" type="System.Drawing.Size, System.Drawing">
-    <value>200, 37</value>
+  <data name="checkDateTimeEnable.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
   </data>
   <data name="&gt;&gt;progressBar1.Name" xml:space="preserve">
     <value>progressBar1</value>
   </data>
-  <data name="label7.Size" type="System.Drawing.Size, System.Drawing">
-    <value>111, 13</value>
+  <data name="&gt;&gt;label3.Name" xml:space="preserve">
+    <value>label3</value>
   </data>
   <data name="comboVADModel.TabIndex" type="System.Int32, mscorlib">
     <value>16</value>
   </data>
-  <data name="&gt;&gt;columnHeader6.Type" xml:space="preserve">
-    <value>System.Windows.Forms.ColumnHeader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="groupCommon.Location" type="System.Drawing.Point, System.Drawing">
+    <value>3, 260</value>
   </data>
   <data name="&gt;&gt;columnHeader14.Type" xml:space="preserve">
     <value>System.Windows.Forms.ColumnHeader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -3285,11 +3279,11 @@
   <data name="&gt;&gt;numRepPen.Type" xml:space="preserve">
     <value>System.Windows.Forms.NumericUpDown, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="checkVoiceInput.Text" xml:space="preserve">
-    <value>Voice input</value>
+  <data name="&gt;&gt;groupCommon.Parent" xml:space="preserve">
+    <value>tabPage2</value>
   </data>
-  <data name="columnHeader1.Text" xml:space="preserve">
-    <value>Name</value>
+  <data name="&gt;&gt;checkLoadAuto.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="numCtxSize.ToolTip" xml:space="preserve">
     <value />
@@ -3300,8 +3294,8 @@
   <data name="label16.Text" xml:space="preserve">
     <value>Wake word:</value>
   </data>
-  <data name="butWhispDown.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 59</value>
+  <data name="groupBox4.Size" type="System.Drawing.Size, System.Drawing">
+    <value>200, 104</value>
   </data>
   <data name="&gt;&gt;checkWhisperUseGPU.Name" xml:space="preserve">
     <value>checkWhisperUseGPU</value>
@@ -3309,7 +3303,7 @@
   <data name="label12.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="checkVoiceInput.ToolTip" xml:space="preserve">
+  <data name="numTemp.ToolTip" xml:space="preserve">
     <value />
   </data>
   <data name="groupCPUParams.ToolTip" xml:space="preserve">
@@ -3330,20 +3324,26 @@
   <data name="label23.ToolTip" xml:space="preserve">
     <value />
   </data>
+  <data name="&gt;&gt;checkMLock.Name" xml:space="preserve">
+    <value>checkMLock</value>
+  </data>
   <data name="&gt;&gt;butVADDown.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
-  <data name="label25.TabIndex" type="System.Int32, mscorlib">
-    <value>13</value>
+  <data name="numVadThreshold.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
   </data>
-  <data name="checkFileWriteEnable.TabIndex" type="System.Int32, mscorlib">
-    <value>3</value>
+  <data name="&gt;&gt;checkMMap.Parent" xml:space="preserve">
+    <value>groupAdvanced</value>
+  </data>
+  <data name="&gt;&gt;checkMarkdown.Parent" xml:space="preserve">
+    <value>splitContainer1.Panel2</value>
   </data>
   <data name="checkLoadAuto.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="label9.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>3, 0, 0, 0</value>
+  <data name="checkFileListEnable.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="butGen.Size" type="System.Drawing.Size, System.Drawing">
     <value>75, 23</value>
@@ -3354,11 +3354,11 @@
   <data name="&gt;&gt;splitContainer3.Panel1.Name" xml:space="preserve">
     <value>splitContainer3.Panel1</value>
   </data>
-  <data name="checkWhisperUseGPU.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Right</value>
+  <data name="&gt;&gt;label14.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="labelPreGen.Size" type="System.Drawing.Size, System.Drawing">
-    <value>110, 17</value>
+  <data name="&gt;&gt;groupBox3.Parent" xml:space="preserve">
+    <value>tabPage2</value>
   </data>
   <data name="label5.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -3366,8 +3366,8 @@
   <data name="&gt;&gt;columnHeader5.Type" xml:space="preserve">
     <value>System.Windows.Forms.ColumnHeader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;checkFlashAttn.ZOrder" xml:space="preserve">
-    <value>7</value>
+  <data name="checkLoadAuto.Size" type="System.Drawing.Size, System.Drawing">
+    <value>147, 17</value>
   </data>
   <data name="groupBox5.Size" type="System.Drawing.Size, System.Drawing">
     <value>200, 37</value>
@@ -3393,9 +3393,6 @@
   <data name="&gt;&gt;splitContainer1.Panel1.Type" xml:space="preserve">
     <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;checkDateTimeEnable.ZOrder" xml:space="preserve">
-    <value>0</value>
-  </data>
   <data name="comboWhisperModel.ToolTip" xml:space="preserve">
     <value />
   </data>
@@ -3411,14 +3408,14 @@
   <data name="groupBox2.Location" type="System.Drawing.Point, System.Drawing">
     <value>415, 199</value>
   </data>
-  <data name="checkSpeak.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Bottom, Left</value>
+  <data name="listViewModels.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
   </data>
-  <data name="checkDateTimeEnable.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
-    <value>MiddleRight</value>
+  <data name="label8.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 0, 0, 0</value>
   </data>
   <data name="checkSpeak.Location" type="System.Drawing.Point, System.Drawing">
-    <value>371, 154</value>
+    <value>371, 150</value>
   </data>
   <data name="&gt;&gt;butBrowse.Type" xml:space="preserve">
     <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -3426,20 +3423,23 @@
   <data name="&gt;&gt;radioBasicVAD.Name" xml:space="preserve">
     <value>radioBasicVAD</value>
   </data>
+  <data name="label25.ToolTip" xml:space="preserve">
+    <value />
+  </data>
   <data name="checkMarkdown.Text" xml:space="preserve">
     <value>Markdown</value>
   </data>
   <data name="&gt;&gt;splitContainer3.Type" xml:space="preserve">
     <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="checkMMap.ToolTip" xml:space="preserve">
-    <value />
+  <data name="&gt;&gt;statusStrip1.ZOrder" xml:space="preserve">
+    <value>0</value>
   </data>
   <data name="numFreqThreshold.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="columnHeader12.Text" xml:space="preserve">
-    <value>Trending Score</value>
+  <data name="numRepPen.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
   </data>
   <data name="&gt;&gt;radioWhisperVAD.Name" xml:space="preserve">
     <value>radioWhisperVAD</value>
@@ -3447,14 +3447,14 @@
   <data name="groupBox6.Size" type="System.Drawing.Size, System.Drawing">
     <value>200, 162</value>
   </data>
-  <data name="label8.ToolTip" xml:space="preserve">
+  <data name="numNGen.ToolTip" xml:space="preserve">
     <value />
   </data>
   <data name="label14.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="columnHeader7.Width" type="System.Int32, mscorlib">
-    <value>85</value>
+  <data name="&gt;&gt;textGoogleApiKey.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;label26.Name" xml:space="preserve">
     <value>label26</value>
@@ -3462,23 +3462,20 @@
   <data name="textSystemPrompt.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="splitContainer3.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
-    <value>Horizontal</value>
+  <data name="listViewHugSearch.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 23</value>
   </data>
   <data name="numGPULayers.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
-  <data name="numVadThreshold.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="&gt;&gt;listViewMeta.Name" xml:space="preserve">
-    <value>listViewMeta</value>
+  <data name="&gt;&gt;splitContainer2.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="butGen.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
   </data>
-  <data name="tabPage2.TabIndex" type="System.Int32, mscorlib">
-    <value>1</value>
+  <data name="&gt;&gt;tabControl1.Name" xml:space="preserve">
+    <value>tabControl1</value>
   </data>
   <data name="&gt;&gt;numNGen.Type" xml:space="preserve">
     <value>System.Windows.Forms.NumericUpDown, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -3510,17 +3507,20 @@
   <data name="numGoogleResults.TabIndex" type="System.Int32, mscorlib">
     <value>5</value>
   </data>
+  <data name="checkWhisperUseGPU.Text" xml:space="preserve">
+    <value>Use GPU</value>
+  </data>
   <data name="&gt;&gt;groupBox4.Type" xml:space="preserve">
     <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;comboNUMAStrat.Type" xml:space="preserve">
     <value>System.Windows.Forms.ComboBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="label25.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>3, 0, 0, 0</value>
+  <data name="checkLoadAuto.Location" type="System.Drawing.Point, System.Drawing">
+    <value>3, 930</value>
   </data>
-  <data name="label16.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>3, 0, 0, 0</value>
+  <data name="&gt;&gt;columnHeader2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ColumnHeader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;label24.Name" xml:space="preserve">
     <value>label24</value>
@@ -3537,7 +3537,7 @@
   <data name="&gt;&gt;checkLoadAuto.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
-  <data name="butLoad.ToolTip" xml:space="preserve">
+  <data name="label17.ToolTip" xml:space="preserve">
     <value />
   </data>
   <data name="columnHeader14.Text" xml:space="preserve">
@@ -3558,8 +3558,11 @@
   <data name="&gt;&gt;toolStripStatusLabel1.Name" xml:space="preserve">
     <value>toolStripStatusLabel1</value>
   </data>
-  <data name="&gt;&gt;checkDateTimeEnable.Parent" xml:space="preserve">
-    <value>groupBox5</value>
+  <data name="columnHeader5.Text" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="label11.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 152</value>
   </data>
   <data name="numThreadsBatch.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -3573,14 +3576,20 @@
   <data name="&gt;&gt;groupCPUParams.Name" xml:space="preserve">
     <value>groupCPUParams</value>
   </data>
-  <data name="&gt;&gt;label25.Name" xml:space="preserve">
-    <value>label25</value>
+  <data name="checkFileReadEnable.Size" type="System.Drawing.Size, System.Drawing">
+    <value>80, 17</value>
   </data>
   <data name="columnHeader1.Width" type="System.Int32, mscorlib">
     <value>250</value>
   </data>
+  <data name="&gt;&gt;groupBox5.Parent" xml:space="preserve">
+    <value>tabPage2</value>
+  </data>
   <data name="butVADDown.Size" type="System.Drawing.Size, System.Drawing">
     <value>188, 23</value>
+  </data>
+  <data name="&gt;&gt;textSystemPrompt.ZOrder" xml:space="preserve">
+    <value>15</value>
   </data>
   <data name="label13.ToolTip" xml:space="preserve">
     <value />
@@ -3588,20 +3597,17 @@
   <data name="splitContainer2.Panel2.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="&gt;&gt;listViewHugSearch.Type" xml:space="preserve">
-    <value>System.Windows.Forms.ListView, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="numTemp.ToolTip" xml:space="preserve">
+  <data name="numTopP.ToolTip" xml:space="preserve">
     <value />
   </data>
   <data name="label9.TabIndex" type="System.Int32, mscorlib">
     <value>19</value>
   </data>
-  <data name="&gt;&gt;tabControl1.Type" xml:space="preserve">
-    <value>System.Windows.Forms.TabControl, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="numMinP.Location" type="System.Drawing.Point, System.Drawing">
+    <value>119, 124</value>
   </data>
-  <data name="label15.Size" type="System.Drawing.Size, System.Drawing">
-    <value>186, 13</value>
+  <data name="checkFileWriteEnable.Size" type="System.Drawing.Size, System.Drawing">
+    <value>80, 17</value>
   </data>
   <data name="&gt;&gt;numWakeWordSimilarity.Type" xml:space="preserve">
     <value>System.Windows.Forms.NumericUpDown, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -3615,8 +3621,8 @@
   <data name="&gt;&gt;columnHeader14.Name" xml:space="preserve">
     <value>columnHeader14</value>
   </data>
-  <data name="label23.TabIndex" type="System.Int32, mscorlib">
-    <value>37</value>
+  <data name="textGoogleApiKey.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="label1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 0, 0, 0</value>
@@ -3633,8 +3639,8 @@
   <data name="checkFileListEnable.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
-  <data name="&gt;&gt;groupBox5.Type" xml:space="preserve">
-    <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="groupBox2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>200, 117</value>
   </data>
   <data name="linkFileInstruction.ToolTip" xml:space="preserve">
     <value />
@@ -3642,17 +3648,17 @@
   <data name="&gt;&gt;label10.Type" xml:space="preserve">
     <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;groupBox6.Name" xml:space="preserve">
-    <value>groupBox6</value>
+  <data name="&gt;&gt;checkMMap.Name" xml:space="preserve">
+    <value>checkMMap</value>
   </data>
   <data name="&gt;&gt;label6.Name" xml:space="preserve">
     <value>label6</value>
   </data>
-  <data name="columnHeader8.Width" type="System.Int32, mscorlib">
-    <value>878</value>
+  <data name="listViewMeta.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
   </data>
-  <data name="&gt;&gt;butCodeBlock.ZOrder" xml:space="preserve">
-    <value>4</value>
+  <data name="butDownload.Location" type="System.Drawing.Point, System.Drawing">
+    <value>919, 439</value>
   </data>
   <data name="&gt;&gt;checkWebpageFetchEnable.Parent" xml:space="preserve">
     <value>groupBox3</value>
@@ -3666,14 +3672,14 @@
   <data name="label7.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
-  <data name="label20.Size" type="System.Drawing.Size, System.Drawing">
-    <value>98, 13</value>
+  <data name="label13.Location" type="System.Drawing.Point, System.Drawing">
+    <value>1, 5</value>
   </data>
-  <data name="label7.ToolTip" xml:space="preserve">
+  <data name="label4.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="label25.ToolTip" xml:space="preserve">
-    <value />
+  <data name="numBatchSize.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
   </data>
   <data name="numMinP.Size" type="System.Drawing.Size, System.Drawing">
     <value>75, 20</value>
@@ -3684,8 +3690,8 @@
   <data name="&gt;&gt;numWhisperTemp.Parent" xml:space="preserve">
     <value>groupBox1</value>
   </data>
-  <data name="butVADDown.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 105</value>
+  <data name="label20.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="&gt;&gt;toolStripStatusLabel1.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripStatusLabel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -3702,56 +3708,56 @@
   <data name="&gt;&gt;label15.Type" xml:space="preserve">
     <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="label11.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 0, 0, 0</value>
+  </data>
   <data name="textGoogleApiKey.Size" type="System.Drawing.Size, System.Drawing">
     <value>132, 20</value>
   </data>
-  <data name="&gt;&gt;comboWhisperModel.ZOrder" xml:space="preserve">
-    <value>10</value>
+  <data name="&gt;&gt;label11.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;label20.ZOrder" xml:space="preserve">
     <value>5</value>
   </data>
-  <data name="label16.TabIndex" type="System.Int32, mscorlib">
-    <value>4</value>
+  <data name="checkMarkdown.Location" type="System.Drawing.Point, System.Drawing">
+    <value>204, 150</value>
   </data>
   <data name="numBatchSize.Location" type="System.Drawing.Point, System.Drawing">
     <value>119, 150</value>
   </data>
-  <data name="checkDateTimeEnable.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 14</value>
+  <data name="textInput.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Bottom, Left, Right</value>
   </data>
-  <data name="label20.Text" xml:space="preserve">
-    <value>Search engine ID:</value>
+  <data name="butLoad.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>0, 0, 0, 0</value>
   </data>
   <data name="label15.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 0, 0, 0</value>
   </data>
-  <data name="&gt;&gt;comboWhisperModel.Parent" xml:space="preserve">
-    <value>groupBox1</value>
-  </data>
-  <data name="progressBar1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>0, 0, 0, 0</value>
+  <data name="numVadThreshold.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="&gt;&gt;groupAdvanced.Type" xml:space="preserve">
     <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;splitContainer2.Name" xml:space="preserve">
-    <value>splitContainer2</value>
-  </data>
-  <data name="checkLoadAuto.Location" type="System.Drawing.Point, System.Drawing">
-    <value>3, 930</value>
+  <data name="numThreadsBatch.Location" type="System.Drawing.Point, System.Drawing">
+    <value>119, 19</value>
   </data>
   <data name="label24.Location" type="System.Drawing.Point, System.Drawing">
     <value>6, 168</value>
   </data>
-  <data name="numCtxSize.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+  <data name="label23.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
+  </data>
+  <data name="splitContainer2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>0, 0, 0, 0</value>
   </data>
   <data name="splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
   </data>
-  <data name="listViewHugFiles.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Bottom, Left, Right</value>
+  <data name="&gt;&gt;listViewModels.Parent" xml:space="preserve">
+    <value>splitContainer2.Panel1</value>
   </data>
   <data name="butApply.Text" xml:space="preserve">
     <value>Apply</value>
@@ -3762,8 +3768,8 @@
   <data name="numWakeWordSimilarity.Size" type="System.Drawing.Size, System.Drawing">
     <value>70, 20</value>
   </data>
-  <data name="&gt;&gt;numFreqThreshold.ZOrder" xml:space="preserve">
-    <value>2</value>
+  <data name="splitContainer3.Panel2.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="&gt;&gt;checkMLock.Type" xml:space="preserve">
     <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -3780,23 +3786,20 @@
   <data name="numThreads.Location" type="System.Drawing.Point, System.Drawing">
     <value>119, 19</value>
   </data>
-  <data name="splitContainer2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>0, 0, 0, 0</value>
+  <data name="&gt;&gt;checkFlashAttn.Name" xml:space="preserve">
+    <value>checkFlashAttn</value>
   </data>
-  <data name="label17.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>3, 0, 0, 0</value>
+  <data name="&gt;&gt;label20.Name" xml:space="preserve">
+    <value>label20</value>
   </data>
-  <data name="&gt;&gt;groupCPUParams.Parent" xml:space="preserve">
-    <value>tabPage2</value>
+  <data name="&gt;&gt;label21.ZOrder" xml:space="preserve">
+    <value>3</value>
   </data>
   <data name="&gt;&gt;numWhisperTemp.Type" xml:space="preserve">
     <value>System.Windows.Forms.NumericUpDown, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="textModelsPath.Size" type="System.Drawing.Size, System.Drawing">
-    <value>840, 20</value>
-  </data>
-  <data name="&gt;&gt;listViewHugSearch.ZOrder" xml:space="preserve">
-    <value>3</value>
+  <data name="splitContainer1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
   </data>
   <data name="radioBasicVAD.Text" xml:space="preserve">
     <value>Use Basic VAD</value>
@@ -3804,14 +3807,11 @@
   <data name="label9.Text" xml:space="preserve">
     <value>Top P:</value>
   </data>
-  <data name="checkFlashAttn.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
-    <value>MiddleRight</value>
+  <data name="numVadThreshold.Location" type="System.Drawing.Point, System.Drawing">
+    <value>124, 134</value>
   </data>
-  <data name="columnHeader5.Text" xml:space="preserve">
-    <value>Name</value>
-  </data>
-  <data name="numVadThreshold.TabIndex" type="System.Int32, mscorlib">
-    <value>6</value>
+  <data name="checkDateTimeEnable.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="butSearch.Location" type="System.Drawing.Point, System.Drawing">
     <value>923, 0</value>
@@ -3819,8 +3819,8 @@
   <data name="label26.TabIndex" type="System.Int32, mscorlib">
     <value>15</value>
   </data>
-  <data name="butGen.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Bottom, Right</value>
+  <data name="checkFlashAttn.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
   </data>
   <data name="label11.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -3834,11 +3834,11 @@
   <data name="&gt;&gt;numGoogleResults.Parent" xml:space="preserve">
     <value>groupBox2</value>
   </data>
-  <data name="label18.Text" xml:space="preserve">
-    <value>Frequency Threshold:</value>
+  <data name="splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
   </data>
-  <data name="&gt;&gt;columnHeader1.Type" xml:space="preserve">
-    <value>System.Windows.Forms.ColumnHeader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="&gt;&gt;textInput.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="textInput.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
@@ -3876,14 +3876,14 @@
   <data name="splitContainer3.SplitterDistance" type="System.Int32, mscorlib">
     <value>469</value>
   </data>
-  <data name="&gt;&gt;textInput.Type" xml:space="preserve">
-    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="checkFileReadEnable.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
   </data>
   <data name="&gt;&gt;textWakeWord.Parent" xml:space="preserve">
     <value>groupBox1</value>
   </data>
-  <data name="&gt;&gt;textInput.Name" xml:space="preserve">
-    <value>textInput</value>
+  <data name="splitContainer3.Location" type="System.Drawing.Point, System.Drawing">
+    <value>3, 3</value>
   </data>
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>

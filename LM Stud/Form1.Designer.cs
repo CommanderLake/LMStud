@@ -482,7 +482,6 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.butDownload, "butDownload");
 			this.butDownload.Name = "butDownload";
-			this.butDownload.Text = global::LMStud.Properties.Resources.Download;
 			this.toolTip1.SetToolTip(this.butDownload, resources.GetString("butDownload.ToolTip"));
 			this.butDownload.UseVisualStyleBackColor = true;
 			this.butDownload.Click += new System.EventHandler(this.ButDownload_Click);
@@ -1476,14 +1475,11 @@ namespace LMStud
 			this.tabPage2.ResumeLayout(false);
 			this.tabPage2.PerformLayout();
 			this.groupBox6.ResumeLayout(false);
-			this.groupBox6.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numVadThreshold)).EndInit();
 			this.groupBox5.ResumeLayout(false);
-			this.groupBox5.PerformLayout();
 			this.groupBox4.ResumeLayout(false);
 			this.groupBox4.PerformLayout();
 			this.groupBox3.ResumeLayout(false);
-			this.groupBox3.PerformLayout();
 			this.groupBox2.ResumeLayout(false);
 			this.groupBox2.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numGoogleResults)).EndInit();
@@ -1493,20 +1489,16 @@ namespace LMStud
 			((System.ComponentModel.ISupportInitialize)(this.numWhisperTemp)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numFreqThreshold)).EndInit();
 			this.groupCPUParamsBatch.ResumeLayout(false);
-			this.groupCPUParamsBatch.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numThreadsBatch)).EndInit();
 			this.groupCPUParams.ResumeLayout(false);
-			this.groupCPUParams.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numThreads)).EndInit();
 			this.groupAdvanced.ResumeLayout(false);
-			this.groupAdvanced.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numMinP)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numRepPen)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numBatchSize)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTopK)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTopP)).EndInit();
 			this.groupCommon.ResumeLayout(false);
-			this.groupCommon.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numCtxSize)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numGPULayers)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numNGen)).EndInit();
