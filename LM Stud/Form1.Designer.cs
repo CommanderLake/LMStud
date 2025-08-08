@@ -36,13 +36,6 @@ namespace LMStud
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
 			this.panelChat = new LMStud.MyFlowLayoutPanel();
-			this.checkSpeak = new System.Windows.Forms.CheckBox();
-			this.checkVoiceInput = new System.Windows.Forms.CheckBox();
-			this.checkMarkdown = new System.Windows.Forms.CheckBox();
-			this.checkStream = new System.Windows.Forms.CheckBox();
-			this.butCodeBlock = new System.Windows.Forms.Button();
-			this.butReset = new System.Windows.Forms.Button();
-			this.butGen = new System.Windows.Forms.Button();
 			this.textInput = new System.Windows.Forms.TextBox();
 			this.splitContainer2 = new System.Windows.Forms.SplitContainer();
 			this.listViewModels = new System.Windows.Forms.ListView();
@@ -52,9 +45,6 @@ namespace LMStud
 			this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.splitContainer3 = new System.Windows.Forms.SplitContainer();
-			this.butSearch = new System.Windows.Forms.Button();
-			this.textSearchTerm = new System.Windows.Forms.TextBox();
-			this.label13 = new System.Windows.Forms.Label();
 			this.listViewHugSearch = new System.Windows.Forms.ListView();
 			this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -63,11 +53,21 @@ namespace LMStud
 			this.columnHeader12 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeader13 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeader14 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-			this.progressBar1 = new System.Windows.Forms.ProgressBar();
-			this.butDownload = new System.Windows.Forms.Button();
 			this.listViewHugFiles = new System.Windows.Forms.ListView();
 			this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeader10 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.checkSpeak = new System.Windows.Forms.CheckBox();
+			this.checkVoiceInput = new System.Windows.Forms.CheckBox();
+			this.checkMarkdown = new System.Windows.Forms.CheckBox();
+			this.checkStream = new System.Windows.Forms.CheckBox();
+			this.butCodeBlock = new System.Windows.Forms.Button();
+			this.butReset = new System.Windows.Forms.Button();
+			this.butGen = new System.Windows.Forms.Button();
+			this.butSearch = new System.Windows.Forms.Button();
+			this.textSearchTerm = new System.Windows.Forms.TextBox();
+			this.label13 = new System.Windows.Forms.Label();
+			this.progressBar1 = new System.Windows.Forms.ProgressBar();
+			this.butDownload = new System.Windows.Forms.Button();
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabPage1 = new System.Windows.Forms.TabPage();
 			this.tabPage2 = new System.Windows.Forms.TabPage();
@@ -223,13 +223,6 @@ namespace LMStud
 			// splitContainer1.Panel2
 			// 
 			resources.ApplyResources(this.splitContainer1.Panel2, "splitContainer1.Panel2");
-			this.splitContainer1.Panel2.Controls.Add(this.checkSpeak);
-			this.splitContainer1.Panel2.Controls.Add(this.checkVoiceInput);
-			this.splitContainer1.Panel2.Controls.Add(this.checkMarkdown);
-			this.splitContainer1.Panel2.Controls.Add(this.checkStream);
-			this.splitContainer1.Panel2.Controls.Add(this.butCodeBlock);
-			this.splitContainer1.Panel2.Controls.Add(this.butReset);
-			this.splitContainer1.Panel2.Controls.Add(this.butGen);
 			this.splitContainer1.Panel2.Controls.Add(this.textInput);
 			this.toolTip1.SetToolTip(this.splitContainer1.Panel2, resources.GetString("splitContainer1.Panel2.ToolTip"));
 			this.toolTip1.SetToolTip(this.splitContainer1, resources.GetString("splitContainer1.ToolTip"));
@@ -242,67 +235,6 @@ namespace LMStud
 			this.panelChat.Name = "panelChat";
 			this.toolTip1.SetToolTip(this.panelChat, resources.GetString("panelChat.ToolTip"));
 			this.panelChat.Layout += new System.Windows.Forms.LayoutEventHandler(this.PanelChat_Layout);
-			// 
-			// checkSpeak
-			// 
-			resources.ApplyResources(this.checkSpeak, "checkSpeak");
-			this.checkSpeak.Name = "checkSpeak";
-			this.toolTip1.SetToolTip(this.checkSpeak, resources.GetString("checkSpeak.ToolTip"));
-			this.checkSpeak.UseVisualStyleBackColor = true;
-			this.checkSpeak.CheckedChanged += new System.EventHandler(this.CheckSpeak_CheckedChanged);
-			// 
-			// checkVoiceInput
-			// 
-			resources.ApplyResources(this.checkVoiceInput, "checkVoiceInput");
-			this.checkVoiceInput.Name = "checkVoiceInput";
-			this.checkVoiceInput.ThreeState = true;
-			this.toolTip1.SetToolTip(this.checkVoiceInput, resources.GetString("checkVoiceInput.ToolTip"));
-			this.checkVoiceInput.UseVisualStyleBackColor = true;
-			this.checkVoiceInput.CheckedChanged += new System.EventHandler(this.CheckVoiceInput_CheckedChanged);
-			// 
-			// checkMarkdown
-			// 
-			resources.ApplyResources(this.checkMarkdown, "checkMarkdown");
-			this.checkMarkdown.Checked = true;
-			this.checkMarkdown.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkMarkdown.Name = "checkMarkdown";
-			this.toolTip1.SetToolTip(this.checkMarkdown, resources.GetString("checkMarkdown.ToolTip"));
-			this.checkMarkdown.UseVisualStyleBackColor = true;
-			this.checkMarkdown.CheckedChanged += new System.EventHandler(this.CheckMarkdown_CheckedChanged);
-			// 
-			// checkStream
-			// 
-			resources.ApplyResources(this.checkStream, "checkStream");
-			this.checkStream.Checked = true;
-			this.checkStream.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkStream.Name = "checkStream";
-			this.toolTip1.SetToolTip(this.checkStream, resources.GetString("checkStream.ToolTip"));
-			this.checkStream.UseVisualStyleBackColor = true;
-			// 
-			// butCodeBlock
-			// 
-			resources.ApplyResources(this.butCodeBlock, "butCodeBlock");
-			this.butCodeBlock.Name = "butCodeBlock";
-			this.toolTip1.SetToolTip(this.butCodeBlock, resources.GetString("butCodeBlock.ToolTip"));
-			this.butCodeBlock.UseVisualStyleBackColor = true;
-			this.butCodeBlock.Click += new System.EventHandler(this.ButCodeBlock_Click);
-			// 
-			// butReset
-			// 
-			resources.ApplyResources(this.butReset, "butReset");
-			this.butReset.Name = "butReset";
-			this.toolTip1.SetToolTip(this.butReset, resources.GetString("butReset.ToolTip"));
-			this.butReset.UseVisualStyleBackColor = true;
-			this.butReset.Click += new System.EventHandler(this.ButReset_Click);
-			// 
-			// butGen
-			// 
-			resources.ApplyResources(this.butGen, "butGen");
-			this.butGen.Name = "butGen";
-			this.butGen.Text = global::LMStud.Properties.Resources.Generate;
-			this.toolTip1.SetToolTip(this.butGen, resources.GetString("butGen.ToolTip"));
-			this.butGen.UseVisualStyleBackColor = true;
-			this.butGen.Click += new System.EventHandler(this.ButGen_Click);
 			// 
 			// textInput
 			// 
@@ -389,41 +321,15 @@ namespace LMStud
 			// splitContainer3.Panel1
 			// 
 			resources.ApplyResources(this.splitContainer3.Panel1, "splitContainer3.Panel1");
-			this.splitContainer3.Panel1.Controls.Add(this.butSearch);
-			this.splitContainer3.Panel1.Controls.Add(this.textSearchTerm);
-			this.splitContainer3.Panel1.Controls.Add(this.label13);
 			this.splitContainer3.Panel1.Controls.Add(this.listViewHugSearch);
 			this.toolTip1.SetToolTip(this.splitContainer3.Panel1, resources.GetString("splitContainer3.Panel1.ToolTip"));
 			// 
 			// splitContainer3.Panel2
 			// 
 			resources.ApplyResources(this.splitContainer3.Panel2, "splitContainer3.Panel2");
-			this.splitContainer3.Panel2.Controls.Add(this.progressBar1);
-			this.splitContainer3.Panel2.Controls.Add(this.butDownload);
 			this.splitContainer3.Panel2.Controls.Add(this.listViewHugFiles);
 			this.toolTip1.SetToolTip(this.splitContainer3.Panel2, resources.GetString("splitContainer3.Panel2.ToolTip"));
 			this.toolTip1.SetToolTip(this.splitContainer3, resources.GetString("splitContainer3.ToolTip"));
-			// 
-			// butSearch
-			// 
-			resources.ApplyResources(this.butSearch, "butSearch");
-			this.butSearch.Name = "butSearch";
-			this.toolTip1.SetToolTip(this.butSearch, resources.GetString("butSearch.ToolTip"));
-			this.butSearch.UseVisualStyleBackColor = true;
-			this.butSearch.Click += new System.EventHandler(this.ButSearch_Click);
-			// 
-			// textSearchTerm
-			// 
-			resources.ApplyResources(this.textSearchTerm, "textSearchTerm");
-			this.textSearchTerm.Name = "textSearchTerm";
-			this.toolTip1.SetToolTip(this.textSearchTerm, resources.GetString("textSearchTerm.ToolTip"));
-			this.textSearchTerm.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextSearchTerm_KeyDown);
-			// 
-			// label13
-			// 
-			resources.ApplyResources(this.label13, "label13");
-			this.label13.Name = "label13";
-			this.toolTip1.SetToolTip(this.label13, resources.GetString("label13.ToolTip"));
 			// 
 			// listViewHugSearch
 			// 
@@ -472,20 +378,6 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.columnHeader14, "columnHeader14");
 			// 
-			// progressBar1
-			// 
-			resources.ApplyResources(this.progressBar1, "progressBar1");
-			this.progressBar1.Name = "progressBar1";
-			this.toolTip1.SetToolTip(this.progressBar1, resources.GetString("progressBar1.ToolTip"));
-			// 
-			// butDownload
-			// 
-			resources.ApplyResources(this.butDownload, "butDownload");
-			this.butDownload.Name = "butDownload";
-			this.toolTip1.SetToolTip(this.butDownload, resources.GetString("butDownload.ToolTip"));
-			this.butDownload.UseVisualStyleBackColor = true;
-			this.butDownload.Click += new System.EventHandler(this.ButDownload_Click);
-			// 
 			// listViewHugFiles
 			// 
 			resources.ApplyResources(this.listViewHugFiles, "listViewHugFiles");
@@ -507,6 +399,102 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.columnHeader10, "columnHeader10");
 			// 
+			// checkSpeak
+			// 
+			resources.ApplyResources(this.checkSpeak, "checkSpeak");
+			this.checkSpeak.Name = "checkSpeak";
+			this.toolTip1.SetToolTip(this.checkSpeak, resources.GetString("checkSpeak.ToolTip"));
+			this.checkSpeak.UseVisualStyleBackColor = true;
+			this.checkSpeak.CheckedChanged += new System.EventHandler(this.CheckSpeak_CheckedChanged);
+			// 
+			// checkVoiceInput
+			// 
+			resources.ApplyResources(this.checkVoiceInput, "checkVoiceInput");
+			this.checkVoiceInput.Name = "checkVoiceInput";
+			this.checkVoiceInput.ThreeState = true;
+			this.toolTip1.SetToolTip(this.checkVoiceInput, resources.GetString("checkVoiceInput.ToolTip"));
+			this.checkVoiceInput.UseVisualStyleBackColor = true;
+			this.checkVoiceInput.CheckedChanged += new System.EventHandler(this.CheckVoiceInput_CheckedChanged);
+			// 
+			// checkMarkdown
+			// 
+			resources.ApplyResources(this.checkMarkdown, "checkMarkdown");
+			this.checkMarkdown.Checked = true;
+			this.checkMarkdown.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkMarkdown.Name = "checkMarkdown";
+			this.toolTip1.SetToolTip(this.checkMarkdown, resources.GetString("checkMarkdown.ToolTip"));
+			this.checkMarkdown.UseVisualStyleBackColor = true;
+			this.checkMarkdown.CheckedChanged += new System.EventHandler(this.CheckMarkdown_CheckedChanged);
+			// 
+			// checkStream
+			// 
+			resources.ApplyResources(this.checkStream, "checkStream");
+			this.checkStream.Checked = true;
+			this.checkStream.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkStream.Name = "checkStream";
+			this.toolTip1.SetToolTip(this.checkStream, resources.GetString("checkStream.ToolTip"));
+			this.checkStream.UseVisualStyleBackColor = true;
+			// 
+			// butCodeBlock
+			// 
+			resources.ApplyResources(this.butCodeBlock, "butCodeBlock");
+			this.butCodeBlock.Name = "butCodeBlock";
+			this.toolTip1.SetToolTip(this.butCodeBlock, resources.GetString("butCodeBlock.ToolTip"));
+			this.butCodeBlock.UseVisualStyleBackColor = true;
+			this.butCodeBlock.Click += new System.EventHandler(this.ButCodeBlock_Click);
+			// 
+			// butReset
+			// 
+			resources.ApplyResources(this.butReset, "butReset");
+			this.butReset.Name = "butReset";
+			this.toolTip1.SetToolTip(this.butReset, resources.GetString("butReset.ToolTip"));
+			this.butReset.UseVisualStyleBackColor = true;
+			this.butReset.Click += new System.EventHandler(this.ButReset_Click);
+			// 
+			// butGen
+			// 
+			resources.ApplyResources(this.butGen, "butGen");
+			this.butGen.Name = "butGen";
+			this.butGen.Text = global::LMStud.Properties.Resources.Generate;
+			this.toolTip1.SetToolTip(this.butGen, resources.GetString("butGen.ToolTip"));
+			this.butGen.UseVisualStyleBackColor = true;
+			this.butGen.Click += new System.EventHandler(this.ButGen_Click);
+			// 
+			// butSearch
+			// 
+			resources.ApplyResources(this.butSearch, "butSearch");
+			this.butSearch.Name = "butSearch";
+			this.toolTip1.SetToolTip(this.butSearch, resources.GetString("butSearch.ToolTip"));
+			this.butSearch.UseVisualStyleBackColor = true;
+			this.butSearch.Click += new System.EventHandler(this.ButSearch_Click);
+			// 
+			// textSearchTerm
+			// 
+			resources.ApplyResources(this.textSearchTerm, "textSearchTerm");
+			this.textSearchTerm.Name = "textSearchTerm";
+			this.toolTip1.SetToolTip(this.textSearchTerm, resources.GetString("textSearchTerm.ToolTip"));
+			this.textSearchTerm.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextSearchTerm_KeyDown);
+			// 
+			// label13
+			// 
+			resources.ApplyResources(this.label13, "label13");
+			this.label13.Name = "label13";
+			this.toolTip1.SetToolTip(this.label13, resources.GetString("label13.ToolTip"));
+			// 
+			// progressBar1
+			// 
+			resources.ApplyResources(this.progressBar1, "progressBar1");
+			this.progressBar1.Name = "progressBar1";
+			this.toolTip1.SetToolTip(this.progressBar1, resources.GetString("progressBar1.ToolTip"));
+			// 
+			// butDownload
+			// 
+			resources.ApplyResources(this.butDownload, "butDownload");
+			this.butDownload.Name = "butDownload";
+			this.toolTip1.SetToolTip(this.butDownload, resources.GetString("butDownload.ToolTip"));
+			this.butDownload.UseVisualStyleBackColor = true;
+			this.butDownload.Click += new System.EventHandler(this.ButDownload_Click);
+			// 
 			// tabControl1
 			// 
 			resources.ApplyResources(this.tabControl1, "tabControl1");
@@ -521,7 +509,14 @@ namespace LMStud
 			// tabPage1
 			// 
 			resources.ApplyResources(this.tabPage1, "tabPage1");
+			this.tabPage1.Controls.Add(this.checkSpeak);
 			this.tabPage1.Controls.Add(this.splitContainer1);
+			this.tabPage1.Controls.Add(this.checkVoiceInput);
+			this.tabPage1.Controls.Add(this.butReset);
+			this.tabPage1.Controls.Add(this.checkMarkdown);
+			this.tabPage1.Controls.Add(this.butGen);
+			this.tabPage1.Controls.Add(this.checkStream);
+			this.tabPage1.Controls.Add(this.butCodeBlock);
 			this.tabPage1.Name = "tabPage1";
 			this.toolTip1.SetToolTip(this.tabPage1, resources.GetString("tabPage1.ToolTip"));
 			this.tabPage1.UseVisualStyleBackColor = true;
@@ -1387,6 +1382,11 @@ namespace LMStud
 			// tabPage4
 			// 
 			resources.ApplyResources(this.tabPage4, "tabPage4");
+			this.tabPage4.Controls.Add(this.butDownload);
+			this.tabPage4.Controls.Add(this.label13);
+			this.tabPage4.Controls.Add(this.butSearch);
+			this.tabPage4.Controls.Add(this.textSearchTerm);
+			this.tabPage4.Controls.Add(this.progressBar1);
 			this.tabPage4.Controls.Add(this.splitContainer3);
 			this.tabPage4.Name = "tabPage4";
 			this.toolTip1.SetToolTip(this.tabPage4, resources.GetString("tabPage4.ToolTip"));
@@ -1466,12 +1466,12 @@ namespace LMStud
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
 			this.splitContainer2.ResumeLayout(false);
 			this.splitContainer3.Panel1.ResumeLayout(false);
-			this.splitContainer3.Panel1.PerformLayout();
 			this.splitContainer3.Panel2.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).EndInit();
 			this.splitContainer3.ResumeLayout(false);
 			this.tabControl1.ResumeLayout(false);
 			this.tabPage1.ResumeLayout(false);
+			this.tabPage1.PerformLayout();
 			this.tabPage2.ResumeLayout(false);
 			this.tabPage2.PerformLayout();
 			this.groupBox6.ResumeLayout(false);
@@ -1506,6 +1506,7 @@ namespace LMStud
 			this.tabPage3.ResumeLayout(false);
 			this.tabPage3.PerformLayout();
 			this.tabPage4.ResumeLayout(false);
+			this.tabPage4.PerformLayout();
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();
 			this.ResumeLayout(false);

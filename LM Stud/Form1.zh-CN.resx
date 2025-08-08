@@ -123,6 +123,84 @@
   <data name="splitContainer1.Panel1.ToolTip" xml:space="preserve">
     <value />
   </data>
+  <data name="textInput.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="splitContainer1.Panel2.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="splitContainer1.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="columnHeader1.Text" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="columnHeader2.Text" xml:space="preserve">
+    <value>完整路径</value>
+  </data>
+  <data name="listViewModels.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="splitContainer2.Panel1.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="columnHeader3.Text" xml:space="preserve">
+    <value>元数据条目</value>
+  </data>
+  <data name="columnHeader4.Text" xml:space="preserve">
+    <value>值</value>
+  </data>
+  <data name="listViewMeta.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="splitContainer2.Panel2.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="splitContainer2.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="columnHeader5.Text" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="columnHeader6.Text" xml:space="preserve">
+    <value>上传者</value>
+  </data>
+  <data name="columnHeader7.Text" xml:space="preserve">
+    <value>点赞数</value>
+  </data>
+  <data name="columnHeader11.Text" xml:space="preserve">
+    <value>下载量</value>
+  </data>
+  <data name="columnHeader12.Text" xml:space="preserve">
+    <value>热度分</value>
+  </data>
+  <data name="columnHeader13.Text" xml:space="preserve">
+    <value>创建时间</value>
+  </data>
+  <data name="columnHeader14.Text" xml:space="preserve">
+    <value>修改时间</value>
+  </data>
+  <data name="listViewHugSearch.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="splitContainer3.Panel1.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="columnHeader8.Text" xml:space="preserve">
+    <value>文件名</value>
+  </data>
+  <data name="columnHeader10.Text" xml:space="preserve">
+    <value>大小</value>
+  </data>
+  <data name="listViewHugFiles.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="splitContainer3.Panel2.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="splitContainer3.ToolTip" xml:space="preserve">
+    <value />
+  </data>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="checkSpeak.Size" type="System.Drawing.Size, System.Drawing">
     <value>74, 17</value>
@@ -169,42 +247,6 @@
   <data name="butGen.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="textInput.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer1.Panel2.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer1.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="columnHeader1.Text" xml:space="preserve">
-    <value>名称</value>
-  </data>
-  <data name="columnHeader2.Text" xml:space="preserve">
-    <value>完整路径</value>
-  </data>
-  <data name="listViewModels.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer2.Panel1.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="columnHeader3.Text" xml:space="preserve">
-    <value>元数据条目</value>
-  </data>
-  <data name="columnHeader4.Text" xml:space="preserve">
-    <value>值</value>
-  </data>
-  <data name="listViewMeta.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer2.Panel2.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer2.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="butSearch.Text" xml:space="preserve">
     <value>搜索</value>
   </data>
@@ -220,67 +262,13 @@
   <data name="label13.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="columnHeader5.Text" xml:space="preserve">
-    <value>名称</value>
-  </data>
-  <data name="columnHeader6.Text" xml:space="preserve">
-    <value>上传者</value>
-  </data>
-  <data name="columnHeader7.Text" xml:space="preserve">
-    <value>点赞数</value>
-  </data>
-  <data name="columnHeader11.Text" xml:space="preserve">
-    <value>下载量</value>
-  </data>
-  <data name="columnHeader12.Text" xml:space="preserve">
-    <value>热度分</value>
-  </data>
-  <data name="columnHeader13.Text" xml:space="preserve">
-    <value>创建时间</value>
-  </data>
-  <data name="columnHeader14.Text" xml:space="preserve">
-    <value>修改时间</value>
-  </data>
-  <data name="listViewHugSearch.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer3.Panel1.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="progressBar1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 443</value>
-  </data>
-  <data name="progressBar1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>923, 23</value>
-  </data>
   <data name="progressBar1.ToolTip" xml:space="preserve">
     <value />
-  </data>
-  <data name="butDownload.Location" type="System.Drawing.Point, System.Drawing">
-    <value>923, 443</value>
   </data>
   <data name="butDownload.Text" xml:space="preserve">
     <value>下载</value>
   </data>
   <data name="butDownload.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="columnHeader8.Text" xml:space="preserve">
-    <value>文件名</value>
-  </data>
-  <data name="columnHeader10.Text" xml:space="preserve">
-    <value>大小</value>
-  </data>
-  <data name="listViewHugFiles.Size" type="System.Drawing.Size, System.Drawing">
-    <value>998, 443</value>
-  </data>
-  <data name="listViewHugFiles.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer3.Panel2.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer3.ToolTip" xml:space="preserve">
     <value />
   </data>
   <data name="tabPage1.Text" xml:space="preserve">
