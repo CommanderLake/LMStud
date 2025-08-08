@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Speech.Synthesis;
@@ -28,6 +29,9 @@ namespace LMStud{
 		private LVColumnClickHandler _columnClickHandler;
 		internal Form1(){
 			_this = this;
+			//var culture = new CultureInfo("zh-CN");
+			//Thread.CurrentThread.CurrentUICulture = culture;
+			//Thread.CurrentThread.CurrentCulture = culture;
 			InitializeComponent();
 			InitializeListViews();
 			Icon = Resources.LM_Stud_256;

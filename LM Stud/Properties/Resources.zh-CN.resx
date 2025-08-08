@@ -1,0 +1,287 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    这是针对 LMStud 项目的简体中文（zh-CN）资源文件。
+    注释中对一些关键翻译提供了说明。
+  -->
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  
+  <!-- 非字符串资源，保持原样 -->
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="LM_Stud_256" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\LM Stud 256.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+
+  <!-- 字符串资源翻译 -->
+  
+  <data name="LM_Stud" xml:space="preserve">
+    <value>LM Stud</value>
+    <comment>产品名，通常建议保留原文</comment>
+  </data>
+  <data name="Error_Whisper_model_not_found" xml:space="preserve">
+    <value>错误：未找到 Whisper 模型。</value>
+  </data>
+  <data name="VAD_model_not_found__use_Basic_VAD_" xml:space="preserve">
+    <value>未找到 VAD 模型，是否使用基础 VAD？</value>
+    <comment>VAD: Voice Activity Detection 语音活动检测</comment>
+  </data>
+  <data name="Error_initialising_whisper" xml:space="preserve">
+    <value>初始化 Whisper 时出错。</value>
+  </data>
+  <data name="Error_starting_whisper_transcription" xml:space="preserve">
+    <value>启动 Whisper 转录时出错。</value>
+  </data>
+  <data name="Conversation_too_long_for_context" xml:space="preserve">
+    <value>对话过长，已超出上下文窗口限制。</value>
+  </data>
+  <data name="Generate" xml:space="preserve">
+    <value>生成</value>
+  </data>
+  <data name="_0_F2__Tok_s" xml:space="preserve">
+    <value>{0:F2} Token/秒</value>
+    <comment>Token/s (Tokens per second) 是行业标准术语，直接翻译并保留格式</comment>
+  </data>
+  <data name="First_token_time__" xml:space="preserve">
+    <value>首个 Token 生成时间：</value>
+    <comment>TTFT (Time To First Token) 的通俗表达</comment>
+  </data>
+  <data name="_Tokens" xml:space="preserve">
+    <value> Token</value>
+    <comment>注意保留前面的空格</comment>
+  </data>
+  <data name="_s" xml:space="preserve">
+    <value> 秒</value>
+    <comment>秒的缩写，注意保留前面的空格</comment>
+  </data>
+  <data name="Error_reading_file___0_" xml:space="preserve">
+    <value>读取文件时出错：{0}</value>
+  </data>
+  <data name="Stop" xml:space="preserve">
+    <value>停止</value>
+  </data>
+  <data name="Please_select_an_item_from_both_lists_" xml:space="preserve">
+    <value>请从两个列表中都选择一个项目。</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Model_search_error___0_" xml:space="preserve">
+    <value>模型搜索错误：{0}</value>
+  </data>
+  <data name="HTTP_Error_loading_files_for_" xml:space="preserve">
+    <value>加载文件时出现 HTTP 错误：</value>
+  </data>
+  <data name="JSON_Parse_Error_for_" xml:space="preserve">
+    <value>解析 JSON 时出错：</value>
+  </data>
+  <data name="Error_loading_files_for_" xml:space="preserve">
+    <value>加载文件时出错：</value>
+  </data>
+  <data name="Failed_to_create_directory___0_" xml:space="preserve">
+    <value>创建目录失败：{0}</value>
+  </data>
+  <data name="Downloaded__0__to___1_" xml:space="preserve">
+    <value>已下载 {0} 到：
+{1}</value>
+  </data>
+  <data name="Download_failed_with_error_code___0_" xml:space="preserve">
+    <value>下载失败，错误代码：{0}</value>
+  </data>
+  <data name="Download_failed___0_" xml:space="preserve">
+    <value>下载失败：{0}</value>
+  </data>
+  <data name="Download" xml:space="preserve">
+    <value>下载</value>
+  </data>
+  <data name="_0___1__2_" xml:space="preserve">
+    <value>{0}/{1}{2}</value>
+  </data>
+  <data name="Models_folder_not_found__please_specify_a_valid_folder_in_the_Settings_tab" xml:space="preserve">
+    <value>未找到模型文件夹，请在“设置”选项卡中指定一个有效文件夹。</value>
+  </data>
+  <data name="Error_setting_system_prompt" xml:space="preserve">
+    <value>设置系统提示词时出错</value>
+  </data>
+  <data name="Loading__" xml:space="preserve">
+    <value>正在加载：</value>
+  </data>
+  <data name="Done_loading__" xml:space="preserve">
+    <value>加载完成：</value>
+  </data>
+  <data name="Model_unloaded" xml:space="preserve">
+    <value>模型已卸载</value>
+  </data>
+  <data name="A_changed_setting_requires_the_model_to_be_reloaded__reload_now_" xml:space="preserve">
+    <value>设置已更改，需要重新加载模型。是否立即重新加载？</value>
+  </data>
+  <data name="Folder_not_found" xml:space="preserve">
+    <value>未找到文件夹</value>
+  </data>
+  <data name="ToolTip_textSystemPrompt" xml:space="preserve">
+    <value>告诉 AI 它的角色、行为方式，或提供初始上下文（即系统提示词）。</value>
+  </data>
+  <data name="ToolTip_textModelsPath" xml:space="preserve">
+    <value>包含 .gguf 模型文件的文件夹路径。</value>
+  </data>
+  <data name="ToolTip_numCtxSize" xml:space="preserve">
+    <value>上下文窗口大小（最大 Token 数）。值越高，模型的“记忆”能力越强，但会消耗更多内存。</value>
+  </data>
+  <data name="ToolTip_numGPULayers" xml:space="preserve">
+    <value>要卸载到 GPU 的模型层数。层数越多，性能越好，但会增加显存（VRAM）使用量。</value>
+  </data>
+  <data name="ToolTip_numTemp" xml:space="preserve">
+    <value>温度（Temperature）控制生成内容的随机性。值越低，响应越确定；值越高，输出越具创造性。</value>
+  </data>
+  <data name="ToolTip_numNGen" xml:space="preserve">
+    <value>每次响应生成 Token 的数量（即 AI 回复的最大长度）。-1 表示无限制。</value>
+  </data>
+  <data name="ToolTip_comboNUMAStrat" xml:space="preserve">
+    <value>NUMA（非统一内存访问）策略。如果使用多路 CPU 或特定的内存配置，调整此项可能提升性能。</value>
+  </data>
+  <data name="ToolTip_numRepPen" xml:space="preserve">
+    <value>重复惩罚（Repetition Penalty）用于减少重复的输出。值越高，对重复短语的抑制越强。</value>
+  </data>
+  <data name="ToolTip_numTopK" xml:space="preserve">
+    <value>Top-K 采样：将 Token 的选择范围限制在 K 个最可能的候选项内，以提高连贯性。</value>
+  </data>
+  <data name="ToolTip_numTopP" xml:space="preserve">
+    <value>Top-P 采样：从累积概率超过阈值的最小 Token 集合中进行选择，以控制内容的多样性。</value>
+  </data>
+  <data name="ToolTip_numMinP" xml:space="preserve">
+    <value>Min-P 采样：仅保留那些概率至少为最高概率 Token 一定比例的候选项，用于削减不太可能的选项并降低噪声。</value>
+  </data>
+  <data name="ToolTip_numBatchSize" xml:space="preserve">
+    <value>生成期间处理 Token 的批处理大小。较高的值可以提高性能，但会消耗更多内存。</value>
+  </data>
+  <data name="ToolTip_groupCPUParams" xml:space="preserve">
+    <value>控制在 CPU 上生成文本的参数。</value>
+  </data>
+  <data name="ToolTip_numThreads" xml:space="preserve">
+    <value>用于生成 Token 的 CPU 线程数。通常，设置为物理核心数的 75% 左右是最佳选择，以避免内存控制器过载。</value>
+  </data>
+  <data name="ToolTip_checkMMap" xml:space="preserve">
+    <value>将模型文件映射到内存中以便按需加载，可以缩短模型加载时间。</value>
+  </data>
+  <data name="ToolTip_checkMLock" xml:space="preserve">
+    <value>将模型锁定在内存（RAM）中，防止被交换到磁盘。</value>
+  </data>
+  <data name="ToolTip_groupCPUParamsBatch" xml:space="preserve">
+    <value>用于预生成阶段（批处理准备）的参数。</value>
+  </data>
+  <data name="ToolTip_numThreadsBatch" xml:space="preserve">
+    <value>用于批处理准备的 CPU 线程数。</value>
+  </data>
+  <data name="ToolTip_numVadThreshold" xml:space="preserve">
+    <value>语音活动检测（VAD）阈值。值越低，对语音激活的灵敏度越高。</value>
+  </data>
+  <data name="ToolTip_numFreqThreshold" xml:space="preserve">
+    <value>高通滤波器截止频率。值越高，能滤除的低频噪声越多。</value>
+  </data>
+  <data name="ToolTip_checkSpeak" xml:space="preserve">
+    <value>使用计算机的默认语音朗读生成的回复。</value>
+  </data>
+  <data name="ToolTip_checkVoiceInput" xml:space="preserve">
+    <value>中间选中状态（填充方块）表示仅转录语音而不生成回复；完全选中状态表示在转录后自动生成回复。</value>
+  </data>
+  <data name="ToolTip_textGoogleApiKey" xml:space="preserve">
+    <value>使用搜索工具需要 Google API 密钥，您可以免费获取一个（每天 100 次搜索）。</value>
+  </data>
+  <data name="ToolTip_textGoogleSearchID" xml:space="preserve">
+    <value>创建您自己的 Google Programmable Search Engine，并将其“搜索引擎 ID”复制到此处。</value>
+  </data>
+  <data name="ToolTip_checkFileListEnable" xml:space="preserve">
+    <value>启用工具：列出指定基础路径下的文件夹内容。</value>
+  </data>
+  <data name="ToolTip_checkFileCreateEnable" xml:space="preserve">
+    <value>启用工具：在指定基础路径下创建新文件。</value>
+  </data>
+  <data name="ToolTip_checkFileReadEnable" xml:space="preserve">
+    <value>启用工具：读取指定基础路径下的文件内容。</value>
+  </data>
+  <data name="ToolTip_checkFileWriteEnable" xml:space="preserve">
+    <value>启用工具：向指定基础路径下的文件写入内容。</value>
+  </data>
+  <data name="ToolTip_textFileBasePath" xml:space="preserve">
+    <value>文件访问均基于此相对路径，并严格限制在此路径下的文件和文件夹。</value>
+  </data>
+  <data name="ToolTip_linkFileInstruction" xml:space="preserve">
+    <value>设置一条指令，用于优化助手使用文件工具的方式。</value>
+  </data>
+  <data name="ToolTip_numWakeWordSimilarity" xml:space="preserve">
+    <value>设置检测到的唤醒词与目标唤醒词的相似度阈值，达到该阈值才能激活转录。</value>
+  </data>
+  <data name="ToolTip_textWakeWord" xml:space="preserve">
+    <value>可选的唤醒词。在开始语音转录前，必须先说出此短语。</value>
+  </data>
+  <data name="ToolTip_radioBasicVAD" xml:space="preserve">
+    <value>使用基于能量的简单语音活动检测。</value>
+  </data>
+  <data name="ToolTip_radioWhisperVAD" xml:space="preserve">
+    <value>使用 Whisper 的神经网络 VAD 模型进行语音检测。</value>
+  </data>
+  <data name="ToolTip_comboVADModel" xml:space="preserve">
+    <value>选择用于语音检测的 Whisper VAD 模型。</value>
+  </data>
+  <data name="ToolTip_butVADDown" xml:space="preserve">
+    <value>下载 Whisper VAD 模型。</value>
+  </data>
+  <data name="_0____1_" xml:space="preserve">
+    <value>{0}：{1}</value>
+  </data>
+  <data name="The_model_could_not_be_loaded_" xml:space="preserve">
+    <value>无法加载模型。</value>
+  </data>
+  <data name="No_model_has_been_loaded_" xml:space="preserve">
+    <value>尚未加载任何模型。</value>
+  </data>
+  <data name="Failed_to_create_the_model_context_" xml:space="preserve">
+    <value>创建模型上下文失败。</value>
+  </data>
+  <data name="Failed_to_create_the_sampler_" xml:space="preserve">
+    <value>创建采样器失败。</value>
+  </data>
+  <data name="The_chat_template_could_not_be_applied_" xml:space="preserve">
+    <value>无法应用聊天模板。</value>
+  </data>
+  <data name="The_conversation_is_too_long_for_the_context_window_" xml:space="preserve">
+    <value>对话长度超出上下文窗口限制。</value>
+  </data>
+  <data name="The_model_backend_returned_a_decode_error_" xml:space="preserve">
+    <value>模型后端返回解码错误。</value>
+  </data>
+  <data name="An_index_was_out_of_range_" xml:space="preserve">
+    <value>索引超出范围。</value>
+  </data>
+  <data name="Failed_to_tokenize_the_prompt_" xml:space="preserve">
+    <value>对提示词进行分词（Tokenize）失败。</value>
+  </data>
+  <data name="Failed_to_convert_a_token_" xml:space="preserve">
+    <value>转换 Token 失败。</value>
+  </data>
+  <data name="Unable_to_parse_the_chat_message_" xml:space="preserve">
+    <value>无法解析聊天消息。</value>
+  </data>
+  <data name="Error_loading_model" xml:space="preserve">
+    <value>加载模型时出错</value>
+  </data>
+  <data name="Error_creating_session" xml:space="preserve">
+    <value>创建会话时出错</value>
+  </data>
+  <data name="Error_creating_context" xml:space="preserve">
+    <value>创建上下文时出错</value>
+  </data>
+  <data name="Error_creating_sampler" xml:space="preserve">
+    <value>创建采样器时出错</value>
+  </data>
+</root>
