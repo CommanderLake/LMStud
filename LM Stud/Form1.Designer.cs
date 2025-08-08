@@ -846,7 +846,7 @@ namespace LMStud
             0});
 			this.numTopK.Name = "numTopK";
 			this.numTopK.Value = new decimal(new int[] {
-            20,
+            40,
             0,
             0,
             0});
