@@ -423,6 +423,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Modified global settings are overridden by the Model Settings for this model..
+        /// </summary>
+        internal static string Modified_global_settings_are_overridden_by_the_Model_Settings_for_this_model_ {
+            get {
+                return ResourceManager.GetString("Modified_global_settings_are_overridden_by_the_Model_Settings_for_this_model_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No model has been loaded..
         /// </summary>
         internal static string No_model_has_been_loaded_ {
