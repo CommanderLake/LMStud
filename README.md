@@ -1,4 +1,7 @@
-﻿# 🦙 LM Stud – Local LLMs Minus the Lard
+Copyright (c) 2025 CommanderLake
+All rights reserved.
+
+# 🦙 LM Stud – Local LLMs Minus the Lard
 
 > **TL;DR**  
 > A WinForms chat client for `llama.cpp`, `whisper.cpp` and your questionable life choices.  
@@ -103,4 +106,11 @@
 
 ## License
 
-MIT—short, sweet, almost readable.
+No license granted. All rights reserved.  
+Viewing and forking on GitHub are permitted under GitHub’s Terms of Service.  
+No other rights are granted; any use, redistribution, or modification outside GitHub requires prior written permission.
+
+### Disclaimer
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,  
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE and NON-INFRINGEMENT, TO THE MAXIMUM EXTENT PERMITTED BY LAW.
