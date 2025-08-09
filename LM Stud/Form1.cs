@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Speech.Synthesis;
@@ -27,12 +26,14 @@ namespace LMStud{
 		private volatile bool _rendering;
 		private bool _whisperLoaded;
 		private LVColumnClickHandler _columnClickHandler;
+		private ApiServer _apiServer;
 		internal Form1(){
 			_this = this;
 			//var culture = new CultureInfo("zh-CN");
 			//Thread.CurrentThread.CurrentUICulture = culture;
 			//Thread.CurrentThread.CurrentCulture = culture;
 			InitializeComponent();
+			_apiServer = new ApiServer(this);
 			InitializeListViews();
 			Icon = Resources.LM_Stud_256;
 			SetToolTips();
@@ -77,6 +78,8 @@ namespace LMStud{
 			SetToolTip(radioWhisperVAD);
 			SetToolTip(comboVADModel);
 			SetToolTip(butVADDown);
+			SetToolTip(checkApiServerEnable);
+			SetToolTip(numApiServerPort);
 		}
 		private void Form1_Load(object sender, EventArgs e){
 			NativeMethods.SetHWnd(Handle);
@@ -318,6 +321,20 @@ namespace LMStud{
 				if((sb[i] == '.' || sb[i] == '!' || sb[i] == '?') && char.IsWhiteSpace(sb[i + 1]))
 					return i;
 			return -1;
+		}
+		internal void GenerateForApi(string prompt, Action<string> onToken){
+			if(!_llModelLoaded || string.IsNullOrWhiteSpace(prompt)) return;
+			unsafe{
+				var prev = _tokenCallback;
+				void APICb(byte* tPtr, int tLen, byte* mPtr, int mLen, int tc, int tt, double ft, int tool){
+					if(mLen <= 0) return;
+					var token = Encoding.UTF8.GetString(mPtr, mLen);
+					onToken(token);
+				}
+				NativeMethods.SetTokenCallback(APICb);
+				NativeMethods.GenerateWithTools(MessageRole.User, prompt, _nGen, true);
+				NativeMethods.SetTokenCallback(prev);
+			}
 		}
 		private static unsafe void TokenCallback(byte* thinkPtr, int thinkLen, byte* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool){
 			var elapsed = _this._swRate.Elapsed.TotalSeconds;

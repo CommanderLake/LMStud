@@ -502,5 +502,29 @@ namespace LMStud.Properties {
                 this["UseWhisperVAD"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ApiServerEnable {
+            get {
+                return ((bool)(this["ApiServerEnable"]));
+            }
+            set {
+                this["ApiServerEnable"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public decimal ApiServerPort {
+            get {
+                return ((decimal)(this["ApiServerPort"]));
+            }
+            set {
+                this["ApiServerPort"] = value;
+            }
+        }
     }
 }

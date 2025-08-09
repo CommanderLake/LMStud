@@ -272,5 +272,8 @@ namespace LMStud{
 				listViewMeta.Items.Add(lvi);
 			}
 		}
+		internal IEnumerable<string> GetModelNames(){
+			foreach(var m in _models) yield return Path.GetFileNameWithoutExtension(m.FilePath);
+		}
 	}
 }

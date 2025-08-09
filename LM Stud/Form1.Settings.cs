@@ -43,6 +43,8 @@ namespace LMStud{
 		private bool _fileReadEnable;
 		private bool _fileWriteEnable;
 		private bool _dateTimeEnable;
+		private bool _apiServerEnable;
+		private int _apiServerPort;
 		private void LoadConfig(){
 			_systemPrompt = textSystemPrompt.Text = Settings.Default.SystemPrompt;
 			_modelsPath = textModelsPath.Text = Settings.Default.ModelsDir;
@@ -80,6 +82,12 @@ namespace LMStud{
 			_fileReadEnable = checkFileReadEnable.Checked = Settings.Default.FileReadEnable;
 			_fileWriteEnable = checkFileWriteEnable.Checked = Settings.Default.FileWriteEnable;
 			_dateTimeEnable = checkDateTimeEnable.Checked = Settings.Default.DateTimeEnable;
+			_apiServerEnable = checkApiServerEnable.Checked = Settings.Default.ApiServerEnable;
+			_apiServerPort = (int)(numApiServerPort.Value = Settings.Default.ApiServerPort);
+			if(_apiServerEnable){
+				_apiServer.Port = _apiServerPort;
+				_apiServer.Start();
+			}
 			NativeMethods.SetFileBaseDir(_fileBaseDir);
 			NativeMethods.SetWakeCommand(_wakeWord);
 			NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
@@ -284,6 +292,21 @@ namespace LMStud{
 			UpdateSetting(ref _dateTimeEnable, checkDateTimeEnable.Checked, value => {
 				Settings.Default.DateTimeEnable = value;
 				registerTools = true;
+			});
+			UpdateSetting(ref _apiServerEnable, checkApiServerEnable.Checked, value => {
+				Settings.Default.ApiServerEnable = value;
+				if(value){
+					_apiServer.Port = _apiServerPort;
+					_apiServer.Start();
+				} else _apiServer.Stop();
+			});
+			UpdateSetting(ref _apiServerPort, (int)numApiServerPort.Value, value => {
+				Settings.Default.ApiServerPort = value;
+				if(_apiServerEnable){
+					_apiServer.Stop();
+					_apiServer.Port = value;
+					_apiServer.Start();
+				}
 			});
 			var flash = usingModelSettings ? ms.FlashAttn : _flashAttn;
 			var minP = usingModelSettings ? ms.MinP : _minP;
