@@ -345,6 +345,7 @@ namespace LMStud
 			resources.ApplyResources(this.butApplyModelSettings, "butApplyModelSettings");
 			this.butApplyModelSettings.Name = "butApplyModelSettings";
 			this.butApplyModelSettings.UseVisualStyleBackColor = true;
+			this.butApplyModelSettings.Click += new System.EventHandler(this.ButApplyModelSettings_Click);
 			// 
 			// checkUseModelSettings
 			// 

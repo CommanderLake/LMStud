@@ -32,7 +32,8 @@ namespace LMStud{
 		private void ListViewModels_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e){
 			if(listViewModels.SelectedItems.Count == 1){
 				tabControlModelStuff.Enabled = true;
-				PopulateMeta((int)listViewModels.SelectedItems[0].Tag);
+				var index = (int)listViewModels.SelectedItems[0].Tag;
+				PopulateMeta(index);
 			} else{
 				listViewMeta.Items.Clear();
 				tabControlModelStuff.Enabled = false;

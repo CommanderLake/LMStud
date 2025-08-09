@@ -37,6 +37,7 @@ namespace LMStud{
 			Icon = Resources.LM_Stud_256;
 			SetToolTips();
 			LoadConfig();
+			LoadModelSettings();
 		}
 		private void SetToolTip(Control control){toolTip1.SetToolTip(control, Resources.ResourceManager.GetString("ToolTip_" + control.Name));}
 		private void SetToolTips(){
