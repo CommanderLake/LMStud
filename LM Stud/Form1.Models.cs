@@ -34,6 +34,7 @@ namespace LMStud{
 				tabControlModelStuff.Enabled = true;
 				var index = (int)listViewModels.SelectedItems[0].Tag;
 				PopulateMeta(index);
+				PopulateModelSettings(index);
 			} else{
 				listViewMeta.Items.Clear();
 				tabControlModelStuff.Enabled = false;
@@ -140,10 +141,11 @@ namespace LMStud{
 			if(InvokeRequired) Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources._0____1_, action, detail), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 			else MessageBox.Show(this, string.Format(Resources._0____1_, action, detail), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}
-		private void SetSystemPrompt(){
-			var error = NativeMethods.SetSystemPrompt(_systemPrompt.Length > 0 ? _systemPrompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : "");
+		private void SetSystemPrompt(string prompt){
+			var error = NativeMethods.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : "");
 			if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_setting_system_prompt, error);
 		}
+		private void SetSystemPrompt(){SetSystemPrompt(_systemPrompt);}
 		NativeMethods.StudError LoadModel(string filename, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){
 			var result = NativeMethods.LoadModel(filename, nGPULayers, mMap, mLock, numaStrategy);
 			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_loading_model, result);
@@ -169,6 +171,7 @@ namespace LMStud{
 			var modelPath = _models[modelIndex].FilePath;
 			var fileName = Path.GetFileName(modelPath);
 			var useModelSettings = _modelSettings.TryGetValue(modelPath, out var settings) && settings.UseModelSettings;
+			var systemPrompt = useModelSettings ? settings.SystemPrompt : _systemPrompt;
 			var ctxSize = useModelSettings ? settings.CtxSize : _ctxSize;
 			var gpuLayers = useModelSettings ? settings.GPULayers : _gpuLayers;
 			var temp = useModelSettings ? settings.Temp : _temp;
@@ -214,7 +217,7 @@ namespace LMStud{
 						_tokenCallback = TokenCallback;
 						NativeMethods.SetTokenCallback(_tokenCallback);
 						RegisterTools();
-						SetSystemPrompt();
+						SetSystemPrompt(systemPrompt);
 						if(whisperOn) NativeMethods.StartSpeechTranscription();
 						try{
 							Invoke(new MethodInvoker(() => {
@@ -223,8 +226,7 @@ namespace LMStud{
 									Settings.Default.LoadAuto = true;
 									Settings.Default.Save();
 								}
-								toolTip1.SetToolTip(numCtxSize,
-									"Context size (max tokens). Higher values improve memory but use more RAM.\r\nThe model last loaded has a maximum context size of " + _modelCtxMax);
+								toolTip1.SetToolTip(numCtxSize, Resources.ToolTip_numCtxSize + Resources.__The_last_model_loaded_has_a_maximum_context_size_of_ + _modelCtxMax);
 								toolStripStatusLabel1.Text = Resources.Done_loading__ + fileName;
 							}));
 						} catch(ObjectDisposedException){}
@@ -244,7 +246,7 @@ namespace LMStud{
 				NativeMethods.FreeModel();
 				try{
 					BeginInvoke(new MethodInvoker(() => {
-						toolTip1.SetToolTip(numCtxSize, "Context size (max tokens). Higher values improve memory but use more RAM.");
+						toolTip1.SetToolTip(numCtxSize, Resources.ToolTip_numCtxSize);
 						toolStripStatusLabel1.Text = Resources.Model_unloaded;
 					}));
 				} catch(ObjectDisposedException){}

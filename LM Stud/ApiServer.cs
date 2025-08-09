@@ -12,7 +12,7 @@ namespace LMStud{
 		private CancellationTokenSource _cts;
 		private HttpListener _listener;
 		public ApiServer(Form1 form){_form = form;}
-		public int Port{get; set;} = 11434;
+		public int Port = 11434;
 		public bool IsRunning => _listener != null && _listener.IsListening;
 		public void Start(){
 			if(IsRunning) return;
@@ -59,8 +59,8 @@ namespace LMStud{
 			using(var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)){ body = reader.ReadToEnd(); }
 			var request = JsonConvert.DeserializeObject<ChatRequest>(body);
 			if(request == null) return;
-			var prompt = request.messages?.LastOrDefault(m => m.role == "user")?.content ?? "";
-			var stream = request.stream;
+			var prompt = request.Messages?.LastOrDefault(m => m.Role == "user")?.Content ?? "";
+			var stream = request.Stream;
 			ctx.Response.ContentType = stream ? "text/event-stream" : "application/json";
 			var sb = new StringBuilder();
 			void TokenCb(string token){
@@ -83,12 +83,12 @@ namespace LMStud{
 			}
 		}
 		private class ChatRequest{
-			public List<Message> messages{get; set;}
-			public bool stream{get; set;}
+			public List<Message> Messages;
+			public bool Stream;
 		}
 		private class Message{
-			public string role{get; set;}
-			public string content{get; set;}
+			public string Role;
+			public string Content;
 		}
 	}
 }

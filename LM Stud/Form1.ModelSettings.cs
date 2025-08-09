@@ -4,7 +4,7 @@ using System.IO;
 using Newtonsoft.Json;
 namespace LMStud{
 	internal partial class Form1{
-		private struct ModelSettings{
+		private class ModelSettings{
 			public readonly bool UseModelSettings;
 			public readonly string SystemPrompt;
 			public readonly int CtxSize;
@@ -27,11 +27,12 @@ namespace LMStud{
 			}
 		}
 		private readonly Dictionary<string, ModelSettings> _modelSettings = new Dictionary<string, ModelSettings>();
-		private readonly string _modelSettingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LM Stud\\ModelSettings.json");
+		private static readonly string ModelSettingsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LM Stud");
+		private static readonly string ModelSettingsFile = Path.Combine(ModelSettingsFolder, "ModelSettings.json");
 		private void LoadModelSettings(){
-			if(!File.Exists(_modelSettingsPath)) return;
+			if(!File.Exists(ModelSettingsFile)) return;
 			try{
-				var json = File.ReadAllText(_modelSettingsPath);
+				var json = File.ReadAllText(ModelSettingsFile);
 				var dict = JsonConvert.DeserializeObject<Dictionary<string, ModelSettings>>(json);
 				if(dict == null) return;
 				foreach(var kv in dict) _modelSettings[kv.Key] = kv.Value;
@@ -40,7 +41,8 @@ namespace LMStud{
 		private void SaveModelSettings(){
 			try{
 				var json = JsonConvert.SerializeObject(_modelSettings, Formatting.Indented);
-				File.WriteAllText(_modelSettingsPath, json);
+				if(!Directory.Exists(ModelSettingsFolder)) Directory.CreateDirectory(ModelSettingsFolder);
+				File.WriteAllText(ModelSettingsFile, json);
 			} catch{}
 		}
 		private void ButApplyModelSettings_Click(object sender, EventArgs e){
@@ -50,6 +52,30 @@ namespace LMStud{
 				(float)numTopPModel.Value, (int)numTopKModel.Value, checkFlashAttnModel.Checked);
 			_modelSettings[path] = settings;
 			SaveModelSettings();
+		}
+		private void PopulateModelSettings(int modelIndex){
+			var path = _models[modelIndex].FilePath;
+			if(_modelSettings.TryGetValue(path, out var ms)){
+				checkUseModelSettings.Checked = ms.UseModelSettings;
+				textSystemPromptModel.Text = ms.SystemPrompt;
+				numCtxSizeModel.Value = ms.CtxSize;
+				numGPULayersModel.Value = ms.GPULayers;
+				numTempModel.Value = (decimal)ms.Temp;
+				numMinPModel.Value = (decimal)ms.MinP;
+				numTopPModel.Value = (decimal)ms.TopP;
+				numTopKModel.Value = ms.TopK;
+				checkFlashAttnModel.Checked = ms.FlashAttn;
+			} else{
+				checkUseModelSettings.Checked = false;
+				textSystemPromptModel.Text = _systemPrompt;
+				numCtxSizeModel.Value = _ctxSize;
+				numGPULayersModel.Value = _gpuLayers;
+				numTempModel.Value = (decimal)_temp;
+				numMinPModel.Value = (decimal)_minP;
+				numTopPModel.Value = (decimal)_topP;
+				numTopKModel.Value = _topK;
+				checkFlashAttnModel.Checked = _flashAttn;
+			}
 		}
 	}
 }

@@ -61,6 +61,16 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 
+        ///The model last loaded has a maximum context size of .
+        /// </summary>
+        internal static string @__The_last_model_loaded_has_a_maximum_context_size_of_ {
+            get {
+                return ResourceManager.GetString("__The_last_model_loaded_has_a_maximum_context_size_of_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0}: {1}.
         /// </summary>
         internal static string _0____1_ {
@@ -423,15 +433,6 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Modified global settings are overridden by the Model Settings for this model..
-        /// </summary>
-        internal static string Modified_global_settings_are_overridden_by_the_Model_Settings_for_this_model_ {
-            get {
-                return ResourceManager.GetString("Modified_global_settings_are_overridden_by_the_Model_Settings_for_this_model_", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to No model has been loaded..
         /// </summary>
         internal static string No_model_has_been_loaded_ {
@@ -491,6 +492,15 @@ namespace LMStud.Properties {
         internal static string The_model_could_not_be_loaded_ {
             get {
                 return ResourceManager.GetString("The_model_could_not_be_loaded_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The modified settings are overridden by the Model Settings for this model..
+        /// </summary>
+        internal static string The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_ {
+            get {
+                return ResourceManager.GetString("The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_", resourceCulture);
             }
         }
         

@@ -377,7 +377,11 @@
   <data name="Error_creating_sampler" xml:space="preserve">
     <value>Error creating sampler</value>
   </data>
-<data name="Modified_global_settings_are_overridden_by_the_Model_Settings_for_this_model_" xml:space="preserve">
-	<value>Modified global settings are overridden by the Model Settings for this model.</value>
-</data>
+  <data name="The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_" xml:space="preserve">
+    <value>The modified settings are overridden by the Model Settings for this model.</value>
+  </data>
+  <data name="__The_last_model_loaded_has_a_maximum_context_size_of_" xml:space="preserve">
+    <value>
+The model last loaded has a maximum context size of </value>
+  </data>
 </root>

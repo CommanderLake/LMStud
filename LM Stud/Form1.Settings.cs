@@ -334,7 +334,7 @@ namespace LMStud{
 			if(setGoogle) NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID, _googleSearchResultCount);
 			if(registerTools) RegisterTools();
 			if(registerTools || setSystemPrompt) SetSystemPrompt();
-			if(usingModelSettings && modelOverrideChanged) MessageBox.Show(this, Resources.Modified_global_settings_are_overridden_by_the_Model_Settings_for_this_model_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
+			if(usingModelSettings && modelOverrideChanged) MessageBox.Show(this, Resources.The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 			Settings.Default.Save();
 		}
 		private void ButBrowse_Click(object sender, EventArgs e){

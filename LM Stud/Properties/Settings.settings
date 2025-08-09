@@ -126,7 +126,7 @@
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="ApiServerPort" Type="System.Decimal" Scope="User">
-      <Value Profile="(Default)">0</Value>
+      <Value Profile="(Default)">11434</Value>
     </Setting>
   </Settings>
 </SettingsFile>

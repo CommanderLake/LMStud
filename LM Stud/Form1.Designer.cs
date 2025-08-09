@@ -93,6 +93,10 @@ namespace LMStud
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabPageChat = new System.Windows.Forms.TabPage();
 			this.tabPageSettings = new System.Windows.Forms.TabPage();
+			this.groupBox7 = new System.Windows.Forms.GroupBox();
+			this.numApiServerPort = new System.Windows.Forms.NumericUpDown();
+			this.label28 = new System.Windows.Forms.Label();
+			this.checkApiServerEnable = new System.Windows.Forms.CheckBox();
 			this.textModelsPath = new System.Windows.Forms.TextBox();
 			this.groupBox6 = new System.Windows.Forms.GroupBox();
 			this.numVadThreshold = new System.Windows.Forms.NumericUpDown();
@@ -183,10 +187,6 @@ namespace LMStud
 			this.labelTPS = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-			this.groupBox7 = new System.Windows.Forms.GroupBox();
-			this.checkApiServerEnable = new System.Windows.Forms.CheckBox();
-			this.numApiServerPort = new System.Windows.Forms.NumericUpDown();
-			this.label28 = new System.Windows.Forms.Label();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -213,6 +213,8 @@ namespace LMStud
 			this.tabControl1.SuspendLayout();
 			this.tabPageChat.SuspendLayout();
 			this.tabPageSettings.SuspendLayout();
+			this.groupBox7.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numApiServerPort)).BeginInit();
 			this.groupBox6.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numVadThreshold)).BeginInit();
 			this.groupBox5.SuspendLayout();
@@ -242,8 +244,6 @@ namespace LMStud
 			this.tabPageModels.SuspendLayout();
 			this.tabPageHuggingFace.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
-			this.groupBox7.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.numApiServerPort)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// splitContainer1
@@ -769,6 +769,41 @@ namespace LMStud
 			resources.ApplyResources(this.tabPageSettings, "tabPageSettings");
 			this.tabPageSettings.Name = "tabPageSettings";
 			this.tabPageSettings.UseVisualStyleBackColor = true;
+			// 
+			// groupBox7
+			// 
+			this.groupBox7.Controls.Add(this.numApiServerPort);
+			this.groupBox7.Controls.Add(this.label28);
+			this.groupBox7.Controls.Add(this.checkApiServerEnable);
+			resources.ApplyResources(this.groupBox7, "groupBox7");
+			this.groupBox7.Name = "groupBox7";
+			this.groupBox7.TabStop = false;
+			// 
+			// numApiServerPort
+			// 
+			resources.ApplyResources(this.numApiServerPort, "numApiServerPort");
+			this.numApiServerPort.Maximum = new decimal(new int[] {
+            65535,
+            0,
+            0,
+            0});
+			this.numApiServerPort.Name = "numApiServerPort";
+			this.numApiServerPort.Value = new decimal(new int[] {
+            11434,
+            0,
+            0,
+            0});
+			// 
+			// label28
+			// 
+			resources.ApplyResources(this.label28, "label28");
+			this.label28.Name = "label28";
+			// 
+			// checkApiServerEnable
+			// 
+			resources.ApplyResources(this.checkApiServerEnable, "checkApiServerEnable");
+			this.checkApiServerEnable.Name = "checkApiServerEnable";
+			this.checkApiServerEnable.UseVisualStyleBackColor = true;
 			// 
 			// textModelsPath
 			// 
@@ -1580,41 +1615,6 @@ namespace LMStud
 			this.toolTip1.UseAnimation = false;
 			this.toolTip1.UseFading = false;
 			// 
-			// groupBox7
-			// 
-			this.groupBox7.Controls.Add(this.numApiServerPort);
-			this.groupBox7.Controls.Add(this.label28);
-			this.groupBox7.Controls.Add(this.checkApiServerEnable);
-			resources.ApplyResources(this.groupBox7, "groupBox7");
-			this.groupBox7.Name = "groupBox7";
-			this.groupBox7.TabStop = false;
-			// 
-			// checkApiServerEnable
-			// 
-			resources.ApplyResources(this.checkApiServerEnable, "checkApiServerEnable");
-			this.checkApiServerEnable.Name = "checkApiServerEnable";
-			this.checkApiServerEnable.UseVisualStyleBackColor = true;
-			// 
-			// numApiServerPort
-			// 
-			resources.ApplyResources(this.numApiServerPort, "numApiServerPort");
-			this.numApiServerPort.Maximum = new decimal(new int[] {
-            65535,
-            0,
-            0,
-            0});
-			this.numApiServerPort.Name = "numApiServerPort";
-			this.numApiServerPort.Value = new decimal(new int[] {
-            8,
-            0,
-            0,
-            0});
-			// 
-			// label28
-			// 
-			resources.ApplyResources(this.label28, "label28");
-			this.label28.Name = "label28";
-			// 
 			// Form1
 			// 
 			resources.ApplyResources(this, "$this");
@@ -1658,6 +1658,8 @@ namespace LMStud
 			this.tabPageChat.PerformLayout();
 			this.tabPageSettings.ResumeLayout(false);
 			this.tabPageSettings.PerformLayout();
+			this.groupBox7.ResumeLayout(false);
+			((System.ComponentModel.ISupportInitialize)(this.numApiServerPort)).EndInit();
 			this.groupBox6.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.numVadThreshold)).EndInit();
 			this.groupBox5.ResumeLayout(false);
@@ -1693,8 +1695,6 @@ namespace LMStud
 			this.tabPageHuggingFace.PerformLayout();
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();
-			this.groupBox7.ResumeLayout(false);
-			((System.ComponentModel.ISupportInitialize)(this.numApiServerPort)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
