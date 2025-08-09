@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 namespace LMStud{
 	internal partial class Form1{
 		private class ModelSettings{
-			public readonly bool UseModelSettings;
+			public readonly bool OverrideSettings;
 			public readonly string SystemPrompt;
 			public readonly int CtxSize;
 			public readonly int GPULayers;
@@ -14,8 +14,8 @@ namespace LMStud{
 			public readonly float TopP;
 			public readonly int TopK;
 			public readonly bool FlashAttn;
-			public ModelSettings(bool useModelSettings, string systemPrompt, int ctxSize, int gpuLayers, float temp, float minP, float topP, int topK, bool flashAttn){
-				UseModelSettings = useModelSettings;
+			public ModelSettings(bool overrideSettings, string systemPrompt, int ctxSize, int gpuLayers, float temp, float minP, float topP, int topK, bool flashAttn){
+				OverrideSettings = overrideSettings;
 				SystemPrompt = systemPrompt;
 				CtxSize = ctxSize;
 				GPULayers = gpuLayers;
@@ -48,7 +48,7 @@ namespace LMStud{
 		private void ButApplyModelSettings_Click(object sender, EventArgs e){
 			if(listViewModels.SelectedItems.Count == 0) return;
 			var path = _models[(int)listViewModels.SelectedItems[0].Tag].FilePath;
-			var settings = new ModelSettings(checkUseModelSettings.Checked, textSystemPromptModel.Text, (int)numCtxSizeModel.Value, (int)numGPULayersModel.Value, (float)numTempModel.Value, (float)numMinPModel.Value,
+			var settings = new ModelSettings(checkOverrideSettings.Checked, textSystemPromptModel.Text, (int)numCtxSizeModel.Value, (int)numGPULayersModel.Value, (float)numTempModel.Value, (float)numMinPModel.Value,
 				(float)numTopPModel.Value, (int)numTopKModel.Value, checkFlashAttnModel.Checked);
 			_modelSettings[path] = settings;
 			SaveModelSettings();
@@ -56,7 +56,7 @@ namespace LMStud{
 		private void PopulateModelSettings(int modelIndex){
 			var path = _models[modelIndex].FilePath;
 			if(_modelSettings.TryGetValue(path, out var ms)){
-				checkUseModelSettings.Checked = ms.UseModelSettings;
+				checkOverrideSettings.Checked = ms.OverrideSettings;
 				textSystemPromptModel.Text = ms.SystemPrompt;
 				numCtxSizeModel.Value = ms.CtxSize;
 				numGPULayersModel.Value = ms.GPULayers;
@@ -66,7 +66,7 @@ namespace LMStud{
 				numTopKModel.Value = ms.TopK;
 				checkFlashAttnModel.Checked = ms.FlashAttn;
 			} else{
-				checkUseModelSettings.Checked = false;
+				checkOverrideSettings.Checked = false;
 				textSystemPromptModel.Text = _systemPrompt;
 				numCtxSizeModel.Value = _ctxSize;
 				numGPULayersModel.Value = _gpuLayers;

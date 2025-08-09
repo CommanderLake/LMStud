@@ -24,8 +24,10 @@ namespace LMStud{
 				Meta = meta;
 			}
 		}
+		private string GetModelPath(string relativePath){return Path.IsPathRooted(relativePath) ? relativePath : Path.Combine(_modelsPath, relativePath);}
+		private string GetModelPath(int index){return GetModelPath(_models[index].FilePath);}
 		private void CheckLoadAuto_CheckedChanged(object sender, EventArgs e){
-			if(checkLoadAuto.Checked && File.Exists(Settings.Default.LastModel)) Settings.Default.LoadAuto = true;
+			if(checkLoadAuto.Checked && File.Exists(GetModelPath(Settings.Default.LastModel))) Settings.Default.LoadAuto = true;
 			else Settings.Default.LoadAuto = false;
 			Settings.Default.Save();
 		}
@@ -57,7 +59,7 @@ namespace LMStud{
 			LoadModel((int)listViewModels.SelectedItems[0].Tag, false);
 		}
 		private void CheckUseModelSettings_CheckedChanged(object sender, EventArgs e){
-			groupCommonModel.Enabled = groupAdvancedModel.Enabled = butApplyModelSettings.Enabled = labelSystemPromptModel.Enabled = textSystemPromptModel.Enabled = checkUseModelSettings.Checked;
+			groupCommonModel.Enabled = groupAdvancedModel.Enabled = butApplyModelSettings.Enabled = labelSystemPromptModel.Enabled = textSystemPromptModel.Enabled = checkOverrideSettings.Checked;
 		}
 		private bool ModelsFolderExists(bool showError){
 			if(!Directory.Exists(_modelsPath)){
@@ -82,7 +84,8 @@ namespace LMStud{
 					foreach(var file in files){
 						var meta = GGUFMetadataManager.LoadGGUFMetadata(file);
 						var idx = _models.Count;
-						_models.Add(new ModelInfo(file, meta));
+						var relPath = Uri.UnescapeDataString(new Uri(_modelsPath + Path.DirectorySeparatorChar).MakeRelativeUri(new Uri(file)).ToString().Replace('/', Path.DirectorySeparatorChar));
+						_models.Add(new ModelInfo(relPath, meta));
 						var lvi = new ListViewItem(Path.GetFileName(file));
 						lvi.SubItems.Add(file);
 						lvi.Tag = idx;
@@ -168,17 +171,18 @@ namespace LMStud{
 		}
 		private void LoadModel(int modelIndex, bool autoLoad){
 			var whisperOn = checkVoiceInput.CheckState != CheckState.Unchecked;
-			var modelPath = _models[modelIndex].FilePath;
+			var modelKey = _models[modelIndex].FilePath;
+			var modelPath = GetModelPath(modelKey);
 			var fileName = Path.GetFileName(modelPath);
-			var useModelSettings = _modelSettings.TryGetValue(modelPath, out var settings) && settings.UseModelSettings;
-			var systemPrompt = useModelSettings ? settings.SystemPrompt : _systemPrompt;
-			var ctxSize = useModelSettings ? settings.CtxSize : _ctxSize;
-			var gpuLayers = useModelSettings ? settings.GPULayers : _gpuLayers;
-			var temp = useModelSettings ? settings.Temp : _temp;
-			var minP = useModelSettings ? settings.MinP : _minP;
-			var topP = useModelSettings ? settings.TopP : _topP;
-			var topK = useModelSettings ? settings.TopK : _topK;
-			var flashAttn = useModelSettings ? settings.FlashAttn : _flashAttn;
+			var overrideSettings = _modelSettings.TryGetValue(modelKey, out var settings) && settings.OverrideSettings;
+			var systemPrompt = overrideSettings ? settings.SystemPrompt : _systemPrompt;
+			var ctxSize = overrideSettings ? settings.CtxSize : _ctxSize;
+			var gpuLayers = overrideSettings ? settings.GPULayers : _gpuLayers;
+			var temp = overrideSettings ? settings.Temp : _temp;
+			var minP = overrideSettings ? settings.MinP : _minP;
+			var topP = overrideSettings ? settings.TopP : _topP;
+			var topK = overrideSettings ? settings.TopK : _topK;
+			var flashAttn = overrideSettings ? settings.FlashAttn : _flashAttn;
 			butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = false;
 			ThreadPool.QueueUserWorkItem(o => {
 				try{
@@ -221,7 +225,7 @@ namespace LMStud{
 						if(whisperOn) NativeMethods.StartSpeechTranscription();
 						try{
 							Invoke(new MethodInvoker(() => {
-								Settings.Default.LastModel = modelPath;
+								Settings.Default.LastModel = modelKey;
 								if(checkLoadAuto.Checked && !autoLoad){
 									Settings.Default.LoadAuto = true;
 									Settings.Default.Save();

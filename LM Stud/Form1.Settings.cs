@@ -112,10 +112,10 @@ namespace LMStud{
 			var setSystemPrompt = false;
 			var modelOverrideChanged = false;
 			ModelSettings ms = default;
-			var usingModelSettings = _llModelLoaded && _modelSettings.TryGetValue(_models[_modelIndex].FilePath, out ms) && ms.UseModelSettings;
+			var overrideSettings = _llModelLoaded && _modelSettings.TryGetValue(_models[_modelIndex].FilePath, out ms) && ms.OverrideSettings;
 			UpdateSetting(ref _systemPrompt, textSystemPrompt.Text, value => {
 				Settings.Default.SystemPrompt = value;
-				if(usingModelSettings){
+				if(overrideSettings){
 					modelOverrideChanged = true;
 					return;
 				}
@@ -128,7 +128,7 @@ namespace LMStud{
 			});
 			UpdateSetting(ref _ctxSize, (int)numCtxSize.Value, value => {
 				Settings.Default.CtxSize = value;
-				if(usingModelSettings){
+				if(overrideSettings){
 					modelOverrideChanged = true;
 					return;
 				}
@@ -139,7 +139,7 @@ namespace LMStud{
 			});
 			UpdateSetting(ref _gpuLayers, (int)numGPULayers.Value, value => {
 				Settings.Default.GPULayers = value;
-				if(usingModelSettings){
+				if(overrideSettings){
 					modelOverrideChanged = true;
 					return;
 				}
@@ -147,7 +147,7 @@ namespace LMStud{
 			});
 			UpdateSetting(ref _temp, (float)numTemp.Value, value => {
 				Settings.Default.Temp = numTemp.Value;
-				if(usingModelSettings){
+				if(overrideSettings){
 					modelOverrideChanged = true;
 					return;
 				}
@@ -165,7 +165,7 @@ namespace LMStud{
 			});
 			UpdateSetting(ref _topK, (int)numTopK.Value, value => {
 				Settings.Default.TopK = value;
-				if(usingModelSettings){
+				if(overrideSettings){
 					modelOverrideChanged = true;
 					return;
 				}
@@ -173,7 +173,7 @@ namespace LMStud{
 			});
 			UpdateSetting(ref _topP, (float)numTopP.Value, value => {
 				Settings.Default.TopP = numTopP.Value;
-				if(usingModelSettings){
+				if(overrideSettings){
 					modelOverrideChanged = true;
 					return;
 				}
@@ -181,7 +181,7 @@ namespace LMStud{
 			});
 			UpdateSetting(ref _minP, (float)numMinP.Value, value => {
 				Settings.Default.MinP = numMinP.Value;
-				if(usingModelSettings){
+				if(overrideSettings){
 					modelOverrideChanged = true;
 					return;
 				}
@@ -243,7 +243,7 @@ namespace LMStud{
 			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			UpdateSetting(ref _flashAttn, checkFlashAttn.Checked, value => {
 				Settings.Default.FlashAttn = value;
-				if(usingModelSettings){
+				if(overrideSettings){
 					modelOverrideChanged = true;
 					return;
 				}
@@ -308,11 +308,11 @@ namespace LMStud{
 					_apiServer.Start();
 				}
 			});
-			var flash = usingModelSettings ? ms.FlashAttn : _flashAttn;
-			var minP = usingModelSettings ? ms.MinP : _minP;
-			var topP = usingModelSettings ? ms.TopP : _topP;
-			var topK = usingModelSettings ? ms.TopK : _topK;
-			var temp = usingModelSettings ? ms.Temp : _temp;
+			var flash = overrideSettings ? ms.FlashAttn : _flashAttn;
+			var minP = overrideSettings ? ms.MinP : _minP;
+			var topP = overrideSettings ? ms.TopP : _topP;
+			var topK = overrideSettings ? ms.TopK : _topK;
+			var temp = overrideSettings ? ms.Temp : _temp;
 			if(reloadModel && _llModelLoaded &&
 				MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes) LoadModel(_modelIndex, false);
 			else{
@@ -334,7 +334,7 @@ namespace LMStud{
 			if(setGoogle) NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID, _googleSearchResultCount);
 			if(registerTools) RegisterTools();
 			if(registerTools || setSystemPrompt) SetSystemPrompt();
-			if(usingModelSettings && modelOverrideChanged) MessageBox.Show(this, Resources.The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
+			if(overrideSettings && modelOverrideChanged) MessageBox.Show(this, Resources.The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 			Settings.Default.Save();
 		}
 		private void ButBrowse_Click(object sender, EventArgs e){
