@@ -32,8 +32,8 @@ namespace LMStud{
 			} catch{}
 		}
 		private void ButApplyModelSettings_Click(object sender, EventArgs e){
-			if(listViewModels.SelectedIndices.Count == 0) return;
-			var path = _models[listViewModels.SelectedIndices[0]].FilePath;
+			if(listViewModels.SelectedItems.Count == 0) return;
+			var path = _models[(int)listViewModels.SelectedItems[0].Tag].FilePath;
 			var settings = new ModelSettings{
 				UseModelSettings = checkUseModelSettings.Checked, CtxSize = (int)numCtxSizeModel.Value, GPULayers = (int)numGPULayersModel.Value, Temp = (float)numTempModel.Value,
 				MinP = (float)numMinPModel.Value, TopP = (float)numTopPModel.Value, TopK = (int)numTopKModel.Value, FlashAttn = checkFlashAttnModel.Checked
