@@ -6,8 +6,6 @@
 #include <fstream>
 #include <regex>
 #include <curl\curl.h>
-static std::unordered_map<std::string, CachedPage> _webCache;
-static std::filesystem::path _baseFolder;
 static std::string JsonEscape(const std::string& in){
 	std::string out;
 	out.reserve(in.size());

@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <minja\minja.hpp>
 #include <minja\chat-template.hpp>
+#include <algorithm>
 using HrClock = std::chrono::high_resolution_clock;
 void SetHWnd(HWND hWnd){ _hWnd = hWnd; }
 void BackendInit(){
@@ -178,7 +179,7 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	llama_sampler_reset(_session.smpl);
 	for(size_t i = 0; i < prefix; ++i){ llama_sampler_accept(_session.smpl, promptTokens[i]); }
 	const size_t decodeEnd = newSize - suffix;
-	const int batchSize = min(_session.nBatch, static_cast<int>(decodeEnd - prefix));
+	const int batchSize = std::min(_session.nBatch, static_cast<int>(decodeEnd - prefix));
 	if(batchSize <= 0) return StudError::Success;
 	for(size_t i = prefix; i < decodeEnd; i += _session.nBatch){
 		const int nEval = std::min<int>(_session.nBatch, decodeEnd - i);
@@ -473,10 +474,10 @@ StudError GenerateWithTools(const MessageRole role, const char* prompt, const in
 			}
 			msg.content = "";
 			msg.reasoning_content = "";
-			for(common_chat_tool_call& tool : msg.tool_calls){
-				auto it = _toolHandlers.find(tool.name);
+			for(common_chat_tool_call& toolCall : msg.tool_calls){
+				auto it = _toolHandlers.find(toolCall.name);
 				if(it != _toolHandlers.end()){
-					auto toolMsg = it->second(tool.arguments.c_str());
+					auto toolMsg = it->second(toolCall.arguments.c_str());
 					if(cb) cb(nullptr, 0, toolMsg.c_str(), static_cast<int>(toolMsg.length()), 0, LlamaMemSize(), 0, 1);
 					msgs.push_back(common_chat_msg());
 					msgs.back().role = "tool";

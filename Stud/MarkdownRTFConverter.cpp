@@ -7,11 +7,7 @@
 #include <iostream>
 #include <array>
 #include <charconv>
-#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#ifdef max
-#undef max
-#endif
 struct MarkdownState{
 	bool inCodeBlock = false;
 	bool firstLine = true;

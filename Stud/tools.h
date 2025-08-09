@@ -1,9 +1,11 @@
 #pragma once
+#include <filesystem>
 #include <unordered_map>
 #define EXPORT __declspec(dllexport)
 inline std::string googleAPIKey;
 inline std::string googleSearchID;
 inline int googleResultCount = 5;
+inline std::filesystem::path _baseFolder;
 struct WebSection{
 	std::string tag;
 	std::string text;
@@ -11,6 +13,7 @@ struct WebSection{
 struct CachedPage{
 	std::vector<WebSection> tags;
 };
+inline std::unordered_map<std::string, CachedPage> _webCache;
 extern "C" {
 	EXPORT void AddTool(const char* name, const char* description, const char* parameters, std::string(*handler)(const char* args));
 	EXPORT void ClearTools();
