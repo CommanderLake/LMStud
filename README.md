@@ -94,16 +94,6 @@ All rights reserved.
 
 ---
 
-## Contributing
-
-* Fork it.
-* Break it.
-* PR it.
-* Get internet points.
-  (Memes optional but encouraged.)
-
----
-
 ## License
 
 No license granted. All rights reserved.  
