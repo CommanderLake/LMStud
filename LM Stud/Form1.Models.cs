@@ -30,24 +30,32 @@ namespace LMStud{
 			Settings.Default.Save();
 		}
 		private void ListViewModels_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e){
-			if(listViewModels.SelectedItems.Count < 1) return;
-			PopulateMeta(listViewModels.SelectedIndices[0]);
+			if(listViewModels.SelectedItems.Count == 1){
+				tabControlModelStuff.Enabled = true;
+				PopulateMeta((int)listViewModels.SelectedItems[0].Tag);
+			} else{
+				listViewMeta.Items.Clear();
+				tabControlModelStuff.Enabled = false;
+			}
 		}
 		private void ListViewModels_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.F5) return;
 			PopulateModels();
 		}
 		private void ButLoad_Click(object sender, EventArgs e){
-			if(listViewModels.SelectedIndices.Count == 0) return;
-			LoadModel(listViewModels.SelectedIndices[0], false);
+			if(listViewModels.SelectedItems.Count == 0) return;
+			LoadModel((int)listViewModels.SelectedItems[0].Tag, false);
 		}
 		private void ButUnload_Click(object sender, EventArgs e){
 			butUnload.Enabled = false;
 			UnloadModel();
 		}
 		private void ListViewModels_DoubleClick(object sender, EventArgs e){
-			if(listViewModels.SelectedIndices.Count == 0) return;
-			LoadModel(listViewModels.SelectedIndices[0], false);
+			if(listViewModels.SelectedItems.Count == 0) return;
+			LoadModel((int)listViewModels.SelectedItems[0].Tag, false);
+		}
+		private void CheckUseModelSettings_CheckedChanged(object sender, EventArgs e){
+			groupCommonModel.Enabled = groupAdvancedModel.Enabled = butApplyModelSettings.Enabled = labelSystemPromptModel.Enabled = textSystemPromptModel.Enabled = checkUseModelSettings.Checked;
 		}
 		private bool ModelsFolderExists(bool showError){
 			if(!Directory.Exists(_modelsPath)){
@@ -71,9 +79,11 @@ namespace LMStud{
 					var items = new List<ListViewItem>();
 					foreach(var file in files){
 						var meta = GGUFMetadataManager.LoadGGUFMetadata(file);
+						var idx = _models.Count;
 						_models.Add(new ModelInfo(file, meta));
 						var lvi = new ListViewItem(Path.GetFileName(file));
 						lvi.SubItems.Add(file);
+						lvi.Tag = idx;
 						items.Add(lvi);
 					}
 					Invoke(new MethodInvoker(() => {listViewModels.Items.AddRange(items.ToArray());}));

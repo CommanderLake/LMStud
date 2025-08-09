@@ -41,15 +41,13 @@ namespace LMStud
 			this.listViewModels = new System.Windows.Forms.ListView();
 			this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-			this.tabControl2 = new System.Windows.Forms.TabControl();
-			this.tabPageMetadata = new System.Windows.Forms.TabPage();
-			this.listViewMeta = new System.Windows.Forms.ListView();
-			this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-			this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.tabControlModelStuff = new System.Windows.Forms.TabControl();
 			this.tabPageModelSettings = new System.Windows.Forms.TabPage();
+			this.labelSystemPromptModel = new System.Windows.Forms.Label();
+			this.textSystemPromptModel = new System.Windows.Forms.TextBox();
 			this.butApplyModelSettings = new System.Windows.Forms.Button();
 			this.checkUseModelSettings = new System.Windows.Forms.CheckBox();
-			this.groupBox7 = new System.Windows.Forms.GroupBox();
+			this.groupAdvancedModel = new System.Windows.Forms.GroupBox();
 			this.numMinPModel = new System.Windows.Forms.NumericUpDown();
 			this.numTopKModel = new System.Windows.Forms.NumericUpDown();
 			this.numTopPModel = new System.Windows.Forms.NumericUpDown();
@@ -57,13 +55,17 @@ namespace LMStud
 			this.checkFlashAttnModel = new System.Windows.Forms.CheckBox();
 			this.label31 = new System.Windows.Forms.Label();
 			this.label32 = new System.Windows.Forms.Label();
-			this.groupBox8 = new System.Windows.Forms.GroupBox();
+			this.groupCommonModel = new System.Windows.Forms.GroupBox();
 			this.numCtxSizeModel = new System.Windows.Forms.NumericUpDown();
 			this.numGPULayersModel = new System.Windows.Forms.NumericUpDown();
 			this.numTempModel = new System.Windows.Forms.NumericUpDown();
 			this.label33 = new System.Windows.Forms.Label();
 			this.label34 = new System.Windows.Forms.Label();
 			this.label35 = new System.Windows.Forms.Label();
+			this.tabPageMetadata = new System.Windows.Forms.TabPage();
+			this.listViewMeta = new System.Windows.Forms.ListView();
+			this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.splitContainer3 = new System.Windows.Forms.SplitContainer();
 			this.listViewHugSearch = new System.Windows.Forms.ListView();
 			this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -189,17 +191,17 @@ namespace LMStud
 			this.splitContainer2.Panel1.SuspendLayout();
 			this.splitContainer2.Panel2.SuspendLayout();
 			this.splitContainer2.SuspendLayout();
-			this.tabControl2.SuspendLayout();
-			this.tabPageMetadata.SuspendLayout();
+			this.tabControlModelStuff.SuspendLayout();
 			this.tabPageModelSettings.SuspendLayout();
-			this.groupBox7.SuspendLayout();
+			this.groupAdvancedModel.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numMinPModel)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTopKModel)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTopPModel)).BeginInit();
-			this.groupBox8.SuspendLayout();
+			this.groupCommonModel.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numCtxSizeModel)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numGPULayersModel)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTempModel)).BeginInit();
+			this.tabPageMetadata.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).BeginInit();
 			this.splitContainer3.Panel1.SuspendLayout();
 			this.splitContainer3.Panel2.SuspendLayout();
@@ -282,7 +284,7 @@ namespace LMStud
 			// 
 			// splitContainer2.Panel2
 			// 
-			this.splitContainer2.Panel2.Controls.Add(this.tabControl2);
+			this.splitContainer2.Panel2.Controls.Add(this.tabControlModelStuff);
 			// 
 			// listViewModels
 			// 
@@ -308,51 +310,35 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.columnHeader2, "columnHeader2");
 			// 
-			// tabControl2
+			// tabControlModelStuff
 			// 
-			this.tabControl2.Controls.Add(this.tabPageMetadata);
-			this.tabControl2.Controls.Add(this.tabPageModelSettings);
-			resources.ApplyResources(this.tabControl2, "tabControl2");
-			this.tabControl2.Name = "tabControl2";
-			this.tabControl2.SelectedIndex = 0;
-			// 
-			// tabPageMetadata
-			// 
-			this.tabPageMetadata.Controls.Add(this.listViewMeta);
-			resources.ApplyResources(this.tabPageMetadata, "tabPageMetadata");
-			this.tabPageMetadata.Name = "tabPageMetadata";
-			this.tabPageMetadata.UseVisualStyleBackColor = true;
-			// 
-			// listViewMeta
-			// 
-			this.listViewMeta.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.columnHeader3,
-            this.columnHeader4});
-			resources.ApplyResources(this.listViewMeta, "listViewMeta");
-			this.listViewMeta.GridLines = true;
-			this.listViewMeta.HideSelection = false;
-			this.listViewMeta.MultiSelect = false;
-			this.listViewMeta.Name = "listViewMeta";
-			this.listViewMeta.UseCompatibleStateImageBehavior = false;
-			this.listViewMeta.View = System.Windows.Forms.View.Details;
-			// 
-			// columnHeader3
-			// 
-			resources.ApplyResources(this.columnHeader3, "columnHeader3");
-			// 
-			// columnHeader4
-			// 
-			resources.ApplyResources(this.columnHeader4, "columnHeader4");
+			this.tabControlModelStuff.Controls.Add(this.tabPageModelSettings);
+			this.tabControlModelStuff.Controls.Add(this.tabPageMetadata);
+			resources.ApplyResources(this.tabControlModelStuff, "tabControlModelStuff");
+			this.tabControlModelStuff.Name = "tabControlModelStuff";
+			this.tabControlModelStuff.SelectedIndex = 0;
 			// 
 			// tabPageModelSettings
 			// 
+			this.tabPageModelSettings.Controls.Add(this.labelSystemPromptModel);
+			this.tabPageModelSettings.Controls.Add(this.textSystemPromptModel);
 			this.tabPageModelSettings.Controls.Add(this.butApplyModelSettings);
 			this.tabPageModelSettings.Controls.Add(this.checkUseModelSettings);
-			this.tabPageModelSettings.Controls.Add(this.groupBox7);
-			this.tabPageModelSettings.Controls.Add(this.groupBox8);
+			this.tabPageModelSettings.Controls.Add(this.groupAdvancedModel);
+			this.tabPageModelSettings.Controls.Add(this.groupCommonModel);
 			resources.ApplyResources(this.tabPageModelSettings, "tabPageModelSettings");
 			this.tabPageModelSettings.Name = "tabPageModelSettings";
 			this.tabPageModelSettings.UseVisualStyleBackColor = true;
+			// 
+			// labelSystemPromptModel
+			// 
+			resources.ApplyResources(this.labelSystemPromptModel, "labelSystemPromptModel");
+			this.labelSystemPromptModel.Name = "labelSystemPromptModel";
+			// 
+			// textSystemPromptModel
+			// 
+			resources.ApplyResources(this.textSystemPromptModel, "textSystemPromptModel");
+			this.textSystemPromptModel.Name = "textSystemPromptModel";
 			// 
 			// butApplyModelSettings
 			// 
@@ -365,19 +351,20 @@ namespace LMStud
 			resources.ApplyResources(this.checkUseModelSettings, "checkUseModelSettings");
 			this.checkUseModelSettings.Name = "checkUseModelSettings";
 			this.checkUseModelSettings.UseVisualStyleBackColor = true;
+			this.checkUseModelSettings.CheckedChanged += new System.EventHandler(this.CheckUseModelSettings_CheckedChanged);
 			// 
-			// groupBox7
+			// groupAdvancedModel
 			// 
-			this.groupBox7.Controls.Add(this.numMinPModel);
-			this.groupBox7.Controls.Add(this.numTopKModel);
-			this.groupBox7.Controls.Add(this.numTopPModel);
-			this.groupBox7.Controls.Add(this.label27);
-			this.groupBox7.Controls.Add(this.checkFlashAttnModel);
-			this.groupBox7.Controls.Add(this.label31);
-			this.groupBox7.Controls.Add(this.label32);
-			resources.ApplyResources(this.groupBox7, "groupBox7");
-			this.groupBox7.Name = "groupBox7";
-			this.groupBox7.TabStop = false;
+			this.groupAdvancedModel.Controls.Add(this.numMinPModel);
+			this.groupAdvancedModel.Controls.Add(this.numTopKModel);
+			this.groupAdvancedModel.Controls.Add(this.numTopPModel);
+			this.groupAdvancedModel.Controls.Add(this.label27);
+			this.groupAdvancedModel.Controls.Add(this.checkFlashAttnModel);
+			this.groupAdvancedModel.Controls.Add(this.label31);
+			this.groupAdvancedModel.Controls.Add(this.label32);
+			resources.ApplyResources(this.groupAdvancedModel, "groupAdvancedModel");
+			this.groupAdvancedModel.Name = "groupAdvancedModel";
+			this.groupAdvancedModel.TabStop = false;
 			// 
 			// numMinPModel
 			// 
@@ -454,17 +441,17 @@ namespace LMStud
 			resources.ApplyResources(this.label32, "label32");
 			this.label32.Name = "label32";
 			// 
-			// groupBox8
+			// groupCommonModel
 			// 
-			this.groupBox8.Controls.Add(this.numCtxSizeModel);
-			this.groupBox8.Controls.Add(this.numGPULayersModel);
-			this.groupBox8.Controls.Add(this.numTempModel);
-			this.groupBox8.Controls.Add(this.label33);
-			this.groupBox8.Controls.Add(this.label34);
-			this.groupBox8.Controls.Add(this.label35);
-			resources.ApplyResources(this.groupBox8, "groupBox8");
-			this.groupBox8.Name = "groupBox8";
-			this.groupBox8.TabStop = false;
+			this.groupCommonModel.Controls.Add(this.numCtxSizeModel);
+			this.groupCommonModel.Controls.Add(this.numGPULayersModel);
+			this.groupCommonModel.Controls.Add(this.numTempModel);
+			this.groupCommonModel.Controls.Add(this.label33);
+			this.groupCommonModel.Controls.Add(this.label34);
+			this.groupCommonModel.Controls.Add(this.label35);
+			resources.ApplyResources(this.groupCommonModel, "groupCommonModel");
+			this.groupCommonModel.Name = "groupCommonModel";
+			this.groupCommonModel.TabStop = false;
 			// 
 			// numCtxSizeModel
 			// 
@@ -536,6 +523,34 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.label35, "label35");
 			this.label35.Name = "label35";
+			// 
+			// tabPageMetadata
+			// 
+			this.tabPageMetadata.Controls.Add(this.listViewMeta);
+			resources.ApplyResources(this.tabPageMetadata, "tabPageMetadata");
+			this.tabPageMetadata.Name = "tabPageMetadata";
+			this.tabPageMetadata.UseVisualStyleBackColor = true;
+			// 
+			// listViewMeta
+			// 
+			this.listViewMeta.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.columnHeader3,
+            this.columnHeader4});
+			resources.ApplyResources(this.listViewMeta, "listViewMeta");
+			this.listViewMeta.GridLines = true;
+			this.listViewMeta.HideSelection = false;
+			this.listViewMeta.MultiSelect = false;
+			this.listViewMeta.Name = "listViewMeta";
+			this.listViewMeta.UseCompatibleStateImageBehavior = false;
+			this.listViewMeta.View = System.Windows.Forms.View.Details;
+			// 
+			// columnHeader3
+			// 
+			resources.ApplyResources(this.columnHeader3, "columnHeader3");
+			// 
+			// columnHeader4
+			// 
+			resources.ApplyResources(this.columnHeader4, "columnHeader4");
 			// 
 			// splitContainer3
 			// 
@@ -1579,18 +1594,18 @@ namespace LMStud
 			this.splitContainer2.Panel2.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
 			this.splitContainer2.ResumeLayout(false);
-			this.tabControl2.ResumeLayout(false);
-			this.tabPageMetadata.ResumeLayout(false);
+			this.tabControlModelStuff.ResumeLayout(false);
 			this.tabPageModelSettings.ResumeLayout(false);
 			this.tabPageModelSettings.PerformLayout();
-			this.groupBox7.ResumeLayout(false);
+			this.groupAdvancedModel.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.numMinPModel)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTopKModel)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTopPModel)).EndInit();
-			this.groupBox8.ResumeLayout(false);
+			this.groupCommonModel.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.numCtxSizeModel)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numGPULayersModel)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTempModel)).EndInit();
+			this.tabPageMetadata.ResumeLayout(false);
 			this.splitContainer3.Panel1.ResumeLayout(false);
 			this.splitContainer3.Panel2.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).EndInit();
@@ -1769,10 +1784,10 @@ namespace LMStud
 		private System.Windows.Forms.RadioButton radioWhisperVAD;
 		private System.Windows.Forms.ComboBox comboVADModel;
 		private System.Windows.Forms.Label label26;
-		private System.Windows.Forms.TabControl tabControl2;
+		private System.Windows.Forms.TabControl tabControlModelStuff;
 		private System.Windows.Forms.TabPage tabPageMetadata;
 		private System.Windows.Forms.TabPage tabPageModelSettings;
-		private System.Windows.Forms.GroupBox groupBox7;
+		private System.Windows.Forms.GroupBox groupAdvancedModel;
 		private System.Windows.Forms.NumericUpDown numMinPModel;
 		private System.Windows.Forms.NumericUpDown numTopKModel;
 		private System.Windows.Forms.NumericUpDown numTopPModel;
@@ -1780,7 +1795,7 @@ namespace LMStud
 		private System.Windows.Forms.CheckBox checkFlashAttnModel;
 		private System.Windows.Forms.Label label31;
 		private System.Windows.Forms.Label label32;
-		private System.Windows.Forms.GroupBox groupBox8;
+		private System.Windows.Forms.GroupBox groupCommonModel;
 		private System.Windows.Forms.NumericUpDown numCtxSizeModel;
 		private System.Windows.Forms.NumericUpDown numGPULayersModel;
 		private System.Windows.Forms.NumericUpDown numTempModel;
@@ -1789,6 +1804,8 @@ namespace LMStud
 		private System.Windows.Forms.Label label35;
 		private System.Windows.Forms.Button butApplyModelSettings;
 		private System.Windows.Forms.CheckBox checkUseModelSettings;
+		private System.Windows.Forms.Label labelSystemPromptModel;
+		private System.Windows.Forms.TextBox textSystemPromptModel;
 	}
 }
 
