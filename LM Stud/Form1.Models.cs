@@ -168,6 +168,14 @@ namespace LMStud{
 			var whisperOn = checkVoiceInput.CheckState != CheckState.Unchecked;
 			var modelPath = _models[modelIndex].FilePath;
 			var fileName = Path.GetFileName(modelPath);
+			var useModelSettings = _modelSettings.TryGetValue(modelPath, out var settings) && settings.UseModelSettings;
+			var ctxSize = useModelSettings ? settings.CtxSize : _ctxSize;
+			var gpuLayers = useModelSettings ? settings.GPULayers : _gpuLayers;
+			var temp = useModelSettings ? settings.Temp : _temp;
+			var minP = useModelSettings ? settings.MinP : _minP;
+			var topP = useModelSettings ? settings.TopP : _topP;
+			var topK = useModelSettings ? settings.TopK : _topK;
+			var flashAttn = useModelSettings ? settings.FlashAttn : _flashAttn;
 			butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = false;
 			ThreadPool.QueueUserWorkItem(o => {
 				try{
@@ -184,7 +192,7 @@ namespace LMStud{
 							while(_generating) Thread.Sleep(10);
 						}
 						if(whisperOn) NativeMethods.StopSpeechTranscription();
-						var result = LoadModel(modelPath, _gpuLayers, _mMap, _mLock, _numaStrat);
+						var result = LoadModel(modelPath, gpuLayers, _mMap, _mLock, _numaStrat);
 						if(result != NativeMethods.StudError.Success){
 							Settings.Default.LoadAuto = false;
 							Settings.Default.Save();
@@ -192,9 +200,9 @@ namespace LMStud{
 						}
 						_modelIndex = modelIndex;
 						_modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
-						if(_modelCtxMax <= 0) _cntCtxMax = _ctxSize;
-						else _cntCtxMax = _ctxSize > _modelCtxMax ? _modelCtxMax : _ctxSize;
-						result = CreateSession(_cntCtxMax, _batchSize, _flashAttn, _nThreads, _nThreadsBatch, _minP, _topP, _topK, _temp, _repPen);
+						if(_modelCtxMax <= 0) _cntCtxMax = ctxSize;
+						else _cntCtxMax = ctxSize > _modelCtxMax ? _modelCtxMax : ctxSize;
+						result = CreateSession(_cntCtxMax, _batchSize, flashAttn, _nThreads, _nThreadsBatch, minP, topP, topK, temp, _repPen);
 						if(result != NativeMethods.StudError.Success){
 							Settings.Default.LoadAuto = false;
 							Settings.Default.Save();

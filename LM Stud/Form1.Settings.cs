@@ -102,6 +102,8 @@ namespace LMStud{
 			var setGoogle = false;
 			var registerTools = false;
 			var setSystemPrompt = false;
+			var modelOverrideChanged = false;
+			var usingModelSettings = _llModelLoaded && _modelSettings.TryGetValue(_models[_modelIndex].FilePath, out var ms) && ms.UseModelSettings;
 			UpdateSetting(ref _systemPrompt, textSystemPrompt.Text, value => {
 				Settings.Default.SystemPrompt = value;
 				setSystemPrompt = true;
@@ -113,6 +115,10 @@ namespace LMStud{
 			});
 			UpdateSetting(ref _ctxSize, (int)numCtxSize.Value, value => {
 				Settings.Default.CtxSize = value;
+				if(usingModelSettings){
+					modelOverrideChanged = true;
+					return;
+				}
 				if(!_llModelLoaded) return;
 				if(_modelCtxMax <= 0) _cntCtxMax = _ctxSize;
 				else _cntCtxMax = _ctxSize > _modelCtxMax ? _modelCtxMax : _ctxSize;
@@ -120,10 +126,18 @@ namespace LMStud{
 			});
 			UpdateSetting(ref _gpuLayers, (int)numGPULayers.Value, value => {
 				Settings.Default.GPULayers = value;
+				if(usingModelSettings){
+					modelOverrideChanged = true;
+					return;
+				}
 				reloadModel = true;
 			});
 			UpdateSetting(ref _temp, (float)numTemp.Value, value => {
 				Settings.Default.Temp = numTemp.Value;
+				if(usingModelSettings){
+					modelOverrideChanged = true;
+					return;
+				}
 				reloadSmpl = true;
 			});
 			UpdateSetting(ref _nGen, (int)numNGen.Value, value => {Settings.Default.NGen = value;});
@@ -138,14 +152,26 @@ namespace LMStud{
 			});
 			UpdateSetting(ref _topK, (int)numTopK.Value, value => {
 				Settings.Default.TopK = value;
+				if(usingModelSettings){
+					modelOverrideChanged = true;
+					return;
+				}
 				reloadSmpl = true;
 			});
 			UpdateSetting(ref _topP, (float)numTopP.Value, value => {
 				Settings.Default.TopP = numTopP.Value;
+				if(usingModelSettings){
+					modelOverrideChanged = true;
+					return;
+				}
 				reloadSmpl = true;
 			});
 			UpdateSetting(ref _minP, (float)numMinP.Value, value => {
 				Settings.Default.MinP = numMinP.Value;
+				if(usingModelSettings){
+					modelOverrideChanged = true;
+					return;
+				}
 				reloadSmpl = true;
 			});
 			UpdateSetting(ref _batchSize, (int)numBatchSize.Value, value => {
@@ -204,6 +230,10 @@ namespace LMStud{
 			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			UpdateSetting(ref _flashAttn, checkFlashAttn.Checked, value => {
 				Settings.Default.FlashAttn = value;
+				if(usingModelSettings){
+					modelOverrideChanged = true;
+					return;
+				}
 				reloadCtx = true;
 			});
 			UpdateSetting(ref _googleAPIKey, textGoogleApiKey.Text, value => {
@@ -250,11 +280,16 @@ namespace LMStud{
 				Settings.Default.DateTimeEnable = value;
 				registerTools = true;
 			});
-			if(reloadModel && _llModelLoaded && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-				LoadModel(_modelIndex, false);
+			var flash = usingModelSettings ? ms.FlashAttn : _flashAttn;
+			var minP = usingModelSettings ? ms.MinP : _minP;
+			var topP = usingModelSettings ? ms.TopP : _topP;
+			var topK = usingModelSettings ? ms.TopK : _topK;
+			var temp = usingModelSettings ? ms.Temp : _temp;
+			if(reloadModel && _llModelLoaded &&
+				MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes) LoadModel(_modelIndex, false);
 			else{
-				if(reloadCtx) CreateContext(_cntCtxMax, _batchSize, _flashAttn, _nThreads, _nThreadsBatch);
-				if(reloadSmpl) CreateSampler(_minP, _topP, _topK, _temp, _repPen);
+				if(reloadCtx) CreateContext(_cntCtxMax, _batchSize, flash, _nThreads, _nThreadsBatch);
+				if(reloadSmpl) CreateSampler(minP, topP, topK, temp, _repPen);
 			}
 			if(setVAD) NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
 			if(setWWS) NativeMethods.SetWakeWordSimilarity(_wakeWordSimilarity);
@@ -271,6 +306,7 @@ namespace LMStud{
 			if(setGoogle) NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID, _googleSearchResultCount);
 			if(registerTools) RegisterTools();
 			if(registerTools || setSystemPrompt) SetSystemPrompt();
+			if(usingModelSettings && modelOverrideChanged) MessageBox.Show(this, "Modified global settings are overridden by the Model Settings for this model.", Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 			Settings.Default.Save();
 		}
 		private void ButBrowse_Click(object sender, EventArgs e){

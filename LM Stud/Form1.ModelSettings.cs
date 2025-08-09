@@ -5,14 +5,24 @@ using Newtonsoft.Json;
 namespace LMStud{
 	internal partial class Form1{
 		private struct ModelSettings{
-			public bool UseModelSettings;
-			public int CtxSize;
-			public int GPULayers;
-			public float Temp;
-			public float MinP;
-			public float TopP;
-			public int TopK;
-			public bool FlashAttn;
+			public readonly bool UseModelSettings;
+			public readonly int CtxSize;
+			public readonly int GPULayers;
+			public readonly float Temp;
+			public readonly float MinP;
+			public readonly float TopP;
+			public readonly int TopK;
+			public readonly bool FlashAttn;
+			public ModelSettings(bool useModelSettings, int ctxSize, int gpuLayers, float temp, float minP, float topP, int topK, bool flashAttn){
+				UseModelSettings = useModelSettings;
+				CtxSize = ctxSize;
+				GPULayers = gpuLayers;
+				Temp = temp;
+				MinP = minP;
+				TopP = topP;
+				TopK = topK;
+				FlashAttn = flashAttn;
+			}
 		}
 		private readonly Dictionary<string, ModelSettings> _modelSettings = new Dictionary<string, ModelSettings>();
 		private readonly string _modelSettingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LM Stud\\ModelSettings.json");
@@ -34,10 +44,8 @@ namespace LMStud{
 		private void ButApplyModelSettings_Click(object sender, EventArgs e){
 			if(listViewModels.SelectedItems.Count == 0) return;
 			var path = _models[(int)listViewModels.SelectedItems[0].Tag].FilePath;
-			var settings = new ModelSettings{
-				UseModelSettings = checkUseModelSettings.Checked, CtxSize = (int)numCtxSizeModel.Value, GPULayers = (int)numGPULayersModel.Value, Temp = (float)numTempModel.Value,
-				MinP = (float)numMinPModel.Value, TopP = (float)numTopPModel.Value, TopK = (int)numTopKModel.Value, FlashAttn = checkFlashAttnModel.Checked
-			};
+			var settings = new ModelSettings(checkUseModelSettings.Checked, (int)numCtxSizeModel.Value, (int)numGPULayersModel.Value, (float)numTempModel.Value, (float)numMinPModel.Value,
+				(float)numTopPModel.Value, (int)numTopKModel.Value, checkFlashAttnModel.Checked);
 			_modelSettings[path] = settings;
 			SaveModelSettings();
 		}
