@@ -106,6 +106,7 @@ void SetFileBaseDir(const char* dir){
 }
 static std::string UrlEncode(const char* text){
 	CURL* curl = curl_easy_init();
+	if(curl == nullptr) return std::string();
 	char* enc = curl_easy_escape(curl, text, 0);
 	std::string out = enc ? enc : "";
 	curl_free(enc);
@@ -134,6 +135,9 @@ std::string GoogleSearch(const char* argsJson){
 	std::string query = GetArgValue(argsJson, "query");
 	if(query.empty()) query = argsJson ? argsJson : "";
 	const auto result = PerformHttpGet(("https://customsearch.googleapis.com/customsearch/v1?key=" + googleAPIKey + "&cx=" + googleSearchID + "&num=" + std::to_string(googleResultCount) + "&fields=items(title,link,snippet)&prettyPrint=true&q=" + UrlEncode(query.c_str())).c_str());
+	if(result == nullptr){
+		return "{\"error\":\"nullptr getting search results\"}";
+	}
 	auto resultStr = std::string(result);
 	std::free(result);
 	return resultStr;
@@ -207,9 +211,10 @@ std::string ListWebTags(const char* argsJson){
 void ClearWebCache(){ _webCache.clear(); }
 std::string GetLongDateTime(const char* argsJson){
 	const auto now = std::time(nullptr);
-	const std::tm* localTime = std::localtime(&now);
+	std::tm localTime{};
+	localtime_s(&localTime, &now);
 	char buffer[80];
-	std::strftime(buffer, sizeof buffer, "%A, %d %B %Y, %H:%M:%S", localTime);
+	std::strftime(buffer, sizeof buffer, "%A, %d %B %Y, %H:%M:%S", &localTime);
 	return std::string(buffer);
 }
 static bool IsPathAllowed(const std::filesystem::path& p){
