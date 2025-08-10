@@ -29,7 +29,7 @@ namespace LMStud{
 				var variantLabel = listViewHugFiles.SelectedItems[0].SubItems[0].Text;
 				butDownload.Text = Resources.Cancel;
 				HugDownloadFile(_uploader, _modelName, variantLabel);
-			} else _downloading = false;
+			} else{ _downloading = false; }
 		}
 		private void HugSearch(string term){
 			if(string.IsNullOrWhiteSpace(term)) return;
@@ -105,11 +105,17 @@ namespace LMStud{
 					}
 					if(items.Count > 0) Invoke(new MethodInvoker(() => {listViewHugFiles.Items.AddRange(items.ToArray());}));
 				} catch(HttpRequestException ex){
-					Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.HTTP_Error_loading_files_for_ + Resources._0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+					Invoke(new MethodInvoker(() => {
+						MessageBox.Show(this, string.Format(Resources.HTTP_Error_loading_files_for_ + Resources._0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+					}));
 				} catch(JsonException ex){
-					Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.JSON_Parse_Error_for_ + Resources._0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+					Invoke(new MethodInvoker(() => {
+						MessageBox.Show(this, string.Format(Resources.JSON_Parse_Error_for_ + Resources._0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+					}));
 				} catch(Exception ex){
-					Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.Error_loading_files_for_ + Resources._0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+					Invoke(new MethodInvoker(() => {
+						MessageBox.Show(this, string.Format(Resources.Error_loading_files_for_ + Resources._0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+					}));
 				} finally{ Invoke(new MethodInvoker(() => {listViewHugFiles.EndUpdate();})); }
 			});
 		}
@@ -127,9 +133,7 @@ namespace LMStud{
 			int ProgressCb(long totalBytes, long downloadedBytes){
 				if(totalBytes <= 0) return 0;
 				var percent = (int)(downloadedBytes*1000/totalBytes);
-				progressBar1.Invoke((MethodInvoker)(() => {
-					progressBar1.Value = percent;
-				}));
+				progressBar1.Invoke((MethodInvoker)(() => {progressBar1.Value = percent;}));
 				return _downloading ? 0 : 1;
 			}
 			ThreadPool.QueueUserWorkItem(_ => {
@@ -141,12 +145,20 @@ namespace LMStud{
 								MessageBox.Show(this, string.Format(Resources.Downloaded__0__to___1_, variantLabel, targetPath), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 								PopulateModels();
 							}));
-						else File.Delete(targetPath);
+						else
+							try{ File.Delete(targetPath); } catch{}
+					} else if(_downloading){
+						Invoke(new MethodInvoker(() => {
+							MessageBox.Show(this, string.Format(Resources.Download_failed_with_error_code___0_, result), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+						}));
 					} else{
-						Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.Download_failed_with_error_code___0_, result), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+						try{ File.Delete(targetPath); } catch{}
 					}
 				} catch(Exception ex){
-					if(_downloading) Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.Download_failed___0_, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+					if(_downloading)
+						Invoke(new MethodInvoker(() => {
+							MessageBox.Show(this, string.Format(Resources.Download_failed___0_, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+						}));
 				} finally{
 					Invoke(new MethodInvoker(() => {
 						progressBar1.Value = 0;
