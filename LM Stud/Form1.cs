@@ -213,8 +213,8 @@ namespace LMStud{
 			if(_generating) return;
 			var id = _chatMessages.IndexOf(cm);
 			GenerationLock.Wait(-1);
-			var result = NativeMethods.RemoveMessageAt(id);
-			GenerationLock.Release();
+			NativeMethods.StudError result;
+			try{ result = NativeMethods.RemoveMessageAt(id); } finally{GenerationLock.Release();}
 			if(result != NativeMethods.StudError.IndexOutOfRange){
 				_chatMessages[id].Dispose();
 				_chatMessages.RemoveAt(id);
@@ -231,8 +231,8 @@ namespace LMStud{
 			var role = _chatMessages[idx].Role;
 			var msg = _chatMessages[idx].Message;
 			GenerationLock.Wait(-1);
-			var result = NativeMethods.RemoveMessagesStartingAt(idx);
-			GenerationLock.Release();
+			NativeMethods.StudError result;
+			try{ result = NativeMethods.RemoveMessagesStartingAt(idx); } finally{ GenerationLock.Release(); }
 			if(result != NativeMethods.StudError.IndexOutOfRange)
 				for(var i = _chatMessages.Count - 1; i >= idx; i--){
 					_chatMessages[i].Dispose();

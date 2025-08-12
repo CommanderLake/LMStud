@@ -313,12 +313,12 @@ namespace LMStud{
 			var topP = overrideSettings ? ms.TopP : _topP;
 			var topK = overrideSettings ? ms.TopK : _topK;
 			var temp = overrideSettings ? ms.Temp : _temp;
-			if(reloadModel && LlModelLoaded &&
-				MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes) LoadModel(_modelIndex, false);
-			else{
-				if(reloadCtx) CreateContext(_cntCtxMax, _batchSize, flash, _nThreads, _nThreadsBatch);
-				if(reloadSmpl) CreateSampler(minP, topP, topK, temp, _repPen);
-			}
+			if(LlModelLoaded)
+				if(reloadModel && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes) LoadModel(_modelIndex, false);
+				else{
+					if(reloadCtx) CreateContext(_cntCtxMax, _batchSize, flash, _nThreads, _nThreadsBatch);
+					if(reloadSmpl) CreateSampler(minP, topP, topK, temp, _repPen);
+				}
 			if(setVAD) NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
 			if(setWWS) NativeMethods.SetWakeWordSimilarity(_wakeWordSimilarity);
 			if(reloadWhisper && _whisperLoaded){

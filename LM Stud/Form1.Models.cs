@@ -146,8 +146,8 @@ namespace LMStud{
 		}
 		private void SetSystemPrompt(string prompt){
 			GenerationLock.Wait(-1);
-			var error = NativeMethods.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : "");
-			GenerationLock.Release();
+			NativeMethods.StudError error;
+			try{ error = NativeMethods.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : ""); } finally{ GenerationLock.Release(); }
 			if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_setting_system_prompt, error);
 		}
 		private void SetSystemPrompt(){SetSystemPrompt(_systemPrompt);}
@@ -158,22 +158,22 @@ namespace LMStud{
 		}
 		NativeMethods.StudError CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
 			GenerationLock.Wait(-1);
-			var result = NativeMethods.CreateSession(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty);
-			GenerationLock.Release();
+			NativeMethods.StudError result;
+			try{ result = NativeMethods.CreateSession(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty); } finally{ GenerationLock.Release(); }
 			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_session, result);
 			return result;
 		}
 		NativeMethods.StudError CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch){
 			GenerationLock.Wait(-1);
-			var result = NativeMethods.CreateContext(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch);
-			GenerationLock.Release();
+			NativeMethods.StudError result;
+			try{ result = NativeMethods.CreateContext(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch); } finally{ GenerationLock.Release(); }
 			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_context, result);
 			return result;
 		}
 		NativeMethods.StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty){
 			GenerationLock.Wait(-1);
-			var result = NativeMethods.CreateSampler(minP, topP, topK, temp, repeatPenalty);
-			GenerationLock.Release();
+			NativeMethods.StudError result;
+			try{ result = NativeMethods.CreateSampler(minP, topP, topK, temp, repeatPenalty); } finally{ GenerationLock.Release(); }
 			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_sampler, result);
 			return result;
 		}

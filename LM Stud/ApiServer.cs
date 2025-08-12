@@ -37,15 +37,16 @@ namespace LMStud{
 			}
 		}
 		private void HandleContext(HttpListenerContext context){
+			var acquired = false;
 			try{
 				var req = context.Request;
 				var method = req.HttpMethod;
 				var path = req.Url.AbsolutePath;
-				if(!_form.GenerationLock.Wait(-1)) return;
-				if(_form.IsGenerating || !_form.LlModelLoaded){
+				if(!_form.LlModelLoaded || !_form.GenerationLock.Wait(0)){
 					context.Response.StatusCode = 409;
 					return;
 				}
+				acquired = true;
 				if(method == "GET" && path == "/v1/models") HandleModels(context);
 				else if(method == "POST" && path == "/v1/chat/completions") HandleChat(context);
 				else if(method == "POST" && path == "/v1/chat/reset") HandleReset(context);
@@ -54,7 +55,7 @@ namespace LMStud{
 				try{
 					context.Response.OutputStream.Close();
 				} catch{}
-				_form.GenerationLock.Release();
+				if(acquired) _form.GenerationLock.Release();
 			}
 		}
 		private void HandleModels(HttpListenerContext ctx){
