@@ -89,11 +89,15 @@ namespace LMStud{
 				return;
 			}
 			var session = _sessions.Get(request.SessionId);
+			ctx.Response.AddHeader("X-Session-Id", session.Id);
+			if(_form.IsGenerating){
+				ctx.Response.StatusCode = 409;
+				return;
+			}
 			_form.SetState(session.State);
 			var prompt = request.Messages?.LastOrDefault(m => m.Role == "user")?.Content ?? "";
 			var stream = request.Stream;
 			ctx.Response.ContentType = stream ? "text/event-stream" : "application/json";
-			ctx.Response.AddHeader("X-Session-Id", session.Id);
 			var sb = new StringBuilder();
 			void TokenCb(string token){
 				sb.Append(token);
