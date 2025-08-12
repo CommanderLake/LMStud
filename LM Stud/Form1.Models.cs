@@ -9,7 +9,7 @@ namespace LMStud{
 	internal partial class Form1{
 		private const string DefaultPrompt = "Assist the user to the best of your ability.";
 		private const string FetchPrompt = "\nAfter calling the web_search tool you must subsequently call the get_webpage tool with a url followed by the get_webpage_text tool with the id of any relevant preview.";
-		private volatile bool _llModelLoaded;
+		internal volatile bool LlModelLoaded;
 		private volatile bool _populating;
 		private int _cntCtxMax;
 		private int _modelCtxMax;
@@ -145,7 +145,9 @@ namespace LMStud{
 			else MessageBox.Show(this, string.Format(Resources._0____1_, action, detail), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}
 		private void SetSystemPrompt(string prompt){
+			GenerationLock.Wait(-1);
 			var error = NativeMethods.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : "");
+			GenerationLock.Release();
 			if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_setting_system_prompt, error);
 		}
 		private void SetSystemPrompt(){SetSystemPrompt(_systemPrompt);}
@@ -155,17 +157,23 @@ namespace LMStud{
 			return result;
 		}
 		NativeMethods.StudError CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
+			GenerationLock.Wait(-1);
 			var result = NativeMethods.CreateSession(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty);
+			GenerationLock.Release();
 			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_session, result);
 			return result;
 		}
 		NativeMethods.StudError CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch){
+			GenerationLock.Wait(-1);
 			var result = NativeMethods.CreateContext(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch);
+			GenerationLock.Release();
 			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_context, result);
 			return result;
 		}
 		NativeMethods.StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty){
+			GenerationLock.Wait(-1);
 			var result = NativeMethods.CreateSampler(minP, topP, topK, temp, repeatPenalty);
+			GenerationLock.Release();
 			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_sampler, result);
 			return result;
 		}
@@ -186,9 +194,9 @@ namespace LMStud{
 			butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = false;
 			ThreadPool.QueueUserWorkItem(o => {
 				try{
-					if(_llModelLoaded){
+					if(LlModelLoaded){
 						Invoke(new MethodInvoker(UnloadModel));
-						while(_llModelLoaded) Thread.Sleep(10);
+						while(LlModelLoaded) Thread.Sleep(10);
 					}
 					Invoke(new MethodInvoker(() => {
 						toolStripStatusLabel1.Text = Resources.Loading__ + fileName;
@@ -213,9 +221,9 @@ namespace LMStud{
 						if(result != NativeMethods.StudError.Success){
 							Settings.Default.LoadAuto = false;
 							Settings.Default.Save();
-							_llModelLoaded = true;
+							LlModelLoaded = true;
 							Invoke(new MethodInvoker(UnloadModel));
-							while(_llModelLoaded) Thread.Sleep(10);
+							while(LlModelLoaded) Thread.Sleep(10);
 							return;
 						}
 						_tokenCallback = TokenCallback;
@@ -234,7 +242,7 @@ namespace LMStud{
 								toolStripStatusLabel1.Text = Resources.Done_loading__ + fileName;
 							}));
 						} catch(ObjectDisposedException){}
-						_llModelLoaded = true;
+						LlModelLoaded = true;
 					}
 				} finally{ Invoke(new MethodInvoker(() => {butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = true;})); }
 			});
@@ -242,19 +250,22 @@ namespace LMStud{
 		private void UnloadModel(){
 			butGen.Enabled = butReset.Enabled = butUnload.Enabled = false;
 			ThreadPool.QueueUserWorkItem(o => {
-				if(_generating) {
-					NativeMethods.StopGeneration();
-					while(_generating) Thread.Sleep(10);
-				}
-				ClearRegisteredTools();
-				NativeMethods.FreeModel();
+				GenerationLock.Wait(-1);
 				try{
-					BeginInvoke(new MethodInvoker(() => {
-						toolTip1.SetToolTip(numCtxSize, Resources.ToolTip_numCtxSize);
-						toolStripStatusLabel1.Text = Resources.Model_unloaded;
-					}));
-				} catch(ObjectDisposedException){}
-				_llModelLoaded = false;
+					if(_generating){
+						NativeMethods.StopGeneration();
+						while(_generating) Thread.Sleep(10);
+					}
+					ClearRegisteredTools();
+					NativeMethods.FreeModel();
+					try{
+						BeginInvoke(new MethodInvoker(() => {
+							toolTip1.SetToolTip(numCtxSize, Resources.ToolTip_numCtxSize);
+							toolStripStatusLabel1.Text = Resources.Model_unloaded;
+						}));
+					} catch(ObjectDisposedException){}
+					LlModelLoaded = false;
+				} finally{ GenerationLock.Release(); }
 			});
 		}
 		private string ConvertValueToString(GGUFMetadataManager.GGUFMetaValue metaVal){

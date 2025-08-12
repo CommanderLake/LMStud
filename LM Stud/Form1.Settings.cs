@@ -112,7 +112,7 @@ namespace LMStud{
 			var setSystemPrompt = false;
 			var modelOverrideChanged = false;
 			ModelSettings ms = default;
-			var overrideSettings = _llModelLoaded && _modelSettings.TryGetValue(_models[_modelIndex].FilePath, out ms) && ms.OverrideSettings;
+			var overrideSettings = LlModelLoaded && _modelSettings.TryGetValue(_models[_modelIndex].FilePath, out ms) && ms.OverrideSettings;
 			UpdateSetting(ref _systemPrompt, textSystemPrompt.Text, value => {
 				Settings.Default.SystemPrompt = value;
 				if(overrideSettings){
@@ -132,7 +132,7 @@ namespace LMStud{
 					modelOverrideChanged = true;
 					return;
 				}
-				if(!_llModelLoaded) return;
+				if(!LlModelLoaded) return;
 				if(_modelCtxMax <= 0) _cntCtxMax = _ctxSize;
 				else _cntCtxMax = _ctxSize > _modelCtxMax ? _modelCtxMax : _ctxSize;
 				reloadCtx = true;
@@ -313,7 +313,7 @@ namespace LMStud{
 			var topP = overrideSettings ? ms.TopP : _topP;
 			var topK = overrideSettings ? ms.TopK : _topK;
 			var temp = overrideSettings ? ms.Temp : _temp;
-			if(reloadModel && _llModelLoaded &&
+			if(reloadModel && LlModelLoaded &&
 				MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes) LoadModel(_modelIndex, false);
 			else{
 				if(reloadCtx) CreateContext(_cntCtxMax, _batchSize, flash, _nThreads, _nThreadsBatch);

@@ -28,8 +28,9 @@ namespace LMStud{
 		private volatile bool _rendering;
 		private bool _whisperLoaded;
 		private LVColumnClickHandler _columnClickHandler;
-		private ApiServer _apiServer;
+		private readonly ApiServer _apiServer;
 		internal bool IsGenerating => _generating || _apiGenerating;
+		internal readonly SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
 		internal Form1(){
 			_this = this;
 			//var culture = new CultureInfo("zh-CN");
@@ -211,13 +212,17 @@ namespace LMStud{
 		private void MsgButDeleteOnClick(ChatMessage cm){
 			if(_generating) return;
 			var id = _chatMessages.IndexOf(cm);
+			GenerationLock.Wait(-1);
 			var result = NativeMethods.RemoveMessageAt(id);
-			_chatMessages[id].Dispose();
-			_chatMessages.RemoveAt(id);
-			if(result != NativeMethods.StudError.Success) MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+			GenerationLock.Release();
+			if(result != NativeMethods.StudError.IndexOutOfRange){
+				_chatMessages[id].Dispose();
+				_chatMessages.RemoveAt(id);
+			}
+			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_session, result);
 		}
 		private void MsgButRegenOnClick(ChatMessage cm){
-			if(!_llModelLoaded || _generating) return;
+			if(!LlModelLoaded || _generating) return;
 			var idx = _chatMessages.IndexOf(cm);
 			if(idx < 0) return;
 			while(_chatMessages[idx].Role == MessageRole.Assistant)
@@ -225,13 +230,16 @@ namespace LMStud{
 					return;
 			var role = _chatMessages[idx].Role;
 			var msg = _chatMessages[idx].Message;
+			GenerationLock.Wait(-1);
 			var result = NativeMethods.RemoveMessagesStartingAt(idx);
-			for(var i = _chatMessages.Count - 1; i >= idx; i--){
-				_chatMessages[i].Dispose();
-				_chatMessages.RemoveAt(i);
-			}
+			GenerationLock.Release();
+			if(result != NativeMethods.StudError.IndexOutOfRange)
+				for(var i = _chatMessages.Count - 1; i >= idx; i--){
+					_chatMessages[i].Dispose();
+					_chatMessages.RemoveAt(i);
+				}
 			if(result != NativeMethods.StudError.Success){
-				MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+				ShowErrorMessage(Resources.Error_creating_session, result);
 				return;
 			}
 			Generate(role, msg);
@@ -278,7 +286,12 @@ namespace LMStud{
 			Generate(MessageRole.User, prompt);
 		}
 		private void Generate(MessageRole role, string prompt){
-			if(!_llModelLoaded || _generating || _apiGenerating || string.IsNullOrWhiteSpace(prompt)) return;
+			if(!LlModelLoaded || string.IsNullOrWhiteSpace(prompt)) return;
+			if(!GenerationLock.Wait(-1)) return;
+			if(_generating || _apiGenerating){
+				GenerationLock.Release();
+				return;
+			}
 			_generating = true;
 			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
 			butGen.Text = Resources.Stop;
@@ -316,23 +329,27 @@ namespace LMStud{
 						_generating = false;
 						foreach(var message in _chatMessages) message.Generating = false;
 					}));
-				} catch(ObjectDisposedException){}
+				} catch(ObjectDisposedException){} finally{ GenerationLock.Release(); }
 			});
+		}
+		internal bool GenerateForApi(byte[] state, string prompt, Action<string> onToken){
+			if(!LlModelLoaded || _generating || _apiGenerating || string.IsNullOrWhiteSpace(prompt)) return false;
+			_apiGenerating = true;
+			_apiTokenCallback = onToken;
+			try{
+				SetState(state);
+				NativeMethods.GenerateWithTools(MessageRole.User, prompt, _nGen, false);
+				return true;
+			} finally{
+				_apiTokenCallback = null;
+				_apiGenerating = false;
+			}
 		}
 		private static int FindSentenceEnd(StringBuilder sb){
 			for(var i = 0; i < sb.Length - 1; i++)
 				if((sb[i] == '.' || sb[i] == '!' || sb[i] == '?') && char.IsWhiteSpace(sb[i + 1]))
 					return i;
 			return -1;
-		}
-		internal void GenerateForApi(string prompt, Action<string> onToken){
-			if(!_llModelLoaded || _generating || _apiGenerating || string.IsNullOrWhiteSpace(prompt)) return;
-			_apiGenerating = true;
-			_apiTokenCallback = onToken;
-			try{ NativeMethods.GenerateWithTools(MessageRole.User, prompt, _nGen, false); } finally{
-				_apiTokenCallback = null;
-				_apiGenerating = false;
-			}
 		}
 		internal byte[] GetState(){
 			var size = NativeMethods.GetStateSize();

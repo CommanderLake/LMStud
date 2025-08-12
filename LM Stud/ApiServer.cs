@@ -33,18 +33,28 @@ namespace LMStud{
 			while(!token.IsCancellationRequested){
 				HttpListenerContext ctx;
 				try{ ctx = _listener.GetContext(); } catch{ break; }
-				ThreadPool.QueueUserWorkItem(_ => HandleContext(ctx));
+				HandleContext(ctx);
 			}
 		}
 		private void HandleContext(HttpListenerContext context){
 			try{
 				var req = context.Request;
-				if(req.HttpMethod == "GET" && req.Url.AbsolutePath == "/v1/models") HandleModels(context);
-				else if(req.HttpMethod == "POST" && req.Url.AbsolutePath == "/v1/chat/completions") HandleChat(context);
-				else if(req.HttpMethod == "POST" && req.Url.AbsolutePath == "/v1/chat/reset") HandleReset(context);
+				var method = req.HttpMethod;
+				var path = req.Url.AbsolutePath;
+				if(!_form.GenerationLock.Wait(-1)) return;
+				if(_form.IsGenerating || !_form.LlModelLoaded){
+					context.Response.StatusCode = 409;
+					return;
+				}
+				if(method == "GET" && path == "/v1/models") HandleModels(context);
+				else if(method == "POST" && path == "/v1/chat/completions") HandleChat(context);
+				else if(method == "POST" && path == "/v1/chat/reset") HandleReset(context);
 				else context.Response.StatusCode = 404;
 			} catch{ context.Response.StatusCode = 500; } finally{
-				try{ context.Response.OutputStream.Close(); } catch{}
+				try{
+					context.Response.OutputStream.Close();
+				} catch{}
+				_form.GenerationLock.Release();
 			}
 		}
 		private void HandleModels(HttpListenerContext ctx){
@@ -59,12 +69,11 @@ namespace LMStud{
 			string body;
 			using(var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)){ body = reader.ReadToEnd(); }
 			ChatRequest request = null;
-			if(!string.IsNullOrEmpty(body)){
+			if(!string.IsNullOrEmpty(body))
 				try{ request = JsonConvert.DeserializeObject<ChatRequest>(body); } catch{
 					ctx.Response.StatusCode = 400;
 					return;
 				}
-			}
 			NativeMethods.ResetChat();
 			if(request?.SessionId != null) _sessions.Remove(request.SessionId);
 			var resp = new{ status = "reset" };
@@ -90,53 +99,32 @@ namespace LMStud{
 			}
 			var session = _sessions.Get(request.SessionId);
 			ctx.Response.AddHeader("X-Session-Id", session.Id);
-			if(_form.IsGenerating){
-				ctx.Response.StatusCode = 409;
-				return;
-			}
-			_form.SetState(session.State);
 			var prompt = request.Messages?.LastOrDefault(m => m.Role == "user")?.Content ?? "";
-			var stream = request.Stream;
-			ctx.Response.ContentType = stream ? "text/event-stream" : "application/json";
+			ctx.Response.ContentType = "application/json";
 			var sb = new StringBuilder();
-			void TokenCb(string token){
-				sb.Append(token);
-				if(stream){
-					var chunk = "data: " + JsonConvert.SerializeObject(new{ choices = new[]{ new{ delta = new{ content = token } } } }) + "\n\n";
-					var buf = Encoding.UTF8.GetBytes(chunk);
-					ctx.Response.OutputStream.Write(buf, 0, buf.Length);
-					ctx.Response.OutputStream.Flush();
-				}
-			}
-			if(_form.IsGenerating){
+			void TokenCb(string token){sb.Append(token);}
+			if(_form.IsGenerating || !_form.GenerateForApi(session.State, prompt, TokenCb)){
 				ctx.Response.StatusCode = 409;
 				return;
 			}
-			_form.GenerateForApi(prompt, TokenCb);
 			var assistant = sb.ToString();
 			session.Messages.Add(new Message{ Role = "user", Content = prompt });
 			session.Messages.Add(new Message{ Role = "assistant", Content = assistant });
 			var state = _form.GetState();
 			var tokens = _form.GetTokenCount();
 			_sessions.Update(session, session.Messages, state, tokens);
-			if(stream){
-				var end = Encoding.UTF8.GetBytes("data: [DONE]\n\n");
-				ctx.Response.OutputStream.Write(end, 0, end.Length);
-			} else{
-				var resp = new{ session_id = session.Id, choices = new[]{ new{ message = new{ role = "assistant", content = assistant } } } };
-				var json = JsonConvert.SerializeObject(resp);
-				var bytes = Encoding.UTF8.GetBytes(json);
-				ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
-			}
+			var resp = new{ session_id = session.Id, choices = new[]{ new{ message = new{ role = "assistant", content = assistant } } } };
+			var json = JsonConvert.SerializeObject(resp);
+			var bytes = Encoding.UTF8.GetBytes(json);
+			ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
 		}
 		private class ChatRequest{
 			public List<Message> Messages;
 			[JsonProperty("session_id")] public string SessionId;
-			public bool Stream;
 		}
 		public class Message{
-			public string Role;
 			public string Content;
+			public string Role;
 		}
 	}
 }
