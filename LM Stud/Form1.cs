@@ -21,12 +21,15 @@ namespace LMStud{
 		private ChatMessage _cntAssMsg;
 		private bool _first = true;
 		private volatile bool _generating;
+		private volatile bool _apiGenerating;
+		private Action<string> _apiTokenCallback;
 		private int _genTokenTotal;
 		private int _msgTokenCount;
 		private volatile bool _rendering;
 		private bool _whisperLoaded;
 		private LVColumnClickHandler _columnClickHandler;
 		private ApiServer _apiServer;
+		internal bool IsGenerating => _generating || _apiGenerating;
 		internal Form1(){
 			_this = this;
 			//var culture = new CultureInfo("zh-CN");
@@ -275,7 +278,7 @@ namespace LMStud{
 			Generate(MessageRole.User, prompt);
 		}
 		private void Generate(MessageRole role, string prompt){
-			if(!_llModelLoaded || _generating || string.IsNullOrWhiteSpace(prompt)) return;
+			if(!_llModelLoaded || _generating || _apiGenerating || string.IsNullOrWhiteSpace(prompt)) return;
 			_generating = true;
 			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
 			butGen.Text = Resources.Stop;
@@ -323,17 +326,12 @@ namespace LMStud{
 			return -1;
 		}
 		internal void GenerateForApi(string prompt, Action<string> onToken){
-			if(!_llModelLoaded || string.IsNullOrWhiteSpace(prompt)) return;
-			unsafe{
-				var prev = _tokenCallback;
-				void APICb(byte* tPtr, int tLen, byte* mPtr, int mLen, int tc, int tt, double ft, int tool){
-					if(mLen <= 0) return;
-					var token = Encoding.UTF8.GetString(mPtr, mLen);
-					onToken(token);
-				}
-				NativeMethods.SetTokenCallback(APICb);
-				NativeMethods.GenerateWithTools(MessageRole.User, prompt, _nGen, false);
-				NativeMethods.SetTokenCallback(prev);
+			if(!_llModelLoaded || _generating || _apiGenerating || string.IsNullOrWhiteSpace(prompt)) return;
+			_apiGenerating = true;
+			_apiTokenCallback = onToken;
+			try{ NativeMethods.GenerateWithTools(MessageRole.User, prompt, _nGen, false); } finally{
+				_apiTokenCallback = null;
+				_apiGenerating = false;
 			}
 		}
 		internal byte[] GetState(){
@@ -353,6 +351,12 @@ namespace LMStud{
 		}
 		internal int GetTokenCount(){return NativeMethods.LlamaMemSize();}
 		private static unsafe void TokenCallback(byte* thinkPtr, int thinkLen, byte* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool){
+			if(_this._apiGenerating){
+				if(messageLen <= 0) return;
+				var msg = Encoding.UTF8.GetString(messagePtr, messageLen);
+				_this._apiTokenCallback?.Invoke(msg);
+				return;
+			}
 			var elapsed = _this._swRate.Elapsed.TotalSeconds;
 			if(elapsed >= 1.0) _this._swRate.Restart();
 			var think = "";

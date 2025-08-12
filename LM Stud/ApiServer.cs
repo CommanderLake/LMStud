@@ -104,6 +104,10 @@ namespace LMStud{
 					ctx.Response.OutputStream.Flush();
 				}
 			}
+			if(_form.IsGenerating){
+				ctx.Response.StatusCode = 409;
+				return;
+			}
 			_form.GenerateForApi(prompt, TokenCb);
 			var assistant = sb.ToString();
 			session.Messages.Add(new Message{ Role = "user", Content = prompt });
