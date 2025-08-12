@@ -5,14 +5,17 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
+using LMStud.Properties;
 using Newtonsoft.Json;
 namespace LMStud{
 	internal class ApiServer{
 		private readonly Form1 _form;
+		private readonly SessionManager _sessions = new SessionManager();
 		private CancellationTokenSource _cts;
 		private HttpListener _listener;
-		public ApiServer(Form1 form){_form = form;}
 		public int Port = 11434;
+		public ApiServer(Form1 form){_form = form;}
 		public bool IsRunning => _listener != null && _listener.IsListening;
 		public void Start(){
 			if(IsRunning) return;
@@ -42,7 +45,9 @@ namespace LMStud{
 				if(req.HttpMethod == "GET" && req.Url.AbsolutePath == "/v1/models") HandleModels(context);
 				else if(req.HttpMethod == "POST" && req.Url.AbsolutePath == "/v1/chat/completions") HandleChat(context);
 				else context.Response.StatusCode = 404;
-			} catch{} finally{
+			} catch(JsonSerializationException e){
+				_form.Invoke(new MethodInvoker(() => {MessageBox.Show(_form, e.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+			} finally{
 				try{ context.Response.OutputStream.Close(); } catch{}
 			}
 		}
@@ -57,26 +62,46 @@ namespace LMStud{
 		private void HandleChat(HttpListenerContext ctx){
 			string body;
 			using(var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)){ body = reader.ReadToEnd(); }
-			var request = JsonConvert.DeserializeObject<ChatRequest>(body);
-			if(request == null) return;
+			ChatRequest request;
+			try{ request = JsonConvert.DeserializeObject<ChatRequest>(body); } catch(JsonException ex){
+				ctx.Response.StatusCode = 400;
+				var err = JsonConvert.SerializeObject(new{ error = new{ message = ex.Message } });
+				var buf = Encoding.UTF8.GetBytes(err);
+				ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+				return;
+			}
+			if(request == null){
+				ctx.Response.StatusCode = 400;
+				return;
+			}
+			var session = _sessions.Get(request.SessionId);
+			_form.SetState(session.State);
 			var prompt = request.Messages?.LastOrDefault(m => m.Role == "user")?.Content ?? "";
 			var stream = request.Stream;
 			ctx.Response.ContentType = stream ? "text/event-stream" : "application/json";
+			ctx.Response.AddHeader("X-Session-Id", session.Id);
 			var sb = new StringBuilder();
 			void TokenCb(string token){
+				sb.Append(token);
 				if(stream){
 					var chunk = "data: " + JsonConvert.SerializeObject(new{ choices = new[]{ new{ delta = new{ content = token } } } }) + "\n\n";
 					var buf = Encoding.UTF8.GetBytes(chunk);
 					ctx.Response.OutputStream.Write(buf, 0, buf.Length);
 					ctx.Response.OutputStream.Flush();
-				} else{ sb.Append(token); }
+				}
 			}
 			_form.GenerateForApi(prompt, TokenCb);
+			var assistant = sb.ToString();
+			session.Messages.Add(new Message{ Role = "user", Content = prompt });
+			session.Messages.Add(new Message{ Role = "assistant", Content = assistant });
+			var state = _form.GetState();
+			var tokens = _form.GetTokenCount();
+			_sessions.Update(session, session.Messages, state, tokens);
 			if(stream){
 				var end = Encoding.UTF8.GetBytes("data: [DONE]\n\n");
 				ctx.Response.OutputStream.Write(end, 0, end.Length);
 			} else{
-				var resp = new{ choices = new[]{ new{ message = new{ role = "assistant", content = sb.ToString() } } } };
+				var resp = new{ session_id = session.Id, choices = new[]{ new{ message = new{ role = "assistant", content = assistant } } } };
 				var json = JsonConvert.SerializeObject(resp);
 				var bytes = Encoding.UTF8.GetBytes(json);
 				ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
@@ -84,11 +109,12 @@ namespace LMStud{
 		}
 		private class ChatRequest{
 			public List<Message> Messages;
+			[JsonProperty("session_id")] public string SessionId;
 			public bool Stream;
 		}
-		private class Message{
-			public string Role;
+		public class Message{
 			public string Content;
+			public string Role;
 		}
 	}
 }

@@ -336,6 +336,22 @@ namespace LMStud{
 				NativeMethods.SetTokenCallback(prev);
 			}
 		}
+		internal byte[] GetState(){
+			var size = NativeMethods.GetStateSize();
+			var data = new byte[size];
+			unsafe{
+				fixed(byte* p = data){ NativeMethods.CopyStateData((IntPtr)p, size); }
+			}
+			return data;
+		}
+		internal void SetState(byte[] state){
+			NativeMethods.ResetChat();
+			if(state == null || state.Length == 0) return;
+			unsafe{
+				fixed(byte* p = state){ NativeMethods.SetStateData((IntPtr)p, state.Length); }
+			}
+		}
+		internal int GetTokenCount(){return NativeMethods.LlamaMemSize();}
 		private static unsafe void TokenCallback(byte* thinkPtr, int thinkLen, byte* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool){
 			var elapsed = _this._swRate.Elapsed.TotalSeconds;
 			if(elapsed >= 1.0) _this._swRate.Restart();

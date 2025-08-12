@@ -56,6 +56,12 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int LlamaMemSize();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern int GetStateSize();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void CopyStateData(IntPtr dst, int size);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void SetStateData(IntPtr src, int size);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern StudError RetokenizeChat(bool rebuildMemory);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern StudError SetSystemPrompt([MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, [MarshalAs(UnmanagedType.LPUTF8Str)] string toolsPrompt);

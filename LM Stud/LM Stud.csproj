@@ -141,6 +141,7 @@
     <Compile Include="NativeMethods.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SessionManager.cs" />
     <EmbeddedResource Include="ChatMessage.resx">
       <DependentUpon>ChatMessage.cs</DependentUpon>
     </EmbeddedResource>
