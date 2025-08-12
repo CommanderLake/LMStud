@@ -123,6 +123,52 @@
   <data name="columnHeader2.Text" xml:space="preserve">
     <value>完整路径</value>
   </data>
+  <data name="tabPageModelSettings.Text" xml:space="preserve">
+    <value>模型设置</value>
+  </data>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="labelSystemPromptModel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>73, 13</value>
+  </data>
+  <data name="labelSystemPromptModel.Text" xml:space="preserve">
+    <value>系统提示词：</value>
+  </data>
+  <data name="butApplyModelSettings.Text" xml:space="preserve">
+    <value>应用</value>
+  </data>
+  <data name="checkOverrideSettings.Size" type="System.Drawing.Size, System.Drawing">
+    <value>122, 17</value>
+  </data>
+  <data name="checkOverrideSettings.Text" xml:space="preserve">
+    <value>为此模型覆盖设置</value>
+  </data>
+  <data name="groupAdvancedModel.Text" xml:space="preserve">
+    <value>高级选项</value>
+  </data>
+  <data name="label27.Text" xml:space="preserve">
+    <value>Min-P：</value>
+  </data>
+  <data name="label31.Text" xml:space="preserve">
+    <value>Top-K：</value>
+  </data>
+  <data name="label32.Text" xml:space="preserve">
+    <value>Top-P：</value>
+  </data>
+  <data name="groupCommonModel.Text" xml:space="preserve">
+    <value>通用参数</value>
+  </data>
+  <data name="label33.Text" xml:space="preserve">
+    <value>上下文大小：</value>
+  </data>
+  <data name="label34.Text" xml:space="preserve">
+    <value>温度：</value>
+  </data>
+  <data name="label35.Text" xml:space="preserve">
+    <value>GPU 层数：</value>
+  </data>
+  <data name="tabPageMetadata.Text" xml:space="preserve">
+    <value>元数据</value>
+  </data>
   <data name="columnHeader3.Text" xml:space="preserve">
     <value>元数据条目</value>
   </data>
@@ -156,7 +202,6 @@
   <data name="columnHeader10.Text" xml:space="preserve">
     <value>大小</value>
   </data>
-  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="checkSpeak.Size" type="System.Drawing.Size, System.Drawing">
     <value>74, 17</value>
   </data>
@@ -195,6 +240,15 @@
   </data>
   <data name="tabPageSettings.Text" xml:space="preserve">
     <value>设置</value>
+  </data>
+  <data name="groupBox7.Text" xml:space="preserve">
+    <value>API 服务器</value>
+  </data>
+  <data name="label28.Text" xml:space="preserve">
+    <value>端口：</value>
+  </data>
+  <data name="checkApiServerEnable.Text" xml:space="preserve">
+    <value>启用</value>
   </data>
   <data name="groupBox6.Text" xml:space="preserve">
     <value>语音活动检测 (VAD)</value>
@@ -321,6 +375,12 @@
   </data>
   <data name="label23.Text" xml:space="preserve">
     <value>Min-P：</value>
+  </data>
+  <data name="checkMLock.Text" xml:space="preserve">
+    <value>锁定内存 (MLock)</value>
+  </data>
+  <data name="checkMMap.Text" xml:space="preserve">
+    <value>内存映射 (MMap)</value>
   </data>
   <data name="label6.Text" xml:space="preserve">
     <value>重复惩罚：</value>
