@@ -332,7 +332,7 @@ namespace LMStud{
 					onToken(token);
 				}
 				NativeMethods.SetTokenCallback(APICb);
-				NativeMethods.GenerateWithTools(MessageRole.User, prompt, _nGen, true);
+				NativeMethods.GenerateWithTools(MessageRole.User, prompt, _nGen, false);
 				NativeMethods.SetTokenCallback(prev);
 			}
 		}
