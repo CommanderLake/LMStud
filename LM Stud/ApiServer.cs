@@ -44,6 +44,7 @@ namespace LMStud{
 				var req = context.Request;
 				if(req.HttpMethod == "GET" && req.Url.AbsolutePath == "/v1/models") HandleModels(context);
 				else if(req.HttpMethod == "POST" && req.Url.AbsolutePath == "/v1/chat/completions") HandleChat(context);
+				else if(req.HttpMethod == "POST" && req.Url.AbsolutePath == "/v1/chat/reset") HandleReset(context);
 				else context.Response.StatusCode = 404;
 			} catch(JsonSerializationException e){
 				_form.Invoke(new MethodInvoker(() => {MessageBox.Show(_form, e.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
@@ -55,6 +56,21 @@ namespace LMStud{
 			var models = _form.GetModelNames();
 			var obj = new{ data = models.Select(m => new{ id = m }).ToArray() };
 			var json = JsonConvert.SerializeObject(obj);
+			var bytes = Encoding.UTF8.GetBytes(json);
+			ctx.Response.ContentType = "application/json";
+			ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
+		}
+		private void HandleReset(HttpListenerContext ctx){
+			string body;
+			using(var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)){ body = reader.ReadToEnd(); }
+			ChatRequest request = null;
+			if(!string.IsNullOrEmpty(body)){
+				try{ request = JsonConvert.DeserializeObject<ChatRequest>(body); } catch{}
+			}
+			NativeMethods.ResetChat();
+			if(request?.SessionId != null) _sessions.Remove(request.SessionId);
+			var resp = new{ status = "reset" };
+			var json = JsonConvert.SerializeObject(resp);
 			var bytes = Encoding.UTF8.GetBytes(json);
 			ctx.Response.ContentType = "application/json";
 			ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
@@ -113,8 +129,8 @@ namespace LMStud{
 			public bool Stream;
 		}
 		public class Message{
-			public string Content;
 			public string Role;
+			public string Content;
 		}
 	}
 }

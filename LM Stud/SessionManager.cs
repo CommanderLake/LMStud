@@ -28,6 +28,9 @@ namespace LMStud{
 			session.LastUsed = DateTime.UtcNow;
 			Evict();
 		}
+		public void Remove(string id){
+			if(!string.IsNullOrEmpty(id)) _sessions.Remove(id);
+		}
 		private void Evict(){
 			while(_sessions.Count > _maxSessions || TotalTokens > _maxTokens){
 				var lru = _sessions.Values.OrderBy(s => s.LastUsed).First();
