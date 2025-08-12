@@ -4,9 +4,6 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using LMStud.Properties;
 using Newtonsoft.Json;
 namespace LMStud{
 	internal class ApiServer{
@@ -46,7 +43,7 @@ namespace LMStud{
 				else if(req.HttpMethod == "POST" && req.Url.AbsolutePath == "/v1/chat/completions") HandleChat(context);
 				else if(req.HttpMethod == "POST" && req.Url.AbsolutePath == "/v1/chat/reset") HandleReset(context);
 				else context.Response.StatusCode = 404;
-			} catch{} finally{
+			} catch{ context.Response.StatusCode = 500; } finally{
 				try{ context.Response.OutputStream.Close(); } catch{}
 			}
 		}
@@ -63,7 +60,10 @@ namespace LMStud{
 			using(var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)){ body = reader.ReadToEnd(); }
 			ChatRequest request = null;
 			if(!string.IsNullOrEmpty(body)){
-				try{ request = JsonConvert.DeserializeObject<ChatRequest>(body); } catch{}
+				try{ request = JsonConvert.DeserializeObject<ChatRequest>(body); } catch{
+					ctx.Response.StatusCode = 400;
+					return;
+				}
 			}
 			NativeMethods.ResetChat();
 			if(request?.SessionId != null) _sessions.Remove(request.SessionId);
