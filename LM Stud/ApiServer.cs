@@ -48,6 +48,7 @@ namespace LMStud{
 				}
 				acquired = true;
 				if(method == "GET" && path == "/v1/models") HandleModels(context);
+				else if(method == "GET" && path == "/v1/model") HandleModel(context);
 				else if(method == "POST" && path == "/v1/chat/completions") HandleChat(context);
 				else if(method == "POST" && path == "/v1/chat/reset") HandleReset(context);
 				else context.Response.StatusCode = 404;
@@ -61,6 +62,15 @@ namespace LMStud{
 		private void HandleModels(HttpListenerContext ctx){
 			var models = _form.GetModelNames();
 			var obj = new{ data = models.Select(m => new{ id = m }).ToArray() };
+			var json = JsonConvert.SerializeObject(obj);
+			var bytes = Encoding.UTF8.GetBytes(json);
+			ctx.Response.ContentType = "application/json";
+			ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
+		}
+		private void HandleModel(HttpListenerContext ctx){
+			var modelPath = Properties.Settings.Default.LastModel;
+			var model = Path.GetFileNameWithoutExtension(modelPath);
+			var obj = new{ model };
 			var json = JsonConvert.SerializeObject(obj);
 			var bytes = Encoding.UTF8.GetBytes(json);
 			ctx.Response.ContentType = "application/json";
