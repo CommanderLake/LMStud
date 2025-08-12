@@ -1,34 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Windows.Forms;
+using LMStud.Properties;
 using Newtonsoft.Json;
 namespace LMStud{
 	internal partial class Form1{
-		private class ModelSettings{
-			public readonly bool OverrideSettings;
-			public readonly string SystemPrompt;
-			public readonly int CtxSize;
-			public readonly int GPULayers;
-			public readonly float Temp;
-			public readonly float MinP;
-			public readonly float TopP;
-			public readonly int TopK;
-			public readonly bool FlashAttn;
-			public ModelSettings(bool overrideSettings, string systemPrompt, int ctxSize, int gpuLayers, float temp, float minP, float topP, int topK, bool flashAttn){
-				OverrideSettings = overrideSettings;
-				SystemPrompt = systemPrompt;
-				CtxSize = ctxSize;
-				GPULayers = gpuLayers;
-				Temp = temp;
-				MinP = minP;
-				TopP = topP;
-				TopK = topK;
-				FlashAttn = flashAttn;
-			}
-		}
-		private readonly Dictionary<string, ModelSettings> _modelSettings = new Dictionary<string, ModelSettings>();
 		private static readonly string ModelSettingsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LM Stud");
 		private static readonly string ModelSettingsFile = Path.Combine(ModelSettingsFolder, "ModelSettings.json");
+		private readonly Dictionary<string, ModelSettings> _modelSettings = new Dictionary<string, ModelSettings>();
 		private void LoadModelSettings(){
 			if(!File.Exists(ModelSettingsFile)) return;
 			try{
@@ -47,11 +27,51 @@ namespace LMStud{
 		}
 		private void ButApplyModelSettings_Click(object sender, EventArgs e){
 			if(listViewModels.SelectedItems.Count == 0) return;
-			var path = _models[(int)listViewModels.SelectedItems[0].Tag].FilePath;
-			var settings = new ModelSettings(checkOverrideSettings.Checked, textSystemPromptModel.Text, (int)numCtxSizeModel.Value, (int)numGPULayersModel.Value, (float)numTempModel.Value, (float)numMinPModel.Value,
-				(float)numTopPModel.Value, (int)numTopKModel.Value, checkFlashAttnModel.Checked);
-			_modelSettings[path] = settings;
+			var modelIndex = (int)listViewModels.SelectedItems[0].Tag;
+			var path = _models[modelIndex].FilePath;
+			_modelSettings.TryGetValue(path, out var oldSettings);
+			var overrideNew = checkOverrideSettings.Checked;
+			var systemPromptNew = textSystemPromptModel.Text;
+			var ctxSizeNew = (int)numCtxSizeModel.Value;
+			var gpuLayersNew = (int)numGPULayersModel.Value;
+			var tempNew = (float)numTempModel.Value;
+			var minPNew = (float)numMinPModel.Value;
+			var topPNew = (float)numTopPModel.Value;
+			var topKNew = (int)numTopKModel.Value;
+			var flashNew = checkFlashAttnModel.Checked;
+			_modelSettings[path] = new ModelSettings(overrideNew, systemPromptNew, ctxSizeNew, gpuLayersNew, tempNew, minPNew, topPNew, topKNew, flashNew);
 			SaveModelSettings();
+			if(_modelIndex != modelIndex || !LlModelLoaded) return;
+			var overrideOld = oldSettings?.OverrideSettings ?? false;
+			var systemPromptOld = overrideOld ? oldSettings.SystemPrompt : _systemPrompt;
+			var ctxSizeOld = overrideOld ? oldSettings.CtxSize : _ctxSize;
+			var gpuLayersOld = overrideOld ? oldSettings.GPULayers : _gpuLayers;
+			var tempOld = overrideOld ? oldSettings.Temp : _temp;
+			var minPOld = overrideOld ? oldSettings.MinP : _minP;
+			var topPOld = overrideOld ? oldSettings.TopP : _topP;
+			var topKOld = overrideOld ? oldSettings.TopK : _topK;
+			var flashOld = overrideOld ? oldSettings.FlashAttn : _flashAttn;
+			var systemPromptEff = overrideNew ? systemPromptNew : _systemPrompt;
+			var ctxSizeEff = overrideNew ? ctxSizeNew : _ctxSize;
+			var gpuLayersEff = overrideNew ? gpuLayersNew : _gpuLayers;
+			var tempEff = overrideNew ? tempNew : _temp;
+			var minPEff = overrideNew ? minPNew : _minP;
+			var topPEff = overrideNew ? topPNew : _topP;
+			var topKEff = overrideNew ? topKNew : _topK;
+			var flashEff = overrideNew ? flashNew : _flashAttn;
+			var reloadModel = gpuLayersOld != gpuLayersEff;
+			var reloadCtx = ctxSizeOld != ctxSizeEff || flashOld != flashEff;
+			var reloadSmpl = tempOld != tempEff || minPOld != minPEff || topPOld != topPEff || topKOld != topKEff;
+			var setSystemPrompt = systemPromptOld != systemPromptEff;
+			if(reloadModel && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes){ LoadModel(_modelIndex, false); } else{
+				if(reloadCtx){
+					if(_modelCtxMax <= 0) _cntCtxMax = ctxSizeEff;
+					else _cntCtxMax = ctxSizeEff > _modelCtxMax ? _modelCtxMax : ctxSizeEff;
+					CreateContext(_cntCtxMax, _batchSize, flashEff, _nThreads, _nThreadsBatch);
+				}
+				if(reloadSmpl) CreateSampler(minPEff, topPEff, topKEff, tempEff, _repPen);
+			}
+			if(setSystemPrompt) SetSystemPrompt(systemPromptEff);
 		}
 		private void PopulateModelSettings(int modelIndex){
 			var path = _models[modelIndex].FilePath;
@@ -75,6 +95,28 @@ namespace LMStud{
 				numTopPModel.Value = (decimal)_topP;
 				numTopKModel.Value = _topK;
 				checkFlashAttnModel.Checked = _flashAttn;
+			}
+		}
+		private class ModelSettings{
+			public readonly int CtxSize;
+			public readonly bool FlashAttn;
+			public readonly int GPULayers;
+			public readonly float MinP;
+			public readonly bool OverrideSettings;
+			public readonly string SystemPrompt;
+			public readonly float Temp;
+			public readonly int TopK;
+			public readonly float TopP;
+			public ModelSettings(bool overrideSettings, string systemPrompt, int ctxSize, int gpuLayers, float temp, float minP, float topP, int topK, bool flashAttn){
+				OverrideSettings = overrideSettings;
+				SystemPrompt = systemPrompt;
+				CtxSize = ctxSize;
+				GPULayers = gpuLayers;
+				Temp = temp;
+				MinP = minP;
+				TopP = topP;
+				TopK = topK;
+				FlashAttn = flashAttn;
 			}
 		}
 	}
