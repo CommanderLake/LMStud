@@ -23,7 +23,7 @@ namespace LMStud{
 			_listener = new HttpListener();
 			_listener.Prefixes.Add($"http://*:{Port}/");
 			_listener.Start();
-			Task.Run(() => ListenLoop(_cts.Token));
+			ThreadPool.QueueUserWorkItem(o => {ListenLoop(_cts.Token);});
 		}
 		public void Stop(){
 			if(!IsRunning) return;
@@ -32,11 +32,11 @@ namespace LMStud{
 			_listener.Close();
 			_listener = null;
 		}
-		private async Task ListenLoop(CancellationToken token){
+		private void ListenLoop(CancellationToken token){
 			while(!token.IsCancellationRequested){
 				HttpListenerContext ctx;
-				try{ ctx = await _listener.GetContextAsync(); } catch{ break; }
-				_ = Task.Run(() => HandleContext(ctx), token);
+				try{ ctx = _listener.GetContext(); } catch{ break; }
+				ThreadPool.QueueUserWorkItem(_ => HandleContext(ctx));
 			}
 		}
 		private void HandleContext(HttpListenerContext context){
@@ -46,9 +46,7 @@ namespace LMStud{
 				else if(req.HttpMethod == "POST" && req.Url.AbsolutePath == "/v1/chat/completions") HandleChat(context);
 				else if(req.HttpMethod == "POST" && req.Url.AbsolutePath == "/v1/chat/reset") HandleReset(context);
 				else context.Response.StatusCode = 404;
-			} catch(JsonSerializationException e){
-				_form.Invoke(new MethodInvoker(() => {MessageBox.Show(_form, e.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
-			} finally{
+			} catch{} finally{
 				try{ context.Response.OutputStream.Close(); } catch{}
 			}
 		}
