@@ -287,7 +287,7 @@ namespace LMStud{
 		}
 		private void Generate(MessageRole role, string prompt){
 			if(!LlModelLoaded || string.IsNullOrWhiteSpace(prompt)) return;
-			if(!GenerationLock.Wait(-1)) return;
+			if(!GenerationLock.Wait(0)) return;
 			if(_generating || _apiGenerating){
 				GenerationLock.Release();
 				return;
