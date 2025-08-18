@@ -26,6 +26,7 @@ bool LoadWhisperModel(const char* modelPath, const int nThreads, const bool useG
 	_wparams.print_timestamps = false;
 	_wparams.no_timestamps = true;
 	_wparams.suppress_nst = true;
+	_wparams.single_segment = false;
 	if(useVAD && vadModel && std::strlen(vadModel) > 0){
 		_wparams.vad = useVAD;
 		_vadModel = vadModel;
@@ -171,8 +172,10 @@ bool StartSpeechTranscription(){
 				_audioCapture->clear();
 			}
 			// Reinitialize the long audio buffer before next iteration.
-			pcmDataLong.clear();
-			pcmDataLong.resize(nInitialSamples, 0.0f);
+			if(!_wakeCommand.empty()){
+				pcmDataLong.clear();
+				pcmDataLong.resize(nInitialSamples, 0.0f);
+			}
 		}
 		_audioCapture->pause();
 	});

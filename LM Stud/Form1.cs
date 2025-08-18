@@ -316,7 +316,7 @@ namespace LMStud{
 					_speechBuffer.Clear();
 				}
 				try{
-					Invoke(new MethodInvoker(() => {
+					BeginInvoke(new MethodInvoker(() => {
 						var elapsed = _swTot.Elapsed.TotalSeconds;
 						if(_genTokenTotal > 0 && elapsed > 0.0){
 							var callsPerSecond = _genTokenTotal/elapsed;
@@ -382,7 +382,7 @@ namespace LMStud{
 			if(messageLen > 0) message = Encoding.UTF8.GetString(messagePtr, messageLen);
 			if(tool == 1){
 				try{
-					_this.Invoke(new MethodInvoker(() => {
+					_this.BeginInvoke(new MethodInvoker(() => {
 						var cm = _this.AddMessage(MessageRole.Tool, message);
 						cm.SetRoleText("Tool");
 						_this._cntAssMsg = null;
