@@ -362,6 +362,9 @@
   <data name="Failed_to_convert_a_token_" xml:space="preserve">
     <value>Failed to convert a token.</value>
   </data>
+  <data name="The_GPU_is_out_of_memory_" xml:space="preserve">
+    <value>The GPU is out of memory.</value>
+  </data>
   <data name="Unable_to_parse_the_chat_message_" xml:space="preserve">
     <value>Unable to parse the chat message.</value>
   </data>
@@ -384,4 +387,7 @@
     <value>
 The model last loaded has a maximum context size of </value>
   </data>
+<data name="No_model_loaded" xml:space="preserve">
+	<value>No model loaded</value>
+</data>
 </root>

@@ -30,6 +30,7 @@ enum class StudError{
 	CantTokenizePrompt = -9,
 	CantConvertToken = -10,
 	ChatParseError = -11,
+	GpuOutOfMemory = -12,
 };
 struct ChatSession{
 	llama_context* ctx = nullptr;

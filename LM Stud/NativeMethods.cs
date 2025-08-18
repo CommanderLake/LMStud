@@ -31,6 +31,7 @@ namespace LMStud{
 			CantTokenizePrompt = -9,
 			CantConvertToken = -10,
 			ChatParseError = -11,
+			GpuOutOfMemory = -12,
 		};
 		private const string DLLName = "stud";
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

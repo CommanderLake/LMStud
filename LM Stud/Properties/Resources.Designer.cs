@@ -442,6 +442,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No model loaded.
+        /// </summary>
+        internal static string No_model_loaded {
+            get {
+                return ResourceManager.GetString("No_model_loaded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Please select an item from both lists..
         /// </summary>
         internal static string Please_select_an_item_from_both_lists_ {
@@ -474,6 +483,15 @@ namespace LMStud.Properties {
         internal static string The_conversation_is_too_long_for_the_context_window_ {
             get {
                 return ResourceManager.GetString("The_conversation_is_too_long_for_the_context_window_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The GPU is out of memory..
+        /// </summary>
+        internal static string The_GPU_is_out_of_memory_ {
+            get {
+                return ResourceManager.GetString("The_GPU_is_out_of_memory_", resourceCulture);
             }
         }
         

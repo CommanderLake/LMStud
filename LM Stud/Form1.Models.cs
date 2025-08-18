@@ -137,6 +137,9 @@ namespace LMStud{
 				case NativeMethods.StudError.ChatParseError:
 					detail = Resources.Unable_to_parse_the_chat_message_;
 					break;
+				case NativeMethods.StudError.GpuOutOfMemory:
+					detail = Resources.The_GPU_is_out_of_memory_;
+					break;
 				default:
 					detail = error.ToString();
 					break;
@@ -244,7 +247,12 @@ namespace LMStud{
 						} catch(ObjectDisposedException){}
 						LlModelLoaded = true;
 					}
-				} finally{ Invoke(new MethodInvoker(() => {butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = true;})); }
+				} finally{
+					Invoke(new MethodInvoker(() => {
+						butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = true;
+						toolStripStatusLabel1.Text = Resources.No_model_loaded;
+					}));
+				}
 			});
 		}
 		private void UnloadModel(){

@@ -7,7 +7,15 @@
 #include <minja\minja.hpp>
 #include <minja\chat-template.hpp>
 #include <algorithm>
+#include <string_view>
 using HrClock = std::chrono::high_resolution_clock;
+static bool _gpuOom = false;
+static void GPUOomLogCallback(ggml_log_level level, const char* text, void* userData){
+	if(level == GGML_LOG_LEVEL_ERROR || level == GGML_LOG_LEVEL_WARN){
+		const std::string_view msg(text);
+		if(msg.find("out of memory") != std::string_view::npos) _gpuOom = true;
+	}
+}
 void SetHWnd(HWND hWnd){ _hWnd = hWnd; }
 void BackendInit(){
 	_putenv("OMP_PROC_BIND=close");
@@ -27,9 +35,12 @@ StudError CreateContext(const int nCtx, const int nBatch, const bool flashAttn, 
 	ctxParams.flash_attn = flashAttn;
 	ctxParams.n_threads = nThreads;
 	ctxParams.n_threads_batch = nThreadsBatch;
+	_gpuOom = false;
+	llama_log_set(GPUOomLogCallback, nullptr);
 	_session.ctx = llama_init_from_model(_llModel, ctxParams);
+	llama_log_set(nullptr, nullptr);
 	if(!_session.ctx){
-		return StudError::CantCreateContext;
+		return _gpuOom ? StudError::GpuOutOfMemory : StudError::CantCreateContext;
 	}
 	_session.llMem = llama_get_memory(_session.ctx);
 	auto result = StudError::Success;
@@ -96,9 +107,12 @@ StudError LoadModel(const char* filename, const int nGPULayers, const bool mMap,
 	params.use_mlock = mLock;
 	params.use_mmap = mMap;
 	llama_numa_init(numaStrategy);
+	_gpuOom = false;
+	llama_log_set(GPUOomLogCallback, nullptr);
 	_llModel = llama_model_load_from_file(filename, params);
+	llama_log_set(nullptr, nullptr);
 	if(!_llModel){
-		return StudError::CantLoadModel;
+		return _gpuOom ? StudError::GpuOutOfMemory : StudError::CantLoadModel;
 	}
 	_vocab = llama_model_get_vocab(_llModel);
 	_chatTemplates = common_chat_templates_init(_llModel, "");

@@ -365,6 +365,9 @@
   <data name="Failed_to_convert_a_token_" xml:space="preserve">
     <value>转换 Token 失败。</value>
   </data>
+  <data name="The_GPU_is_out_of_memory_" xml:space="preserve">
+    <value>GPU 内存不足。</value>
+  </data>
   <data name="Unable_to_parse_the_chat_message_" xml:space="preserve">
     <value>无法解析聊天消息。</value>
   </data>
@@ -385,5 +388,8 @@
   </data>
   <data name="The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_" xml:space="preserve">
     <value>修改的设置已被当前模型的“模型设置”覆盖。</value>
+  </data>
+  <data name="No_model_loaded" xml:space="preserve">
+    <value>未加载模型</value>
   </data>
 </root>
