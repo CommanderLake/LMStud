@@ -26,9 +26,9 @@ StudError LoadWhisperModel(const char* modelPath, const int nThreads, const bool
 	whisper_context_params cparams = whisper_context_default_params();
 	cparams.use_gpu = useGPU;
 	_gpuOomSpeech = false;
-	llama_log_set(GPUOomLogCallbackSpeech, nullptr);
+	whisper_log_set(GPUOomLogCallbackSpeech, nullptr);
 	_whisperCtx = whisper_init_from_file_with_params(modelPath, cparams);
-	llama_log_set(nullptr, nullptr);
+	whisper_log_set(nullptr, nullptr);
 	if(!_whisperCtx) return _gpuOomSpeech ? StudError::GpuOutOfMemory : StudError::CantLoadWhisperModel;
 	_wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
 	_wparams.n_threads = nThreads;

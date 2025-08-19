@@ -266,7 +266,7 @@ namespace LMStud{
 				} finally{
 					Invoke(new MethodInvoker(() => {
 						butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = true;
-						toolStripStatusLabel1.Text = Resources.No_model_loaded;
+						if(!LlModelLoaded) toolStripStatusLabel1.Text = Resources.No_model_loaded;
 					}));
 				}
 			});
