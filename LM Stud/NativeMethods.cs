@@ -32,6 +32,9 @@ namespace LMStud{
 			CantConvertToken = -10,
 			ChatParseError = -11,
 			GpuOutOfMemory = -12,
+			CantLoadWhisperModel = -13,
+			CantLoadVADModel = -14,
+			CantInitAudioCapture = -15
 		};
 		private const string DLLName = "stud";
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -91,8 +94,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetWhisperCallback(WhisperCallback cb);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		[return: MarshalAs(UnmanagedType.I1)]
-		public static extern bool LoadWhisperModel(string modelPath, int nThreads, bool useGPU, bool useVAD, string vadModel);
+		public static extern StudError LoadWhisperModel(string modelPath, int nThreads, bool useGPU, bool useVAD, string vadModel);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void UnloadWhisperModel();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

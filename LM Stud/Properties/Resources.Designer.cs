@@ -225,11 +225,20 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error initialising whisper..
+        ///   Looks up a localized string similar to Error initialising voice input.
         /// </summary>
-        internal static string Error_initialising_whisper {
+        internal static string Error_initialising_voice_input {
             get {
-                return ResourceManager.GetString("Error_initialising_whisper", resourceCulture);
+                return ResourceManager.GetString("Error_initialising_voice_input", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error initializing audio capture..
+        /// </summary>
+        internal static string Error_initializing_audio_capture_ {
+            get {
+                return ResourceManager.GetString("Error_initializing_audio_capture_", resourceCulture);
             }
         }
         
@@ -252,6 +261,24 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Error loading VAD model..
+        /// </summary>
+        internal static string Error_loading_VAD_model_ {
+            get {
+                return ResourceManager.GetString("Error_loading_VAD_model_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error loading Whisper model..
+        /// </summary>
+        internal static string Error_loading_Whisper_model_ {
+            get {
+                return ResourceManager.GetString("Error_loading_Whisper_model_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Error reading file: {0}.
         /// </summary>
         internal static string Error_reading_file___0_ {
@@ -270,11 +297,11 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error starting whisper transcription..
+        ///   Looks up a localized string similar to Error starting voice input..
         /// </summary>
-        internal static string Error_starting_whisper_transcription {
+        internal static string Error_starting_voice_input {
             get {
-                return ResourceManager.GetString("Error_starting_whisper_transcription", resourceCulture);
+                return ResourceManager.GetString("Error_starting_voice_input", resourceCulture);
             }
         }
         

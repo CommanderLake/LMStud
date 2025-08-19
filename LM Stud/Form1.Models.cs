@@ -140,12 +140,23 @@ namespace LMStud{
 				case NativeMethods.StudError.GpuOutOfMemory:
 					detail = Resources.The_GPU_is_out_of_memory_;
 					break;
+				case NativeMethods.StudError.CantLoadWhisperModel:
+					detail = Resources.Error_loading_Whisper_model_;
+					break;
+				case NativeMethods.StudError.CantLoadVADModel:
+					detail = Resources.Error_loading_VAD_model_;
+					break;
+				case NativeMethods.StudError.CantInitAudioCapture:
+					detail = Resources.Error_initializing_audio_capture_;
+					break;
 				default:
 					detail = error.ToString();
 					break;
 			}
-			if(InvokeRequired) Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources._0____1_, action, detail), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
-			else MessageBox.Show(this, string.Format(Resources._0____1_, action, detail), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+			void ShowMessage(){MessageBox.Show(this, string.Format(Resources._0____1_, action, detail), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}
+			if(InvokeRequired){
+				Invoke(new MethodInvoker(ShowMessage));
+			} else ShowMessage();
 		}
 		private void SetSystemPrompt(string prompt){
 			GenerationLock.Wait(-1);
@@ -178,6 +189,11 @@ namespace LMStud{
 			NativeMethods.StudError result;
 			try{ result = NativeMethods.CreateSampler(minP, topP, topK, temp, repeatPenalty); } finally{ GenerationLock.Release(); }
 			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_sampler, result);
+			return result;
+		}
+		NativeMethods.StudError LoadWhisperModel(string modelPath, int nThreads, bool useGPU, bool useVAD, string vadModel){
+			var result = NativeMethods.LoadWhisperModel(modelPath, nThreads, useGPU, useVAD, vadModel);
+			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_initialising_voice_input, result);
 			return result;
 		}
 		private void LoadModel(int modelIndex, bool autoLoad){

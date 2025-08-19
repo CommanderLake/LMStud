@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "StudError.h"
 #include <Windows.h>
 #include <llama.h>
 #include <chat.h>
@@ -16,21 +17,6 @@ enum class MessageRole{
 	User,
 	Assistant,
 	Tool
-};
-enum class StudError{
-	Success = 0,
-	CantLoadModel = -1,
-	ModelNotLoaded = -2,
-	CantCreateContext = -3,
-	CantCreateSampler = -4,
-	CantApplyTemplate = -5,
-	ConvTooLong = -6,
-	LlamaDecodeError = -7,
-	IndexOutOfRange = -8,
-	CantTokenizePrompt = -9,
-	CantConvertToken = -10,
-	ChatParseError = -11,
-	GpuOutOfMemory = -12,
 };
 struct ChatSession{
 	llama_context* ctx = nullptr;

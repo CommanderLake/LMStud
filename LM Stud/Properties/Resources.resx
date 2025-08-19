@@ -130,12 +130,12 @@
   <data name="VAD_model_not_found__use_Basic_VAD_" xml:space="preserve">
     <value>VAD model not found, use Basic VAD?</value>
   </data>
-  <data name="Error_initialising_whisper" xml:space="preserve">
-    <value>Error initialising whisper.</value>
-  </data>
-  <data name="Error_starting_whisper_transcription" xml:space="preserve">
-    <value>Error starting whisper transcription.</value>
-  </data>
+<data name="Error_initialising_voice_input" xml:space="preserve">
+	<value>Error initialising voice input</value>
+</data>
+<data name="Error_starting_voice_input" xml:space="preserve">
+	<value>Error starting voice input.</value>
+</data>
   <data name="Conversation_too_long_for_context" xml:space="preserve">
     <value>Conversation too long for context.</value>
   </data>
@@ -389,5 +389,14 @@ The model last loaded has a maximum context size of </value>
   </data>
 <data name="No_model_loaded" xml:space="preserve">
 	<value>No model loaded</value>
+</data>
+<data name="Error_loading_Whisper_model_" xml:space="preserve">
+	<value>Error loading Whisper model.</value>
+</data>
+<data name="Error_loading_VAD_model_" xml:space="preserve">
+	<value>Error loading VAD model.</value>
+</data>
+<data name="Error_initializing_audio_capture_" xml:space="preserve">
+	<value>Error initializing audio capture.</value>
 </data>
 </root>

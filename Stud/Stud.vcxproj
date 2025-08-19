@@ -153,6 +153,7 @@ xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\
     <ClInclude Include="hug.h" />
     <ClInclude Include="speech.h" />
     <ClInclude Include="stud.h" />
+    <ClInclude Include="StudError.h" />
     <ClInclude Include="tools.h" />
   </ItemGroup>
   <ItemGroup>

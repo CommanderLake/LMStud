@@ -1,5 +1,6 @@
 #pragma once
 #define SDL_MAIN_HANDLED
+#include "StudError.h"
 #include "common-sdl.h"
 #include <whisper.h>
 #pragma comment(lib, "winmm.lib")
@@ -34,7 +35,7 @@ inline whisper_vad_context_params _vadParams = {};
 inline audio_async* _audioCapture = nullptr;
 extern "C"{
 	EXPORT void SetWhisperCallback(WhisperCallbackFn cb);
-	EXPORT bool LoadWhisperModel(const char* modelPath, int nThreads, bool useGPU, bool useVAD, const char* vadModel);
+	EXPORT StudError LoadWhisperModel(const char* modelPath, int nThreads, bool useGPU, bool useVAD, const char* vadModel);
 	EXPORT bool StartSpeechTranscription();
 	EXPORT void StopSpeechTranscription();
 	EXPORT void UnloadWhisperModel();

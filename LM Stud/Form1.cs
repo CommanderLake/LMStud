@@ -162,20 +162,20 @@ namespace LMStud{
 						Settings.Default.Save();
 					}
 				if(!_whisperLoaded){
-					var result = NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU, _useWhisperVAD, _useWhisperVAD ? _whisperModels[_vadModelIndex] : "");
-					if(result){
+					var result = LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU, _useWhisperVAD, _useWhisperVAD ? _whisperModels[_vadModelIndex] : "");
+					if(result == NativeMethods.StudError.Success){
 						_whisperLoaded = true;
 						_whisperCallback = WhisperCallback;
 						NativeMethods.SetWhisperCallback(_whisperCallback);
 					} else{
 						_whisperLoaded = false;
-						MessageBox.Show(this, Resources.Error_initialising_whisper, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+						MessageBox.Show(this, Resources.Error_initialising_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 						checkVoiceInput.Checked = false;
 						return;
 					}
 				}
 				if(NativeMethods.StartSpeechTranscription()) return;
-				MessageBox.Show(this, Resources.Error_starting_whisper_transcription, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+				MessageBox.Show(this, Resources.Error_starting_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 				checkVoiceInput.Checked = false;
 			} else{
 				NativeMethods.StopSpeechTranscription();

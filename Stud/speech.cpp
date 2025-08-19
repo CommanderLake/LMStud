@@ -1,23 +1,35 @@
 #define _USE_MATH_DEFINES
 #include "speech.h"
+#include "StudError.h"
 #include <thread>
 #include <atomic>
+#include <llama.h>
 #include <vector>
 #include <string>
 #include <regex>
 #include <sstream>
+static bool _gpuOomSpeech = false;
+static void GPUOomLogCallbackSpeech(ggml_log_level level, const char* text, void* userData){
+	if(level == GGML_LOG_LEVEL_ERROR || level == GGML_LOG_LEVEL_WARN){
+		const std::string_view msg(text);
+		if(msg.find("out of memory") != std::string_view::npos) _gpuOomSpeech = true;
+	}
+}
 static std::string trim(const std::string& s){
 	const size_t start = s.find_first_not_of(" \t\n\r");
 	if(start == std::string::npos) return "";
 	const size_t end = s.find_last_not_of(" \t\n\r");
 	return s.substr(start, end - start + 1);
 }
-bool LoadWhisperModel(const char* modelPath, const int nThreads, const bool useGPU, const bool useVAD, const char* vadModel){
+StudError LoadWhisperModel(const char* modelPath, const int nThreads, const bool useGPU, const bool useVAD, const char* vadModel){
 	UnloadWhisperModel();
 	whisper_context_params cparams = whisper_context_default_params();
 	cparams.use_gpu = useGPU;
+	_gpuOomSpeech = false;
+	llama_log_set(GPUOomLogCallbackSpeech, nullptr);
 	_whisperCtx = whisper_init_from_file_with_params(modelPath, cparams);
-	if(!_whisperCtx) return false;
+	llama_log_set(nullptr, nullptr);
+	if(!_whisperCtx) return _gpuOomSpeech ? StudError::GpuOutOfMemory : StudError::CantLoadWhisperModel;
 	_wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
 	_wparams.n_threads = nThreads;
 	_wparams.tdrz_enable = true;
@@ -37,15 +49,15 @@ bool LoadWhisperModel(const char* modelPath, const int nThreads, const bool useG
 		vadCParams.n_threads = nThreads;
 		vadCParams.use_gpu = false;
 		_vadCtx = whisper_vad_init_from_file_with_params(_vadModel.c_str(), vadCParams);
-		if(!_vadCtx) return false;
+		if(!_vadCtx) return StudError::CantLoadVADModel;
 	}
 	_audioCapture = new audio_async(_voiceDuration);
 	if(!_audioCapture->init(-1, WHISPER_SAMPLE_RATE)){
 		delete _audioCapture;
 		_audioCapture = nullptr;
-		return false;
+		return StudError::CantInitAudioCapture;
 	}
-	return true;
+	return StudError::Success;
 }
 void UnloadWhisperModel(){
 	if(_audioCapture){
