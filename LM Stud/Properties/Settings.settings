@@ -108,7 +108,7 @@
       <Value Profile="(Default)">0</Value>
     </Setting>
     <Setting Name="WhisperTemp" Type="System.Decimal" Scope="User">
-      <Value Profile="(Default)">0.2</Value>
+      <Value Profile="(Default)">0</Value>
     </Setting>
     <Setting Name="WakeWordSimilarity" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">0.8</Value>
@@ -129,7 +129,7 @@
       <Value Profile="(Default)">11434</Value>
     </Setting>
     <Setting Name="GenDelay" Type="System.Decimal" Scope="User">
-      <Value Profile="(Default)">1500</Value>
+      <Value Profile="(Default)">2000</Value>
     </Setting>
   </Settings>
 </SettingsFile>

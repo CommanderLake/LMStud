@@ -48,6 +48,8 @@ namespace LMStud{
 			if(_genDelay > 0) _genTimer.Interval = _genDelay;
 			_genTimer.Tick += (sender, args) => {
 				_genTimer.Stop();
+				if(_this.checkVoiceInput.CheckState != CheckState.Checked) return;
+				NativeMethods.StopSpeechTranscription();
 				Generate();
 			};
 		}
@@ -149,45 +151,49 @@ namespace LMStud{
 		private void CheckMarkdown_CheckedChanged(object sender, EventArgs e){
 			foreach(var message in _chatMessages) message.Markdown = checkMarkdown.Checked;
 		}
+		private CheckState _checkVoiceInputLast = CheckState.Unchecked;
 		private void CheckVoiceInput_CheckedChanged(object sender, EventArgs e){
-			if(checkVoiceInput.CheckState != CheckState.Unchecked){
-				if(_whisperModelIndex < 0 || _whisperModelIndex >= _whisperModels.Count || !File.Exists(_whisperModels[_whisperModelIndex])){
-					checkVoiceInput.Checked = false;
-					MessageBox.Show(this, Resources.Error_Whisper_model_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
-					tabControl1.SelectTab(1);
-					comboWhisperModel.Focus();
-					return;
-				}
-				if(_useWhisperVAD)
-					if(_vadModelIndex < 0 || _vadModelIndex >= _whisperModels.Count || !File.Exists(_whisperModels[_vadModelIndex])){
-						if(MessageBox.Show(this, Resources.VAD_model_not_found__use_Basic_VAD_, Resources.LM_Stud, MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation) != DialogResult.OK){
+			try{
+				if(checkVoiceInput.CheckState != CheckState.Unchecked && _checkVoiceInputLast == CheckState.Unchecked){
+					if(checkVoiceInput.CheckState == CheckState.Indeterminate) _genTimer.Stop();
+					if(_whisperModelIndex < 0 || _whisperModelIndex >= _whisperModels.Count || !File.Exists(_whisperModels[_whisperModelIndex])){
+						checkVoiceInput.Checked = false;
+						MessageBox.Show(this, Resources.Error_Whisper_model_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+						tabControl1.SelectTab(1);
+						comboWhisperModel.Focus();
+						return;
+					}
+					if(_useWhisperVAD)
+						if(_vadModelIndex < 0 || _vadModelIndex >= _whisperModels.Count || !File.Exists(_whisperModels[_vadModelIndex])){
+							if(MessageBox.Show(this, Resources.VAD_model_not_found__use_Basic_VAD_, Resources.LM_Stud, MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation) != DialogResult.OK){
+								checkVoiceInput.Checked = false;
+								return;
+							}
+							radioBasicVAD.Checked = true;
+							_useWhisperVAD = Settings.Default.UseWhisperVAD = false;
+							Settings.Default.Save();
+						}
+					if(!_whisperLoaded){
+						var result = LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU, _useWhisperVAD, _useWhisperVAD ? _whisperModels[_vadModelIndex] : "");
+						if(result == NativeMethods.StudError.Success){
+							_whisperLoaded = true;
+							_whisperCallback = WhisperCallback;
+							NativeMethods.SetWhisperCallback(_whisperCallback);
+						} else{
+							_whisperLoaded = false;
+							MessageBox.Show(this, Resources.Error_initialising_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 							checkVoiceInput.Checked = false;
 							return;
 						}
-						radioBasicVAD.Checked = true;
-						_useWhisperVAD = Settings.Default.UseWhisperVAD = false;
-						Settings.Default.Save();
 					}
-				if(!_whisperLoaded){
-					var result = LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU, _useWhisperVAD, _useWhisperVAD ? _whisperModels[_vadModelIndex] : "");
-					if(result == NativeMethods.StudError.Success){
-						_whisperLoaded = true;
-						_whisperCallback = WhisperCallback;
-						NativeMethods.SetWhisperCallback(_whisperCallback);
-					} else{
-						_whisperLoaded = false;
-						MessageBox.Show(this, Resources.Error_initialising_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
-						checkVoiceInput.Checked = false;
-						return;
-					}
+					if(NativeMethods.StartSpeechTranscription()) return;
+					MessageBox.Show(this, Resources.Error_starting_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+					checkVoiceInput.Checked = false;
+				} else{
+					_genTimer.Stop();
+					NativeMethods.StopSpeechTranscription();
 				}
-				if(NativeMethods.StartSpeechTranscription()) return;
-				MessageBox.Show(this, Resources.Error_starting_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
-				checkVoiceInput.Checked = false;
-			} else{
-				_genTimer.Stop();
-				NativeMethods.StopSpeechTranscription();
-			}
+			} finally{ _checkVoiceInputLast = checkVoiceInput.CheckState; }
 		}
 		private void CheckSpeak_CheckedChanged(object sender, EventArgs e){
 			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
@@ -335,6 +341,7 @@ namespace LMStud{
 						butReset.Enabled = butApply.Enabled = true;
 						_generating = false;
 						foreach(var message in _chatMessages) message.Generating = false;
+						if(checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StartSpeechTranscription();
 					}));
 				} catch(ObjectDisposedException){} finally{ GenerationLock.Release(); }
 			});

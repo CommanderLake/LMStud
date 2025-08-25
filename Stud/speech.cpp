@@ -9,6 +9,7 @@
 #include <regex>
 #include <sstream>
 static bool _gpuOomSpeech = false;
+static std::atomic<bool> _wakeWordDetected{false};
 static void GPUOomLogCallbackSpeech(ggml_log_level level, const char* text, void* userData){
 	if(level == GGML_LOG_LEVEL_ERROR || level == GGML_LOG_LEVEL_WARN){
 		const std::string_view msg(text);
@@ -26,13 +27,13 @@ StudError LoadWhisperModel(const char* modelPath, const int nThreads, const bool
 	if(!_whisperCtx) return _gpuOomSpeech ? StudError::GpuOutOfMemory : StudError::CantLoadWhisperModel;
 	_wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
 	_wparams.n_threads = nThreads;
-	_wparams.tdrz_enable = true;
+	_wparams.tdrz_enable = false;
 	_wparams.temperature = _temp;
 	_wparams.print_progress = false;
 	_wparams.print_timestamps = false;
 	_wparams.no_timestamps = true;
 	_wparams.suppress_nst = true;
-	_wparams.single_segment = false;
+	_wparams.single_segment = true;
 	if(useVAD && vadModel && std::strlen(vadModel) > 0){
 		_wparams.vad = useVAD;
 		_vadModel = vadModel;
@@ -110,6 +111,7 @@ float Similarity(const std::string& s0, const std::string& s1){
 }
 bool StartSpeechTranscription(){
 	if(!_whisperCtx || !_audioCapture){ return false; }
+	_wakeWordDetected.store(false);
 	_transcriptionRunning.store(true);
 	_transcriptionThread = std::thread([](){
 		constexpr int nShortSamples = WHISPER_SAMPLE_RATE * 2;
@@ -172,6 +174,7 @@ bool StartSpeechTranscription(){
 					continue;
 				}
 				transcriptionResult = remaining;
+				_wakeWordDetected.store(true);
 			}
 			if(!transcriptionResult.empty() && transcriptionResult != lastOutput){
 				lastOutput = transcriptionResult;
@@ -187,6 +190,7 @@ bool StartSpeechTranscription(){
 void StopSpeechTranscription(){
 	_transcriptionRunning.store(false);
 	if(_transcriptionThread.joinable()){ _transcriptionThread.join(); }
+	_wakeWordDetected.store(false);
 }
 void SetWhisperCallback(WhisperCallbackFn cb){ _whisperCallback = cb; }
 void SetWakeCommand(const char* wakeCmd){ if(wakeCmd){ _wakeCommand = wakeCmd; } else{ _wakeCommand.clear(); } }
