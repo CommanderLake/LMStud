@@ -164,6 +164,7 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	in.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
 	common_chat_params chatData;
 	try{ chatData = common_chat_templates_apply(_chatTemplates.get(), in); } catch(std::exception& e){
+		OutputDebugStringA((std::string("EXCEPTION:\r\n") + e.what()).c_str());
 		return StudError::CantApplyTemplate;
 	}
 	_session.syntax.format = chatData.format;
@@ -477,27 +478,22 @@ StudError GenerateWithTools(const MessageRole role, const char* prompt, const in
 	if(!_hasTools){
 		return Generate(msgs, nPredict, callback, msg);
 	}
-	bool toolCalled = role == MessageRole::Tool;
 	const TokenCallbackFn cb = _tokenCb;
 	StudError err = StudError::Success;
+	bool toolCalled = false;
 	do{
 		err = Generate(msgs, nPredict, callback, msg);
 		if(err != StudError::Success) return err;
-		toolCalled = false;
 		if(!_session.chatMsgs.size()) return StudError::Success;
 		msgs.clear();
 		_session.syntax.parse_tool_calls = true;
 		try{
-			std::string rest = msg.content;
-			while(true){
-				const auto parsed = common_chat_parse(rest, false, _session.syntax);
-				rest = parsed.content;
-				msg.tool_calls.insert(msg.tool_calls.end(), parsed.tool_calls.begin(), parsed.tool_calls.end());
-				if(parsed.tool_calls.empty()) break;
-			}
-			msg.content = "";
-			msg.reasoning_content = "";
-			for(common_chat_tool_call& toolCall : msg.tool_calls){
+			auto parsed = common_chat_parse(msg.content, false, _session.syntax);
+			msg.content.clear();
+			msg.reasoning_content.clear();
+			msg.tool_calls = parsed.tool_calls;
+			toolCalled = false;
+			for(common_chat_tool_call& toolCall : parsed.tool_calls){
 				auto it = _toolHandlers.find(toolCall.name);
 				if(it != _toolHandlers.end()){
 					auto toolMsg = it->second(toolCall.arguments.c_str());
