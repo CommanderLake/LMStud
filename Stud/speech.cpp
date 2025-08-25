@@ -78,11 +78,11 @@ void HighPassFilter(std::vector<float>& data, const float cutoff, const float sa
 		data[i] = y;
 	}
 }
-bool VadSimple(std::vector<float>& pcmf32, const int sampleRate, const int lastMs, const float vadThold, const float freqThold){
+bool VadSimple(std::vector<float>& pcmf32, const int sampleRate, const int lastMs){
 	const int nSamples = pcmf32.size();
 	const int nSamplesLast = (sampleRate * lastMs) / 1000;
 	if(nSamplesLast >= nSamples){ return false; }
-	if(freqThold > 0.0f){ HighPassFilter(pcmf32, freqThold, sampleRate); }
+	if(_freqThreshold > 0.0f){ HighPassFilter(pcmf32, _freqThreshold, sampleRate); }
 	float energyAll = 0.0f;
 	float energyLast = 0.0f;
 	for(int i = 0; i < nSamples; i++){
@@ -91,10 +91,10 @@ bool VadSimple(std::vector<float>& pcmf32, const int sampleRate, const int lastM
 	}
 	energyAll /= nSamples;
 	energyLast /= nSamplesLast;
-	if(energyLast > vadThold * energyAll){ return false; }
+	if(energyLast > _vadThreshold * energyAll){ return false; }
 	return true;
 }
-float similarity(const std::string& s0, const std::string& s1){
+float Similarity(const std::string& s0, const std::string& s1){
 	const size_t len0 = s0.size() + 1;
 	const size_t len1 = s1.size() + 1;
 	std::vector<int> col(len1, 0);
@@ -138,7 +138,7 @@ bool StartSpeechTranscription(){
 		while(_transcriptionRunning.load()){
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			_audioCapture->get(2000, pcmDataShort);
-			if(_vadCtx){ if(!whisper_vad_detect_speech(_vadCtx, pcmDataShort.data(), pcmDataShort.size())) continue; } else{ if(!VadSimple(pcmDataShort, WHISPER_SAMPLE_RATE, 1250, _vadThreshold, _freqThreshold)) continue; }
+			if(_vadCtx){ if(!whisper_vad_detect_speech(_vadCtx, pcmDataShort.data(), pcmDataShort.size())) continue; } else{ if(!VadSimple(pcmDataShort, WHISPER_SAMPLE_RATE, 1250)) continue; }
 			_audioCapture->get(voiceDuration, pcmDataLong);
 			if(whisper_full(_whisperCtx, _wparams, pcmDataLong.data(), static_cast<int>(pcmDataLong.size())) != 0){
 				pcmDataLong.assign(nInitialSamples, 0.0f);
@@ -159,7 +159,7 @@ bool StartSpeechTranscription(){
 				const size_t maxProbe = std::min(transWords.size(), wakeWords.size() + static_cast<size_t>(3));
 				for(size_t cut = 1; cut <= maxProbe; ++cut){
 					const std::string probe = joinRange(transWords, 0, cut);
-					const float sim = similarity(probe, _wakeCommand);
+					const float sim = Similarity(probe, _wakeCommand);
 					if(sim > bestSim){
 						bestSim = sim;
 						bestCut = cut;
