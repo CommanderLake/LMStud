@@ -312,7 +312,7 @@ namespace LMStud{
 			});
 			UpdateSetting(ref _genDelay, (int)numGenDelay.Value, value => {
 				Settings.Default.GenDelay = value;
-				_genTimer.Interval = _genDelay;
+				if(value > 1) _genTimer.Interval = _genDelay;
 			});
 			var flash = overrideSettings ? ms.FlashAttn : _flashAttn;
 			var minP = overrideSettings ? ms.MinP : _minP;

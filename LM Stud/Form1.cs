@@ -46,7 +46,10 @@ namespace LMStud{
 			LoadConfig();
 			LoadModelSettings();
 			if(_genDelay > 0) _genTimer.Interval = _genDelay;
-			_genTimer.Tick += (sender, args) => Generate();
+			_genTimer.Tick += (sender, args) => {
+				_genTimer.Stop();
+				Generate();
+			};
 		}
 		private void SetToolTip(Control control){toolTip1.SetToolTip(control, Resources.ResourceManager.GetString("ToolTip_" + control.Name));}
 		private void SetToolTips(){

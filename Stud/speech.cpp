@@ -15,12 +15,6 @@ static void GPUOomLogCallbackSpeech(ggml_log_level level, const char* text, void
 		if(msg.find("out of memory") != std::string_view::npos) _gpuOomSpeech = true;
 	}
 }
-static std::string trim(const std::string& s){
-	const size_t start = s.find_first_not_of(" \t\n\r");
-	if(start == std::string::npos) return "";
-	const size_t end = s.find_last_not_of(" \t\n\r");
-	return s.substr(start, end - start + 1);
-}
 StudError LoadWhisperModel(const char* modelPath, const int nThreads, const bool useGPU, const bool useVAD, const char* vadModel){
 	UnloadWhisperModel();
 	whisper_context_params cparams = whisper_context_default_params();
@@ -43,7 +37,7 @@ StudError LoadWhisperModel(const char* modelPath, const int nThreads, const bool
 		_wparams.vad = useVAD;
 		_vadModel = vadModel;
 		_wparams.vad_model_path = _vadModel.c_str();
-		_wparams.vad_params.max_speech_duration_s = _voiceDuration/1000.0f;
+		_wparams.vad_params.max_speech_duration_s = _voiceDuration / 1000.0f;
 		_wparams.vad_params.threshold = _vadThreshold;
 		whisper_vad_context_params vadCParams = whisper_vad_default_context_params();
 		vadCParams.n_threads = nThreads;
@@ -123,71 +117,68 @@ bool StartSpeechTranscription(){
 		const auto voiceDuration = _voiceDuration;
 		const int nInitialSamples = (WHISPER_SAMPLE_RATE * voiceDuration) / 1000;
 		std::vector<float> pcmDataLong(nInitialSamples, 0.0f);
-		// Helper lambda to split a string into words.
 		auto getWords = [](const std::string& s) -> std::vector<std::string>{
 			std::istringstream iss(s);
 			std::vector<std::string> words;
-			std::string word;
-			while(iss >> word){ words.push_back(word); }
+			std::string w;
+			while(iss >> w) words.push_back(w);
 			return words;
 		};
-		// Variable to track last output and prevent duplicate transcriptions.
+		auto joinRange = [](const std::vector<std::string>& v, size_t a, size_t b) -> std::string{
+			std::string out;
+			for(size_t i = a; i < b; ++i){
+				if(i > a) out += ' ';
+				out += v[i];
+			}
+			return out;
+		};
 		std::string lastOutput;
 		_audioCapture->clear();
 		_audioCapture->resume();
 		while(_transcriptionRunning.load()){
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			_audioCapture->get(2000, pcmDataShort);
-			if(_vadCtx){ if(!whisper_vad_detect_speech(_vadCtx, pcmDataShort.data(), pcmDataShort.size())) continue; }
-			else if(!VadSimple(pcmDataShort, WHISPER_SAMPLE_RATE, 1250, _vadThreshold, _freqThreshold)) continue;
+			if(_vadCtx){ if(!whisper_vad_detect_speech(_vadCtx, pcmDataShort.data(), pcmDataShort.size())) continue; } else{ if(!VadSimple(pcmDataShort, WHISPER_SAMPLE_RATE, 1250, _vadThreshold, _freqThreshold)) continue; }
 			_audioCapture->get(voiceDuration, pcmDataLong);
 			if(whisper_full(_whisperCtx, _wparams, pcmDataLong.data(), static_cast<int>(pcmDataLong.size())) != 0){
-				pcmDataLong.clear();
-				pcmDataLong.resize(nInitialSamples, 0.0f);
+				pcmDataLong.assign(nInitialSamples, 0.0f);
 				continue;
 			}
 			std::string transcriptionResult;
 			const int nSegs = whisper_full_n_segments(_whisperCtx);
-			if(nSegs > 0){
-				// Use the final segment to avoid duplicates.
-				transcriptionResult = std::string(whisper_full_get_segment_text(_whisperCtx, nSegs - 1));
+			for(int i = 0; i < nSegs; ++i){
+				const char* seg = whisper_full_get_segment_text(_whisperCtx, i);
+				if(seg) transcriptionResult += seg;
 			}
-			// Process wake command if configured.
 			if(!_wakeCommand.empty()){
-				auto wakeWords = getWords(_wakeCommand);
-				const int wakeWordCount = wakeWords.size();
-				auto transWords = getWords(transcriptionResult);
-				if(transWords.size() < static_cast<size_t>(wakeWordCount)){
-					// Clear the buffer before the next iteration.
-					pcmDataLong.clear();
-					pcmDataLong.resize(nInitialSamples, 0.0f);
-					continue;
-				}
-				std::string heardWake;
+				const auto transWords = getWords(transcriptionResult);
+				const auto wakeWords = getWords(_wakeCommand);
 				std::string remaining;
-				for(size_t i = 0; i < transWords.size(); i++){ if(i < static_cast<size_t>(wakeWordCount)){ heardWake += transWords[i] + " "; } else{ remaining += transWords[i] + " "; } }
-				heardWake = trim(heardWake);
-				remaining = trim(remaining);
-				const float sim = similarity(heardWake, _wakeCommand);
-				// Only proceed if similarity is acceptable and there is text remaining.
-				if(sim < _wakeWordSim || remaining.empty()){
-					pcmDataLong.clear();
-					pcmDataLong.resize(nInitialSamples, 0.0f);
+				float bestSim = -1.0f;
+				size_t bestCut = 0;
+				const size_t maxProbe = std::min(transWords.size(), wakeWords.size() + static_cast<size_t>(3));
+				for(size_t cut = 1; cut <= maxProbe; ++cut){
+					const std::string probe = joinRange(transWords, 0, cut);
+					const float sim = similarity(probe, _wakeCommand);
+					if(sim > bestSim){
+						bestSim = sim;
+						bestCut = cut;
+					}
+				}
+				std::string heardWake = joinRange(transWords, 0, bestCut);
+				remaining = joinRange(transWords, bestCut, transWords.size());
+				if(bestSim < _wakeWordSim || remaining.empty()){
+					pcmDataLong.assign(nInitialSamples, 0.0f);
 					continue;
 				}
 				transcriptionResult = remaining;
 			}
-			// Only fire the callback if the transcription is non-empty and different from the last output.
-			if(_whisperCallback && !transcriptionResult.empty() && transcriptionResult != lastOutput){
+			if(!transcriptionResult.empty() && transcriptionResult != lastOutput){
 				lastOutput = transcriptionResult;
 				_whisperCallback(transcriptionResult.c_str());
 				_audioCapture->clear();
 			}
-			// Reinitialize the long audio buffer before next iteration.
-			if(!_wakeCommand.empty()){
-				pcmDataLong.clear();
-				pcmDataLong.resize(nInitialSamples, 0.0f);
-			}
+			pcmDataLong.assign(nInitialSamples, 0.0f);
 		}
 		_audioCapture->pause();
 	});
