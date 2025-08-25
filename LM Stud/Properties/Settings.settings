@@ -128,5 +128,8 @@
     <Setting Name="ApiServerPort" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">11434</Value>
     </Setting>
+    <Setting Name="GenDelay" Type="System.Decimal" Scope="User">
+      <Value Profile="(Default)">1500</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

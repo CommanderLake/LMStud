@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using LMStud.Properties;
+using Timer = System.Windows.Forms.Timer;
 namespace LMStud{
 	internal partial class Form1 : Form{
 		private static Form1 _this;
@@ -31,6 +32,7 @@ namespace LMStud{
 		private readonly ApiServer _apiServer;
 		internal bool IsGenerating => _generating || _apiGenerating;
 		internal readonly SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
+		private readonly Timer _genTimer = new Timer();
 		internal Form1(){
 			_this = this;
 			//var culture = new CultureInfo("zh-CN");
@@ -43,6 +45,8 @@ namespace LMStud{
 			SetToolTips();
 			LoadConfig();
 			LoadModelSettings();
+			if(_genDelay > 0) _genTimer.Interval = _genDelay;
+			_genTimer.Tick += (sender, args) => Generate();
 		}
 		private void SetToolTip(Control control){toolTip1.SetToolTip(control, Resources.ResourceManager.GetString("ToolTip_" + control.Name));}
 		private void SetToolTips(){
@@ -120,7 +124,7 @@ namespace LMStud{
 			};
 			_columnClickHandler.RegisterListView(listViewModels);
 			_columnClickHandler.RegisterListView(listViewMeta);
-			_columnClickHandler.RegisterListView(listViewHugSearch, columnDataTypesHugSearch);
+			_columnClickHandler.RegisterListView(listViewHugSearch, columnDataTypesHugSearch, 4, SortOrder.Descending);
 			_columnClickHandler.RegisterListView(listViewHugFiles, columnDataTypesHugFiles);
 		}
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e){
@@ -178,6 +182,7 @@ namespace LMStud{
 				MessageBox.Show(this, Resources.Error_starting_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 				checkVoiceInput.Checked = false;
 			} else{
+				_genTimer.Stop();
 				NativeMethods.StopSpeechTranscription();
 			}
 		}
@@ -282,15 +287,14 @@ namespace LMStud{
 		private static void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){Process.Start(e.LinkText);}
 		private void Generate(){
 			var prompt = textInput.Text;
-			textInput.Text = "";
-			Generate(MessageRole.User, prompt);
+			if(Generate(MessageRole.User, prompt)) textInput.Text = "";
 		}
-		private void Generate(MessageRole role, string prompt){
-			if(!LlModelLoaded || string.IsNullOrWhiteSpace(prompt)) return;
-			if(!GenerationLock.Wait(0)) return;
+		private bool Generate(MessageRole role, string prompt){
+			if(!LlModelLoaded || string.IsNullOrWhiteSpace(prompt)) return false;
+			if(!GenerationLock.Wait(0)) return false;
 			if(_generating || _apiGenerating){
 				GenerationLock.Release();
-				return;
+				return false;
 			}
 			_generating = true;
 			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
@@ -331,6 +335,7 @@ namespace LMStud{
 					}));
 				} catch(ObjectDisposedException){} finally{ GenerationLock.Release(); }
 			});
+			return true;
 		}
 		internal bool GenerateForApi(byte[] state, string prompt, Action<string> onToken){
 			if(!LlModelLoaded || _generating || _apiGenerating || string.IsNullOrWhiteSpace(prompt)) return false;
@@ -435,7 +440,10 @@ namespace LMStud{
 			_this.BeginInvoke((MethodInvoker)(() => {
 				if(thisform.IsDisposed) return;
 				_this.textInput.AppendText(transcription);
-				if(_this.checkVoiceInput.CheckState == CheckState.Checked) _this.Generate();
+				if(_this.checkVoiceInput.CheckState != CheckState.Checked) return;
+				_this._genTimer.Stop();
+				if(_this._genDelay == 0) _this.Generate();
+				else _this._genTimer.Start();
 			}));
 		}
 		private void TextInput_DragEnter(object sender, DragEventArgs e){

@@ -99,6 +99,8 @@ namespace LMStud
 			this.checkApiServerEnable = new System.Windows.Forms.CheckBox();
 			this.textModelsPath = new System.Windows.Forms.TextBox();
 			this.groupBox6 = new System.Windows.Forms.GroupBox();
+			this.numGenDelay = new System.Windows.Forms.NumericUpDown();
+			this.label29 = new System.Windows.Forms.Label();
 			this.numVadThreshold = new System.Windows.Forms.NumericUpDown();
 			this.butVADDown = new System.Windows.Forms.Button();
 			this.radioBasicVAD = new System.Windows.Forms.RadioButton();
@@ -216,6 +218,7 @@ namespace LMStud
 			this.groupBox7.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numApiServerPort)).BeginInit();
 			this.groupBox6.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numGenDelay)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numVadThreshold)).BeginInit();
 			this.groupBox5.SuspendLayout();
 			this.groupBox4.SuspendLayout();
@@ -879,6 +882,8 @@ namespace LMStud
 			// groupBox6
 			// 
 			resources.ApplyResources(this.groupBox6, "groupBox6");
+			this.groupBox6.Controls.Add(this.numGenDelay);
+			this.groupBox6.Controls.Add(this.label29);
 			this.groupBox6.Controls.Add(this.numVadThreshold);
 			this.groupBox6.Controls.Add(this.butVADDown);
 			this.groupBox6.Controls.Add(this.radioBasicVAD);
@@ -889,6 +894,28 @@ namespace LMStud
 			this.groupBox6.Name = "groupBox6";
 			this.groupBox6.TabStop = false;
 			this.toolTip1.SetToolTip(this.groupBox6, resources.GetString("groupBox6.ToolTip"));
+			// 
+			// numGenDelay
+			// 
+			resources.ApplyResources(this.numGenDelay, "numGenDelay");
+			this.numGenDelay.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+			this.numGenDelay.Name = "numGenDelay";
+			this.toolTip1.SetToolTip(this.numGenDelay, resources.GetString("numGenDelay.ToolTip"));
+			this.numGenDelay.Value = new decimal(new int[] {
+            1500,
+            0,
+            0,
+            0});
+			// 
+			// label29
+			// 
+			resources.ApplyResources(this.label29, "label29");
+			this.label29.Name = "label29";
+			this.toolTip1.SetToolTip(this.label29, resources.GetString("label29.ToolTip"));
 			// 
 			// numVadThreshold
 			// 
@@ -1812,6 +1839,7 @@ namespace LMStud
 			this.groupBox7.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.numApiServerPort)).EndInit();
 			this.groupBox6.ResumeLayout(false);
+			((System.ComponentModel.ISupportInitialize)(this.numGenDelay)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numVadThreshold)).EndInit();
 			this.groupBox5.ResumeLayout(false);
 			this.groupBox4.ResumeLayout(false);
@@ -2006,6 +2034,8 @@ namespace LMStud
 		private System.Windows.Forms.NumericUpDown numApiServerPort;
 		private System.Windows.Forms.Label label28;
 		private System.Windows.Forms.CheckBox checkApiServerEnable;
+		private System.Windows.Forms.NumericUpDown numGenDelay;
+		private System.Windows.Forms.Label label29;
 	}
 }
 

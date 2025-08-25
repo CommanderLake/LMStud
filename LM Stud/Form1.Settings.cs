@@ -45,6 +45,7 @@ namespace LMStud{
 		private bool _dateTimeEnable;
 		private bool _apiServerEnable;
 		private int _apiServerPort;
+		private int _genDelay;
 		private void LoadConfig(){
 			_systemPrompt = textSystemPrompt.Text = Settings.Default.SystemPrompt;
 			_modelsPath = textModelsPath.Text = Settings.Default.ModelsDir;
@@ -84,6 +85,7 @@ namespace LMStud{
 			_dateTimeEnable = checkDateTimeEnable.Checked = Settings.Default.DateTimeEnable;
 			_apiServerEnable = checkApiServerEnable.Checked = Settings.Default.ApiServerEnable;
 			_apiServerPort = (int)(numApiServerPort.Value = Settings.Default.ApiServerPort);
+			_genDelay = (int)(numGenDelay.Value = Settings.Default.GenDelay);
 			if(_apiServerEnable){
 				_apiServer.Port = _apiServerPort;
 				_apiServer.Start();
@@ -307,6 +309,10 @@ namespace LMStud{
 					_apiServer.Port = value;
 					_apiServer.Start();
 				}
+			});
+			UpdateSetting(ref _genDelay, (int)numGenDelay.Value, value => {
+				Settings.Default.GenDelay = value;
+				_genTimer.Interval = _genDelay;
 			});
 			var flash = overrideSettings ? ms.FlashAttn : _flashAttn;
 			var minP = overrideSettings ? ms.MinP : _minP;

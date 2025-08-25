@@ -5,13 +5,21 @@ namespace LMStud{
 	public class LVColumnClickHandler{
 		private readonly Dictionary<ListView, ListViewSortInfo> _listViewSorters;
 		public LVColumnClickHandler(){_listViewSorters = new Dictionary<ListView, ListViewSortInfo>();}
-		public void RegisterListView(ListView listView, SortDataType[] columnDataTypes = null){
+		public void RegisterListView(ListView listView, SortDataType[] columnDataTypes = null, int initialSortColumn = -1, SortOrder initialSortOrder = SortOrder.Ascending){
 			if(listView == null) throw new ArgumentNullException(nameof(listView));
 			UnregisterListView(listView);
 			var sortInfo = new ListViewSortInfo(columnDataTypes);
 			_listViewSorters[listView] = sortInfo;
 			listView.ListViewItemSorter = sortInfo.Sorter;
 			listView.ColumnClick += OnColumnClick;
+			if(initialSortColumn >= 0 && initialSortColumn < listView.Columns.Count){
+				var sorter = sortInfo.Sorter;
+				sorter.ColumnIndex = initialSortColumn;
+				sorter.SortOrder = initialSortOrder;
+				sorter.DataType = sortInfo.GetColumnDataType(initialSortColumn);
+				listView.Sort();
+				UpdateColumnHeaders(listView, initialSortColumn, sorter.SortOrder);
+			}
 		}
 		public void UnregisterListView(ListView listView){
 			if(listView != null && _listViewSorters.ContainsKey(listView)){

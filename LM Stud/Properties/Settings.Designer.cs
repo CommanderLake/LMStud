@@ -526,5 +526,17 @@ namespace LMStud.Properties {
                 this["ApiServerPort"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1500")]
+        public decimal GenDelay {
+            get {
+                return ((decimal)(this["GenDelay"]));
+            }
+            set {
+                this["GenDelay"] = value;
+            }
+        }
     }
 }
