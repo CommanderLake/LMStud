@@ -153,10 +153,11 @@ namespace LMStud{
 					detail = error.ToString();
 					break;
 			}
+			var extra = NativeMethods.GetLastError();
+			NativeMethods.ClearLastErrorMessage();
+			if(!string.IsNullOrEmpty(extra)) detail += "\r\n\r\n" + extra;
 			void ShowMessage(){MessageBox.Show(this, string.Format(Resources._0____1_, action, detail), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}
-			if(InvokeRequired){
-				Invoke(new MethodInvoker(ShowMessage));
-			} else ShowMessage();
+			if(InvokeRequired){ Invoke(new MethodInvoker(ShowMessage)); } else ShowMessage();
 		}
 		private void SetSystemPrompt(string prompt){
 			GenerationLock.Wait(-1);

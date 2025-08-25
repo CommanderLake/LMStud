@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Text;
 namespace LMStud{
 	internal static class NativeMethods{
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -83,6 +84,22 @@ namespace LMStud{
 		public static extern void SetFileBaseDir(string dir);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void ClearTools();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		private static extern IntPtr GetLastErrorMessage();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void ClearLastErrorMessage();
+		private static string PtrToStringUtf8(IntPtr ptr){
+			if(ptr == IntPtr.Zero) return string.Empty;
+			var len = 0;
+			while(Marshal.ReadByte(ptr, len) != 0) len++;
+			var buffer = new byte[len];
+			Marshal.Copy(ptr, buffer, 0, len);
+			return Encoding.UTF8.GetString(buffer);
+		}
+		internal static string GetLastError(){
+			var ptr = GetLastErrorMessage();
+			return PtrToStringUtf8(ptr);
+		}
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void RegisterTools(bool dateTime, bool googleSearch, bool webpageFetch, bool fileList, bool fileCreate, bool fileRead, bool fileWrite);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

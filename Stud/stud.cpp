@@ -8,7 +8,9 @@
 #include <minja\chat-template.hpp>
 #include <algorithm>
 using HrClock = std::chrono::high_resolution_clock;
-static bool _gpuOomStud = false;
+static bool _gpuOomStud = false; static std::string _lastErrorMessage;
+extern "C" EXPORT const char* GetLastErrorMessage(){ return _lastErrorMessage.c_str(); }
+extern "C" EXPORT void ClearLastErrorMessage(){ _lastErrorMessage.clear(); }
 static void GPUOomLogCallbackStud(ggml_log_level level, const char* text, void* userData){
 	if(level == GGML_LOG_LEVEL_ERROR || level == GGML_LOG_LEVEL_WARN){
 		const std::string_view msg(text);
@@ -164,6 +166,7 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	in.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
 	common_chat_params chatData;
 	try{ chatData = common_chat_templates_apply(_chatTemplates.get(), in); } catch(std::exception& e){
+		_lastErrorMessage = e.what();
 		OutputDebugStringA((std::string("EXCEPTION:\r\n") + e.what()).c_str());
 		return StudError::CantApplyTemplate;
 	}
@@ -504,7 +507,8 @@ StudError GenerateWithTools(const MessageRole role, const char* prompt, const in
 					toolCalled = true;
 				}
 			}
-		} catch(std::exception&){
+		} catch(std::exception& e){
+			_lastErrorMessage = e.what();
 			return StudError::ChatParseError;
 		}
 	} while(toolCalled);

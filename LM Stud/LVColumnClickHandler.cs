@@ -40,8 +40,8 @@ namespace LMStud{
 				if(headerText.EndsWith(" ↑") || headerText.EndsWith(" ↓")) headerText = headerText.Substring(0, headerText.Length - 2);
 				if(column.Tag == null) column.Tag = headerText;
 				if(i == sortColumnIndex){
-					var indicator = sortOrder == SortOrder.Ascending ? " ↑" : " ↓";
-					column.Text = headerText + indicator;
+					listView.Sorting = sortOrder;
+					column.Text = headerText + (sortOrder == SortOrder.Ascending ? " ↑" : " ↓");
 				} else{ column.Text = headerText; }
 			}
 		}

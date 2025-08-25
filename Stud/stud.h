@@ -70,5 +70,7 @@ extern "C" {
 	EXPORT StudError RemoveMessagesStartingAt(int index);
 	EXPORT StudError GenerateWithTools(MessageRole role, const char* prompt, int nPredict, bool callback);
 	EXPORT void StopGeneration();
+	EXPORT const char* GetLastErrorMessage();
+	EXPORT void ClearLastErrorMessage();
 	char* GetContextAsText();
 }
