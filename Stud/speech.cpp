@@ -73,18 +73,18 @@ void UnloadWhisperModel(){
 	}
 }
 void HighPassFilter(std::vector<float>& data, const float cutoff, const float sampleRate){
-	const float rc = 1.0f / (2.0f * M_PI * cutoff);
+	const float rc = 1.0f / (2.0f*M_PI*cutoff);
 	const float dt = 1.0f / sampleRate;
 	const float alpha = dt / (rc + dt);
 	float y = data[0];
 	for(size_t i = 1; i < data.size(); i++){
-		y = alpha * (y + data[i] - data[i - 1]);
+		y = alpha*(y + data[i] - data[i - 1]);
 		data[i] = y;
 	}
 }
 bool VadSimple(std::vector<float>& pcmf32, const int sampleRate, const int lastMs){
 	const int nSamples = pcmf32.size();
-	const int nSamplesLast = (sampleRate * lastMs) / 1000;
+	const int nSamplesLast = sampleRate*lastMs / 1000;
 	if(nSamplesLast >= nSamples){ return false; }
 	if(_freqThreshold > 0.0f){ HighPassFilter(pcmf32, _freqThreshold, sampleRate); }
 	float energyAll = 0.0f;
@@ -95,7 +95,7 @@ bool VadSimple(std::vector<float>& pcmf32, const int sampleRate, const int lastM
 	}
 	energyAll /= nSamples;
 	energyLast /= nSamplesLast;
-	if(energyLast > _vadThreshold * energyAll){ return false; }
+	if(energyLast > _vadThreshold*energyAll){ return false; }
 	return true;
 }
 float Similarity(const std::string& s0, const std::string& s1){
@@ -110,19 +110,19 @@ float Similarity(const std::string& s0, const std::string& s1){
 		col.swap(prevCol);
 	}
 	const float dist = prevCol[len1 - 1];
-	return 1.0f - (dist / std::max(s0.size(), s1.size()));
+	return 1.0f - dist / std::max(s0.size(), s1.size());
 }
 bool StartSpeechTranscription(){
 	if(!_whisperCtx || !_audioCapture){ return false; }
 	_wakeWordDetected.store(false);
 	_transcriptionRunning.store(true);
-	_transcriptionThread = std::thread([](){
-		const int stepMs = 3000;
+	_transcriptionThread = std::thread([]{
+		const int stepMs = 2000;
 		const int lengthMs = _voiceDurationMS;
 		const int keepMs = 200;
-		const int nSamplesStep = (1e-3 * stepMs) * WHISPER_SAMPLE_RATE;
-		const int nSamplesLen = (1e-3 * lengthMs) * WHISPER_SAMPLE_RATE;
-		const int nSamplesKeep = (1e-3 * keepMs) * WHISPER_SAMPLE_RATE;
+		const int nSamplesStep = 1e-3*stepMs*WHISPER_SAMPLE_RATE;
+		const int nSamplesLen = 1e-3*lengthMs*WHISPER_SAMPLE_RATE;
+		const int nSamplesKeep = 1e-3*keepMs*WHISPER_SAMPLE_RATE;
 		std::vector<float> pcmf32(nSamplesLen, 0.0f);
 		std::vector<float> pcmf32Old;
 		std::vector<float> pcmf32New;
@@ -150,7 +150,7 @@ bool StartSpeechTranscription(){
 		while(_transcriptionRunning.load()){
 			while(_transcriptionRunning.load()){
 				_audioCapture->get(stepMs, pcmf32New);
-				if(static_cast<int>(pcmf32New.size()) > 2 * nSamplesStep){
+				if(static_cast<int>(pcmf32New.size()) > 2*nSamplesStep){
 					_audioCapture->clear();
 					continue;
 				}
@@ -192,7 +192,7 @@ bool StartSpeechTranscription(){
 			const int nSamplesTake = std::min(static_cast<int>(pcmf32Old.size()), std::max(0, nSamplesKeep + nSamplesLen - nSamplesNew));
 			pcmf32.resize(nSamplesNew + nSamplesTake);
 			for(int i = 0; i < nSamplesTake; ++i){ pcmf32[i] = pcmf32Old[pcmf32Old.size() - nSamplesTake + i]; }
-			memcpy(pcmf32.data() + nSamplesTake, pcmf32New.data(), nSamplesNew * sizeof(float));
+			memcpy(pcmf32.data() + nSamplesTake, pcmf32New.data(), nSamplesNew*sizeof(float));
 			pcmf32Old = pcmf32;
 			_wparams.prompt_tokens = promptTokens.data();
 			_wparams.prompt_n_tokens = promptTokens.size();
