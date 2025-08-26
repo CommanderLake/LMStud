@@ -17,7 +17,7 @@
 #endif
 #pragma comment(lib, "whisper.lib")
 #define EXPORT __declspec(dllexport)
-inline int _voiceDuration = 10000;
+inline int _voiceDurationMS = 10000;
 inline std::string _wakeCommand = "";
 inline float _vadThreshold = 0.5f;
 inline float _freqThreshold = 100.0f;
