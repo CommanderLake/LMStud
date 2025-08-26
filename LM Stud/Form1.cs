@@ -14,6 +14,7 @@ namespace LMStud{
 		private static Form1 _this;
 		private static NativeMethods.TokenCallback _tokenCallback;
 		private static NativeMethods.WhisperCallback _whisperCallback;
+		private static NativeMethods.SpeechEndCallback _speechEndCallback;
 		private readonly List<ChatMessage> _chatMessages = new List<ChatMessage>();
 		private readonly StringBuilder _speechBuffer = new StringBuilder();
 		private readonly Stopwatch _swRate = new Stopwatch();
@@ -32,7 +33,6 @@ namespace LMStud{
 		private readonly ApiServer _apiServer;
 		internal bool IsGenerating => _generating || _apiGenerating;
 		internal readonly SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
-		private readonly Timer _genTimer = new Timer();
 		internal Form1(){
 			_this = this;
 			//var culture = new CultureInfo("zh-CN");
@@ -45,13 +45,6 @@ namespace LMStud{
 			SetToolTips();
 			LoadConfig();
 			LoadModelSettings();
-			if(_genDelay > 0) _genTimer.Interval = _genDelay;
-			_genTimer.Tick += (sender, args) => {
-				_genTimer.Stop();
-				if(_this.checkVoiceInput.CheckState != CheckState.Checked) return;
-				NativeMethods.StopSpeechTranscription();
-				Generate();
-			};
 		}
 		private void SetToolTip(Control control){toolTip1.SetToolTip(control, Resources.ResourceManager.GetString("ToolTip_" + control.Name));}
 		private void SetToolTips(){
@@ -155,7 +148,6 @@ namespace LMStud{
 		private void CheckVoiceInput_CheckedChanged(object sender, EventArgs e){
 			try{
 				if(checkVoiceInput.CheckState != CheckState.Unchecked && _checkVoiceInputLast == CheckState.Unchecked){
-					if(checkVoiceInput.CheckState == CheckState.Indeterminate) _genTimer.Stop();
 					if(_whisperModelIndex < 0 || _whisperModelIndex >= _whisperModels.Count || !File.Exists(_whisperModels[_whisperModelIndex])){
 						checkVoiceInput.Checked = false;
 						MessageBox.Show(this, Resources.Error_Whisper_model_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -179,6 +171,8 @@ namespace LMStud{
 							_whisperLoaded = true;
 							_whisperCallback = WhisperCallback;
 							NativeMethods.SetWhisperCallback(_whisperCallback);
+							_speechEndCallback = SpeechEndCallback;
+							NativeMethods.SetSpeechEndCallback(_speechEndCallback);
 						} else{
 							_whisperLoaded = false;
 							MessageBox.Show(this, Resources.Error_initialising_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -190,7 +184,6 @@ namespace LMStud{
 					MessageBox.Show(this, Resources.Error_starting_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 					checkVoiceInput.Checked = false;
 				} else{
-					_genTimer.Stop();
 					NativeMethods.StopSpeechTranscription();
 				}
 			} finally{ _checkVoiceInputLast = checkVoiceInput.CheckState; }
@@ -451,9 +444,16 @@ namespace LMStud{
 				if(thisform.IsDisposed) return;
 				_this.textInput.AppendText(transcription);
 				if(_this.checkVoiceInput.CheckState != CheckState.Checked) return;
-				_this._genTimer.Stop();
-				if(_this._genDelay == 0) _this.Generate();
-				else _this._genTimer.Start();
+			}));
+		}
+		private static void SpeechEndCallback(){
+			var thisform = _this;
+			if(_this.IsDisposed) return;
+			_this.BeginInvoke((MethodInvoker)(() => {
+				if(thisform.IsDisposed) return;
+				if(_this.checkVoiceInput.CheckState != CheckState.Checked) return;
+				NativeMethods.StopSpeechTranscription();
+				_this.Generate();
 			}));
 		}
 		private void TextInput_DragEnter(object sender, DragEventArgs e){

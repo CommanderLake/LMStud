@@ -86,6 +86,7 @@ namespace LMStud{
 			_apiServerEnable = checkApiServerEnable.Checked = Settings.Default.ApiServerEnable;
 			_apiServerPort = (int)(numApiServerPort.Value = Settings.Default.ApiServerPort);
 			_genDelay = (int)(numGenDelay.Value = Settings.Default.GenDelay);
+			NativeMethods.SetSilenceTimeout(_genDelay);
 			if(_apiServerEnable){
 				_apiServer.Port = _apiServerPort;
 				_apiServer.Start();
@@ -312,7 +313,7 @@ namespace LMStud{
 			});
 			UpdateSetting(ref _genDelay, (int)numGenDelay.Value, value => {
 				Settings.Default.GenDelay = value;
-				if(value > 1) _genTimer.Interval = _genDelay;
+				NativeMethods.SetSilenceTimeout(value);
 			});
 			var flash = overrideSettings ? ms.FlashAttn : _flashAttn;
 			var minP = overrideSettings ? ms.MinP : _minP;

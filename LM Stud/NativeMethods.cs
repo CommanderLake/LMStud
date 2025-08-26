@@ -11,6 +11,7 @@ namespace LMStud{
 		public delegate IntPtr ToolHandler([MarshalAs(UnmanagedType.LPUTF8Str)] string args);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate void WhisperCallback(string transcription);
+		public delegate void SpeechEndCallback();
 		public enum GgmlNumaStrategy{
 			Disabled = 0,
 			Distribute = 1,
@@ -111,6 +112,8 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetWhisperCallback(WhisperCallback cb);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void SetSpeechEndCallback(SpeechEndCallback cb);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern StudError LoadWhisperModel(string modelPath, int nThreads, bool useGPU, bool useVAD, string vadModel);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void UnloadWhisperModel();
@@ -129,6 +132,8 @@ namespace LMStud{
 		public static extern void SetVoiceDuration(int voiceDuration);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetWhisperTemp(float temp);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void SetSilenceTimeout(int milliseconds);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 		public static extern IntPtr PerformHttpGet(string url);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]

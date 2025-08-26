@@ -1,6 +1,7 @@
 #define _USE_MATH_DEFINES
 #include "speech.h"
 #include "StudError.h"
+#include <windows.h>
 #include <thread>
 #include <atomic>
 #include <llama.h>
@@ -8,6 +9,8 @@
 #include <string>
 #include <regex>
 #include <sstream>
+#include <cstring>
+#include <cctype>
 static bool _gpuOomSpeech = false;
 static std::atomic<bool> _wakeWordDetected{false};
 static void GPUOomLogCallbackSpeech(ggml_log_level level, const char* text, void* userData){
@@ -114,7 +117,7 @@ bool StartSpeechTranscription(){
 	_wakeWordDetected.store(false);
 	_transcriptionRunning.store(true);
 	_transcriptionThread = std::thread([](){
-		const int stepMs = 1000;
+		const int stepMs = 3000;
 		const int lengthMs = _voiceDurationMS;
 		const int keepMs = 200;
 		const int nSamplesStep = (1e-3 * stepMs) * WHISPER_SAMPLE_RATE;
@@ -140,6 +143,8 @@ bool StartSpeechTranscription(){
 			return out;
 		};
 		std::string lastOutput;
+		bool speaking = false;
+		auto lastSpeech = std::chrono::steady_clock::now();
 		_audioCapture->clear();
 		_audioCapture->resume();
 		while(_transcriptionRunning.load()){
@@ -156,7 +161,33 @@ bool StartSpeechTranscription(){
 				std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			}
 			if(!_transcriptionRunning.load()) break;
-			if(_vadCtx){ if(!whisper_vad_detect_speech(_vadCtx, pcmf32New.data(), pcmf32New.size())) continue; } else{ if(!VadSimple(pcmf32New, WHISPER_SAMPLE_RATE, 1250)) continue; }
+			bool hasSpeech = false;
+			if(_vadCtx){
+				if(whisper_vad_detect_speech(_vadCtx, pcmf32New.data(), pcmf32New.size())){
+					const int nProbs = whisper_vad_n_probs(_vadCtx);
+					const float* probs = whisper_vad_probs(_vadCtx);
+					for(int i = 0; i < nProbs; ++i){
+						if(probs[i] > _wparams.vad_params.threshold){
+							hasSpeech = true;
+							break;
+						}
+					}
+				}
+			} else{ hasSpeech = !VadSimple(pcmf32New, WHISPER_SAMPLE_RATE, 1250); }
+			auto now = std::chrono::steady_clock::now();
+			if(!hasSpeech){
+				if(speaking && now - lastSpeech > std::chrono::milliseconds(_silenceTimeoutMs.load())){
+					speaking = false;
+					lastOutput.clear();
+					pcmf32Old.clear();
+					promptTokens.clear();
+					const bool wasWake = _wakeWordDetected.exchange(false);
+					if(wasWake && _speechEndCallback) _speechEndCallback();
+				}
+				continue;
+			}
+			speaking = true;
+			lastSpeech = now;
 			const int nSamplesNew = pcmf32New.size();
 			const int nSamplesTake = std::min(static_cast<int>(pcmf32Old.size()), std::max(0, nSamplesKeep + nSamplesLen - nSamplesNew));
 			pcmf32.resize(nSamplesNew + nSamplesTake);
@@ -172,28 +203,45 @@ bool StartSpeechTranscription(){
 				const char* seg = whisper_full_get_segment_text(_whisperCtx, i);
 				if(seg) transcriptionResult += seg;
 			}
-			if(!_wakeCommand.empty()){
-				const auto transWords = getWords(transcriptionResult);
-				const auto wakeWords = getWords(_wakeCommand);
-				std::string remaining;
+			if(!_wakeCommand.empty() && !_wakeWordDetected.load()){
+				auto normalize = [](const std::string& in) -> std::string{
+					std::string out;
+					out.reserve(in.size());
+					for(char c : in){ if(!std::ispunct(static_cast<unsigned char>(c))){ out.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c)))); } }
+					return out;
+				};
+				const std::string normTrans = normalize(transcriptionResult);
+				const std::string normWake = normalize(_wakeCommand);
+				const auto transWords = getWords(normTrans);
+				const auto wakeWords = getWords(normWake);
 				float bestSim = -1.0f;
-				size_t bestCut = 0;
-				const size_t maxProbe = std::min(transWords.size(), wakeWords.size() + static_cast<size_t>(3));
-				for(size_t cut = 1; cut <= maxProbe; ++cut){
-					const std::string probe = joinRange(transWords, 0, cut);
-					const float sim = Similarity(probe, _wakeCommand);
-					if(sim > bestSim){
-						bestSim = sim;
-						bestCut = cut;
+				size_t bestStart = 0;
+				size_t bestEnd = 0;
+				for(size_t start = 0; start < transWords.size(); ++start){
+					const size_t maxEnd = std::min(transWords.size(), start + wakeWords.size() + static_cast<size_t>(2));
+					for(size_t end = start + 1; end <= maxEnd; ++end){
+						const std::string probe = joinRange(transWords, start, end);
+						const float sim = Similarity(probe, normWake);
+						if(sim > bestSim){
+							bestSim = sim;
+							bestStart = start;
+							bestEnd = end;
+						}
 					}
 				}
-				std::string heardWake = joinRange(transWords, 0, bestCut);
-				remaining = joinRange(transWords, bestCut, transWords.size());
-				if(bestSim < _wakeWordSim || remaining.empty()){
+				const std::string bestPhrase = joinRange(transWords, bestStart, bestEnd);
+				{
+					std::string msg = "Wake word probe: \"" + bestPhrase + "\" sim=" + std::to_string(bestSim) + " threshold=" + std::to_string(_wakeWordSim) + "\n";
+					OutputDebugStringA(msg.c_str());
+				}
+				if(bestSim < _wakeWordSim){
+					OutputDebugStringA("Wake word not detected\n");
 					pcmf32Old.clear();
 					continue;
 				}
-				transcriptionResult = remaining;
+				OutputDebugStringA("Wake word detected\n");
+				const auto origWords = getWords(transcriptionResult);
+				if(bestEnd <= origWords.size()){ transcriptionResult = joinRange(origWords, bestEnd, origWords.size()); } else{ transcriptionResult.clear(); }
 				_wakeWordDetected.store(true);
 			}
 			std::string newText = transcriptionResult;
@@ -219,6 +267,7 @@ void StopSpeechTranscription(){
 	_wakeWordDetected.store(false);
 }
 void SetWhisperCallback(WhisperCallbackFn cb){ _whisperCallback = cb; }
+void SetSpeechEndCallback(SpeechEndCallbackFn cb){ _speechEndCallback = cb; }
 void SetWakeCommand(const char* wakeCmd){ if(wakeCmd){ _wakeCommand = wakeCmd; } else{ _wakeCommand.clear(); } }
 void SetVADThresholds(const float vad, const float freq){
 	_vadThreshold = vad;
@@ -227,3 +276,4 @@ void SetVADThresholds(const float vad, const float freq){
 void SetVoiceDuration(const int voiceDuration){ _voiceDurationMS = voiceDuration; }
 void SetWakeWordSimilarity(float similarity){ _wakeWordSim = similarity; }
 void SetWhisperTemp(float temp){ _temp = temp; }
+void SetSilenceTimeout(int ms){ _silenceTimeoutMs.store(ms); }
