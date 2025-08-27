@@ -8,31 +8,32 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using LMStud.Properties;
-using Timer = System.Windows.Forms.Timer;
 namespace LMStud{
 	internal partial class Form1 : Form{
 		private static Form1 _this;
 		private static NativeMethods.TokenCallback _tokenCallback;
 		private static NativeMethods.WhisperCallback _whisperCallback;
 		private static NativeMethods.SpeechEndCallback _speechEndCallback;
+		private readonly ApiServer _apiServer;
 		private readonly List<ChatMessage> _chatMessages = new List<ChatMessage>();
 		private readonly StringBuilder _speechBuffer = new StringBuilder();
 		private readonly Stopwatch _swRate = new Stopwatch();
 		private readonly Stopwatch _swTot = new Stopwatch();
 		private readonly SpeechSynthesizer _tts = new SpeechSynthesizer();
-		private ChatMessage _cntAssMsg;
-		private bool _first = true;
-		private volatile bool _generating;
+		internal readonly SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
 		private volatile bool _apiGenerating;
 		private Action<string> _apiTokenCallback;
+		private CheckState _checkVoiceInputLast = CheckState.Unchecked;
+		private ChatMessage _cntAssMsg;
+		private LVColumnClickHandler _columnClickHandler;
+		private string _editOriginalText = "";
+		private bool _first = true;
+		private volatile bool _generating;
 		private int _genTokenTotal;
+		private bool _isEditing;
 		private int _msgTokenCount;
 		private volatile bool _rendering;
 		private bool _whisperLoaded;
-		private LVColumnClickHandler _columnClickHandler;
-		private readonly ApiServer _apiServer;
-		internal bool IsGenerating => _generating || _apiGenerating;
-		internal readonly SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
 		internal Form1(){
 			_this = this;
 			//var culture = new CultureInfo("zh-CN");
@@ -46,6 +47,7 @@ namespace LMStud{
 			LoadConfig();
 			LoadModelSettings();
 		}
+		internal bool IsGenerating => _generating || _apiGenerating;
 		private void SetToolTip(Control control){toolTip1.SetToolTip(control, Resources.ResourceManager.GetString("ToolTip_" + control.Name));}
 		private void SetToolTips(){
 			SetToolTip(textSystemPrompt);
@@ -144,7 +146,6 @@ namespace LMStud{
 		private void CheckMarkdown_CheckedChanged(object sender, EventArgs e){
 			foreach(var message in _chatMessages) message.Markdown = checkMarkdown.Checked;
 		}
-		private CheckState _checkVoiceInputLast = CheckState.Unchecked;
 		private void CheckVoiceInput_CheckedChanged(object sender, EventArgs e){
 			try{
 				if(checkVoiceInput.CheckState != CheckState.Unchecked && _checkVoiceInputLast == CheckState.Unchecked){
@@ -183,9 +184,7 @@ namespace LMStud{
 					if(NativeMethods.StartSpeechTranscription()) return;
 					MessageBox.Show(this, Resources.Error_starting_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 					checkVoiceInput.Checked = false;
-				} else{
-					NativeMethods.StopSpeechTranscription();
-				}
+				} else{ NativeMethods.StopSpeechTranscription(); }
 			} finally{ _checkVoiceInputLast = checkVoiceInput.CheckState; }
 		}
 		private void CheckSpeak_CheckedChanged(object sender, EventArgs e){
@@ -205,10 +204,48 @@ namespace LMStud{
 			_chatMessages.Clear();
 			labelTokens.Text = NativeMethods.LlamaMemSize() + Resources._Tokens;
 		}
+		private void SetEditingMessageVisible(bool visible){
+			toolStripStatusLabel1.Visible = labelTokens.Visible = labelTPS.Visible = labelPreGen.Visible = !visible;
+			labelEditing.Visible = visible;
+		}
+		private void StartEditing(){
+			if(_isEditing) return;
+			_editOriginalText = textInput.Text;
+			_isEditing = true;
+			SetEditingMessageVisible(true);
+			if(checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StopSpeechTranscription();
+		}
+		private void FinishEditing(){
+			_isEditing = false;
+			SetEditingMessageVisible(false);
+			if(checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StartSpeechTranscription();
+		}
+		private void CancelEditing(){
+			textInput.Text = _editOriginalText;
+			textInput.SelectionStart = textInput.Text.Length;
+			FinishEditing();
+		}
 		private void TextInput_KeyDown(object sender, KeyEventArgs e){
-			if(e.KeyCode != Keys.Enter || e.Control || e.Shift || !butGen.Enabled) return;
-			e.SuppressKeyPress = true;
-			ButGen_Click(null, null);
+			if(_isEditing){
+				if(e.KeyCode == Keys.Enter && !e.Control && !e.Shift){
+					e.SuppressKeyPress = true;
+					NativeMethods.SetCommittedText(textInput.Text);
+					FinishEditing();
+				} else if(e.KeyCode == Keys.Escape){
+					e.SuppressKeyPress = true;
+					CancelEditing();
+				}
+				return;
+			}
+			if(e.KeyCode == Keys.Enter && !e.Control && !e.Shift && butGen.Enabled){
+				e.SuppressKeyPress = true;
+				ButGen_Click(null, null);
+				return;
+			}
+			StartEditing();
+		}
+		private void TextInput_MouseDown(object sender, MouseEventArgs e){
+			if(checkVoiceInput.CheckState != CheckState.Unchecked && !_isEditing) StartEditing();
 		}
 		private void PanelChat_Layout(object sender, LayoutEventArgs e){
 			panelChat.SuspendLayout();
@@ -221,7 +258,7 @@ namespace LMStud{
 			var id = _chatMessages.IndexOf(cm);
 			GenerationLock.Wait(-1);
 			NativeMethods.StudError result;
-			try{ result = NativeMethods.RemoveMessageAt(id); } finally{GenerationLock.Release();}
+			try{ result = NativeMethods.RemoveMessageAt(id); } finally{ GenerationLock.Release(); }
 			if(result != NativeMethods.StudError.IndexOutOfRange){
 				_chatMessages[id].Dispose();
 				_chatMessages.RemoveAt(id);
@@ -267,7 +304,8 @@ namespace LMStud{
 			var idx = _chatMessages.IndexOf(cm);
 			if(cm.checkThink.Checked) cm.Think = cm.richTextMsg.Text;
 			else cm.Message = cm.richTextMsg.Text;
-			if(NativeMethods.SetMessageAt(idx, cm.Think, cm.Message) != NativeMethods.StudError.Success) MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+			if(NativeMethods.SetMessageAt(idx, cm.Think, cm.Message) != NativeMethods.StudError.Success)
+				MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 			cm.Editing = false;
 			cm.Markdown = checkMarkdown.Checked;
 		}
@@ -441,9 +479,9 @@ namespace LMStud{
 			var thisform = _this;
 			if(_this.IsDisposed) return;
 			_this.BeginInvoke((MethodInvoker)(() => {
-				if(thisform.IsDisposed) return;
-				_this.textInput.AppendText(transcription);
-				if(_this.checkVoiceInput.CheckState != CheckState.Checked) return;
+				if(thisform.IsDisposed || _this._isEditing) return;
+				_this.textInput.Text = transcription;
+				_this.textInput.SelectionStart = _this.textInput.Text.Length;
 			}));
 		}
 		private static void SpeechEndCallback(){

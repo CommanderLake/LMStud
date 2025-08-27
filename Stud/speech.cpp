@@ -11,22 +11,35 @@
 #include <sstream>
 #include <cstring>
 #include <cctype>
-static bool _gpuOomSpeech = false;
 static std::atomic<bool> _wakeWordDetected{false};
+static bool _gpuOomSpeech = false;
+static void WhisperLogDisable(ggml_log_level level, const char* text, void* userData){}
 static void GPUOomLogCallbackSpeech(ggml_log_level level, const char* text, void* userData){
+	fputs(text, stderr);
+	fflush(stderr);
 	if(level == GGML_LOG_LEVEL_ERROR || level == GGML_LOG_LEVEL_WARN){
 		const std::string_view msg(text);
 		if(msg.find("out of memory") != std::string_view::npos) _gpuOomSpeech = true;
+		if(msg.find("failed to allocate") != std::string_view::npos) _gpuOomSpeech = true;
 	}
+}
+LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo){
+	if(exceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION){
+		_gpuOomSpeech = true;
+		return EXCEPTION_EXECUTE_HANDLER;
+	}
+	return EXCEPTION_CONTINUE_SEARCH;
 }
 StudError LoadWhisperModel(const char* modelPath, const int nThreads, const bool useGPU, const bool useVAD, const char* vadModel){
 	UnloadWhisperModel();
 	whisper_context_params cparams = whisper_context_default_params();
 	cparams.use_gpu = useGPU;
 	_gpuOomSpeech = false;
-	whisper_log_set(GPUOomLogCallbackSpeech, nullptr);
+	const auto oldHandler = SetUnhandledExceptionFilter(ExceptionHandler);
+	ggml_log_set(GPUOomLogCallbackSpeech, nullptr);
 	_whisperCtx = whisper_init_from_file_with_params(modelPath, cparams);
-	whisper_log_set(nullptr, nullptr);
+	ggml_log_set(nullptr, nullptr);
+	SetUnhandledExceptionFilter(oldHandler);
 	if(!_whisperCtx) return _gpuOomSpeech ? StudError::GpuOutOfMemory : StudError::CantLoadWhisperModel;
 	_wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
 	_wparams.n_threads = nThreads;
@@ -55,6 +68,7 @@ StudError LoadWhisperModel(const char* modelPath, const int nThreads, const bool
 		_audioCapture = nullptr;
 		return StudError::CantInitAudioCapture;
 	}
+	whisper_log_set(WhisperLogDisable, nullptr);
 	return StudError::Success;
 }
 void UnloadWhisperModel(){
@@ -73,18 +87,18 @@ void UnloadWhisperModel(){
 	}
 }
 void HighPassFilter(std::vector<float>& data, const float cutoff, const float sampleRate){
-	const float rc = 1.0f / (2.0f*M_PI*cutoff);
+	const float rc = 1.0f / (2.0f * M_PI * cutoff);
 	const float dt = 1.0f / sampleRate;
 	const float alpha = dt / (rc + dt);
 	float y = data[0];
 	for(size_t i = 1; i < data.size(); i++){
-		y = alpha*(y + data[i] - data[i - 1]);
+		y = alpha * (y + data[i] - data[i - 1]);
 		data[i] = y;
 	}
 }
 bool VadSimple(std::vector<float>& pcmf32, const int sampleRate, const int lastMs){
 	const int nSamples = pcmf32.size();
-	const int nSamplesLast = sampleRate*lastMs / 1000;
+	const int nSamplesLast = sampleRate * lastMs / 1000;
 	if(nSamplesLast >= nSamples){ return false; }
 	if(_freqThreshold > 0.0f){ HighPassFilter(pcmf32, _freqThreshold, sampleRate); }
 	float energyAll = 0.0f;
@@ -95,7 +109,7 @@ bool VadSimple(std::vector<float>& pcmf32, const int sampleRate, const int lastM
 	}
 	energyAll /= nSamples;
 	energyLast /= nSamplesLast;
-	if(energyLast > _vadThreshold*energyAll){ return false; }
+	if(energyLast > _vadThreshold * energyAll){ return false; }
 	return true;
 }
 float Similarity(const std::string& s0, const std::string& s1){
@@ -117,16 +131,10 @@ bool StartSpeechTranscription(){
 	_wakeWordDetected.store(false);
 	_transcriptionRunning.store(true);
 	_transcriptionThread = std::thread([]{
-		const int stepMs = 2000;
-		const int lengthMs = _voiceDurationMS;
-		const int keepMs = 200;
-		const int nSamplesStep = 1e-3*stepMs*WHISPER_SAMPLE_RATE;
-		const int nSamplesLen = 1e-3*lengthMs*WHISPER_SAMPLE_RATE;
-		const int nSamplesKeep = 1e-3*keepMs*WHISPER_SAMPLE_RATE;
-		std::vector<float> pcmf32(nSamplesLen, 0.0f);
-		std::vector<float> pcmf32Old;
-		std::vector<float> pcmf32New;
-		std::vector<whisper_token> promptTokens;
+		const int stepMs = 500;
+		const int nSamplesStep = 1e-3 * stepMs * WHISPER_SAMPLE_RATE;
+		std::vector<float> pcmBuffer;
+		std::vector<float> pcmStep;
 		auto getWords = [](const std::string& s) -> std::vector<std::string>{
 			std::istringstream iss(s);
 			std::vector<std::string> words;
@@ -142,6 +150,7 @@ bool StartSpeechTranscription(){
 			}
 			return out;
 		};
+		std::string pending;
 		std::string lastOutput;
 		bool speaking = false;
 		auto lastSpeech = std::chrono::steady_clock::now();
@@ -149,21 +158,22 @@ bool StartSpeechTranscription(){
 		_audioCapture->resume();
 		while(_transcriptionRunning.load()){
 			while(_transcriptionRunning.load()){
-				_audioCapture->get(stepMs, pcmf32New);
-				if(static_cast<int>(pcmf32New.size()) > 2*nSamplesStep){
+				_audioCapture->get(stepMs, pcmStep);
+				if(static_cast<int>(pcmStep.size()) > 2 * nSamplesStep){
 					_audioCapture->clear();
 					continue;
 				}
-				if(static_cast<int>(pcmf32New.size()) >= nSamplesStep){
+				if(static_cast<int>(pcmStep.size()) >= nSamplesStep){
 					_audioCapture->clear();
 					break;
 				}
 				std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			}
 			if(!_transcriptionRunning.load()) break;
+			pcmBuffer.insert(pcmBuffer.end(), pcmStep.begin(), pcmStep.end());
 			bool hasSpeech = false;
 			if(_vadCtx){
-				if(whisper_vad_detect_speech(_vadCtx, pcmf32New.data(), pcmf32New.size())){
+				if(whisper_vad_detect_speech(_vadCtx, pcmStep.data(), pcmStep.size())){
 					const int nProbs = whisper_vad_n_probs(_vadCtx);
 					const float* probs = whisper_vad_probs(_vadCtx);
 					for(int i = 0; i < nProbs; ++i){
@@ -173,30 +183,26 @@ bool StartSpeechTranscription(){
 						}
 					}
 				}
-			} else{ hasSpeech = !VadSimple(pcmf32New, WHISPER_SAMPLE_RATE, 1250); }
+			} else{ hasSpeech = !VadSimple(pcmStep, WHISPER_SAMPLE_RATE, 1250); }
 			auto now = std::chrono::steady_clock::now();
 			if(!hasSpeech){
-				if(speaking && now - lastSpeech > std::chrono::milliseconds(_silenceTimeoutMs.load())){
+				if(speaking && now - lastSpeech > std::chrono::milliseconds(1000)){
 					speaking = false;
+					_committed += pending;
+					pending.clear();
 					lastOutput.clear();
-					pcmf32Old.clear();
-					promptTokens.clear();
+					pcmBuffer.clear();
 					const bool wasWake = _wakeWordDetected.exchange(false);
 					if(wasWake && _speechEndCallback) _speechEndCallback();
+					if(_whisperCallback) _whisperCallback(_committed.c_str());
 				}
 				continue;
 			}
 			speaking = true;
 			lastSpeech = now;
-			const int nSamplesNew = pcmf32New.size();
-			const int nSamplesTake = std::min(static_cast<int>(pcmf32Old.size()), std::max(0, nSamplesKeep + nSamplesLen - nSamplesNew));
-			pcmf32.resize(nSamplesNew + nSamplesTake);
-			for(int i = 0; i < nSamplesTake; ++i){ pcmf32[i] = pcmf32Old[pcmf32Old.size() - nSamplesTake + i]; }
-			memcpy(pcmf32.data() + nSamplesTake, pcmf32New.data(), nSamplesNew*sizeof(float));
-			pcmf32Old = pcmf32;
-			_wparams.prompt_tokens = promptTokens.data();
-			_wparams.prompt_n_tokens = promptTokens.size();
-			if(whisper_full(_whisperCtx, _wparams, pcmf32.data(), static_cast<int>(pcmf32.size())) != 0){ continue; }
+			_wparams.prompt_tokens = nullptr;
+			_wparams.prompt_n_tokens = 0;
+			if(whisper_full(_whisperCtx, _wparams, pcmBuffer.data(), static_cast<int>(pcmBuffer.size())) != 0){ continue; }
 			std::string transcriptionResult;
 			const int nSegs = whisper_full_n_segments(_whisperCtx);
 			for(int i = 0; i < nSegs; ++i){
@@ -207,7 +213,7 @@ bool StartSpeechTranscription(){
 				auto normalize = [](const std::string& in) -> std::string{
 					std::string out;
 					out.reserve(in.size());
-					for(char c : in){ if(!std::ispunct(static_cast<unsigned char>(c))){ out.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c)))); } }
+					for(const char c : in){ if(!std::ispunct(static_cast<unsigned char>(c))){ out.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c)))); } }
 					return out;
 				};
 				const std::string normTrans = normalize(transcriptionResult);
@@ -236,25 +242,23 @@ bool StartSpeechTranscription(){
 				}
 				if(bestSim < _wakeWordSim){
 					OutputDebugStringA("Wake word not detected\n");
-					pcmf32Old.clear();
+					pcmBuffer.clear();
+					pending.clear();
 					continue;
 				}
 				OutputDebugStringA("Wake word detected\n");
 				const auto origWords = getWords(transcriptionResult);
 				if(bestEnd <= origWords.size()){ transcriptionResult = joinRange(origWords, bestEnd, origWords.size()); } else{ transcriptionResult.clear(); }
 				_wakeWordDetected.store(true);
+				pcmBuffer.clear();
 			}
-			std::string newText = transcriptionResult;
-			if(!lastOutput.empty() && transcriptionResult.rfind(lastOutput, 0) == 0){ newText = transcriptionResult.substr(lastOutput.size()); }
-			if(!newText.empty()){
-				lastOutput = transcriptionResult;
-				if(_whisperCallback) _whisperCallback(newText.c_str());
-			}
-			pcmf32Old = std::vector<float>(pcmf32.end() - std::min(nSamplesKeep, static_cast<int>(pcmf32.size())), pcmf32.end());
-			promptTokens.clear();
-			for(int i = 0; i < nSegs; ++i){
-				const int tokenCount = whisper_full_n_tokens(_whisperCtx, i);
-				for(int j = 0; j < tokenCount; ++j){ promptTokens.push_back(whisper_full_get_token_id(_whisperCtx, i, j)); }
+			if(_wakeCommand.empty() || _wakeWordDetected.load()){
+				pending = transcriptionResult;
+				std::string combined = _committed + pending;
+				if(combined != lastOutput){
+					lastOutput = combined;
+					if(_whisperCallback) _whisperCallback(combined.c_str());
+				}
 			}
 		}
 		_audioCapture->pause();
@@ -266,14 +270,16 @@ void StopSpeechTranscription(){
 	if(_transcriptionThread.joinable()){ _transcriptionThread.join(); }
 	_wakeWordDetected.store(false);
 }
-void SetWhisperCallback(WhisperCallbackFn cb){ _whisperCallback = cb; }
-void SetSpeechEndCallback(SpeechEndCallbackFn cb){ _speechEndCallback = cb; }
+void SetWhisperCallback(const WhisperCallbackFn cb){ _whisperCallback = cb; }
+void SetSpeechEndCallback(const SpeechEndCallbackFn cb){ _speechEndCallback = cb; }
 void SetWakeCommand(const char* wakeCmd){ if(wakeCmd){ _wakeCommand = wakeCmd; } else{ _wakeCommand.clear(); } }
 void SetVADThresholds(const float vad, const float freq){
-	_vadThreshold = vad;
+	_wparams.vad_params.threshold = _vadThreshold = vad;
 	_freqThreshold = freq;
 }
-void SetVoiceDuration(const int voiceDuration){ _voiceDurationMS = voiceDuration; }
-void SetWakeWordSimilarity(float similarity){ _wakeWordSim = similarity; }
-void SetWhisperTemp(float temp){ _temp = temp; }
-void SetSilenceTimeout(int ms){ _silenceTimeoutMs.store(ms); }
+void SetWakeWordSimilarity(const float similarity){ _wakeWordSim = similarity; }
+void SetWhisperTemp(const float temp){ _temp = temp; }
+void SetSilenceTimeout(const int ms){ _silenceTimeoutMs.store(ms); }
+void SetCommittedText(const char* text){
+	_committed = text;
+}

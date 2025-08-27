@@ -22,7 +22,7 @@ inline std::string _wakeCommand = "";
 inline float _vadThreshold = 0.5f;
 inline float _freqThreshold = 100.0f;
 inline float _wakeWordSim = 0.8f;
-inline float _temp = 0.2f;
+inline float _temp = 0.0f;
 inline std::string _vadModel;
 inline std::atomic<bool> _transcriptionRunning(false);
 inline std::thread _transcriptionThread;
@@ -35,6 +35,7 @@ inline whisper_context* _whisperCtx = nullptr;
 inline whisper_full_params _wparams = {};
 inline whisper_vad_context* _vadCtx = nullptr;
 inline audio_async* _audioCapture = nullptr;
+inline std::string _committed;
 extern "C"{
 	EXPORT StudError LoadWhisperModel(const char* modelPath, int nThreads, bool useGPU, bool useVAD, const char* vadModel);
 	EXPORT void UnloadWhisperModel();
@@ -44,8 +45,8 @@ extern "C"{
 	EXPORT void SetSpeechEndCallback(SpeechEndCallbackFn cb);
 	EXPORT void SetWakeCommand(const char* wakeCmd);
 	EXPORT void SetVADThresholds(float vad, float freq);
-	EXPORT void SetVoiceDuration(int voiceDuration);
 	EXPORT void SetWakeWordSimilarity(float similarity);
 	EXPORT void SetWhisperTemp(float temp);
 	EXPORT void SetSilenceTimeout(int ms);
+	EXPORT void SetCommittedText(const char* text);
 }

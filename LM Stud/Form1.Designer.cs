@@ -188,6 +188,7 @@ namespace LMStud
 			this.labelTokens = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelTPS = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
+			this.labelEditing = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
@@ -280,6 +281,7 @@ namespace LMStud
 			this.textInput.DragDrop += new System.Windows.Forms.DragEventHandler(this.TextInput_DragDrop);
 			this.textInput.DragEnter += new System.Windows.Forms.DragEventHandler(this.TextInput_DragEnter);
 			this.textInput.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextInput_KeyDown);
+			this.textInput.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TextInput_MouseDown);
 			// 
 			// splitContainer2
 			// 
@@ -1601,7 +1603,8 @@ namespace LMStud
             this.toolStripStatusLabel1,
             this.labelTokens,
             this.labelTPS,
-            this.labelPreGen});
+            this.labelPreGen,
+            this.labelEditing});
 			this.statusStrip1.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.HorizontalStackWithOverflow;
 			resources.ApplyResources(this.statusStrip1, "statusStrip1");
 			this.statusStrip1.Name = "statusStrip1";
@@ -1631,6 +1634,12 @@ namespace LMStud
 			this.labelPreGen.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
 			this.labelPreGen.Name = "labelPreGen";
 			resources.ApplyResources(this.labelPreGen, "labelPreGen");
+			// 
+			// labelEditing
+			// 
+			resources.ApplyResources(this.labelEditing, "labelEditing");
+			this.labelEditing.Name = "labelEditing";
+			this.labelEditing.Spring = true;
 			// 
 			// toolTip1
 			// 
@@ -1883,6 +1892,7 @@ namespace LMStud
 		private System.Windows.Forms.CheckBox checkApiServerEnable;
 		private System.Windows.Forms.NumericUpDown numGenDelay;
 		private System.Windows.Forms.Label label29;
+		private System.Windows.Forms.ToolStripStatusLabel labelEditing;
 	}
 }
 
