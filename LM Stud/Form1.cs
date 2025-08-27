@@ -327,7 +327,10 @@ namespace LMStud{
 		private static void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){Process.Start(e.LinkText);}
 		private void Generate(){
 			var prompt = textInput.Text;
-			if(Generate(MessageRole.User, prompt)) textInput.Text = "";
+			if(Generate(MessageRole.User, prompt)){
+				NativeMethods.SetCommittedText("");
+				textInput.Text = "";
+			}
 		}
 		private bool Generate(MessageRole role, string prompt){
 			if(!LlModelLoaded || string.IsNullOrWhiteSpace(prompt)) return false;

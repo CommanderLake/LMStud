@@ -127,7 +127,7 @@ float Similarity(const std::string& s0, const std::string& s1){
 	return 1.0f - dist / std::max(s0.size(), s1.size());
 }
 bool StartSpeechTranscription(){
-	if(!_whisperCtx || !_audioCapture){ return false; }
+	if(!_whisperCtx || !_audioCapture || _transcriptionThread.joinable()){ return false; }
 	_wakeWordDetected.store(false);
 	_transcriptionRunning.store(true);
 	_transcriptionThread = std::thread([]{
@@ -149,6 +149,24 @@ bool StartSpeechTranscription(){
 				out += v[i];
 			}
 			return out;
+		};
+		auto trimWakeWord = [](std::string& text){
+			if(_wakeCommand.empty()) return;
+			size_t pos = 0;
+			while(pos < text.size() && std::isspace(static_cast<unsigned char>(text[pos]))) ++pos;
+			std::string lowerText = text.substr(pos);
+			std::transform(lowerText.begin(), lowerText.end(), lowerText.begin(),
+				[](unsigned char c){ return static_cast<char>(std::tolower(c)); });
+			std::string lowerWake = _wakeCommand;
+			std::transform(lowerWake.begin(), lowerWake.end(), lowerWake.begin(),
+				[](unsigned char c){ return static_cast<char>(std::tolower(c)); });
+			if(lowerText.rfind(lowerWake, 0) == 0){
+				pos += lowerWake.size();
+				if(pos < text.size() && text[pos] == ',') ++pos;
+				while(pos < text.size() && std::isspace(static_cast<unsigned char>(text[pos]))) ++pos;
+				text.erase(0, pos);
+				if(!text.empty()) text[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(text[0])));
+			}
 		};
 		std::string pending;
 		std::string lastOutput;
@@ -255,6 +273,7 @@ bool StartSpeechTranscription(){
 				_wakeWordDetected.store(true);
 			}
 			if(_wakeCommand.empty() || _wakeWordDetected.load()){
+				if(_committed.empty()) trimWakeWord(transcriptionResult);
 				pending = transcriptionResult;
 				std::string combined = _committed + pending;
 				if(combined != lastOutput){
