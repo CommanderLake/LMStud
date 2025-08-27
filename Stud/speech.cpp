@@ -253,7 +253,6 @@ bool StartSpeechTranscription(){
 				const auto origWords = getWords(transcriptionResult);
 				if(bestEnd <= origWords.size()){ transcriptionResult = joinRange(origWords, bestEnd, origWords.size()); } else{ transcriptionResult.clear(); }
 				_wakeWordDetected.store(true);
-				//pcmBuffer.clear();
 			}
 			if(_wakeCommand.empty() || _wakeWordDetected.load()){
 				pending = transcriptionResult;
