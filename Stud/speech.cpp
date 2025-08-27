@@ -87,18 +87,18 @@ void UnloadWhisperModel(){
 	}
 }
 void HighPassFilter(std::vector<float>& data, const float cutoff, const float sampleRate){
-	const float rc = 1.0f / (2.0f * M_PI * cutoff);
+	const float rc = 1.0f / (2.0f*M_PI*cutoff);
 	const float dt = 1.0f / sampleRate;
 	const float alpha = dt / (rc + dt);
 	float y = data[0];
 	for(size_t i = 1; i < data.size(); i++){
-		y = alpha * (y + data[i] - data[i - 1]);
+		y = alpha*(y + data[i] - data[i - 1]);
 		data[i] = y;
 	}
 }
 bool VadSimple(std::vector<float>& pcmf32, const int sampleRate, const int lastMs){
 	const int nSamples = pcmf32.size();
-	const int nSamplesLast = sampleRate * lastMs / 1000;
+	const int nSamplesLast = sampleRate*lastMs / 1000;
 	if(nSamplesLast >= nSamples){ return false; }
 	if(_freqThreshold > 0.0f){ HighPassFilter(pcmf32, _freqThreshold, sampleRate); }
 	float energyAll = 0.0f;
@@ -109,7 +109,7 @@ bool VadSimple(std::vector<float>& pcmf32, const int sampleRate, const int lastM
 	}
 	energyAll /= nSamples;
 	energyLast /= nSamplesLast;
-	if(energyLast > _vadThreshold * energyAll){ return false; }
+	if(energyLast > _vadThreshold*energyAll){ return false; }
 	return true;
 }
 float Similarity(const std::string& s0, const std::string& s1){
@@ -132,9 +132,10 @@ bool StartSpeechTranscription(){
 	_transcriptionRunning.store(true);
 	_transcriptionThread = std::thread([]{
 		const int stepMs = 500;
-		const int nSamplesStep = 1e-3 * stepMs * WHISPER_SAMPLE_RATE;
+		const int nSamplesStep = 1e-3*stepMs*WHISPER_SAMPLE_RATE;
 		std::vector<float> pcmBuffer;
 		std::vector<float> pcmStep;
+		const size_t maxWakeSamples = 3*WHISPER_SAMPLE_RATE;
 		auto getWords = [](const std::string& s) -> std::vector<std::string>{
 			std::istringstream iss(s);
 			std::vector<std::string> words;
@@ -154,12 +155,11 @@ bool StartSpeechTranscription(){
 		std::string lastOutput;
 		bool speaking = false;
 		auto lastSpeech = std::chrono::steady_clock::now();
-		_audioCapture->clear();
 		_audioCapture->resume();
 		while(_transcriptionRunning.load()){
 			while(_transcriptionRunning.load()){
 				_audioCapture->get(stepMs, pcmStep);
-				if(static_cast<int>(pcmStep.size()) > 2 * nSamplesStep){
+				if(static_cast<int>(pcmStep.size()) > 2*nSamplesStep){
 					_audioCapture->clear();
 					continue;
 				}
@@ -171,6 +171,9 @@ bool StartSpeechTranscription(){
 			}
 			if(!_transcriptionRunning.load()) break;
 			pcmBuffer.insert(pcmBuffer.end(), pcmStep.begin(), pcmStep.end());
+			if(!_wakeCommand.empty() && !_wakeWordDetected.load() && pcmBuffer.size() > maxWakeSamples){
+				pcmBuffer.erase(pcmBuffer.begin(), pcmBuffer.begin() + (pcmBuffer.size() - maxWakeSamples));
+			}
 			bool hasSpeech = false;
 			if(_vadCtx){
 				if(whisper_vad_detect_speech(_vadCtx, pcmStep.data(), pcmStep.size())){
@@ -186,15 +189,21 @@ bool StartSpeechTranscription(){
 			} else{ hasSpeech = !VadSimple(pcmStep, WHISPER_SAMPLE_RATE, 1250); }
 			auto now = std::chrono::steady_clock::now();
 			if(!hasSpeech){
-				if(speaking && now - lastSpeech > std::chrono::milliseconds(1000)){
+				if(speaking && now - lastSpeech > std::chrono::milliseconds(std::min(1000, _silenceTimeoutMs.load()))){
+					OutputDebugStringA("Commit and clear\n");
 					speaking = false;
 					_committed += pending;
 					pending.clear();
 					lastOutput.clear();
 					pcmBuffer.clear();
-					const bool wasWake = _wakeWordDetected.exchange(false);
-					if(wasWake && _speechEndCallback) _speechEndCallback();
 					if(_whisperCallback) _whisperCallback(_committed.c_str());
+				}
+				if(!speaking && _wakeWordDetected.load() && now - lastSpeech > std::chrono::milliseconds(_silenceTimeoutMs.load())){
+					_wakeWordDetected.exchange(false);
+					if(!_committed.empty()){
+						if(_speechEndCallback) _speechEndCallback();
+						_committed.clear();
+					}
 				}
 				continue;
 			}
@@ -210,6 +219,9 @@ bool StartSpeechTranscription(){
 				if(seg) transcriptionResult += seg;
 			}
 			if(!_wakeCommand.empty() && !_wakeWordDetected.load()){
+				if(pcmBuffer.size() < WHISPER_SAMPLE_RATE / 2){
+					continue;
+				}
 				auto normalize = [](const std::string& in) -> std::string{
 					std::string out;
 					out.reserve(in.size());
@@ -242,8 +254,6 @@ bool StartSpeechTranscription(){
 				}
 				if(bestSim < _wakeWordSim){
 					OutputDebugStringA("Wake word not detected\n");
-					pcmBuffer.clear();
-					pending.clear();
 					continue;
 				}
 				OutputDebugStringA("Wake word detected\n");
