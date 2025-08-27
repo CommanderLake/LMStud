@@ -135,7 +135,6 @@ bool StartSpeechTranscription(){
 		const int nSamplesStep = 1e-3*stepMs*WHISPER_SAMPLE_RATE;
 		std::vector<float> pcmBuffer;
 		std::vector<float> pcmStep;
-		const size_t maxWakeSamples = 3*WHISPER_SAMPLE_RATE;
 		auto getWords = [](const std::string& s) -> std::vector<std::string>{
 			std::istringstream iss(s);
 			std::vector<std::string> words;
@@ -171,9 +170,6 @@ bool StartSpeechTranscription(){
 			}
 			if(!_transcriptionRunning.load()) break;
 			pcmBuffer.insert(pcmBuffer.end(), pcmStep.begin(), pcmStep.end());
-			if(!_wakeCommand.empty() && !_wakeWordDetected.load() && pcmBuffer.size() > maxWakeSamples){
-				pcmBuffer.erase(pcmBuffer.begin(), pcmBuffer.begin() + (pcmBuffer.size() - maxWakeSamples));
-			}
 			bool hasSpeech = false;
 			if(_vadCtx){
 				if(whisper_vad_detect_speech(_vadCtx, pcmStep.data(), pcmStep.size())){
@@ -219,9 +215,6 @@ bool StartSpeechTranscription(){
 				if(seg) transcriptionResult += seg;
 			}
 			if(!_wakeCommand.empty() && !_wakeWordDetected.load()){
-				if(pcmBuffer.size() < WHISPER_SAMPLE_RATE / 2){
-					continue;
-				}
 				auto normalize = [](const std::string& in) -> std::string{
 					std::string out;
 					out.reserve(in.size());
@@ -260,7 +253,7 @@ bool StartSpeechTranscription(){
 				const auto origWords = getWords(transcriptionResult);
 				if(bestEnd <= origWords.size()){ transcriptionResult = joinRange(origWords, bestEnd, origWords.size()); } else{ transcriptionResult.clear(); }
 				_wakeWordDetected.store(true);
-				pcmBuffer.clear();
+				//pcmBuffer.clear();
 			}
 			if(_wakeCommand.empty() || _wakeWordDetected.load()){
 				pending = transcriptionResult;
