@@ -97,22 +97,25 @@ void HighPassFilter(std::vector<float>& data, const float cutoff, const float sa
 		data[i] = y;
 	}
 }
-bool VadSimple(std::vector<float>& pcmf32, const int sampleRate, const int lastMs){
+float _vadEnergy;
+bool VadSimple(std::vector<float>& pcmf32, const int sampleRate){
 	const int nSamples = pcmf32.size();
-	const int nSamplesLast = sampleRate*lastMs / 1000;
-	OutputDebugStringA(("VadSimple nSamples/nSamplesLast: " + std::to_string(nSamples) + "/" + std::to_string(nSamplesLast) + "\n").c_str());
-	if(nSamplesLast >= nSamples){ return false; }
+	if(nSamples == 0){ _vadEnergy = 0.0f; return false; }
 	if(_freqThreshold > 0.0f){ HighPassFilter(pcmf32, _freqThreshold, sampleRate); }
-	float energyAll = 0.0f;
-	float energyLast = 0.0f;
-	for(int i = 0; i < nSamples; i++){
-		energyAll += fabsf(pcmf32[i]);
-		if(i >= nSamples - nSamplesLast){ energyLast += fabsf(pcmf32[i]); }
+	float energy = 0.0f;
+	for(int i = 0; i < nSamples; ++i){
+		energy += fabsf(pcmf32[i]);
 	}
-	energyAll /= nSamples;
-	energyLast /= nSamplesLast;
-	if(energyLast > _vadThreshold*energyAll){ return false; }
-	return true;
+	energy /= nSamples;
+	static float energyAvg = 0.0f;
+	if(energyAvg <= 0.0f) energyAvg = energy;
+	_vadEnergy = energy;
+	const float ratio = energyAvg > 0.0f ? energy / energyAvg : 0.0f;
+	const float prob = ratio / (ratio + 1.0f);
+	OutputDebugStringA(("VadSimple prob: " + std::to_string(prob) + "\n").c_str());
+	const bool speech = prob >= std::clamp(_vadThreshold, 0.0f, 1.0f);
+	energyAvg = 0.95f*energyAvg + 0.05f*energy;
+	return speech;
 }
 float Similarity(const std::string& s0, const std::string& s1){
 	const size_t len0 = s0.size() + 1;
@@ -203,7 +206,7 @@ bool StartSpeechTranscription(){
 						}
 					}
 				}
-			} else{ hasSpeech = VadSimple(pcmStep, WHISPER_SAMPLE_RATE, stepMs); }
+			} else{ hasSpeech = VadSimple(pcmStep, WHISPER_SAMPLE_RATE); }
 			auto now = std::chrono::steady_clock::now();
 			if(!hasSpeech){
 				if(speaking && now - lastSpeech > std::chrono::milliseconds(std::min(1000, _silenceTimeoutMs.load()))){

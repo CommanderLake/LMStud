@@ -884,7 +884,7 @@ namespace LMStud
             0});
 			this.numVadThreshold.Name = "numVadThreshold";
 			this.numVadThreshold.Value = new decimal(new int[] {
-            5,
+            6,
             0,
             0,
             65536});
