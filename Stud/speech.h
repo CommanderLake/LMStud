@@ -36,6 +36,7 @@ inline whisper_full_params _wparams = {};
 inline whisper_vad_context* _vadCtx = nullptr;
 inline audio_async* _audioCapture = nullptr;
 inline std::string _committed;
+inline std::mutex _committedMutex;
 extern "C"{
 	EXPORT StudError LoadWhisperModel(const char* modelPath, int nThreads, bool useGPU, bool useVAD, const char* vadModel);
 	EXPORT void UnloadWhisperModel();

@@ -206,7 +206,10 @@ bool StartSpeechTranscription(){
 				if(speaking && now - lastSpeech > std::chrono::milliseconds(std::min(1000, _silenceTimeoutMs.load()))){
 					OutputDebugStringA("Commit and clear\n");
 					speaking = false;
-					_committed += pending;
+					{
+						std::lock_guard<std::mutex> lock(_committedMutex);
+						_committed += pending;
+					}
 					pending.clear();
 					lastOutput.clear();
 					pcmBuffer.clear();
@@ -214,6 +217,7 @@ bool StartSpeechTranscription(){
 				}
 				if(!speaking && _wakeWordDetected.load() && now - lastSpeech > std::chrono::milliseconds(_silenceTimeoutMs.load())){
 					_wakeWordDetected.exchange(false);
+					std::lock_guard<std::mutex> lock(_committedMutex);
 					if(!_committed.empty()){
 						if(_speechEndCallback) _speechEndCallback();
 						_committed.clear();
@@ -290,6 +294,8 @@ void StopSpeechTranscription(){
 	_transcriptionRunning.store(false);
 	if(_transcriptionThread.joinable()){ _transcriptionThread.join(); }
 	_wakeWordDetected.store(false);
+	std::lock_guard<std::mutex> lock(_committedMutex);
+	_committed.clear();
 }
 void SetWhisperCallback(const WhisperCallbackFn cb){ _whisperCallback = cb; }
 void SetSpeechEndCallback(const SpeechEndCallbackFn cb){ _speechEndCallback = cb; }
@@ -302,5 +308,6 @@ void SetWakeWordSimilarity(const float similarity){ _wakeWordSim = similarity; }
 void SetWhisperTemp(const float temp){ _temp = temp; }
 void SetSilenceTimeout(const int ms){ _silenceTimeoutMs.store(ms); }
 void SetCommittedText(const char* text){
+	std::lock_guard<std::mutex> lock(_committedMutex);
 	_committed = text;
 }

@@ -218,7 +218,11 @@ namespace LMStud{
 		private void FinishEditing(){
 			_isEditing = false;
 			SetEditingMessageVisible(false);
-			if(checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StartSpeechTranscription();
+			if(checkVoiceInput.CheckState != CheckState.Checked) return;
+			if(NativeMethods.StartSpeechTranscription()) return;
+			MessageBox.Show(this, Resources.Error_starting_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+			checkVoiceInput.Checked = false;
+			_checkVoiceInputLast = checkVoiceInput.CheckState;
 		}
 		private void CancelEditing(){
 			textInput.Text = _editOriginalText;
@@ -327,17 +331,14 @@ namespace LMStud{
 		private static void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){Process.Start(e.LinkText);}
 		private void Generate(){
 			var prompt = textInput.Text;
-			if(Generate(MessageRole.User, prompt)){
-				NativeMethods.SetCommittedText("");
-				textInput.Text = "";
-			}
+			Generate(MessageRole.User, prompt);
 		}
-		private bool Generate(MessageRole role, string prompt){
-			if(!LlModelLoaded || string.IsNullOrWhiteSpace(prompt)) return false;
-			if(!GenerationLock.Wait(0)) return false;
+		private void Generate(MessageRole role, string prompt){
+			if(!LlModelLoaded || string.IsNullOrWhiteSpace(prompt)) return;
+			if(!GenerationLock.Wait(0)) return;
 			if(_generating || _apiGenerating){
 				GenerationLock.Release();
-				return false;
+				return;
 			}
 			_generating = true;
 			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
@@ -350,6 +351,10 @@ namespace LMStud{
 			_tts.SpeakAsyncCancelAll();
 			_first = true;
 			ThreadPool.QueueUserWorkItem(o => {
+				if(role == MessageRole.User){
+					NativeMethods.SetCommittedText("");
+					textInput.Text = "";
+				}
 				_msgTokenCount = 0;
 				_genTokenTotal = 0;
 				_swTot.Restart();
@@ -379,7 +384,6 @@ namespace LMStud{
 					}));
 				} catch(ObjectDisposedException){} finally{ GenerationLock.Release(); }
 			});
-			return true;
 		}
 		internal bool GenerateForApi(byte[] state, string prompt, Action<string> onToken){
 			if(!LlModelLoaded || _generating || _apiGenerating || string.IsNullOrWhiteSpace(prompt)) return false;
@@ -491,7 +495,7 @@ namespace LMStud{
 			var thisform = _this;
 			if(_this.IsDisposed) return;
 			_this.BeginInvoke((MethodInvoker)(() => {
-				if(thisform.IsDisposed) return;
+				if(thisform.IsDisposed || _this._isEditing) return;
 				if(_this.checkVoiceInput.CheckState != CheckState.Checked) return;
 				NativeMethods.StopSpeechTranscription();
 				_this.Generate();
