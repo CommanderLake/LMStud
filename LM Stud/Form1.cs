@@ -88,6 +88,7 @@ namespace LMStud{
 			SetToolTip(butVADDown);
 			SetToolTip(checkApiServerEnable);
 			SetToolTip(numApiServerPort);
+			SetToolTip(numGenDelay);
 		}
 		private void Form1_Load(object sender, EventArgs e){
 			NativeMethods.SetHWnd(Handle);
