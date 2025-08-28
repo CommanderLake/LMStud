@@ -11,6 +11,7 @@
 #include <sstream>
 #include <cstring>
 #include <cctype>
+static std::mutex _committedMutex;
 static std::atomic<bool> _wakeWordDetected{false};
 static bool _gpuOomSpeech = false;
 static void WhisperLogDisable(ggml_log_level level, const char* text, void* userData){}
@@ -99,6 +100,7 @@ void HighPassFilter(std::vector<float>& data, const float cutoff, const float sa
 bool VadSimple(std::vector<float>& pcmf32, const int sampleRate, const int lastMs){
 	const int nSamples = pcmf32.size();
 	const int nSamplesLast = sampleRate*lastMs / 1000;
+	OutputDebugStringA(("VadSimple nSamples/nSamplesLast: " + std::to_string(nSamples) + "/" + std::to_string(nSamplesLast) + "\n").c_str());
 	if(nSamplesLast >= nSamples){ return false; }
 	if(_freqThreshold > 0.0f){ HighPassFilter(pcmf32, _freqThreshold, sampleRate); }
 	float energyAll = 0.0f;
@@ -194,13 +196,14 @@ bool StartSpeechTranscription(){
 					const int nProbs = whisper_vad_n_probs(_vadCtx);
 					const float* probs = whisper_vad_probs(_vadCtx);
 					for(int i = 0; i < nProbs; ++i){
+						if(probs[i] > 0.1f) OutputDebugStringA(("VAD prob " + std::to_string(probs[i]) + "/" + std::to_string(_wparams.vad_params.threshold) + "\n").c_str());
 						if(probs[i] > _wparams.vad_params.threshold){
 							hasSpeech = true;
 							break;
 						}
 					}
 				}
-			} else{ hasSpeech = !VadSimple(pcmStep, WHISPER_SAMPLE_RATE, 1250); }
+			} else{ hasSpeech = VadSimple(pcmStep, WHISPER_SAMPLE_RATE, stepMs); }
 			auto now = std::chrono::steady_clock::now();
 			if(!hasSpeech){
 				if(speaking && now - lastSpeech > std::chrono::milliseconds(std::min(1000, _silenceTimeoutMs.load()))){

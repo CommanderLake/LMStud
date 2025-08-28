@@ -92,6 +92,7 @@ namespace LMStud
 			this.butDownload = new System.Windows.Forms.Button();
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabPageChat = new System.Windows.Forms.TabPage();
+			this.checkAutoScroll = new System.Windows.Forms.CheckBox();
 			this.tabPageSettings = new System.Windows.Forms.TabPage();
 			this.groupBox7 = new System.Windows.Forms.GroupBox();
 			this.numApiServerPort = new System.Windows.Forms.NumericUpDown();
@@ -740,6 +741,7 @@ namespace LMStud
 			// 
 			// tabPageChat
 			// 
+			this.tabPageChat.Controls.Add(this.checkAutoScroll);
 			this.tabPageChat.Controls.Add(this.checkSpeak);
 			this.tabPageChat.Controls.Add(this.splitContainer1);
 			this.tabPageChat.Controls.Add(this.checkVoiceInput);
@@ -751,6 +753,14 @@ namespace LMStud
 			resources.ApplyResources(this.tabPageChat, "tabPageChat");
 			this.tabPageChat.Name = "tabPageChat";
 			this.tabPageChat.UseVisualStyleBackColor = true;
+			// 
+			// checkAutoScroll
+			// 
+			resources.ApplyResources(this.checkAutoScroll, "checkAutoScroll");
+			this.checkAutoScroll.Checked = true;
+			this.checkAutoScroll.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkAutoScroll.Name = "checkAutoScroll";
+			this.checkAutoScroll.UseVisualStyleBackColor = true;
 			// 
 			// tabPageSettings
 			// 
@@ -1893,6 +1903,7 @@ namespace LMStud
 		private System.Windows.Forms.NumericUpDown numGenDelay;
 		private System.Windows.Forms.Label label29;
 		private System.Windows.Forms.ToolStripStatusLabel labelEditing;
+		internal System.Windows.Forms.CheckBox checkAutoScroll;
 	}
 }
 

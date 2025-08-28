@@ -130,12 +130,12 @@
   <data name="VAD_model_not_found__use_Basic_VAD_" xml:space="preserve">
     <value>VAD model not found, use Basic VAD?</value>
   </data>
-<data name="Error_initialising_voice_input" xml:space="preserve">
-	<value>Error initialising voice input</value>
-</data>
-<data name="Error_starting_voice_input" xml:space="preserve">
-	<value>Error starting voice input.</value>
-</data>
+  <data name="Error_initialising_voice_input" xml:space="preserve">
+    <value>Error initialising voice input</value>
+  </data>
+  <data name="Error_starting_voice_input" xml:space="preserve">
+    <value>Error starting voice input.</value>
+  </data>
   <data name="Conversation_too_long_for_context" xml:space="preserve">
     <value>Conversation too long for context.</value>
   </data>
@@ -275,9 +275,9 @@
   <data name="ToolTip_numThreadsBatch" xml:space="preserve">
     <value>CPU threads used for batch preparation.</value>
   </data>
-  <data name="ToolTip_numVadThreshold" xml:space="preserve">
-    <value>Voice Activity Detection threashold, lower values increase sensitivity to speech activation.</value>
-  </data>
+<data name="ToolTip_numVadThreshold" xml:space="preserve">
+	<value>Voice Activity Detection threshold: for Basic VAD this sets loudness, for Whisper VAD this sets speech probability.</value>
+</data>
   <data name="ToolTip_numFreqThreshold" xml:space="preserve">
     <value>High-pass filter cutoff frequency. Higher values reduce low frequency noise.</value>
   </data>
@@ -383,20 +383,22 @@
   <data name="The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_" xml:space="preserve">
     <value>The modified settings are overridden by the Model Settings for this model.</value>
   </data>
-  <data name="__The_last_model_loaded_has_a_maximum_context_size_of_" xml:space="preserve">
-    <value>
-The model last loaded has a maximum context size of </value>
+<data name="Max_context_size_of_last_loaded_model" xml:space="preserve">
+	<value>Maximum context size of the last loaded model: </value>
+</data>
+  <data name="No_model_loaded" xml:space="preserve">
+    <value>No model loaded</value>
   </data>
-<data name="No_model_loaded" xml:space="preserve">
-	<value>No model loaded</value>
-</data>
-<data name="Error_loading_Whisper_model_" xml:space="preserve">
-	<value>Error loading Whisper model.</value>
-</data>
-<data name="Error_loading_VAD_model_" xml:space="preserve">
-	<value>Error loading VAD model.</value>
-</data>
-<data name="Error_initializing_audio_capture_" xml:space="preserve">
-	<value>Error initializing audio capture.</value>
-</data>
+  <data name="Error_loading_Whisper_model_" xml:space="preserve">
+    <value>Error loading Whisper model.</value>
+  </data>
+  <data name="Error_loading_VAD_model_" xml:space="preserve">
+    <value>Error loading VAD model.</value>
+  </data>
+  <data name="Error_initializing_audio_capture_" xml:space="preserve">
+    <value>Error initializing audio capture.</value>
+  </data>
+  <data name="ToolTip_numGenDelay" xml:space="preserve">
+    <value>Delay before automatic response generation after speech input ends (only when ‘Speech input’ is fully enabled).</value>
+  </data>
 </root>

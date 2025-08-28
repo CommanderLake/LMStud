@@ -64,7 +64,7 @@ namespace LMStud{
 			base.WndProc(ref m);
 		}
 		internal void ScrollToEnd(){
-			if(!_scrollable || Handle == IntPtr.Zero) return;
+			if(!_scrollable || Handle == IntPtr.Zero || !Form1.This.checkAutoScroll.Checked) return;
 			if(_userScrolling) return;
 			var m = Message.Create(Handle, WmVscroll, _sbBottom, IntPtr.Zero);
 			base.WndProc(ref m);

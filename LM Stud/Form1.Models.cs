@@ -258,7 +258,7 @@ namespace LMStud{
 									Settings.Default.LoadAuto = true;
 									Settings.Default.Save();
 								}
-								toolTip1.SetToolTip(numCtxSize, Resources.ToolTip_numCtxSize + Resources.__The_last_model_loaded_has_a_maximum_context_size_of_ + _modelCtxMax);
+								toolTip1.SetToolTip(numCtxSize, Resources.ToolTip_numCtxSize + "\r\n" + Resources.Max_context_size_of_last_loaded_model + _modelCtxMax);
 								toolStripStatusLabel1.Text = Resources.Done_loading__ + fileName;
 							}));
 						} catch(ObjectDisposedException){}

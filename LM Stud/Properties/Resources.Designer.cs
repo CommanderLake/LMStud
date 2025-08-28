@@ -61,16 +61,6 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 
-        ///The model last loaded has a maximum context size of .
-        /// </summary>
-        internal static string @__The_last_model_loaded_has_a_maximum_context_size_of_ {
-            get {
-                return ResourceManager.GetString("__The_last_model_loaded_has_a_maximum_context_size_of_", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to {0}: {1}.
         /// </summary>
         internal static string _0____1_ {
@@ -433,6 +423,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Maximum context size of the last loaded model: .
+        /// </summary>
+        internal static string Max_context_size_of_last_loaded_model {
+            get {
+                return ResourceManager.GetString("Max_context_size_of_last_loaded_model", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Model search error: {0}.
         /// </summary>
         internal static string Model_search_error___0_ {
@@ -703,6 +702,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Delay before automatic response generation after speech input ends (only when ‘Speech input’ is fully enabled)..
+        /// </summary>
+        internal static string ToolTip_numGenDelay {
+            get {
+                return ResourceManager.GetString("ToolTip_numGenDelay", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Number of layers to offload to GPU, more layers improve performance but increase GPU memory usage..
         /// </summary>
         internal static string ToolTip_numGPULayers {
@@ -784,7 +792,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Voice Activity Detection threashold, lower values increase sensitivity to speech activation..
+        ///   Looks up a localized string similar to Voice Activity Detection threashold, with Basic VAD this is loudness, with Whisper VAD this is speech probability..
         /// </summary>
         internal static string ToolTip_numVadThreshold {
             get {

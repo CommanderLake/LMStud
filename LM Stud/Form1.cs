@@ -10,7 +10,7 @@ using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
 	internal partial class Form1 : Form{
-		private static Form1 _this;
+		internal static Form1 This;
 		private static NativeMethods.TokenCallback _tokenCallback;
 		private static NativeMethods.WhisperCallback _whisperCallback;
 		private static NativeMethods.SpeechEndCallback _speechEndCallback;
@@ -27,7 +27,7 @@ namespace LMStud{
 		private ChatMessage _cntAssMsg;
 		private LVColumnClickHandler _columnClickHandler;
 		private string _editOriginalText = "";
-		private bool _first = true;
+		private bool _firstToken = true;
 		private volatile bool _generating;
 		private int _genTokenTotal;
 		private bool _isEditing;
@@ -35,7 +35,7 @@ namespace LMStud{
 		private volatile bool _rendering;
 		private bool _whisperLoaded;
 		internal Form1(){
-			_this = this;
+			This = this;
 			//var culture = new CultureInfo("zh-CN");
 			//Thread.CurrentThread.CurrentUICulture = culture;
 			//Thread.CurrentThread.CurrentCulture = culture;
@@ -349,12 +349,12 @@ namespace LMStud{
 			_cntAssMsg = null;
 			foreach(var message in _chatMessages) message.Generating = true;
 			_tts.SpeakAsyncCancelAll();
-			_first = true;
+			_firstToken = true;
+			if(role == MessageRole.User){
+				NativeMethods.SetCommittedText("");
+				textInput.Text = "";
+			}
 			ThreadPool.QueueUserWorkItem(o => {
-				if(role == MessageRole.User){
-					NativeMethods.SetCommittedText("");
-					textInput.Text = "";
-				}
 				_msgTokenCount = 0;
 				_genTokenTotal = 0;
 				_swTot.Restart();
@@ -421,84 +421,84 @@ namespace LMStud{
 		}
 		internal int GetTokenCount(){return NativeMethods.LlamaMemSize();}
 		private static unsafe void TokenCallback(byte* thinkPtr, int thinkLen, byte* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool){
-			if(_this._apiGenerating){
+			if(This._apiGenerating){
 				if(messageLen <= 0) return;
 				var msg = Encoding.UTF8.GetString(messagePtr, messageLen);
-				_this._apiTokenCallback?.Invoke(msg);
+				This._apiTokenCallback?.Invoke(msg);
 				return;
 			}
-			var elapsed = _this._swRate.Elapsed.TotalSeconds;
-			if(elapsed >= 1.0) _this._swRate.Restart();
+			var elapsed = This._swRate.Elapsed.TotalSeconds;
+			if(elapsed >= 1.0) This._swRate.Restart();
 			var think = "";
 			if(thinkLen > 0) think = Encoding.UTF8.GetString(thinkPtr, thinkLen);
 			var message = "";
 			if(messageLen > 0) message = Encoding.UTF8.GetString(messagePtr, messageLen);
 			if(tool == 1){
 				try{
-					_this.BeginInvoke(new MethodInvoker(() => {
-						var cm = _this.AddMessage(MessageRole.Tool, message);
+					This.BeginInvoke(new MethodInvoker(() => {
+						var cm = This.AddMessage(MessageRole.Tool, message);
 						cm.SetRoleText("Tool");
-						_this._cntAssMsg = null;
-						_this.labelTokens.Text = string.Format(Resources._0___1__2_, tokensTotal, _this._cntCtxMax, Resources._Tokens);
+						This._cntAssMsg = null;
+						This.labelTokens.Text = string.Format(Resources._0___1__2_, tokensTotal, This._cntCtxMax, Resources._Tokens);
 					}));
 				} catch(ObjectDisposedException){}
 				return;
 			}
-			_this._msgTokenCount += tokenCount;
-			_this._genTokenTotal += tokenCount;
-			var renderToken = !_this._rendering;
+			This._msgTokenCount += tokenCount;
+			This._genTokenTotal += tokenCount;
+			var renderToken = !This._rendering;
 			try{
-				_this.BeginInvoke((MethodInvoker)(() => {
+				This.BeginInvoke((MethodInvoker)(() => {
 					try{
-						_this._rendering = true;
-						if(_this._first){
-							_this.labelPreGen.Text = Resources.First_token_time__ + ftTime + Resources._s;
-							_this._first = false;
+						This._rendering = true;
+						if(This._firstToken){
+							This.labelPreGen.Text = Resources.First_token_time__ + ftTime + Resources._s;
+							This._firstToken = false;
 						}
 						if(elapsed >= 1.0){
-							var callsPerSecond = _this._msgTokenCount/elapsed;
-							_this.labelTPS.Text = string.Format(Resources._0_F2__Tok_s, callsPerSecond);
-							_this._msgTokenCount = 0;
+							var callsPerSecond = This._msgTokenCount/elapsed;
+							This.labelTPS.Text = string.Format(Resources._0_F2__Tok_s, callsPerSecond);
+							This._msgTokenCount = 0;
 						}
-						if(_this._cntAssMsg == null) _this._cntAssMsg = _this.AddMessage(MessageRole.Assistant, "");
-						var lastThink = _this._cntAssMsg.checkThink.Checked;
-						_this._cntAssMsg.UpdateText(think, message, renderToken);
-						if(_this._speak && !_this._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(message)){
-							var i = _this._cntAssMsg.TTSPosition;
-							for(; i < _this._cntAssMsg.Message.Length; i++){
-								var ch = _this._cntAssMsg.Message[i];
-								if(ch != '`' && ch != '*' && ch != '_' && ch != '#') _this._speechBuffer.Append(ch);
+						if(This._cntAssMsg == null) This._cntAssMsg = This.AddMessage(MessageRole.Assistant, "");
+						var lastThink = This._cntAssMsg.checkThink.Checked;
+						This._cntAssMsg.UpdateText(think, message, renderToken);
+						if(This._speak && !This._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(message)){
+							var i = This._cntAssMsg.TTSPosition;
+							for(; i < This._cntAssMsg.Message.Length; i++){
+								var ch = This._cntAssMsg.Message[i];
+								if(ch != '`' && ch != '*' && ch != '_' && ch != '#') This._speechBuffer.Append(ch);
 							}
-							_this._cntAssMsg.TTSPosition = i;
-							while((i = FindSentenceEnd(_this._speechBuffer)) >= 0){
-								var sentence = _this._speechBuffer.ToString(0, i + 1).Trim();
-								if(!string.IsNullOrWhiteSpace(sentence)) _this._tts.SpeakAsync(sentence);
-								_this._speechBuffer.Remove(0, i + 1);
-								while(_this._speechBuffer.Length > 0 && char.IsWhiteSpace(_this._speechBuffer[0])) _this._speechBuffer.Remove(0, 1);
+							This._cntAssMsg.TTSPosition = i;
+							while((i = FindSentenceEnd(This._speechBuffer)) >= 0){
+								var sentence = This._speechBuffer.ToString(0, i + 1).Trim();
+								if(!string.IsNullOrWhiteSpace(sentence)) This._tts.SpeakAsync(sentence);
+								This._speechBuffer.Remove(0, i + 1);
+								while(This._speechBuffer.Length > 0 && char.IsWhiteSpace(This._speechBuffer[0])) This._speechBuffer.Remove(0, 1);
 							}
 						}
-						_this.labelTokens.Text = string.Format(Resources._0___1__2_, tokensTotal, _this._cntCtxMax, Resources._Tokens);
-					} catch(ObjectDisposedException){} finally{ _this._rendering = false; }
+						This.labelTokens.Text = string.Format(Resources._0___1__2_, tokensTotal, This._cntCtxMax, Resources._Tokens);
+					} catch(ObjectDisposedException){} finally{ This._rendering = false; }
 				}));
 			} catch(ObjectDisposedException){}
 		}
 		private static void WhisperCallback(string transcription){
-			var thisform = _this;
-			if(_this.IsDisposed) return;
-			_this.BeginInvoke((MethodInvoker)(() => {
-				if(thisform.IsDisposed || _this._isEditing) return;
-				_this.textInput.Text = transcription;
-				_this.textInput.SelectionStart = _this.textInput.Text.Length;
+			var thisform = This;
+			if(This.IsDisposed) return;
+			This.BeginInvoke((MethodInvoker)(() => {
+				if(thisform.IsDisposed || This._isEditing) return;
+				This.textInput.Text = transcription;
+				This.textInput.SelectionStart = This.textInput.Text.Length;
 			}));
 		}
 		private static void SpeechEndCallback(){
-			var thisform = _this;
-			if(_this.IsDisposed) return;
-			_this.BeginInvoke((MethodInvoker)(() => {
-				if(thisform.IsDisposed || _this._isEditing) return;
-				if(_this.checkVoiceInput.CheckState != CheckState.Checked) return;
+			var thisform = This;
+			if(This.IsDisposed) return;
+			This.BeginInvoke((MethodInvoker)(() => {
+				if(thisform.IsDisposed || This._isEditing) return;
+				if(This.checkVoiceInput.CheckState != CheckState.Checked) return;
 				NativeMethods.StopSpeechTranscription();
-				_this.Generate();
+				This.Generate();
 			}));
 		}
 		private void TextInput_DragEnter(object sender, DragEventArgs e){

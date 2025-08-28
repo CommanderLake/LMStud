@@ -278,9 +278,9 @@
   <data name="ToolTip_numThreadsBatch" xml:space="preserve">
     <value>用于批处理准备的 CPU 线程数。</value>
   </data>
-  <data name="ToolTip_numVadThreshold" xml:space="preserve">
-    <value>语音活动检测（VAD）阈值。值越低，对语音激活的灵敏度越高。</value>
-  </data>
+<data name="ToolTip_numVadThreshold" xml:space="preserve">
+	<value>语音活动检测阈值：在基础 VAD 中表示响度，在 Whisper VAD 中表示语音概率。</value>
+</data>
   <data name="ToolTip_numFreqThreshold" xml:space="preserve">
     <value>高通滤波器截止频率。值越高，能滤除的低频噪声越多。</value>
   </data>
@@ -383,10 +383,7 @@
   <data name="Error_creating_sampler" xml:space="preserve">
     <value>创建采样器时出错</value>
   </data>
-  <data name="__The_last_model_loaded_has_a_maximum_context_size_of_" xml:space="preserve">
-    <value>上次加载的模型最大上下文大小为</value>
-  </data>
-  <data name="The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_" xml:space="preserve">
+<data name="The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_" xml:space="preserve">
     <value>修改的设置已被当前模型的“模型设置”覆盖。</value>
   </data>
   <data name="No_model_loaded" xml:space="preserve">
@@ -400,5 +397,11 @@
 </data>
 <data name="Error_initializing_audio_capture_" xml:space="preserve">
 	<value>初始化音频捕获时出错。</value>
+</data>
+<data name="ToolTip_numGenDelay" xml:space="preserve">
+	<value>在“语音输入”完全启用时，用户说完话后自动生成回复的延迟时间。</value>
+</data>
+<data name="Max_context_size_of_last_loaded_model" xml:space="preserve">
+	<value>上次加载的模型最大上下文大小：</value>
 </data>
 </root>
