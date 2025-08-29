@@ -92,6 +92,7 @@ namespace LMStud
 			this.butDownload = new System.Windows.Forms.Button();
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabPageChat = new System.Windows.Forms.TabPage();
+			this.checkDialectic = new System.Windows.Forms.CheckBox();
 			this.checkAutoScroll = new System.Windows.Forms.CheckBox();
 			this.tabPageSettings = new System.Windows.Forms.TabPage();
 			this.groupBox7 = new System.Windows.Forms.GroupBox();
@@ -741,6 +742,7 @@ namespace LMStud
 			// 
 			// tabPageChat
 			// 
+			this.tabPageChat.Controls.Add(this.checkDialectic);
 			this.tabPageChat.Controls.Add(this.checkAutoScroll);
 			this.tabPageChat.Controls.Add(this.checkSpeak);
 			this.tabPageChat.Controls.Add(this.splitContainer1);
@@ -753,6 +755,13 @@ namespace LMStud
 			resources.ApplyResources(this.tabPageChat, "tabPageChat");
 			this.tabPageChat.Name = "tabPageChat";
 			this.tabPageChat.UseVisualStyleBackColor = true;
+			// 
+			// checkDialectic
+			// 
+			resources.ApplyResources(this.checkDialectic, "checkDialectic");
+			this.checkDialectic.Name = "checkDialectic";
+			this.checkDialectic.UseVisualStyleBackColor = true;
+			this.checkDialectic.CheckedChanged += new System.EventHandler(this.CheckDialectic_CheckedChanged);
 			// 
 			// checkAutoScroll
 			// 
@@ -1904,6 +1913,7 @@ namespace LMStud
 		private System.Windows.Forms.Label label29;
 		private System.Windows.Forms.ToolStripStatusLabel labelEditing;
 		internal System.Windows.Forms.CheckBox checkAutoScroll;
+		private System.Windows.Forms.CheckBox checkDialectic;
 	}
 }
 

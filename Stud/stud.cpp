@@ -8,6 +8,8 @@
 #include <minja\chat-template.hpp>
 #include <algorithm>
 using HrClock = std::chrono::high_resolution_clock;
+static std::vector<unsigned char> _dialState[2];
+static int _dialIndex = 0;
 static bool _gpuOomStud = false; static std::string _lastErrorMessage;
 extern "C" EXPORT const char* GetLastErrorMessage(){ return _lastErrorMessage.c_str(); }
 extern "C" EXPORT void ClearLastErrorMessage(){ _lastErrorMessage.clear(); }
@@ -147,6 +149,35 @@ void GetStateData(unsigned char* dst, int size){
 }
 void SetStateData(const unsigned char* src, int size){
 	if(_session.ctx) llama_state_set_data(_session.ctx, src, size);
+}
+void DialecticInit(){
+	const int size = GetStateSize();
+	if(size <= 0) return;
+	_dialState[0].assign(size, 0);
+	_dialState[1].assign(size, 0);
+	GetStateData(_dialState[0].data(), size);
+	GetStateData(_dialState[1].data(), size);
+	_dialIndex = 0;
+}
+void DialecticStart(const char* seed){
+	if(_dialState[0].empty()) return;
+	const int size = static_cast<int>(_dialState[0].size());
+	SetStateData(_dialState[0].data(), size);
+	GenerateWithTools(MessageRole::Assistant, seed, 0, false);
+	GetStateData(_dialState[0].data(), size);
+	SetStateData(_dialState[1].data(), size);
+	_dialIndex = 1;
+}
+void DialecticSwap(){
+	if(_dialState[0].empty()) return;
+	const int size = static_cast<int>(_dialState[0].size());
+	GetStateData(_dialState[_dialIndex].data(), size);
+	_dialIndex = 1 - _dialIndex;
+	SetStateData(_dialState[_dialIndex].data(), size);
+}
+void DialecticFree(){
+	_dialState[0].clear();
+	_dialState[1].clear();
 }
 StudError RetokenizeChat(bool rebuildMemory = false){
 	if(!_session.ctx || !_session.smpl || !_vocab) return StudError::ModelNotLoaded;

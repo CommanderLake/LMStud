@@ -244,7 +244,7 @@
     <value>tabPageChat</value>
   </data>
   <data name="&gt;&gt;splitContainer1.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>3</value>
   </data>
   <data name="splitContainer2.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Bottom, Left, Right</value>
@@ -1216,7 +1216,7 @@
     <value>tabPageChat</value>
   </data>
   <data name="&gt;&gt;checkSpeak.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>2</value>
   </data>
   <data name="checkVoiceInput.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Left</value>
@@ -1246,7 +1246,7 @@
     <value>tabPageChat</value>
   </data>
   <data name="&gt;&gt;checkVoiceInput.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>4</value>
   </data>
   <data name="checkMarkdown.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Left</value>
@@ -1276,7 +1276,7 @@
     <value>tabPageChat</value>
   </data>
   <data name="&gt;&gt;checkMarkdown.ZOrder" xml:space="preserve">
-    <value>5</value>
+    <value>6</value>
   </data>
   <data name="checkStream.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Left</value>
@@ -1306,7 +1306,7 @@
     <value>tabPageChat</value>
   </data>
   <data name="&gt;&gt;checkStream.ZOrder" xml:space="preserve">
-    <value>7</value>
+    <value>8</value>
   </data>
   <data name="butCodeBlock.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Left</value>
@@ -1336,7 +1336,7 @@
     <value>tabPageChat</value>
   </data>
   <data name="&gt;&gt;butCodeBlock.ZOrder" xml:space="preserve">
-    <value>8</value>
+    <value>9</value>
   </data>
   <data name="butReset.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Right</value>
@@ -1369,7 +1369,7 @@
     <value>tabPageChat</value>
   </data>
   <data name="&gt;&gt;butReset.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>5</value>
   </data>
   <data name="butGen.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Right</value>
@@ -1399,7 +1399,7 @@
     <value>tabPageChat</value>
   </data>
   <data name="&gt;&gt;butGen.ZOrder" xml:space="preserve">
-    <value>6</value>
+    <value>7</value>
   </data>
   <data name="butSearch.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -1548,6 +1548,33 @@
   <data name="tabControl1.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Bottom, Left, Right</value>
   </data>
+  <data name="checkDialectic.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="checkDialectic.Location" type="System.Drawing.Point, System.Drawing">
+    <value>501, 930</value>
+  </data>
+  <data name="checkDialectic.Size" type="System.Drawing.Size, System.Drawing">
+    <value>67, 17</value>
+  </data>
+  <data name="checkDialectic.TabIndex" type="System.Int32, mscorlib">
+    <value>14</value>
+  </data>
+  <data name="checkDialectic.Text" xml:space="preserve">
+    <value>Dialectic</value>
+  </data>
+  <data name="&gt;&gt;checkDialectic.Name" xml:space="preserve">
+    <value>checkDialectic</value>
+  </data>
+  <data name="&gt;&gt;checkDialectic.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;checkDialectic.Parent" xml:space="preserve">
+    <value>tabPageChat</value>
+  </data>
+  <data name="&gt;&gt;checkDialectic.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
   <data name="checkAutoScroll.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Left</value>
   </data>
@@ -1576,7 +1603,7 @@
     <value>tabPageChat</value>
   </data>
   <data name="&gt;&gt;checkAutoScroll.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>1</value>
   </data>
   <data name="tabPageChat.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 22</value>

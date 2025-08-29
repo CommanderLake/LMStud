@@ -68,6 +68,14 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetStateData(IntPtr src, int size);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void DialecticInit();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void DialecticStart([MarshalAs(UnmanagedType.LPUTF8Str)] string seed);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void DialecticSwap();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void DialecticFree();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern StudError RetokenizeChat(bool rebuildMemory);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern StudError SetSystemPrompt([MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, [MarshalAs(UnmanagedType.LPUTF8Str)] string toolsPrompt);

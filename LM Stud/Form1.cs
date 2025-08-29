@@ -26,6 +26,8 @@ namespace LMStud{
 		private CheckState _checkVoiceInputLast = CheckState.Unchecked;
 		private ChatMessage _cntAssMsg;
 		private LVColumnClickHandler _columnClickHandler;
+		private bool _dialecticPaused;
+		private bool _dialecticStarted;
 		private string _editOriginalText = "";
 		private bool _firstToken = true;
 		private volatile bool _generating;
@@ -192,9 +194,22 @@ namespace LMStud{
 			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			Settings.Default.Save();
 		}
+		private void CheckDialectic_CheckedChanged(object sender, EventArgs e){
+			if(checkDialectic.Checked){
+				NativeMethods.DialecticInit();
+				_dialecticStarted = false;
+				_dialecticPaused = false;
+			} else{
+				NativeMethods.DialecticFree();
+				_dialecticStarted = false;
+				_dialecticPaused = false;
+			}
+		}
 		private void ButGen_Click(object sender, EventArgs e){
-			if(_generating) NativeMethods.StopGeneration();
-			else Generate();
+			if(_generating){
+				_dialecticPaused = true;
+				NativeMethods.StopGeneration();
+			} else{ Generate(); }
 		}
 		private void ButReset_Click(object sender, EventArgs e){
 			NativeMethods.ResetChat();
@@ -215,8 +230,7 @@ namespace LMStud{
 					e.SuppressKeyPress = true;
 					CancelEditing();
 				}
-			} else if(e.KeyCode != Keys.Enter && checkVoiceInput.CheckState != CheckState.Unchecked) StartEditing();
-			else if(e.KeyCode == Keys.Enter && !e.Control && !e.Shift && butGen.Enabled){
+			} else if(e.KeyCode != Keys.Enter && checkVoiceInput.CheckState != CheckState.Unchecked){ StartEditing(); } else if(e.KeyCode == Keys.Enter && !e.Control && !e.Shift && butGen.Enabled){
 				e.SuppressKeyPress = true;
 				ButGen_Click(null, null);
 			}
@@ -263,7 +277,7 @@ namespace LMStud{
 				ShowErrorMessage(Resources.Error_creating_session, result);
 				return;
 			}
-			Generate(role, msg);
+			Generate(role, msg, true);
 		}
 		private void MsgButEditOnClick(ChatMessage cm){
 			if(_generating || cm.Editing) return;
@@ -329,28 +343,33 @@ namespace LMStud{
 		}
 		private void Generate(){
 			var prompt = textInput.Text;
-			Generate(MessageRole.User, prompt);
+			Generate(MessageRole.User, prompt, true);
 		}
-		private void Generate(MessageRole role, string prompt){
+		private void Generate(MessageRole role, string prompt, bool addToChat){
 			if(!LlModelLoaded || string.IsNullOrWhiteSpace(prompt)) return;
 			if(!GenerationLock.Wait(0)) return;
 			if(_generating || _apiGenerating){
 				GenerationLock.Release();
 				return;
 			}
+			_dialecticPaused = false;
 			_generating = true;
 			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
 			butGen.Text = Resources.Stop;
 			butReset.Enabled = butApply.Enabled = false;
 			var newMsg = prompt.Trim();
-			AddMessage(role, newMsg);
+			if(addToChat) AddMessage(role, newMsg);
 			_cntAssMsg = null;
 			foreach(var message in _chatMessages) message.Generating = true;
 			_tts.SpeakAsyncCancelAll();
 			_firstToken = true;
 			if(role == MessageRole.User){
 				NativeMethods.SetCommittedText("");
-				textInput.Text = "";
+				if(addToChat) textInput.Text = "";
+			}
+			if(checkDialectic.Checked && !_dialecticStarted && role == MessageRole.User){
+				NativeMethods.DialecticStart(newMsg);
+				_dialecticStarted = true;
 			}
 			ThreadPool.QueueUserWorkItem(o => {
 				_msgTokenCount = 0;
@@ -379,6 +398,13 @@ namespace LMStud{
 						_generating = false;
 						foreach(var message in _chatMessages) message.Generating = false;
 						if(checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StartSpeechTranscription();
+						if(checkDialectic.Checked && !_dialecticPaused){
+							var last = _chatMessages.LastOrDefault();
+							if(last != null){
+								NativeMethods.DialecticSwap();
+								Generate(MessageRole.User, last.Message, false);
+							}
+						}
 					}));
 				} catch(ObjectDisposedException){} finally{ GenerationLock.Release(); }
 			});
