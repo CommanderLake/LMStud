@@ -205,31 +205,6 @@ namespace LMStud{
 			_chatMessages.Clear();
 			labelTokens.Text = NativeMethods.LlamaMemSize() + Resources._Tokens;
 		}
-		private void SetEditingMessageVisible(bool visible){
-			toolStripStatusLabel1.Visible = labelTokens.Visible = labelTPS.Visible = labelPreGen.Visible = !visible;
-			labelEditing.Visible = visible;
-		}
-		private void StartEditing(){
-			if(_isEditing) return;
-			_editOriginalText = textInput.Text;
-			_isEditing = true;
-			SetEditingMessageVisible(true);
-			if(checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StopSpeechTranscription();
-		}
-		private void FinishEditing(){
-			_isEditing = false;
-			SetEditingMessageVisible(false);
-			if(checkVoiceInput.CheckState != CheckState.Checked) return;
-			if(NativeMethods.StartSpeechTranscription()) return;
-			MessageBox.Show(this, Resources.Error_starting_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
-			checkVoiceInput.Checked = false;
-			_checkVoiceInputLast = checkVoiceInput.CheckState;
-		}
-		private void CancelEditing(){
-			textInput.Text = _editOriginalText;
-			textInput.SelectionStart = textInput.Text.Length;
-			FinishEditing();
-		}
 		private void TextInput_KeyDown(object sender, KeyEventArgs e){
 			if(_isEditing){
 				if(e.KeyCode == Keys.Enter && !e.Control && !e.Shift){
@@ -240,14 +215,11 @@ namespace LMStud{
 					e.SuppressKeyPress = true;
 					CancelEditing();
 				}
-				return;
-			}
-			if(e.KeyCode == Keys.Enter && !e.Control && !e.Shift && butGen.Enabled){
+			} else if(e.KeyCode != Keys.Enter && checkVoiceInput.CheckState != CheckState.Unchecked) StartEditing();
+			else if(e.KeyCode == Keys.Enter && !e.Control && !e.Shift && butGen.Enabled){
 				e.SuppressKeyPress = true;
 				ButGen_Click(null, null);
-				return;
 			}
-			StartEditing();
 		}
 		private void TextInput_MouseDown(object sender, MouseEventArgs e){
 			if(checkVoiceInput.CheckState != CheckState.Unchecked && !_isEditing) StartEditing();
@@ -330,6 +302,31 @@ namespace LMStud{
 			return cm;
 		}
 		private static void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){Process.Start(e.LinkText);}
+		private void SetEditingMessageVisible(bool visible){
+			toolStripStatusLabel1.Visible = labelTokens.Visible = labelTPS.Visible = labelPreGen.Visible = !visible;
+			labelEditing.Visible = visible;
+		}
+		private void StartEditing(){
+			if(_isEditing) return;
+			_editOriginalText = textInput.Text;
+			_isEditing = true;
+			SetEditingMessageVisible(true);
+			if(checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StopSpeechTranscription();
+		}
+		private void FinishEditing(){
+			_isEditing = false;
+			SetEditingMessageVisible(false);
+			if(checkVoiceInput.CheckState != CheckState.Checked) return;
+			if(NativeMethods.StartSpeechTranscription()) return;
+			MessageBox.Show(this, Resources.Error_starting_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+			checkVoiceInput.Checked = false;
+			_checkVoiceInputLast = checkVoiceInput.CheckState;
+		}
+		private void CancelEditing(){
+			textInput.Text = _editOriginalText;
+			textInput.SelectionStart = textInput.Text.Length;
+			FinishEditing();
+		}
 		private void Generate(){
 			var prompt = textInput.Text;
 			Generate(MessageRole.User, prompt);
@@ -409,7 +406,7 @@ namespace LMStud{
 			var size = NativeMethods.GetStateSize();
 			var data = new byte[size];
 			unsafe{
-				fixed(byte* p = data){ NativeMethods.CopyStateData((IntPtr)p, size); }
+				fixed(byte* p = data){ NativeMethods.GetStateData((IntPtr)p, size); }
 			}
 			return data;
 		}

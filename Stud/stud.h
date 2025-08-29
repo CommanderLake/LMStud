@@ -61,7 +61,7 @@ extern "C" {
 	EXPORT void SetThreadCount(int n, int nBatch);
 	EXPORT int LlamaMemSize();
 	EXPORT int GetStateSize();
-	EXPORT void CopyStateData(unsigned char* dst, int size);
+	EXPORT void GetStateData(unsigned char* dst, int size);
 	EXPORT void SetStateData(const unsigned char* src, int size);
 	EXPORT StudError RetokenizeChat(bool rebuildMemory);
 	EXPORT StudError SetSystemPrompt(const char* prompt, const char* toolsPrompt);

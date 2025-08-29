@@ -64,7 +64,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern int GetStateSize();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void CopyStateData(IntPtr dst, int size);
+		public static extern void GetStateData(IntPtr dst, int size);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetStateData(IntPtr src, int size);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

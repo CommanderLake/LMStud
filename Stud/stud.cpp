@@ -142,7 +142,7 @@ int GetStateSize(){
 	if(!_session.ctx) return 0;
 	return static_cast<int>(llama_state_get_size(_session.ctx));
 }
-void CopyStateData(unsigned char* dst, int size){
+void GetStateData(unsigned char* dst, int size){
 	if(_session.ctx) llama_state_get_data(_session.ctx, dst, size);
 }
 void SetStateData(const unsigned char* src, int size){
