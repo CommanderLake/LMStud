@@ -401,4 +401,7 @@
   <data name="ToolTip_numGenDelay" xml:space="preserve">
     <value>Delay before automatic response generation after speech input ends (only when ‘Speech input’ is fully enabled).</value>
   </data>
+<data name="Load_a_model_first_" xml:space="preserve">
+	<value>Load a model first.</value>
+</data>
 </root>

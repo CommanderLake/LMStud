@@ -26,8 +26,6 @@ namespace LMStud{
 		private CheckState _checkVoiceInputLast = CheckState.Unchecked;
 		private ChatMessage _cntAssMsg;
 		private LVColumnClickHandler _columnClickHandler;
-		private bool _dialecticPaused;
-		private bool _dialecticStarted;
 		private string _editOriginalText = "";
 		private bool _firstToken = true;
 		private volatile bool _generating;
@@ -36,6 +34,8 @@ namespace LMStud{
 		private int _msgTokenCount;
 		private volatile bool _rendering;
 		private bool _whisperLoaded;
+		private bool _dialecticStarted;
+		private bool _dialecticPaused;
 		internal Form1(){
 			This = this;
 			//var culture = new CultureInfo("zh-CN");
@@ -196,6 +196,11 @@ namespace LMStud{
 		}
 		private void CheckDialectic_CheckedChanged(object sender, EventArgs e){
 			if(checkDialectic.Checked){
+				if(!LlModelLoaded){
+					MessageBox.Show(this, Resources.Load_a_model_first_, Resources.LM_Stud);
+					checkDialectic.Checked = false;
+					return;
+				}
 				NativeMethods.DialecticInit();
 				_dialecticStarted = false;
 				_dialecticPaused = false;
@@ -209,7 +214,7 @@ namespace LMStud{
 			if(_generating){
 				_dialecticPaused = true;
 				NativeMethods.StopGeneration();
-			} else{ Generate(); }
+			} else Generate();
 		}
 		private void ButReset_Click(object sender, EventArgs e){
 			NativeMethods.ResetChat();
@@ -359,6 +364,7 @@ namespace LMStud{
 			butReset.Enabled = butApply.Enabled = false;
 			var newMsg = prompt.Trim();
 			if(addToChat) AddMessage(role, newMsg);
+			var seedMsg = checkDialectic.Checked && _chatMessages.Count == 1;
 			_cntAssMsg = null;
 			foreach(var message in _chatMessages) message.Generating = true;
 			_tts.SpeakAsyncCancelAll();
@@ -368,7 +374,7 @@ namespace LMStud{
 				if(addToChat) textInput.Text = "";
 			}
 			if(checkDialectic.Checked && !_dialecticStarted && role == MessageRole.User){
-				NativeMethods.DialecticStart(newMsg);
+				NativeMethods.DialecticStart();
 				_dialecticStarted = true;
 			}
 			ThreadPool.QueueUserWorkItem(o => {
@@ -402,6 +408,7 @@ namespace LMStud{
 							var last = _chatMessages.LastOrDefault();
 							if(last != null){
 								NativeMethods.DialecticSwap();
+								if(seedMsg) NativeMethods.AddMessage(MessageRole.Assistant, prompt);
 								Generate(MessageRole.User, last.Message, false);
 							}
 						}

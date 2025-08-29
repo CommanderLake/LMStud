@@ -54,7 +54,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void FreeModel();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void ResetChat();
+		public static extern StudError ResetChat();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void SetTokenCallback(TokenCallback cb);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -70,7 +70,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void DialecticInit();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void DialecticStart([MarshalAs(UnmanagedType.LPUTF8Str)] string seed);
+		public static extern void DialecticStart();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void DialecticSwap();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
@@ -85,6 +85,8 @@ namespace LMStud{
 		public static extern StudError RemoveMessageAt(int index);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern StudError RemoveMessagesStartingAt(int index);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern StudError AddMessage(MessageRole role, string message);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern StudError GenerateWithTools(MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

@@ -8,8 +8,6 @@
 #include <minja\chat-template.hpp>
 #include <algorithm>
 using HrClock = std::chrono::high_resolution_clock;
-static std::vector<unsigned char> _dialState[2];
-static int _dialIndex = 0;
 static bool _gpuOomStud = false; static std::string _lastErrorMessage;
 extern "C" EXPORT const char* GetLastErrorMessage(){ return _lastErrorMessage.c_str(); }
 extern "C" EXPORT void ClearLastErrorMessage(){ _lastErrorMessage.clear(); }
@@ -98,7 +96,8 @@ void FreeModel(){
 		llama_free(_session.ctx);
 		_session.ctx = nullptr;
 	}
-	_session.cachedTokens.clear();
+	_session.cachedTokens[0].clear();
+	_session.cachedTokens[1].clear();
 	if(_llModel){
 		llama_model_free(_llModel);
 		_llModel = nullptr;
@@ -153,31 +152,35 @@ void SetStateData(const unsigned char* src, int size){
 void DialecticInit(){
 	const int size = GetStateSize();
 	if(size <= 0) return;
-	_dialState[0].assign(size, 0);
-	_dialState[1].assign(size, 0);
-	GetStateData(_dialState[0].data(), size);
-	GetStateData(_dialState[1].data(), size);
-	_dialIndex = 0;
+	_session.dialState[0].assign(size, 0);
+	_session.dialState[1].assign(size, 0);
+	GetStateData(_session.dialState[0].data(), size);
+	GetStateData(_session.dialState[1].data(), size);
+	_session.dId = 0;
 }
-void DialecticStart(const char* seed){
-	if(_dialState[0].empty()) return;
-	const int size = static_cast<int>(_dialState[0].size());
-	SetStateData(_dialState[0].data(), size);
-	GenerateWithTools(MessageRole::Assistant, seed, 0, false);
-	GetStateData(_dialState[0].data(), size);
-	SetStateData(_dialState[1].data(), size);
-	_dialIndex = 1;
+void DialecticStart(){
+	if(_session.dialState[0].empty()) return;
+	const int size = static_cast<int>(_session.dialState[0].size());
+	SetStateData(_session.dialState[_session.dId].data(), size);
 }
 void DialecticSwap(){
-	if(_dialState[0].empty()) return;
-	const int size = static_cast<int>(_dialState[0].size());
-	GetStateData(_dialState[_dialIndex].data(), size);
-	_dialIndex = 1 - _dialIndex;
-	SetStateData(_dialState[_dialIndex].data(), size);
+	if(_session.dialState[0].empty()) return;
+	const int size = static_cast<int>(_session.dialState[0].size());
+	GetStateData(_session.dialState[_session.dId].data(), size);
+	_session.dId = 1 - _session.dId;
+	SetStateData(_session.dialState[_session.dId].data(), size);
 }
 void DialecticFree(){
-	_dialState[0].clear();
-	_dialState[1].clear();
+	_session.dialState[0].clear();
+	_session.dialState[1].clear();
+}
+std::string RoleString(const MessageRole role){
+	switch(role){
+		case MessageRole::User: return std::string("user");
+		case MessageRole::Assistant: return std::string("assistant");
+		case MessageRole::Tool: return std::string("tool");
+		default: return std::string();
+	}
 }
 StudError RetokenizeChat(bool rebuildMemory = false){
 	if(!_session.ctx || !_session.smpl || !_vocab) return StudError::ModelNotLoaded;
@@ -185,7 +188,7 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	std::string prompt(_session.prompt);
 	if(_hasTools && !_session.toolsPrompt.empty()) prompt += _session.toolsPrompt;
 	msgs.push_back({"system", prompt});
-	msgs.insert(msgs.end(), _session.chatMsgs.begin(), _session.chatMsgs.end());
+	msgs.insert(msgs.end(), _session.chatMsgs[_session.dId].begin(), _session.chatMsgs[_session.dId].end());
 	for(auto& msg : msgs) if(msg.content.empty()) msg.content = " ";
 	common_chat_templates_inputs in;
 	in.use_jinja = _session.useJinja;
@@ -206,7 +209,7 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	std::vector<llama_token> promptTokens(nPrompt);
 	llama_tokenize(_vocab, chatData.prompt.c_str(), chatData.prompt.size(), promptTokens.data(), promptTokens.size(), true, true);
 	size_t prefix = 0;
-	while(prefix < _session.cachedTokens.size() && prefix < promptTokens.size() && _session.cachedTokens[prefix] == promptTokens[prefix]){ ++prefix; }
+	while(prefix < _session.cachedTokens[_session.dId].size() && prefix < promptTokens.size() && _session.cachedTokens[_session.dId][prefix] == promptTokens[prefix]){ ++prefix; }
 	const bool canShift = llama_memory_can_shift(_session.llMem);
 	if(rebuildMemory){
 		if(prefix == 0 || LlamaMemSize() < static_cast<llama_pos>(prefix - 1)){
@@ -214,11 +217,11 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 			llama_memory_clear(_session.llMem, true);
 		}
 	}
-	const size_t oldSz = _session.cachedTokens.size();
+	const size_t oldSz = _session.cachedTokens[_session.dId].size();
 	const size_t newSz = promptTokens.size();
 	size_t suffix = 0;
-	if(canShift && oldSz > 0 && newSz > 0){ while(suffix + prefix < oldSz && suffix + prefix < newSz && suffix < oldSz && suffix < newSz && _session.cachedTokens[oldSz - 1 - suffix] == promptTokens[newSz - 1 - suffix]){ ++suffix; } }
-	const size_t oldSize = _session.cachedTokens.size();
+	if(canShift && oldSz > 0 && newSz > 0){ while(suffix + prefix < oldSz && suffix + prefix < newSz && suffix < oldSz && suffix < newSz && _session.cachedTokens[_session.dId][oldSz - 1 - suffix] == promptTokens[newSz - 1 - suffix]){ ++suffix; } }
+	const size_t oldSize = _session.cachedTokens[_session.dId].size();
 	const size_t newSize = promptTokens.size();
 	if(newSize > static_cast<size_t>(llama_n_ctx(_session.ctx))){
 		return StudError::ConvTooLong;
@@ -246,12 +249,16 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 		for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl, promptTokens[i + j]); }
 	}
 	for(size_t i = decodeEnd; i < newSize; ++i){ llama_sampler_accept(_session.smpl, promptTokens[i]); }
-	_session.cachedTokens = std::move(promptTokens);
+	_session.cachedTokens[_session.dId] = std::move(promptTokens);
 	return StudError::Success;
 }
-void ResetChat(){
-	_session.chatMsgs.clear();
-	RetokenizeChat(true);
+StudError ResetChat(){
+	_session.chatMsgs[_session.dId].clear();
+	const auto err = RetokenizeChat(true);
+	if(err != StudError::Success || _session.dialState[0].empty()) return err;
+	DialecticSwap();
+	_session.chatMsgs[_session.dId].clear();
+	return RetokenizeChat(true);
 }
 StudError SetSystemPrompt(const char* prompt, const char* toolsPrompt){
 	_session.prompt = std::string(prompt);
@@ -259,20 +266,27 @@ StudError SetSystemPrompt(const char* prompt, const char* toolsPrompt){
 	return RetokenizeChat();
 }
 StudError SetMessageAt(const int index, const char* think, const char* message){
-	if(index < 0 || index >= static_cast<int>(_session.chatMsgs.size())) return StudError::IndexOutOfRange;
-	_session.chatMsgs[index].reasoning_content = think;
-	_session.chatMsgs[index].content = std::string(message);
+	if(index < 0 || index >= static_cast<int>(_session.chatMsgs[_session.dId].size())) return StudError::IndexOutOfRange;
+	_session.chatMsgs[_session.dId][index].reasoning_content = think;
+	_session.chatMsgs[_session.dId][index].content = std::string(message);
 	return RetokenizeChat();
 }
 StudError RemoveMessageAt(const int index){
-	if(index < 0 || index >= static_cast<int>(_session.chatMsgs.size())) return StudError::IndexOutOfRange;
-	_session.chatMsgs.erase(_session.chatMsgs.begin() + index);
+	if(index < 0 || index >= static_cast<int>(_session.chatMsgs[_session.dId].size())) return StudError::IndexOutOfRange;
+	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index);
 	return RetokenizeChat();
 }
 StudError RemoveMessagesStartingAt(int index){
 	if(index < 0) index = 0;
-	if(index > static_cast<int>(_session.chatMsgs.size())) index = static_cast<int>(_session.chatMsgs.size());
-	_session.chatMsgs.erase(_session.chatMsgs.begin() + index, _session.chatMsgs.end());
+	if(index > static_cast<int>(_session.chatMsgs[_session.dId].size())) index = static_cast<int>(_session.chatMsgs[_session.dId].size());
+	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index, _session.chatMsgs[_session.dId].end());
+	return RetokenizeChat();
+}
+StudError AddMessage(const MessageRole role, const char* message){
+	common_chat_msg msg;
+	msg.role = RoleString(role);
+	msg.content = std::string(message);
+	_session.chatMsgs[_session.dId].push_back(msg);
 	return RetokenizeChat();
 }
 static std::string OpenToolResponseTag(){
@@ -398,16 +412,16 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	const auto prepStart = HrClock::now();
 	_stop.store(false);
 	const TokenCallbackFn cb = _tokenCb;
-	const size_t chatStart = _session.chatMsgs.size();
+	const size_t chatStart = _session.chatMsgs[_session.dId].size();
 	for(const auto& message : messages){
-		const auto formatted = common_chat_format_single(_chatTemplates.get(), _session.chatMsgs, message, !message.role._Equal("assistant"), _session.useJinja && message.role._Equal("assistant"));
+		const auto formatted = common_chat_format_single(_chatTemplates.get(), _session.chatMsgs[_session.dId], message, !message.role._Equal("assistant"), _session.useJinja && message.role._Equal("assistant"));
 		const int nPromptTokens = -llama_tokenize(_vocab, formatted.c_str(), formatted.size(), nullptr, 0, true, true);
 		std::vector<llama_token> promptTokens(nPromptTokens);
 		if(llama_tokenize(_vocab, formatted.c_str(), formatted.size(), promptTokens.data(), promptTokens.size(), true, true) < 0){
 			outMsg = common_chat_msg();
 			return StudError::CantTokenizePrompt;
 		}
-		_session.chatMsgs.push_back(message);
+		_session.chatMsgs[_session.dId].push_back(message);
 		size_t p = 0;
 		while(p < promptTokens.size() && !_stop.load()){
 			const int nEval = std::min<int>(_session.nBatch, promptTokens.size() - p);
@@ -415,14 +429,14 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 			const int nCtx = llama_n_ctx(_session.ctx);
 			const int nCtxUsed = LlamaMemSize();
 			if(nCtxUsed + batch.n_tokens > nCtx){
-				_session.chatMsgs.pop_back();
+				_session.chatMsgs[_session.dId].pop_back();
 				RetokenizeChat(true);
 				outMsg = common_chat_msg();
 				return StudError::ConvTooLong;
 			}
 			auto result = llama_decode(_session.ctx, batch);
 			if(result != 0){
-				_session.chatMsgs.pop_back();
+				_session.chatMsgs[_session.dId].pop_back();
 				RetokenizeChat(true);
 				outMsg = common_chat_msg();
 				if(result == 1) return StudError::ConvTooLong;
@@ -431,7 +445,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 			for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl, promptTokens[p + j]); }
 			p += nEval;
 		}
-		_session.cachedTokens.insert(_session.cachedTokens.end(), promptTokens.begin(), promptTokens.end());
+		_session.cachedTokens[_session.dId].insert(_session.cachedTokens[_session.dId].end(), promptTokens.begin(), promptTokens.end());
 	}
 	auto status = StudError::Success;
 	llama_token newTokenId;
@@ -447,7 +461,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 		char buf[256];
 		const int n = llama_token_to_piece(_vocab, newTokenId, buf, sizeof buf, 0, false);
 		if(n < 0){
-			_session.chatMsgs.resize(chatStart + messages.size());
+			_session.chatMsgs[_session.dId].resize(chatStart + messages.size());
 			RetokenizeChat(true);
 			outMsg = common_chat_msg();
 			return StudError::CantConvertToken;
@@ -466,14 +480,14 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 		const int nCtx = llama_n_ctx(_session.ctx);
 		const int nCtxUsed = LlamaMemSize();
 		if(nCtxUsed + batch.n_tokens > nCtx){
-			_session.chatMsgs.resize(chatStart + messages.size());
+			_session.chatMsgs[_session.dId].resize(chatStart + messages.size());
 			RetokenizeChat(true);
 			outMsg = common_chat_msg();
 			return StudError::ConvTooLong;
 		}
 		auto decodeErr = llama_decode(_session.ctx, batch);
 		if(decodeErr != 0){
-			_session.chatMsgs.resize(chatStart + messages.size());
+			_session.chatMsgs[_session.dId].resize(chatStart + messages.size());
 			RetokenizeChat(true);
 			outMsg = common_chat_msg();
 			if(decodeErr == 1) return StudError::ConvTooLong;
@@ -490,35 +504,28 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	}
 	_session.syntax.parse_tool_calls = false;
 	msg = common_chat_parse(response, false, _session.syntax);
-	_session.chatMsgs.push_back(msg);
-	_session.cachedTokens.insert(_session.cachedTokens.end(), newTokens.begin(), newTokens.end());
+	_session.chatMsgs[_session.dId].push_back(msg);
+	_session.cachedTokens[_session.dId].insert(_session.cachedTokens[_session.dId].end(), newTokens.begin(), newTokens.end());
 	if(cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(), ftTime, 0);
 	outMsg = std::move(msg);
-	//OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
+	OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
 	return status;
 }
 StudError GenerateWithTools(const MessageRole role, const char* prompt, const int nPredict, const bool callback){
 	common_chat_msg msg;
-	switch(role){
-		case MessageRole::User: msg.role = "user";
-			break;
-		case MessageRole::Assistant: msg.role = "assistant";
-			break;
-		case MessageRole::Tool: msg.role = "tool";
-			break;
-	}
+	msg.role = RoleString(role);
 	msg.content = std::string(prompt);
 	std::vector<common_chat_msg> msgs{msg};
 	if(!_hasTools){
 		return Generate(msgs, nPredict, callback, msg);
 	}
 	const TokenCallbackFn cb = _tokenCb;
-	StudError err = StudError::Success;
+	auto err = StudError::Success;
 	bool toolCalled = false;
 	do{
 		err = Generate(msgs, nPredict, callback, msg);
 		if(err != StudError::Success) return err;
-		if(!_session.chatMsgs.size()) return StudError::Success;
+		if(!_session.chatMsgs[_session.dId].size()) return StudError::Success;
 		msgs.clear();
 		_session.syntax.parse_tool_calls = true;
 		try{
@@ -549,8 +556,8 @@ void StopGeneration(){ _stop.store(true); }
 char* GetContextAsText(){
 	if(!_session.ctx) return nullptr;
 	std::string outStr;
-	outStr.reserve(_session.cachedTokens.size() * 4);
-	for(const llama_token tok : _session.cachedTokens){ outStr += common_token_to_piece(_session.ctx, tok, true); }
+	outStr.reserve(_session.cachedTokens[_session.dId].size() * 4);
+	for(const llama_token tok : _session.cachedTokens[_session.dId]){ outStr += common_token_to_piece(_session.ctx, tok, true); }
 	auto* out = static_cast<char*>(std::malloc(outStr.size() + 1));
 	if(out) std::memcpy(out, outStr.c_str(), outStr.size() + 1);
 	return out;

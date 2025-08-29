@@ -414,6 +414,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Load a model first..
+        /// </summary>
+        internal static string Load_a_model_first_ {
+            get {
+                return ResourceManager.GetString("Load_a_model_first_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Loading: .
         /// </summary>
         internal static string Loading__ {
@@ -792,7 +801,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Voice Activity Detection threashold, with Basic VAD this is loudness, with Whisper VAD this is speech probability..
+        ///   Looks up a localized string similar to Voice Activity Detection threshold: for Basic VAD this sets loudness, for Whisper VAD this sets speech probability..
         /// </summary>
         internal static string ToolTip_numVadThreshold {
             get {

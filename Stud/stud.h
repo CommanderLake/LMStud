@@ -21,9 +21,11 @@ enum class MessageRole{
 struct ChatSession{
 	llama_context* ctx = nullptr;
 	llama_sampler* smpl = nullptr;
-	llama_memory_t llMem;
-	std::vector<common_chat_msg> chatMsgs;
-	std::vector<llama_token> cachedTokens;
+	llama_memory_t llMem = nullptr;
+	std::vector<common_chat_msg> chatMsgs[2];
+	std::vector<llama_token> cachedTokens[2];
+	std::vector<unsigned char> dialState[2];
+	int dId = 0;
 	std::string prompt;
 	std::string toolsPrompt;
 	common_chat_syntax syntax;
@@ -53,7 +55,7 @@ extern "C" {
 	EXPORT StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty);
 	EXPORT StudError CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
 	EXPORT void DestroySession();
-	EXPORT void ResetChat();
+	EXPORT StudError ResetChat();
 	EXPORT void FreeModel();
 	EXPORT StudError LoadModel(const char* filename, int nGPULayers, bool mMap, bool mLock, ggml_numa_strategy numaStrategy);
 	EXPORT bool HasTool(const char* name);
@@ -64,7 +66,7 @@ extern "C" {
 	EXPORT void GetStateData(unsigned char* dst, int size);
 	EXPORT void SetStateData(const unsigned char* src, int size);
 	EXPORT void DialecticInit();
-	EXPORT void DialecticStart(const char* seed);
+	EXPORT void DialecticStart();
 	EXPORT void DialecticSwap();
 	EXPORT void DialecticFree();
 	EXPORT StudError RetokenizeChat(bool rebuildMemory);
@@ -72,6 +74,7 @@ extern "C" {
 	EXPORT StudError SetMessageAt(int index, const char* think, const char* message);
 	EXPORT StudError RemoveMessageAt(int index);
 	EXPORT StudError RemoveMessagesStartingAt(int index);
+	EXPORT StudError AddMessage(MessageRole role, const char* message);
 	EXPORT StudError GenerateWithTools(MessageRole role, const char* prompt, int nPredict, bool callback);
 	EXPORT void StopGeneration();
 	EXPORT const char* GetLastErrorMessage();
