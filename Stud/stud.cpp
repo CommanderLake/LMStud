@@ -86,6 +86,7 @@ void DestroySession(){
 		llama_free(_session.ctx);
 		_session.ctx = nullptr;
 	}
+	DialecticFree();
 }
 void FreeModel(){
 	if(_session.smpl){
@@ -169,6 +170,7 @@ void DialecticSwap(){
 	GetStateData(_session.dialState[_session.dId].data(), size);
 	_session.dId = 1 - _session.dId;
 	SetStateData(_session.dialState[_session.dId].data(), size);
+	RetokenizeChat(true);
 }
 void DialecticFree(){
 	_session.dialState[0].clear();
