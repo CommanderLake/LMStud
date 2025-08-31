@@ -197,7 +197,7 @@ namespace LMStud{
 		private void CheckDialectic_CheckedChanged(object sender, EventArgs e){
 			if(checkDialectic.Checked){
 				if(!LlModelLoaded){
-					MessageBox.Show(this, Resources.Load_a_model_first_, Resources.LM_Stud);
+					MessageBox.Show(this, Resources.Load_a_model_first_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 					checkDialectic.Checked = false;
 					return;
 				}

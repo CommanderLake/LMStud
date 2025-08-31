@@ -256,33 +256,59 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 }
 StudError ResetChat(){
 	_session.chatMsgs[_session.dId].clear();
-	const auto err = RetokenizeChat(true);
-	if(err != StudError::Success || _session.dialState[0].empty()) return err;
+	auto err = RetokenizeChat(true);
+	if(err != StudError::Success || _session.dialState[_session.dId == 0 ? 1 : 0].empty()) return err;
 	DialecticSwap();
 	_session.chatMsgs[_session.dId].clear();
-	return RetokenizeChat(true);
+	err = RetokenizeChat();
+	DialecticSwap();
+	return err;
 }
 StudError SetSystemPrompt(const char* prompt, const char* toolsPrompt){
 	_session.prompt = std::string(prompt);
 	_session.toolsPrompt = std::string(toolsPrompt);
-	return RetokenizeChat();
+	auto err = RetokenizeChat();
+	if(err != StudError::Success || _session.dialState[_session.dId == 0 ? 1 : 0].empty()) return err;
+	DialecticSwap();
+	err = RetokenizeChat();
+	DialecticSwap();
+	return err;
 }
 StudError SetMessageAt(const int index, const char* think, const char* message){
 	if(index < 0 || index >= static_cast<int>(_session.chatMsgs[_session.dId].size())) return StudError::IndexOutOfRange;
 	_session.chatMsgs[_session.dId][index].reasoning_content = think;
 	_session.chatMsgs[_session.dId][index].content = std::string(message);
-	return RetokenizeChat();
+	auto err = RetokenizeChat();
+	if(err != StudError::Success || _session.dialState[_session.dId == 0 ? 1 : 0].empty()) return err;
+	DialecticSwap();
+	_session.chatMsgs[_session.dId][index].reasoning_content = think;
+	_session.chatMsgs[_session.dId][index].content = std::string(message);
+	err = RetokenizeChat();
+	DialecticSwap();
+	return err;
 }
 StudError RemoveMessageAt(const int index){
 	if(index < 0 || index >= static_cast<int>(_session.chatMsgs[_session.dId].size())) return StudError::IndexOutOfRange;
 	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index);
-	return RetokenizeChat();
+	auto err = RetokenizeChat();
+	if(err != StudError::Success || _session.dialState[_session.dId == 0 ? 1 : 0].empty()) return err;
+	DialecticSwap();
+	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index);
+	err = RetokenizeChat();
+	DialecticSwap();
+	return err;
 }
 StudError RemoveMessagesStartingAt(int index){
 	if(index < 0) index = 0;
 	if(index > static_cast<int>(_session.chatMsgs[_session.dId].size())) index = static_cast<int>(_session.chatMsgs[_session.dId].size());
 	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index, _session.chatMsgs[_session.dId].end());
-	return RetokenizeChat();
+	auto err = RetokenizeChat();
+	if(err != StudError::Success || _session.dialState[_session.dId == 0 ? 1 : 0].empty()) return err;
+	DialecticSwap();
+	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index, _session.chatMsgs[_session.dId].end());
+	err = RetokenizeChat();
+	DialecticSwap();
+	return err;
 }
 StudError AddMessage(const MessageRole role, const char* message){
 	common_chat_msg msg;
