@@ -45,27 +45,32 @@ StudError CreateContext(const int nCtx, const int nBatch, const bool flashAttn, 
 	}
 	_session.llMem = llama_get_memory(_session.ctx);
 	auto result = StudError::Success;
-	if(_session.smpl) result = RetokenizeChat(true);
+	if(_session.smpl[0]) result = RetokenizeChat(true);
 	return result;
 }
-StudError CreateSampler(const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
-	if(_session.smpl){
-		llama_sampler_free(_session.smpl);
-		_session.smpl = nullptr;
+StudError CreateSamplerInternal(const float minP, const float topP, const int topK, const float temp, const float repeatPenalty, llama_sampler* &smpl){
+	if(smpl){
+		llama_sampler_free(smpl);
+		smpl = nullptr;
 	}
-	_session.smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
-	if(!_session.smpl){
+	smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
+	if(!smpl){
 		return StudError::CantCreateSampler;
 	}
-	llama_sampler_chain_add(_session.smpl, llama_sampler_init_penalties(128, repeatPenalty, 0.0f, 0.0f));
+	llama_sampler_chain_add(smpl, llama_sampler_init_penalties(128, repeatPenalty, 0.0f, 0.0f));
 	// Optional: DRY (sequence) penalty immediately after penalties
 	// llama_sampler_chain_add(_session.smpl, llama_sampler_init_dry(0.8f, 1.8f, -1));
-	if(topK > 0) llama_sampler_chain_add(_session.smpl, llama_sampler_init_top_k(topK));
-	if(topP < 1.0f) llama_sampler_chain_add(_session.smpl, llama_sampler_init_top_p(topP, 1));
-	llama_sampler_chain_add(_session.smpl, llama_sampler_init_temp(temp));
-	llama_sampler_chain_add(_session.smpl, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
-	if(minP > 0.0f) llama_sampler_chain_add(_session.smpl, llama_sampler_init_min_p(minP, 1));
+	if(topK > 0) llama_sampler_chain_add(smpl, llama_sampler_init_top_k(topK));
+	if(topP < 1.0f) llama_sampler_chain_add(smpl, llama_sampler_init_top_p(topP, 1));
+	llama_sampler_chain_add(smpl, llama_sampler_init_temp(temp));
+	llama_sampler_chain_add(smpl, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
+	if(minP > 0.0f) llama_sampler_chain_add(smpl, llama_sampler_init_min_p(minP, 1));
 	return StudError::Success;
+}
+StudError CreateSampler(const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
+	const auto result = CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, _session.smpl[0]);
+	if(result != StudError::Success) return result;
+	return CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, _session.smpl[1]);
 }
 StudError CreateSession(const int nCtx, const int nBatch, const bool flashAttn, const int nThreads, const int nThreadsBatch, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
 	if(!_llModel) return StudError::ModelNotLoaded;
@@ -78,9 +83,13 @@ StudError CreateSession(const int nCtx, const int nBatch, const bool flashAttn, 
 	return StudError::Success;
 }
 void DestroySession(){
-	if(_session.smpl){
-		llama_sampler_free(_session.smpl);
-		_session.smpl = nullptr;
+	if(_session.smpl[0]){
+		llama_sampler_free(_session.smpl[0]);
+		_session.smpl[0] = nullptr;
+	}
+	if(_session.smpl[1]){
+		llama_sampler_free(_session.smpl[1]);
+		_session.smpl[1] = nullptr;
 	}
 	if(_session.ctx){
 		llama_free(_session.ctx);
@@ -89,14 +98,7 @@ void DestroySession(){
 	DialecticFree();
 }
 void FreeModel(){
-	if(_session.smpl){
-		llama_sampler_free(_session.smpl);
-		_session.smpl = nullptr;
-	}
-	if(_session.ctx){
-		llama_free(_session.ctx);
-		_session.ctx = nullptr;
-	}
+	DestroySession();
 	_session.cachedTokens[0].clear();
 	_session.cachedTokens[1].clear();
 	if(_llModel){
@@ -185,7 +187,7 @@ std::string RoleString(const MessageRole role){
 	}
 }
 StudError RetokenizeChat(bool rebuildMemory = false){
-	if(!_session.ctx || !_session.smpl || !_vocab) return StudError::ModelNotLoaded;
+	if(!_session.ctx || !_session.smpl[_session.dId] || !_vocab) return StudError::ModelNotLoaded;
 	std::vector<common_chat_msg> msgs;
 	std::string prompt(_session.prompt);
 	if(_hasTools && !_session.toolsPrompt.empty()) prompt += _session.toolsPrompt;
@@ -239,8 +241,8 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 		suffix = 0;
 		if(prefix < oldSize){ llama_memory_seq_rm(_session.llMem, 0, prefix, -1); }
 	}
-	llama_sampler_reset(_session.smpl);
-	for(size_t i = 0; i < prefix; ++i){ llama_sampler_accept(_session.smpl, promptTokens[i]); }
+	llama_sampler_reset(_session.smpl[_session.dId]);
+	for(size_t i = 0; i < prefix; ++i){ llama_sampler_accept(_session.smpl[_session.dId], promptTokens[i]); }
 	const size_t decodeEnd = newSize - suffix;
 	const int batchSize = std::min(_session.nBatch, static_cast<int>(decodeEnd - prefix));
 	if(batchSize <= 0) return StudError::Success;
@@ -248,9 +250,9 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 		const int nEval = std::min<int>(_session.nBatch, decodeEnd - i);
 		auto batch = llama_batch_get_one(&promptTokens[i], nEval);
 		if(llama_decode(_session.ctx, batch) != 0) return StudError::LlamaDecodeError;
-		for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl, promptTokens[i + j]); }
+		for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl[_session.dId], promptTokens[i + j]); }
 	}
-	for(size_t i = decodeEnd; i < newSize; ++i){ llama_sampler_accept(_session.smpl, promptTokens[i]); }
+	for(size_t i = decodeEnd; i < newSize; ++i){ llama_sampler_accept(_session.smpl[_session.dId], promptTokens[i]); }
 	_session.cachedTokens[_session.dId] = std::move(promptTokens);
 	return StudError::Success;
 }
@@ -408,7 +410,7 @@ static StudError doTool(std::string_view tok, ToolCtx& s, const bool cbOn, doubl
 				const llama_batch lb = llama_batch_get_one(&v[i], b);
 				if(LlamaMemSize() + lb.n_tokens > llama_n_ctx(_session.ctx)) return StudError::ConvTooLong;
 				if(llama_decode(_session.ctx, lb) != 0) return StudError::LlamaDecodeError;
-				for(int k = 0; k < b; ++k) llama_sampler_accept(_session.smpl, v[i + k]);
+				for(int k = 0; k < b; ++k) llama_sampler_accept(_session.smpl[_session.dId], v[i + k]);
 				i += b;
 			}
 			newTokens.insert(newTokens.end(), v.begin(), v.end());
@@ -470,7 +472,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 				if(result == 1) return StudError::ConvTooLong;
 				return StudError::LlamaDecodeError;
 			}
-			for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl, promptTokens[p + j]); }
+			for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl[_session.dId], promptTokens[p + j]); }
 			p += nEval;
 		}
 		_session.cachedTokens[_session.dId].insert(_session.cachedTokens[_session.dId].end(), promptTokens.begin(), promptTokens.end());
@@ -484,7 +486,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	double ftTime = 0.0;
 	int i = 0;
 	while((nPredict < 0 || i < nPredict) && !_stop.load()){
-		newTokenId = llama_sampler_sample(_session.smpl, _session.ctx, -1);
+		newTokenId = llama_sampler_sample(_session.smpl[_session.dId], _session.ctx, -1);
 		if(llama_vocab_is_eog(_vocab, newTokenId)) _stop.store(true);
 		char buf[256];
 		const int n = llama_token_to_piece(_vocab, newTokenId, buf, sizeof buf, 0, false);
@@ -521,7 +523,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 			if(decodeErr == 1) return StudError::ConvTooLong;
 			return StudError::LlamaDecodeError;
 		}
-		llama_sampler_accept(_session.smpl, newTokenId);
+		llama_sampler_accept(_session.smpl[_session.dId], newTokenId);
 		if(_hasTools){
 			auto toolErr = doTool(tokenStr, tool, callback, ftTime, prepStart, _session.llMem, response, newTokens, cb);
 			if(toolErr != StudError::Success){
@@ -536,7 +538,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	_session.cachedTokens[_session.dId].insert(_session.cachedTokens[_session.dId].end(), newTokens.begin(), newTokens.end());
 	if(cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(), ftTime, 0);
 	outMsg = std::move(msg);
-	OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
+	//OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
 	return status;
 }
 StudError GenerateWithTools(const MessageRole role, const char* prompt, const int nPredict, const bool callback){

@@ -20,7 +20,7 @@ enum class MessageRole{
 };
 struct ChatSession{
 	llama_context* ctx = nullptr;
-	llama_sampler* smpl = nullptr;
+	llama_sampler* smpl[2] = {nullptr, nullptr};
 	llama_memory_t llMem = nullptr;
 	std::vector<common_chat_msg> chatMsgs[2];
 	std::vector<llama_token> cachedTokens[2];

@@ -181,7 +181,7 @@
     <value>Fill</value>
   </data>
   <data name="textInput.Font" type="System.Drawing.Font, System.Drawing">
-    <value>Segoe UI, 9.75pt</value>
+    <value>Segoe UI Symbol, 9.75pt</value>
   </data>
   <data name="textInput.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>

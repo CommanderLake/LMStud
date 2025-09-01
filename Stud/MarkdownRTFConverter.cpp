@@ -266,7 +266,7 @@ extern "C" __declspec(dllexport) void ConvertMarkdownToRtf(const char* markdown,
 	g = std::clamp(g + delta, 0, 255);
 	b = std::clamp(b + delta, 0, 255);
 	std::ostringstream header;
-	header<<"{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat{\\fonttbl{\\f0\\fnil Segoe UI;}}{\\colortbl ;\\red"<<r<<"\\green"<<g<<"\\blue"<<b<<";}\\viewkind4\\uc1\\pard\\sa0\\sl0\\slmult1\\f0\\fs20 ";
+	header<<"{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat{\\fonttbl{\\f0\\fnil Segoe UI Symbol;}}{\\colortbl ;\\red"<<r<<"\\green"<<g<<"\\blue"<<b<<";}\\viewkind4\\uc1\\pard\\sa0\\sl0\\slmult1\\f0\\fs20 ";
 	const std::string rtfHeader = header.str();
 	rtf.str(std::string());
 	rtf.clear();

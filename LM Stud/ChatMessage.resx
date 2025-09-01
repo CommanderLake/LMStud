@@ -1,494 +1,494 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
-	Microsoft ResX Schema 
-	
-	Version 2.0
-	
-	The primary goals of this format is to allow a simple XML format 
-	that is mostly human readable. The generation and parsing of the 
-	various data types are done through the TypeConverter classes 
-	associated with the data types.
-	
-	Example:
-	
-	... ado.net/XML headers & schema ...
-	<resheader name="resmimetype">text/microsoft-resx</resheader>
-	<resheader name="version">2.0</resheader>
-	<resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-	<resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
-	<data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
-	<data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
-	<data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-		<value>[base64 mime encoded serialized .NET Framework object]</value>
-	</data>
-	<data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-		<value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
-		<comment>This is a comment</comment>
-	</data>
-				
-	There are any number of "resheader" rows that contain simple 
-	name/value pairs.
-	
-	Each data row contains a name, and value. The row also contains a 
-	type or mimetype. Type corresponds to a .NET class that support 
-	text/value conversion through the TypeConverter architecture. 
-	Classes that don't support this are serialized and stored with the 
-	mimetype set.
-	
-	The mimetype is used for serialized objects, and tells the 
-	ResXResourceReader how to depersist the object. This is currently not 
-	extensible. For a given mimetype the value must be set accordingly:
-	
-	Note - application/x-microsoft.net.object.binary.base64 is the format 
-	that the ResXResourceWriter will generate, however the reader can 
-	read any of the formats listed below.
-	
-	mimetype: application/x-microsoft.net.object.binary.base64
-	value   : The object must be serialized with 
-			: System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-			: and then encoded with base64 encoding.
-	
-	mimetype: application/x-microsoft.net.object.soap.base64
-	value   : The object must be serialized with 
-			: System.Runtime.Serialization.Formatters.Soap.SoapFormatter
-			: and then encoded with base64 encoding.
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
 
-	mimetype: application/x-microsoft.net.object.bytearray.base64
-	value   : The object must be serialized into a byte array 
-			: using a System.ComponentModel.TypeConverter
-			: and then encoded with base64 encoding.
-	-->
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-	<xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
-	<xsd:element name="root" msdata:IsDataSet="true">
-	  <xsd:complexType>
-		<xsd:choice maxOccurs="unbounded">
-		  <xsd:element name="metadata">
-			<xsd:complexType>
-			  <xsd:sequence>
-				<xsd:element name="value" type="xsd:string" minOccurs="0" />
-			  </xsd:sequence>
-			  <xsd:attribute name="name" use="required" type="xsd:string" />
-			  <xsd:attribute name="type" type="xsd:string" />
-			  <xsd:attribute name="mimetype" type="xsd:string" />
-			  <xsd:attribute ref="xml:space" />
-			</xsd:complexType>
-		  </xsd:element>
-		  <xsd:element name="assembly">
-			<xsd:complexType>
-			  <xsd:attribute name="alias" type="xsd:string" />
-			  <xsd:attribute name="name" type="xsd:string" />
-			</xsd:complexType>
-		  </xsd:element>
-		  <xsd:element name="data">
-			<xsd:complexType>
-			  <xsd:sequence>
-				<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-				<xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
-			  </xsd:sequence>
-			  <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
-			  <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-			  <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-			  <xsd:attribute ref="xml:space" />
-			</xsd:complexType>
-		  </xsd:element>
-		  <xsd:element name="resheader">
-			<xsd:complexType>
-			  <xsd:sequence>
-				<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-			  </xsd:sequence>
-			  <xsd:attribute name="name" type="xsd:string" use="required" />
-			</xsd:complexType>
-		  </xsd:element>
-		</xsd:choice>
-	  </xsd:complexType>
-	</xsd:element>
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
   </xsd:schema>
   <resheader name="resmimetype">
-	<value>text/microsoft-resx</value>
+    <value>text/microsoft-resx</value>
   </resheader>
   <resheader name="version">
-	<value>2.0</value>
+    <value>2.0</value>
   </resheader>
   <resheader name="reader">
-	<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-	<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="richTextMsg.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-	<value>Top, Bottom, Left, Right</value>
+    <value>Top, Bottom, Left, Right</value>
   </data>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="richTextMsg.Font" type="System.Drawing.Font, System.Drawing">
-	<value>Segoe UI, 9.75pt</value>
+    <value>Segoe UI Symbol, 9.75pt</value>
   </data>
   <data name="richTextMsg.Location" type="System.Drawing.Point, System.Drawing">
-	<value>0, 24</value>
+    <value>0, 24</value>
   </data>
   <data name="richTextMsg.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-	<value>0, 0, 0, 0</value>
+    <value>0, 0, 0, 0</value>
   </data>
   <data name="richTextMsg.ScrollBars" type="System.Windows.Forms.RichTextBoxScrollBars, System.Windows.Forms">
-	<value>None</value>
+    <value>None</value>
   </data>
   <data name="richTextMsg.Size" type="System.Drawing.Size, System.Drawing">
-	<value>200, 26</value>
+    <value>192, 18</value>
   </data>
   <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="richTextMsg.TabIndex" type="System.Int32, mscorlib">
-	<value>0</value>
+    <value>0</value>
   </data>
   <data name="richTextMsg.Text" xml:space="preserve">
-	<value />
+    <value />
   </data>
   <data name="&gt;&gt;richTextMsg.Name" xml:space="preserve">
-	<value>richTextMsg</value>
+    <value>richTextMsg</value>
   </data>
   <data name="&gt;&gt;richTextMsg.Type" xml:space="preserve">
-	<value>System.Windows.Forms.RichTextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.RichTextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;richTextMsg.Parent" xml:space="preserve">
-	<value>panel1</value>
+    <value>panel1</value>
   </data>
   <data name="&gt;&gt;richTextMsg.ZOrder" xml:space="preserve">
-	<value>3</value>
+    <value>3</value>
   </data>
   <data name="butDelete.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-	<value>Top, Right</value>
+    <value>Top, Right</value>
   </data>
   <data name="butDelete.Enabled" type="System.Boolean, mscorlib">
-	<value>False</value>
+    <value>False</value>
   </data>
   <data name="butDelete.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-	<value>
-		iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAO
-		vAAADrwBlbxySQAAA3tJREFUOE+tkd1PWncch12yJUuvd7GbZfsTlixbs4ulS2f2Ypomq7pWqsNmmy7d
-		amdpcbbAaVF5EQxIDyAORUB59RU9UN9ARApoUUQ5zkEVC7IKTAW0neXwY5wjy/6BfZLv3fM8N9+S/2Xm
-		ZfQc4gn8OLHo544urGiGHE+cRqs7YbC6UnqrOzno8PpHHd5J04K3D3GtPhh3rl3RPrK/Q8idmlGm1jKf
-		1Ew7fd3IvFMyOuMXaMfDHIUxThN2p2+zBH83soQnFHbnSRNPnOHINVGleS4s1I7BRICv0Bltq+izpeSx
-		ejgMfvjVlb1YM50tvTILzl+1gs9qbPnSRle27OE6Rl5PZNtmdg+Us75ApL1PP0ME2N06msXji07tHiot
-		O+AmxQUuldvAhSo7+OKqHXxeYQNffu8AX4vXwa3gIeASnGc5yu7W0IgAE1Z/Mzzn3nn07EA9GwON1MeA
-		XDGSvl7enxBd6P1TVmFIMW/YsWZJADSEMjkWzo3Y3OFWiaqSCLSK+j7STM6FkadJlTsBqAwPIFfyUEOV
-		aO+oVpZKVQojoWrhpqAXxZq2Mrk2ZDup0k7adh4IVGeJQAvc/658fCpgDsVVK/vgXo0Q5ZE6/ji+3BmL
-		fmdKM0iicJzEC8R4jpfc7WPAtDyNK5UT0yFIIH2PCEB1sjOSIcQ9thk1rCVz7NqeyNhX939fIQ8kWn6e
-		eVlf27ev/RZO6GimeP/WEUY3bUb0sM7kgSDoDBGQ1cne4A8M6Q2LGwh6mOX/pNoxlnOjB+XCrRFSV6yn
-		jOlfrHq4l+qwJqXBI+yefgk1t/RopTYIep0I4GN0aW7Ip5zzwUxO/JvriF4t3k9Xstc3qnhr26SCXCMK
-		DerQV79spF/dLXAOuqS/oaieDlJMvC8ctCyjf2U78Vc2mDPVzXMvSNAiuFin2m1le05IkxGs3rf3ohnn
-		6L1DHxbV092SDbzFUQ6uLceOOa7ngNK2Cj7h+cD5dn++lOsH56QBUGZ/jtUvhNNUnLutULxdVE9HVije
-		pMMKj9HmVQZS4A7fn/+gKwg+xg/eBGfV2/lPvQfYNWQpeB/ncL6o/rv8a9cZ7eI7HEFu9vFSzmR1YHy5
-		OksXSAonzvLlyqwGmcLoHTCGczhfFP8bhcasuEa5C9TDJiBVa0ETiw9u0pmgoXDU1nbAgmWgjsoAOFdU
-		Cisp+Qe9ry+hUa8N4QAAAABJRU5ErkJggg==
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAO
+        vAAADrwBlbxySQAAA3tJREFUOE+tkd1PWncch12yJUuvd7GbZfsTlixbs4ulS2f2Ypomq7pWqsNmmy7d
+        amdpcbbAaVF5EQxIDyAORUB59RU9UN9ARApoUUQ5zkEVC7IKTAW0neXwY5wjy/6BfZLv3fM8N9+S/2Xm
+        ZfQc4gn8OLHo544urGiGHE+cRqs7YbC6UnqrOzno8PpHHd5J04K3D3GtPhh3rl3RPrK/Q8idmlGm1jKf
+        1Ew7fd3IvFMyOuMXaMfDHIUxThN2p2+zBH83soQnFHbnSRNPnOHINVGleS4s1I7BRICv0Bltq+izpeSx
+        ejgMfvjVlb1YM50tvTILzl+1gs9qbPnSRle27OE6Rl5PZNtmdg+Us75ApL1PP0ME2N06msXji07tHiot
+        O+AmxQUuldvAhSo7+OKqHXxeYQNffu8AX4vXwa3gIeASnGc5yu7W0IgAE1Z/Mzzn3nn07EA9GwON1MeA
+        XDGSvl7enxBd6P1TVmFIMW/YsWZJADSEMjkWzo3Y3OFWiaqSCLSK+j7STM6FkadJlTsBqAwPIFfyUEOV
+        aO+oVpZKVQojoWrhpqAXxZq2Mrk2ZDup0k7adh4IVGeJQAvc/658fCpgDsVVK/vgXo0Q5ZE6/ji+3BmL
+        fmdKM0iicJzEC8R4jpfc7WPAtDyNK5UT0yFIIH2PCEB1sjOSIcQ9thk1rCVz7NqeyNhX939fIQ8kWn6e
+        eVlf27ev/RZO6GimeP/WEUY3bUb0sM7kgSDoDBGQ1cne4A8M6Q2LGwh6mOX/pNoxlnOjB+XCrRFSV6yn
+        jOlfrHq4l+qwJqXBI+yefgk1t/RopTYIep0I4GN0aW7Ip5zzwUxO/JvriF4t3k9Xstc3qnhr26SCXCMK
+        DerQV79spF/dLXAOuqS/oaieDlJMvC8ctCyjf2U78Vc2mDPVzXMvSNAiuFin2m1le05IkxGs3rf3ohnn
+        6L1DHxbV092SDbzFUQ6uLceOOa7ngNK2Cj7h+cD5dn++lOsH56QBUGZ/jtUvhNNUnLutULxdVE9HVije
+        pMMKj9HmVQZS4A7fn/+gKwg+xg/eBGfV2/lPvQfYNWQpeB/ncL6o/rv8a9cZ7eI7HEFu9vFSzmR1YHy5
+        OksXSAonzvLlyqwGmcLoHTCGczhfFP8bhcasuEa5C9TDJiBVa0ETiw9u0pmgoXDU1nbAgmWgjsoAOFdU
+        Cisp+Qe9ry+hUa8N4QAAAABJRU5ErkJggg==
 </value>
   </data>
   <data name="butDelete.Location" type="System.Drawing.Point, System.Drawing">
-	<value>176, 0</value>
+    <value>168, 0</value>
   </data>
   <data name="butDelete.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-	<value>0, 0, 0, 0</value>
+    <value>0, 0, 0, 0</value>
   </data>
   <data name="butDelete.Size" type="System.Drawing.Size, System.Drawing">
-	<value>24, 24</value>
+    <value>24, 24</value>
   </data>
   <data name="butDelete.TabIndex" type="System.Int32, mscorlib">
-	<value>1</value>
+    <value>1</value>
   </data>
   <data name="&gt;&gt;butDelete.Name" xml:space="preserve">
-	<value>butDelete</value>
+    <value>butDelete</value>
   </data>
   <data name="&gt;&gt;butDelete.Type" xml:space="preserve">
-	<value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;butDelete.Parent" xml:space="preserve">
-	<value>panel1</value>
+    <value>panel1</value>
   </data>
   <data name="&gt;&gt;butDelete.ZOrder" xml:space="preserve">
-	<value>7</value>
+    <value>7</value>
   </data>
   <data name="butEdit.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-	<value>Top, Right</value>
+    <value>Top, Right</value>
   </data>
   <data name="butEdit.Enabled" type="System.Boolean, mscorlib">
-	<value>False</value>
+    <value>False</value>
   </data>
   <data name="butEdit.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-	<value>
-		iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-		YQUAAAAJcEhZcwAADrwAAA68AZW8ckkAAAC/SURBVDhPY6A7OOmXZLLfvp4FyiUN3Dx9Lu5URMb7E37x
-		K0g25NatW8m3b9/+e/vqteuno7LenwiIN4ZKEQZv9jEkPzqdefzGjRt/QfjaidNxUCnC4O1ehtQ3exn+
-		vd3H8P/RqczD165dS4VKEQYgm4H4L0gzyJB3+xiyoFKEwUjU/O6keQVIE0wzKPShUsSB9y/OP357RJ50
-		m0Fg/fr1Vnv27Pn/4eXZx+9Pm5dDhYkHmzZt0gAZAuXSEzAwAAAqCpntTLtXIAAAAABJRU5ErkJggg==
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
+        YQUAAAAJcEhZcwAADrwAAA68AZW8ckkAAAC/SURBVDhPY6A7OOmXZLLfvp4FyiUN3Dx9Lu5URMb7E37x
+        K0g25NatW8m3b9/+e/vqteuno7LenwiIN4ZKEQZv9jEkPzqdefzGjRt/QfjaidNxUCnC4O1ehtQ3exn+
+        vd3H8P/RqczD165dS4VKEQYgm4H4L0gzyJB3+xiyoFKEwUjU/O6keQVIE0wzKPShUsSB9y/OP357RJ50
+        m0Fg/fr1Vnv27Pn/4eXZx+9Pm5dDhYkHmzZt0gAZAuXSEzAwAAAqCpntTLtXIAAAAABJRU5ErkJggg==
 </value>
   </data>
   <data name="butEdit.Location" type="System.Drawing.Point, System.Drawing">
-	<value>152, 0</value>
+    <value>144, 0</value>
   </data>
   <data name="butEdit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-	<value>0, 0, 0, 0</value>
+    <value>0, 0, 0, 0</value>
   </data>
   <data name="butEdit.Size" type="System.Drawing.Size, System.Drawing">
-	<value>24, 24</value>
+    <value>24, 24</value>
   </data>
   <data name="butEdit.TabIndex" type="System.Int32, mscorlib">
-	<value>2</value>
+    <value>2</value>
   </data>
   <data name="&gt;&gt;butEdit.Name" xml:space="preserve">
-	<value>butEdit</value>
+    <value>butEdit</value>
   </data>
   <data name="&gt;&gt;butEdit.Type" xml:space="preserve">
-	<value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;butEdit.Parent" xml:space="preserve">
-	<value>panel1</value>
+    <value>panel1</value>
   </data>
   <data name="&gt;&gt;butEdit.ZOrder" xml:space="preserve">
-	<value>6</value>
+    <value>6</value>
   </data>
   <data name="butRegen.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-	<value>Top, Right</value>
+    <value>Top, Right</value>
   </data>
   <data name="butRegen.Enabled" type="System.Boolean, mscorlib">
-	<value>False</value>
+    <value>False</value>
   </data>
   <data name="butRegen.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-	<value>
-		iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAO
-		vAAADrwBlbxySQAAAjlJREFUOE9jIBb073zXnTbvRQ2USxj8//+fcfLuj8LdW97Jz9r5XnHCjnfHw6c8
-		e2dXe84UqgQ3mLX/o8Wcg+9nTtv77uyEne8e9Wx7e6ty9evvIZOf/neov7TJp/4pF1QpKqiv/88E1Fg6
-		ade7t4VLX/0PnPj0v3fvk/8+fU/++wKxV8+T/x7dT37alB2ph2pBBX073tUD/fnfIGHePznblIeylrEX
-		9WNnX7KrOv3NtePRf+fWu/9tq07914mc/AGqBQEqVrxMdOt89EbVu2ablGGQL1QYDICaHwBt/a8XM+O/
-		olPOMznrlGlQKQSwLT+2SMO3qRnKRQFOrXd/KrkWPpUyieiQNo/zhAoTBmkz/7OCaKPUFe1yNokuYEFi
-		ACgwZ+z9UBM97dkGqBBxYOK2f+zzD3+omL3//c3iZS9/m2SsvQ6VgoOpe97pJc1+fgDKRYBJO9+Xzdj3
-		4UHbpje/0oEx4dJ+/79t5aleqDQYzD34viB/8ctXplkbL0CFECBy2rMVgROe/vfsfvLfrfMxmI6c+vRV
-		7ZrXl6fuef+we9vb95FTn/3XDum7reicrQvVhgCW9RfEbGvOHnZsuPrfqeXWf8em6/+dmm+AaauS/f+1
-		gjv/S5vHHJSxTNKBasEE9vVXbOzrL30wyVjzX8O/5bGiS/5deZvU21JmETskjUNyZNwKhaBKcQP7mvON
-		WkGdf+RskmJVbHJFVTzKZOTt6zmg0oSBfdF+Ee2wvvnKvjXaUCE8gIEBAISJCh4SbZ5LAAAAAElFTkSu
-		QmCC
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAO
+        vAAADrwBlbxySQAAAjlJREFUOE9jIBb073zXnTbvRQ2USxj8//+fcfLuj8LdW97Jz9r5XnHCjnfHw6c8
+        e2dXe84UqgQ3mLX/o8Wcg+9nTtv77uyEne8e9Wx7e6ty9evvIZOf/neov7TJp/4pF1QpKqiv/88E1Fg6
+        ade7t4VLX/0PnPj0v3fvk/8+fU/++wKxV8+T/x7dT37alB2ph2pBBX073tUD/fnfIGHePznblIeylrEX
+        9WNnX7KrOv3NtePRf+fWu/9tq07914mc/AGqBQEqVrxMdOt89EbVu2ablGGQL1QYDICaHwBt/a8XM+O/
+        olPOMznrlGlQKQSwLT+2SMO3qRnKRQFOrXd/KrkWPpUyieiQNo/zhAoTBmkz/7OCaKPUFe1yNokuYEFi
+        ACgwZ+z9UBM97dkGqBBxYOK2f+zzD3+omL3//c3iZS9/m2SsvQ6VgoOpe97pJc1+fgDKRYBJO9+Xzdj3
+        4UHbpje/0oEx4dJ+/79t5aleqDQYzD34viB/8ctXplkbL0CFECBy2rMVgROe/vfsfvLfrfMxmI6c+vRV
+        7ZrXl6fuef+we9vb95FTn/3XDum7reicrQvVhgCW9RfEbGvOHnZsuPrfqeXWf8em6/+dmm+AaauS/f+1
+        gjv/S5vHHJSxTNKBasEE9vVXbOzrL30wyVjzX8O/5bGiS/5deZvU21JmETskjUNyZNwKhaBKcQP7mvON
+        WkGdf+RskmJVbHJFVTzKZOTt6zmg0oSBfdF+Ee2wvvnKvjXaUCE8gIEBAISJCh4SbZ5LAAAAAElFTkSu
+        QmCC
 </value>
   </data>
   <data name="butRegen.Location" type="System.Drawing.Point, System.Drawing">
-	<value>128, 0</value>
+    <value>120, 0</value>
   </data>
   <data name="butRegen.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-	<value>0, 0, 0, 0</value>
+    <value>0, 0, 0, 0</value>
   </data>
   <data name="butRegen.Size" type="System.Drawing.Size, System.Drawing">
-	<value>24, 24</value>
+    <value>24, 24</value>
   </data>
   <data name="butRegen.TabIndex" type="System.Int32, mscorlib">
-	<value>3</value>
+    <value>3</value>
   </data>
   <data name="&gt;&gt;butRegen.Name" xml:space="preserve">
-	<value>butRegen</value>
+    <value>butRegen</value>
   </data>
   <data name="&gt;&gt;butRegen.Type" xml:space="preserve">
-	<value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;butRegen.Parent" xml:space="preserve">
-	<value>panel1</value>
+    <value>panel1</value>
   </data>
   <data name="&gt;&gt;butRegen.ZOrder" xml:space="preserve">
-	<value>4</value>
+    <value>4</value>
   </data>
   <data name="label1.AutoSize" type="System.Boolean, mscorlib">
-	<value>True</value>
+    <value>True</value>
   </data>
   <data name="label1.Font" type="System.Drawing.Font, System.Drawing">
-	<value>Segoe UI Semibold, 12pt, style=Bold</value>
+    <value>Segoe UI Semibold, 12pt, style=Bold</value>
   </data>
   <data name="label1.Location" type="System.Drawing.Point, System.Drawing">
-	<value>3, 0</value>
+    <value>3, 0</value>
   </data>
   <data name="label1.Size" type="System.Drawing.Size, System.Drawing">
-	<value>54, 21</value>
+    <value>51, 21</value>
   </data>
   <data name="label1.TabIndex" type="System.Int32, mscorlib">
-	<value>4</value>
+    <value>4</value>
   </data>
   <data name="label1.Text" xml:space="preserve">
-	<value>label1</value>
+    <value>label1</value>
   </data>
   <data name="&gt;&gt;label1.Name" xml:space="preserve">
-	<value>label1</value>
+    <value>label1</value>
   </data>
   <data name="&gt;&gt;label1.Type" xml:space="preserve">
-	<value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;label1.Parent" xml:space="preserve">
-	<value>panel1</value>
+    <value>panel1</value>
   </data>
   <data name="&gt;&gt;label1.ZOrder" xml:space="preserve">
-	<value>5</value>
+    <value>5</value>
   </data>
   <data name="butApplyEdit.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-	<value>Top, Right</value>
+    <value>Top, Right</value>
   </data>
   <data name="butApplyEdit.Enabled" type="System.Boolean, mscorlib">
-	<value>False</value>
+    <value>False</value>
   </data>
   <data name="butApplyEdit.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-	<value>
-		iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-		YQUAAAAJcEhZcwAADrwAAA68AZW8ckkAAAHFSURBVDhPlZNNLwNBHMab+ABOEicniavE1UlCvHdn2q2W
-		ljhIRFzQ7S5FGy8lRJEmDQknkUh8jH4LXVulSnWrst5dHjPtxAVVv2Syu/PM/5ln/pux/Rc9QAd1hSbY
-		ONVV0iamqyOpORsNlcKKj+A+OoTzAIWQqkNXSCy/NYTn/WEUo57/GbDIylXYhec9H6xdD9JzlBtMCrky
-		uia1GJoDVsyLx103smEHKyY7Qv4bFv0gv+GGtTMAM8KL2e6qXCvkyrDFwUxIhrU9gOI6RUojMBTqE3IZ
-		Q3E2Jf2kU3x+kfLbmw2N4mHThYd1gkxQ4tE3hFyGxVu7DLlwveoBe4+zaA1CYruT/dyKE8U1glyorxQd
-		slwj5DKG6sD7yQQ+TsZhRr3c5PhclVrZ4unLIEUxIqEQ7kVKlb5H5/AE+agPb0djeD0cRWGz/H/5MJft
-		KIR6kNF6efSfu34266zj0W9W3XiKe0udvl1yILsgwVzsRk7rLJml/HK9KPkZZhLLLLLzsk7fL/fDXOjC
-		ndqBtFI6+7RYVhlmspWeJcjP8+J2ZGc6WE9oQsjVwU0uAnbcTrXhwt8HfvuEVD3cRA+QF/4UU79gs30C
-		6jkazyS/7oUAAAAASUVORK5CYII=
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
+        YQUAAAAJcEhZcwAADrwAAA68AZW8ckkAAAHFSURBVDhPlZNNLwNBHMab+ABOEicniavE1UlCvHdn2q2W
+        ljhIRFzQ7S5FGy8lRJEmDQknkUh8jH4LXVulSnWrst5dHjPtxAVVv2Syu/PM/5ln/pux/Rc9QAd1hSbY
+        ONVV0iamqyOpORsNlcKKj+A+OoTzAIWQqkNXSCy/NYTn/WEUo57/GbDIylXYhec9H6xdD9JzlBtMCrky
+        uia1GJoDVsyLx103smEHKyY7Qv4bFv0gv+GGtTMAM8KL2e6qXCvkyrDFwUxIhrU9gOI6RUojMBTqE3IZ
+        Q3E2Jf2kU3x+kfLbmw2N4mHThYd1gkxQ4tE3hFyGxVu7DLlwveoBe4+zaA1CYruT/dyKE8U1glyorxQd
+        slwj5DKG6sD7yQQ+TsZhRr3c5PhclVrZ4unLIEUxIqEQ7kVKlb5H5/AE+agPb0djeD0cRWGz/H/5MJft
+        KIR6kNF6efSfu34266zj0W9W3XiKe0udvl1yILsgwVzsRk7rLJml/HK9KPkZZhLLLLLzsk7fL/fDXOjC
+        ndqBtFI6+7RYVhlmspWeJcjP8+J2ZGc6WE9oQsjVwU0uAnbcTrXhwt8HfvuEVD3cRA+QF/4UU79gs30C
+        6jkazyS/7oUAAAAASUVORK5CYII=
 </value>
   </data>
   <data name="butApplyEdit.Location" type="System.Drawing.Point, System.Drawing">
-	<value>128, 0</value>
+    <value>120, 0</value>
   </data>
   <data name="butApplyEdit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-	<value>0, 0, 0, 0</value>
+    <value>0, 0, 0, 0</value>
   </data>
   <data name="butApplyEdit.Size" type="System.Drawing.Size, System.Drawing">
-	<value>24, 24</value>
+    <value>24, 24</value>
   </data>
   <data name="butApplyEdit.TabIndex" type="System.Int32, mscorlib">
-	<value>7</value>
+    <value>7</value>
   </data>
   <data name="butApplyEdit.Visible" type="System.Boolean, mscorlib">
-	<value>False</value>
+    <value>False</value>
   </data>
   <data name="&gt;&gt;butApplyEdit.Name" xml:space="preserve">
-	<value>butApplyEdit</value>
+    <value>butApplyEdit</value>
   </data>
   <data name="&gt;&gt;butApplyEdit.Type" xml:space="preserve">
-	<value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;butApplyEdit.Parent" xml:space="preserve">
-	<value>panel1</value>
+    <value>panel1</value>
   </data>
   <data name="&gt;&gt;butApplyEdit.ZOrder" xml:space="preserve">
-	<value>0</value>
+    <value>0</value>
   </data>
   <data name="butCancelEdit.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-	<value>Top, Right</value>
+    <value>Top, Right</value>
   </data>
   <data name="butCancelEdit.Enabled" type="System.Boolean, mscorlib">
-	<value>False</value>
+    <value>False</value>
   </data>
   <data name="butCancelEdit.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-	<value>
-		iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-		YQUAAAAJcEhZcwAADrwAAA68AZW8ckkAAAEtSURBVDhPzZKtTgNBFIVXViIrMHVUNsHwCiQ8BUE1KILa
-		4DYIshLJK/AIa0i6pska0so1iHVLghhD0sv9pnu3M2USLCc5yZ175syc+cn+D5xz+e5710D35fKhPeIv
-		PUP4fCoFUnddV2h7gmbmUNf2CdoIP+GxEKNf5KMr+r7fm480tUyVfgMPYnnTQy5Gxqles26e1TJTHhYA
-		xPaG+ztJEW31tnrRqQtlfIQBE2Izsb1dSkh6VVVhvlDG8UPYmbc31xKSXl3X6egGu+366lJS9Mnadnyd
-		CGZ+PV+IkXGqxzHVEi+CUJ7NxciYMxM7panl9z9Ynk4FUg+3zYXNiH2s01ceUtg/gMM781R22+PrwM37
-		pgy0CMRCYHXqcAI1PTTmJP8B8DvuyyQCPct+ALN4c+J3T7UIAAAAAElFTkSuQmCC
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
+        YQUAAAAJcEhZcwAADrwAAA68AZW8ckkAAAEtSURBVDhPzZKtTgNBFIVXViIrMHVUNsHwCiQ8BUE1KILa
+        4DYIshLJK/AIa0i6pska0so1iHVLghhD0sv9pnu3M2USLCc5yZ175syc+cn+D5xz+e5710D35fKhPeIv
+        PUP4fCoFUnddV2h7gmbmUNf2CdoIP+GxEKNf5KMr+r7fm480tUyVfgMPYnnTQy5Gxqles26e1TJTHhYA
+        xPaG+ztJEW31tnrRqQtlfIQBE2Izsb1dSkh6VVVhvlDG8UPYmbc31xKSXl3X6egGu+366lJS9Mnadnyd
+        CGZ+PV+IkXGqxzHVEi+CUJ7NxciYMxM7panl9z9Ynk4FUg+3zYXNiH2s01ceUtg/gMM781R22+PrwM37
+        pgy0CMRCYHXqcAI1PTTmJP8B8DvuyyQCPct+ALN4c+J3T7UIAAAAAElFTkSuQmCC
 </value>
   </data>
   <data name="butCancelEdit.Location" type="System.Drawing.Point, System.Drawing">
-	<value>152, 0</value>
+    <value>144, 0</value>
   </data>
   <data name="butCancelEdit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-	<value>0, 0, 0, 0</value>
+    <value>0, 0, 0, 0</value>
   </data>
   <data name="butCancelEdit.Size" type="System.Drawing.Size, System.Drawing">
-	<value>24, 24</value>
+    <value>24, 24</value>
   </data>
   <data name="butCancelEdit.TabIndex" type="System.Int32, mscorlib">
-	<value>6</value>
+    <value>6</value>
   </data>
   <data name="butCancelEdit.Visible" type="System.Boolean, mscorlib">
-	<value>False</value>
+    <value>False</value>
   </data>
   <data name="&gt;&gt;butCancelEdit.Name" xml:space="preserve">
-	<value>butCancelEdit</value>
+    <value>butCancelEdit</value>
   </data>
   <data name="&gt;&gt;butCancelEdit.Type" xml:space="preserve">
-	<value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;butCancelEdit.Parent" xml:space="preserve">
-	<value>panel1</value>
+    <value>panel1</value>
   </data>
   <data name="&gt;&gt;butCancelEdit.ZOrder" xml:space="preserve">
-	<value>1</value>
+    <value>1</value>
   </data>
   <data name="checkThink.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-	<value>Top, Right</value>
+    <value>Top, Right</value>
   </data>
   <data name="checkThink.AutoSize" type="System.Boolean, mscorlib">
-	<value>True</value>
+    <value>True</value>
   </data>
   <data name="checkThink.Enabled" type="System.Boolean, mscorlib">
-	<value>False</value>
+    <value>False</value>
   </data>
   <data name="checkThink.Location" type="System.Drawing.Point, System.Drawing">
-	<value>72, 5</value>
+    <value>64, 5</value>
   </data>
   <data name="checkThink.Size" type="System.Drawing.Size, System.Drawing">
-	<value>53, 17</value>
+    <value>53, 17</value>
   </data>
   <data name="checkThink.TabIndex" type="System.Int32, mscorlib">
-	<value>5</value>
+    <value>5</value>
   </data>
   <data name="checkThink.Text" xml:space="preserve">
-	<value>Think</value>
+    <value>Think</value>
   </data>
   <data name="checkThink.Visible" type="System.Boolean, mscorlib">
-	<value>False</value>
+    <value>False</value>
   </data>
   <data name="&gt;&gt;checkThink.Name" xml:space="preserve">
-	<value>checkThink</value>
+    <value>checkThink</value>
   </data>
   <data name="&gt;&gt;checkThink.Type" xml:space="preserve">
-	<value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;checkThink.Parent" xml:space="preserve">
-	<value>panel1</value>
+    <value>panel1</value>
   </data>
   <data name="&gt;&gt;checkThink.ZOrder" xml:space="preserve">
-	<value>2</value>
+    <value>2</value>
   </data>
   <data name="panel1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
-	<value>Fill</value>
+    <value>Fill</value>
   </data>
   <data name="panel1.Location" type="System.Drawing.Point, System.Drawing">
-	<value>0, 0</value>
+    <value>0, 0</value>
   </data>
   <data name="panel1.Size" type="System.Drawing.Size, System.Drawing">
-	<value>200, 50</value>
+    <value>192, 42</value>
   </data>
   <data name="panel1.TabIndex" type="System.Int32, mscorlib">
-	<value>5</value>
+    <value>5</value>
   </data>
   <data name="&gt;&gt;panel1.Name" xml:space="preserve">
-	<value>panel1</value>
+    <value>panel1</value>
   </data>
   <data name="&gt;&gt;panel1.Type" xml:space="preserve">
-	<value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;panel1.Parent" xml:space="preserve">
-	<value>$this</value>
+    <value>$this</value>
   </data>
   <data name="&gt;&gt;panel1.ZOrder" xml:space="preserve">
-	<value>0</value>
+    <value>0</value>
   </data>
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-	<value>True</value>
+    <value>True</value>
   </metadata>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
-	<value>6, 13</value>
+    <value>6, 13</value>
   </data>
   <data name="$this.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-	<value>0, 0, 0, 0</value>
+    <value>0, 0, 0, 0</value>
   </data>
   <data name="$this.Size" type="System.Drawing.Size, System.Drawing">
-	<value>200, 50</value>
+    <value>192, 42</value>
   </data>
   <data name="&gt;&gt;$this.Name" xml:space="preserve">
-	<value>ChatMessage</value>
+    <value>ChatMessage</value>
   </data>
   <data name="&gt;&gt;$this.Type" xml:space="preserve">
-	<value>System.Windows.Forms.UserControl, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.UserControl, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>
