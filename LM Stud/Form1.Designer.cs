@@ -43,6 +43,11 @@ namespace LMStud
 			this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.tabControlModelStuff = new System.Windows.Forms.TabControl();
 			this.tabPageModelSettings = new System.Windows.Forms.TabPage();
+			this.groupJinjaTmplModel = new System.Windows.Forms.GroupBox();
+			this.label30 = new System.Windows.Forms.Label();
+			this.butBrowseJinjaTmplModel = new System.Windows.Forms.Button();
+			this.textJinjaTmplModel = new System.Windows.Forms.TextBox();
+			this.checkOverrideJinjaModel = new System.Windows.Forms.CheckBox();
 			this.labelSystemPromptModel = new System.Windows.Forms.Label();
 			this.textSystemPromptModel = new System.Windows.Forms.TextBox();
 			this.butApplyModelSettings = new System.Windows.Forms.Button();
@@ -192,6 +197,7 @@ namespace LMStud
 			this.labelPreGen = new System.Windows.Forms.ToolStripStatusLabel();
 			this.labelEditing = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -202,6 +208,7 @@ namespace LMStud
 			this.splitContainer2.SuspendLayout();
 			this.tabControlModelStuff.SuspendLayout();
 			this.tabPageModelSettings.SuspendLayout();
+			this.groupJinjaTmplModel.SuspendLayout();
 			this.groupAdvancedModel.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numMinPModel)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTopKModel)).BeginInit();
@@ -333,6 +340,7 @@ namespace LMStud
 			// 
 			// tabPageModelSettings
 			// 
+			this.tabPageModelSettings.Controls.Add(this.groupJinjaTmplModel);
 			this.tabPageModelSettings.Controls.Add(this.labelSystemPromptModel);
 			this.tabPageModelSettings.Controls.Add(this.textSystemPromptModel);
 			this.tabPageModelSettings.Controls.Add(this.butApplyModelSettings);
@@ -342,6 +350,39 @@ namespace LMStud
 			resources.ApplyResources(this.tabPageModelSettings, "tabPageModelSettings");
 			this.tabPageModelSettings.Name = "tabPageModelSettings";
 			this.tabPageModelSettings.UseVisualStyleBackColor = true;
+			// 
+			// groupJinjaTmplModel
+			// 
+			this.groupJinjaTmplModel.Controls.Add(this.label30);
+			this.groupJinjaTmplModel.Controls.Add(this.butBrowseJinjaTmplModel);
+			this.groupJinjaTmplModel.Controls.Add(this.textJinjaTmplModel);
+			this.groupJinjaTmplModel.Controls.Add(this.checkOverrideJinjaModel);
+			resources.ApplyResources(this.groupJinjaTmplModel, "groupJinjaTmplModel");
+			this.groupJinjaTmplModel.Name = "groupJinjaTmplModel";
+			this.groupJinjaTmplModel.TabStop = false;
+			// 
+			// label30
+			// 
+			resources.ApplyResources(this.label30, "label30");
+			this.label30.Name = "label30";
+			// 
+			// butBrowseJinjaTmplModel
+			// 
+			resources.ApplyResources(this.butBrowseJinjaTmplModel, "butBrowseJinjaTmplModel");
+			this.butBrowseJinjaTmplModel.Name = "butBrowseJinjaTmplModel";
+			this.butBrowseJinjaTmplModel.UseVisualStyleBackColor = true;
+			this.butBrowseJinjaTmplModel.Click += new System.EventHandler(this.ButBrowseJinjaTmplModel_Click);
+			// 
+			// textJinjaTmplModel
+			// 
+			resources.ApplyResources(this.textJinjaTmplModel, "textJinjaTmplModel");
+			this.textJinjaTmplModel.Name = "textJinjaTmplModel";
+			// 
+			// checkOverrideJinjaModel
+			// 
+			resources.ApplyResources(this.checkOverrideJinjaModel, "checkOverrideJinjaModel");
+			this.checkOverrideJinjaModel.Name = "checkOverrideJinjaModel";
+			this.checkOverrideJinjaModel.UseVisualStyleBackColor = true;
 			// 
 			// labelSystemPromptModel
 			// 
@@ -1668,6 +1709,10 @@ namespace LMStud
 			this.toolTip1.UseAnimation = false;
 			this.toolTip1.UseFading = false;
 			// 
+			// openFileDialog1
+			// 
+			resources.ApplyResources(this.openFileDialog1, "openFileDialog1");
+			// 
 			// Form1
 			// 
 			resources.ApplyResources(this, "$this");
@@ -1693,6 +1738,8 @@ namespace LMStud
 			this.tabControlModelStuff.ResumeLayout(false);
 			this.tabPageModelSettings.ResumeLayout(false);
 			this.tabPageModelSettings.PerformLayout();
+			this.groupJinjaTmplModel.ResumeLayout(false);
+			this.groupJinjaTmplModel.PerformLayout();
 			this.groupAdvancedModel.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.numMinPModel)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTopKModel)).EndInit();
@@ -1914,6 +1961,12 @@ namespace LMStud
 		private System.Windows.Forms.ToolStripStatusLabel labelEditing;
 		internal System.Windows.Forms.CheckBox checkAutoScroll;
 		private System.Windows.Forms.CheckBox checkDialectic;
+		private System.Windows.Forms.GroupBox groupJinjaTmplModel;
+		private System.Windows.Forms.Label label30;
+		private System.Windows.Forms.Button butBrowseJinjaTmplModel;
+		private System.Windows.Forms.TextBox textJinjaTmplModel;
+		private System.Windows.Forms.CheckBox checkOverrideJinjaModel;
+		private System.Windows.Forms.OpenFileDialog openFileDialog1;
 	}
 }
 

@@ -119,5 +119,8 @@ namespace LMStud{
 				FlashAttn = flashAttn;
 			}
 		}
+		private void ButBrowseJinjaTmplModel_Click(object sender, EventArgs e){
+			if(openFileDialog1.ShowDialog(this) == DialogResult.OK) textJinjaTmplModel.Text = openFileDialog1.FileName;
+		}
 	}
 }

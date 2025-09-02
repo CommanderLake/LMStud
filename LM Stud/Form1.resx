@@ -309,6 +309,138 @@
   <data name="&gt;&gt;splitContainer2.Panel1.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
+  <data name="label30.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="label30.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 45</value>
+  </data>
+  <data name="label30.Size" type="System.Drawing.Size, System.Drawing">
+    <value>26, 13</value>
+  </data>
+  <data name="label30.TabIndex" type="System.Int32, mscorlib">
+    <value>39</value>
+  </data>
+  <data name="label30.Text" xml:space="preserve">
+    <value>File:</value>
+  </data>
+  <data name="&gt;&gt;label30.Name" xml:space="preserve">
+    <value>label30</value>
+  </data>
+  <data name="&gt;&gt;label30.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;label30.Parent" xml:space="preserve">
+    <value>groupJinjaTmplModel</value>
+  </data>
+  <data name="&gt;&gt;label30.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="butBrowseJinjaTmplModel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>119, 68</value>
+  </data>
+  <data name="butBrowseJinjaTmplModel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 23</value>
+  </data>
+  <data name="butBrowseJinjaTmplModel.TabIndex" type="System.Int32, mscorlib">
+    <value>38</value>
+  </data>
+  <data name="butBrowseJinjaTmplModel.Text" xml:space="preserve">
+    <value>Browse</value>
+  </data>
+  <data name="&gt;&gt;butBrowseJinjaTmplModel.Name" xml:space="preserve">
+    <value>butBrowseJinjaTmplModel</value>
+  </data>
+  <data name="&gt;&gt;butBrowseJinjaTmplModel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;butBrowseJinjaTmplModel.Parent" xml:space="preserve">
+    <value>groupJinjaTmplModel</value>
+  </data>
+  <data name="&gt;&gt;butBrowseJinjaTmplModel.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="textJinjaTmplModel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>38, 42</value>
+  </data>
+  <data name="textJinjaTmplModel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>156, 20</value>
+  </data>
+  <data name="textJinjaTmplModel.TabIndex" type="System.Int32, mscorlib">
+    <value>37</value>
+  </data>
+  <data name="&gt;&gt;textJinjaTmplModel.Name" xml:space="preserve">
+    <value>textJinjaTmplModel</value>
+  </data>
+  <data name="&gt;&gt;textJinjaTmplModel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;textJinjaTmplModel.Parent" xml:space="preserve">
+    <value>groupJinjaTmplModel</value>
+  </data>
+  <data name="&gt;&gt;textJinjaTmplModel.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="checkOverrideJinjaModel.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="checkOverrideJinjaModel.CheckAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
+  </data>
+  <data name="checkOverrideJinjaModel.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="checkOverrideJinjaModel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 19</value>
+  </data>
+  <data name="checkOverrideJinjaModel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>188, 17</value>
+  </data>
+  <data name="checkOverrideJinjaModel.TabIndex" type="System.Int32, mscorlib">
+    <value>36</value>
+  </data>
+  <data name="checkOverrideJinjaModel.Text" xml:space="preserve">
+    <value>Override</value>
+  </data>
+  <data name="checkOverrideJinjaModel.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
+  </data>
+  <data name="&gt;&gt;checkOverrideJinjaModel.Name" xml:space="preserve">
+    <value>checkOverrideJinjaModel</value>
+  </data>
+  <data name="&gt;&gt;checkOverrideJinjaModel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;checkOverrideJinjaModel.Parent" xml:space="preserve">
+    <value>groupJinjaTmplModel</value>
+  </data>
+  <data name="&gt;&gt;checkOverrideJinjaModel.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="groupJinjaTmplModel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 254</value>
+  </data>
+  <data name="groupJinjaTmplModel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>200, 98</value>
+  </data>
+  <data name="groupJinjaTmplModel.TabIndex" type="System.Int32, mscorlib">
+    <value>41</value>
+  </data>
+  <data name="groupJinjaTmplModel.Text" xml:space="preserve">
+    <value>Jinja template</value>
+  </data>
+  <data name="&gt;&gt;groupJinjaTmplModel.Name" xml:space="preserve">
+    <value>groupJinjaTmplModel</value>
+  </data>
+  <data name="&gt;&gt;groupJinjaTmplModel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;groupJinjaTmplModel.Parent" xml:space="preserve">
+    <value>tabPageModelSettings</value>
+  </data>
+  <data name="&gt;&gt;groupJinjaTmplModel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
   <data name="labelSystemPromptModel.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
@@ -337,7 +469,7 @@
     <value>tabPageModelSettings</value>
   </data>
   <data name="&gt;&gt;labelSystemPromptModel.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>1</value>
   </data>
   <data name="textSystemPromptModel.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Left, Right</value>
@@ -352,7 +484,7 @@
     <value>True</value>
   </data>
   <data name="textSystemPromptModel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>787, 218</value>
+    <value>787, 322</value>
   </data>
   <data name="textSystemPromptModel.TabIndex" type="System.Int32, mscorlib">
     <value>39</value>
@@ -367,13 +499,13 @@
     <value>tabPageModelSettings</value>
   </data>
   <data name="&gt;&gt;textSystemPromptModel.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>2</value>
   </data>
   <data name="butApplyModelSettings.Enabled" type="System.Boolean, mscorlib">
     <value>False</value>
   </data>
   <data name="butApplyModelSettings.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 254</value>
+    <value>0, 358</value>
   </data>
   <data name="butApplyModelSettings.Size" type="System.Drawing.Size, System.Drawing">
     <value>75, 23</value>
@@ -394,7 +526,7 @@
     <value>tabPageModelSettings</value>
   </data>
   <data name="&gt;&gt;butApplyModelSettings.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>3</value>
   </data>
   <data name="checkOverrideSettings.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -421,7 +553,7 @@
     <value>tabPageModelSettings</value>
   </data>
   <data name="&gt;&gt;checkOverrideSettings.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>4</value>
   </data>
   <data name="numMinPModel.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -664,7 +796,7 @@
     <value>tabPageModelSettings</value>
   </data>
   <data name="&gt;&gt;groupAdvancedModel.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>5</value>
   </data>
   <data name="numCtxSizeModel.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -871,7 +1003,7 @@
     <value>tabPageModelSettings</value>
   </data>
   <data name="&gt;&gt;groupCommonModel.ZOrder" xml:space="preserve">
-    <value>5</value>
+    <value>6</value>
   </data>
   <data name="tabPageModelSettings.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 22</value>
@@ -4326,6 +4458,12 @@
   <metadata name="toolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>254, 17</value>
   </metadata>
+  <metadata name="openFileDialog1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>338, 17</value>
+  </metadata>
+  <data name="openFileDialog1.Filter" xml:space="preserve">
+    <value>Text files|*.txt</value>
+  </data>
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
@@ -4460,6 +4598,12 @@
   </data>
   <data name="&gt;&gt;toolTip1.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolTip, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;openFileDialog1.Name" xml:space="preserve">
+    <value>openFileDialog1</value>
+  </data>
+  <data name="&gt;&gt;openFileDialog1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.OpenFileDialog, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;$this.Name" xml:space="preserve">
     <value>Form1</value>
