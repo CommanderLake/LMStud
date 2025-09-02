@@ -281,7 +281,8 @@ StudError SetMessageAt(const int index, const char* think, const char* message){
 	_session.chatMsgs[_session.dId][index].reasoning_content = think;
 	_session.chatMsgs[_session.dId][index].content = std::string(message);
 	auto err = RetokenizeChat();
-	if(err != StudError::Success || _session.dialState[_session.dId == 0 ? 1 : 0].empty()) return err;
+	const auto dId = _session.dId == 0 ? 1 : 0;
+	if(err != StudError::Success || _session.dialState[dId].empty() || _session.chatMsgs[dId].size() <= index) return err;
 	DialecticSwap();
 	_session.chatMsgs[_session.dId][index].reasoning_content = think;
 	_session.chatMsgs[_session.dId][index].content = std::string(message);
@@ -293,7 +294,8 @@ StudError RemoveMessageAt(const int index){
 	if(index < 0 || index >= static_cast<int>(_session.chatMsgs[_session.dId].size())) return StudError::IndexOutOfRange;
 	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index);
 	auto err = RetokenizeChat();
-	if(err != StudError::Success || _session.dialState[_session.dId == 0 ? 1 : 0].empty()) return err;
+	const auto dId = _session.dId == 0 ? 1 : 0;
+	if(err != StudError::Success || _session.dialState[dId].empty() || _session.chatMsgs[dId].size() <= index) return err;
 	DialecticSwap();
 	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index);
 	err = RetokenizeChat();
@@ -305,7 +307,8 @@ StudError RemoveMessagesStartingAt(int index){
 	if(index > static_cast<int>(_session.chatMsgs[_session.dId].size())) index = static_cast<int>(_session.chatMsgs[_session.dId].size());
 	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index, _session.chatMsgs[_session.dId].end());
 	auto err = RetokenizeChat();
-	if(err != StudError::Success || _session.dialState[_session.dId == 0 ? 1 : 0].empty()) return err;
+	const auto dId = _session.dId == 0 ? 1 : 0;
+	if(err != StudError::Success || _session.dialState[dId].empty() || _session.chatMsgs[dId].size() <= index) return err;
 	DialecticSwap();
 	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index, _session.chatMsgs[_session.dId].end());
 	err = RetokenizeChat();
