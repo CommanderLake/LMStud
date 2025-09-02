@@ -21,6 +21,8 @@ All rights reserved.
 | ✅ | **Built-in Google Search + webpage fetch** (super-visible setup below). |
 | ✅ | Optional speech I/O with `whisper.cpp`—talk smack to your computer. |
 | ✅ | Tiny memory footprint—smaller than RGB keyboard driver. |
+| ✅ | Model API handler for remote endpoints. |
+| ✅ | Dialectic mode with dual samplers for side-by-side debates. |
 
 ---
 
@@ -64,10 +66,10 @@ All rights reserved.
 ### Copy files
 ```text
 1. Clone https://github.com/CommanderLake/LMStud
-2. Copy build\common\Release\common.lib, build\src\Release\llama.lib, build\ggml\src\Release\ggml.lib and ggml-base.lib to <LMStud solution folder>\lib\Release
+2. Adjust "VC++ Directories" in the Stud project so the paths reflect where you cloned llama.cpp and whisper.cpp to
 3. From build\bin\Release copy all .dll files to <LMStud solution folder>\LM Stud\bin\x64\Release
-4. If you wish to use the Debug version follow the last 2 steps but replace "Release" with "Debug"
-5. If you want whisper.cpp for voice input the build steps are similar to llama.cpp https://github.com/ggml-org/whisper.cpp just copy just whisper.lib and whisper.dll files to the respective folders
+4. If you wish to use the Debug version follow the last 2 steps but replace "Release" with "Debug", i use Release for CUDA 10.2 and ReleaseCUDA12 for the CUDA 12.8 build
+5. If you want whisper.cpp for voice input the build steps are similar to llama.cpp, clone https://github.com/ggml-org/whisper.cpp copy only whisper.dll to the "LM Stud\bin\x64\Release" folder or whatever your build configuration is
 ```
 ### Set up curl for tools and model downloading
 ```text
@@ -91,6 +93,15 @@ All rights reserved.
 | **Advanced**           | NUMA strategy, repeat penalty, top-k/p, batch size.            |
 | **Voice**              | Model picker, wake word, VAD, frequency threshold, GPU toggle. |
 | **Tools**              | Enable Google Search (API key + cx), enable webpage fetch.     |
+
+---
+
+## Recent Releases
+
+- **R37** – Added dual samplers for dialectic mode and switched the UI font to Segoe UI Symbol.
+- **R36** – Added tooltip for the generation delay setting.
+- **R35** – Improved generation lock so Generate no longer waits.
+- **R34** – Introduced a model API handler.
 
 ---
 
