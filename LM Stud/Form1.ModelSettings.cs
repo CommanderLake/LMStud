@@ -39,7 +39,9 @@ namespace LMStud{
 			var topPNew = (float)numTopPModel.Value;
 			var topKNew = (int)numTopKModel.Value;
 			var flashNew = checkFlashAttnModel.Checked;
-			_modelSettings[path] = new ModelSettings(overrideNew, systemPromptNew, ctxSizeNew, gpuLayersNew, tempNew, minPNew, topPNew, topKNew, flashNew);
+			var jinjaOverrideNew = checkOverrideJinjaModel.Checked;
+			var jinjaTmplNew = textJinjaTmplModel.Text;
+			_modelSettings[path] = new ModelSettings(overrideNew, systemPromptNew, ctxSizeNew, gpuLayersNew, tempNew, minPNew, topPNew, topKNew, flashNew, jinjaOverrideNew, jinjaTmplNew);
 			SaveModelSettings();
 			if(_modelIndex != modelIndex || !LlModelLoaded) return;
 			var overrideOld = oldSettings?.OverrideSettings ?? false;
@@ -51,6 +53,8 @@ namespace LMStud{
 			var topPOld = overrideOld ? oldSettings.TopP : _topP;
 			var topKOld = overrideOld ? oldSettings.TopK : _topK;
 			var flashOld = overrideOld ? oldSettings.FlashAttn : _flashAttn;
+			var jinjaOverrideOld = oldSettings?.OverrideJinja ?? false;
+			var jinjaTmplOld = oldSettings?.JinjaTemplate ?? string.Empty;
 			var systemPromptEff = overrideNew ? systemPromptNew : _systemPrompt;
 			var ctxSizeEff = overrideNew ? ctxSizeNew : _ctxSize;
 			var gpuLayersEff = overrideNew ? gpuLayersNew : _gpuLayers;
@@ -59,11 +63,14 @@ namespace LMStud{
 			var topPEff = overrideNew ? topPNew : _topP;
 			var topKEff = overrideNew ? topKNew : _topK;
 			var flashEff = overrideNew ? flashNew : _flashAttn;
-			var reloadModel = gpuLayersOld != gpuLayersEff;
+			var jinjaOverrideEff = jinjaOverrideNew;
+			var jinjaTmplEff = jinjaOverrideNew ? jinjaTmplNew : string.Empty;
+			var reloadModel = gpuLayersOld != gpuLayersEff || jinjaOverrideOld != jinjaOverrideEff || jinjaTmplOld != jinjaTmplEff;
 			var reloadCtx = ctxSizeOld != ctxSizeEff || flashOld != flashEff;
 			var reloadSmpl = tempOld != tempEff || minPOld != minPEff || topPOld != topPEff || topKOld != topKEff;
 			var setSystemPrompt = systemPromptOld != systemPromptEff;
-			if(reloadModel && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes){ LoadModel(_modelIndex, false); } else{
+			if(reloadModel && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) ==
+				DialogResult.Yes){ LoadModel(_modelIndex, false); } else{
 				if(reloadCtx){
 					if(_modelCtxMax <= 0) _cntCtxMax = ctxSizeEff;
 					else _cntCtxMax = ctxSizeEff > _modelCtxMax ? _modelCtxMax : ctxSizeEff;
@@ -85,6 +92,8 @@ namespace LMStud{
 				numTopPModel.Value = (decimal)ms.TopP;
 				numTopKModel.Value = ms.TopK;
 				checkFlashAttnModel.Checked = ms.FlashAttn;
+				checkOverrideJinjaModel.Checked = ms.OverrideJinja;
+				textJinjaTmplModel.Text = ms.JinjaTemplate;
 			} else{
 				checkOverrideSettings.Checked = false;
 				textSystemPromptModel.Text = _systemPrompt;
@@ -95,19 +104,27 @@ namespace LMStud{
 				numTopPModel.Value = (decimal)_topP;
 				numTopKModel.Value = _topK;
 				checkFlashAttnModel.Checked = _flashAttn;
+				checkOverrideJinjaModel.Checked = false;
+				textJinjaTmplModel.Text = string.Empty;
 			}
+		}
+		private void ButBrowseJinjaTmplModel_Click(object sender, EventArgs e){
+			if(openFileDialog1.ShowDialog(this) == DialogResult.OK) textJinjaTmplModel.Text = openFileDialog1.FileName;
 		}
 		private class ModelSettings{
 			public readonly int CtxSize;
 			public readonly bool FlashAttn;
 			public readonly int GPULayers;
+			public readonly string JinjaTemplate;
 			public readonly float MinP;
+			public readonly bool OverrideJinja;
 			public readonly bool OverrideSettings;
 			public readonly string SystemPrompt;
 			public readonly float Temp;
 			public readonly int TopK;
 			public readonly float TopP;
-			public ModelSettings(bool overrideSettings, string systemPrompt, int ctxSize, int gpuLayers, float temp, float minP, float topP, int topK, bool flashAttn){
+			public ModelSettings(bool overrideSettings, string systemPrompt, int ctxSize, int gpuLayers, float temp, float minP, float topP, int topK, bool flashAttn, bool overrideJinja,
+				string jinjaTemplate){
 				OverrideSettings = overrideSettings;
 				SystemPrompt = systemPrompt;
 				CtxSize = ctxSize;
@@ -117,10 +134,12 @@ namespace LMStud{
 				TopP = topP;
 				TopK = topK;
 				FlashAttn = flashAttn;
+				OverrideJinja = overrideJinja;
+				JinjaTemplate = jinjaTemplate;
 			}
 		}
-		private void ButBrowseJinjaTmplModel_Click(object sender, EventArgs e){
-			if(openFileDialog1.ShowDialog(this) == DialogResult.OK) textJinjaTmplModel.Text = openFileDialog1.FileName;
+		private void CheckUseModelSettings_CheckedChanged(object sender, EventArgs e){
+			groupJinjaTmplModel.Enabled = groupCommonModel.Enabled = groupAdvancedModel.Enabled = butApplyModelSettings.Enabled = labelSystemPromptModel.Enabled = textSystemPromptModel.Enabled = checkOverrideSettings.Checked;
 		}
 	}
 }

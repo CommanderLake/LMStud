@@ -106,7 +106,7 @@ void FreeModel(){
 		_llModel = nullptr;
 	}
 }
-StudError LoadModel(const char* filename, const int nGPULayers, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy){
+StudError LoadModel(const char* filename, const char* jinjaTemplate, const int nGPULayers, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy){
 	auto params = llama_model_default_params();
 	params.n_gpu_layers = nGPULayers;
 	params.use_mlock = mLock;
@@ -116,19 +116,26 @@ StudError LoadModel(const char* filename, const int nGPULayers, const bool mMap,
 	llama_log_set(GPUOomLogCallbackStud, nullptr);
 	_llModel = llama_model_load_from_file(filename, params);
 	llama_log_set(nullptr, nullptr);
-	if(!_llModel){
-		return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantLoadModel;
-	}
+	if(!_llModel){ return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantLoadModel; }
 	_vocab = llama_model_get_vocab(_llModel);
-	_chatTemplates = common_chat_templates_init(_llModel, "");
 	const auto bosStr = llama_vocab_get_text(_vocab, llama_vocab_bos(_vocab));
 	const auto eosStr = llama_vocab_get_text(_vocab, llama_vocab_eos(_vocab));
-	const std::string tmplSrc = llama_model_chat_template(_llModel, nullptr);
-	//OutputDebugStringA(tmplSrc.c_str());
-	if(!tmplSrc.empty()){
-		const minja::chat_template tmpl(tmplSrc, bosStr, eosStr);
-		_hasTools = tmpl.original_caps().supports_tools;
+	std::string tmplSrc;
+	if(jinjaTemplate && jinjaTemplate[0] != '\0'){
+		_chatTemplates = common_chat_templates_init(_llModel, jinjaTemplate, bosStr, eosStr);
+		tmplSrc = jinjaTemplate;
+	} else{
+		_chatTemplates = common_chat_templates_init(_llModel, "");
+		tmplSrc = llama_model_chat_template(_llModel, nullptr);
 	}
+	_hasTools = false;
+	if(!tmplSrc.empty()){
+		try{
+			const minja::chat_template tmpl(tmplSrc, bosStr, eosStr);
+			_hasTools = tmpl.original_caps().supports_tools;
+			_session.useJinja = true;
+		} catch(...){ _session.useJinja = false; }
+	} else{ _session.useJinja = false; }
 	return StudError::Success;
 }
 bool HasTool(const char* name){
@@ -541,7 +548,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	_session.cachedTokens[_session.dId].insert(_session.cachedTokens[_session.dId].end(), newTokens.begin(), newTokens.end());
 	if(cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(), ftTime, 0);
 	outMsg = std::move(msg);
-	//OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
+	OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
 	return status;
 }
 StudError GenerateWithTools(const MessageRole role, const char* prompt, const int nPredict, const bool callback){

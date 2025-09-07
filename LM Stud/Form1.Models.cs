@@ -58,9 +58,6 @@ namespace LMStud{
 			if(listViewModels.SelectedItems.Count == 0) return;
 			LoadModel((int)listViewModels.SelectedItems[0].Tag, false);
 		}
-		private void CheckUseModelSettings_CheckedChanged(object sender, EventArgs e){
-			groupCommonModel.Enabled = groupAdvancedModel.Enabled = butApplyModelSettings.Enabled = labelSystemPromptModel.Enabled = textSystemPromptModel.Enabled = checkOverrideSettings.Checked;
-		}
 		private bool ModelsFolderExists(bool showError){
 			if(!Directory.Exists(_modelsPath)){
 				if(showError) MessageBox.Show(this, Resources.Models_folder_not_found__please_specify_a_valid_folder_in_the_Settings_tab, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -166,8 +163,8 @@ namespace LMStud{
 			if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_setting_system_prompt, error);
 		}
 		private void SetSystemPrompt(){SetSystemPrompt(_systemPrompt);}
-		NativeMethods.StudError LoadModel(string filename, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){
-			var result = NativeMethods.LoadModel(filename, nGPULayers, mMap, mLock, numaStrategy);
+		NativeMethods.StudError LoadModel(string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){
+			var result = NativeMethods.LoadModel(filename, jinjaTemplate, nGPULayers, mMap, mLock, numaStrategy);
 			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_loading_model, result);
 			return result;
 		}
@@ -211,6 +208,7 @@ namespace LMStud{
 			var topP = overrideSettings ? settings.TopP : _topP;
 			var topK = overrideSettings ? settings.TopK : _topK;
 			var flashAttn = overrideSettings ? settings.FlashAttn : _flashAttn;
+			var jinjaTmpl = settings != null && settings.OverrideJinja && File.Exists(settings.JinjaTemplate) ? File.ReadAllText(settings.JinjaTemplate) : null;
 			butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = false;
 			ThreadPool.QueueUserWorkItem(o => {
 				try{
@@ -227,7 +225,7 @@ namespace LMStud{
 							while(_generating) Thread.Sleep(10);
 						}
 						if(whisperOn) NativeMethods.StopSpeechTranscription();
-						var result = LoadModel(modelPath, gpuLayers, _mMap, _mLock, _numaStrat);
+						var result = LoadModel(modelPath, jinjaTmpl, gpuLayers, _mMap, _mLock, _numaStrat);
 						if(result != NativeMethods.StudError.Success){
 							Settings.Default.LoadAuto = false;
 							Settings.Default.Save();

@@ -144,7 +144,57 @@
   <data name="splitContainer2.Panel1.ToolTip" xml:space="preserve">
     <value />
   </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="label30.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="label30.AutoSize" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="label30.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 45</value>
+  </data>
+  <data name="label30.Size" type="System.Drawing.Size, System.Drawing">
+    <value>43, 13</value>
+  </data>
+  <data name="label30.Text" xml:space="preserve">
+    <value>文件：</value>
+  </data>
+  <data name="label30.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
+  </data>
+  <data name="label30.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="butBrowseJinjaTmplModel.Text" xml:space="preserve">
+    <value>浏览</value>
+  </data>
+  <data name="butBrowseJinjaTmplModel.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="textJinjaTmplModel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>49, 42</value>
+  </data>
+  <data name="textJinjaTmplModel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>145, 20</value>
+  </data>
+  <data name="textJinjaTmplModel.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="checkOverrideJinjaModel.Text" xml:space="preserve">
+    <value>自定义</value>
+  </data>
+  <data name="checkOverrideJinjaModel.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="groupJinjaTmplModel.Text" xml:space="preserve">
+    <value>Jinja 模板</value>
+  </data>
+  <data name="groupJinjaTmplModel.ToolTip" xml:space="preserve">
+    <value />
+  </data>
   <data name="labelSystemPromptModel.Size" type="System.Drawing.Size, System.Drawing">
     <value>73, 13</value>
   </data>
@@ -390,6 +440,18 @@
   </data>
   <data name="butDownload.ToolTip" xml:space="preserve">
     <value />
+  </data>
+  <data name="checkDialectic.Size" type="System.Drawing.Size, System.Drawing">
+    <value>62, 17</value>
+  </data>
+  <data name="checkDialectic.Text" xml:space="preserve">
+    <value>辩证法</value>
+  </data>
+  <data name="checkDialectic.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="checkAutoScroll.Size" type="System.Drawing.Size, System.Drawing">
+    <value>71, 17</value>
   </data>
   <data name="checkAutoScroll.Text" xml:space="preserve">
     <value>自动滚动</value>
@@ -887,25 +949,25 @@
     <value />
   </data>
   <data name="toolStripStatusLabel1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>67, 17</value>
+    <value>68, 19</value>
   </data>
   <data name="toolStripStatusLabel1.Text" xml:space="preserve">
     <value>未加载模型</value>
   </data>
   <data name="labelTokens.Size" type="System.Drawing.Size, System.Drawing">
-    <value>49, 17</value>
+    <value>51, 19</value>
   </data>
   <data name="labelTokens.Text" xml:space="preserve">
     <value>0 Token</value>
   </data>
   <data name="labelTPS.Size" type="System.Drawing.Size, System.Drawing">
-    <value>65, 17</value>
+    <value>68, 19</value>
   </data>
   <data name="labelTPS.Text" xml:space="preserve">
     <value>0 Token/秒</value>
   </data>
   <data name="labelPreGen.Size" type="System.Drawing.Size, System.Drawing">
-    <value>77, 17</value>
+    <value>80, 19</value>
   </data>
   <data name="labelPreGen.Text" xml:space="preserve">
     <value>预生成时间：</value>
