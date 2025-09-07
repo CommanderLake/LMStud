@@ -122,11 +122,30 @@ StudError LoadModel(const char* filename, const char* jinjaTemplate, const int n
 	const auto eosStr = llama_vocab_get_text(_vocab, llama_vocab_eos(_vocab));
 	std::string tmplSrc;
 	if(jinjaTemplate && jinjaTemplate[0] != '\0'){
-		_chatTemplates = common_chat_templates_init(_llModel, jinjaTemplate, bosStr, eosStr);
-		tmplSrc = jinjaTemplate;
-	} else{
-		_chatTemplates = common_chat_templates_init(_llModel, "");
-		tmplSrc = llama_model_chat_template(_llModel, nullptr);
+		try{
+			_chatTemplates = common_chat_templates_init(_llModel, jinjaTemplate, bosStr, eosStr);
+			tmplSrc = jinjaTemplate;
+		} catch(std::exception& e){
+			_chatTemplates = nullptr;
+			_lastErrorMessage = e.what();
+		}
+	}
+	if(!_chatTemplates){
+		try{
+			_chatTemplates = common_chat_templates_init(_llModel, "");
+			tmplSrc = llama_model_chat_template(_llModel, nullptr);
+			_lastErrorMessage.clear();
+		} catch(std::exception& e){
+			_chatTemplates = nullptr;
+			_session.useJinja = false;
+			_lastErrorMessage = e.what();
+			return StudError::CantApplyTemplate;
+		}
+	}
+	if(!_chatTemplates){
+		_session.useJinja = false;
+		if(_lastErrorMessage.empty()) _lastErrorMessage = "Failed to initialize chat templates";
+		return StudError::CantApplyTemplate;
 	}
 	_hasTools = false;
 	if(!tmplSrc.empty()){
@@ -210,6 +229,10 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	in.parallel_tool_calls = true;
 	in.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
 	common_chat_params chatData;
+	if(!_chatTemplates){
+		_lastErrorMessage = "Chat templates not initialized";
+		return StudError::CantApplyTemplate;
+	}
 	try{ chatData = common_chat_templates_apply(_chatTemplates.get(), in); } catch(std::exception& e){
 		_lastErrorMessage = e.what();
 		OutputDebugStringA((std::string("EXCEPTION:\r\n") + e.what()).c_str());

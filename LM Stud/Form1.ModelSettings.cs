@@ -139,7 +139,7 @@ namespace LMStud{
 			}
 		}
 		private void CheckUseModelSettings_CheckedChanged(object sender, EventArgs e){
-			groupJinjaTmplModel.Enabled = groupCommonModel.Enabled = groupAdvancedModel.Enabled = butApplyModelSettings.Enabled = labelSystemPromptModel.Enabled = textSystemPromptModel.Enabled = checkOverrideSettings.Checked;
+			groupCommonModel.Enabled = groupAdvancedModel.Enabled = labelSystemPromptModel.Enabled = textSystemPromptModel.Enabled = checkOverrideSettings.Checked;
 		}
 	}
 }
