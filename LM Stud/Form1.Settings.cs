@@ -65,7 +65,7 @@ namespace LMStud{
 			_nThreadsBatch = (int)(numThreadsBatch.Value = Settings.Default.ThreadsBatch);
 			_wakeWord = textWakeWord.Text = Settings.Default.WakeWord;
 			_wakeWordSimilarity = (float)(numWakeWordSimilarity.Value = Settings.Default.WakeWordSimilarity);
-			_vadThreshold = (float)(numVadThreshold.Value = Settings.Default.VadThreshold);
+			try { _vadThreshold = (float)(numVadThreshold.Value = Settings.Default.VadThreshold); } catch(ArgumentOutOfRangeException) { _vadThreshold = (float)(numVadThreshold.Value); }
 			_freqThreshold = (float)(numFreqThreshold.Value = Settings.Default.FreqThreshold);
 			_whisperUseGPU = checkWhisperUseGPU.Checked = Settings.Default.whisperUseGPU;
 			_whisperTemp = (float)(numWhisperTemp.Value = Settings.Default.WhisperTemp);
