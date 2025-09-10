@@ -404,4 +404,7 @@
 <data name="Load_a_model_first_" xml:space="preserve">
 	<value>Load a model first.</value>
 </data>
+<data name="ToolTip_textJinjaTmplModel" xml:space="preserve">
+	<value>Specify the path to a text file containing a Jinja template, this file must remain in place.</value>
+</data>
 </root>

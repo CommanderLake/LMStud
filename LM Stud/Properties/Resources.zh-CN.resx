@@ -404,4 +404,10 @@
 <data name="Max_context_size_of_last_loaded_model" xml:space="preserve">
 	<value>上次加载的模型最大上下文大小：</value>
 </data>
+<data name="Load_a_model_first_" xml:space="preserve">
+	<value>首先加载一个模型。</value>
+</data>
+<data name="ToolTip_textJinjaTmplModel" xml:space="preserve">
+	<value>指定包含 Jinja 模板的文本文件路径，该文件必须保持在原位置。</value>
+</data>
 </root>

@@ -91,6 +91,7 @@ namespace LMStud{
 			SetToolTip(checkApiServerEnable);
 			SetToolTip(numApiServerPort);
 			SetToolTip(numGenDelay);
+			SetToolTip(textJinjaTmplModel);
 		}
 		private void Form1_Load(object sender, EventArgs e){
 			NativeMethods.SetHWnd(Handle);

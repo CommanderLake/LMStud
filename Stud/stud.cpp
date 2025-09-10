@@ -8,7 +8,8 @@
 #include <minja\chat-template.hpp>
 #include <algorithm>
 using HrClock = std::chrono::high_resolution_clock;
-static bool _gpuOomStud = false; static std::string _lastErrorMessage;
+static bool _gpuOomStud = false;
+static std::string _lastErrorMessage;
 extern "C" EXPORT const char* GetLastErrorMessage(){ return _lastErrorMessage.c_str(); }
 extern "C" EXPORT void ClearLastErrorMessage(){ _lastErrorMessage.clear(); }
 static void GPUOomLogCallbackStud(ggml_log_level level, const char* text, void* userData){
@@ -40,23 +41,19 @@ StudError CreateContext(const int nCtx, const int nBatch, const bool flashAttn, 
 	llama_log_set(GPUOomLogCallbackStud, nullptr);
 	_session.ctx = llama_init_from_model(_llModel, ctxParams);
 	llama_log_set(nullptr, nullptr);
-	if(!_session.ctx){
-		return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantCreateContext;
-	}
+	if(!_session.ctx){ return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantCreateContext; }
 	_session.llMem = llama_get_memory(_session.ctx);
 	auto result = StudError::Success;
 	if(_session.smpl[0]) result = RetokenizeChat(true);
 	return result;
 }
-StudError CreateSamplerInternal(const float minP, const float topP, const int topK, const float temp, const float repeatPenalty, llama_sampler* &smpl){
+StudError CreateSamplerInternal(const float minP, const float topP, const int topK, const float temp, const float repeatPenalty, llama_sampler* & smpl){
 	if(smpl){
 		llama_sampler_free(smpl);
 		smpl = nullptr;
 	}
 	smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
-	if(!smpl){
-		return StudError::CantCreateSampler;
-	}
+	if(!smpl){ return StudError::CantCreateSampler; }
 	llama_sampler_chain_add(smpl, llama_sampler_init_penalties(128, repeatPenalty, 0.0f, 0.0f));
 	// Optional: DRY (sequence) penalty immediately after penalties
 	// llama_sampler_chain_add(_session.smpl, llama_sampler_init_dry(0.8f, 1.8f, -1));
@@ -153,12 +150,8 @@ int GetStateSize(){
 	if(!_session.ctx) return 0;
 	return static_cast<int>(llama_state_get_size(_session.ctx));
 }
-void GetStateData(unsigned char* dst, int size){
-	if(_session.ctx) llama_state_get_data(_session.ctx, dst, size);
-}
-void SetStateData(const unsigned char* src, int size){
-	if(_session.ctx) llama_state_set_data(_session.ctx, src, size);
-}
+void GetStateData(unsigned char* dst, int size){ if(_session.ctx) llama_state_get_data(_session.ctx, dst, size); }
+void SetStateData(const unsigned char* src, int size){ if(_session.ctx) llama_state_set_data(_session.ctx, src, size); }
 void DialecticInit(){
 	const int size = GetStateSize();
 	if(size <= 0) return;
@@ -234,9 +227,7 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	if(canShift && oldSz > 0 && newSz > 0){ while(suffix + prefix < oldSz && suffix + prefix < newSz && suffix < oldSz && suffix < newSz && _session.cachedTokens[_session.dId][oldSz - 1 - suffix] == promptTokens[newSz - 1 - suffix]){ ++suffix; } }
 	const size_t oldSize = _session.cachedTokens[_session.dId].size();
 	const size_t newSize = promptTokens.size();
-	if(newSize > static_cast<size_t>(llama_n_ctx(_session.ctx))){
-		return StudError::ConvTooLong;
-	}
+	if(newSize > static_cast<size_t>(llama_n_ctx(_session.ctx))){ return StudError::ConvTooLong; }
 	if(prefix == oldSize && oldSize == newSize) return StudError::Success;
 	if(canShift && suffix > 0){
 		if(prefix < oldSize - suffix){ llama_memory_seq_rm(_session.llMem, 0, prefix, oldSize - suffix); }
@@ -278,9 +269,7 @@ static void AlignChatStates(){
 		if(msg.role._Equal("assistant")){
 			msg.role = "user";
 			msg.reasoning_content.clear();
-		} else if(msg.role._Equal("user")){
-			msg.role = "assistant";
-		}
+		} else if(msg.role._Equal("user")){ msg.role = "assistant"; }
 		shorter->push_back(std::move(msg));
 	}
 }
@@ -617,9 +606,7 @@ StudError GenerateWithTools(const MessageRole role, const char* prompt, const in
 	msg.role = RoleString(role);
 	msg.content = std::string(prompt);
 	std::vector<common_chat_msg> msgs{msg};
-	if(!_hasTools){
-		return Generate(msgs, nPredict, callback, msg);
-	}
+	if(!_hasTools){ return Generate(msgs, nPredict, callback, msg); }
 	const TokenCallbackFn cb = _tokenCb;
 	auto err = StudError::Success;
 	bool toolCalled = false;

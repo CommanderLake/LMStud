@@ -864,6 +864,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string ToolTip_textJinjaTmplModel {
+            get {
+                return ResourceManager.GetString("ToolTip_textJinjaTmplModel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Path to the folder containing your .gguf model files..
         /// </summary>
         internal static string ToolTip_textModelsPath {
