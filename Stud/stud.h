@@ -67,7 +67,7 @@ extern "C" {
 	EXPORT void SetStateData(const unsigned char* src, int size);
 	EXPORT void DialecticInit();
 	EXPORT void DialecticStart();
-	EXPORT void DialecticSwap();
+	EXPORT StudError DialecticSwap();
 	EXPORT void DialecticFree();
 	EXPORT StudError RetokenizeChat(bool rebuildMemory);
 	EXPORT StudError SetSystemPrompt(const char* prompt, const char* toolsPrompt);

@@ -173,13 +173,13 @@ void DialecticStart(){
 	const int size = static_cast<int>(_session.dialState[0].size());
 	SetStateData(_session.dialState[_session.dId].data(), size);
 }
-void DialecticSwap(){
-	if(_session.dialState[0].empty()) return;
+StudError DialecticSwap(){
+	if(_session.dialState[0].empty()) return StudError::Success;
 	const int size = static_cast<int>(_session.dialState[0].size());
 	GetStateData(_session.dialState[_session.dId].data(), size);
 	_session.dId = 1 - _session.dId;
 	SetStateData(_session.dialState[_session.dId].data(), size);
-	RetokenizeChat(true);
+	return RetokenizeChat(true);
 }
 void DialecticFree(){
 	_session.dialState[0].clear();
@@ -263,64 +263,93 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	_session.cachedTokens[_session.dId] = std::move(promptTokens);
 	return StudError::Success;
 }
+static void AlignChatStates(){
+	auto& a = _session.chatMsgs[0];
+	auto& b = _session.chatMsgs[1];
+	if(a.size() == b.size()) return;
+	auto* longer = &a;
+	auto* shorter = &b;
+	if(a.size() < b.size()){
+		longer = &b;
+		shorter = &a;
+	}
+	for(size_t i = shorter->size(); i < longer->size(); ++i){
+		auto msg = (*longer)[i];
+		if(msg.role._Equal("assistant")){
+			msg.role = "user";
+			msg.reasoning_content.clear();
+		} else if(msg.role._Equal("user")){
+			msg.role = "assistant";
+		}
+		shorter->push_back(std::move(msg));
+	}
+}
 StudError ResetChat(){
 	_session.chatMsgs[_session.dId].clear();
 	auto err = RetokenizeChat(true);
 	if(err != StudError::Success || _session.dialState[_session.dId == 0 ? 1 : 0].empty()) return err;
-	DialecticSwap();
+	err = DialecticSwap();
+	if(err != StudError::Success) return err;
 	_session.chatMsgs[_session.dId].clear();
-	err = RetokenizeChat();
-	DialecticSwap();
-	return err;
+	auto err2 = RetokenizeChat(true);
+	auto err3 = DialecticSwap();
+	return err2 != StudError::Success ? err2 : err3;
 }
 StudError SetSystemPrompt(const char* prompt, const char* toolsPrompt){
 	_session.prompt = std::string(prompt);
 	_session.toolsPrompt = std::string(toolsPrompt);
 	auto err = RetokenizeChat();
 	if(err != StudError::Success || _session.dialState[_session.dId == 0 ? 1 : 0].empty()) return err;
-	DialecticSwap();
-	err = RetokenizeChat();
-	DialecticSwap();
-	return err;
+	err = DialecticSwap();
+	if(err != StudError::Success) return err;
+	auto err2 = RetokenizeChat();
+	auto err3 = DialecticSwap();
+	return err2 != StudError::Success ? err2 : err3;
 }
 StudError SetMessageAt(const int index, const char* think, const char* message){
+	AlignChatStates();
 	if(index < 0 || index >= static_cast<int>(_session.chatMsgs[_session.dId].size())) return StudError::IndexOutOfRange;
 	_session.chatMsgs[_session.dId][index].reasoning_content = think;
 	_session.chatMsgs[_session.dId][index].content = std::string(message);
 	auto err = RetokenizeChat();
 	const auto dId = _session.dId == 0 ? 1 : 0;
 	if(err != StudError::Success || _session.dialState[dId].empty() || _session.chatMsgs[dId].size() <= index) return err;
-	DialecticSwap();
+	err = DialecticSwap();
+	if(err != StudError::Success) return err;
 	_session.chatMsgs[_session.dId][index].reasoning_content = think;
 	_session.chatMsgs[_session.dId][index].content = std::string(message);
-	err = RetokenizeChat();
-	DialecticSwap();
-	return err;
+	auto err2 = RetokenizeChat();
+	auto err3 = DialecticSwap();
+	return err2 != StudError::Success ? err2 : err3;
 }
 StudError RemoveMessageAt(const int index){
+	AlignChatStates();
 	if(index < 0 || index >= static_cast<int>(_session.chatMsgs[_session.dId].size())) return StudError::IndexOutOfRange;
 	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index);
 	auto err = RetokenizeChat();
 	const auto dId = _session.dId == 0 ? 1 : 0;
 	if(err != StudError::Success || _session.dialState[dId].empty() || _session.chatMsgs[dId].size() <= index) return err;
-	DialecticSwap();
+	err = DialecticSwap();
+	if(err != StudError::Success) return err;
 	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index);
-	err = RetokenizeChat();
-	DialecticSwap();
-	return err;
+	auto err2 = RetokenizeChat();
+	auto err3 = DialecticSwap();
+	return err2 != StudError::Success ? err2 : err3;
 }
 StudError RemoveMessagesStartingAt(int index){
+	AlignChatStates();
 	if(index < 0) index = 0;
 	if(index > static_cast<int>(_session.chatMsgs[_session.dId].size())) index = static_cast<int>(_session.chatMsgs[_session.dId].size());
 	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index, _session.chatMsgs[_session.dId].end());
 	auto err = RetokenizeChat();
 	const auto dId = _session.dId == 0 ? 1 : 0;
 	if(err != StudError::Success || _session.dialState[dId].empty() || _session.chatMsgs[dId].size() <= index) return err;
-	DialecticSwap();
+	err = DialecticSwap();
+	if(err != StudError::Success) return err;
 	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index, _session.chatMsgs[_session.dId].end());
-	err = RetokenizeChat();
-	DialecticSwap();
-	return err;
+	auto err2 = RetokenizeChat();
+	auto err3 = DialecticSwap();
+	return err2 != StudError::Success ? err2 : err3;
 }
 StudError AddMessage(const MessageRole role, const char* message){
 	common_chat_msg msg;
@@ -470,17 +499,17 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 			const int nCtxUsed = LlamaMemSize();
 			if(nCtxUsed + batch.n_tokens > nCtx){
 				_session.chatMsgs[_session.dId].pop_back();
-				RetokenizeChat(true);
+				auto rtErr = RetokenizeChat(true);
 				outMsg = common_chat_msg();
-				return StudError::ConvTooLong;
+				return rtErr != StudError::Success ? rtErr : StudError::ConvTooLong;
 			}
 			auto result = llama_decode(_session.ctx, batch);
 			if(result != 0){
 				_session.chatMsgs[_session.dId].pop_back();
-				RetokenizeChat(true);
+				auto rtErr = RetokenizeChat(true);
 				outMsg = common_chat_msg();
-				if(result == 1) return StudError::ConvTooLong;
-				return StudError::LlamaDecodeError;
+				if(result == 1) return rtErr != StudError::Success ? rtErr : StudError::ConvTooLong;
+				return rtErr != StudError::Success ? rtErr : StudError::LlamaDecodeError;
 			}
 			for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl[_session.dId], promptTokens[p + j]); }
 			p += nEval;
@@ -502,9 +531,9 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 		const int n = llama_token_to_piece(_vocab, newTokenId, buf, sizeof buf, 0, false);
 		if(n < 0){
 			_session.chatMsgs[_session.dId].resize(chatStart + messages.size());
-			RetokenizeChat(true);
+			auto rtErr = RetokenizeChat(true);
 			outMsg = common_chat_msg();
-			return StudError::CantConvertToken;
+			return rtErr != StudError::Success ? rtErr : StudError::CantConvertToken;
 		}
 		newTokens.push_back(newTokenId);
 		if(ftTime == 0.0) ftTime = std::chrono::duration<double>(HrClock::now() - prepStart).count();
@@ -521,17 +550,17 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 		const int nCtxUsed = LlamaMemSize();
 		if(nCtxUsed + batch.n_tokens > nCtx){
 			_session.chatMsgs[_session.dId].resize(chatStart + messages.size());
-			RetokenizeChat(true);
+			auto rtErr = RetokenizeChat(true);
 			outMsg = common_chat_msg();
-			return StudError::ConvTooLong;
+			return rtErr != StudError::Success ? rtErr : StudError::ConvTooLong;
 		}
 		auto decodeErr = llama_decode(_session.ctx, batch);
 		if(decodeErr != 0){
 			_session.chatMsgs[_session.dId].resize(chatStart + messages.size());
-			RetokenizeChat(true);
+			auto rtErr = RetokenizeChat(true);
 			outMsg = common_chat_msg();
-			if(decodeErr == 1) return StudError::ConvTooLong;
-			return StudError::LlamaDecodeError;
+			if(decodeErr == 1) return rtErr != StudError::Success ? rtErr : StudError::ConvTooLong;
+			return rtErr != StudError::Success ? rtErr : StudError::LlamaDecodeError;
 		}
 		llama_sampler_accept(_session.smpl[_session.dId], newTokenId);
 		if(_hasTools){

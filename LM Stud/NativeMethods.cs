@@ -72,7 +72,7 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void DialecticStart();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void DialecticSwap();
+		public static extern StudError DialecticSwap();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void DialecticFree();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
