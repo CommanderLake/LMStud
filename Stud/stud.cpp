@@ -26,6 +26,19 @@ void BackendInit(){
 	if(hModule != nullptr) ggml_backend_load("ggml-cuda.dll");
 	llama_backend_init();
 }
+void AddTool(const char* name, const char* description, const char* parameters, std::string(*handler)(const char* args)){
+	if(!name || !_hasTools) return;
+	common_chat_tool tool;
+	tool.name = name;
+	if(description) tool.description = description;
+	if(parameters) tool.parameters = parameters;
+	_tools.push_back(tool);
+	if(handler) _toolHandlers[name] = handler;
+}
+void ClearTools(){
+	_tools.clear();
+	_toolHandlers.clear();
+}
 StudError CreateContext(const int nCtx, const int nBatch, const bool flashAttn, const int nThreads, const int nThreadsBatch){
 	if(_session.ctx){
 		llama_free(_session.ctx);

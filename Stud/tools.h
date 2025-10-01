@@ -15,13 +15,13 @@ struct CachedPage{
 };
 inline std::unordered_map<std::string, CachedPage> _webCache;
 extern "C" {
-	EXPORT void AddTool(const char* name, const char* description, const char* parameters, std::string(*handler)(const char* args));
-	EXPORT void ClearTools();
 	EXPORT void SetGoogle(const char* apiKey, const char* searchEngineId, int resultCount);
 	EXPORT void ClearWebCache();
 	EXPORT void SetFileBaseDir(const char* dir);
 	EXPORT void RegisterTools(bool dateTime, bool googleSearch, bool webpageFetch, bool fileList, bool fileCreate, bool fileRead, bool fileWrite);
 }
+std::string JsonEscape(const std::string& in);
+std::string GetArgValue(const char* args, const char* key);
 std::string GoogleSearch(const char* query);
 std::string GetWebpage(const char* argsJson);
 std::string GetWebTag(const char* argsJson);

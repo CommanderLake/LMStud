@@ -51,6 +51,8 @@ inline bool _hasTools;
 extern "C" {
 	EXPORT void SetHWnd(HWND hWnd);
 	EXPORT void BackendInit();
+	EXPORT void AddTool(const char* name, const char* description, const char* parameters, std::string(*handler)(const char* args));
+	EXPORT void ClearTools();
 	EXPORT StudError CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch);
 	EXPORT StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty);
 	EXPORT StudError CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
