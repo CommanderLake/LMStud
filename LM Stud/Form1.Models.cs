@@ -199,16 +199,16 @@ namespace LMStud{
 			var modelKey = _models[modelIndex].FilePath;
 			var modelPath = GetModelPath(modelKey);
 			var fileName = Path.GetFileName(modelPath);
-			var overrideSettings = _modelSettings.TryGetValue(modelKey, out var settings) && settings.OverrideSettings;
-			var systemPrompt = overrideSettings ? settings.SystemPrompt : _systemPrompt;
-			var ctxSize = overrideSettings ? settings.CtxSize : _ctxSize;
-			var gpuLayers = overrideSettings ? settings.GPULayers : _gpuLayers;
-			var temp = overrideSettings ? settings.Temp : _temp;
-			var minP = overrideSettings ? settings.MinP : _minP;
-			var topP = overrideSettings ? settings.TopP : _topP;
-			var topK = overrideSettings ? settings.TopK : _topK;
-			var flashAttn = overrideSettings ? settings.FlashAttn : _flashAttn;
-			var jinjaTmpl = settings != null && settings.OverrideJinja && File.Exists(settings.JinjaTemplate) ? File.ReadAllText(settings.JinjaTemplate) : null;
+			var overrideSettings = _modelSettings.TryGetValue(modelKey, out var overrides) && overrides.OverrideSettings;
+			var systemPrompt = overrideSettings ? overrides.SystemPrompt : _systemPrompt;
+			var ctxSize = overrideSettings ? overrides.CtxSize : _ctxSize;
+			var gpuLayers = overrideSettings ? overrides.GPULayers : _gpuLayers;
+			var temp = overrideSettings ? overrides.Temp : _temp;
+			var minP = overrideSettings ? overrides.MinP : _minP;
+			var topP = overrideSettings ? overrides.TopP : _topP;
+			var topK = overrideSettings ? overrides.TopK : _topK;
+			var flashAttn = overrideSettings ? overrides.FlashAttn : _flashAttn;
+			var jinjaTmpl = overrides != null && overrides.OverrideJinja && File.Exists(overrides.JinjaTemplate) ? File.ReadAllText(overrides.JinjaTemplate) : null;
 			butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = false;
 			ThreadPool.QueueUserWorkItem(o => {
 				try{

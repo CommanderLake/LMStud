@@ -598,7 +598,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	_session.cachedTokens[_session.dId].insert(_session.cachedTokens[_session.dId].end(), newTokens.begin(), newTokens.end());
 	if(cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(), ftTime, 0);
 	outMsg = std::move(msg);
-	OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
+	//OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
 	return status;
 }
 StudError GenerateWithTools(const MessageRole role, const char* prompt, const int nPredict, const bool callback){
