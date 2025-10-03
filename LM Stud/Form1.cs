@@ -49,6 +49,7 @@ namespace LMStud{
 			LoadConfig();
 			LoadModelSettings();
 		}
+		internal const string DefaultSessionId = "default";
 		internal bool IsGenerating => _generating || _apiGenerating;
 		private void SetToolTip(Control control){toolTip1.SetToolTip(control, Resources.ResourceManager.GetString("ToolTip_" + control.Name));}
 		private void SetToolTips(){
@@ -419,14 +420,18 @@ namespace LMStud{
 				} catch(ObjectDisposedException){} finally{ GenerationLock.Release(); }
 			});
 		}
-		internal bool GenerateForApi(byte[] state, string prompt, Action<string> onToken){
+		internal bool GenerateForApi(string sessionId, string prompt, Action<string> onToken, out NativeMethods.StudError error){
+			error = NativeMethods.StudError.Success;
 			if(!LlModelLoaded || _generating || _apiGenerating || string.IsNullOrWhiteSpace(prompt)) return false;
 			_apiGenerating = true;
 			_apiTokenCallback = onToken;
 			try{
-				SetState(state);
-				NativeMethods.GenerateWithTools(MessageRole.User, prompt, _nGen, false);
-				return true;
+				error = EnsureSession(sessionId);
+				if(error != NativeMethods.StudError.Success) return false;
+				error = ActivateSession(sessionId);
+				if(error != NativeMethods.StudError.Success) return false;
+				error = NativeMethods.GenerateWithTools(MessageRole.User, prompt, _nGen, false);
+				return error == NativeMethods.StudError.Success;
 			} finally{
 				_apiTokenCallback = null;
 				_apiGenerating = false;
@@ -438,20 +443,14 @@ namespace LMStud{
 					return i;
 			return -1;
 		}
-		internal byte[] GetState(){
-			var size = NativeMethods.GetStateSize();
-			var data = new byte[size];
-			unsafe{
-				fixed(byte* p = data){ NativeMethods.GetStateData((IntPtr)p, size); }
-			}
-			return data;
+		internal NativeMethods.StudError EnsureSession(string sessionId){
+			return NativeMethods.EnsureSessionId(sessionId, _cntCtxMax, _batchSize, _flashAttn, _nThreads, _nThreadsBatch, _minP, _topP, _topK, _temp, _repPen, null);
 		}
-		internal void SetState(byte[] state){
-			NativeMethods.ResetChat();
-			if(state == null || state.Length == 0) return;
-			unsafe{
-				fixed(byte* p = state){ NativeMethods.SetStateData((IntPtr)p, state.Length); }
-			}
+		internal NativeMethods.StudError ActivateSession(string sessionId){return NativeMethods.ActivateSessionId(sessionId, null);}
+		internal void ActivateDefaultSession(){NativeMethods.ActivateSessionId(DefaultSessionId, null);}
+		internal void DestroySession(string sessionId){
+			if(string.IsNullOrEmpty(sessionId) || sessionId == DefaultSessionId) return;
+			NativeMethods.DestroySessionId(sessionId, null);
 		}
 		internal int GetTokenCount(){return NativeMethods.LlamaMemSize();}
 		private static unsafe void TokenCallback(byte* thinkPtr, int thinkLen, byte* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool){

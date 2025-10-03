@@ -4,15 +4,19 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
+using LMStud.Properties;
 using Newtonsoft.Json;
 namespace LMStud{
 	internal class ApiServer{
 		private readonly Form1 _form;
-		private readonly SessionManager _sessions = new SessionManager();
+		private readonly SessionManager _sessions;
 		private CancellationTokenSource _cts;
 		private HttpListener _listener;
 		public int Port = 11434;
-		public ApiServer(Form1 form){_form = form;}
+		public ApiServer(Form1 form){
+			_form = form;
+			_sessions = new SessionManager(onRemoved: DestroyNativeSession);
+		}
 		public bool IsRunning => _listener != null && _listener.IsListening;
 		public void Start(){
 			if(IsRunning) return;
@@ -53,9 +57,7 @@ namespace LMStud{
 				else if(method == "POST" && path == "/v1/chat/reset") HandleReset(context);
 				else context.Response.StatusCode = 404;
 			} catch{ context.Response.StatusCode = 500; } finally{
-				try{
-					context.Response.OutputStream.Close();
-				} catch{}
+				try{ context.Response.OutputStream.Close(); } catch{}
 				if(acquired) _form.GenerationLock.Release();
 			}
 		}
@@ -68,7 +70,7 @@ namespace LMStud{
 			ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
 		}
 		private void HandleModel(HttpListenerContext ctx){
-			var modelPath = Properties.Settings.Default.LastModel;
+			var modelPath = Settings.Default.LastModel;
 			var model = Path.GetFileNameWithoutExtension(modelPath);
 			var obj = new{ model };
 			var json = JsonConvert.SerializeObject(obj);
@@ -88,6 +90,7 @@ namespace LMStud{
 			NativeMethods.ResetChat();
 			NativeMethods.CloseCommandPrompt();
 			if(request?.SessionId != null) _sessions.Remove(request.SessionId);
+			_form.ActivateDefaultSession();
 			var resp = new{ status = "reset" };
 			var json = JsonConvert.SerializeObject(resp);
 			var bytes = Encoding.UTF8.GetBytes(json);
@@ -115,20 +118,38 @@ namespace LMStud{
 			ctx.Response.ContentType = "application/json";
 			var sb = new StringBuilder();
 			void TokenCb(string token){sb.Append(token);}
-			if(_form.IsGenerating || !_form.GenerateForApi(session.State, prompt, TokenCb)){
-				ctx.Response.StatusCode = 409;
-				return;
-			}
-			var assistant = sb.ToString();
-			session.Messages.Add(new Message{ Role = "user", Content = prompt });
-			session.Messages.Add(new Message{ Role = "assistant", Content = assistant });
-			var state = _form.GetState();
-			var tokens = _form.GetTokenCount();
-			_sessions.Update(session, session.Messages, state, tokens);
+			var error = NativeMethods.StudError.Success;
+			string assistant;
+			var tokens = 0;
+			try{
+				var generated = !_form.IsGenerating && _form.GenerateForApi(session.Id, prompt, TokenCb, out error);
+				if(!generated){
+					if(error != NativeMethods.StudError.Success){
+						ctx.Response.StatusCode = 500;
+						var detail = NativeMethods.GetLastError();
+						NativeMethods.ClearLastErrorMessage();
+						if(!string.IsNullOrEmpty(detail)){
+							var err = JsonConvert.SerializeObject(new{ error = new{ message = detail, code = error.ToString() } });
+							var buf = Encoding.UTF8.GetBytes(err);
+							ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+						}
+					} else{ ctx.Response.StatusCode = 409; }
+					return;
+				}
+				assistant = sb.ToString();
+				session.Messages.Add(new Message{ Role = "user", Content = prompt });
+				session.Messages.Add(new Message{ Role = "assistant", Content = assistant });
+				tokens = _form.GetTokenCount();
+			} finally{ _form.ActivateDefaultSession(); }
+			_sessions.Update(session, tokens);
 			var resp = new{ session_id = session.Id, choices = new[]{ new{ message = new{ role = "assistant", content = assistant } } } };
 			var json = JsonConvert.SerializeObject(resp);
 			var bytes = Encoding.UTF8.GetBytes(json);
 			ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
+		}
+		private void DestroyNativeSession(string sessionId){
+			if(string.IsNullOrEmpty(sessionId) || sessionId == Form1.DefaultSessionId) return;
+			_form.DestroySession(sessionId);
 		}
 		private class ChatRequest{
 			public List<Message> Messages;

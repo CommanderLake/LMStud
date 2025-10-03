@@ -7,17 +7,169 @@
 #include <minja\minja.hpp>
 #include <minja\chat-template.hpp>
 #include <algorithm>
+#include <sstream>
+struct RuntimeState{
+	struct ModelRecord{
+		llama_model* model = nullptr;
+		const llama_vocab* vocab = nullptr;
+		common_chat_templates_ptr chatTemplates;
+		bool hasTools = false;
+		bool defaultUseJinja = false;
+		std::unordered_map<std::string, std::unique_ptr<ChatSession>> sessions;
+		std::string activeSessionId;
+	};
+	std::unordered_map<std::string, ModelRecord> models;
+	std::string activeModelId;
+	std::string activeSessionId;
+	llama_context* ctx = nullptr;
+	llama_memory_t llMem = nullptr;
+	std::string listScratch;
+};
+RuntimeState& GetRuntime(){
+	static RuntimeState runtime;
+	return runtime;
+}
+static RuntimeState::ModelRecord* GetActiveModelRecord(){
+	auto& runtime = GetRuntime();
+	if(runtime.activeModelId.empty()) return nullptr;
+	const auto it = runtime.models.find(runtime.activeModelId);
+	if(it == runtime.models.end()) return nullptr;
+	return &it->second;
+}
+static ChatSession* GetActiveSession(){
+	auto* model = GetActiveModelRecord();
+	if(!model) return nullptr;
+	auto& runtime = GetRuntime();
+	const auto it = model->sessions.find(runtime.activeSessionId);
+	if(it == model->sessions.end()) return nullptr;
+	return it->second.get();
+}
+ChatSession& ActiveSession(){
+	auto* session = GetActiveSession();
+	if(!session){
+		static ChatSession dummy;
+		return dummy;
+	}
+	return *session;
+}
+const std::string& ActiveModelId(){ return GetRuntime().activeModelId; }
+static llama_model*& ActiveModelHandle(){
+	static llama_model* nullModel = nullptr;
+	auto* model = GetActiveModelRecord();
+	if(!model) return nullModel;
+	return model->model;
+}
+static const llama_vocab*& ActiveVocabHandle(){
+	static const llama_vocab* nullVocab = nullptr;
+	auto* model = GetActiveModelRecord();
+	if(!model) return nullVocab;
+	return model->vocab;
+}
+static common_chat_templates_ptr& ActiveTemplatesHandle(){
+	static common_chat_templates_ptr nullTemplates;
+	auto* model = GetActiveModelRecord();
+	if(!model) return nullTemplates;
+	return model->chatTemplates;
+}
+static bool& ActiveToolsFlag(){
+	static bool falseFlag = false;
+	auto* model = GetActiveModelRecord();
+	if(!model) return falseFlag;
+	return model->hasTools;
+}
+#define _llModel ActiveModelHandle()
+#define _vocab ActiveVocabHandle()
+#define _chatTemplates ActiveTemplatesHandle()
+#define _hasTools ActiveToolsFlag()
+#define _session ActiveSession()
 using HrClock = std::chrono::high_resolution_clock;
 extern "C" void CloseCommandPrompt();
 static bool _gpuOomStud = false;
 static std::string _lastErrorMessage;
 extern "C" EXPORT const char* GetLastErrorMessage(){ return _lastErrorMessage.c_str(); }
 extern "C" EXPORT void ClearLastErrorMessage(){ _lastErrorMessage.clear(); }
+static void ClearSessionState(ChatSession& session){
+	for(auto& sampler : session.smpl){
+		if(sampler){
+			llama_sampler_free(sampler);
+			sampler = nullptr;
+		}
+	}
+	for(auto& msgs : session.chatMsgs){ msgs.clear(); }
+	for(auto& tokens : session.cachedTokens){ tokens.clear(); }
+	for(auto& state : session.dialState){ state.clear(); }
+	session.prompt.clear();
+	session.toolsPrompt.clear();
+	session.ctx = nullptr;
+	session.llMem = nullptr;
+	session.dId = 0;
+}
+static ChatSession* EnsureSessionEntry(RuntimeState::ModelRecord& model, const std::string& sessionId){
+	auto it = model.sessions.find(sessionId);
+	if(it != model.sessions.end()) return it->second.get();
+	auto session = std::make_unique<ChatSession>();
+	session->syntax.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
+	session->useJinja = model.defaultUseJinja;
+	auto* ptr = session.get();
+	model.sessions.emplace(sessionId, std::move(session));
+	return ptr;
+}
+static void SaveActiveSessionState(){
+	auto& runtime = GetRuntime();
+	auto* session = GetActiveSession();
+	if(!session || !runtime.ctx) return;
+	const int size = static_cast<int>(llama_state_get_size(runtime.ctx));
+	if(size > 0){
+		session->dialState[session->dId].assign(size, 0);
+		llama_state_get_data(runtime.ctx, session->dialState[session->dId].data(), size);
+	}
+	session->ctx = nullptr;
+	session->llMem = nullptr;
+}
+static void ReleaseContext(){
+	auto& runtime = GetRuntime();
+	if(runtime.ctx){
+		llama_free(runtime.ctx);
+		runtime.ctx = nullptr;
+		runtime.llMem = nullptr;
+	}
+}
 static void GPUOomLogCallbackStud(ggml_log_level level, const char* text, void* userData){
 	if(level == GGML_LOG_LEVEL_ERROR || level == GGML_LOG_LEVEL_WARN){
 		const std::string_view msg(text);
 		if(msg.find("out of memory") != std::string_view::npos) _gpuOomStud = true;
 	}
+}
+static StudError ActivateContext(ChatSession& session){
+	auto& runtime = GetRuntime();
+	if(!_llModel) return StudError::ModelNotLoaded;
+	if(session.nCtx <= 0) return StudError::CantCreateContext;
+	ReleaseContext();
+	auto ctxParams = llama_context_default_params();
+	ctxParams.n_ctx = session.nCtx;
+	ctxParams.n_batch = session.nBatch;
+	ctxParams.flash_attn = session.flashAttn;
+	ctxParams.n_threads = session.nThreads;
+	ctxParams.n_threads_batch = session.nThreadsBatch;
+	_gpuOomStud = false;
+	llama_log_set(GPUOomLogCallbackStud, nullptr);
+	runtime.ctx = llama_init_from_model(_llModel, ctxParams);
+	llama_log_set(nullptr, nullptr);
+	if(!runtime.ctx){ return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantCreateContext; }
+	runtime.llMem = llama_get_memory(runtime.ctx);
+	session.ctx = runtime.ctx;
+	session.llMem = runtime.llMem;
+	return StudError::Success;
+}
+static StudError RestoreSessionState(ChatSession& session, const bool rebuild){
+	auto& runtime = GetRuntime();
+	if(!runtime.ctx) return StudError::ModelNotLoaded;
+	if(!session.dialState[session.dId].empty()){ llama_state_set_data(runtime.ctx, session.dialState[session.dId].data(), static_cast<int>(session.dialState[session.dId].size())); }
+	if(session.smpl[session.dId]){
+		auto err = RetokenizeChat(rebuild);
+		if(err != StudError::Success) return err;
+	}
+	return StudError::Success;
 }
 void SetHWnd(HWND hWnd){ _hWnd = hWnd; }
 void BackendInit(){
@@ -27,7 +179,7 @@ void BackendInit(){
 	if(hModule != nullptr) ggml_backend_load("ggml-cuda.dll");
 	llama_backend_init();
 }
-void AddTool(const char* name, const char* description, const char* parameters, std::string(*handler)(const char* args)){
+void AddTool(const char* name, const char* description, const char* parameters, std::string (*handler)(const char* args)){
 	if(!name || !_hasTools) return;
 	common_chat_tool tool;
 	tool.name = name;
@@ -42,25 +194,15 @@ void ClearTools(){
 	_toolHandlers.clear();
 }
 StudError CreateContext(const int nCtx, const int nBatch, const bool flashAttn, const int nThreads, const int nThreadsBatch){
-	if(_session.ctx){
-		llama_free(_session.ctx);
-		_session.ctx = nullptr;
-	}
-	auto ctxParams = llama_context_default_params();
-	ctxParams.n_ctx = nCtx;
-	ctxParams.n_batch = nBatch;
-	ctxParams.flash_attn = flashAttn;
-	ctxParams.n_threads = nThreads;
-	ctxParams.n_threads_batch = nThreadsBatch;
-	_gpuOomStud = false;
-	llama_log_set(GPUOomLogCallbackStud, nullptr);
-	_session.ctx = llama_init_from_model(_llModel, ctxParams);
-	llama_log_set(nullptr, nullptr);
-	if(!_session.ctx){ return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantCreateContext; }
-	_session.llMem = llama_get_memory(_session.ctx);
-	auto result = StudError::Success;
-	if(_session.smpl[0]) result = RetokenizeChat(true);
-	return result;
+	_session.nCtx = nCtx;
+	_session.nBatch = nBatch;
+	_session.flashAttn = flashAttn;
+	_session.nThreads = nThreads;
+	_session.nThreadsBatch = nThreadsBatch;
+	auto err = ActivateContext(_session);
+	if(err != StudError::Success) return err;
+	if(_session.smpl[0]) return RetokenizeChat(true);
+	return StudError::Success;
 }
 StudError CreateSamplerInternal(const float minP, const float topP, const int topK, const float temp, const float repeatPenalty, llama_sampler* & smpl){
 	if(smpl){
@@ -80,45 +222,75 @@ StudError CreateSamplerInternal(const float minP, const float topP, const int to
 	return StudError::Success;
 }
 StudError CreateSampler(const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
+	_session.minP = minP;
+	_session.topP = topP;
+	_session.topK = topK;
+	_session.temp = temp;
+	_session.repeatPenalty = repeatPenalty;
 	const auto result = CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, _session.smpl[0]);
 	if(result != StudError::Success) return result;
 	return CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, _session.smpl[1]);
 }
 StudError CreateSession(const int nCtx, const int nBatch, const bool flashAttn, const int nThreads, const int nThreadsBatch, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
 	if(!_llModel) return StudError::ModelNotLoaded;
+	auto& runtime = GetRuntime();
+	auto* model = GetActiveModelRecord();
+	if(!model) return StudError::ModelNotLoaded;
+	SaveActiveSessionState();
+	if(runtime.activeSessionId.empty()) runtime.activeSessionId = STUD_DEFAULT_SESSION;
+	model->activeSessionId = runtime.activeSessionId;
+	auto* session = EnsureSessionEntry(*model, runtime.activeSessionId);
+	(void)session;
+	_session.useJinja = model->defaultUseJinja;
 	_session.syntax.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
 	auto result = CreateContext(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch);
 	if(result != StudError::Success) return result;
-	_session.nBatch = nBatch;
 	result = CreateSampler(minP, topP, topK, temp, repeatPenalty);
 	if(result != StudError::Success) return result;
 	return StudError::Success;
 }
 void DestroySession(){
-	if(_session.smpl[0]){
-		llama_sampler_free(_session.smpl[0]);
-		_session.smpl[0] = nullptr;
-	}
-	if(_session.smpl[1]){
-		llama_sampler_free(_session.smpl[1]);
-		_session.smpl[1] = nullptr;
-	}
-	if(_session.ctx){
-		llama_free(_session.ctx);
-		_session.ctx = nullptr;
-	}
+	SaveActiveSessionState();
+	ReleaseContext();
+	auto* session = GetActiveSession();
+	if(!session) return;
+	ClearSessionState(*session);
 	DialecticFree();
 }
 void FreeModel(){
-	DestroySession();
-	_session.cachedTokens[0].clear();
-	_session.cachedTokens[1].clear();
-	if(_llModel){
-		llama_model_free(_llModel);
-		_llModel = nullptr;
+	SaveActiveSessionState();
+	ReleaseContext();
+	auto& runtime = GetRuntime();
+	auto* model = GetActiveModelRecord();
+	if(!model){
+		runtime.activeModelId.clear();
+		runtime.activeSessionId.clear();
+		return;
 	}
+	for(auto& entry : model->sessions){ ClearSessionState(*entry.second); }
+	model->sessions.clear();
+	if(model->model){
+		llama_model_free(model->model);
+		model->model = nullptr;
+	}
+	model->vocab = nullptr;
+	model->chatTemplates.reset();
+	model->hasTools = false;
+	runtime.models.erase(runtime.activeModelId);
+	runtime.activeModelId.clear();
+	runtime.activeSessionId.clear();
 }
 StudError LoadModel(const char* filename, const char* jinjaTemplate, const int nGPULayers, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy){
+	const auto err = EnsureModel(STUD_DEFAULT_MODEL, filename, jinjaTemplate, nGPULayers, mMap, mLock, numaStrategy);
+	if(err != StudError::Success) return err;
+	return ActivateModel(STUD_DEFAULT_MODEL);
+}
+StudError EnsureModel(const char* modelId, const char* filename, const char* jinjaTemplate, const int nGPULayers, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy){
+	if(!filename || filename[0] == '\0') return StudError::CantLoadModel;
+	const std::string id = (modelId && modelId[0] != '\0') ? modelId : STUD_DEFAULT_MODEL;
+	auto& runtime = GetRuntime();
+	auto& record = runtime.models[id];
+	if(record.model) return StudError::Success;
 	auto params = llama_model_default_params();
 	params.n_gpu_layers = nGPULayers;
 	params.use_mlock = mLock;
@@ -126,29 +298,185 @@ StudError LoadModel(const char* filename, const char* jinjaTemplate, const int n
 	llama_numa_init(numaStrategy);
 	_gpuOomStud = false;
 	llama_log_set(GPUOomLogCallbackStud, nullptr);
-	_llModel = llama_model_load_from_file(filename, params);
+	record.model = llama_model_load_from_file(filename, params);
 	llama_log_set(nullptr, nullptr);
-	if(!_llModel){ return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantLoadModel; }
-	_vocab = llama_model_get_vocab(_llModel);
-	const auto bosStr = llama_vocab_get_text(_vocab, llama_vocab_bos(_vocab));
-	const auto eosStr = llama_vocab_get_text(_vocab, llama_vocab_eos(_vocab));
+	if(!record.model){
+		runtime.models.erase(id);
+		return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantLoadModel;
+	}
+	record.vocab = llama_model_get_vocab(record.model);
+	const auto bosStr = llama_vocab_get_text(record.vocab, llama_vocab_bos(record.vocab));
+	const auto eosStr = llama_vocab_get_text(record.vocab, llama_vocab_eos(record.vocab));
 	std::string tmplSrc;
 	if(jinjaTemplate && jinjaTemplate[0] != '\0'){
-		_chatTemplates = common_chat_templates_init(_llModel, jinjaTemplate, bosStr, eosStr);
+		record.chatTemplates = common_chat_templates_init(record.model, jinjaTemplate, bosStr, eosStr);
 		tmplSrc = jinjaTemplate;
 	} else{
-		_chatTemplates = common_chat_templates_init(_llModel, "");
-		tmplSrc = llama_model_chat_template(_llModel, nullptr);
+		record.chatTemplates = common_chat_templates_init(record.model, "");
+		tmplSrc = llama_model_chat_template(record.model, nullptr);
 	}
-	_hasTools = false;
+	record.hasTools = false;
+	record.defaultUseJinja = false;
 	if(!tmplSrc.empty()){
 		try{
 			const minja::chat_template tmpl(tmplSrc, bosStr, eosStr);
-			_hasTools = tmpl.original_caps().supports_tools;
-			_session.useJinja = true;
-		} catch(...){ _session.useJinja = false; }
-	} else{ _session.useJinja = false; }
+			record.hasTools = tmpl.original_caps().supports_tools;
+			record.defaultUseJinja = true;
+		} catch(...){ record.defaultUseJinja = false; }
+	}
+	auto* session = EnsureSessionEntry(record, STUD_DEFAULT_SESSION);
+	session->useJinja = record.defaultUseJinja;
+	session->syntax.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
+	record.activeSessionId = STUD_DEFAULT_SESSION;
+	if(runtime.activeModelId.empty()) runtime.activeModelId = id;
+	if(runtime.activeSessionId.empty()) runtime.activeSessionId = STUD_DEFAULT_SESSION;
 	return StudError::Success;
+}
+StudError ActivateModel(const char* modelId){
+	const std::string id = (modelId && modelId[0] != '\0') ? modelId : STUD_DEFAULT_MODEL;
+	auto& runtime = GetRuntime();
+	if(runtime.activeModelId == id) return StudError::Success;
+	SaveActiveSessionState();
+	auto* previous = GetActiveModelRecord();
+	if(previous) previous->activeSessionId = runtime.activeSessionId;
+	ReleaseContext();
+	const auto it = runtime.models.find(id);
+	if(it == runtime.models.end() || !it->second.model) return StudError::ModelNotLoaded;
+	runtime.activeModelId = id;
+	runtime.activeSessionId = it->second.activeSessionId;
+	if(runtime.activeSessionId.empty()){
+		if(it->second.sessions.empty()){
+			it->second.activeSessionId = STUD_DEFAULT_SESSION;
+			runtime.activeSessionId = STUD_DEFAULT_SESSION;
+			EnsureSessionEntry(it->second, STUD_DEFAULT_SESSION);
+		} else{
+			runtime.activeSessionId = it->second.sessions.begin()->first;
+			it->second.activeSessionId = runtime.activeSessionId;
+		}
+	}
+	return StudError::Success;
+}
+void DestroyModel(const char* modelId){
+	const std::string id = (modelId && modelId[0] != '\0') ? modelId : ActiveModelId();
+	auto& runtime = GetRuntime();
+	if(id.empty()) return;
+	if(runtime.activeModelId == id){
+		FreeModel();
+		return;
+	}
+	const auto it = runtime.models.find(id);
+	if(it == runtime.models.end()) return;
+	for(auto& entry : it->second.sessions){ ClearSessionState(*entry.second); }
+	if(it->second.model) llama_model_free(it->second.model);
+	runtime.models.erase(it);
+}
+const char* ListModels(){
+	auto& runtime = GetRuntime();
+	std::ostringstream oss;
+	bool first = true;
+	for(const auto& kv : runtime.models){
+		if(!kv.second.model) continue;
+		if(!first) oss << '\n';
+		first = false;
+		oss << kv.first;
+	}
+	runtime.listScratch = oss.str();
+	return runtime.listScratch.c_str();
+}
+StudError EnsureSessionId(const char* sessionId, const int nCtx, const int nBatch, const bool flashAttn, const int nThreads, const int nThreadsBatch, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty, const char* modelId){
+	std::string modelKey = (modelId && modelId[0] != '\0') ? modelId : ActiveModelId();
+	if(modelKey.empty()) modelKey = STUD_DEFAULT_MODEL;
+	auto& runtime = GetRuntime();
+	const auto modelIt = runtime.models.find(modelKey);
+	if(modelIt == runtime.models.end() || !modelIt->second.model) return StudError::ModelNotLoaded;
+	std::string sessionKey = (sessionId && sessionId[0] != '\0') ? sessionId : STUD_DEFAULT_SESSION;
+	auto* session = EnsureSessionEntry(modelIt->second, sessionKey);
+	session->useJinja = modelIt->second.defaultUseJinja;
+	session->nCtx = nCtx;
+	session->nBatch = nBatch;
+	session->flashAttn = flashAttn;
+	session->nThreads = nThreads;
+	session->nThreadsBatch = nThreadsBatch;
+	session->minP = minP;
+	session->topP = topP;
+	session->topK = topK;
+	session->temp = temp;
+	session->repeatPenalty = repeatPenalty;
+	session->syntax.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
+	auto err = CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, session->smpl[0]);
+	if(err != StudError::Success) return err;
+	err = CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, session->smpl[1]);
+	if(err != StudError::Success) return err;
+	if(modelIt->second.activeSessionId.empty()) modelIt->second.activeSessionId = sessionKey;
+	if(runtime.activeModelId == modelKey && runtime.activeSessionId.empty()) runtime.activeSessionId = sessionKey;
+	return StudError::Success;
+}
+StudError ActivateSessionId(const char* sessionId, const char* modelId){
+	std::string modelKey = (modelId && modelId[0] != '\0') ? modelId : ActiveModelId();
+	if(modelKey.empty()) modelKey = STUD_DEFAULT_MODEL;
+	auto& runtime = GetRuntime();
+	const auto modelIt = runtime.models.find(modelKey);
+	if(modelIt == runtime.models.end() || !modelIt->second.model) return StudError::ModelNotLoaded;
+	std::string sessionKey = (sessionId && sessionId[0] != '\0') ? sessionId : modelIt->second.activeSessionId;
+	if(sessionKey.empty()) sessionKey = STUD_DEFAULT_SESSION;
+	const auto sessionIt = modelIt->second.sessions.find(sessionKey);
+	if(sessionIt == modelIt->second.sessions.end()) return StudError::IndexOutOfRange;
+	if(runtime.activeModelId == modelKey && runtime.activeSessionId == sessionKey && runtime.ctx){
+		auto* session = sessionIt->second.get();
+		session->ctx = runtime.ctx;
+		session->llMem = runtime.llMem;
+		return StudError::Success;
+	}
+	if(runtime.activeModelId != modelKey){
+		auto err = ActivateModel(modelKey.c_str());
+		if(err != StudError::Success) return err;
+	}
+	if(runtime.activeSessionId != sessionKey) SaveActiveSessionState();
+	runtime.activeSessionId = sessionKey;
+	modelIt->second.activeSessionId = sessionKey;
+	auto* session = sessionIt->second.get();
+	auto err = ActivateContext(*session);
+	if(err != StudError::Success) return err;
+	return RestoreSessionState(*session, true);
+}
+void DestroySessionId(const char* sessionId, const char* modelId){
+	std::string modelKey = (modelId && modelId[0] != '\0') ? modelId : ActiveModelId();
+	if(modelKey.empty()) modelKey = STUD_DEFAULT_MODEL;
+	auto& runtime = GetRuntime();
+	const auto modelIt = runtime.models.find(modelKey);
+	if(modelIt == runtime.models.end()) return;
+	std::string sessionKey = (sessionId && sessionId[0] != '\0') ? sessionId : STUD_DEFAULT_SESSION;
+	const auto sessionIt = modelIt->second.sessions.find(sessionKey);
+	if(sessionIt == modelIt->second.sessions.end()) return;
+	if(runtime.activeModelId == modelKey && runtime.activeSessionId == sessionKey){
+		DestroySession();
+		modelIt->second.sessions.erase(sessionIt);
+		runtime.activeSessionId.clear();
+		modelIt->second.activeSessionId.clear();
+		return;
+	}
+	ClearSessionState(*sessionIt->second);
+	modelIt->second.sessions.erase(sessionIt);
+	if(modelIt->second.activeSessionId == sessionKey) modelIt->second.activeSessionId.clear();
+}
+const char* ListSessions(const char* modelId){
+	std::string modelKey = (modelId && modelId[0] != '\0') ? modelId : ActiveModelId();
+	if(modelKey.empty()) modelKey = STUD_DEFAULT_MODEL;
+	auto& runtime = GetRuntime();
+	const auto modelIt = runtime.models.find(modelKey);
+	if(modelIt == runtime.models.end()){
+		runtime.listScratch.clear();
+		return runtime.listScratch.c_str();
+	}
+	std::ostringstream oss;
+	bool first = true;
+	for(const auto& kv : modelIt->second.sessions){
+		if(!first) oss << '\n';
+		first = false;
+		oss << kv.first;
+	}
+	runtime.listScratch = oss.str();
+	return runtime.listScratch.c_str();
 }
 bool HasTool(const char* name){
 	for(const auto& tool : _tools){ if(tool.name._Equal(name)) return true; }

@@ -1,6 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
-set BASE=http://10.0.1.13:11434
+set BASE=http://127.0.0.1:11434
 
 echo ==== Get available models ====
 curl -s %BASE%/v1/model
