@@ -50,12 +50,6 @@ namespace LMStud{
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern StudError CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern StudError EnsureSessionId(string sessionId, int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty, string modelId);
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern StudError ActivateSessionId(string sessionId, string modelId);
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void DestroySessionId(string sessionId, string modelId);
-		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern StudError LoadModel(string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy);
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void FreeModel();
