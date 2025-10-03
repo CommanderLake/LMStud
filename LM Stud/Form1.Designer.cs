@@ -100,6 +100,8 @@ namespace LMStud
 			this.checkDialectic = new System.Windows.Forms.CheckBox();
 			this.checkAutoScroll = new System.Windows.Forms.CheckBox();
 			this.tabPageSettings = new System.Windows.Forms.TabPage();
+			this.groupBox8 = new System.Windows.Forms.GroupBox();
+			this.checkCMDEnable = new System.Windows.Forms.CheckBox();
 			this.groupBox7 = new System.Windows.Forms.GroupBox();
 			this.numApiServerPort = new System.Windows.Forms.NumericUpDown();
 			this.label28 = new System.Windows.Forms.Label();
@@ -198,8 +200,6 @@ namespace LMStud
 			this.labelEditing = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-			this.groupBox8 = new System.Windows.Forms.GroupBox();
-			this.checkCMDEnable = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -227,6 +227,7 @@ namespace LMStud
 			this.tabControl1.SuspendLayout();
 			this.tabPageChat.SuspendLayout();
 			this.tabPageSettings.SuspendLayout();
+			this.groupBox8.SuspendLayout();
 			this.groupBox7.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numApiServerPort)).BeginInit();
 			this.groupBox6.SuspendLayout();
@@ -259,7 +260,6 @@ namespace LMStud
 			this.tabPageModels.SuspendLayout();
 			this.tabPageHuggingFace.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
-			this.groupBox8.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// splitContainer1
@@ -271,11 +271,16 @@ namespace LMStud
 			// 
 			// splitContainer1.Panel1
 			// 
+			resources.ApplyResources(this.splitContainer1.Panel1, "splitContainer1.Panel1");
 			this.splitContainer1.Panel1.Controls.Add(this.panelChat);
+			this.toolTip1.SetToolTip(this.splitContainer1.Panel1, resources.GetString("splitContainer1.Panel1.ToolTip"));
 			// 
 			// splitContainer1.Panel2
 			// 
+			resources.ApplyResources(this.splitContainer1.Panel2, "splitContainer1.Panel2");
 			this.splitContainer1.Panel2.Controls.Add(this.textInput);
+			this.toolTip1.SetToolTip(this.splitContainer1.Panel2, resources.GetString("splitContainer1.Panel2.ToolTip"));
+			this.toolTip1.SetToolTip(this.splitContainer1, resources.GetString("splitContainer1.ToolTip"));
 			// 
 			// panelChat
 			// 
@@ -283,13 +288,15 @@ namespace LMStud
 			this.panelChat.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
 			this.panelChat.CausesValidation = false;
 			this.panelChat.Name = "panelChat";
+			this.toolTip1.SetToolTip(this.panelChat, resources.GetString("panelChat.ToolTip"));
 			this.panelChat.Layout += new System.Windows.Forms.LayoutEventHandler(this.PanelChat_Layout);
 			// 
 			// textInput
 			// 
-			this.textInput.AllowDrop = true;
 			resources.ApplyResources(this.textInput, "textInput");
+			this.textInput.AllowDrop = true;
 			this.textInput.Name = "textInput";
+			this.toolTip1.SetToolTip(this.textInput, resources.GetString("textInput.ToolTip"));
 			this.textInput.DragDrop += new System.Windows.Forms.DragEventHandler(this.TextInput_DragDrop);
 			this.textInput.DragEnter += new System.Windows.Forms.DragEventHandler(this.TextInput_DragEnter);
 			this.textInput.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextInput_KeyDown);
@@ -303,22 +310,28 @@ namespace LMStud
 			// 
 			// splitContainer2.Panel1
 			// 
+			resources.ApplyResources(this.splitContainer2.Panel1, "splitContainer2.Panel1");
 			this.splitContainer2.Panel1.Controls.Add(this.listViewModels);
+			this.toolTip1.SetToolTip(this.splitContainer2.Panel1, resources.GetString("splitContainer2.Panel1.ToolTip"));
 			// 
 			// splitContainer2.Panel2
 			// 
+			resources.ApplyResources(this.splitContainer2.Panel2, "splitContainer2.Panel2");
 			this.splitContainer2.Panel2.Controls.Add(this.tabControlModelStuff);
+			this.toolTip1.SetToolTip(this.splitContainer2.Panel2, resources.GetString("splitContainer2.Panel2.ToolTip"));
+			this.toolTip1.SetToolTip(this.splitContainer2, resources.GetString("splitContainer2.ToolTip"));
 			// 
 			// listViewModels
 			// 
+			resources.ApplyResources(this.listViewModels, "listViewModels");
 			this.listViewModels.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1,
             this.columnHeader2});
-			resources.ApplyResources(this.listViewModels, "listViewModels");
 			this.listViewModels.GridLines = true;
 			this.listViewModels.HideSelection = false;
 			this.listViewModels.MultiSelect = false;
 			this.listViewModels.Name = "listViewModels";
+			this.toolTip1.SetToolTip(this.listViewModels, resources.GetString("listViewModels.ToolTip"));
 			this.listViewModels.UseCompatibleStateImageBehavior = false;
 			this.listViewModels.View = System.Windows.Forms.View.Details;
 			this.listViewModels.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.ListViewModels_ItemSelectionChanged);
@@ -335,14 +348,16 @@ namespace LMStud
 			// 
 			// tabControlModelStuff
 			// 
+			resources.ApplyResources(this.tabControlModelStuff, "tabControlModelStuff");
 			this.tabControlModelStuff.Controls.Add(this.tabPageModelSettings);
 			this.tabControlModelStuff.Controls.Add(this.tabPageMetadata);
-			resources.ApplyResources(this.tabControlModelStuff, "tabControlModelStuff");
 			this.tabControlModelStuff.Name = "tabControlModelStuff";
 			this.tabControlModelStuff.SelectedIndex = 0;
+			this.toolTip1.SetToolTip(this.tabControlModelStuff, resources.GetString("tabControlModelStuff.ToolTip"));
 			// 
 			// tabPageModelSettings
 			// 
+			resources.ApplyResources(this.tabPageModelSettings, "tabPageModelSettings");
 			this.tabPageModelSettings.Controls.Add(this.groupJinjaTmplModel);
 			this.tabPageModelSettings.Controls.Add(this.labelSystemPromptModel);
 			this.tabPageModelSettings.Controls.Add(this.textSystemPromptModel);
@@ -350,29 +365,32 @@ namespace LMStud
 			this.tabPageModelSettings.Controls.Add(this.checkOverrideSettings);
 			this.tabPageModelSettings.Controls.Add(this.groupAdvancedModel);
 			this.tabPageModelSettings.Controls.Add(this.groupCommonModel);
-			resources.ApplyResources(this.tabPageModelSettings, "tabPageModelSettings");
 			this.tabPageModelSettings.Name = "tabPageModelSettings";
+			this.toolTip1.SetToolTip(this.tabPageModelSettings, resources.GetString("tabPageModelSettings.ToolTip"));
 			this.tabPageModelSettings.UseVisualStyleBackColor = true;
 			// 
 			// groupJinjaTmplModel
 			// 
+			resources.ApplyResources(this.groupJinjaTmplModel, "groupJinjaTmplModel");
 			this.groupJinjaTmplModel.Controls.Add(this.label30);
 			this.groupJinjaTmplModel.Controls.Add(this.butBrowseJinjaTmplModel);
 			this.groupJinjaTmplModel.Controls.Add(this.textJinjaTmplModel);
 			this.groupJinjaTmplModel.Controls.Add(this.checkOverrideJinjaModel);
-			resources.ApplyResources(this.groupJinjaTmplModel, "groupJinjaTmplModel");
 			this.groupJinjaTmplModel.Name = "groupJinjaTmplModel";
 			this.groupJinjaTmplModel.TabStop = false;
+			this.toolTip1.SetToolTip(this.groupJinjaTmplModel, resources.GetString("groupJinjaTmplModel.ToolTip"));
 			// 
 			// label30
 			// 
 			resources.ApplyResources(this.label30, "label30");
 			this.label30.Name = "label30";
+			this.toolTip1.SetToolTip(this.label30, resources.GetString("label30.ToolTip"));
 			// 
 			// butBrowseJinjaTmplModel
 			// 
 			resources.ApplyResources(this.butBrowseJinjaTmplModel, "butBrowseJinjaTmplModel");
 			this.butBrowseJinjaTmplModel.Name = "butBrowseJinjaTmplModel";
+			this.toolTip1.SetToolTip(this.butBrowseJinjaTmplModel, resources.GetString("butBrowseJinjaTmplModel.ToolTip"));
 			this.butBrowseJinjaTmplModel.UseVisualStyleBackColor = true;
 			this.butBrowseJinjaTmplModel.Click += new System.EventHandler(this.ButBrowseJinjaTmplModel_Click);
 			// 
@@ -380,27 +398,32 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.textJinjaTmplModel, "textJinjaTmplModel");
 			this.textJinjaTmplModel.Name = "textJinjaTmplModel";
+			this.toolTip1.SetToolTip(this.textJinjaTmplModel, resources.GetString("textJinjaTmplModel.ToolTip"));
 			// 
 			// checkOverrideJinjaModel
 			// 
 			resources.ApplyResources(this.checkOverrideJinjaModel, "checkOverrideJinjaModel");
 			this.checkOverrideJinjaModel.Name = "checkOverrideJinjaModel";
+			this.toolTip1.SetToolTip(this.checkOverrideJinjaModel, resources.GetString("checkOverrideJinjaModel.ToolTip"));
 			this.checkOverrideJinjaModel.UseVisualStyleBackColor = true;
 			// 
 			// labelSystemPromptModel
 			// 
 			resources.ApplyResources(this.labelSystemPromptModel, "labelSystemPromptModel");
 			this.labelSystemPromptModel.Name = "labelSystemPromptModel";
+			this.toolTip1.SetToolTip(this.labelSystemPromptModel, resources.GetString("labelSystemPromptModel.ToolTip"));
 			// 
 			// textSystemPromptModel
 			// 
 			resources.ApplyResources(this.textSystemPromptModel, "textSystemPromptModel");
 			this.textSystemPromptModel.Name = "textSystemPromptModel";
+			this.toolTip1.SetToolTip(this.textSystemPromptModel, resources.GetString("textSystemPromptModel.ToolTip"));
 			// 
 			// butApplyModelSettings
 			// 
 			resources.ApplyResources(this.butApplyModelSettings, "butApplyModelSettings");
 			this.butApplyModelSettings.Name = "butApplyModelSettings";
+			this.toolTip1.SetToolTip(this.butApplyModelSettings, resources.GetString("butApplyModelSettings.ToolTip"));
 			this.butApplyModelSettings.UseVisualStyleBackColor = true;
 			this.butApplyModelSettings.Click += new System.EventHandler(this.ButApplyModelSettings_Click);
 			// 
@@ -408,11 +431,13 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.checkOverrideSettings, "checkOverrideSettings");
 			this.checkOverrideSettings.Name = "checkOverrideSettings";
+			this.toolTip1.SetToolTip(this.checkOverrideSettings, resources.GetString("checkOverrideSettings.ToolTip"));
 			this.checkOverrideSettings.UseVisualStyleBackColor = true;
 			this.checkOverrideSettings.CheckedChanged += new System.EventHandler(this.CheckUseModelSettings_CheckedChanged);
 			// 
 			// groupAdvancedModel
 			// 
+			resources.ApplyResources(this.groupAdvancedModel, "groupAdvancedModel");
 			this.groupAdvancedModel.Controls.Add(this.numMinPModel);
 			this.groupAdvancedModel.Controls.Add(this.numTopKModel);
 			this.groupAdvancedModel.Controls.Add(this.numTopPModel);
@@ -420,9 +445,9 @@ namespace LMStud
 			this.groupAdvancedModel.Controls.Add(this.checkFlashAttnModel);
 			this.groupAdvancedModel.Controls.Add(this.label31);
 			this.groupAdvancedModel.Controls.Add(this.label32);
-			resources.ApplyResources(this.groupAdvancedModel, "groupAdvancedModel");
 			this.groupAdvancedModel.Name = "groupAdvancedModel";
 			this.groupAdvancedModel.TabStop = false;
+			this.toolTip1.SetToolTip(this.groupAdvancedModel, resources.GetString("groupAdvancedModel.ToolTip"));
 			// 
 			// numMinPModel
 			// 
@@ -439,6 +464,7 @@ namespace LMStud
             0,
             0});
 			this.numMinPModel.Name = "numMinPModel";
+			this.toolTip1.SetToolTip(this.numMinPModel, resources.GetString("numMinPModel.ToolTip"));
 			// 
 			// numTopKModel
 			// 
@@ -449,6 +475,7 @@ namespace LMStud
             0,
             0});
 			this.numTopKModel.Name = "numTopKModel";
+			this.toolTip1.SetToolTip(this.numTopKModel, resources.GetString("numTopKModel.ToolTip"));
 			this.numTopKModel.Value = new decimal(new int[] {
             40,
             0,
@@ -470,6 +497,7 @@ namespace LMStud
             0,
             0});
 			this.numTopPModel.Name = "numTopPModel";
+			this.toolTip1.SetToolTip(this.numTopPModel, resources.GetString("numTopPModel.ToolTip"));
 			this.numTopPModel.Value = new decimal(new int[] {
             95,
             0,
@@ -480,6 +508,7 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.label27, "label27");
 			this.label27.Name = "label27";
+			this.toolTip1.SetToolTip(this.label27, resources.GetString("label27.ToolTip"));
 			// 
 			// checkFlashAttnModel
 			// 
@@ -487,29 +516,33 @@ namespace LMStud
 			this.checkFlashAttnModel.Checked = true;
 			this.checkFlashAttnModel.CheckState = System.Windows.Forms.CheckState.Checked;
 			this.checkFlashAttnModel.Name = "checkFlashAttnModel";
+			this.toolTip1.SetToolTip(this.checkFlashAttnModel, resources.GetString("checkFlashAttnModel.ToolTip"));
 			this.checkFlashAttnModel.UseVisualStyleBackColor = true;
 			// 
 			// label31
 			// 
 			resources.ApplyResources(this.label31, "label31");
 			this.label31.Name = "label31";
+			this.toolTip1.SetToolTip(this.label31, resources.GetString("label31.ToolTip"));
 			// 
 			// label32
 			// 
 			resources.ApplyResources(this.label32, "label32");
 			this.label32.Name = "label32";
+			this.toolTip1.SetToolTip(this.label32, resources.GetString("label32.ToolTip"));
 			// 
 			// groupCommonModel
 			// 
+			resources.ApplyResources(this.groupCommonModel, "groupCommonModel");
 			this.groupCommonModel.Controls.Add(this.numCtxSizeModel);
 			this.groupCommonModel.Controls.Add(this.numGPULayersModel);
 			this.groupCommonModel.Controls.Add(this.numTempModel);
 			this.groupCommonModel.Controls.Add(this.label33);
 			this.groupCommonModel.Controls.Add(this.label34);
 			this.groupCommonModel.Controls.Add(this.label35);
-			resources.ApplyResources(this.groupCommonModel, "groupCommonModel");
 			this.groupCommonModel.Name = "groupCommonModel";
 			this.groupCommonModel.TabStop = false;
+			this.toolTip1.SetToolTip(this.groupCommonModel, resources.GetString("groupCommonModel.ToolTip"));
 			// 
 			// numCtxSizeModel
 			// 
@@ -520,6 +553,7 @@ namespace LMStud
             0,
             0});
 			this.numCtxSizeModel.Name = "numCtxSizeModel";
+			this.toolTip1.SetToolTip(this.numCtxSizeModel, resources.GetString("numCtxSizeModel.ToolTip"));
 			this.numCtxSizeModel.Value = new decimal(new int[] {
             8192,
             0,
@@ -540,6 +574,7 @@ namespace LMStud
             0,
             -2147483648});
 			this.numGPULayersModel.Name = "numGPULayersModel";
+			this.toolTip1.SetToolTip(this.numGPULayersModel, resources.GetString("numGPULayersModel.ToolTip"));
 			this.numGPULayersModel.Value = new decimal(new int[] {
             1,
             0,
@@ -561,6 +596,7 @@ namespace LMStud
             0,
             0});
 			this.numTempModel.Name = "numTempModel";
+			this.toolTip1.SetToolTip(this.numTempModel, resources.GetString("numTempModel.ToolTip"));
 			this.numTempModel.Value = new decimal(new int[] {
             6,
             0,
@@ -571,34 +607,39 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.label33, "label33");
 			this.label33.Name = "label33";
+			this.toolTip1.SetToolTip(this.label33, resources.GetString("label33.ToolTip"));
 			// 
 			// label34
 			// 
 			resources.ApplyResources(this.label34, "label34");
 			this.label34.Name = "label34";
+			this.toolTip1.SetToolTip(this.label34, resources.GetString("label34.ToolTip"));
 			// 
 			// label35
 			// 
 			resources.ApplyResources(this.label35, "label35");
 			this.label35.Name = "label35";
+			this.toolTip1.SetToolTip(this.label35, resources.GetString("label35.ToolTip"));
 			// 
 			// tabPageMetadata
 			// 
-			this.tabPageMetadata.Controls.Add(this.listViewMeta);
 			resources.ApplyResources(this.tabPageMetadata, "tabPageMetadata");
+			this.tabPageMetadata.Controls.Add(this.listViewMeta);
 			this.tabPageMetadata.Name = "tabPageMetadata";
+			this.toolTip1.SetToolTip(this.tabPageMetadata, resources.GetString("tabPageMetadata.ToolTip"));
 			this.tabPageMetadata.UseVisualStyleBackColor = true;
 			// 
 			// listViewMeta
 			// 
+			resources.ApplyResources(this.listViewMeta, "listViewMeta");
 			this.listViewMeta.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader3,
             this.columnHeader4});
-			resources.ApplyResources(this.listViewMeta, "listViewMeta");
 			this.listViewMeta.GridLines = true;
 			this.listViewMeta.HideSelection = false;
 			this.listViewMeta.MultiSelect = false;
 			this.listViewMeta.Name = "listViewMeta";
+			this.toolTip1.SetToolTip(this.listViewMeta, resources.GetString("listViewMeta.ToolTip"));
 			this.listViewMeta.UseCompatibleStateImageBehavior = false;
 			this.listViewMeta.View = System.Windows.Forms.View.Details;
 			// 
@@ -618,14 +659,20 @@ namespace LMStud
 			// 
 			// splitContainer3.Panel1
 			// 
+			resources.ApplyResources(this.splitContainer3.Panel1, "splitContainer3.Panel1");
 			this.splitContainer3.Panel1.Controls.Add(this.listViewHugSearch);
+			this.toolTip1.SetToolTip(this.splitContainer3.Panel1, resources.GetString("splitContainer3.Panel1.ToolTip"));
 			// 
 			// splitContainer3.Panel2
 			// 
+			resources.ApplyResources(this.splitContainer3.Panel2, "splitContainer3.Panel2");
 			this.splitContainer3.Panel2.Controls.Add(this.listViewHugFiles);
+			this.toolTip1.SetToolTip(this.splitContainer3.Panel2, resources.GetString("splitContainer3.Panel2.ToolTip"));
+			this.toolTip1.SetToolTip(this.splitContainer3, resources.GetString("splitContainer3.ToolTip"));
 			// 
 			// listViewHugSearch
 			// 
+			resources.ApplyResources(this.listViewHugSearch, "listViewHugSearch");
 			this.listViewHugSearch.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader5,
             this.columnHeader6,
@@ -634,10 +681,10 @@ namespace LMStud
             this.columnHeader12,
             this.columnHeader13,
             this.columnHeader14});
-			resources.ApplyResources(this.listViewHugSearch, "listViewHugSearch");
 			this.listViewHugSearch.GridLines = true;
 			this.listViewHugSearch.HideSelection = false;
 			this.listViewHugSearch.Name = "listViewHugSearch";
+			this.toolTip1.SetToolTip(this.listViewHugSearch, resources.GetString("listViewHugSearch.ToolTip"));
 			this.listViewHugSearch.UseCompatibleStateImageBehavior = false;
 			this.listViewHugSearch.View = System.Windows.Forms.View.Details;
 			this.listViewHugSearch.SelectedIndexChanged += new System.EventHandler(this.ListViewHugSearch_SelectedIndexChanged);
@@ -672,13 +719,14 @@ namespace LMStud
 			// 
 			// listViewHugFiles
 			// 
+			resources.ApplyResources(this.listViewHugFiles, "listViewHugFiles");
 			this.listViewHugFiles.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader8,
             this.columnHeader10});
-			resources.ApplyResources(this.listViewHugFiles, "listViewHugFiles");
 			this.listViewHugFiles.GridLines = true;
 			this.listViewHugFiles.HideSelection = false;
 			this.listViewHugFiles.Name = "listViewHugFiles";
+			this.toolTip1.SetToolTip(this.listViewHugFiles, resources.GetString("listViewHugFiles.ToolTip"));
 			this.listViewHugFiles.UseCompatibleStateImageBehavior = false;
 			this.listViewHugFiles.View = System.Windows.Forms.View.Details;
 			// 
@@ -694,6 +742,7 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.checkSpeak, "checkSpeak");
 			this.checkSpeak.Name = "checkSpeak";
+			this.toolTip1.SetToolTip(this.checkSpeak, resources.GetString("checkSpeak.ToolTip"));
 			this.checkSpeak.UseVisualStyleBackColor = true;
 			this.checkSpeak.CheckedChanged += new System.EventHandler(this.CheckSpeak_CheckedChanged);
 			// 
@@ -702,6 +751,7 @@ namespace LMStud
 			resources.ApplyResources(this.checkVoiceInput, "checkVoiceInput");
 			this.checkVoiceInput.Name = "checkVoiceInput";
 			this.checkVoiceInput.ThreeState = true;
+			this.toolTip1.SetToolTip(this.checkVoiceInput, resources.GetString("checkVoiceInput.ToolTip"));
 			this.checkVoiceInput.UseVisualStyleBackColor = true;
 			this.checkVoiceInput.CheckedChanged += new System.EventHandler(this.CheckVoiceInput_CheckedChanged);
 			// 
@@ -711,6 +761,7 @@ namespace LMStud
 			this.checkMarkdown.Checked = true;
 			this.checkMarkdown.CheckState = System.Windows.Forms.CheckState.Checked;
 			this.checkMarkdown.Name = "checkMarkdown";
+			this.toolTip1.SetToolTip(this.checkMarkdown, resources.GetString("checkMarkdown.ToolTip"));
 			this.checkMarkdown.UseVisualStyleBackColor = true;
 			this.checkMarkdown.CheckedChanged += new System.EventHandler(this.CheckMarkdown_CheckedChanged);
 			// 
@@ -720,12 +771,14 @@ namespace LMStud
 			this.checkStream.Checked = true;
 			this.checkStream.CheckState = System.Windows.Forms.CheckState.Checked;
 			this.checkStream.Name = "checkStream";
+			this.toolTip1.SetToolTip(this.checkStream, resources.GetString("checkStream.ToolTip"));
 			this.checkStream.UseVisualStyleBackColor = true;
 			// 
 			// butCodeBlock
 			// 
 			resources.ApplyResources(this.butCodeBlock, "butCodeBlock");
 			this.butCodeBlock.Name = "butCodeBlock";
+			this.toolTip1.SetToolTip(this.butCodeBlock, resources.GetString("butCodeBlock.ToolTip"));
 			this.butCodeBlock.UseVisualStyleBackColor = true;
 			this.butCodeBlock.Click += new System.EventHandler(this.ButCodeBlock_Click);
 			// 
@@ -733,6 +786,7 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.butReset, "butReset");
 			this.butReset.Name = "butReset";
+			this.toolTip1.SetToolTip(this.butReset, resources.GetString("butReset.ToolTip"));
 			this.butReset.UseVisualStyleBackColor = true;
 			this.butReset.Click += new System.EventHandler(this.ButReset_Click);
 			// 
@@ -741,6 +795,7 @@ namespace LMStud
 			resources.ApplyResources(this.butGen, "butGen");
 			this.butGen.Name = "butGen";
 			this.butGen.Text = global::LMStud.Properties.Resources.Generate;
+			this.toolTip1.SetToolTip(this.butGen, resources.GetString("butGen.ToolTip"));
 			this.butGen.UseVisualStyleBackColor = true;
 			this.butGen.Click += new System.EventHandler(this.ButGen_Click);
 			// 
@@ -748,6 +803,7 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.butSearch, "butSearch");
 			this.butSearch.Name = "butSearch";
+			this.toolTip1.SetToolTip(this.butSearch, resources.GetString("butSearch.ToolTip"));
 			this.butSearch.UseVisualStyleBackColor = true;
 			this.butSearch.Click += new System.EventHandler(this.ButSearch_Click);
 			// 
@@ -755,22 +811,26 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.textSearchTerm, "textSearchTerm");
 			this.textSearchTerm.Name = "textSearchTerm";
+			this.toolTip1.SetToolTip(this.textSearchTerm, resources.GetString("textSearchTerm.ToolTip"));
 			this.textSearchTerm.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextSearchTerm_KeyDown);
 			// 
 			// label13
 			// 
 			resources.ApplyResources(this.label13, "label13");
 			this.label13.Name = "label13";
+			this.toolTip1.SetToolTip(this.label13, resources.GetString("label13.ToolTip"));
 			// 
 			// progressBar1
 			// 
 			resources.ApplyResources(this.progressBar1, "progressBar1");
 			this.progressBar1.Name = "progressBar1";
+			this.toolTip1.SetToolTip(this.progressBar1, resources.GetString("progressBar1.ToolTip"));
 			// 
 			// butDownload
 			// 
 			resources.ApplyResources(this.butDownload, "butDownload");
 			this.butDownload.Name = "butDownload";
+			this.toolTip1.SetToolTip(this.butDownload, resources.GetString("butDownload.ToolTip"));
 			this.butDownload.UseVisualStyleBackColor = true;
 			this.butDownload.Click += new System.EventHandler(this.ButDownload_Click);
 			// 
@@ -783,9 +843,11 @@ namespace LMStud
 			this.tabControl1.Controls.Add(this.tabPageHuggingFace);
 			this.tabControl1.Name = "tabControl1";
 			this.tabControl1.SelectedIndex = 0;
+			this.toolTip1.SetToolTip(this.tabControl1, resources.GetString("tabControl1.ToolTip"));
 			// 
 			// tabPageChat
 			// 
+			resources.ApplyResources(this.tabPageChat, "tabPageChat");
 			this.tabPageChat.Controls.Add(this.checkDialectic);
 			this.tabPageChat.Controls.Add(this.checkAutoScroll);
 			this.tabPageChat.Controls.Add(this.checkSpeak);
@@ -796,14 +858,15 @@ namespace LMStud
 			this.tabPageChat.Controls.Add(this.butGen);
 			this.tabPageChat.Controls.Add(this.checkStream);
 			this.tabPageChat.Controls.Add(this.butCodeBlock);
-			resources.ApplyResources(this.tabPageChat, "tabPageChat");
 			this.tabPageChat.Name = "tabPageChat";
+			this.toolTip1.SetToolTip(this.tabPageChat, resources.GetString("tabPageChat.ToolTip"));
 			this.tabPageChat.UseVisualStyleBackColor = true;
 			// 
 			// checkDialectic
 			// 
 			resources.ApplyResources(this.checkDialectic, "checkDialectic");
 			this.checkDialectic.Name = "checkDialectic";
+			this.toolTip1.SetToolTip(this.checkDialectic, resources.GetString("checkDialectic.ToolTip"));
 			this.checkDialectic.UseVisualStyleBackColor = true;
 			this.checkDialectic.CheckedChanged += new System.EventHandler(this.CheckDialectic_CheckedChanged);
 			// 
@@ -813,10 +876,12 @@ namespace LMStud
 			this.checkAutoScroll.Checked = true;
 			this.checkAutoScroll.CheckState = System.Windows.Forms.CheckState.Checked;
 			this.checkAutoScroll.Name = "checkAutoScroll";
+			this.toolTip1.SetToolTip(this.checkAutoScroll, resources.GetString("checkAutoScroll.ToolTip"));
 			this.checkAutoScroll.UseVisualStyleBackColor = true;
 			// 
 			// tabPageSettings
 			// 
+			resources.ApplyResources(this.tabPageSettings, "tabPageSettings");
 			this.tabPageSettings.Controls.Add(this.groupBox8);
 			this.tabPageSettings.Controls.Add(this.groupBox7);
 			this.tabPageSettings.Controls.Add(this.textModelsPath);
@@ -835,18 +900,34 @@ namespace LMStud
 			this.tabPageSettings.Controls.Add(this.butApply);
 			this.tabPageSettings.Controls.Add(this.label1);
 			this.tabPageSettings.Controls.Add(this.textSystemPrompt);
-			resources.ApplyResources(this.tabPageSettings, "tabPageSettings");
 			this.tabPageSettings.Name = "tabPageSettings";
+			this.toolTip1.SetToolTip(this.tabPageSettings, resources.GetString("tabPageSettings.ToolTip"));
 			this.tabPageSettings.UseVisualStyleBackColor = true;
+			// 
+			// groupBox8
+			// 
+			resources.ApplyResources(this.groupBox8, "groupBox8");
+			this.groupBox8.Controls.Add(this.checkCMDEnable);
+			this.groupBox8.Name = "groupBox8";
+			this.groupBox8.TabStop = false;
+			this.toolTip1.SetToolTip(this.groupBox8, resources.GetString("groupBox8.ToolTip"));
+			// 
+			// checkCMDEnable
+			// 
+			resources.ApplyResources(this.checkCMDEnable, "checkCMDEnable");
+			this.checkCMDEnable.Name = "checkCMDEnable";
+			this.toolTip1.SetToolTip(this.checkCMDEnable, resources.GetString("checkCMDEnable.ToolTip"));
+			this.checkCMDEnable.UseVisualStyleBackColor = true;
 			// 
 			// groupBox7
 			// 
+			resources.ApplyResources(this.groupBox7, "groupBox7");
 			this.groupBox7.Controls.Add(this.numApiServerPort);
 			this.groupBox7.Controls.Add(this.label28);
 			this.groupBox7.Controls.Add(this.checkApiServerEnable);
-			resources.ApplyResources(this.groupBox7, "groupBox7");
 			this.groupBox7.Name = "groupBox7";
 			this.groupBox7.TabStop = false;
+			this.toolTip1.SetToolTip(this.groupBox7, resources.GetString("groupBox7.ToolTip"));
 			// 
 			// numApiServerPort
 			// 
@@ -857,6 +938,7 @@ namespace LMStud
             0,
             0});
 			this.numApiServerPort.Name = "numApiServerPort";
+			this.toolTip1.SetToolTip(this.numApiServerPort, resources.GetString("numApiServerPort.ToolTip"));
 			this.numApiServerPort.Value = new decimal(new int[] {
             11434,
             0,
@@ -867,11 +949,13 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.label28, "label28");
 			this.label28.Name = "label28";
+			this.toolTip1.SetToolTip(this.label28, resources.GetString("label28.ToolTip"));
 			// 
 			// checkApiServerEnable
 			// 
 			resources.ApplyResources(this.checkApiServerEnable, "checkApiServerEnable");
 			this.checkApiServerEnable.Name = "checkApiServerEnable";
+			this.toolTip1.SetToolTip(this.checkApiServerEnable, resources.GetString("checkApiServerEnable.ToolTip"));
 			this.checkApiServerEnable.UseVisualStyleBackColor = true;
 			// 
 			// textModelsPath
@@ -880,10 +964,12 @@ namespace LMStud
 			this.textModelsPath.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
 			this.textModelsPath.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.FileSystem;
 			this.textModelsPath.Name = "textModelsPath";
+			this.toolTip1.SetToolTip(this.textModelsPath, resources.GetString("textModelsPath.ToolTip"));
 			this.textModelsPath.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextModelsPath_KeyDown);
 			// 
 			// groupBox6
 			// 
+			resources.ApplyResources(this.groupBox6, "groupBox6");
 			this.groupBox6.Controls.Add(this.numGenDelay);
 			this.groupBox6.Controls.Add(this.label29);
 			this.groupBox6.Controls.Add(this.numVadThreshold);
@@ -893,9 +979,9 @@ namespace LMStud
 			this.groupBox6.Controls.Add(this.label17);
 			this.groupBox6.Controls.Add(this.comboVADModel);
 			this.groupBox6.Controls.Add(this.label26);
-			resources.ApplyResources(this.groupBox6, "groupBox6");
 			this.groupBox6.Name = "groupBox6";
 			this.groupBox6.TabStop = false;
+			this.toolTip1.SetToolTip(this.groupBox6, resources.GetString("groupBox6.ToolTip"));
 			// 
 			// numGenDelay
 			// 
@@ -911,6 +997,7 @@ namespace LMStud
             0,
             0});
 			this.numGenDelay.Name = "numGenDelay";
+			this.toolTip1.SetToolTip(this.numGenDelay, resources.GetString("numGenDelay.ToolTip"));
 			this.numGenDelay.Value = new decimal(new int[] {
             2000,
             0,
@@ -921,6 +1008,7 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.label29, "label29");
 			this.label29.Name = "label29";
+			this.toolTip1.SetToolTip(this.label29, resources.GetString("label29.ToolTip"));
 			// 
 			// numVadThreshold
 			// 
@@ -937,6 +1025,7 @@ namespace LMStud
             0,
             0});
 			this.numVadThreshold.Name = "numVadThreshold";
+			this.toolTip1.SetToolTip(this.numVadThreshold, resources.GetString("numVadThreshold.ToolTip"));
 			this.numVadThreshold.Value = new decimal(new int[] {
             6,
             0,
@@ -947,6 +1036,7 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.butVADDown, "butVADDown");
 			this.butVADDown.Name = "butVADDown";
+			this.toolTip1.SetToolTip(this.butVADDown, resources.GetString("butVADDown.ToolTip"));
 			this.butVADDown.UseVisualStyleBackColor = true;
 			this.butVADDown.Click += new System.EventHandler(this.butDownloadVADModel_Click);
 			// 
@@ -956,18 +1046,21 @@ namespace LMStud
 			this.radioBasicVAD.Checked = true;
 			this.radioBasicVAD.Name = "radioBasicVAD";
 			this.radioBasicVAD.TabStop = true;
+			this.toolTip1.SetToolTip(this.radioBasicVAD, resources.GetString("radioBasicVAD.ToolTip"));
 			this.radioBasicVAD.UseVisualStyleBackColor = true;
 			// 
 			// radioWhisperVAD
 			// 
 			resources.ApplyResources(this.radioWhisperVAD, "radioWhisperVAD");
 			this.radioWhisperVAD.Name = "radioWhisperVAD";
+			this.toolTip1.SetToolTip(this.radioWhisperVAD, resources.GetString("radioWhisperVAD.ToolTip"));
 			this.radioWhisperVAD.UseVisualStyleBackColor = true;
 			// 
 			// label17
 			// 
 			resources.ApplyResources(this.label17, "label17");
 			this.label17.Name = "label17";
+			this.toolTip1.SetToolTip(this.label17, resources.GetString("label17.ToolTip"));
 			// 
 			// comboVADModel
 			// 
@@ -975,28 +1068,33 @@ namespace LMStud
 			this.comboVADModel.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 			this.comboVADModel.FormattingEnabled = true;
 			this.comboVADModel.Name = "comboVADModel";
+			this.toolTip1.SetToolTip(this.comboVADModel, resources.GetString("comboVADModel.ToolTip"));
 			this.comboVADModel.DropDown += new System.EventHandler(this.ComboVADModel_DropDown);
 			// 
 			// label26
 			// 
 			resources.ApplyResources(this.label26, "label26");
 			this.label26.Name = "label26";
+			this.toolTip1.SetToolTip(this.label26, resources.GetString("label26.ToolTip"));
 			// 
 			// groupBox5
 			// 
-			this.groupBox5.Controls.Add(this.checkDateTimeEnable);
 			resources.ApplyResources(this.groupBox5, "groupBox5");
+			this.groupBox5.Controls.Add(this.checkDateTimeEnable);
 			this.groupBox5.Name = "groupBox5";
 			this.groupBox5.TabStop = false;
+			this.toolTip1.SetToolTip(this.groupBox5, resources.GetString("groupBox5.ToolTip"));
 			// 
 			// checkDateTimeEnable
 			// 
 			resources.ApplyResources(this.checkDateTimeEnable, "checkDateTimeEnable");
 			this.checkDateTimeEnable.Name = "checkDateTimeEnable";
+			this.toolTip1.SetToolTip(this.checkDateTimeEnable, resources.GetString("checkDateTimeEnable.ToolTip"));
 			this.checkDateTimeEnable.UseVisualStyleBackColor = true;
 			// 
 			// groupBox4
 			// 
+			resources.ApplyResources(this.groupBox4, "groupBox4");
 			this.groupBox4.Controls.Add(this.textFileBasePath);
 			this.groupBox4.Controls.Add(this.linkFileInstruction);
 			this.groupBox4.Controls.Add(this.label22);
@@ -1004,9 +1102,9 @@ namespace LMStud
 			this.groupBox4.Controls.Add(this.checkFileCreateEnable);
 			this.groupBox4.Controls.Add(this.checkFileReadEnable);
 			this.groupBox4.Controls.Add(this.checkFileListEnable);
-			resources.ApplyResources(this.groupBox4, "groupBox4");
 			this.groupBox4.Name = "groupBox4";
 			this.groupBox4.TabStop = false;
+			this.toolTip1.SetToolTip(this.groupBox4, resources.GetString("groupBox4.ToolTip"));
 			// 
 			// textFileBasePath
 			// 
@@ -1014,6 +1112,7 @@ namespace LMStud
 			this.textFileBasePath.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
 			this.textFileBasePath.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.FileSystemDirectories;
 			this.textFileBasePath.Name = "textFileBasePath";
+			this.toolTip1.SetToolTip(this.textFileBasePath, resources.GetString("textFileBasePath.ToolTip"));
 			// 
 			// linkFileInstruction
 			// 
@@ -1021,52 +1120,61 @@ namespace LMStud
 			this.linkFileInstruction.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(255)))));
 			this.linkFileInstruction.Name = "linkFileInstruction";
 			this.linkFileInstruction.TabStop = true;
+			this.toolTip1.SetToolTip(this.linkFileInstruction, resources.GetString("linkFileInstruction.ToolTip"));
 			this.linkFileInstruction.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.LinkLabel1_LinkClicked);
 			// 
 			// label22
 			// 
 			resources.ApplyResources(this.label22, "label22");
 			this.label22.Name = "label22";
+			this.toolTip1.SetToolTip(this.label22, resources.GetString("label22.ToolTip"));
 			// 
 			// checkFileWriteEnable
 			// 
 			resources.ApplyResources(this.checkFileWriteEnable, "checkFileWriteEnable");
 			this.checkFileWriteEnable.Name = "checkFileWriteEnable";
+			this.toolTip1.SetToolTip(this.checkFileWriteEnable, resources.GetString("checkFileWriteEnable.ToolTip"));
 			this.checkFileWriteEnable.UseVisualStyleBackColor = true;
 			// 
 			// checkFileCreateEnable
 			// 
 			resources.ApplyResources(this.checkFileCreateEnable, "checkFileCreateEnable");
 			this.checkFileCreateEnable.Name = "checkFileCreateEnable";
+			this.toolTip1.SetToolTip(this.checkFileCreateEnable, resources.GetString("checkFileCreateEnable.ToolTip"));
 			this.checkFileCreateEnable.UseVisualStyleBackColor = true;
 			// 
 			// checkFileReadEnable
 			// 
 			resources.ApplyResources(this.checkFileReadEnable, "checkFileReadEnable");
 			this.checkFileReadEnable.Name = "checkFileReadEnable";
+			this.toolTip1.SetToolTip(this.checkFileReadEnable, resources.GetString("checkFileReadEnable.ToolTip"));
 			this.checkFileReadEnable.UseVisualStyleBackColor = true;
 			// 
 			// checkFileListEnable
 			// 
 			resources.ApplyResources(this.checkFileListEnable, "checkFileListEnable");
 			this.checkFileListEnable.Name = "checkFileListEnable";
+			this.toolTip1.SetToolTip(this.checkFileListEnable, resources.GetString("checkFileListEnable.ToolTip"));
 			this.checkFileListEnable.UseVisualStyleBackColor = true;
 			// 
 			// groupBox3
 			// 
-			this.groupBox3.Controls.Add(this.checkWebpageFetchEnable);
 			resources.ApplyResources(this.groupBox3, "groupBox3");
+			this.groupBox3.Controls.Add(this.checkWebpageFetchEnable);
 			this.groupBox3.Name = "groupBox3";
 			this.groupBox3.TabStop = false;
+			this.toolTip1.SetToolTip(this.groupBox3, resources.GetString("groupBox3.ToolTip"));
 			// 
 			// checkWebpageFetchEnable
 			// 
 			resources.ApplyResources(this.checkWebpageFetchEnable, "checkWebpageFetchEnable");
 			this.checkWebpageFetchEnable.Name = "checkWebpageFetchEnable";
+			this.toolTip1.SetToolTip(this.checkWebpageFetchEnable, resources.GetString("checkWebpageFetchEnable.ToolTip"));
 			this.checkWebpageFetchEnable.UseVisualStyleBackColor = true;
 			// 
 			// groupBox2
 			// 
+			resources.ApplyResources(this.groupBox2, "groupBox2");
 			this.groupBox2.Controls.Add(this.numGoogleResults);
 			this.groupBox2.Controls.Add(this.textGoogleSearchID);
 			this.groupBox2.Controls.Add(this.textGoogleApiKey);
@@ -1074,9 +1182,9 @@ namespace LMStud
 			this.groupBox2.Controls.Add(this.checkGoogleEnable);
 			this.groupBox2.Controls.Add(this.label20);
 			this.groupBox2.Controls.Add(this.label19);
-			resources.ApplyResources(this.groupBox2, "groupBox2");
 			this.groupBox2.Name = "groupBox2";
 			this.groupBox2.TabStop = false;
+			this.toolTip1.SetToolTip(this.groupBox2, resources.GetString("groupBox2.ToolTip"));
 			// 
 			// numGoogleResults
 			// 
@@ -1087,6 +1195,7 @@ namespace LMStud
             0,
             0});
 			this.numGoogleResults.Name = "numGoogleResults";
+			this.toolTip1.SetToolTip(this.numGoogleResults, resources.GetString("numGoogleResults.ToolTip"));
 			this.numGoogleResults.Value = new decimal(new int[] {
             5,
             0,
@@ -1097,35 +1206,42 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.textGoogleSearchID, "textGoogleSearchID");
 			this.textGoogleSearchID.Name = "textGoogleSearchID";
+			this.toolTip1.SetToolTip(this.textGoogleSearchID, resources.GetString("textGoogleSearchID.ToolTip"));
 			// 
 			// textGoogleApiKey
 			// 
 			resources.ApplyResources(this.textGoogleApiKey, "textGoogleApiKey");
 			this.textGoogleApiKey.Name = "textGoogleApiKey";
+			this.toolTip1.SetToolTip(this.textGoogleApiKey, resources.GetString("textGoogleApiKey.ToolTip"));
 			// 
 			// label21
 			// 
 			resources.ApplyResources(this.label21, "label21");
 			this.label21.Name = "label21";
+			this.toolTip1.SetToolTip(this.label21, resources.GetString("label21.ToolTip"));
 			// 
 			// checkGoogleEnable
 			// 
 			resources.ApplyResources(this.checkGoogleEnable, "checkGoogleEnable");
 			this.checkGoogleEnable.Name = "checkGoogleEnable";
+			this.toolTip1.SetToolTip(this.checkGoogleEnable, resources.GetString("checkGoogleEnable.ToolTip"));
 			this.checkGoogleEnable.UseVisualStyleBackColor = true;
 			// 
 			// label20
 			// 
 			resources.ApplyResources(this.label20, "label20");
 			this.label20.Name = "label20";
+			this.toolTip1.SetToolTip(this.label20, resources.GetString("label20.ToolTip"));
 			// 
 			// label19
 			// 
 			resources.ApplyResources(this.label19, "label19");
 			this.label19.Name = "label19";
+			this.toolTip1.SetToolTip(this.label19, resources.GetString("label19.ToolTip"));
 			// 
 			// groupBox1
 			// 
+			resources.ApplyResources(this.groupBox1, "groupBox1");
 			this.groupBox1.Controls.Add(this.numWakeWordSimilarity);
 			this.groupBox1.Controls.Add(this.numWhisperTemp);
 			this.groupBox1.Controls.Add(this.numFreqThreshold);
@@ -1138,9 +1254,9 @@ namespace LMStud
 			this.groupBox1.Controls.Add(this.butWhispDown);
 			this.groupBox1.Controls.Add(this.comboWhisperModel);
 			this.groupBox1.Controls.Add(this.label15);
-			resources.ApplyResources(this.groupBox1, "groupBox1");
 			this.groupBox1.Name = "groupBox1";
 			this.groupBox1.TabStop = false;
+			this.toolTip1.SetToolTip(this.groupBox1, resources.GetString("groupBox1.ToolTip"));
 			// 
 			// numWakeWordSimilarity
 			// 
@@ -1157,6 +1273,7 @@ namespace LMStud
             0,
             0});
 			this.numWakeWordSimilarity.Name = "numWakeWordSimilarity";
+			this.toolTip1.SetToolTip(this.numWakeWordSimilarity, resources.GetString("numWakeWordSimilarity.ToolTip"));
 			this.numWakeWordSimilarity.Value = new decimal(new int[] {
             8,
             0,
@@ -1178,6 +1295,7 @@ namespace LMStud
             0,
             0});
 			this.numWhisperTemp.Name = "numWhisperTemp";
+			this.toolTip1.SetToolTip(this.numWhisperTemp, resources.GetString("numWhisperTemp.ToolTip"));
 			// 
 			// numFreqThreshold
 			// 
@@ -1193,6 +1311,7 @@ namespace LMStud
             0,
             0});
 			this.numFreqThreshold.Name = "numFreqThreshold";
+			this.toolTip1.SetToolTip(this.numFreqThreshold, resources.GetString("numFreqThreshold.ToolTip"));
 			this.numFreqThreshold.Value = new decimal(new int[] {
             100,
             0,
@@ -1203,37 +1322,44 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.textWakeWord, "textWakeWord");
 			this.textWakeWord.Name = "textWakeWord";
+			this.toolTip1.SetToolTip(this.textWakeWord, resources.GetString("textWakeWord.ToolTip"));
 			// 
 			// label25
 			// 
 			resources.ApplyResources(this.label25, "label25");
 			this.label25.Name = "label25";
+			this.toolTip1.SetToolTip(this.label25, resources.GetString("label25.ToolTip"));
 			// 
 			// label24
 			// 
 			resources.ApplyResources(this.label24, "label24");
 			this.label24.Name = "label24";
+			this.toolTip1.SetToolTip(this.label24, resources.GetString("label24.ToolTip"));
 			// 
 			// label18
 			// 
 			resources.ApplyResources(this.label18, "label18");
 			this.label18.Name = "label18";
+			this.toolTip1.SetToolTip(this.label18, resources.GetString("label18.ToolTip"));
 			// 
 			// checkWhisperUseGPU
 			// 
 			resources.ApplyResources(this.checkWhisperUseGPU, "checkWhisperUseGPU");
 			this.checkWhisperUseGPU.Name = "checkWhisperUseGPU";
+			this.toolTip1.SetToolTip(this.checkWhisperUseGPU, resources.GetString("checkWhisperUseGPU.ToolTip"));
 			this.checkWhisperUseGPU.UseVisualStyleBackColor = true;
 			// 
 			// label16
 			// 
 			resources.ApplyResources(this.label16, "label16");
 			this.label16.Name = "label16";
+			this.toolTip1.SetToolTip(this.label16, resources.GetString("label16.ToolTip"));
 			// 
 			// butWhispDown
 			// 
 			resources.ApplyResources(this.butWhispDown, "butWhispDown");
 			this.butWhispDown.Name = "butWhispDown";
+			this.toolTip1.SetToolTip(this.butWhispDown, resources.GetString("butWhispDown.ToolTip"));
 			this.butWhispDown.UseVisualStyleBackColor = true;
 			this.butWhispDown.Click += new System.EventHandler(this.ButWhispDown_Click);
 			// 
@@ -1243,20 +1369,23 @@ namespace LMStud
 			this.comboWhisperModel.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 			this.comboWhisperModel.FormattingEnabled = true;
 			this.comboWhisperModel.Name = "comboWhisperModel";
+			this.toolTip1.SetToolTip(this.comboWhisperModel, resources.GetString("comboWhisperModel.ToolTip"));
 			this.comboWhisperModel.DropDown += new System.EventHandler(this.ComboWhisperModel_DropDown);
 			// 
 			// label15
 			// 
 			resources.ApplyResources(this.label15, "label15");
 			this.label15.Name = "label15";
+			this.toolTip1.SetToolTip(this.label15, resources.GetString("label15.ToolTip"));
 			// 
 			// groupCPUParamsBatch
 			// 
+			resources.ApplyResources(this.groupCPUParamsBatch, "groupCPUParamsBatch");
 			this.groupCPUParamsBatch.Controls.Add(this.numThreadsBatch);
 			this.groupCPUParamsBatch.Controls.Add(this.label14);
-			resources.ApplyResources(this.groupCPUParamsBatch, "groupCPUParamsBatch");
 			this.groupCPUParamsBatch.Name = "groupCPUParamsBatch";
 			this.groupCPUParamsBatch.TabStop = false;
+			this.toolTip1.SetToolTip(this.groupCPUParamsBatch, resources.GetString("groupCPUParamsBatch.ToolTip"));
 			// 
 			// numThreadsBatch
 			// 
@@ -1267,6 +1396,7 @@ namespace LMStud
             0,
             0});
 			this.numThreadsBatch.Name = "numThreadsBatch";
+			this.toolTip1.SetToolTip(this.numThreadsBatch, resources.GetString("numThreadsBatch.ToolTip"));
 			this.numThreadsBatch.Value = new decimal(new int[] {
             8,
             0,
@@ -1277,14 +1407,16 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.label14, "label14");
 			this.label14.Name = "label14";
+			this.toolTip1.SetToolTip(this.label14, resources.GetString("label14.ToolTip"));
 			// 
 			// groupCPUParams
 			// 
+			resources.ApplyResources(this.groupCPUParams, "groupCPUParams");
 			this.groupCPUParams.Controls.Add(this.numThreads);
 			this.groupCPUParams.Controls.Add(this.label2);
-			resources.ApplyResources(this.groupCPUParams, "groupCPUParams");
 			this.groupCPUParams.Name = "groupCPUParams";
 			this.groupCPUParams.TabStop = false;
+			this.toolTip1.SetToolTip(this.groupCPUParams, resources.GetString("groupCPUParams.ToolTip"));
 			// 
 			// numThreads
 			// 
@@ -1295,6 +1427,7 @@ namespace LMStud
             0,
             0});
 			this.numThreads.Name = "numThreads";
+			this.toolTip1.SetToolTip(this.numThreads, resources.GetString("numThreads.ToolTip"));
 			this.numThreads.Value = new decimal(new int[] {
             8,
             0,
@@ -1305,9 +1438,11 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.label2, "label2");
 			this.label2.Name = "label2";
+			this.toolTip1.SetToolTip(this.label2, resources.GetString("label2.ToolTip"));
 			// 
 			// groupAdvanced
 			// 
+			resources.ApplyResources(this.groupAdvanced, "groupAdvanced");
 			this.groupAdvanced.Controls.Add(this.numMinP);
 			this.groupAdvanced.Controls.Add(this.comboNUMAStrat);
 			this.groupAdvanced.Controls.Add(this.numRepPen);
@@ -1323,9 +1458,9 @@ namespace LMStud
 			this.groupAdvanced.Controls.Add(this.label11);
 			this.groupAdvanced.Controls.Add(this.label8);
 			this.groupAdvanced.Controls.Add(this.label9);
-			resources.ApplyResources(this.groupAdvanced, "groupAdvanced");
 			this.groupAdvanced.Name = "groupAdvanced";
 			this.groupAdvanced.TabStop = false;
+			this.toolTip1.SetToolTip(this.groupAdvanced, resources.GetString("groupAdvanced.ToolTip"));
 			// 
 			// numMinP
 			// 
@@ -1342,6 +1477,7 @@ namespace LMStud
             0,
             0});
 			this.numMinP.Name = "numMinP";
+			this.toolTip1.SetToolTip(this.numMinP, resources.GetString("numMinP.ToolTip"));
 			// 
 			// comboNUMAStrat
 			// 
@@ -1356,6 +1492,7 @@ namespace LMStud
             resources.GetString("comboNUMAStrat.Items4"),
             resources.GetString("comboNUMAStrat.Items5")});
 			this.comboNUMAStrat.Name = "comboNUMAStrat";
+			this.toolTip1.SetToolTip(this.comboNUMAStrat, resources.GetString("comboNUMAStrat.ToolTip"));
 			// 
 			// numRepPen
 			// 
@@ -1372,6 +1509,7 @@ namespace LMStud
             0,
             0});
 			this.numRepPen.Name = "numRepPen";
+			this.toolTip1.SetToolTip(this.numRepPen, resources.GetString("numRepPen.ToolTip"));
 			this.numRepPen.Value = new decimal(new int[] {
             11,
             0,
@@ -1387,6 +1525,7 @@ namespace LMStud
             0,
             0});
 			this.numBatchSize.Name = "numBatchSize";
+			this.toolTip1.SetToolTip(this.numBatchSize, resources.GetString("numBatchSize.ToolTip"));
 			this.numBatchSize.Value = new decimal(new int[] {
             512,
             0,
@@ -1402,6 +1541,7 @@ namespace LMStud
             0,
             0});
 			this.numTopK.Name = "numTopK";
+			this.toolTip1.SetToolTip(this.numTopK, resources.GetString("numTopK.ToolTip"));
 			this.numTopK.Value = new decimal(new int[] {
             40,
             0,
@@ -1423,6 +1563,7 @@ namespace LMStud
             0,
             0});
 			this.numTopP.Name = "numTopP";
+			this.toolTip1.SetToolTip(this.numTopP, resources.GetString("numTopP.ToolTip"));
 			this.numTopP.Value = new decimal(new int[] {
             95,
             0,
@@ -1433,6 +1574,7 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.label23, "label23");
 			this.label23.Name = "label23";
+			this.toolTip1.SetToolTip(this.label23, resources.GetString("label23.ToolTip"));
 			// 
 			// checkFlashAttn
 			// 
@@ -1440,47 +1582,56 @@ namespace LMStud
 			this.checkFlashAttn.Checked = true;
 			this.checkFlashAttn.CheckState = System.Windows.Forms.CheckState.Checked;
 			this.checkFlashAttn.Name = "checkFlashAttn";
+			this.toolTip1.SetToolTip(this.checkFlashAttn, resources.GetString("checkFlashAttn.ToolTip"));
 			this.checkFlashAttn.UseVisualStyleBackColor = true;
 			// 
 			// checkMLock
 			// 
 			resources.ApplyResources(this.checkMLock, "checkMLock");
 			this.checkMLock.Name = "checkMLock";
+			this.toolTip1.SetToolTip(this.checkMLock, resources.GetString("checkMLock.ToolTip"));
 			this.checkMLock.UseVisualStyleBackColor = true;
 			// 
 			// checkMMap
 			// 
 			resources.ApplyResources(this.checkMMap, "checkMMap");
 			this.checkMMap.Name = "checkMMap";
+			this.toolTip1.SetToolTip(this.checkMMap, resources.GetString("checkMMap.ToolTip"));
 			this.checkMMap.UseVisualStyleBackColor = true;
 			// 
 			// label6
 			// 
 			resources.ApplyResources(this.label6, "label6");
 			this.label6.Name = "label6";
+			this.toolTip1.SetToolTip(this.label6, resources.GetString("label6.ToolTip"));
 			// 
 			// label12
 			// 
 			resources.ApplyResources(this.label12, "label12");
 			this.label12.Name = "label12";
+			this.toolTip1.SetToolTip(this.label12, resources.GetString("label12.ToolTip"));
 			// 
 			// label11
 			// 
 			resources.ApplyResources(this.label11, "label11");
 			this.label11.Name = "label11";
+			this.toolTip1.SetToolTip(this.label11, resources.GetString("label11.ToolTip"));
 			// 
 			// label8
 			// 
 			resources.ApplyResources(this.label8, "label8");
 			this.label8.Name = "label8";
+			this.toolTip1.SetToolTip(this.label8, resources.GetString("label8.ToolTip"));
 			// 
 			// label9
 			// 
 			resources.ApplyResources(this.label9, "label9");
 			this.label9.Name = "label9";
+			this.toolTip1.SetToolTip(this.label9, resources.GetString("label9.ToolTip"));
 			// 
 			// groupCommon
 			// 
+			resources.ApplyResources(this.groupCommon, "groupCommon");
 			this.groupCommon.Controls.Add(this.numCtxSize);
 			this.groupCommon.Controls.Add(this.numGPULayers);
 			this.groupCommon.Controls.Add(this.numNGen);
@@ -1489,9 +1640,9 @@ namespace LMStud
 			this.groupCommon.Controls.Add(this.label7);
 			this.groupCommon.Controls.Add(this.label10);
 			this.groupCommon.Controls.Add(this.label4);
-			resources.ApplyResources(this.groupCommon, "groupCommon");
 			this.groupCommon.Name = "groupCommon";
 			this.groupCommon.TabStop = false;
+			this.toolTip1.SetToolTip(this.groupCommon, resources.GetString("groupCommon.ToolTip"));
 			// 
 			// numCtxSize
 			// 
@@ -1502,6 +1653,7 @@ namespace LMStud
             0,
             0});
 			this.numCtxSize.Name = "numCtxSize";
+			this.toolTip1.SetToolTip(this.numCtxSize, resources.GetString("numCtxSize.ToolTip"));
 			this.numCtxSize.Value = new decimal(new int[] {
             8192,
             0,
@@ -1522,6 +1674,7 @@ namespace LMStud
             0,
             -2147483648});
 			this.numGPULayers.Name = "numGPULayers";
+			this.toolTip1.SetToolTip(this.numGPULayers, resources.GetString("numGPULayers.ToolTip"));
 			this.numGPULayers.Value = new decimal(new int[] {
             1,
             0,
@@ -1542,6 +1695,7 @@ namespace LMStud
             0,
             -2147483648});
 			this.numNGen.Name = "numNGen";
+			this.toolTip1.SetToolTip(this.numNGen, resources.GetString("numNGen.ToolTip"));
 			this.numNGen.Value = new decimal(new int[] {
             1,
             0,
@@ -1563,6 +1717,7 @@ namespace LMStud
             0,
             0});
 			this.numTemp.Name = "numTemp";
+			this.toolTip1.SetToolTip(this.numTemp, resources.GetString("numTemp.ToolTip"));
 			this.numTemp.Value = new decimal(new int[] {
             6,
             0,
@@ -1573,31 +1728,37 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.label5, "label5");
 			this.label5.Name = "label5";
+			this.toolTip1.SetToolTip(this.label5, resources.GetString("label5.ToolTip"));
 			// 
 			// label7
 			// 
 			resources.ApplyResources(this.label7, "label7");
 			this.label7.Name = "label7";
+			this.toolTip1.SetToolTip(this.label7, resources.GetString("label7.ToolTip"));
 			// 
 			// label10
 			// 
 			resources.ApplyResources(this.label10, "label10");
 			this.label10.Name = "label10";
+			this.toolTip1.SetToolTip(this.label10, resources.GetString("label10.ToolTip"));
 			// 
 			// label4
 			// 
 			resources.ApplyResources(this.label4, "label4");
 			this.label4.Name = "label4";
+			this.toolTip1.SetToolTip(this.label4, resources.GetString("label4.ToolTip"));
 			// 
 			// label3
 			// 
 			resources.ApplyResources(this.label3, "label3");
 			this.label3.Name = "label3";
+			this.toolTip1.SetToolTip(this.label3, resources.GetString("label3.ToolTip"));
 			// 
 			// butBrowse
 			// 
 			resources.ApplyResources(this.butBrowse, "butBrowse");
 			this.butBrowse.Name = "butBrowse";
+			this.toolTip1.SetToolTip(this.butBrowse, resources.GetString("butBrowse.ToolTip"));
 			this.butBrowse.UseVisualStyleBackColor = true;
 			this.butBrowse.Click += new System.EventHandler(this.ButBrowse_Click);
 			// 
@@ -1605,6 +1766,7 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.butApply, "butApply");
 			this.butApply.Name = "butApply";
+			this.toolTip1.SetToolTip(this.butApply, resources.GetString("butApply.ToolTip"));
 			this.butApply.UseVisualStyleBackColor = true;
 			this.butApply.Click += new System.EventHandler(this.ButApply_Click);
 			// 
@@ -1612,26 +1774,30 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.label1, "label1");
 			this.label1.Name = "label1";
+			this.toolTip1.SetToolTip(this.label1, resources.GetString("label1.ToolTip"));
 			// 
 			// textSystemPrompt
 			// 
 			resources.ApplyResources(this.textSystemPrompt, "textSystemPrompt");
 			this.textSystemPrompt.Name = "textSystemPrompt";
+			this.toolTip1.SetToolTip(this.textSystemPrompt, resources.GetString("textSystemPrompt.ToolTip"));
 			// 
 			// tabPageModels
 			// 
+			resources.ApplyResources(this.tabPageModels, "tabPageModels");
 			this.tabPageModels.Controls.Add(this.splitContainer2);
 			this.tabPageModels.Controls.Add(this.checkLoadAuto);
 			this.tabPageModels.Controls.Add(this.butUnload);
 			this.tabPageModels.Controls.Add(this.butLoad);
-			resources.ApplyResources(this.tabPageModels, "tabPageModels");
 			this.tabPageModels.Name = "tabPageModels";
+			this.toolTip1.SetToolTip(this.tabPageModels, resources.GetString("tabPageModels.ToolTip"));
 			this.tabPageModels.UseVisualStyleBackColor = true;
 			// 
 			// checkLoadAuto
 			// 
 			resources.ApplyResources(this.checkLoadAuto, "checkLoadAuto");
 			this.checkLoadAuto.Name = "checkLoadAuto";
+			this.toolTip1.SetToolTip(this.checkLoadAuto, resources.GetString("checkLoadAuto.ToolTip"));
 			this.checkLoadAuto.UseVisualStyleBackColor = true;
 			this.checkLoadAuto.CheckedChanged += new System.EventHandler(this.CheckLoadAuto_CheckedChanged);
 			// 
@@ -1639,6 +1805,7 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.butUnload, "butUnload");
 			this.butUnload.Name = "butUnload";
+			this.toolTip1.SetToolTip(this.butUnload, resources.GetString("butUnload.ToolTip"));
 			this.butUnload.UseVisualStyleBackColor = true;
 			this.butUnload.Click += new System.EventHandler(this.ButUnload_Click);
 			// 
@@ -1646,23 +1813,30 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.butLoad, "butLoad");
 			this.butLoad.Name = "butLoad";
+			this.toolTip1.SetToolTip(this.butLoad, resources.GetString("butLoad.ToolTip"));
 			this.butLoad.UseVisualStyleBackColor = true;
 			this.butLoad.Click += new System.EventHandler(this.ButLoad_Click);
 			// 
 			// tabPageHuggingFace
 			// 
+			resources.ApplyResources(this.tabPageHuggingFace, "tabPageHuggingFace");
 			this.tabPageHuggingFace.Controls.Add(this.butDownload);
 			this.tabPageHuggingFace.Controls.Add(this.label13);
 			this.tabPageHuggingFace.Controls.Add(this.butSearch);
 			this.tabPageHuggingFace.Controls.Add(this.textSearchTerm);
 			this.tabPageHuggingFace.Controls.Add(this.progressBar1);
 			this.tabPageHuggingFace.Controls.Add(this.splitContainer3);
-			resources.ApplyResources(this.tabPageHuggingFace, "tabPageHuggingFace");
 			this.tabPageHuggingFace.Name = "tabPageHuggingFace";
+			this.toolTip1.SetToolTip(this.tabPageHuggingFace, resources.GetString("tabPageHuggingFace.ToolTip"));
 			this.tabPageHuggingFace.UseVisualStyleBackColor = true;
+			// 
+			// folderBrowserDialog1
+			// 
+			resources.ApplyResources(this.folderBrowserDialog1, "folderBrowserDialog1");
 			// 
 			// statusStrip1
 			// 
+			resources.ApplyResources(this.statusStrip1, "statusStrip1");
 			this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1,
             this.labelTokens,
@@ -1670,34 +1844,34 @@ namespace LMStud
             this.labelPreGen,
             this.labelEditing});
 			this.statusStrip1.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.HorizontalStackWithOverflow;
-			resources.ApplyResources(this.statusStrip1, "statusStrip1");
 			this.statusStrip1.Name = "statusStrip1";
+			this.toolTip1.SetToolTip(this.statusStrip1, resources.GetString("statusStrip1.ToolTip"));
 			// 
 			// toolStripStatusLabel1
 			// 
-			this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
 			resources.ApplyResources(this.toolStripStatusLabel1, "toolStripStatusLabel1");
+			this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
 			// 
 			// labelTokens
 			// 
+			resources.ApplyResources(this.labelTokens, "labelTokens");
 			this.labelTokens.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
 			this.labelTokens.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
 			this.labelTokens.Name = "labelTokens";
-			resources.ApplyResources(this.labelTokens, "labelTokens");
 			// 
 			// labelTPS
 			// 
+			resources.ApplyResources(this.labelTPS, "labelTPS");
 			this.labelTPS.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
 			this.labelTPS.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
 			this.labelTPS.Name = "labelTPS";
-			resources.ApplyResources(this.labelTPS, "labelTPS");
 			// 
 			// labelPreGen
 			// 
+			resources.ApplyResources(this.labelPreGen, "labelPreGen");
 			this.labelPreGen.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
 			this.labelPreGen.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
 			this.labelPreGen.Name = "labelPreGen";
-			resources.ApplyResources(this.labelPreGen, "labelPreGen");
 			// 
 			// labelEditing
 			// 
@@ -1717,19 +1891,6 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.openFileDialog1, "openFileDialog1");
 			// 
-			// groupBox8
-			// 
-			this.groupBox8.Controls.Add(this.checkCMDEnable);
-			resources.ApplyResources(this.groupBox8, "groupBox8");
-			this.groupBox8.Name = "groupBox8";
-			this.groupBox8.TabStop = false;
-			// 
-			// checkCMDEnable
-			// 
-			resources.ApplyResources(this.checkCMDEnable, "checkCMDEnable");
-			this.checkCMDEnable.Name = "checkCMDEnable";
-			this.checkCMDEnable.UseVisualStyleBackColor = true;
-			// 
 			// Form1
 			// 
 			resources.ApplyResources(this, "$this");
@@ -1740,6 +1901,7 @@ namespace LMStud
 			this.DoubleBuffered = true;
 			this.KeyPreview = true;
 			this.Name = "Form1";
+			this.toolTip1.SetToolTip(this, resources.GetString("$this.ToolTip"));
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
 			this.Load += new System.EventHandler(this.Form1_Load);
 			this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
@@ -1775,6 +1937,7 @@ namespace LMStud
 			this.tabPageChat.PerformLayout();
 			this.tabPageSettings.ResumeLayout(false);
 			this.tabPageSettings.PerformLayout();
+			this.groupBox8.ResumeLayout(false);
 			this.groupBox7.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.numApiServerPort)).EndInit();
 			this.groupBox6.ResumeLayout(false);
@@ -1813,7 +1976,6 @@ namespace LMStud
 			this.tabPageHuggingFace.PerformLayout();
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();
-			this.groupBox8.ResumeLayout(false);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 

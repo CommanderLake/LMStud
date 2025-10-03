@@ -33,4 +33,5 @@ std::string ReadFileTool(const char* argsJson);
 std::string CreateFileTool(const char* argsJson);
 std::string ReplaceLinesTool(const char* argsJson);
 std::string ApplyPatchTool(const char* argsJson);
-std::string CommandPromptTool(const char* argsJson);
+std::string StartCommandPromptTool(const char* argsJson);
+std::string CommandPromptExecuteTool(const char* argsJson);
