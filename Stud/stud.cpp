@@ -39,7 +39,7 @@ static RuntimeState::ModelRecord* GetActiveModelRecord(){
 static ChatSession* GetActiveSession(){
 	auto* model = GetActiveModelRecord();
 	if(!model) return nullptr;
-	auto& runtime = GetRuntime();
+	const auto& runtime = GetRuntime();
 	const auto it = model->sessions.find(runtime.activeSessionId);
 	if(it == model->sessions.end()) return nullptr;
 	return it->second.get();
@@ -105,7 +105,7 @@ static void ClearSessionState(ChatSession& session){
 	session.dId = 0;
 }
 static ChatSession* EnsureSessionEntry(RuntimeState::ModelRecord& model, const std::string& sessionId){
-	auto it = model.sessions.find(sessionId);
+	const auto it = model.sessions.find(sessionId);
 	if(it != model.sessions.end()) return it->second.get();
 	auto session = std::make_unique<ChatSession>();
 	session->syntax.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
@@ -115,7 +115,7 @@ static ChatSession* EnsureSessionEntry(RuntimeState::ModelRecord& model, const s
 	return ptr;
 }
 static void SaveActiveSessionState(){
-	auto& runtime = GetRuntime();
+	const auto& runtime = GetRuntime();
 	auto* session = GetActiveSession();
 	if(!session || !runtime.ctx) return;
 	const int size = static_cast<int>(llama_state_get_size(runtime.ctx));
@@ -161,12 +161,12 @@ static StudError ActivateContext(ChatSession& session){
 	session.llMem = runtime.llMem;
 	return StudError::Success;
 }
-static StudError RestoreSessionState(ChatSession& session, const bool rebuild){
-	auto& runtime = GetRuntime();
+static StudError RestoreSessionState(const ChatSession& session, const bool rebuild){
+	const auto& runtime = GetRuntime();
 	if(!runtime.ctx) return StudError::ModelNotLoaded;
 	if(!session.dialState[session.dId].empty()){ llama_state_set_data(runtime.ctx, session.dialState[session.dId].data(), static_cast<int>(session.dialState[session.dId].size())); }
 	if(session.smpl[session.dId]){
-		auto err = RetokenizeChat(rebuild);
+		const auto err = RetokenizeChat(rebuild);
 		if(err != StudError::Success) return err;
 	}
 	return StudError::Success;
@@ -199,7 +199,7 @@ StudError CreateContext(const int nCtx, const int nBatch, const bool flashAttn, 
 	_session.flashAttn = flashAttn;
 	_session.nThreads = nThreads;
 	_session.nThreadsBatch = nThreadsBatch;
-	auto err = ActivateContext(_session);
+	const auto err = ActivateContext(_session);
 	if(err != StudError::Success) return err;
 	if(_session.smpl[0]) return RetokenizeChat(true);
 	return StudError::Success;
@@ -239,7 +239,7 @@ StudError CreateSession(const int nCtx, const int nBatch, const bool flashAttn, 
 	SaveActiveSessionState();
 	if(runtime.activeSessionId.empty()) runtime.activeSessionId = STUD_DEFAULT_SESSION;
 	model->activeSessionId = runtime.activeSessionId;
-	auto* session = EnsureSessionEntry(*model, runtime.activeSessionId);
+	const auto* session = EnsureSessionEntry(*model, runtime.activeSessionId);
 	(void)session;
 	_session.useJinja = model->defaultUseJinja;
 	_session.syntax.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
@@ -383,14 +383,48 @@ const char* ListModels(){
 	runtime.listScratch = oss.str();
 	return runtime.listScratch.c_str();
 }
-StudError EnsureSessionId(const char* sessionId, const int nCtx, const int nBatch, const bool flashAttn, const int nThreads, const int nThreadsBatch, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty, const char* modelId){
-	std::string modelKey = (modelId && modelId[0] != '\0') ? modelId : ActiveModelId();
-	if(modelKey.empty()) modelKey = STUD_DEFAULT_MODEL;
+struct SessionKeys{
+	std::string modelKey;
+	std::string sessionKey;
+	static SessionKeys Resolve(const char* sessionId, const char* modelId){
+		SessionKeys keys;
+		keys.modelKey = (modelId && modelId[0]) ? modelId : ActiveModelId();
+		if(keys.modelKey.empty()) keys.modelKey = STUD_DEFAULT_MODEL;
+		keys.sessionKey = (sessionId && sessionId[0]) ? sessionId : STUD_DEFAULT_SESSION;
+		return keys;
+	}
+};
+struct SessionLookupResult{
+	StudError error = StudError::Success;
+	RuntimeState::ModelRecord* model = nullptr;
+	ChatSession* session = nullptr;
+	SessionKeys keys;
+};
+SessionLookupResult LookupSession(const char* sessionId, const char* modelId){
+	SessionLookupResult result;
+	result.keys = SessionKeys::Resolve(sessionId, modelId);
 	auto& runtime = GetRuntime();
-	const auto modelIt = runtime.models.find(modelKey);
-	if(modelIt == runtime.models.end() || !modelIt->second.model) return StudError::ModelNotLoaded;
-	std::string sessionKey = (sessionId && sessionId[0] != '\0') ? sessionId : STUD_DEFAULT_SESSION;
-	auto* session = EnsureSessionEntry(modelIt->second, sessionKey);
+	const auto modelIt = runtime.models.find(result.keys.modelKey);
+	if(modelIt == runtime.models.end() || !modelIt->second.model){
+		result.error = StudError::ModelNotLoaded;
+		return result;
+	}
+	result.model = &modelIt->second;
+	const auto sessionIt = modelIt->second.sessions.find(result.keys.sessionKey);
+	if(sessionIt == modelIt->second.sessions.end()){
+		result.error = StudError::IndexOutOfRange;
+		return result;
+	}
+	result.session = sessionIt->second.get();
+	return result;
+}
+StudError EnsureSessionId(const char* sessionId, const int nCtx, const int nBatch, const bool flashAttn, const int nThreads, const int nThreadsBatch, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty, const char* modelId){
+	const auto keys = SessionKeys::Resolve(sessionId, modelId);
+	auto& runtime = GetRuntime();
+	const auto modelIt = runtime.models.find(keys.modelKey);
+	if(modelIt == runtime.models.end() || !modelIt->second.model){ return StudError::ModelNotLoaded; }
+	auto* session = EnsureSessionEntry(modelIt->second, keys.sessionKey);
+	// Configure session
 	session->useJinja = modelIt->second.defaultUseJinja;
 	session->nCtx = nCtx;
 	session->nBatch = nBatch;
@@ -403,77 +437,70 @@ StudError EnsureSessionId(const char* sessionId, const int nCtx, const int nBatc
 	session->temp = temp;
 	session->repeatPenalty = repeatPenalty;
 	session->syntax.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
+	// Create samplers
 	auto err = CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, session->smpl[0]);
 	if(err != StudError::Success) return err;
 	err = CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, session->smpl[1]);
 	if(err != StudError::Success) return err;
-	if(modelIt->second.activeSessionId.empty()) modelIt->second.activeSessionId = sessionKey;
-	if(runtime.activeModelId == modelKey && runtime.activeSessionId.empty()) runtime.activeSessionId = sessionKey;
+	// Set as active if needed
+	if(modelIt->second.activeSessionId.empty()){ modelIt->second.activeSessionId = keys.sessionKey; }
+	if(runtime.activeModelId == keys.modelKey && runtime.activeSessionId.empty()){ runtime.activeSessionId = keys.sessionKey; }
 	return StudError::Success;
 }
 StudError ActivateSessionId(const char* sessionId, const char* modelId){
-	std::string modelKey = (modelId && modelId[0] != '\0') ? modelId : ActiveModelId();
-	if(modelKey.empty()) modelKey = STUD_DEFAULT_MODEL;
+	const auto lookup = LookupSession(sessionId, modelId);
+	if(lookup.error != StudError::Success) return lookup.error;
 	auto& runtime = GetRuntime();
-	const auto modelIt = runtime.models.find(modelKey);
-	if(modelIt == runtime.models.end() || !modelIt->second.model) return StudError::ModelNotLoaded;
-	std::string sessionKey = (sessionId && sessionId[0] != '\0') ? sessionId : modelIt->second.activeSessionId;
-	if(sessionKey.empty()) sessionKey = STUD_DEFAULT_SESSION;
-	const auto sessionIt = modelIt->second.sessions.find(sessionKey);
-	if(sessionIt == modelIt->second.sessions.end()) return StudError::IndexOutOfRange;
-	if(runtime.activeModelId == modelKey && runtime.activeSessionId == sessionKey && runtime.ctx){
-		auto* session = sessionIt->second.get();
-		session->ctx = runtime.ctx;
-		session->llMem = runtime.llMem;
+	// Already active?
+	if(runtime.activeModelId == lookup.keys.modelKey && runtime.activeSessionId == lookup.keys.sessionKey && runtime.ctx){
+		lookup.session->ctx = runtime.ctx;
+		lookup.session->llMem = runtime.llMem;
 		return StudError::Success;
 	}
-	if(runtime.activeModelId != modelKey){
-		auto err = ActivateModel(modelKey.c_str());
+	// Activate model if needed
+	if(runtime.activeModelId != lookup.keys.modelKey){
+		const auto err = ActivateModel(lookup.keys.modelKey.c_str());
 		if(err != StudError::Success) return err;
 	}
-	if(runtime.activeSessionId != sessionKey) SaveActiveSessionState();
-	runtime.activeSessionId = sessionKey;
-	modelIt->second.activeSessionId = sessionKey;
-	auto* session = sessionIt->second.get();
-	auto err = ActivateContext(*session);
+	// Save current session and activate new one
+	if(runtime.activeSessionId != lookup.keys.sessionKey){ SaveActiveSessionState(); }
+	runtime.activeSessionId = lookup.keys.sessionKey;
+	lookup.model->activeSessionId = lookup.keys.sessionKey;
+	const auto err = ActivateContext(*lookup.session);
 	if(err != StudError::Success) return err;
-	return RestoreSessionState(*session, true);
+	return RestoreSessionState(*lookup.session, true);
 }
 void DestroySessionId(const char* sessionId, const char* modelId){
-	std::string modelKey = (modelId && modelId[0] != '\0') ? modelId : ActiveModelId();
-	if(modelKey.empty()) modelKey = STUD_DEFAULT_MODEL;
+	const auto lookup = LookupSession(sessionId, modelId);
+	if(lookup.error != StudError::Success) return;
 	auto& runtime = GetRuntime();
-	const auto modelIt = runtime.models.find(modelKey);
-	if(modelIt == runtime.models.end()) return;
-	std::string sessionKey = (sessionId && sessionId[0] != '\0') ? sessionId : STUD_DEFAULT_SESSION;
-	const auto sessionIt = modelIt->second.sessions.find(sessionKey);
-	if(sessionIt == modelIt->second.sessions.end()) return;
-	if(runtime.activeModelId == modelKey && runtime.activeSessionId == sessionKey){
+	// Handle active session destruction
+	if(runtime.activeModelId == lookup.keys.modelKey && runtime.activeSessionId == lookup.keys.sessionKey){
 		DestroySession();
-		modelIt->second.sessions.erase(sessionIt);
+		lookup.model->sessions.erase(lookup.keys.sessionKey);
 		runtime.activeSessionId.clear();
-		modelIt->second.activeSessionId.clear();
+		lookup.model->activeSessionId.clear();
 		return;
 	}
-	ClearSessionState(*sessionIt->second);
-	modelIt->second.sessions.erase(sessionIt);
-	if(modelIt->second.activeSessionId == sessionKey) modelIt->second.activeSessionId.clear();
+	// Inactive session destruction
+	ClearSessionState(*lookup.session);
+	lookup.model->sessions.erase(lookup.keys.sessionKey);
+	if(lookup.model->activeSessionId == lookup.keys.sessionKey){ lookup.model->activeSessionId.clear(); }
 }
 const char* ListSessions(const char* modelId){
-	std::string modelKey = (modelId && modelId[0] != '\0') ? modelId : ActiveModelId();
-	if(modelKey.empty()) modelKey = STUD_DEFAULT_MODEL;
+	const auto keys = SessionKeys::Resolve(nullptr, modelId);
 	auto& runtime = GetRuntime();
-	const auto modelIt = runtime.models.find(modelKey);
+	const auto modelIt = runtime.models.find(keys.modelKey);
 	if(modelIt == runtime.models.end()){
 		runtime.listScratch.clear();
 		return runtime.listScratch.c_str();
 	}
 	std::ostringstream oss;
 	bool first = true;
-	for(const auto& kv : modelIt->second.sessions){
+	for(const auto& [sessionId, _] : modelIt->second.sessions){
 		if(!first) oss << '\n';
 		first = false;
-		oss << kv.first;
+		oss << sessionId;
 	}
 	runtime.listScratch = oss.str();
 	return runtime.listScratch.c_str();
@@ -601,7 +628,7 @@ static void AlignChatStates(){
 	auto& a = _session.chatMsgs[0];
 	auto& b = _session.chatMsgs[1];
 	if(a.size() == b.size()) return;
-	auto* longer = &a;
+	const auto* longer = &a;
 	auto* shorter = &b;
 	if(a.size() < b.size()){
 		longer = &b;
@@ -616,6 +643,27 @@ static void AlignChatStates(){
 		shorter->push_back(std::move(msg));
 	}
 }
+class DialecticStateGuard{
+	bool swapped = false;
+	bool shouldRestore = false;
+public:
+	StudError SwapIfNeeded(){
+		if(_session.dialState[OtherDialecticId()].empty()){ return StudError::Success; }
+		const auto err = DialecticSwap();
+		if(err == StudError::Success){
+			swapped = true;
+			shouldRestore = true;
+		}
+		return err;
+	}
+	~DialecticStateGuard(){
+		if(shouldRestore && swapped){
+			DialecticSwap(); // Best effort restore
+		}
+	}
+private:
+	static int OtherDialecticId(){ return _session.dId == 0 ? 1 : 0; }
+};
 StudError ResetChat(){
 	_session.chatMsgs[0].clear();
 	_session.chatMsgs[1].clear();
@@ -626,94 +674,67 @@ StudError ResetChat(){
 		return StudError::Success;
 	}
 	auto err = RetokenizeChat(true);
-	if(err != StudError::Success || _session.dialState[_session.dId == 0 ? 1 : 0].empty()) return err;
-	err = DialecticSwap();
 	if(err != StudError::Success) return err;
-	auto err2 = RetokenizeChat(true);
-	auto err3 = DialecticSwap();
-	return err2 != StudError::Success ? err2 : err3;
+	if(_session.dialState[_session.dId == 0 ? 1 : 0].empty()){ return StudError::Success; }
+	DialecticStateGuard guard;
+	err = guard.SwapIfNeeded();
+	if(err != StudError::Success) return err;
+	return RetokenizeChat(true);
 }
 StudError SetSystemPrompt(const char* prompt, const char* toolsPrompt){
-	_session.prompt = std::string(prompt);
-	_session.toolsPrompt = std::string(toolsPrompt);
+	_session.prompt = prompt;
+	_session.toolsPrompt = toolsPrompt;
 	_session.cachedTokens[0].clear();
 	_session.cachedTokens[1].clear();
-	if(!_session.ctx || !_session.smpl[_session.dId] || !_vocab) return StudError::Success;
+	if(!_session.ctx || !_session.smpl[_session.dId] || !_vocab){ return StudError::Success; }
 	auto err = RetokenizeChat();
-	if(err != StudError::Success || _session.dialState[_session.dId == 0 ? 1 : 0].empty()) return err;
-	err = DialecticSwap();
 	if(err != StudError::Success) return err;
-	auto err2 = RetokenizeChat();
-	auto err3 = DialecticSwap();
-	return err2 != StudError::Success ? err2 : err3;
+	const int altId = _session.dId == 0 ? 1 : 0;
+	if(_session.dialState[altId].empty()){ return StudError::Success; }
+	DialecticStateGuard guard;
+	err = guard.SwapIfNeeded();
+	if(err != StudError::Success) return err;
+	return RetokenizeChat();
+}
+template <typename Operation> StudError ApplyToBothDialecticStates(Operation op){
+	AlignChatStates();
+	// Fast path: no context loaded
+	if(!_session.ctx || !_session.smpl[_session.dId] || !_vocab){
+		op(0);
+		op(1);
+		_session.cachedTokens[0].clear();
+		_session.cachedTokens[1].clear();
+		return StudError::Success;
+	}
+	// Apply to current state
+	op(_session.dId);
+	auto err = RetokenizeChat();
+	if(err != StudError::Success) return err;
+	// Apply to alternate state if it exists
+	const int altId = _session.dId == 0 ? 1 : 0;
+	if(_session.dialState[altId].empty()){ return StudError::Success; }
+	DialecticStateGuard guard;
+	err = guard.SwapIfNeeded();
+	if(err != StudError::Success) return err;
+	op(_session.dId);
+	return RetokenizeChat();
 }
 StudError SetMessageAt(const int index, const char* think, const char* message){
-	AlignChatStates();
-	if(index < 0 || index >= static_cast<int>(_session.chatMsgs[_session.dId].size())) return StudError::IndexOutOfRange;
-	if(!_session.ctx || !_session.smpl[_session.dId] || !_vocab){
-		_session.chatMsgs[0][index].reasoning_content = think;
-		_session.chatMsgs[0][index].content = std::string(message);
-		_session.chatMsgs[1][index].reasoning_content = think;
-		_session.chatMsgs[1][index].content = std::string(message);
-		_session.cachedTokens[0].clear();
-		_session.cachedTokens[1].clear();
-		return StudError::Success;
-	}
-	_session.chatMsgs[_session.dId][index].reasoning_content = think;
-	_session.chatMsgs[_session.dId][index].content = std::string(message);
-	auto err = RetokenizeChat();
-	const auto dId = _session.dId == 0 ? 1 : 0;
-	if(err != StudError::Success || _session.dialState[dId].empty() || _session.chatMsgs[dId].size() <= index) return err;
-	err = DialecticSwap();
-	if(err != StudError::Success) return err;
-	_session.chatMsgs[_session.dId][index].reasoning_content = think;
-	_session.chatMsgs[_session.dId][index].content = std::string(message);
-	auto err2 = RetokenizeChat();
-	auto err3 = DialecticSwap();
-	return err2 != StudError::Success ? err2 : err3;
+	if(index < 0 || index >= static_cast<int>(_session.chatMsgs[_session.dId].size())){ return StudError::IndexOutOfRange; }
+	return ApplyToBothDialecticStates([&](int dId){
+		_session.chatMsgs[dId][index].reasoning_content = think;
+		_session.chatMsgs[dId][index].content = message;
+	});
 }
 StudError RemoveMessageAt(const int index){
-	AlignChatStates();
-	if(index < 0 || index >= static_cast<int>(_session.chatMsgs[_session.dId].size())) return StudError::IndexOutOfRange;
-	if(!_session.ctx || !_session.smpl[_session.dId] || !_vocab){
-		_session.chatMsgs[0].erase(_session.chatMsgs[0].begin() + index);
-		_session.chatMsgs[1].erase(_session.chatMsgs[1].begin() + index);
-		_session.cachedTokens[0].clear();
-		_session.cachedTokens[1].clear();
-		return StudError::Success;
-	}
-	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index);
-	auto err = RetokenizeChat();
-	const auto dId = _session.dId == 0 ? 1 : 0;
-	if(err != StudError::Success || _session.dialState[dId].empty() || _session.chatMsgs[dId].size() <= index) return err;
-	err = DialecticSwap();
-	if(err != StudError::Success) return err;
-	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index);
-	auto err2 = RetokenizeChat();
-	auto err3 = DialecticSwap();
-	return err2 != StudError::Success ? err2 : err3;
+	if(index < 0 || index >= static_cast<int>(_session.chatMsgs[_session.dId].size())){ return StudError::IndexOutOfRange; }
+	return ApplyToBothDialecticStates([&](int dId){ _session.chatMsgs[dId].erase(_session.chatMsgs[dId].begin() + index); });
 }
 StudError RemoveMessagesStartingAt(int index){
-	AlignChatStates();
 	if(index < 0) index = 0;
-	if(index > static_cast<int>(_session.chatMsgs[_session.dId].size())) index = static_cast<int>(_session.chatMsgs[_session.dId].size());
-	if(!_session.ctx || !_session.smpl[_session.dId] || !_vocab){
-		_session.chatMsgs[0].erase(_session.chatMsgs[0].begin() + index, _session.chatMsgs[0].end());
-		_session.chatMsgs[1].erase(_session.chatMsgs[1].begin() + index, _session.chatMsgs[1].end());
-		_session.cachedTokens[0].clear();
-		_session.cachedTokens[1].clear();
-		return StudError::Success;
-	}
-	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index, _session.chatMsgs[_session.dId].end());
-	auto err = RetokenizeChat();
-	const auto dId = _session.dId == 0 ? 1 : 0;
-	if(err != StudError::Success || _session.dialState[dId].empty() || _session.chatMsgs[dId].size() <= index) return err;
-	err = DialecticSwap();
-	if(err != StudError::Success) return err;
-	_session.chatMsgs[_session.dId].erase(_session.chatMsgs[_session.dId].begin() + index, _session.chatMsgs[_session.dId].end());
-	auto err2 = RetokenizeChat();
-	auto err3 = DialecticSwap();
-	return err2 != StudError::Success ? err2 : err3;
+	const int maxIdx = static_cast<int>(_session.chatMsgs[_session.dId].size());
+	if(index > maxIdx) index = maxIdx;
+	return ApplyToBothDialecticStates([&](int dId){ _session.chatMsgs[dId].erase(_session.chatMsgs[dId].begin() + index, _session.chatMsgs[dId].end()); });
 }
 StudError AddMessage(const MessageRole role, const char* message){
 	common_chat_msg msg;
