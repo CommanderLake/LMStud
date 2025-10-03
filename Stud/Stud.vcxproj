@@ -160,6 +160,7 @@ xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\
     <ClInclude Include="tools.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CMDTool.cpp" />
     <ClCompile Include="common-sdl.cpp" />
     <ClCompile Include="FileTools.cpp" />
     <ClCompile Include="hug.cpp" />

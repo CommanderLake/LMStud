@@ -138,6 +138,7 @@ namespace LMStud{
 				NativeMethods.UnloadWhisperModel();
 			}
 			_tts.Dispose();
+			NativeMethods.CloseCommandPrompt();
 			NativeMethods.CurlGlobalCleanup();
 		}
 		private void Form1_KeyDown(object sender, KeyEventArgs e){
@@ -219,6 +220,7 @@ namespace LMStud{
 		}
 		private void ButReset_Click(object sender, EventArgs e){
 			NativeMethods.ResetChat();
+			NativeMethods.CloseCommandPrompt();
 			NativeMethods.ClearWebCache();
 			panelChat.SuspendLayout();
 			foreach(var message in _chatMessages) message.Dispose();

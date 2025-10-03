@@ -1770,6 +1770,66 @@
   <data name="&gt;&gt;tabPageChat.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
+  <data name="checkCMDEnable.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="checkCMDEnable.CheckAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
+  </data>
+  <data name="checkCMDEnable.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="checkCMDEnable.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 14</value>
+  </data>
+  <data name="checkCMDEnable.Size" type="System.Drawing.Size, System.Drawing">
+    <value>188, 17</value>
+  </data>
+  <data name="checkCMDEnable.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="checkCMDEnable.Text" xml:space="preserve">
+    <value>Enable</value>
+  </data>
+  <data name="checkCMDEnable.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
+  </data>
+  <data name="&gt;&gt;checkCMDEnable.Name" xml:space="preserve">
+    <value>checkCMDEnable</value>
+  </data>
+  <data name="&gt;&gt;checkCMDEnable.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;checkCMDEnable.Parent" xml:space="preserve">
+    <value>groupBox8</value>
+  </data>
+  <data name="&gt;&gt;checkCMDEnable.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="groupBox8.Location" type="System.Drawing.Point, System.Drawing">
+    <value>415, 475</value>
+  </data>
+  <data name="groupBox8.Size" type="System.Drawing.Size, System.Drawing">
+    <value>200, 37</value>
+  </data>
+  <data name="groupBox8.TabIndex" type="System.Int32, mscorlib">
+    <value>44</value>
+  </data>
+  <data name="groupBox8.Text" xml:space="preserve">
+    <value>Command Line Tool</value>
+  </data>
+  <data name="&gt;&gt;groupBox8.Name" xml:space="preserve">
+    <value>groupBox8</value>
+  </data>
+  <data name="&gt;&gt;groupBox8.Type" xml:space="preserve">
+    <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;groupBox8.Parent" xml:space="preserve">
+    <value>tabPageSettings</value>
+  </data>
+  <data name="&gt;&gt;groupBox8.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
   <data name="numApiServerPort.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
@@ -1867,7 +1927,7 @@
     <value>2</value>
   </data>
   <data name="groupBox7.Location" type="System.Drawing.Point, System.Drawing">
-    <value>415, 475</value>
+    <value>415, 518</value>
   </data>
   <data name="groupBox7.Size" type="System.Drawing.Size, System.Drawing">
     <value>200, 64</value>
@@ -1888,7 +1948,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;groupBox7.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>1</value>
   </data>
   <data name="textModelsPath.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Left, Right</value>
@@ -1912,7 +1972,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;textModelsPath.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>2</value>
   </data>
   <data name="numGenDelay.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -2197,7 +2257,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;groupBox6.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>3</value>
   </data>
   <data name="checkDateTimeEnable.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -2254,7 +2314,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;groupBox5.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>4</value>
   </data>
   <data name="textFileBasePath.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -2497,7 +2557,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;groupBox4.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>5</value>
   </data>
   <data name="checkWebpageFetchEnable.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -2554,7 +2614,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;groupBox3.ZOrder" xml:space="preserve">
-    <value>5</value>
+    <value>6</value>
   </data>
   <data name="numGoogleResults.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -2782,7 +2842,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;groupBox2.ZOrder" xml:space="preserve">
-    <value>6</value>
+    <value>7</value>
   </data>
   <data name="numWakeWordSimilarity.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -3154,7 +3214,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;groupBox1.ZOrder" xml:space="preserve">
-    <value>7</value>
+    <value>8</value>
   </data>
   <data name="numThreadsBatch.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -3235,7 +3295,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;groupCPUParamsBatch.ZOrder" xml:space="preserve">
-    <value>8</value>
+    <value>9</value>
   </data>
   <data name="numThreads.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -3316,7 +3376,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;groupCPUParams.ZOrder" xml:space="preserve">
-    <value>9</value>
+    <value>10</value>
   </data>
   <data name="numMinP.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -3799,7 +3859,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;groupAdvanced.ZOrder" xml:space="preserve">
-    <value>10</value>
+    <value>11</value>
   </data>
   <data name="numCtxSize.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -4051,7 +4111,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;groupCommon.ZOrder" xml:space="preserve">
-    <value>11</value>
+    <value>12</value>
   </data>
   <data name="label3.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 133</value>
@@ -4081,7 +4141,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;label3.ZOrder" xml:space="preserve">
-    <value>12</value>
+    <value>13</value>
   </data>
   <data name="butBrowse.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -4108,7 +4168,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;butBrowse.ZOrder" xml:space="preserve">
-    <value>13</value>
+    <value>14</value>
   </data>
   <data name="butApply.Location" type="System.Drawing.Point, System.Drawing">
     <value>3, 639</value>
@@ -4132,7 +4192,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;butApply.ZOrder" xml:space="preserve">
-    <value>14</value>
+    <value>15</value>
   </data>
   <data name="label1.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -4162,7 +4222,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;label1.ZOrder" xml:space="preserve">
-    <value>15</value>
+    <value>16</value>
   </data>
   <data name="textSystemPrompt.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Left, Right</value>
@@ -4192,7 +4252,7 @@
     <value>tabPageSettings</value>
   </data>
   <data name="&gt;&gt;textSystemPrompt.ZOrder" xml:space="preserve">
-    <value>16</value>
+    <value>17</value>
   </data>
   <data name="tabPageSettings.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 22</value>
@@ -4399,25 +4459,25 @@
     <value>155, 17</value>
   </metadata>
   <data name="toolStripStatusLabel1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>99, 19</value>
+    <value>86, 17</value>
   </data>
   <data name="toolStripStatusLabel1.Text" xml:space="preserve">
     <value>No model loaded</value>
   </data>
   <data name="labelTokens.Size" type="System.Drawing.Size, System.Drawing">
-    <value>56, 19</value>
+    <value>54, 17</value>
   </data>
   <data name="labelTokens.Text" xml:space="preserve">
     <value>0 Tokens</value>
   </data>
   <data name="labelTPS.Size" type="System.Drawing.Size, System.Drawing">
-    <value>48, 19</value>
+    <value>46, 17</value>
   </data>
   <data name="labelTPS.Text" xml:space="preserve">
     <value>0 Tok/s</value>
   </data>
   <data name="labelPreGen.Size" type="System.Drawing.Size, System.Drawing">
-    <value>120, 19</value>
+    <value>110, 17</value>
   </data>
   <data name="labelPreGen.Text" xml:space="preserve">
     <value>Pre-generation time:</value>
@@ -4426,7 +4486,7 @@
     <value>Tahoma, 8.25pt, style=Bold</value>
   </data>
   <data name="labelEditing.Size" type="System.Drawing.Size, System.Drawing">
-    <value>334, 19</value>
+    <value>334, 17</value>
   </data>
   <data name="labelEditing.Text" xml:space="preserve">
     <value>Editing transcription - Press Enter to finish or Esc to cancel</value>
@@ -4435,10 +4495,10 @@
     <value>False</value>
   </data>
   <data name="statusStrip1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 973</value>
+    <value>0, 975</value>
   </data>
   <data name="statusStrip1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1016, 24</value>
+    <value>1016, 22</value>
   </data>
   <data name="statusStrip1.TabIndex" type="System.Int32, mscorlib">
     <value>4</value>

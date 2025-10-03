@@ -86,6 +86,7 @@ namespace LMStud{
 					return;
 				}
 			NativeMethods.ResetChat();
+			NativeMethods.CloseCommandPrompt();
 			if(request?.SessionId != null) _sessions.Remove(request.SessionId);
 			var resp = new{ status = "reset" };
 			var json = JsonConvert.SerializeObject(resp);

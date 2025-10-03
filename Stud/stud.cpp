@@ -8,6 +8,7 @@
 #include <minja\chat-template.hpp>
 #include <algorithm>
 using HrClock = std::chrono::high_resolution_clock;
+extern "C" void CloseCommandPrompt();
 static bool _gpuOomStud = false;
 static std::string _lastErrorMessage;
 extern "C" EXPORT const char* GetLastErrorMessage(){ return _lastErrorMessage.c_str(); }
@@ -36,6 +37,7 @@ void AddTool(const char* name, const char* description, const char* parameters, 
 	if(handler) _toolHandlers[name] = handler;
 }
 void ClearTools(){
+	CloseCommandPrompt();
 	_tools.clear();
 	_toolHandlers.clear();
 }

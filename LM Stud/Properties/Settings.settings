@@ -131,5 +131,8 @@
     <Setting Name="GenDelay" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">2000</Value>
     </Setting>
+    <Setting Name="CMDToolEnable" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

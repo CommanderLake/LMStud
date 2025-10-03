@@ -198,6 +198,8 @@ namespace LMStud
 			this.labelEditing = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+			this.groupBox8 = new System.Windows.Forms.GroupBox();
+			this.checkCMDEnable = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -257,6 +259,7 @@ namespace LMStud
 			this.tabPageModels.SuspendLayout();
 			this.tabPageHuggingFace.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
+			this.groupBox8.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// splitContainer1
@@ -814,6 +817,7 @@ namespace LMStud
 			// 
 			// tabPageSettings
 			// 
+			this.tabPageSettings.Controls.Add(this.groupBox8);
 			this.tabPageSettings.Controls.Add(this.groupBox7);
 			this.tabPageSettings.Controls.Add(this.textModelsPath);
 			this.tabPageSettings.Controls.Add(this.groupBox6);
@@ -1713,6 +1717,19 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.openFileDialog1, "openFileDialog1");
 			// 
+			// groupBox8
+			// 
+			this.groupBox8.Controls.Add(this.checkCMDEnable);
+			resources.ApplyResources(this.groupBox8, "groupBox8");
+			this.groupBox8.Name = "groupBox8";
+			this.groupBox8.TabStop = false;
+			// 
+			// checkCMDEnable
+			// 
+			resources.ApplyResources(this.checkCMDEnable, "checkCMDEnable");
+			this.checkCMDEnable.Name = "checkCMDEnable";
+			this.checkCMDEnable.UseVisualStyleBackColor = true;
+			// 
 			// Form1
 			// 
 			resources.ApplyResources(this, "$this");
@@ -1796,6 +1813,7 @@ namespace LMStud
 			this.tabPageHuggingFace.PerformLayout();
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();
+			this.groupBox8.ResumeLayout(false);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -1967,6 +1985,8 @@ namespace LMStud
 		private System.Windows.Forms.TextBox textJinjaTmplModel;
 		private System.Windows.Forms.CheckBox checkOverrideJinjaModel;
 		private System.Windows.Forms.OpenFileDialog openFileDialog1;
+		private System.Windows.Forms.GroupBox groupBox8;
+		private System.Windows.Forms.CheckBox checkCMDEnable;
 	}
 }
 

@@ -538,5 +538,17 @@ namespace LMStud.Properties {
                 this["GenDelay"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool CMDToolEnable {
+            get {
+                return ((bool)(this["CMDToolEnable"]));
+            }
+            set {
+                this["CMDToolEnable"] = value;
+            }
+        }
     }
 }

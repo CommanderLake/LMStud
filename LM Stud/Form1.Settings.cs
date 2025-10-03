@@ -43,6 +43,7 @@ namespace LMStud{
 		private bool _fileReadEnable;
 		private bool _fileWriteEnable;
 		private bool _dateTimeEnable;
+		private bool _cmdEnable;
 		private bool _apiServerEnable;
 		private int _apiServerPort;
 		private int _genDelay;
@@ -83,6 +84,7 @@ namespace LMStud{
 			_fileReadEnable = checkFileReadEnable.Checked = Settings.Default.FileReadEnable;
 			_fileWriteEnable = checkFileWriteEnable.Checked = Settings.Default.FileWriteEnable;
 			_dateTimeEnable = checkDateTimeEnable.Checked = Settings.Default.DateTimeEnable;
+			_cmdEnable = checkCMDEnable.Checked = Settings.Default.CMDToolEnable;
 			_apiServerEnable = checkApiServerEnable.Checked = Settings.Default.ApiServerEnable;
 			_apiServerPort = (int)(numApiServerPort.Value = Settings.Default.ApiServerPort);
 			_genDelay = (int)(numGenDelay.Value = Settings.Default.GenDelay);
@@ -294,6 +296,10 @@ namespace LMStud{
 			});
 			UpdateSetting(ref _dateTimeEnable, checkDateTimeEnable.Checked, value => {
 				Settings.Default.DateTimeEnable = value;
+				registerTools = true;
+			});
+			UpdateSetting(ref _cmdEnable, checkCMDEnable.Checked, value => {
+				Settings.Default.CMDToolEnable = value;
 				registerTools = true;
 			});
 			UpdateSetting(ref _apiServerEnable, checkApiServerEnable.Checked, value => {

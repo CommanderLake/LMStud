@@ -112,7 +112,9 @@ namespace LMStud{
 			return PtrToStringUtf8(ptr);
 		}
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void RegisterTools(bool dateTime, bool googleSearch, bool webpageFetch, bool fileList, bool fileCreate, bool fileRead, bool fileWrite);
+		public static extern void RegisterTools(bool dateTime, bool googleSearch, bool webpageFetch, bool fileList, bool fileCreate, bool fileRead, bool fileWrite, bool commandPrompt);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void CloseCommandPrompt();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void StopGeneration();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]

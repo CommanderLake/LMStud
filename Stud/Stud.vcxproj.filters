@@ -59,5 +59,8 @@
     <ClCompile Include="FileTools.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CMDTool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

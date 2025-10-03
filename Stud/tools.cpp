@@ -105,7 +105,7 @@ std::string GetLongDateTime(const char* argsJson){
 	std::strftime(buffer, sizeof buffer, "%A, %d %B %Y, %H:%M:%S", &localTime);
 	return std::string(buffer);
 }
-void RegisterTools(const bool dateTime, const bool googleSearch, const bool webpageFetch, const bool fileList, const bool fileCreate, const bool fileRead, const bool fileWrite){
+void RegisterTools(const bool dateTime, const bool googleSearch, const bool webpageFetch, const bool fileList, const bool fileCreate, const bool fileRead, const bool fileWrite, const bool commandPrompt){
 	ClearTools();
 	if(dateTime) AddTool("get_datetime", "Return local date and time", "{\"type\":\"object\",\"properties\":{},\"required\":[]}", GetLongDateTime);
 	if(googleSearch){ AddTool("web_search", "Google search, JSON results, call get_webpage next.", "{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]}", GoogleSearch); }
@@ -121,4 +121,7 @@ void RegisterTools(const bool dateTime, const bool googleSearch, const bool webp
 		AddTool("file_replace_lines", "Replace range of lines in a text file (1 based)", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"},\"text\":{\"type\":\"string\"}},\"required\":[\"path\",\"start\",\"end\",\"text\"]}", ReplaceLinesTool);
 		AddTool("file_apply_diff_patch", "Apply unified diff patch to a file", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"patch\":{\"type\":\"string\"}},\"required\":[\"path\",\"patch\"]}", ApplyPatchTool);
 	}
+	if(commandPrompt){
+		AddTool("command_prompt", "Execute commands in a Windows command prompt session. Use the optional session parameter to create isolated shells.", "{\"type\":\"object\",\"properties\":{\"session\":{\"type\":\"string\"},\"command\":{\"type\":\"string\"},\"close\":{\"type\":\"boolean\"}},\"required\":[]}", CommandPromptTool);
+	} else CloseCommandPrompt();
 }
