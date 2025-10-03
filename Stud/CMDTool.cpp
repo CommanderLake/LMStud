@@ -249,8 +249,7 @@ bool StartCommandPromptSession(const std::string& sessionId, std::string& startu
 	PROCESS_INFORMATION pi{};
 	wchar_t commandLine[] = L"cmd.exe /Q";
 	wchar_t userProfile[MAX_PATH];
-	DWORD size = MAX_PATH;
-	if(GetEnvironmentVariableW(L"USERPROFILE", userProfile, size) == 0){
+	if(GetEnvironmentVariableW(L"USERPROFILE", userProfile, MAX_PATH) == 0){
 		wcscpy_s(userProfile, L"C:\\");
 	}
 	if(!CreateProcessW(nullptr, commandLine, nullptr, nullptr, TRUE, CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT, nullptr, userProfile, &si, &pi)){

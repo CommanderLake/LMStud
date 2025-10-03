@@ -19,27 +19,31 @@ static bool ResolveSystemProxyForUrl(const char* url, std::string& outProxy){
 	if(!WinHttpGetIEProxyConfigForCurrentUser(&ie)){ return false; }
 	BOOL ok = FALSE;
 	WINHTTP_PROXY_INFO pi = {0};
-	if(ie.fAutoDetect || ie.lpszAutoConfigUrl){
-		WINHTTP_AUTOPROXY_OPTIONS ao = {0};
-		ao.dwFlags = (ie.fAutoDetect ? WINHTTP_AUTOPROXY_AUTO_DETECT : 0) | (ie.lpszAutoConfigUrl ? WINHTTP_AUTOPROXY_CONFIG_URL : 0);
-		ao.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A;
-		ao.lpszAutoConfigUrl = ie.lpszAutoConfigUrl;
-		const std::wstring w_url = Utf8ToWide(url);
-		ok = WinHttpGetProxyForUrl(nullptr, w_url.c_str(), &ao, &pi);
+	const bool has_auto_proxy = ie.fAutoDetect || ie.lpszAutoConfigUrl;
+	if(has_auto_proxy){
+		const HINTERNET hSession = WinHttpOpen(L"LMStud/1.0", WINHTTP_ACCESS_TYPE_NO_PROXY, nullptr, nullptr, 0);
+		if(hSession){
+			WINHTTP_AUTOPROXY_OPTIONS ao = {0};
+			ao.dwFlags = (ie.fAutoDetect ? WINHTTP_AUTOPROXY_AUTO_DETECT : 0) | (ie.lpszAutoConfigUrl ? WINHTTP_AUTOPROXY_CONFIG_URL : 0);
+			ao.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A;
+			ao.lpszAutoConfigUrl = ie.lpszAutoConfigUrl;
+			const std::wstring w_url = Utf8ToWide(url);
+			ok = WinHttpGetProxyForUrl(hSession, w_url.c_str(), &ao, &pi);
+			WinHttpCloseHandle(hSession);
+			if(ok && (!pi.lpszProxy || !pi.lpszProxy[0])){
+				if(pi.lpszProxy){ GlobalFree(pi.lpszProxy); pi.lpszProxy = nullptr; }
+				if(pi.lpszProxyBypass){ GlobalFree(pi.lpszProxyBypass); pi.lpszProxyBypass = nullptr; }
+				ok = FALSE;
+			}
+		}
 	}
 	if(!ok && ie.lpszProxy){
+		if(pi.lpszProxy){ GlobalFree(pi.lpszProxy); pi.lpszProxy = nullptr; }
+		if(pi.lpszProxyBypass){ GlobalFree(pi.lpszProxyBypass); pi.lpszProxyBypass = nullptr; }
 		pi.dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
 		pi.lpszProxy = ie.lpszProxy;
 		ie.lpszProxy = nullptr;
 		ok = TRUE;
-	}
-	if(ok && pi.lpszProxy){
-		const int len = WideCharToMultiByte(CP_UTF8, 0, pi.lpszProxy, -1, nullptr, 0, nullptr, nullptr);
-		if(len > 1){
-			std::string s(len - 1, '\0');
-			WideCharToMultiByte(CP_UTF8, 0, pi.lpszProxy, -1, &s[0], len, nullptr, nullptr);
-			outProxy = s;
-		}
 	}
 	if(ie.lpszAutoConfigUrl) GlobalFree(ie.lpszAutoConfigUrl);
 	if(ie.lpszProxy) GlobalFree(ie.lpszProxy);
