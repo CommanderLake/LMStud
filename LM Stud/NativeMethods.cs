@@ -158,6 +158,12 @@ namespace LMStud{
 		public static extern void CurlGlobalInit();
 		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void CurlGlobalCleanup();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern IntPtr CaptureChatState();
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void RestoreChatState(IntPtr state);
+		[DllImport(DLLName, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void FreeChatState(IntPtr state);
 		[DllImport("user32.dll")]
 		public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wp, IntPtr lp);
 		[DllImport("user32.dll")]

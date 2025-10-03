@@ -419,15 +419,24 @@ namespace LMStud{
 				} catch(ObjectDisposedException){} finally{ GenerationLock.Release(); }
 			});
 		}
-		internal bool GenerateForApi(byte[] state, string prompt, Action<string> onToken){
+		internal bool GenerateForApi(byte[] state, string prompt, Action<string> onToken, out byte[] newState, out int tokenCount){
+			newState = null;
+			tokenCount = 0;
 			if(!LlModelLoaded || _generating || _apiGenerating || string.IsNullOrWhiteSpace(prompt)) return false;
 			_apiGenerating = true;
 			_apiTokenCallback = onToken;
+			var originalState = GetState();
+			var chatSnapshot = NativeMethods.CaptureChatState();
 			try{
 				SetState(state);
 				NativeMethods.GenerateWithTools(MessageRole.User, prompt, _nGen, false);
+				newState = GetState();
+				tokenCount = GetTokenCount();
 				return true;
 			} finally{
+				try{ SetState(originalState); } catch{}
+				if(chatSnapshot != IntPtr.Zero)
+					try{ NativeMethods.RestoreChatState(chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
 				_apiTokenCallback = null;
 				_apiGenerating = false;
 			}

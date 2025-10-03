@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
+using LMStud.Properties;
 using Newtonsoft.Json;
 namespace LMStud{
 	internal class ApiServer{
@@ -53,9 +54,7 @@ namespace LMStud{
 				else if(method == "POST" && path == "/v1/chat/reset") HandleReset(context);
 				else context.Response.StatusCode = 404;
 			} catch{ context.Response.StatusCode = 500; } finally{
-				try{
-					context.Response.OutputStream.Close();
-				} catch{}
+				try{ context.Response.OutputStream.Close(); } catch{}
 				if(acquired) _form.GenerationLock.Release();
 			}
 		}
@@ -68,7 +67,7 @@ namespace LMStud{
 			ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
 		}
 		private void HandleModel(HttpListenerContext ctx){
-			var modelPath = Properties.Settings.Default.LastModel;
+			var modelPath = Settings.Default.LastModel;
 			var model = Path.GetFileNameWithoutExtension(modelPath);
 			var obj = new{ model };
 			var json = JsonConvert.SerializeObject(obj);
@@ -115,16 +114,14 @@ namespace LMStud{
 			ctx.Response.ContentType = "application/json";
 			var sb = new StringBuilder();
 			void TokenCb(string token){sb.Append(token);}
-			if(_form.IsGenerating || !_form.GenerateForApi(session.State, prompt, TokenCb)){
+			if(!_form.GenerateForApi(session.State, prompt, TokenCb, out var newState, out var tokens)){
 				ctx.Response.StatusCode = 409;
 				return;
 			}
 			var assistant = sb.ToString();
 			session.Messages.Add(new Message{ Role = "user", Content = prompt });
 			session.Messages.Add(new Message{ Role = "assistant", Content = assistant });
-			var state = _form.GetState();
-			var tokens = _form.GetTokenCount();
-			_sessions.Update(session, session.Messages, state, tokens);
+			_sessions.Update(session, session.Messages, newState, tokens);
 			var resp = new{ session_id = session.Id, choices = new[]{ new{ message = new{ role = "assistant", content = assistant } } } };
 			var json = JsonConvert.SerializeObject(resp);
 			var bytes = Encoding.UTF8.GetBytes(json);

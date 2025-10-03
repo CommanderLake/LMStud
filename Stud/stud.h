@@ -20,6 +20,7 @@ enum class MessageRole{
 };
 struct ChatSession{
 	llama_context* ctx = nullptr;
+	const llama_vocab* _vocab = nullptr;
 	llama_sampler* smpl[2] = {nullptr, nullptr};
 	llama_memory_t llMem = nullptr;
 	std::vector<common_chat_msg> chatMsgs[2];
@@ -39,7 +40,6 @@ struct ToolCtx{
 };
 inline HWND _hWnd;
 inline llama_model* _llModel = nullptr;
-inline const llama_vocab* _vocab = nullptr;
 inline ChatSession _session;
 inline std::atomic_bool _stop{false};
 inline common_chat_templates_ptr _chatTemplates;
@@ -81,5 +81,8 @@ extern "C" {
 	EXPORT void StopGeneration();
 	EXPORT const char* GetLastErrorMessage();
 	EXPORT void ClearLastErrorMessage();
-	char* GetContextAsText();
+	EXPORT void* CaptureChatState();
+	EXPORT void RestoreChatState(void* state);
+	EXPORT void FreeChatState(void* state);
 }
+char* GetContextAsText();
