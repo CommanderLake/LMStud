@@ -11,6 +11,28 @@ using HrClock = std::chrono::high_resolution_clock;
 extern "C" void CloseCommandPrompt();
 static bool _gpuOomStud = false;
 static std::string _lastErrorMessage;
+namespace Stud::Backend{
+	BackendState& state(){
+		static BackendState instance;
+		return instance;
+	}
+}
+namespace{
+	Stud::Backend::BackendState& backend = Stud::Backend::state();
+	auto& _hWnd = backend.hWnd;
+	auto& _llModel = backend.model;
+	auto& _session = backend.session;
+	auto& _stop = backend.stop;
+	auto& _chatTemplates = backend.chatTemplates;
+	auto& _tokenCb = backend.tokenCallback;
+	auto& _tools = backend.tools;
+	auto& _toolHandlers = backend.toolHandlers;
+	auto& _hasTools = backend.hasTools;
+}
+using Stud::MessageRole;
+using Stud::ToolCtx;
+using Stud::ToolHandlerFn;
+using Stud::TokenCallbackFn;
 struct ChatStateSnapshot{
 	std::vector<common_chat_msg> chatMsgs[2];
 	std::vector<llama_token> cachedTokens[2];
@@ -38,7 +60,7 @@ void BackendInit(){
 	if(hModule != nullptr) ggml_backend_load("ggml-cuda.dll");
 	llama_backend_init();
 }
-void AddTool(const char* name, const char* description, const char* parameters, std::string(*handler)(const char* args)){
+void AddTool(const char* name, const char* description, const char* parameters, const ToolHandlerFn handler){
 	if(!name || !_hasTools) return;
 	common_chat_tool tool;
 	tool.name = name;
