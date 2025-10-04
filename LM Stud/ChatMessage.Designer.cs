@@ -28,7 +28,7 @@
 			this.butDelete = new System.Windows.Forms.Button();
 			this.butEdit = new System.Windows.Forms.Button();
 			this.butRegen = new System.Windows.Forms.Button();
-			this.label1 = new System.Windows.Forms.Label();
+			this.labelRole = new System.Windows.Forms.Label();
 			this.panel1 = new System.Windows.Forms.Panel();
 			this.butApplyEdit = new System.Windows.Forms.Button();
 			this.butCancelEdit = new System.Windows.Forms.Button();
@@ -61,10 +61,10 @@
 			this.butRegen.Name = "butRegen";
 			this.butRegen.UseVisualStyleBackColor = true;
 			// 
-			// label1
+			// labelRole
 			// 
-			resources.ApplyResources(this.label1, "label1");
-			this.label1.Name = "label1";
+			resources.ApplyResources(this.labelRole, "labelRole");
+			this.labelRole.Name = "labelRole";
 			// 
 			// panel1
 			// 
@@ -74,7 +74,7 @@
 			this.panel1.Controls.Add(this.checkThink);
 			this.panel1.Controls.Add(this.richTextMsg);
 			this.panel1.Controls.Add(this.butRegen);
-			this.panel1.Controls.Add(this.label1);
+			this.panel1.Controls.Add(this.labelRole);
 			this.panel1.Controls.Add(this.butEdit);
 			this.panel1.Controls.Add(this.butDelete);
 			resources.ApplyResources(this.panel1, "panel1");
@@ -117,7 +117,7 @@
 		}
 
 		#endregion
-		internal System.Windows.Forms.Label label1;
+		internal System.Windows.Forms.Label labelRole;
 		internal System.Windows.Forms.RichTextBox richTextMsg;
 		internal System.Windows.Forms.Button butDelete;
 		internal System.Windows.Forms.Button butEdit;

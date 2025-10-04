@@ -20,7 +20,7 @@ namespace LMStud{
 		private readonly Stopwatch _swRate = new Stopwatch();
 		private readonly Stopwatch _swTot = new Stopwatch();
 		private readonly SpeechSynthesizer _tts = new SpeechSynthesizer();
-		internal readonly SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
+		internal SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
 		private volatile bool _apiGenerating;
 		private Action<string> _apiTokenCallback;
 		private CheckState _checkVoiceInputLast = CheckState.Unchecked;
