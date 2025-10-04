@@ -17,7 +17,17 @@ namespace LM_Stud.Tests{
 		[TestInitialize]
 		public void TestInitialize(){_form = CreateForm();}
 		[TestCleanup]
-		public void TestCleanup(){_form?.Dispose();}
+		public void TestCleanup(){
+			if(_form != null){
+				try{ _form.Dispose(); } catch(NullReferenceException){
+					// the form is never fully initialised when created via FormatterServices
+					// which can cause ObjectDisposed routines to dereference null fields
+				}
+				var staticField = typeof(Form1).GetField("This", BindingFlags.Static | BindingFlags.Public);
+				staticField?.SetValue(null, null);
+				_form = null;
+			}
+		}
 		private static Form1 CreateForm(){
 			var form = (Form1)FormatterServices.GetUninitializedObject(typeof(Form1));
 			var staticField = typeof(Form1).GetField("This", BindingFlags.Static | BindingFlags.Public);
@@ -56,9 +66,29 @@ namespace LM_Stud.Tests{
 			return (T)field.GetValue(instance);
 		}
 		private static void Invoke(object instance, string name, params object[] parameters){
-			var method = instance.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-			if(method == null) throw new InvalidOperationException($"Method '{name}' not found.");
-			method.Invoke(instance, parameters);
+			if(parameters == null) parameters = Array.Empty<object>();
+			var methods = instance.GetType().GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+			foreach(var candidate in methods){
+				if(candidate.Name != name) continue;
+				var parameterInfos = candidate.GetParameters();
+				if(!ParametersMatch(parameterInfos, parameters)) continue;
+				candidate.Invoke(instance, parameters);
+				return;
+			}
+			throw new InvalidOperationException($"Method '{name}' with matching signature not found.");
+		}
+		private static bool ParametersMatch(ParameterInfo[] parameterInfos, object[] parameters){
+			if(parameterInfos.Length != parameters.Length) return false;
+			for(var i = 0; i < parameterInfos.Length; i++){
+				var expectedType = parameterInfos[i].ParameterType;
+				var providedValue = parameters[i];
+				if(providedValue == null){
+					if(expectedType.IsValueType && Nullable.GetUnderlyingType(expectedType) == null){ return false; }
+					continue;
+				}
+				if(!expectedType.IsInstanceOfType(providedValue)){ return false; }
+			}
+			return true;
 		}
 		[TestMethod]
 		public void GetState_ReturnsCurrentState(){

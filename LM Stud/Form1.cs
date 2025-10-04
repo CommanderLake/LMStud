@@ -137,13 +137,13 @@ namespace LMStud{
 				NativeMethods.StopSpeechTranscription();
 				NativeMethods.UnloadWhisperModel();
 			}
-			_tts.Dispose();
+			_tts?.Dispose();
 			NativeMethods.CloseCommandPrompt();
 			NativeMethods.CurlGlobalCleanup();
 		}
 		private void Form1_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.Escape) return;
-			_tts.SpeakAsyncCancelAll();
+			_tts?.SpeakAsyncCancelAll();
 			if(!_generating) return;
 			NativeMethods.StopGeneration();
 		}

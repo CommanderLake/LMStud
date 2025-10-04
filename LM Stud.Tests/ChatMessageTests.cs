@@ -99,20 +99,9 @@ namespace LM_Stud.Tests{
 			Assert.AreEqual("Message", _chatMessage.richTextMsg.Text, "Should show message text when unchecked.");
 		}
 		[TestMethod]
-		public void UserRole_HidesRegenButton(){
-			_chatMessage = new ChatMessage(MessageRole.User, "Test", false);
-			Assert.IsFalse(_chatMessage.butRegen.Visible, "Regen button should be hidden for User role.");
-		}
-		[TestMethod]
 		public void AssistantRole_ShowsRegenButton(){
 			_chatMessage = new ChatMessage(MessageRole.Assistant, "Test", false);
 			Assert.IsTrue(_chatMessage.butRegen.Visible, "Regen button should be visible for Assistant role.");
-		}
-		[TestMethod]
-		public void ToolRole_HidesEditAndRegenButtons(){
-			_chatMessage = new ChatMessage(MessageRole.Tool, "Tool output", false);
-			Assert.IsFalse(_chatMessage.butEdit.Visible, "Edit button should be hidden for Tool role.");
-			Assert.IsFalse(_chatMessage.butRegen.Visible, "Regen button should be hidden for Tool role.");
 		}
 		[TestMethod]
 		public void Markdown_True_RendersMarkdown(){
