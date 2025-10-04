@@ -20,6 +20,9 @@ namespace LMStud{
 		private readonly Stopwatch _swRate = new Stopwatch();
 		private readonly Stopwatch _swTot = new Stopwatch();
 		private readonly SpeechSynthesizer _tts = new SpeechSynthesizer();
+		private volatile bool _ttsSpeaking;
+		private int _ttsPendingCount;
+		private volatile bool _voiceInputResumePending;
 		internal SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
 		private volatile bool _apiGenerating;
 		private Action<string> _apiTokenCallback;
@@ -43,6 +46,8 @@ namespace LMStud{
 			//Thread.CurrentThread.CurrentCulture = culture;
 			InitializeComponent();
 			_apiServer = new ApiServer(this);
+			_tts.SpeakStarted += TtsOnSpeakStarted;
+			_tts.SpeakCompleted += TtsOnSpeakCompleted;
 			InitializeListViews();
 			Icon = Resources.LM_Stud_256;
 			SetToolTips();
@@ -143,7 +148,7 @@ namespace LMStud{
 		}
 		private void Form1_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.Escape) return;
-			_tts?.SpeakAsyncCancelAll();
+			CancelPendingSpeech();
 			if(!_generating) return;
 			NativeMethods.StopGeneration();
 		}
@@ -186,10 +191,11 @@ namespace LMStud{
 							return;
 						}
 					}
-					if(NativeMethods.StartSpeechTranscription()) return;
-					MessageBox.Show(this, Resources.Error_starting_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
-					checkVoiceInput.Checked = false;
-				} else{ NativeMethods.StopSpeechTranscription(); }
+					TryStartSpeechTranscription(true);
+				} else{
+					NativeMethods.StopSpeechTranscription();
+					_voiceInputResumePending = false;
+				}
 			} finally{ _checkVoiceInputLast = checkVoiceInput.CheckState; }
 		}
 		private void CheckSpeak_CheckedChanged(object sender, EventArgs e){
@@ -339,15 +345,68 @@ namespace LMStud{
 			_isEditing = false;
 			SetEditingMessageVisible(false);
 			if(checkVoiceInput.CheckState != CheckState.Checked) return;
-			if(NativeMethods.StartSpeechTranscription()) return;
-			MessageBox.Show(this, Resources.Error_starting_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
-			checkVoiceInput.Checked = false;
-			_checkVoiceInputLast = checkVoiceInput.CheckState;
+			TryStartSpeechTranscription(true);
 		}
 		private void CancelEditing(){
 			textInput.Text = _editOriginalText;
 			textInput.SelectionStart = textInput.Text.Length;
 			FinishEditing();
+		}
+		private void CancelPendingSpeech(){
+			_tts.SpeakAsyncCancelAll();
+			Interlocked.Exchange(ref _ttsPendingCount, 0);
+			_ttsSpeaking = false;
+			TryStartSpeechTranscription(false);
+		}
+		private void QueueSpeech(string text){
+			if(string.IsNullOrWhiteSpace(text)) return;
+			Interlocked.Increment(ref _ttsPendingCount);
+			_tts.SpeakAsync(text);
+		}
+		private void TryStartSpeechTranscription(bool showErrorOnFailure){
+			if(checkVoiceInput.CheckState != CheckState.Checked){
+				_voiceInputResumePending = false;
+				return;
+			}
+			_voiceInputResumePending = true;
+			if(_isEditing) return;
+			if(_generating || _apiGenerating || _ttsSpeaking || Volatile.Read(ref _ttsPendingCount) > 0) return;
+			if(NativeMethods.StartSpeechTranscription()){
+				_voiceInputResumePending = false;
+				return;
+			}
+			_voiceInputResumePending = false;
+			if(showErrorOnFailure){
+				MessageBox.Show(this, Resources.Error_starting_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+				checkVoiceInput.Checked = false;
+				_checkVoiceInputLast = checkVoiceInput.CheckState;
+			}
+		}
+		private void TtsOnSpeakStarted(object sender, SpeakStartedEventArgs e){
+			if(IsDisposed) return;
+			BeginInvoke((MethodInvoker)(() => {
+				if(IsDisposed) return;
+				_ttsSpeaking = true;
+				if(checkVoiceInput.CheckState == CheckState.Checked){
+					NativeMethods.StopSpeechTranscription();
+					_voiceInputResumePending = true;
+				}
+			}));
+		}
+		private void TtsOnSpeakCompleted(object sender, SpeakCompletedEventArgs e){
+			var pending = Interlocked.Decrement(ref _ttsPendingCount);
+			if(pending < 0){
+				Interlocked.Exchange(ref _ttsPendingCount, 0);
+				pending = 0;
+			}
+			if(IsDisposed) return;
+			BeginInvoke((MethodInvoker)(() => {
+				if(IsDisposed) return;
+				if(pending <= 0){
+					_ttsSpeaking = false;
+					TryStartSpeechTranscription(false);
+				}
+			}));
 		}
 		private void Generate(){
 			var prompt = textInput.Text;
@@ -360,6 +419,7 @@ namespace LMStud{
 				GenerationLock.Release();
 				return;
 			}
+			if(checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StopSpeechTranscription();
 			_dialecticPaused = false;
 			_generating = true;
 			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
@@ -370,7 +430,7 @@ namespace LMStud{
 			var seedMsg = checkDialectic.Checked && _chatMessages.Count == 1;
 			_cntAssMsg = null;
 			foreach(var message in _chatMessages) message.Generating = true;
-			_tts.SpeakAsyncCancelAll();
+			CancelPendingSpeech();
 			_firstToken = true;
 			if(role == MessageRole.User){
 				NativeMethods.SetCommittedText("");
@@ -390,7 +450,7 @@ namespace LMStud{
 				_swRate.Stop();
 				if(_speechBuffer.Length > 0){
 					var remainingText = _speechBuffer.ToString().Trim();
-					if(!string.IsNullOrWhiteSpace(remainingText)) _tts.SpeakAsync(remainingText);
+					if(!string.IsNullOrWhiteSpace(remainingText)) QueueSpeech(remainingText);
 					_speechBuffer.Clear();
 				}
 				try{
@@ -406,7 +466,7 @@ namespace LMStud{
 						butReset.Enabled = butApply.Enabled = true;
 						_generating = false;
 						foreach(var message in _chatMessages) message.Generating = false;
-						if(checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StartSpeechTranscription();
+						if(checkVoiceInput.CheckState == CheckState.Checked) TryStartSpeechTranscription(false);
 						if(checkDialectic.Checked && !_dialecticPaused){
 							var last = _chatMessages.LastOrDefault();
 							if(last != null){
@@ -515,7 +575,7 @@ namespace LMStud{
 							This._cntAssMsg.TTSPosition = i;
 							while((i = FindSentenceEnd(This._speechBuffer)) >= 0){
 								var sentence = This._speechBuffer.ToString(0, i + 1).Trim();
-								if(!string.IsNullOrWhiteSpace(sentence)) This._tts.SpeakAsync(sentence);
+								if(!string.IsNullOrWhiteSpace(sentence)) This.QueueSpeech(sentence);
 								This._speechBuffer.Remove(0, i + 1);
 								while(This._speechBuffer.Length > 0 && char.IsWhiteSpace(This._speechBuffer[0])) This._speechBuffer.Remove(0, 1);
 							}
