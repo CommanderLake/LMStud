@@ -38,4 +38,5 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("LM Stud.Tests")]
 [assembly: InternalsVisibleTo("LM Stud.Explorables")]
 [assembly: InternalsVisibleTo("LM Stud.Tests1")]
+[assembly: InternalsVisibleTo("LM Stud1.Tests")]
 

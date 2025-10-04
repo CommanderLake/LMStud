@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 namespace LMStud{
-	internal class MyFlowLayoutPanel : FlowLayoutPanel{
+	public class MyFlowLayoutPanel : FlowLayoutPanel{
 		private const int WmVscroll = 0x0115;
 		private const int WsHscroll = 0x00100000;
 		private const int WsVscroll = 0x00200000;
