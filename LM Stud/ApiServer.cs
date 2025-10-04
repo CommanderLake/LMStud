@@ -7,7 +7,7 @@ using System.Threading;
 using LMStud.Properties;
 using Newtonsoft.Json;
 namespace LMStud{
-	internal class ApiServer{
+	public class ApiServer{
 		private readonly Form1 _form;
 		private readonly SessionManager _sessions = new SessionManager();
 		private CancellationTokenSource _cts;

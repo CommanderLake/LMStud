@@ -5,7 +5,7 @@ using System.Windows.Forms;
 using LMStud.Properties;
 using Newtonsoft.Json;
 namespace LMStud{
-	internal partial class Form1{
+	public partial class Form1{
 		private static readonly string ModelSettingsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LM Stud");
 		private static readonly string ModelSettingsFile = Path.Combine(ModelSettingsFolder, "ModelSettings.json");
 		private readonly Dictionary<string, ModelSettings> _modelSettings = new Dictionary<string, ModelSettings>();

@@ -1,7 +1,7 @@
 ﻿using LMStud.Properties;
 namespace LMStud
 {
-	internal partial class Form1
+	public partial class Form1
 	{
 		/// <summary>
 		/// Required designer variable.

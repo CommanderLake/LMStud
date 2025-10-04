@@ -9,8 +9,8 @@ using System.Threading;
 using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
-	internal partial class Form1 : Form{
-		internal static Form1 This;
+	public partial class Form1 : Form{
+		public static Form1 This;
 		private static NativeMethods.TokenCallback _tokenCallback;
 		private static NativeMethods.WhisperCallback _whisperCallback;
 		private static NativeMethods.SpeechEndCallback _speechEndCallback;
@@ -36,7 +36,7 @@ namespace LMStud{
 		private bool _whisperLoaded;
 		private bool _dialecticStarted;
 		private bool _dialecticPaused;
-		internal Form1(){
+		public Form1(){
 			This = this;
 			//var culture = new CultureInfo("zh-CN");
 			//Thread.CurrentThread.CurrentUICulture = culture;

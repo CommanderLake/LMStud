@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Runtime.CompilerServices;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following
@@ -33,3 +34,8 @@ using System.Runtime.InteropServices;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("LMStud.Tests")]
+[assembly: InternalsVisibleTo("LM Stud.Tests")]
+[assembly: InternalsVisibleTo("LM Stud.Explorables")]
+[assembly: InternalsVisibleTo("LM Stud.Tests1")]
+

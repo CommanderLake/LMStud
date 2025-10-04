@@ -4,7 +4,7 @@ using System.IO;
 using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
-	internal partial class Form1{
+	public partial class Form1{
 		private string _systemPrompt;
 		private string _modelsPath;
 		private int _ctxSize;

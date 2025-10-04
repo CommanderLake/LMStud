@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 namespace LMStud{
-	internal static class GGUFMetadataManager{
+	public static class GGUFMetadataManager{
 		public enum GGUFType : uint{
 			UINT8 = 0,
 			INT8 = 1,

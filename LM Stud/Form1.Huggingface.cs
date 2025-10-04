@@ -9,7 +9,7 @@ using LMStud.Properties;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 namespace LMStud{
-	internal partial class Form1{
+	public partial class Form1{
 		private const string ApiUrl = "https://huggingface.co/api/models";
 		private const string Filter = "gguf";
 		private volatile bool _downloading;

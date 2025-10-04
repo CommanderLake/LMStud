@@ -6,7 +6,7 @@ using System.Threading;
 using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
-	internal partial class Form1{
+	public partial class Form1{
 		private const string DefaultPrompt = "Assist the user to the best of your ability.";
 		private const string FetchPrompt = "\nAfter calling the web_search tool you must subsequently call the get_webpage tool with a url followed by the get_webpage_text tool with the id of any relevant preview.";
 		internal volatile bool LlModelLoaded;
