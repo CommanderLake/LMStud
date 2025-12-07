@@ -275,9 +275,9 @@
   <data name="ToolTip_numThreadsBatch" xml:space="preserve">
     <value>CPU threads used for batch preparation.</value>
   </data>
-<data name="ToolTip_numVadThreshold" xml:space="preserve">
-	<value>Voice Activity Detection threshold: for Basic VAD this sets loudness, for Whisper VAD this sets speech probability.</value>
-</data>
+  <data name="ToolTip_numVadThreshold" xml:space="preserve">
+    <value>Voice Activity Detection threshold: for Basic VAD this sets loudness, for Whisper VAD this sets speech probability.</value>
+  </data>
   <data name="ToolTip_numFreqThreshold" xml:space="preserve">
     <value>High-pass filter cutoff frequency. Higher values reduce low frequency noise.</value>
   </data>
@@ -383,9 +383,9 @@
   <data name="The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_" xml:space="preserve">
     <value>The modified settings are overridden by the Model Settings for this model.</value>
   </data>
-<data name="Max_context_size_of_last_loaded_model" xml:space="preserve">
-	<value>Maximum context size of the last loaded model: </value>
-</data>
+  <data name="Max_context_size_of_last_loaded_model" xml:space="preserve">
+    <value>Maximum context size of the last loaded model: </value>
+  </data>
   <data name="No_model_loaded" xml:space="preserve">
     <value>No model loaded</value>
   </data>
@@ -401,10 +401,13 @@
   <data name="ToolTip_numGenDelay" xml:space="preserve">
     <value>Delay before automatic response generation after speech input ends (only when ‘Speech input’ is fully enabled).</value>
   </data>
-<data name="Load_a_model_first_" xml:space="preserve">
-	<value>Load a model first.</value>
-</data>
-<data name="ToolTip_textJinjaTmplModel" xml:space="preserve">
-	<value>Specify the path to a text file containing a Jinja template, this file must remain in place.</value>
-</data>
+  <data name="Load_a_model_first_" xml:space="preserve">
+    <value>Load a model first.</value>
+  </data>
+  <data name="ToolTip_textJinjaTmplModel" xml:space="preserve">
+    <value>Specify the path to a text file containing a Jinja template, this file must remain in place.</value>
+  </data>
+  <data name="ToolTip_checkFlashAttn" xml:space="preserve">
+    <value>Enable Flash Attention. The filled state lets Llama.cpp choose automatically.</value>
+  </data>
 </root>

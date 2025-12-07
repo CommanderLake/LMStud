@@ -514,8 +514,9 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.checkFlashAttnModel, "checkFlashAttnModel");
 			this.checkFlashAttnModel.Checked = true;
-			this.checkFlashAttnModel.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkFlashAttnModel.CheckState = System.Windows.Forms.CheckState.Indeterminate;
 			this.checkFlashAttnModel.Name = "checkFlashAttnModel";
+			this.checkFlashAttnModel.ThreeState = true;
 			this.toolTip1.SetToolTip(this.checkFlashAttnModel, resources.GetString("checkFlashAttnModel.ToolTip"));
 			this.checkFlashAttnModel.UseVisualStyleBackColor = true;
 			// 
@@ -1580,8 +1581,9 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.checkFlashAttn, "checkFlashAttn");
 			this.checkFlashAttn.Checked = true;
-			this.checkFlashAttn.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkFlashAttn.CheckState = System.Windows.Forms.CheckState.Indeterminate;
 			this.checkFlashAttn.Name = "checkFlashAttn";
+			this.checkFlashAttn.ThreeState = true;
 			this.toolTip1.SetToolTip(this.checkFlashAttn, resources.GetString("checkFlashAttn.ToolTip"));
 			this.checkFlashAttn.UseVisualStyleBackColor = true;
 			// 

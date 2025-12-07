@@ -301,10 +301,10 @@ namespace LMStud.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        public bool FlashAttn {
+        [global::System.Configuration.DefaultSettingValueAttribute("2")]
+        public uint FlashAttn {
             get {
-                return ((bool)(this["FlashAttn"]));
+                return ((uint)(this["FlashAttn"]));
             }
             set {
                 this["FlashAttn"] = value;

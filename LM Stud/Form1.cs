@@ -73,6 +73,7 @@ namespace LMStud{
 			SetToolTip(numThreads);
 			SetToolTip(checkMMap);
 			SetToolTip(checkMLock);
+			SetToolTip(checkFlashAttn);
 			SetToolTip(groupCPUParamsBatch);
 			SetToolTip(numThreadsBatch);
 			SetToolTip(numVadThreshold);

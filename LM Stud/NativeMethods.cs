@@ -42,11 +42,13 @@ namespace LMStud{
 		internal static INativeMethods Implementation{get => _implementation; set => _implementation = value ?? throw new ArgumentNullException(nameof(value));}
 		public static void SetHWnd(IntPtr hWnd){Implementation.SetHWnd(hWnd);}
 		public static void BackendInit(){Implementation.BackendInit();}
-		public static StudError CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch){
+		public static StudError CreateContext(int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch){
 			return Implementation.CreateContext(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch);
 		}
-		public static StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty){return Implementation.CreateSampler(minP, topP, topK, temp, repeatPenalty);}
-		public static StudError CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
+		public static StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty){
+			return Implementation.CreateSampler(minP, topP, topK, temp, repeatPenalty);
+		}
+		public static StudError CreateSession(int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
 			return Implementation.CreateSession(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty);
 		}
 		public static StudError LoadModel(string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy){
@@ -111,9 +113,9 @@ namespace LMStud{
 		internal interface INativeMethods{
 			void SetHWnd(IntPtr hWnd);
 			void BackendInit();
-			StudError CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch);
+			StudError CreateContext(int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch);
 			StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty);
-			StudError CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
+			StudError CreateSession(int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
 			StudError LoadModel(string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy);
 			void FreeModel();
 			StudError ResetChat();
@@ -171,9 +173,9 @@ namespace LMStud{
 		private sealed class DllImportNativeMethods : INativeMethods{
 			public void SetHWnd(IntPtr hWnd){NativeExports.SetHWnd(hWnd);}
 			public void BackendInit(){NativeExports.BackendInit();}
-			public StudError CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch){return NativeExports.CreateContext(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch);}
+			public StudError CreateContext(int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch){return NativeExports.CreateContext(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch);}
 			public StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty){return NativeExports.CreateSampler(minP, topP, topK, temp, repeatPenalty);}
-			public StudError CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
+			public StudError CreateSession(int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
 				return NativeExports.CreateSession(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty);
 			}
 			public StudError LoadModel(string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy){
@@ -251,11 +253,11 @@ namespace LMStud{
 			[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 			internal static extern void BackendInit();
 			[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-			internal static extern StudError CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch);
+			internal static extern StudError CreateContext(int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch);
 			[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 			internal static extern StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty);
 			[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-			internal static extern StudError CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
+			internal static extern StudError CreateSession(int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
 			[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 			internal static extern StudError LoadModel(string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy);
 			[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]

@@ -410,4 +410,7 @@
 <data name="ToolTip_textJinjaTmplModel" xml:space="preserve">
 	<value>指定包含 Jinja 模板的文本文件路径，该文件必须保持在原位置。</value>
 </data>
+<data name="ToolTip_checkFlashAttn" xml:space="preserve">
+	<value>启用 Flash Attention。填充状态表示由 Llama.cpp 自动选择。</value>
+</data>
 </root>

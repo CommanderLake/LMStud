@@ -168,17 +168,17 @@ namespace LMStud{
 			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_loading_model, result);
 			return result;
 		}
-		NativeMethods.StudError CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
+		NativeMethods.StudError CreateSession(int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
 			GenerationLock.Wait(-1);
 			NativeMethods.StudError result;
-			try{ result = NativeMethods.CreateSession(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty); } finally{ GenerationLock.Release(); }
+			try{ result = NativeMethods.CreateSession(nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty); } finally{ GenerationLock.Release(); }
 			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_session, result);
 			return result;
 		}
-		NativeMethods.StudError CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch){
+		NativeMethods.StudError CreateContext(int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch){
 			GenerationLock.Wait(-1);
 			NativeMethods.StudError result;
-			try{ result = NativeMethods.CreateContext(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch); } finally{ GenerationLock.Release(); }
+			try{ result = NativeMethods.CreateContext(nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch); } finally{ GenerationLock.Release(); }
 			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_context, result);
 			return result;
 		}

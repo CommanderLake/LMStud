@@ -236,9 +236,9 @@ namespace LM_Stud.Tests{
 			public void Dispose(){NativeMethods.Implementation = _original;}
 			public void SetHWnd(IntPtr hWnd){}
 			public void BackendInit(){}
-			public NativeMethods.StudError CreateContext(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch){return NativeMethods.StudError.Success;}
+			public NativeMethods.StudError CreateContext(int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch){return NativeMethods.StudError.Success;}
 			public NativeMethods.StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty){return NativeMethods.StudError.Success;}
-			public NativeMethods.StudError CreateSession(int nCtx, int nBatch, bool flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
+			public NativeMethods.StudError CreateSession(int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
 				return NativeMethods.StudError.Success;
 			}
 			public NativeMethods.StudError LoadModel(string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){

@@ -74,7 +74,7 @@ void ClearTools(){
 	_tools.clear();
 	_toolHandlers.clear();
 }
-StudError CreateContext(const int nCtx, const int nBatch, const bool flashAttn, const int nThreads, const int nThreadsBatch){
+StudError CreateContext(const int nCtx, const int nBatch, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch){
 	if(_session.ctx){
 		llama_free(_session.ctx);
 		_session.ctx = nullptr;
@@ -82,7 +82,10 @@ StudError CreateContext(const int nCtx, const int nBatch, const bool flashAttn, 
 	auto ctxParams = llama_context_default_params();
 	ctxParams.n_ctx = nCtx;
 	ctxParams.n_batch = nBatch;
-	ctxParams.flash_attn = flashAttn;
+	ctxParams.flash_attn = flashAttn > 0;
+	//if(flashAttn == 0) ctxParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED;
+	//else if(flashAttn == 1) ctxParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_ENABLED;
+	//else if(flashAttn == 2) ctxParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_AUTO;
 	ctxParams.n_threads = nThreads;
 	ctxParams.n_threads_batch = nThreadsBatch;
 	_gpuOomStud = false;
@@ -117,7 +120,7 @@ StudError CreateSampler(const float minP, const float topP, const int topK, cons
 	if(result != StudError::Success) return result;
 	return CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, _session.smpl[1]);
 }
-StudError CreateSession(const int nCtx, const int nBatch, const bool flashAttn, const int nThreads, const int nThreadsBatch, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
+StudError CreateSession(const int nCtx, const int nBatch, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
 	if(!_llModel) return StudError::ModelNotLoaded;
 	_session.syntax.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
 	auto result = CreateContext(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch);

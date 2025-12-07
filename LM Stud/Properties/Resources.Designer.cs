@@ -603,6 +603,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Enable Flash Attention. The filled state lets Llama.cpp choose automatically..
+        /// </summary>
+        internal static string ToolTip_checkFlashAttn {
+            get {
+                return ResourceManager.GetString("ToolTip_checkFlashAttn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Lock the model in RAM..
         /// </summary>
         internal static string ToolTip_checkMLock {
@@ -864,7 +873,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to Specify the path to a text file containing a Jinja template, this file must remain in place..
         /// </summary>
         internal static string ToolTip_textJinjaTmplModel {
             get {

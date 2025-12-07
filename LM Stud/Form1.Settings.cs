@@ -31,7 +31,7 @@ namespace LMStud{
 		private bool _whisperUseGPU;
 		private bool _useWhisperVAD;
 		private bool _speak;
-		private bool _flashAttn;
+		private CheckState _flashAttn;
 		private string _googleAPIKey;
 		private string _googleSearchID;
 		private int _googleSearchResultCount;
@@ -72,7 +72,7 @@ namespace LMStud{
 			_whisperTemp = (float)(numWhisperTemp.Value = Settings.Default.WhisperTemp);
 			_useWhisperVAD = radioWhisperVAD.Checked = Settings.Default.UseWhisperVAD;
 			_speak = checkSpeak.Checked = Settings.Default.Speak;
-			_flashAttn = checkFlashAttn.Checked = Settings.Default.FlashAttn;
+			_flashAttn = checkFlashAttn.CheckState = (CheckState)Settings.Default.FlashAttn;
 			_googleAPIKey = textGoogleApiKey.Text = Settings.Default.GoogleAPIKey;
 			_googleSearchID = textGoogleSearchID.Text = Settings.Default.GoogleSearchID;
 			_googleSearchResultCount = (int)(numGoogleResults.Value = Settings.Default.GoogleSearchResultCount);
@@ -246,8 +246,8 @@ namespace LMStud{
 				setVAD = true;
 			});
 			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
-			UpdateSetting(ref _flashAttn, checkFlashAttn.Checked, value => {
-				Settings.Default.FlashAttn = value;
+			UpdateSetting(ref _flashAttn, checkFlashAttn.CheckState, value => {
+				Settings.Default.FlashAttn = (uint)value;
 				if(overrideSettings){
 					modelOverrideChanged = true;
 					return;

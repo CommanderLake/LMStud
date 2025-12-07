@@ -61,19 +61,19 @@
     <TargetName>Stud</TargetName>
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\llama.cpp\vendor;I:\whisper.cpp\include;I:\whisper.cpp\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
-    <LibraryPath>I:\vcpkg-2025.04.09\installed\x64-windows-static\debug\lib;I:\llama.cpp-b6258\build\common\Debug;I:\llama.cpp-b6258\build\ggml\src\Debug;I:\llama.cpp-b6258\build\src\Debug;I:\whisper.cpp-1.7.6\build\src\Debug;$(LibraryPath)</LibraryPath>
+    <LibraryPath>I:\vcpkg-2025.04.09\installed\x64-windows-static\debug\lib;I:\llama.cpp\build\common\Debug;I:\llama.cpp\build\ggml\src\Debug;I:\llama.cpp\build\src\Debug;I:\whisper.cpp-1.7.6\build\src\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\llama.cpp\vendor;I:\whisper.cpp\include;I:\whisper.cpp\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
-    <LibraryPath>I:\vcpkg-2025.04.09\installed\x64-windows-static\lib;I:\llama.cpp-b6258\build\common\RelWithDebInfo;I:\llama.cpp-b6258\build\ggml\src\RelWithDebInfo;I:\llama.cpp-b6258\build\src\RelWithDebInfo;I:\whisper.cpp-1.7.6\build\src\RelWithDebInfo;$(LibraryPath)</LibraryPath>
+    <LibraryPath>I:\vcpkg-2025.04.09\installed\x64-windows-static\lib;I:\llama.cpp\build\common\RelWithDebInfo;I:\llama.cpp\build\ggml\src\RelWithDebInfo;I:\llama.cpp\build\src\RelWithDebInfo;I:\whisper.cpp-1.7.6\build\src\RelWithDebInfo;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCUDA12|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>I:\llama.cpp-cu12\include;I:\llama.cpp-cu12\common;I:\llama.cpp-cu12\ggml\include;I:\llama.cpp-cu12\src;I:\llama.cpp-cu12\vendor;I:\whisper.cpp\include;I:\whisper.cpp\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
-    <LibraryPath>I:\vcpkg-2025.04.09\installed\x64-windows-static\lib;I:\llama.cpp-b6258-cu12\build\common\RelWithDebInfo;I:\llama.cpp-b6258-cu12\build\ggml\src\RelWithDebInfo;I:\llama.cpp-b6258-cu12\build\src\RelWithDebInfo;I:\whisper.cpp-1.7.6\build\src\RelWithDebInfo;$(LibraryPath)</LibraryPath>
+    <LibraryPath>I:\vcpkg-2025.04.09\installed\x64-windows-static\lib;I:\llama.cpp-cu12\build\common\RelWithDebInfo;I:\llama.cpp-cu12\build\ggml\src\RelWithDebInfo;I:\llama.cpp-cu12\build\src\RelWithDebInfo;I:\whisper.cpp-1.7.6\build\src\RelWithDebInfo;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

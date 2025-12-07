@@ -38,7 +38,7 @@ namespace LMStud{
 			var minPNew = (float)numMinPModel.Value;
 			var topPNew = (float)numTopPModel.Value;
 			var topKNew = (int)numTopKModel.Value;
-			var flashNew = checkFlashAttnModel.Checked;
+			var flashNew = checkFlashAttnModel.CheckState;
 			var jinjaOverrideNew = checkOverrideJinjaModel.Checked;
 			var jinjaTmplNew = textJinjaTmplModel.Text;
 			_modelSettings[path] = new ModelSettings(overrideNew, systemPromptNew, ctxSizeNew, gpuLayersNew, tempNew, minPNew, topPNew, topKNew, flashNew, jinjaOverrideNew, jinjaTmplNew);
@@ -91,7 +91,7 @@ namespace LMStud{
 				numMinPModel.Value = (decimal)ms.MinP;
 				numTopPModel.Value = (decimal)ms.TopP;
 				numTopKModel.Value = ms.TopK;
-				checkFlashAttnModel.Checked = ms.FlashAttn;
+				checkFlashAttnModel.CheckState = ms.FlashAttn;
 				checkOverrideJinjaModel.Checked = ms.OverrideJinja;
 				textJinjaTmplModel.Text = ms.JinjaTemplate;
 			} else{
@@ -103,7 +103,7 @@ namespace LMStud{
 				numMinPModel.Value = (decimal)_minP;
 				numTopPModel.Value = (decimal)_topP;
 				numTopKModel.Value = _topK;
-				checkFlashAttnModel.Checked = _flashAttn;
+				checkFlashAttnModel.CheckState = _flashAttn;
 				checkOverrideJinjaModel.Checked = false;
 				textJinjaTmplModel.Text = string.Empty;
 			}
@@ -113,7 +113,7 @@ namespace LMStud{
 		}
 		private class ModelSettings{
 			public readonly int CtxSize;
-			public readonly bool FlashAttn;
+			public readonly CheckState FlashAttn;
 			public readonly int GPULayers;
 			public readonly string JinjaTemplate;
 			public readonly float MinP;
@@ -123,7 +123,7 @@ namespace LMStud{
 			public readonly float Temp;
 			public readonly int TopK;
 			public readonly float TopP;
-			public ModelSettings(bool overrideSettings, string systemPrompt, int ctxSize, int gpuLayers, float temp, float minP, float topP, int topK, bool flashAttn, bool overrideJinja,
+			public ModelSettings(bool overrideSettings, string systemPrompt, int ctxSize, int gpuLayers, float temp, float minP, float topP, int topK, CheckState flashAttn, bool overrideJinja,
 				string jinjaTemplate){
 				OverrideSettings = overrideSettings;
 				SystemPrompt = systemPrompt;
