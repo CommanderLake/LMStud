@@ -219,6 +219,7 @@ void DialecticStart(){
 }
 StudError DialecticSwap(){
 	if(_session.dialState[0].empty()) return StudError::Success;
+	AlignChatStates();
 	const int size = static_cast<int>(_session.dialState[0].size());
 	GetStateData(_session.dialState[_session.dId].data(), size);
 	_session.dId = 1 - _session.dId;
@@ -358,24 +359,24 @@ StudError SetSystemPrompt(const char* prompt, const char* toolsPrompt){
 StudError SetMessageAt(const int index, const char* think, const char* message){
 	AlignChatStates();
 	if(index < 0 || index >= static_cast<int>(_session.chatMsgs[_session.dId].size())) return StudError::IndexOutOfRange;
+	const auto applyMessageUpdate = [&](std::vector<common_chat_msg>& msgs){
+		msgs[index].reasoning_content = msgs[index].role._Equal("assistant") ? think : std::string();
+		msgs[index].content = std::string(message);
+	};
 	if(!_session.ctx || !_session.smpl[_session.dId] || !_session._vocab){
-		_session.chatMsgs[0][index].reasoning_content = think;
-		_session.chatMsgs[0][index].content = std::string(message);
-		_session.chatMsgs[1][index].reasoning_content = think;
-		_session.chatMsgs[1][index].content = std::string(message);
+		applyMessageUpdate(_session.chatMsgs[0]);
+		applyMessageUpdate(_session.chatMsgs[1]);
 		_session.cachedTokens[0].clear();
 		_session.cachedTokens[1].clear();
 		return StudError::Success;
 	}
-	_session.chatMsgs[_session.dId][index].reasoning_content = think;
-	_session.chatMsgs[_session.dId][index].content = std::string(message);
+	applyMessageUpdate(_session.chatMsgs[_session.dId]);
 	auto err = RetokenizeChat();
 	const auto dId = _session.dId == 0 ? 1 : 0;
 	if(err != StudError::Success || _session.dialState[dId].empty() || _session.chatMsgs[dId].size() <= index) return err;
 	err = DialecticSwap();
 	if(err != StudError::Success) return err;
-	_session.chatMsgs[_session.dId][index].reasoning_content = think;
-	_session.chatMsgs[_session.dId][index].content = std::string(message);
+	applyMessageUpdate(_session.chatMsgs[_session.dId]);
 	const auto err2 = RetokenizeChat();
 	const auto err3 = DialecticSwap();
 	return err2 != StudError::Success ? err2 : err3;

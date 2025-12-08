@@ -101,6 +101,48 @@ std::string ReadFileTool(const char* argsJson){
 	std::string out = "[FILE] " + fileName + "\n```" + contentType + "\n" + body + "```\n";
 	return out;
 }
+std::string SearchFileTool(const char* argsJson){
+	std::string path = GetArgValue(argsJson, "path");
+	std::string keyword = GetArgValue(argsJson, "keyword");
+	const std::string maxResultsStr = GetArgValue(argsJson, "max_results");
+	const std::string caseSensitiveStr = GetArgValue(argsJson, "case_sensitive");
+	const bool caseSensitive = !(caseSensitiveStr == "false" || caseSensitiveStr == "0");
+	int maxResults = -1;
+	if(!maxResultsStr.empty()){
+		auto[ptr, ec] = std::from_chars(maxResultsStr.data(), maxResultsStr.data() + maxResultsStr.size(), maxResults);
+		if(ec != std::errc() || ptr != maxResultsStr.data() + maxResultsStr.size()){
+			return "{\"error\":\"max_results must be a number\"}";
+		}
+	}
+	if(path.empty() || keyword.empty() || maxResults <= 0) return "{\"error\":\"args\"}";
+	std::filesystem::path p = _baseFolder / path;
+	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
+	if(is_directory(p)) return "{\"error\":\"path is a folder\"}";
+	std::ifstream f(p);
+	if(!f.is_open()) return "{\"error\":\"open failed, try the list_directory tool\"}";
+	std::string json = "{\"matches\":[";
+	std::string line;
+	int lineNo = 1;
+	auto toLower = [](std::string s){
+		std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return static_cast<char>(std::tolower(c, std::locale())); });
+		return s;
+	};
+	const std::string kwSearch = caseSensitive ? keyword : toLower(keyword);
+	int matches = 0;
+	while(std::getline(f, line)){
+		const std::string lineSearch = caseSensitive ? line : toLower(line);
+		if(lineSearch.find(kwSearch) != std::string::npos){
+			json += "{\"line\":" + std::to_string(lineNo) + ",\"text\":\"" + JsonEscape(line) + "\"}";
+			json += ',';
+			++matches;
+			if(matches >= maxResults) break;
+		}
+		++lineNo;
+	}
+	if(json.back() == ',') json.pop_back();
+	json += "]}";
+	return json;
+}
 std::string CreateFileTool(const char* argsJson){
 	const std::string path = GetArgValue(argsJson, "path");
 	const std::string text = GetArgValue(argsJson, "text");

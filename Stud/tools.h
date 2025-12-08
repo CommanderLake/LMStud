@@ -30,6 +30,7 @@ std::string ListWebTags(const char* argsJson);
 std::string GetLongDateTime(const char* argsJson);
 std::string ListDirectoryTool(const char* argsJson);
 std::string ReadFileTool(const char* argsJson);
+std::string SearchFileTool(const char* argsJson);
 std::string CreateFileTool(const char* argsJson);
 std::string ReplaceLinesTool(const char* argsJson);
 std::string ApplyPatchTool(const char* argsJson);

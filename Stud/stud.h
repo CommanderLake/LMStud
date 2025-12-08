@@ -65,6 +65,7 @@ EXPORT StudError CreateContext(int nCtx, int nBatch, unsigned int flashAttn, int
 EXPORT StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty);
 EXPORT StudError CreateSession(int nCtx, int nBatch, unsigned int flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
 EXPORT void DestroySession();
+static void AlignChatStates();
 EXPORT StudError ResetChat();
 EXPORT void FreeModel();
 EXPORT StudError LoadModel(const char* filename, const char* jinjaTemplate, int nGPULayers, bool mMap, bool mLock, ggml_numa_strategy numaStrategy);
