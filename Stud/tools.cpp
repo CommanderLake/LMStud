@@ -125,7 +125,7 @@ void RegisterTools(const bool dateTime, const bool googleSearch, const bool webp
 		AddTool("file_apply_diff_patch", "Apply unified diff patch to a file", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"patch\":{\"type\":\"string\"}},\"required\":[\"path\",\"patch\"]}", ApplyPatchTool);
 	}
 	if(commandPrompt){
-		AddTool("command_prompt_start", "Start or restart a Windows command prompt session and return the initial output.", "{\"type\":\"object\",\"properties\":{\"session\":{\"type\":\"string\"}},\"required\":[]}", StartCommandPromptTool);
-		AddTool("command_prompt_execute", "Execute a command in the active Windows command prompt session.", "{\"type\":\"object\",\"properties\":{\"session\":{\"type\":\"string\"},\"command\":{\"type\":\"string\"},\"close\":{\"type\":\"boolean\"}},\"required\":[\"command\"]}", CommandPromptExecuteTool);
+		AddTool("command_prompt_start", "Start or restart a Windows command prompt session and return the initial output.", "{\"type\":\"object\",\"properties\":{},\"required\":[]}", StartCommandPromptTool);
+		AddTool("command_prompt_execute", "Execute a command in the active Windows command prompt session.", "{\"type\":\"object\",\"properties\":{\"command\":{\"type\":\"string\"},\"close\":{\"type\":\"boolean\"}},\"required\":[\"command\"]}", CommandPromptExecuteTool);
 	} else CloseCommandPrompt();
 }

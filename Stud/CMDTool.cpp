@@ -12,12 +12,10 @@ struct CommandPromptSession{
 	HANDLE process = nullptr;
 	HANDLE stdinWrite = nullptr;
 	HANDLE stdoutRead = nullptr;
-	std::string id;
 	bool active = false;
 };
 std::mutex g_cmdMutex;
 CommandPromptSession g_cmdSession;
-constexpr const char* kDefaultSession = "default";
 constexpr const char* kEndMarker = "__LMSTUD_CMD_END_7B3F9A2C__";
 constexpr const char* kReadyMarker = "__LMSTUD_CMD_READY_7B3F9A2C__";
 constexpr DWORD kDefaultTimeoutMs = 60000;
@@ -69,7 +67,6 @@ void CloseHandles(CommandPromptSession& session){
 		CloseHandle(session.process);
 		session.process = nullptr;
 	}
-	session.id.clear();
 	session.active = false;
 }
 void InternalCloseCommandPrompt(const bool force){
@@ -210,7 +207,7 @@ std::string TrimCopy(std::string text){
 	const auto end = text.find_last_not_of(" \t\r\n");
 	return text.substr(begin, end - begin + 1);
 }
-bool StartCommandPromptSession(const std::string& sessionId, std::string& startupOutput, std::string& error){
+bool StartCommandPromptSession(std::string& startupOutput, std::string& error){
 	startupOutput.clear();
 	SECURITY_ATTRIBUTES sa{};
 	sa.nLength = sizeof(sa);
@@ -269,7 +266,6 @@ bool StartCommandPromptSession(const std::string& sessionId, std::string& startu
 	g_cmdSession.process = pi.hProcess;
 	g_cmdSession.stdinWrite = stdinWrite;
 	g_cmdSession.stdoutRead = stdoutRead;
-	g_cmdSession.id = sessionId.empty() ? kDefaultSession : sessionId;
 	g_cmdSession.active = true;
 	stdinWriteGuard.release();
 	stdoutReadGuard.release();
@@ -341,24 +337,20 @@ bool IsExitCommand(const std::string& value){
 	return lower == "exit" || lower == "quit";
 }
 std::string StartCommandPromptTool(const char* argsJson){
-	const auto sessionArg = TrimCopy(GetArgValue(argsJson, "session"));
-	const auto sessionId = sessionArg.empty() ? std::string(kDefaultSession) : sessionArg;
 	std::lock_guard<std::mutex> lock(g_cmdMutex);
 	if(g_cmdSession.active){ InternalCloseCommandPrompt(true); }
 	std::string output;
 	std::string error;
-	if(!StartCommandPromptSession(sessionId, output, error)){ return "{\"error\":\"" + JsonEscape(error) + "\"}"; }
+	if(!StartCommandPromptSession(output, error)){ return "{\"error\":\"" + JsonEscape(error) + "\"}"; }
 	if(output.empty()){ output = "(no output)"; }
 	return "```cmd\n" + output + "\n```";
 }
 std::string CommandPromptExecuteTool(const char* argsJson){
-	const auto sessionArg = TrimCopy(GetArgValue(argsJson, "session"));
 	const auto commandArg = TrimCopy(GetArgValue(argsJson, "command"));
 	const auto closeArg = TrimCopy(GetArgValue(argsJson, "close"));
 	if(commandArg.empty() && (closeArg.empty() || !IsTruthy(closeArg))){ return "{\"error\":\"command is required\"}"; }
-	const auto sessionId = sessionArg.empty() ? std::string(kDefaultSession) : sessionArg;
 	std::lock_guard<std::mutex> lock(g_cmdMutex);
-	if(!g_cmdSession.active || g_cmdSession.id != sessionId){
+	if(!g_cmdSession.active){
 		if(!closeArg.empty() && IsTruthy(closeArg)){ return "{\"result\":\"session already closed\"}"; }
 		return "{\"error\":\"Session not started. Call command_prompt_start first.\"}";
 	}
