@@ -281,8 +281,8 @@ bool StartSpeechTranscription(){
 				const auto origWords = getWords(transcriptionResult);
 				if(bestEnd <= origWords.size()){ transcriptionResult = joinRange(origWords, bestEnd, origWords.size()); } else{ transcriptionResult.clear(); }
 				_wakeWordDetected.store(true);
-			}
-			if(_wakeCommand.empty() || _wakeWordDetected.load()){
+			} else if(_wakeCommand.empty()) _wakeWordDetected.store(true);
+			if(_wakeWordDetected.load()){
 				if(_committed.empty()) trimWakeWord(transcriptionResult);
 				pending = transcriptionResult;
 				std::string combined = _committed + pending;
