@@ -163,6 +163,16 @@ namespace LMStud{
 			if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_setting_system_prompt, error);
 		}
 		private void SetSystemPrompt(){SetSystemPrompt(_systemPrompt);}
+		private void QueueSetSystemPrompt(string prompt){
+			if(!LlModelLoaded){
+				SetSystemPrompt(prompt);
+				return;
+			}
+			BeginRetokenization();
+			ThreadPool.QueueUserWorkItem(_ => {
+				try{ SetSystemPrompt(prompt); } finally{ EndRetokenization(); }
+			});
+		}
 		NativeMethods.StudError LoadModel(string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){
 			var result = NativeMethods.LoadModel(filename, jinjaTemplate, nGPULayers, mMap, mLock, numaStrategy);
 			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_loading_model, result);

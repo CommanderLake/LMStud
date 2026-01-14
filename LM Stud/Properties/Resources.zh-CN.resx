@@ -413,4 +413,7 @@
 <data name="ToolTip_checkFlashAttn" xml:space="preserve">
 	<value>启用 Flash Attention。填充状态表示由 Llama.cpp 自动选择。</value>
 </data>
+<data name="Retokenizing_chat___" xml:space="preserve">
+	<value>正在重新分词…</value>
+</data>
 </root>

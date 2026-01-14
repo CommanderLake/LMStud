@@ -78,7 +78,7 @@ namespace LMStud{
 				}
 				if(reloadSmpl) CreateSampler(minPEff, topPEff, topKEff, tempEff, _repPen);
 			}
-			if(setSystemPrompt) SetSystemPrompt(systemPromptEff);
+			if(setSystemPrompt) QueueSetSystemPrompt(systemPromptEff);
 		}
 		private void PopulateModelSettings(int modelIndex){
 			var path = _models[modelIndex].FilePath;

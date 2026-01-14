@@ -495,6 +495,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Retokenizing chat....
+        /// </summary>
+        internal static string Retokenizing_chat___ {
+            get {
+                return ResourceManager.GetString("Retokenizing_chat___", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Stop.
         /// </summary>
         internal static string Stop {

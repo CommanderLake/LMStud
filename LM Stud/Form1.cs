@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -23,6 +24,17 @@ namespace LMStud{
 		private volatile bool _ttsSpeaking;
 		private int _ttsPendingCount;
 		private volatile bool _voiceInputResumePending;
+		private string _editingStatusText;
+		private int _retokenizeCount;
+		private bool _retokenizeButApplyEnabled;
+		private bool _retokenizeButApplyModelSettingsEnabled;
+		private bool _retokenizeButGenEnabled;
+		private bool _retokenizeButLoadEnabled;
+		private bool _retokenizeButResetEnabled;
+		private bool _retokenizeButUnloadEnabled;
+		private bool _retokenizeListViewModelsEnabled;
+		private bool _retokenizePanelChatEnabled;
+		private bool _retokenizeTextInputEnabled;
 		internal SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
 		private volatile bool _apiGenerating;
 		private Action<string> _apiTokenCallback;
@@ -45,6 +57,7 @@ namespace LMStud{
 			//Thread.CurrentThread.CurrentUICulture = culture;
 			//Thread.CurrentThread.CurrentCulture = culture;
 			InitializeComponent();
+			_editingStatusText = labelEditing.Text;
 			_apiServer = new ApiServer(this);
 			_tts.SpeakStarted += TtsOnSpeakStarted;
 			_tts.SpeakCompleted += TtsOnSpeakCompleted;
@@ -226,14 +239,22 @@ namespace LMStud{
 			} else Generate();
 		}
 		private void ButReset_Click(object sender, EventArgs e){
-			NativeMethods.ResetChat();
-			NativeMethods.CloseCommandPrompt();
-			NativeMethods.ClearWebCache();
-			panelChat.SuspendLayout();
-			foreach(var message in _chatMessages) message.Dispose();
-			panelChat.ResumeLayout();
-			_chatMessages.Clear();
-			labelTokens.Text = NativeMethods.LlamaMemSize() + Resources._Tokens;
+			if(_retokenizeCount > 0) return;
+			BeginRetokenization();
+			ThreadPool.QueueUserWorkItem(_ => {
+				GenerationLock.Wait(-1);
+				try{ NativeMethods.ResetChat(); } finally{ GenerationLock.Release(); }
+				NativeMethods.CloseCommandPrompt();
+				NativeMethods.ClearWebCache();
+				RunOnUiThread(() => {
+					panelChat.SuspendLayout();
+					foreach(var message in _chatMessages) message.Dispose();
+					panelChat.ResumeLayout();
+					_chatMessages.Clear();
+					labelTokens.Text = NativeMethods.LlamaMemSize() + Resources._Tokens;
+					EndRetokenization();
+				});
+			});
 		}
 		private void TextInput_KeyDown(object sender, KeyEventArgs e){
 			if(_isEditing){
@@ -260,19 +281,26 @@ namespace LMStud{
 			} finally{ panelChat.ResumeLayout(true); }
 		}
 		private void MsgButDeleteOnClick(ChatMessage cm){
-			if(_generating) return;
+			if(_generating || _retokenizeCount > 0) return;
 			var id = _chatMessages.IndexOf(cm);
-			GenerationLock.Wait(-1);
-			NativeMethods.StudError result;
-			try{ result = NativeMethods.RemoveMessageAt(id); } finally{ GenerationLock.Release(); }
-			if(result != NativeMethods.StudError.IndexOutOfRange){
-				_chatMessages[id].Dispose();
-				_chatMessages.RemoveAt(id);
-			}
-			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_session, result);
+			if(id < 0) return;
+			BeginRetokenization();
+			ThreadPool.QueueUserWorkItem(_ => {
+				GenerationLock.Wait(-1);
+				NativeMethods.StudError result;
+				try{ result = NativeMethods.RemoveMessageAt(id); } finally{ GenerationLock.Release(); }
+				RunOnUiThread(() => {
+					if(result != NativeMethods.StudError.IndexOutOfRange && id < _chatMessages.Count){
+						_chatMessages[id].Dispose();
+						_chatMessages.RemoveAt(id);
+					}
+					if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_session, result);
+					EndRetokenization();
+				});
+			});
 		}
 		private void MsgButRegenOnClick(ChatMessage cm){
-			if(!LlModelLoaded || _generating) return;
+			if(!LlModelLoaded || _generating || _retokenizeCount > 0) return;
 			var idx = _chatMessages.IndexOf(cm);
 			if(idx < 0) return;
 			while(_chatMessages[idx].Role == MessageRole.Assistant)
@@ -280,19 +308,26 @@ namespace LMStud{
 					return;
 			var role = _chatMessages[idx].Role;
 			var msg = _chatMessages[idx].Message;
-			GenerationLock.Wait(-1);
-			NativeMethods.StudError result;
-			try{ result = NativeMethods.RemoveMessagesStartingAt(idx); } finally{ GenerationLock.Release(); }
-			if(result != NativeMethods.StudError.IndexOutOfRange)
-				for(var i = _chatMessages.Count - 1; i >= idx; i--){
-					_chatMessages[i].Dispose();
-					_chatMessages.RemoveAt(i);
-				}
-			if(result != NativeMethods.StudError.Success){
-				ShowErrorMessage(Resources.Error_creating_session, result);
-				return;
-			}
-			Generate(role, msg, true);
+			BeginRetokenization();
+			ThreadPool.QueueUserWorkItem(_ => {
+				GenerationLock.Wait(-1);
+				NativeMethods.StudError result;
+				try{ result = NativeMethods.RemoveMessagesStartingAt(idx); } finally{ GenerationLock.Release(); }
+				RunOnUiThread(() => {
+					if(result != NativeMethods.StudError.IndexOutOfRange)
+						for(var i = _chatMessages.Count - 1; i >= idx; i--){
+							_chatMessages[i].Dispose();
+							_chatMessages.RemoveAt(i);
+						}
+					if(result != NativeMethods.StudError.Success){
+						ShowErrorMessage(Resources.Error_creating_session, result);
+						EndRetokenization();
+						return;
+					}
+					EndRetokenization();
+					Generate(role, msg, true);
+				});
+			});
 		}
 		private void MsgButEditOnClick(ChatMessage cm){
 			if(_generating || cm.Editing) return;
@@ -306,14 +341,24 @@ namespace LMStud{
 			cm.Markdown = checkMarkdown.Checked;
 		}
 		private void MsgButEditApplyOnClick(ChatMessage cm){
-			if(_generating || !cm.Editing) return;
+			if(_generating || !cm.Editing || _retokenizeCount > 0) return;
 			var idx = _chatMessages.IndexOf(cm);
+			if(idx < 0) return;
 			if(cm.checkThink.Checked) cm.Think = cm.richTextMsg.Text;
 			else cm.Message = cm.richTextMsg.Text;
-			if(NativeMethods.SetMessageAt(idx, cm.Think, cm.Message) != NativeMethods.StudError.Success)
-				MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 			cm.Editing = false;
 			cm.Markdown = checkMarkdown.Checked;
+			BeginRetokenization();
+			ThreadPool.QueueUserWorkItem(_ => {
+				GenerationLock.Wait(-1);
+				NativeMethods.StudError result;
+				try{ result = NativeMethods.SetMessageAt(idx, cm.Think, cm.Message); } finally{ GenerationLock.Release(); }
+				RunOnUiThread(() => {
+					if(result != NativeMethods.StudError.Success)
+						MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+					EndRetokenization();
+				});
+			});
 		}
 		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)(((e.Delta/8) << 16) & 0xffff0000), IntPtr.Zero);}
 		private ChatMessage AddMessage(MessageRole role, string message){
@@ -331,20 +376,71 @@ namespace LMStud{
 			return cm;
 		}
 		private static void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){Process.Start(e.LinkText);}
-		private void SetEditingMessageVisible(bool visible){
+		private void SetStatusMessageVisible(bool visible, string message){
+			if(message != null) labelEditing.Text = message;
 			toolStripStatusLabel1.Visible = labelTokens.Visible = labelTPS.Visible = labelPreGen.Visible = !visible;
 			labelEditing.Visible = visible;
+		}
+		[Localizable(true)]
+		private void UpdateStatusMessage(){
+			if(_retokenizeCount > 0) SetStatusMessageVisible(true, Resources.Retokenizing_chat___);
+			else if(_isEditing) SetStatusMessageVisible(true, _editingStatusText);
+			else SetStatusMessageVisible(false, null);
+		}
+		private void BeginRetokenization(){
+			if(Interlocked.Increment(ref _retokenizeCount) != 1) return;
+			RunOnUiThread(() => {
+				_retokenizeButApplyEnabled = butApply.Enabled;
+				_retokenizeButApplyModelSettingsEnabled = butApplyModelSettings.Enabled;
+				_retokenizeButGenEnabled = butGen.Enabled;
+				_retokenizeButLoadEnabled = butLoad.Enabled;
+				_retokenizeButResetEnabled = butReset.Enabled;
+				_retokenizeButUnloadEnabled = butUnload.Enabled;
+				_retokenizeListViewModelsEnabled = listViewModels.Enabled;
+				_retokenizePanelChatEnabled = panelChat.Enabled;
+				_retokenizeTextInputEnabled = textInput.Enabled;
+				butApply.Enabled = false;
+				butApplyModelSettings.Enabled = false;
+				butGen.Enabled = false;
+				butLoad.Enabled = false;
+				butReset.Enabled = false;
+				butUnload.Enabled = false;
+				listViewModels.Enabled = false;
+				panelChat.Enabled = false;
+				textInput.Enabled = false;
+				UpdateStatusMessage();
+			});
+		}
+		private void EndRetokenization(){
+			if(Interlocked.Decrement(ref _retokenizeCount) != 0) return;
+			RunOnUiThread(() => {
+				butApply.Enabled = _retokenizeButApplyEnabled;
+				butApplyModelSettings.Enabled = _retokenizeButApplyModelSettingsEnabled;
+				butGen.Enabled = _retokenizeButGenEnabled;
+				butLoad.Enabled = _retokenizeButLoadEnabled;
+				butReset.Enabled = _retokenizeButResetEnabled;
+				butUnload.Enabled = _retokenizeButUnloadEnabled;
+				listViewModels.Enabled = _retokenizeListViewModelsEnabled;
+				panelChat.Enabled = _retokenizePanelChatEnabled;
+				textInput.Enabled = _retokenizeTextInputEnabled;
+				UpdateStatusMessage();
+			});
+		}
+		private void RunOnUiThread(Action action){
+			if(IsDisposed) return;
+			if(InvokeRequired) BeginInvoke(action);
+			else action();
 		}
 		private void StartEditing(){
 			if(_isEditing) return;
 			_editOriginalText = textInput.Text;
 			_isEditing = true;
-			SetEditingMessageVisible(true);
+			UpdateStatusMessage();
 			if(checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StopSpeechTranscription();
 		}
 		private void FinishEditing(){
 			_isEditing = false;
-			SetEditingMessageVisible(false);
+			UpdateStatusMessage();
 			if(checkVoiceInput.CheckState != CheckState.Checked) return;
 			TryStartSpeechTranscription(true);
 		}

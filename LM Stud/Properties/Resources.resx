@@ -410,4 +410,7 @@
   <data name="ToolTip_checkFlashAttn" xml:space="preserve">
     <value>Enable Flash Attention. The filled state lets Llama.cpp choose automatically.</value>
   </data>
+<data name="Retokenizing_chat___" xml:space="preserve">
+	<value>Retokenizing chat...</value>
+</data>
 </root>
