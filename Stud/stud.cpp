@@ -345,9 +345,11 @@ StudError ResetChat(){
 StudError SetSystemPrompt(const char* prompt, const char* toolsPrompt){
 	_session.prompt = std::string(prompt);
 	_session.toolsPrompt = std::string(toolsPrompt);
-	_session.cachedTokens[0].clear();
-	_session.cachedTokens[1].clear();
-	if(!_session.ctx || !_session.smpl[_session.dId] || !_session._vocab) return StudError::Success;
+	if(!_session.ctx || !_session.smpl[_session.dId] || !_session._vocab){
+		_session.cachedTokens[0].clear();
+		_session.cachedTokens[1].clear();
+		return StudError::Success;
+	}
 	auto err = RetokenizeChat();
 	if(err != StudError::Success || _session.dialState[_session.dId == 0 ? 1 : 0].empty()) return err;
 	err = DialecticSwap();
