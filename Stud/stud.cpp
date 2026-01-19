@@ -265,20 +265,20 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	size_t prefix = 0;
 	while(prefix < _session.cachedTokens[_session.dId].size() && prefix < promptTokens.size() && _session.cachedTokens[_session.dId][prefix] == promptTokens[prefix]){ ++prefix; }
 	const bool canShift = llama_memory_can_shift(_session.llMem);
-	if(rebuildMemory || !canShift){
-		if(prefix == 0 || LlamaMemSize() < static_cast<llama_pos>(prefix - 1)){
-			prefix = 0;
-			llama_memory_clear(_session.llMem, true);
-		}
-	}
 	const size_t oldSz = _session.cachedTokens[_session.dId].size();
 	const size_t newSz = promptTokens.size();
 	size_t suffix = 0;
 	if(canShift && oldSz > 0 && newSz > 0){ while(suffix + prefix < oldSz && suffix + prefix < newSz && suffix < oldSz && suffix < newSz && _session.cachedTokens[_session.dId][oldSz - 1 - suffix] == promptTokens[newSz - 1 - suffix]){ ++suffix; } }
 	const size_t oldSize = _session.cachedTokens[_session.dId].size();
 	const size_t newSize = promptTokens.size();
-	if(newSize > static_cast<size_t>(llama_n_ctx(_session.ctx))){ return StudError::ConvTooLong; }
 	if(prefix == oldSize && oldSize == newSize) return StudError::Success;
+	if(newSize > static_cast<size_t>(llama_n_ctx(_session.ctx))){ return StudError::ConvTooLong; }
+	if(rebuildMemory || !canShift){
+		if(prefix == 0 || LlamaMemSize() < static_cast<llama_pos>(prefix - 1)){
+			prefix = 0;
+			llama_memory_clear(_session.llMem, true);
+		}
+	}
 	if(!canShift && newSize < oldSize){
 		prefix = 0;
 		llama_memory_clear(_session.llMem, true);
@@ -301,7 +301,12 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 		for(size_t i = prefix; i < decodeEnd; i += _session.nBatch){
 			const int nEval = std::min<int>(_session.nBatch, decodeEnd - i);
 			auto batch = llama_batch_get_one(&promptTokens[i], nEval);
-			if(llama_decode(_session.ctx, batch) != 0) return StudError::LlamaDecodeError;
+			if(llama_decode(_session.ctx, batch) != 0){
+				if(_session.llMem) llama_memory_clear(_session.llMem, true);
+				_session.cachedTokens[_session.dId].clear();
+				if(_session.smpl[_session.dId]) llama_sampler_reset(_session.smpl[_session.dId]);
+				return StudError::LlamaDecodeError;
+			}
 			for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl[_session.dId], promptTokens[i + j]); }
 		}
 	}
