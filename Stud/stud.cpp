@@ -82,10 +82,10 @@ StudError CreateContext(const int nCtx, const int nBatch, const unsigned int fla
 	auto ctxParams = llama_context_default_params();
 	ctxParams.n_ctx = nCtx;
 	ctxParams.n_batch = nBatch;
-	ctxParams.flash_attn = flashAttn > 0;
-	//if(flashAttn == 0) ctxParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED;
-	//else if(flashAttn == 1) ctxParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_ENABLED;
-	//else if(flashAttn == 2) ctxParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_AUTO;
+	//ctxParams.flash_attn = flashAttn > 0;
+	if(flashAttn == 0) ctxParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED;
+	else if(flashAttn == 1) ctxParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_ENABLED;
+	else if(flashAttn == 2) ctxParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_AUTO;
 	ctxParams.n_threads = nThreads;
 	ctxParams.n_threads_batch = nThreadsBatch;
 	_gpuOomStud = false;
@@ -122,7 +122,7 @@ StudError CreateSampler(const float minP, const float topP, const int topK, cons
 }
 StudError CreateSession(const int nCtx, const int nBatch, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
 	if(!_llModel) return StudError::ModelNotLoaded;
-	_session.syntax.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
+	_session.syntax.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
 	auto result = CreateContext(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch);
 	if(result != StudError::Success) return result;
 	_session.nBatch = nBatch;
@@ -193,9 +193,7 @@ bool HasTool(const char* name){
 void SetTokenCallback(const TokenCallbackFn cb){ _tokenCb = cb; }
 void SetThreadCount(const int n, const int nBatch){ if(_session.ctx) llama_set_n_threads(_session.ctx, n, nBatch); }
 int LlamaMemSize(){
-	const int nCtxPosMin = llama_memory_seq_pos_min(_session.llMem, 0);
-	const int nCtxPosMax = llama_memory_seq_pos_max(_session.llMem, 0);
-	return nCtxPosMax - nCtxPosMin + 1;
+	return static_cast<int>(_session.cachedTokens[_session.dId].size());
 }
 int GetStateSize(){
 	if(!_session.ctx) return 0;
@@ -253,7 +251,7 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	in.tools = _tools;
 	in.tool_choice = COMMON_CHAT_TOOL_CHOICE_AUTO;
 	in.parallel_tool_calls = true;
-	in.reasoning_format = COMMON_REASONING_FORMAT_DEEPSEEK;
+	in.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
 	common_chat_params chatData;
 	try{ chatData = common_chat_templates_apply(_chatTemplates.get(), in); } catch(std::exception& e){
 		_lastErrorMessage = e.what();
@@ -267,7 +265,7 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	size_t prefix = 0;
 	while(prefix < _session.cachedTokens[_session.dId].size() && prefix < promptTokens.size() && _session.cachedTokens[_session.dId][prefix] == promptTokens[prefix]){ ++prefix; }
 	const bool canShift = llama_memory_can_shift(_session.llMem);
-	if(rebuildMemory){
+	if(rebuildMemory || !canShift){
 		if(prefix == 0 || LlamaMemSize() < static_cast<llama_pos>(prefix - 1)){
 			prefix = 0;
 			llama_memory_clear(_session.llMem, true);
@@ -487,7 +485,7 @@ static std::string CloseThinkTag(){
 		default: return "</think>";
 	}
 }
-static StudError doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ftTime, const HrClock::time_point& t0, llama_memory_t llMem, std::string& response, std::vector<llama_token>& newTokens, const TokenCallbackFn cb){
+static StudError doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ftTime, std::string& response, std::vector<llama_token>& newTokens, const TokenCallbackFn cb){
 	if(tok == OpenThinkTag()){
 		s.inThink = true;
 		return StudError::Success;
@@ -592,15 +590,13 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 		_session.cachedTokens[_session.dId].insert(_session.cachedTokens[_session.dId].end(), promptTokens.begin(), promptTokens.end());
 	}
 	auto status = StudError::Success;
-	llama_token newTokenId;
-	std::vector<llama_token> newTokens;
 	std::string response;
 	common_chat_msg msg;
 	ToolCtx tool;
 	double ftTime = 0.0;
 	int i = 0;
 	while((nPredict < 0 || i < nPredict) && !_stop.load()){
-		newTokenId = llama_sampler_sample(_session.smpl[_session.dId], _session.ctx, -1);
+		auto newTokenId = llama_sampler_sample(_session.smpl[_session.dId], _session.ctx, -1);
 		if(llama_vocab_is_eog(_session._vocab, newTokenId)) _stop.store(true);
 		char buf[256];
 		const int n = llama_token_to_piece(_session._vocab, newTokenId, buf, sizeof buf, 0, false);
@@ -610,7 +606,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 			outMsg = common_chat_msg();
 			return rtErr != StudError::Success ? rtErr : StudError::CantConvertToken;
 		}
-		newTokens.push_back(newTokenId);
+		_session.cachedTokens[_session.dId].push_back(newTokenId);
 		if(ftTime == 0.0) ftTime = std::chrono::duration<double>(HrClock::now() - prepStart).count();
 		std::string tokenStr(buf, n);
 		response += tokenStr;
@@ -639,7 +635,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 		}
 		llama_sampler_accept(_session.smpl[_session.dId], newTokenId);
 		if(_hasTools){
-			auto toolErr = doTool(tokenStr, tool, callback, ftTime, prepStart, _session.llMem, response, newTokens, cb);
+			auto toolErr = doTool(tokenStr, tool, callback, ftTime, response, _session.cachedTokens[_session.dId], cb);
 			if(toolErr != StudError::Success){
 				status = toolErr;
 				_stop.store(true);
@@ -649,7 +645,6 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	_session.syntax.parse_tool_calls = false;
 	msg = common_chat_parse(response, false, _session.syntax);
 	_session.chatMsgs[_session.dId].push_back(msg);
-	_session.cachedTokens[_session.dId].insert(_session.cachedTokens[_session.dId].end(), newTokens.begin(), newTokens.end());
 	if(cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(), ftTime, 0);
 	outMsg = std::move(msg);
 	//OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
