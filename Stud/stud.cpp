@@ -279,6 +279,10 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	const size_t newSize = promptTokens.size();
 	if(newSize > static_cast<size_t>(llama_n_ctx(_session.ctx))){ return StudError::ConvTooLong; }
 	if(prefix == oldSize && oldSize == newSize) return StudError::Success;
+	if(!canShift && newSize < oldSize){
+		prefix = 0;
+		llama_memory_clear(_session.llMem, true);
+	}
 	if(canShift && suffix > 0){
 		if(prefix < oldSize - suffix){ llama_memory_seq_rm(_session.llMem, 0, prefix, oldSize - suffix); }
 		if(oldSize != newSize){
@@ -293,12 +297,13 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	for(size_t i = 0; i < prefix; ++i){ llama_sampler_accept(_session.smpl[_session.dId], promptTokens[i]); }
 	const size_t decodeEnd = newSize - suffix;
 	const int batchSize = std::min(_session.nBatch, static_cast<int>(decodeEnd - prefix));
-	if(batchSize <= 0) return StudError::Success;
-	for(size_t i = prefix; i < decodeEnd; i += _session.nBatch){
-		const int nEval = std::min<int>(_session.nBatch, decodeEnd - i);
-		auto batch = llama_batch_get_one(&promptTokens[i], nEval);
-		if(llama_decode(_session.ctx, batch) != 0) return StudError::LlamaDecodeError;
-		for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl[_session.dId], promptTokens[i + j]); }
+	if(batchSize > 0){
+		for(size_t i = prefix; i < decodeEnd; i += _session.nBatch){
+			const int nEval = std::min<int>(_session.nBatch, decodeEnd - i);
+			auto batch = llama_batch_get_one(&promptTokens[i], nEval);
+			if(llama_decode(_session.ctx, batch) != 0) return StudError::LlamaDecodeError;
+			for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl[_session.dId], promptTokens[i + j]); }
+		}
 	}
 	for(size_t i = decodeEnd; i < newSize; ++i){ llama_sampler_accept(_session.smpl[_session.dId], promptTokens[i]); }
 	_session.cachedTokens[_session.dId] = std::move(promptTokens);
@@ -523,9 +528,9 @@ static StudError doTool(std::string_view tok, ToolCtx& s, const bool cbOn, doubl
 				if(LlamaMemSize() + lb.n_tokens > llama_n_ctx(_session.ctx)) return StudError::ConvTooLong;
 				if(llama_decode(_session.ctx, lb) != 0) return StudError::LlamaDecodeError;
 				for(int k = 0; k < b; ++k) llama_sampler_accept(_session.smpl[_session.dId], v[i + k]);
+				newTokens.insert(newTokens.end(), v.begin() + i, v.begin() + i + b);
 				i += b;
 			}
-			newTokens.insert(newTokens.end(), v.begin(), v.end());
 			response += text;
 			return StudError::Success;
 		};
@@ -585,9 +590,9 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 				return rtErr != StudError::Success ? rtErr : StudError::LlamaDecodeError;
 			}
 			for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl[_session.dId], promptTokens[p + j]); }
+			_session.cachedTokens[_session.dId].insert(_session.cachedTokens[_session.dId].end(), promptTokens.begin() + p, promptTokens.begin() + p + nEval);
 			p += nEval;
 		}
-		_session.cachedTokens[_session.dId].insert(_session.cachedTokens[_session.dId].end(), promptTokens.begin(), promptTokens.end());
 	}
 	auto status = StudError::Success;
 	std::string response;
@@ -606,7 +611,6 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 			outMsg = common_chat_msg();
 			return rtErr != StudError::Success ? rtErr : StudError::CantConvertToken;
 		}
-		_session.cachedTokens[_session.dId].push_back(newTokenId);
 		if(ftTime == 0.0) ftTime = std::chrono::duration<double>(HrClock::now() - prepStart).count();
 		std::string tokenStr(buf, n);
 		response += tokenStr;
@@ -634,6 +638,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 			return rtErr != StudError::Success ? rtErr : StudError::LlamaDecodeError;
 		}
 		llama_sampler_accept(_session.smpl[_session.dId], newTokenId);
+		_session.cachedTokens[_session.dId].push_back(newTokenId);
 		if(_hasTools){
 			auto toolErr = doTool(tokenStr, tool, callback, ftTime, response, _session.cachedTokens[_session.dId], cb);
 			if(toolErr != StudError::Success){
