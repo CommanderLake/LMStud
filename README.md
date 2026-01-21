@@ -96,15 +96,6 @@ All rights reserved.
 
 ---
 
-## Recent Releases
-
-- **R37** – Added dual samplers for dialectic mode and switched the UI font to Segoe UI Symbol.
-- **R36** – Added tooltip for the generation delay setting.
-- **R35** – Improved generation lock so Generate no longer waits.
-- **R34** – Introduced a model API handler.
-
----
-
 ## License
 
 No license granted. All rights reserved.  
