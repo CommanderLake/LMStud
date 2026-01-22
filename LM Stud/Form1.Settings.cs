@@ -372,7 +372,10 @@ namespace LMStud{
 		}
 		private void LinkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e){
 			textSystemPrompt.SelectAll();
-			textSystemPrompt.Paste("The list directory and file tools operate relative to a base directory.\r\nUse list directory with an empty path before using the file tools to help with coding tasks throughout my project.\r\nAlways read a file and verify its contents before making changes.");
+			textSystemPrompt.Paste(@"The list_directory and file tools operate relative to a base directory.
+The file tools use 1-based line numbers.
+First use list_directory with an empty path before using the file tools to help with coding tasks or other file changes.
+Always read a file and verify its contents before making changes.");
 		}
 		private void butDownloadVADModel_Click(object sender, EventArgs e){
 			HugLoadFiles("ggml-org", "whisper-vad", ".bin");
