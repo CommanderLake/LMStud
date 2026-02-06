@@ -188,6 +188,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Editing transcription - Press Enter to finish or Esc to cancel.
+        /// </summary>
+        internal static string Editing_transcription_ {
+            get {
+                return ResourceManager.GetString("Editing_transcription_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Error creating context.
         /// </summary>
         internal static string Error_creating_context {
@@ -707,6 +716,15 @@ namespace LMStud.Properties {
         internal static string ToolTip_numBatchSize {
             get {
                 return ResourceManager.GetString("ToolTip_numBatchSize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Configure the timeout for commands, 0 means no timeout..
+        /// </summary>
+        internal static string ToolTip_numCmdTimeout {
+            get {
+                return ResourceManager.GetString("ToolTip_numCmdTimeout", resourceCulture);
             }
         }
         

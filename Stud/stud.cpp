@@ -9,6 +9,7 @@
 #include <algorithm>
 using HrClock = std::chrono::high_resolution_clock;
 extern "C" void CloseCommandPrompt();
+extern "C" void StopCMDOutput();
 static bool _gpuOomStud = false;
 static std::string _lastErrorMessage;
 namespace Stud::Backend{
@@ -496,6 +497,7 @@ static std::string CloseThinkTag(){
 	}
 }
 static StudError doTool(std::string_view tok, ToolCtx& s, const bool cbOn, double& ftTime, std::string& response, std::vector<llama_token>& newTokens, const TokenCallbackFn cb){
+	if(_stop.load()) return StudError::Success;
 	if(tok == OpenThinkTag()){
 		s.inThink = true;
 		return StudError::Success;
@@ -528,6 +530,7 @@ static StudError doTool(std::string_view tok, ToolCtx& s, const bool cbOn, doubl
 			std::vector<llama_token> v(n);
 			llama_tokenize(_session._vocab, text.c_str(), text.size(), v.data(), n, true, true);
 			for(size_t i = 0; i < v.size();){
+				if(_stop.load()) return StudError::Success;
 				const int b = std::min<int>(_session.nBatch, v.size() - i);
 				const llama_batch lb = llama_batch_get_one(&v[i], b);
 				if(LlamaMemSize() + lb.n_tokens > llama_n_ctx(_session.ctx)) return StudError::ConvTooLong;
@@ -540,6 +543,7 @@ static StudError doTool(std::string_view tok, ToolCtx& s, const bool cbOn, doubl
 			return StudError::Success;
 		};
 		if(auto h = _toolHandlers.find(c.name); h != _toolHandlers.end()){
+			if(_stop.load()) return StudError::Success;
 			if(tok == CloseToolCallTag()){
 				std::string open = "\n" + OpenToolResponseTag();
 				auto err = tokenizeAndRun(open);
@@ -599,6 +603,12 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 			p += nEval;
 		}
 	}
+	auto handleError = [&](StudError error){
+		_session.chatMsgs[_session.dId].resize(chatStart + messages.size());
+		const auto rtErr = RetokenizeChat(true);
+		outMsg = common_chat_msg();
+		return rtErr != StudError::Success ? rtErr : error;
+	};
 	auto status = StudError::Success;
 	std::string response;
 	common_chat_msg msg;
@@ -606,16 +616,17 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	double ftTime = 0.0;
 	int i = 0;
 	while((nPredict < 0 || i < nPredict) && !_stop.load()){
+		if(LlamaMemSize() + 1 > llama_n_ctx(_session.ctx)) return handleError(StudError::ConvTooLong);
 		auto newTokenId = llama_sampler_sample(_session.smpl[_session.dId], _session.ctx, -1);
-		if(llama_vocab_is_eog(_session._vocab, newTokenId)) _stop.store(true);
+		auto isEog = llama_vocab_is_eog(_session._vocab, newTokenId);
+		auto decodeErr = llama_decode(_session.ctx, llama_batch_get_one(&newTokenId, 1));
+		if(decodeErr != 0) return handleError(decodeErr == 1 ? StudError::ConvTooLong : StudError::LlamaDecodeError);
+		llama_sampler_accept(_session.smpl[_session.dId], newTokenId);
+		_session.cachedTokens[_session.dId].push_back(newTokenId);
+		if(isEog) break;
 		char buf[256];
 		const int n = llama_token_to_piece(_session._vocab, newTokenId, buf, sizeof buf, 0, false);
-		if(n < 0){
-			_session.chatMsgs[_session.dId].resize(chatStart + messages.size());
-			auto rtErr = RetokenizeChat(true);
-			outMsg = common_chat_msg();
-			return rtErr != StudError::Success ? rtErr : StudError::CantConvertToken;
-		}
+		if(n < 0) return handleError(StudError::CantConvertToken);
 		if(ftTime == 0.0) ftTime = std::chrono::duration<double>(HrClock::now() - prepStart).count();
 		std::string tokenStr(buf, n);
 		response += tokenStr;
@@ -625,25 +636,6 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 			msg = common_chat_parse(response, true, _session.syntax);
 			cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), 1, LlamaMemSize(), ftTime, 0);
 		}
-		auto batch = llama_batch_get_one(&newTokenId, 1);
-		const int nCtx = llama_n_ctx(_session.ctx);
-		const int nCtxUsed = LlamaMemSize();
-		if(nCtxUsed + batch.n_tokens > nCtx){
-			_session.chatMsgs[_session.dId].resize(chatStart + messages.size());
-			auto rtErr = RetokenizeChat(true);
-			outMsg = common_chat_msg();
-			return rtErr != StudError::Success ? rtErr : StudError::ConvTooLong;
-		}
-		auto decodeErr = llama_decode(_session.ctx, batch);
-		if(decodeErr != 0){
-			_session.chatMsgs[_session.dId].resize(chatStart + messages.size());
-			auto rtErr = RetokenizeChat(true);
-			outMsg = common_chat_msg();
-			if(decodeErr == 1) return rtErr != StudError::Success ? rtErr : StudError::ConvTooLong;
-			return rtErr != StudError::Success ? rtErr : StudError::LlamaDecodeError;
-		}
-		llama_sampler_accept(_session.smpl[_session.dId], newTokenId);
-		_session.cachedTokens[_session.dId].push_back(newTokenId);
 		if(_hasTools){
 			auto toolErr = doTool(tokenStr, tool, callback, ftTime, response, _session.cachedTokens[_session.dId], cb);
 			if(toolErr != StudError::Success){
@@ -682,6 +674,7 @@ StudError GenerateWithTools(const MessageRole role, const char* prompt, const in
 			msg.tool_calls = parsed.tool_calls;
 			toolCalled = false;
 			for(common_chat_tool_call& toolCall : parsed.tool_calls){
+				if(_stop.load()) return StudError::Success;
 				auto it = _toolHandlers.find(toolCall.name);
 				if(it != _toolHandlers.end()){
 					auto toolMsg = it->second(toolCall.arguments.c_str());
@@ -699,7 +692,10 @@ StudError GenerateWithTools(const MessageRole role, const char* prompt, const in
 	} while(toolCalled);
 	return StudError::Success;
 }
-void StopGeneration(){ _stop.store(true); }
+void StopGeneration(){
+	_stop.store(true);
+	StopCMDOutput();
+}
 char* GetContextAsText(){
 	if(!_session.ctx) return nullptr;
 	std::string outStr;

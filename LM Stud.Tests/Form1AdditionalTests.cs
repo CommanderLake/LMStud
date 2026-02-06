@@ -296,6 +296,7 @@ namespace LM_Stud.Tests{
 			public void SetWakeWordSimilarity(float similarity){}
 			public void SetWhisperTemp(float temp){}
 			public void SetSilenceTimeout(int milliseconds){}
+			public void SetCommandPromptTimeout(int milliseconds){}
 			public void SetCommittedText(string text){}
 			public unsafe void ConvertMarkdownToRtf(string markdown, ref byte* rtfOut, ref int rtfLen){}
 			public IntPtr PerformHttpGet(string url){return IntPtr.Zero;}

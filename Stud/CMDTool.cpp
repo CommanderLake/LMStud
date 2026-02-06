@@ -1,6 +1,7 @@
 #include "tools.h"
 #include <Windows.h>
 #include <algorithm>
+#include <atomic>
 #include <cctype>
 #include <mutex>
 #include <string>
@@ -8,6 +9,8 @@
 #include <chrono>
 #include <vector>
 #include <sstream>
+
+#include "stud.h"
 struct CommandPromptSession{
 	HANDLE process = nullptr;
 	HANDLE stdinWrite = nullptr;
@@ -20,6 +23,8 @@ constexpr const char* kEndMarker = "__LMSTUD_CMD_END_7B3F9A2C__";
 constexpr const char* kReadyMarker = "__LMSTUD_CMD_READY_7B3F9A2C__";
 constexpr DWORD kDefaultTimeoutMs = 60000;
 constexpr DWORD kInitTimeoutMs = 10000;
+std::atomic<DWORD> g_cmdTimeoutMs{kDefaultTimeoutMs};
+std::atomic_bool stop{false};
 class HandleGuard{
 	HANDLE& handle;
 public:
@@ -74,7 +79,7 @@ void InternalCloseCommandPrompt(const bool force){
 	if(g_cmdSession.stdinWrite && g_cmdSession.stdinWrite != INVALID_HANDLE_VALUE){
 		DWORD written = 0;
 		const char exitCmd[] = "exit\r\n";
-		WriteFile(g_cmdSession.stdinWrite, exitCmd, static_cast<DWORD>(sizeof(exitCmd) - 1), &written, nullptr);
+		WriteFile(g_cmdSession.stdinWrite, exitCmd, static_cast<DWORD>(sizeof exitCmd - 1), &written, nullptr);
 	}
 	if(g_cmdSession.process && g_cmdSession.process != INVALID_HANDLE_VALUE){
 		if(WaitForSingleObject(g_cmdSession.process, 1000) == WAIT_TIMEOUT && force){
@@ -102,7 +107,7 @@ bool WriteLine(const CommandPromptSession& session, std::string text, std::strin
 	}
 	return true;
 }
-bool ReadUntilMarker(const CommandPromptSession& session, const std::string& marker, std::string& output, std::string& error, const DWORD timeoutMs){
+bool ReadUntilMarker(const CommandPromptSession& session, const std::string& marker, std::string& output, std::string& error, const DWORD timeoutMs, const std::function<void(const std::string&)>& streamCb){
 	output.clear();
 	if(!session.stdoutRead || session.stdoutRead == INVALID_HANDLE_VALUE){
 		error = "stdout handle is invalid";
@@ -123,10 +128,10 @@ bool ReadUntilMarker(const CommandPromptSession& session, const std::string& mar
 			return false;
 		}
 		if(timeoutMs != INFINITE){
-			auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+			const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
 			if(elapsed > timeoutMs){
-				error = "Command timed out after " + std::to_string(timeoutMs) + "ms";
-				return false;
+				//error = "Command timed out after " + std::to_string(timeoutMs) + "ms";
+				return true;
 			}
 		}
 		DWORD available = 0;
@@ -136,7 +141,7 @@ bool ReadUntilMarker(const CommandPromptSession& session, const std::string& mar
 		}
 		if(available > 0){
 			char buffer[4096];
-			const DWORD toRead = std::min<DWORD>(available, static_cast<DWORD>(sizeof(buffer)));
+			const DWORD toRead = std::min<DWORD>(available, static_cast<DWORD>(sizeof buffer));
 			DWORD read = 0;
 			if(!ReadFile(session.stdoutRead, buffer, toRead, &read, nullptr)){
 				error = FormatWin32Error("ReadFile");
@@ -151,10 +156,13 @@ bool ReadUntilMarker(const CommandPromptSession& session, const std::string& mar
 						Sleep(50);
 					}
 				}
+				if(streamCb){
+					streamCb(output);
+				}
 			}
 		} else if(markerFound){
 			break;
-		} else if(marker.empty()){
+		} else if(marker.empty() || stop.load()){
 			return true;
 		} else{
 			Sleep(10);
@@ -191,6 +199,25 @@ void RemoveConsecutiveDuplicateLines(std::string& text){
 		text += result[i];
 	}
 }
+void RemoveCommandEchoLine(std::string& text){
+	if(text.empty()) return;
+	std::vector<std::string> lines;
+	std::istringstream stream(text);
+	std::string line;
+	bool foundCommandEcho = false;
+	while(std::getline(stream, line)){
+		if(!foundCommandEcho && line.find(" & echo ") != std::string::npos){
+			foundCommandEcho = true;
+			continue;
+		}
+		lines.push_back(line);
+	}
+	text.clear();
+	for(size_t i = 0; i < lines.size(); ++i){
+		if(i > 0) text += '\n';
+		text += lines[i];
+	}
+}
 void TrimNewlines(std::string& text){
 	size_t start = 0;
 	while(start < text.size() && (text[start] == '\r' || text[start] == '\n')){ ++start; }
@@ -201,6 +228,12 @@ void NormalizeCommandOutput(std::string& text){
 	text.erase(std::remove(text.begin(), text.end(), '\r'), text.end());
 	TrimNewlines(text);
 }
+void StreamToolOutput(const std::string& text){
+	if(text.empty()) return;
+	const auto cb = Stud::Backend::state().tokenCallback;
+	if(!cb) return;
+	cb(nullptr, 0, text.c_str(), static_cast<int>(text.size()), 0, LlamaMemSize(), 0.0, 2);
+}
 std::string TrimCopy(std::string text){
 	const auto begin = text.find_first_not_of(" \t\r\n");
 	if(begin == std::string::npos) return {};
@@ -210,7 +243,7 @@ std::string TrimCopy(std::string text){
 bool StartCommandPromptSession(std::string& startupOutput, std::string& error){
 	startupOutput.clear();
 	SECURITY_ATTRIBUTES sa{};
-	sa.nLength = sizeof(sa);
+	sa.nLength = sizeof sa;
 	sa.bInheritHandle = TRUE;
 	HANDLE stdoutRead = nullptr;
 	HANDLE stdoutWrite = nullptr;
@@ -237,7 +270,7 @@ bool StartCommandPromptSession(std::string& startupOutput, std::string& error){
 		return false;
 	}
 	STARTUPINFOW si{};
-	si.cb = sizeof(si);
+	si.cb = sizeof si;
 	si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
 	si.hStdOutput = stdoutWrite;
 	si.hStdError = stdoutWrite;
@@ -271,13 +304,13 @@ bool StartCommandPromptSession(std::string& startupOutput, std::string& error){
 	stdoutReadGuard.release();
 	std::string initError;
 	Sleep(50);
-	std::string initCmd = "chcp 65001>nul 2>&1 & echo " + std::string(kReadyMarker);
+	const std::string initCmd = "chcp 65001>nul 2>&1 & echo " + std::string(kReadyMarker);
 	if(!WriteLine(g_cmdSession, initCmd, initError)){
 		error = "Failed to initialize session: " + initError;
 		InternalCloseCommandPrompt(true);
 		return false;
 	}
-	if(!ReadUntilMarker(g_cmdSession, kReadyMarker, startupOutput, error, kInitTimeoutMs)){
+	if(!ReadUntilMarker(g_cmdSession, kReadyMarker, startupOutput, error, kInitTimeoutMs, {})){
 		InternalCloseCommandPrompt(true);
 		return false;
 	}
@@ -296,45 +329,30 @@ bool ExecuteCommand(const std::string& command, std::string& output, std::string
 		char buffer[4096];
 		DWORD read = 0;
 		while(available > 0){
-			ReadFile(g_cmdSession.stdoutRead, buffer, std::min<DWORD>(available, sizeof(buffer)), &read, nullptr);
+			ReadFile(g_cmdSession.stdoutRead, buffer, std::min<DWORD>(available, sizeof buffer), &read, nullptr);
 			if(!PeekNamedPipe(g_cmdSession.stdoutRead, nullptr, 0, nullptr, &available, nullptr)) break;
 		}
 	}
-	std::string combinedCommand = command + " & echo " + kEndMarker;
+	const std::string combinedCommand = command + " & echo " + kEndMarker;
 	if(!WriteLine(g_cmdSession, combinedCommand, error)){ return false; }
-	if(!ReadUntilMarker(g_cmdSession, kEndMarker, output, error, kDefaultTimeoutMs)){ return false; }
+	std::string lastStreamed;
+	const auto streamCb = [&](const std::string& raw){
+		std::string display = raw;
+		StripMarker(display, kEndMarker);
+		RemoveCommandEchoLine(display);
+		RemoveConsecutiveDuplicateLines(display);
+		NormalizeCommandOutput(display);
+		if(display == lastStreamed) return;
+		lastStreamed = display;
+		StreamToolOutput(display);
+	};
+	if(!ReadUntilMarker(g_cmdSession, kEndMarker, output, error, g_cmdTimeoutMs.load(), streamCb)){ return false; }
+	stop.store(false);
 	StripMarker(output, kEndMarker);
-	if(!output.empty()){
-		std::vector<std::string> lines;
-		std::istringstream stream(output);
-		std::string line;
-		bool foundCommandEcho = false;
-		while(std::getline(stream, line)){
-			if(!foundCommandEcho && line.find(" & echo ") != std::string::npos){
-				foundCommandEcho = true;
-				continue;
-			}
-			lines.push_back(line);
-		}
-		output.clear();
-		for(size_t i = 0; i < lines.size(); ++i){
-			if(i > 0) output += '\n';
-			output += lines[i];
-		}
-	}
+	RemoveCommandEchoLine(output);
 	RemoveConsecutiveDuplicateLines(output);
 	NormalizeCommandOutput(output);
 	return true;
-}
-bool IsTruthy(const std::string& value){
-	auto lower = value;
-	std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c){ return static_cast<char>(std::tolower(c)); });
-	return lower == "true" || lower == "1" || lower == "yes" || lower == "close";
-}
-bool IsExitCommand(const std::string& value){
-	auto lower = value;
-	std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c){ return static_cast<char>(std::tolower(c)); });
-	return lower == "exit" || lower == "quit";
 }
 std::string StartCommandPromptTool(const char* argsJson){
 	std::lock_guard<std::mutex> lock(g_cmdMutex);
@@ -348,19 +366,10 @@ std::string StartCommandPromptTool(const char* argsJson){
 std::string CommandPromptExecuteTool(const char* argsJson){
 	const auto commandArg = TrimCopy(GetArgValue(argsJson, "command"));
 	const auto closeArg = TrimCopy(GetArgValue(argsJson, "close"));
-	if(commandArg.empty() && (closeArg.empty() || !IsTruthy(closeArg))){ return "{\"error\":\"command is required\"}"; }
+	if(commandArg.empty() && closeArg.empty()){ return "{\"error\":\"command is required\"}"; }
 	std::lock_guard<std::mutex> lock(g_cmdMutex);
 	if(!g_cmdSession.active){
-		if(!closeArg.empty() && IsTruthy(closeArg)){ return "{\"result\":\"session already closed\"}"; }
 		return "{\"error\":\"Session not started. Call command_prompt_start first.\"}";
-	}
-	if(!closeArg.empty() && IsTruthy(closeArg)){
-		InternalCloseCommandPrompt(true);
-		return "{\"result\":\"session closed\"}";
-	}
-	if(IsExitCommand(commandArg)){
-		InternalCloseCommandPrompt(true);
-		return "{\"result\":\"session closed\"}";
 	}
 	std::string output;
 	std::string error;
@@ -375,3 +384,7 @@ extern "C" EXPORT void CloseCommandPrompt(){
 	std::lock_guard<std::mutex> lock(g_cmdMutex);
 	InternalCloseCommandPrompt(true);
 }
+extern "C" EXPORT void SetCommandPromptTimeout(const int timeoutMs){
+	g_cmdTimeoutMs.store(timeoutMs > 0 ? static_cast<DWORD>(timeoutMs) : INFINITY);
+}
+extern "C" EXPORT void StopCMDOutput(){ stop.store(true); }

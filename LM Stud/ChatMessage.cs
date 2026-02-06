@@ -33,8 +33,8 @@ namespace LMStud{
 				try{
 					Invoke(new MethodInvoker(() => {
 						var newHeight = e.NewRectangle.Height + 32;
-						if(Height == newHeight) return;
-						Height = newHeight;
+						if(Height != newHeight) Height = newHeight;
+						((MyFlowLayoutPanel)Parent).ScrollToEnd();
 					}));
 				} catch(ObjectDisposedException){}
 			});
@@ -106,7 +106,6 @@ namespace LMStud{
 					if(render) RenderText();
 				}
 			}
-			((MyFlowLayoutPanel)Parent).ScrollToEnd();
 		}
 		private void CheckThink_CheckedChanged(object sender, EventArgs e){RenderText();}
 		private unsafe string MarkdownToRtf(string markdown){

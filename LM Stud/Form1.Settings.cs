@@ -44,6 +44,7 @@ namespace LMStud{
 		private bool _fileWriteEnable;
 		private bool _dateTimeEnable;
 		private bool _cmdEnable;
+		private int _cmdTimeoutMs;
 		private bool _apiServerEnable;
 		private int _apiServerPort;
 		private int _genDelay;
@@ -85,6 +86,7 @@ namespace LMStud{
 			_fileWriteEnable = checkFileWriteEnable.Checked = Settings.Default.FileWriteEnable;
 			_dateTimeEnable = checkDateTimeEnable.Checked = Settings.Default.DateTimeEnable;
 			_cmdEnable = checkCMDEnable.Checked = Settings.Default.CMDToolEnable;
+			_cmdTimeoutMs = (int)(numCmdTimeout.Value = Settings.Default.CMDToolTimeoutMs);
 			_apiServerEnable = checkApiServerEnable.Checked = Settings.Default.ApiServerEnable;
 			_apiServerPort = (int)(numApiServerPort.Value = Settings.Default.ApiServerPort);
 			_genDelay = (int)(numGenDelay.Value = Settings.Default.GenDelay);
@@ -99,6 +101,7 @@ namespace LMStud{
 			NativeMethods.SetWakeWordSimilarity(_wakeWordSimilarity);
 			NativeMethods.SetWhisperTemp(_whisperTemp);
 			NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID, _googleSearchResultCount);
+			NativeMethods.SetCommandPromptTimeout(_cmdTimeoutMs);
 		}
 		private void UpdateSetting<T>(ref T currentValue, T newValue, Action<T> updateAction){
 			if(EqualityComparer<T>.Default.Equals(currentValue, newValue)) return;
@@ -301,6 +304,10 @@ namespace LMStud{
 			UpdateSetting(ref _cmdEnable, checkCMDEnable.Checked, value => {
 				Settings.Default.CMDToolEnable = value;
 				registerTools = true;
+			});
+			UpdateSetting(ref _cmdTimeoutMs, (int)numCmdTimeout.Value, value => {
+				Settings.Default.CMDToolTimeoutMs = value;
+				NativeMethods.SetCommandPromptTimeout(value);
 			});
 			UpdateSetting(ref _apiServerEnable, checkApiServerEnable.Checked, value => {
 				Settings.Default.ApiServerEnable = value;

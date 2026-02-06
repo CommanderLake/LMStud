@@ -550,5 +550,17 @@ namespace LMStud.Properties {
                 this["CMDToolEnable"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("60000")]
+        public decimal CMDToolTimeoutMs {
+            get {
+                return ((decimal)(this["CMDToolTimeoutMs"]));
+            }
+            set {
+                this["CMDToolTimeoutMs"] = value;
+            }
+        }
     }
 }

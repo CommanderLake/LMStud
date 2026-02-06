@@ -24,7 +24,6 @@ namespace LMStud{
 		private volatile bool _ttsSpeaking;
 		private int _ttsPendingCount;
 		private volatile bool _voiceInputResumePending;
-		private string _editingStatusText;
 		private int _retokenizeCount;
 		private bool _retokenizeButApplyEnabled;
 		private bool _retokenizeButApplyModelSettingsEnabled;
@@ -35,11 +34,12 @@ namespace LMStud{
 		private bool _retokenizeListViewModelsEnabled;
 		private bool _retokenizePanelChatEnabled;
 		private bool _retokenizeTextInputEnabled;
-		internal SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
+		internal readonly SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
 		private volatile bool _apiGenerating;
 		private Action<string> _apiTokenCallback;
 		private CheckState _checkVoiceInputLast = CheckState.Unchecked;
 		private ChatMessage _cntAssMsg;
+		private ChatMessage _cntToolMsg;
 		private LVColumnClickHandler _columnClickHandler;
 		private string _editOriginalText = "";
 		private bool _firstToken = true;
@@ -57,7 +57,6 @@ namespace LMStud{
 			//Thread.CurrentThread.CurrentUICulture = culture;
 			//Thread.CurrentThread.CurrentCulture = culture;
 			InitializeComponent();
-			_editingStatusText = labelEditing.Text;
 			_apiServer = new ApiServer(this);
 			_tts.SpeakStarted += TtsOnSpeakStarted;
 			_tts.SpeakCompleted += TtsOnSpeakCompleted;
@@ -67,7 +66,6 @@ namespace LMStud{
 			LoadConfig();
 			LoadModelSettings();
 		}
-		internal bool IsGenerating => _generating || _apiGenerating;
 		private void SetToolTip(Control control){toolTip1.SetToolTip(control, Resources.ResourceManager.GetString("ToolTip_" + control.Name));}
 		private void SetToolTips(){
 			SetToolTip(textSystemPrompt);
@@ -110,6 +108,7 @@ namespace LMStud{
 			SetToolTip(checkApiServerEnable);
 			SetToolTip(numApiServerPort);
 			SetToolTip(numGenDelay);
+			SetToolTip(numCmdTimeout);
 			SetToolTip(textJinjaTmplModel);
 		}
 		private void Form1_Load(object sender, EventArgs e){
@@ -377,14 +376,14 @@ namespace LMStud{
 		}
 		private static void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){Process.Start(e.LinkText);}
 		private void SetStatusMessageVisible(bool visible, string message){
-			if(message != null) labelEditing.Text = message;
+			if(message != null) labelStatusMsg.Text = message;
 			toolStripStatusLabel1.Visible = labelTokens.Visible = labelTPS.Visible = labelPreGen.Visible = !visible;
-			labelEditing.Visible = visible;
+			labelStatusMsg.Visible = visible;
 		}
 		[Localizable(true)]
 		private void UpdateStatusMessage(){
 			if(_retokenizeCount > 0) SetStatusMessageVisible(true, Resources.Retokenizing_chat___);
-			else if(_isEditing) SetStatusMessageVisible(true, _editingStatusText);
+			else if(_isEditing) SetStatusMessageVisible(true, Resources.Editing_transcription_);
 			else SetStatusMessageVisible(false, null);
 		}
 		private void BeginRetokenization(){
@@ -526,6 +525,7 @@ namespace LMStud{
 			if(addToChat) AddMessage(role, newMsg);
 			var seedMsg = checkDialectic.Checked && _chatMessages.Count == 1;
 			_cntAssMsg = null;
+			_cntToolMsg = null;
 			foreach(var message in _chatMessages) message.Generating = true;
 			CancelPendingSpeech();
 			_firstToken = true;
@@ -633,13 +633,17 @@ namespace LMStud{
 			if(thinkLen > 0) think = Encoding.UTF8.GetString(thinkPtr, thinkLen);
 			var message = "";
 			if(messageLen > 0) message = Encoding.UTF8.GetString(messagePtr, messageLen);
-			if(tool == 1){
+			if(tool == 1 || tool == 2){
 				try{
 					This.BeginInvoke(new MethodInvoker(() => {
-						var cm = This.AddMessage(MessageRole.Tool, message);
-						cm.SetRoleText("Tool");
+						if(This._cntToolMsg == null){
+							This._cntToolMsg = This.AddMessage(MessageRole.Tool, message);
+							This._cntToolMsg.SetRoleText("Tool");
+						}
+						else{ This._cntToolMsg.UpdateText("", message, true); }
 						This._cntAssMsg = null;
 						This.labelTokens.Text = string.Format(Resources._0___1__2_, tokensTotal, This._cntCtxMax, Resources._Tokens);
+						if(tool == 1) This._cntToolMsg = null;
 					}));
 				} catch(ObjectDisposedException){}
 				return;

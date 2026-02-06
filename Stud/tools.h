@@ -18,8 +18,10 @@ extern "C" {
 	EXPORT void SetGoogle(const char* apiKey, const char* searchEngineId, int resultCount);
 	EXPORT void ClearWebCache();
 	EXPORT void SetFileBaseDir(const char* dir);
+	EXPORT void SetCommandPromptTimeout(int timeoutMs);
 	EXPORT void RegisterTools(bool dateTime, bool googleSearch, bool webpageFetch, bool fileList, bool fileCreate, bool fileRead, bool fileWrite, bool commandPrompt);
 	EXPORT void CloseCommandPrompt();
+	EXPORT void StopCMDOutput();
 }
 std::string JsonEscape(const std::string& in);
 std::string GetArgValue(const char* args, const char* key);

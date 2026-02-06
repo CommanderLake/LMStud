@@ -98,6 +98,7 @@ namespace LMStud{
 		public static void SetWakeWordSimilarity(float similarity){Implementation.SetWakeWordSimilarity(similarity);}
 		public static void SetWhisperTemp(float temp){Implementation.SetWhisperTemp(temp);}
 		public static void SetSilenceTimeout(int milliseconds){Implementation.SetSilenceTimeout(milliseconds);}
+		public static void SetCommandPromptTimeout(int milliseconds){Implementation.SetCommandPromptTimeout(milliseconds);}
 		public static void SetCommittedText(string text){Implementation.SetCommittedText(text);}
 		public static IntPtr PerformHttpGet(string url){return Implementation.PerformHttpGet(url);}
 		public static int DownloadFile(string url, string targetPath){return Implementation.DownloadFile(url, targetPath);}
@@ -156,6 +157,7 @@ namespace LMStud{
 			void SetWakeWordSimilarity(float similarity);
 			void SetWhisperTemp(float temp);
 			void SetSilenceTimeout(int milliseconds);
+			void SetCommandPromptTimeout(int milliseconds);
 			void SetCommittedText(string text);
 			unsafe void ConvertMarkdownToRtf(string markdown, ref byte* rtfOut, ref int rtfLen);
 			IntPtr PerformHttpGet(string url);
@@ -233,6 +235,7 @@ namespace LMStud{
 			public void SetWakeWordSimilarity(float similarity){NativeExports.SetWakeWordSimilarity(similarity);}
 			public void SetWhisperTemp(float temp){NativeExports.SetWhisperTemp(temp);}
 			public void SetSilenceTimeout(int milliseconds){NativeExports.SetSilenceTimeout(milliseconds);}
+			public void SetCommandPromptTimeout(int milliseconds){NativeExports.SetCommandPromptTimeout(milliseconds);}
 			public void SetCommittedText(string text){NativeExports.SetCommittedText(text);}
 			public IntPtr PerformHttpGet(string url){return NativeExports.PerformHttpGet(url);}
 			public int DownloadFile(string url, string targetPath){return NativeExports.DownloadFile(url, targetPath);}
@@ -341,6 +344,8 @@ namespace LMStud{
 			internal static extern void SetWhisperTemp(float temp);
 			[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 			internal static extern void SetSilenceTimeout(int milliseconds);
+			[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+			internal static extern void SetCommandPromptTimeout(int milliseconds);
 			[DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 			internal static extern void SetCommittedText(string text);
 			[DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]

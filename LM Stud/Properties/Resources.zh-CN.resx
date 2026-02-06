@@ -416,4 +416,10 @@
 <data name="Retokenizing_chat___" xml:space="preserve">
 	<value>正在重新分词…</value>
 </data>
+<data name="ToolTip_numCmdTimeout" xml:space="preserve">
+	<value>配置命令超时时间，0 表示不超时。</value>
+</data>
+<data name="Editing_transcription_" xml:space="preserve">
+	<value>正在编辑转录文本——按 Enter 完成，按 Esc 取消</value>
+</data>
 </root>

@@ -123,6 +123,12 @@
   <data name="columnHeader2.Text" xml:space="preserve">
     <value>完整路径</value>
   </data>
+  <data name="tabPageModelSettings.Text" xml:space="preserve">
+    <value>模型设置</value>
+  </data>
+  <data name="groupJinjaTmplModel.Text" xml:space="preserve">
+    <value>Jinja 模板</value>
+  </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="label30.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -156,9 +162,6 @@
   <data name="checkOverrideJinjaModel.Text" xml:space="preserve">
     <value>自定义</value>
   </data>
-  <data name="groupJinjaTmplModel.Text" xml:space="preserve">
-    <value>Jinja 模板</value>
-  </data>
   <data name="labelSystemPromptModel.Size" type="System.Drawing.Size, System.Drawing">
     <value>73, 13</value>
   </data>
@@ -174,6 +177,9 @@
   <data name="checkOverrideSettings.Text" xml:space="preserve">
     <value>为此模型覆盖设置</value>
   </data>
+  <data name="groupAdvancedModel.Text" xml:space="preserve">
+    <value>高级选项</value>
+  </data>
   <data name="label27.Text" xml:space="preserve">
     <value>Min-P：</value>
   </data>
@@ -183,8 +189,8 @@
   <data name="label32.Text" xml:space="preserve">
     <value>Top-P：</value>
   </data>
-  <data name="groupAdvancedModel.Text" xml:space="preserve">
-    <value>高级选项</value>
+  <data name="groupCommonModel.Text" xml:space="preserve">
+    <value>通用参数</value>
   </data>
   <data name="label33.Text" xml:space="preserve">
     <value>上下文大小：</value>
@@ -195,20 +201,14 @@
   <data name="label35.Text" xml:space="preserve">
     <value>GPU 层数：</value>
   </data>
-  <data name="groupCommonModel.Text" xml:space="preserve">
-    <value>通用参数</value>
-  </data>
-  <data name="tabPageModelSettings.Text" xml:space="preserve">
-    <value>模型设置</value>
+  <data name="tabPageMetadata.Text" xml:space="preserve">
+    <value>元数据</value>
   </data>
   <data name="columnHeader3.Text" xml:space="preserve">
     <value>元数据条目</value>
   </data>
   <data name="columnHeader4.Text" xml:space="preserve">
     <value>值</value>
-  </data>
-  <data name="tabPageMetadata.Text" xml:space="preserve">
-    <value>元数据</value>
   </data>
   <data name="columnHeader5.Text" xml:space="preserve">
     <value>名称</value>
@@ -279,6 +279,9 @@
   <data name="butDownload.Text" xml:space="preserve">
     <value>下载</value>
   </data>
+  <data name="tabPageChat.Text" xml:space="preserve">
+    <value>聊天</value>
+  </data>
   <data name="checkDialectic.Size" type="System.Drawing.Size, System.Drawing">
     <value>62, 17</value>
   </data>
@@ -288,14 +291,20 @@
   <data name="checkAutoScroll.Text" xml:space="preserve">
     <value>自动滚动</value>
   </data>
-  <data name="tabPageChat.Text" xml:space="preserve">
-    <value>聊天</value>
+  <data name="tabPageSettings.Text" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="groupBox8.Text" xml:space="preserve">
+    <value>命令提示符工具</value>
+  </data>
+  <data name="label36.Text" xml:space="preserve">
+    <value>超时（毫秒）：</value>
   </data>
   <data name="checkCMDEnable.Text" xml:space="preserve">
     <value>启用</value>
   </data>
-  <data name="groupBox8.Text" xml:space="preserve">
-    <value>命令提示符工具</value>
+  <data name="groupBox7.Text" xml:space="preserve">
+    <value>API 服务器</value>
   </data>
   <data name="label28.Text" xml:space="preserve">
     <value>端口：</value>
@@ -303,8 +312,8 @@
   <data name="checkApiServerEnable.Text" xml:space="preserve">
     <value>启用</value>
   </data>
-  <data name="groupBox7.Text" xml:space="preserve">
-    <value>API 服务器</value>
+  <data name="groupBox6.Text" xml:space="preserve">
+    <value>语音活动检测 (VAD)</value>
   </data>
   <data name="label29.Text" xml:space="preserve">
     <value>等待生成 (毫秒)：</value>
@@ -324,14 +333,14 @@
   <data name="label26.Text" xml:space="preserve">
     <value>Whisper VAD 模型：</value>
   </data>
-  <data name="groupBox6.Text" xml:space="preserve">
-    <value>语音活动检测 (VAD)</value>
+  <data name="groupBox5.Text" xml:space="preserve">
+    <value>日期时间工具</value>
   </data>
   <data name="checkDateTimeEnable.Text" xml:space="preserve">
     <value>启用</value>
   </data>
-  <data name="groupBox5.Text" xml:space="preserve">
-    <value>日期时间工具</value>
+  <data name="groupBox4.Text" xml:space="preserve">
+    <value>文件工具</value>
   </data>
   <data name="linkFileInstruction.Location" type="System.Drawing.Point, System.Drawing">
     <value>36, 88</value>
@@ -357,14 +366,14 @@
   <data name="checkFileListEnable.Text" xml:space="preserve">
     <value>列出目录</value>
   </data>
-  <data name="groupBox4.Text" xml:space="preserve">
-    <value>文件工具</value>
+  <data name="groupBox3.Text" xml:space="preserve">
+    <value>网页抓取工具</value>
   </data>
   <data name="checkWebpageFetchEnable.Text" xml:space="preserve">
     <value>启用</value>
   </data>
-  <data name="groupBox3.Text" xml:space="preserve">
-    <value>网页抓取工具</value>
+  <data name="groupBox2.Text" xml:space="preserve">
+    <value>谷歌搜索工具</value>
   </data>
   <data name="label21.Text" xml:space="preserve">
     <value>结果数量：</value>
@@ -378,8 +387,8 @@
   <data name="label19.Text" xml:space="preserve">
     <value>API 密钥：</value>
   </data>
-  <data name="groupBox2.Text" xml:space="preserve">
-    <value>谷歌搜索工具</value>
+  <data name="groupBox1.Text" xml:space="preserve">
+    <value>语音输入设置</value>
   </data>
   <data name="label25.Text" xml:space="preserve">
     <value>唤醒词相似度：</value>
@@ -402,20 +411,20 @@
   <data name="label15.Text" xml:space="preserve">
     <value>Whisper.cpp 模型：</value>
   </data>
-  <data name="groupBox1.Text" xml:space="preserve">
-    <value>语音输入设置</value>
+  <data name="groupCPUParamsBatch.Text" xml:space="preserve">
+    <value>CPU 批处理参数</value>
   </data>
   <data name="label14.Text" xml:space="preserve">
     <value>线程数：</value>
   </data>
-  <data name="groupCPUParamsBatch.Text" xml:space="preserve">
-    <value>CPU 批处理参数</value>
+  <data name="groupCPUParams.Text" xml:space="preserve">
+    <value>CPU 参数</value>
   </data>
   <data name="label2.Text" xml:space="preserve">
     <value>线程数：</value>
   </data>
-  <data name="groupCPUParams.Text" xml:space="preserve">
-    <value>CPU 参数</value>
+  <data name="groupAdvanced.Text" xml:space="preserve">
+    <value>高级选项</value>
   </data>
   <data name="comboNUMAStrat.Items" xml:space="preserve">
     <value>禁用</value>
@@ -456,8 +465,8 @@
   <data name="label9.Text" xml:space="preserve">
     <value>Top-P：</value>
   </data>
-  <data name="groupAdvanced.Text" xml:space="preserve">
-    <value>高级选项</value>
+  <data name="groupCommon.Text" xml:space="preserve">
+    <value>通用参数</value>
   </data>
   <data name="label5.Text" xml:space="preserve">
     <value>上下文大小：</value>
@@ -470,9 +479,6 @@
   </data>
   <data name="label4.Text" xml:space="preserve">
     <value>生成 Token 数量：</value>
-  </data>
-  <data name="groupCommon.Text" xml:space="preserve">
-    <value>通用参数</value>
   </data>
   <data name="label3.Text" xml:space="preserve">
     <value>模型文件夹：</value>
@@ -489,8 +495,8 @@
   <data name="label1.Text" xml:space="preserve">
     <value>系统提示词：</value>
   </data>
-  <data name="tabPageSettings.Text" xml:space="preserve">
-    <value>设置</value>
+  <data name="tabPageModels.Text" xml:space="preserve">
+    <value>模型管理</value>
   </data>
   <data name="checkLoadAuto.Size" type="System.Drawing.Size, System.Drawing">
     <value>134, 17</value>
@@ -503,9 +509,6 @@
   </data>
   <data name="butLoad.Text" xml:space="preserve">
     <value>加载</value>
-  </data>
-  <data name="tabPageModels.Text" xml:space="preserve">
-    <value>模型管理</value>
   </data>
   <data name="toolStripStatusLabel1.Size" type="System.Drawing.Size, System.Drawing">
     <value>67, 17</value>
@@ -531,4 +534,7 @@
   <data name="labelPreGen.Text" xml:space="preserve">
     <value>预生成时间：</value>
   </data>
+<data name="labelStatusMsg.Text" xml:space="preserve">
+	<value>正在编辑转录文本——按 Enter 完成，按 Esc 取消</value>
+</data>
 </root>
