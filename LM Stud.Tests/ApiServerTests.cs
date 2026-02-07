@@ -106,7 +106,7 @@ namespace LM_Stud.Tests{
 			await WaitForServerAsync();
 			using(var client = new HttpClient()){
 				var payload = new{ messages = new[]{ new{ role = "user", content = "hello" } } };
-				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/chat/completions", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
+				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/responses", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
 				Assert.AreEqual(HttpStatusCode.Conflict, response.StatusCode, "Chat endpoint should return 409 when model is unavailable.");
 			}
 		}
@@ -116,13 +116,13 @@ namespace LM_Stud.Tests{
 			await WaitForServerAsync();
 			using(var client = new HttpClient()){
 				var payload = new{ messages = new[]{ new{ role = "user", content = "Hello" } } };
-				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/chat/completions", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
+				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/responses", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
 				Assert.AreEqual(HttpStatusCode.OK, response.StatusCode, "Successful chat should return 200.");
 				var sessionId = response.Headers.Contains("X-Session-Id") ? string.Join("", response.Headers.GetValues("X-Session-Id")) : null;
 				Assert.IsFalse(string.IsNullOrEmpty(sessionId), "Session id header should be present.");
 				var json = await response.Content.ReadAsStringAsync();
 				dynamic result = JsonConvert.DeserializeObject(json);
-				Assert.AreEqual("assistant response", (string)result.choices[0].message.content, "Stubbed assistant response should be returned.");
+				Assert.AreEqual("assistant response", (string)result.output[0].content[0].text, "Stubbed assistant response should be returned.");
 				Assert.AreEqual("Hello", _nativeStub.LastPrompt, "Native stub should receive prompt from request.");
 				var sessionManager = GetSessionManager();
 				var session = sessionManager.Get(sessionId);
@@ -137,7 +137,7 @@ namespace LM_Stud.Tests{
 			string sessionId;
 			using(var client = new HttpClient()){
 				var payload = new{ messages = new[]{ new{ role = "user", content = "Hi" } } };
-				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/chat/completions", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
+				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/responses", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
 				sessionId = response.Headers.Contains("X-Session-Id") ? string.Join("", response.Headers.GetValues("X-Session-Id")) : null;
 				Assert.IsFalse(string.IsNullOrEmpty(sessionId), "Chat call should return a session id.");
 			}
@@ -145,7 +145,7 @@ namespace LM_Stud.Tests{
 			var existing = sessionManager.Get(sessionId);
 			using(var client = new HttpClient()){
 				var resetPayload = new{ session_id = sessionId };
-				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/chat/reset", new StringContent(JsonConvert.SerializeObject(resetPayload), Encoding.UTF8, "application/json"));
+				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/reset", new StringContent(JsonConvert.SerializeObject(resetPayload), Encoding.UTF8, "application/json"));
 				Assert.AreEqual(HttpStatusCode.OK, response.StatusCode, "Reset endpoint should return success.");
 				var json = await response.Content.ReadAsStringAsync();
 				dynamic result = JsonConvert.DeserializeObject(json);

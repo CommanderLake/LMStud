@@ -10,6 +10,7 @@ namespace LMStud{
 		private string _apiClientKey;
 		private string _apiClientModel;
 		private string _apiClientURL;
+		private string _apiLastResponseId;
 		private bool _apiServerEnable;
 		private int _apiServerPort;
 		private int _batchSize;
@@ -445,7 +446,7 @@ Always read a file and verify its contents before making changes.");
 		}
 		private void ComboApiClientModel_DropDown(object sender, EventArgs e){
 			try{
-				var client = new ApiClient(textApiClientUrl.Text, textApiClientKey.Text, "");
+				var client = new ApiClient(textApiClientUrl.Text, textApiClientKey.Text, "", _systemPrompt);
 				var clientModels = client.ListModels(CancellationToken.None);
 				foreach(var model in clientModels) comboApiClientModel.Items.Add(model);
 			} catch(Exception ex){ MessageBox.Show(this, ex.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);}
