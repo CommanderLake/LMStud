@@ -9,7 +9,7 @@ namespace LMStud{
 		Assistant,
 		Tool
 	}
-	internal partial class ChatMessage : UserControl{
+	internal partial class ChatMessageControl : UserControl{
 		internal readonly MessageRole Role;
 		internal List<ApiClient.ToolCall> ApiToolCalls;
 		internal string ApiToolCallId;
@@ -19,7 +19,7 @@ namespace LMStud{
 		private bool _generating;
 		private bool _editing;
 		internal int TTSPosition = 0;
-		internal ChatMessage(MessageRole role, string message, bool markdown){
+		internal ChatMessageControl(MessageRole role, string message, bool markdown){
 			Role = role;
 			_markdown = markdown;
 			InitializeComponent();

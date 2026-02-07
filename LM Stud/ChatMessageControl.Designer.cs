@@ -1,5 +1,5 @@
 ﻿namespace LMStud {
-	internal partial class ChatMessage {
+	internal partial class ChatMessageControl {
 		/// <summary> 
 		/// Required designer variable.
 		/// </summary>
@@ -23,7 +23,7 @@
 		/// the contents of this method with the code editor.
 		/// </summary>
 		private void InitializeComponent() {
-			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChatMessage));
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChatMessageControl));
 			this.richTextMsg = new System.Windows.Forms.RichTextBox();
 			this.butDelete = new System.Windows.Forms.Button();
 			this.butEdit = new System.Windows.Forms.Button();
@@ -108,7 +108,7 @@
 			this.CausesValidation = false;
 			this.Controls.Add(this.panel1);
 			this.DoubleBuffered = true;
-			this.Name = "ChatMessage";
+			this.Name = "ChatMessageControl";
 			this.Load += new System.EventHandler(this.ChatMessage_Load);
 			this.panel1.ResumeLayout(false);
 			this.panel1.PerformLayout();

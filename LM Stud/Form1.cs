@@ -16,7 +16,7 @@ namespace LMStud{
 		private static NativeMethods.WhisperCallback _whisperCallback;
 		private static NativeMethods.SpeechEndCallback _speechEndCallback;
 		private readonly ApiServer _apiServer;
-		private readonly List<ChatMessage> _chatMessages = new List<ChatMessage>();
+		private readonly List<ChatMessageControl> _chatMessages = new List<ChatMessageControl>();
 		private readonly StringBuilder _speechBuffer = new StringBuilder();
 		private readonly Stopwatch _swRate = new Stopwatch();
 		private readonly Stopwatch _swTot = new Stopwatch();
@@ -38,8 +38,8 @@ namespace LMStud{
 		private volatile bool _apiGenerating;
 		private Action<string> _apiTokenCallback;
 		private CheckState _checkVoiceInputLast = CheckState.Unchecked;
-		private ChatMessage _cntAssMsg;
-		private ChatMessage _cntToolMsg;
+		private ChatMessageControl _cntAssMsg;
+		private ChatMessageControl _cntToolMsg;
 		private LVColumnClickHandler _columnClickHandler;
 		private string _editOriginalText = "";
 		private bool _firstToken = true;
@@ -280,7 +280,7 @@ namespace LMStud{
 				for(var i = 0; i < panelChat.Controls.Count; ++i) panelChat.Controls[i].Width = panelChat.ClientSize.Width;
 			} finally{ panelChat.ResumeLayout(true); }
 		}
-		private void MsgButDeleteOnClick(ChatMessage cm){
+		private void MsgButDeleteOnClick(ChatMessageControl cm){
 			if(_generating || _retokenizeCount > 0) return;
 			var id = _chatMessages.IndexOf(cm);
 			if(id < 0) return;
@@ -299,7 +299,7 @@ namespace LMStud{
 				}));
 			});
 		}
-		private void MsgButRegenOnClick(ChatMessage cm){
+		private void MsgButRegenOnClick(ChatMessageControl cm){
 			if(!LlModelLoaded || _generating || _retokenizeCount > 0) return;
 			var idx = _chatMessages.IndexOf(cm);
 			if(idx < 0) return;
@@ -329,18 +329,18 @@ namespace LMStud{
 				}));
 			});
 		}
-		private void MsgButEditOnClick(ChatMessage cm){
+		private void MsgButEditOnClick(ChatMessageControl cm){
 			if(_generating || cm.Editing) return;
 			foreach(var msg in _chatMessages.Where(msg => msg != cm && msg.Editing)) MsgButEditCancelOnClick(msg);
 			cm.Editing = true;
 			cm.richTextMsg.Focus();
 		}
-		private void MsgButEditCancelOnClick(ChatMessage cm){
+		private void MsgButEditCancelOnClick(ChatMessageControl cm){
 			if(_generating || !cm.Editing) return;
 			cm.Editing = false;
 			cm.Markdown = checkMarkdown.Checked;
 		}
-		private void MsgButEditApplyOnClick(ChatMessage cm){
+		private void MsgButEditApplyOnClick(ChatMessageControl cm){
 			if(_generating || !cm.Editing || _retokenizeCount > 0) return;
 			var idx = _chatMessages.IndexOf(cm);
 			if(idx < 0) return;
@@ -360,8 +360,8 @@ namespace LMStud{
 			});
 		}
 		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)(((e.Delta/8) << 16) & 0xffff0000), IntPtr.Zero);}
-		private ChatMessage AddMessage(MessageRole role, string message, bool showInChat = true, List<ApiClient.ToolCall> toolCalls = null, string toolCallId = null){
-			var cm = new ChatMessage(role, message ?? "", checkMarkdown.Checked){ ApiToolCalls = toolCalls, ApiToolCallId = toolCallId };
+		private ChatMessageControl AddMessage(MessageRole role, string message, bool showInChat = true, List<ApiClient.ToolCall> toolCalls = null, string toolCallId = null){
+			var cm = new ChatMessageControl(role, message ?? "", checkMarkdown.Checked){ ApiToolCalls = toolCalls, ApiToolCallId = toolCallId };
 			if(showInChat){
 				cm.Parent = panelChat;
 				cm.Width = panelChat.ClientSize.Width;

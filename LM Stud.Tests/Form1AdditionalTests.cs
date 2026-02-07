@@ -33,7 +33,7 @@ namespace LM_Stud.Tests{
 			var staticField = typeof(Form1).GetField("This", BindingFlags.Static | BindingFlags.Public);
 			staticField?.SetValue(null, form);
 			SetField(form, "GenerationLock", new SemaphoreSlim(1, 1));
-			SetField(form, "_chatMessages", new List<ChatMessage>());
+			SetField(form, "_chatMessages", new List<ChatMessageControl>());
 			SetField(form, "_speechBuffer", new StringBuilder());
 			SetField(form, "_swRate", new Stopwatch());
 			SetField(form, "_swTot", new Stopwatch());
@@ -194,7 +194,7 @@ namespace LM_Stud.Tests{
 			Invoke(_form, "Generate");
 
 			// Assert
-			var messages = GetField<List<ChatMessage>>(_form, "_chatMessages");
+			var messages = GetField<List<ChatMessageControl>>(_form, "_chatMessages");
 			Assert.AreEqual(0, messages.Count, "Should not add message when API is generating.");
 		}
 		[TestMethod]

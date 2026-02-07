@@ -179,7 +179,7 @@ namespace LM_Stud.Tests{
 			var staticField = typeof(Form1).GetField("This", BindingFlags.Static | BindingFlags.Public);
 			staticField?.SetValue(null, form);
 			SetField(form, "GenerationLock", new SemaphoreSlim(1, 1));
-			SetField(form, "_chatMessages", new List<ChatMessage>());
+			SetField(form, "_chatMessages", new List<ChatMessageControl>());
 			SetField(form, "_speechBuffer", new StringBuilder());
 			SetField(form, "_swRate", new Stopwatch());
 			SetField(form, "_swTot", new Stopwatch());

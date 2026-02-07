@@ -106,11 +106,11 @@
   <ItemGroup>
     <Compile Include="ApiClient.cs" />
     <Compile Include="ApiServer.cs" />
-    <Compile Include="ChatMessage.cs">
+    <Compile Include="ChatMessageControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="ChatMessage.Designer.cs">
-      <DependentUpon>ChatMessage.cs</DependentUpon>
+    <Compile Include="ChatMessageControl.Designer.cs">
+      <DependentUpon>ChatMessageControl.cs</DependentUpon>
     </Compile>
     <Compile Include="Form1.ModelSettings.cs">
       <SubType>Form</SubType>
@@ -143,11 +143,11 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SessionManager.cs" />
-    <EmbeddedResource Include="ChatMessage.resx">
-      <DependentUpon>ChatMessage.cs</DependentUpon>
+    <EmbeddedResource Include="ChatMessageControl.resx">
+      <DependentUpon>ChatMessageControl.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ChatMessage.zh-CN.resx">
-      <DependentUpon>ChatMessage.cs</DependentUpon>
+    <EmbeddedResource Include="ChatMessageControl.zh-CN.resx">
+      <DependentUpon>ChatMessageControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>

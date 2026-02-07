@@ -28,7 +28,7 @@ namespace LM_Stud.Tests{
 			var staticField = typeof(Form1).GetField("This", BindingFlags.Static | BindingFlags.Public);
 			staticField?.SetValue(null, form);
 			SetField(form, "GenerationLock", new SemaphoreSlim(1, 1));
-			SetField(form, "_chatMessages", new List<ChatMessage>());
+			SetField(form, "_chatMessages", new List<ChatMessageControl>());
 			SetField(form, "_speechBuffer", new StringBuilder());
 			SetField(form, "_swRate", new Stopwatch());
 			SetField(form, "_swTot", new Stopwatch());
@@ -97,7 +97,7 @@ namespace LM_Stud.Tests{
 			var textInput = GetField<TextBox>(form, "textInput");
 			textInput.Text = "   ";
 			Invoke(form, "Generate");
-			var messages = GetField<List<ChatMessage>>(form, "_chatMessages");
+			var messages = GetField<List<ChatMessageControl>>(form, "_chatMessages");
 			Assert.AreEqual(0, messages.Count, "Whitespace input should not enqueue a chat message.");
 		}
 		[TestMethod]
@@ -108,7 +108,7 @@ namespace LM_Stud.Tests{
 			var textInput = GetField<TextBox>(form, "textInput");
 			textInput.Text = "Hello";
 			Invoke(form, "Generate");
-			var messages = GetField<List<ChatMessage>>(form, "_chatMessages");
+			var messages = GetField<List<ChatMessageControl>>(form, "_chatMessages");
 			Assert.AreEqual(0, messages.Count, "Generation should not start when the semaphore cannot be acquired.");
 			Assert.IsFalse(GetField<bool>(form, "_generating"), "Generating flag must remain false when generation is skipped.");
 		}
@@ -139,8 +139,8 @@ namespace LM_Stud.Tests{
 		[TestMethod]
 		public void MarkdownToggle_AppliesToExistingMessages(){
 			var form = CreateForm();
-			var messages = GetField<List<ChatMessage>>(form, "_chatMessages");
-			var userMessage = new ChatMessage(MessageRole.User, "Hello", false);
+			var messages = GetField<List<ChatMessageControl>>(form, "_chatMessages");
+			var userMessage = new ChatMessageControl(MessageRole.User, "Hello", false);
 			messages.Add(userMessage);
 			var checkMarkdown = GetField<CheckBox>(form, "checkMarkdown");
 			checkMarkdown.Checked = true;
@@ -150,8 +150,8 @@ namespace LM_Stud.Tests{
 		[TestMethod]
 		public void EditCancel_LeavesMessageUnchanged(){
 			var form = CreateForm();
-			var messages = GetField<List<ChatMessage>>(form, "_chatMessages");
-			var message = new ChatMessage(MessageRole.User, "Original", false);
+			var messages = GetField<List<ChatMessageControl>>(form, "_chatMessages");
+			var message = new ChatMessageControl(MessageRole.User, "Original", false);
 			messages.Add(message);
 			message.Editing = true;
 			var checkMarkdown = GetField<CheckBox>(form, "checkMarkdown");
@@ -164,8 +164,8 @@ namespace LM_Stud.Tests{
 		[TestMethod]
 		public void EditApply_WritesBackEditedText(){
 			var form = CreateForm();
-			var messages = GetField<List<ChatMessage>>(form, "_chatMessages");
-			var message = new ChatMessage(MessageRole.User, "Original", false);
+			var messages = GetField<List<ChatMessageControl>>(form, "_chatMessages");
+			var message = new ChatMessageControl(MessageRole.User, "Original", false);
 			messages.Add(message);
 			message.Editing = true;
 			message.richTextMsg.Text = "Updated";
@@ -178,8 +178,8 @@ namespace LM_Stud.Tests{
 		[TestMethod]
 		public void DeleteMessage_RemovesFromChat(){
 			var form = CreateForm();
-			var messages = GetField<List<ChatMessage>>(form, "_chatMessages");
-			var message = new ChatMessage(MessageRole.User, "To delete", false);
+			var messages = GetField<List<ChatMessageControl>>(form, "_chatMessages");
+			var message = new ChatMessageControl(MessageRole.User, "To delete", false);
 			messages.Add(message);
 			SetField(form, "LlModelLoaded", true);
 			Invoke(form, "MsgButDeleteOnClick", message);
@@ -188,8 +188,8 @@ namespace LM_Stud.Tests{
 		[TestMethod]
 		public void Regenerate_WhenAlreadyGenerating_DoesNothing(){
 			var form = CreateForm();
-			var messages = GetField<List<ChatMessage>>(form, "_chatMessages");
-			var message = new ChatMessage(MessageRole.Assistant, "Assistant", false);
+			var messages = GetField<List<ChatMessageControl>>(form, "_chatMessages");
+			var message = new ChatMessageControl(MessageRole.Assistant, "Assistant", false);
 			messages.Add(message);
 			SetField(form, "_generating", true);
 			Invoke(form, "MsgButRegenOnClick", message);
