@@ -10,6 +10,7 @@ namespace LMStud{
 		private const string DefaultPrompt = "Assist the user to the best of your ability.";
 		private const string FetchPrompt = "\nAfter calling the web_search tool you must subsequently call the get_webpage tool with a url followed by the get_webpage_text tool with the id of any relevant preview.";
 		internal volatile bool LlModelLoaded;
+		private string _lastModelPath = "";
 		private volatile bool _populating;
 		private int _cntCtxMax;
 		private int _modelCtxMax;
@@ -46,17 +47,17 @@ namespace LMStud{
 			if(e.KeyCode != Keys.F5) return;
 			PopulateModels();
 		}
+		private void ListViewModels_DoubleClick(object sender, EventArgs e){
+			if(listViewModels.SelectedItems.Count == 0) return;
+			LoadModel((int)listViewModels.SelectedItems[0].Tag, false);
+		}
 		private void ButLoad_Click(object sender, EventArgs e){
 			if(listViewModels.SelectedItems.Count == 0) return;
 			LoadModel((int)listViewModels.SelectedItems[0].Tag, false);
 		}
 		private void ButUnload_Click(object sender, EventArgs e){
 			butUnload.Enabled = false;
-			UnloadModel();
-		}
-		private void ListViewModels_DoubleClick(object sender, EventArgs e){
-			if(listViewModels.SelectedItems.Count == 0) return;
-			LoadModel((int)listViewModels.SelectedItems[0].Tag, false);
+			UnloadModel(true);
 		}
 		private bool ModelsFolderExists(bool showError){
 			if(!Directory.Exists(_modelsPath)){
@@ -156,22 +157,29 @@ namespace LMStud{
 			void ShowMessage(){MessageBox.Show(this, string.Format(Resources._0____1_, action, detail), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}
 			if(InvokeRequired){ Invoke(new MethodInvoker(ShowMessage)); } else ShowMessage();
 		}
-		private void SetSystemPrompt(string prompt){
-			GenerationLock.Wait(-1);
+		private void SetSystemPromptInternal(bool genLock){
+			if(genLock) GenerationLock.Wait(-1);
+			var overrideSettings = _modelSettings.TryGetValue(GetModelPath(_models[_modelIndex].FilePath), out var overrides) && overrides.OverrideSettings;
+			var prompt = overrideSettings ? overrides.SystemPrompt : _systemPrompt;
 			NativeMethods.StudError error;
-			try{ error = NativeMethods.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : ""); } finally{ GenerationLock.Release(); }
+			try{ error = NativeMethods.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : ""); } finally{
+				if(genLock) GenerationLock.Release();
+			}
 			if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_setting_system_prompt, error);
 		}
-		private void SetSystemPrompt(){SetSystemPrompt(_systemPrompt);}
-		private void QueueSetSystemPrompt(string prompt){
+		private void SetSystemPrompt(bool genLock = true){
 			if(!LlModelLoaded){
-				SetSystemPrompt(prompt);
+				SetSystemPromptInternal(genLock);
 				return;
 			}
 			BeginRetokenization();
-			ThreadPool.QueueUserWorkItem(_ => {
-				try{ SetSystemPrompt(prompt); } finally{ EndRetokenization(); }
-			});
+			try{ SetSystemPromptInternal(genLock); } finally{ EndRetokenization(); }
+		}
+		void SetModelStatus(){
+			butGen.Enabled = butReset.Enabled = _apiClientEnable || LlModelLoaded;
+			if(_apiClientEnable) toolStripStatusLabel1.Text = Resources.Using_API_Model_ + _apiClientModel;
+			else if(LlModelLoaded) toolStripStatusLabel1.Text = Resources.Using_Model_ + Path.GetFileName(_lastModelPath);
+			else toolStripStatusLabel1.Text = Resources.No_model_loaded;
 		}
 		NativeMethods.StudError LoadModel(string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){
 			var result = NativeMethods.LoadModel(filename, jinjaTemplate, nGPULayers, mMap, mLock, numaStrategy);
@@ -179,9 +187,7 @@ namespace LMStud{
 			return result;
 		}
 		NativeMethods.StudError CreateSession(int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
-			GenerationLock.Wait(-1);
-			NativeMethods.StudError result;
-			try{ result = NativeMethods.CreateSession(nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty); } finally{ GenerationLock.Release(); }
+			var result = NativeMethods.CreateSession(nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty);
 			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_session, result);
 			return result;
 		}
@@ -205,12 +211,11 @@ namespace LMStud{
 			return result;
 		}
 		private void LoadModel(int modelIndex, bool autoLoad){
-			var whisperOn = checkVoiceInput.CheckState != CheckState.Unchecked;
+			if(!GenerationLock.Wait(1000)) return;
 			var modelKey = _models[modelIndex].FilePath;
 			var modelPath = GetModelPath(modelKey);
 			var fileName = Path.GetFileName(modelPath);
 			var overrideSettings = _modelSettings.TryGetValue(modelKey, out var overrides) && overrides.OverrideSettings;
-			var systemPrompt = overrideSettings ? overrides.SystemPrompt : _systemPrompt;
 			var ctxSize = overrideSettings ? overrides.CtxSize : _ctxSize;
 			var gpuLayers = overrideSettings ? overrides.GPULayers : _gpuLayers;
 			var temp = overrideSettings ? overrides.Temp : _temp;
@@ -219,22 +224,17 @@ namespace LMStud{
 			var topK = overrideSettings ? overrides.TopK : _topK;
 			var flashAttn = overrideSettings ? overrides.FlashAttn : _flashAttn;
 			var jinjaTmpl = overrides != null && overrides.OverrideJinja && File.Exists(overrides.JinjaTemplate) ? File.ReadAllText(overrides.JinjaTemplate) : null;
-			butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = false;
+			butLoad.Enabled = butUnload.Enabled = false;
 			ThreadPool.QueueUserWorkItem(o => {
 				try{
 					if(LlModelLoaded){
-						Invoke(new MethodInvoker(UnloadModel));
+						Invoke(new MethodInvoker(() => UnloadModel(false)));
 						while(LlModelLoaded) Thread.Sleep(10);
 					}
 					Invoke(new MethodInvoker(() => {
 						toolStripStatusLabel1.Text = Resources.Loading__ + fileName;
 					}));
 					unsafe{
-						if(_generating){
-							NativeMethods.StopGeneration();
-							while(_generating) Thread.Sleep(10);
-						}
-						if(whisperOn) NativeMethods.StopSpeechTranscription();
 						var result = LoadModel(modelPath, jinjaTmpl, gpuLayers, _mMap, _mLock, _numaStrat);
 						if(result != NativeMethods.StudError.Success){
 							Settings.Default.LoadAuto = false;
@@ -246,19 +246,19 @@ namespace LMStud{
 						if(_modelCtxMax <= 0) _cntCtxMax = ctxSize;
 						else _cntCtxMax = ctxSize > _modelCtxMax ? _modelCtxMax : ctxSize;
 						result = CreateSession(_cntCtxMax, _batchSize, flashAttn, _nThreads, _nThreadsBatch, minP, topP, topK, temp, _repPen);
+						_lastModelPath = modelPath;
+						LlModelLoaded = true;
 						if(result != NativeMethods.StudError.Success){
 							Settings.Default.LoadAuto = false;
 							Settings.Default.Save();
-							LlModelLoaded = true;
-							Invoke(new MethodInvoker(UnloadModel));
+							Invoke(new MethodInvoker(() => UnloadModel(false)));
 							while(LlModelLoaded) Thread.Sleep(10);
 							return;
 						}
 						_tokenCallback = TokenCallback;
 						NativeMethods.SetTokenCallback(_tokenCallback);
 						RegisterTools();
-						SetSystemPrompt(systemPrompt);
-						if(whisperOn) NativeMethods.StartSpeechTranscription();
+						SetSystemPrompt(false);
 						try{
 							Invoke(new MethodInvoker(() => {
 								Settings.Default.LastModel = modelKey;
@@ -267,23 +267,22 @@ namespace LMStud{
 									Settings.Default.Save();
 								}
 								toolTip1.SetToolTip(numCtxSize, Resources.ToolTip_numCtxSize + "\r\n" + Resources.Max_context_size_of_last_loaded_model + _modelCtxMax);
-								toolStripStatusLabel1.Text = Resources.Done_loading__ + fileName;
 							}));
 						} catch(ObjectDisposedException){}
-						LlModelLoaded = true;
 					}
 				} finally{
 					Invoke(new MethodInvoker(() => {
-						butGen.Enabled = butReset.Enabled = listViewModels.Enabled = butLoad.Enabled = butUnload.Enabled = true;
-						if(!LlModelLoaded) toolStripStatusLabel1.Text = Resources.No_model_loaded;
+						SetModelStatus();
+						butLoad.Enabled = butUnload.Enabled = true;
+						GenerationLock.Release();
 					}));
 				}
 			});
 		}
-		private void UnloadModel(){
-			butGen.Enabled = butReset.Enabled = butUnload.Enabled = false;
+		private void UnloadModel(bool genLock){
+			butUnload.Enabled = false;
 			ThreadPool.QueueUserWorkItem(o => {
-				GenerationLock.Wait(-1);
+				if(genLock) GenerationLock.Wait(-1);
 				try{
 					if(_generating){
 						NativeMethods.StopGeneration();
@@ -294,11 +293,13 @@ namespace LMStud{
 					try{
 						BeginInvoke(new MethodInvoker(() => {
 							toolTip1.SetToolTip(numCtxSize, Resources.ToolTip_numCtxSize);
-							toolStripStatusLabel1.Text = Resources.Model_unloaded;
+							SetModelStatus();
 						}));
 					} catch(ObjectDisposedException){}
+				} finally{
 					LlModelLoaded = false;
-				} finally{ GenerationLock.Release(); }
+					if(genLock) GenerationLock.Release();
+				}
 			});
 		}
 		private string ConvertValueToString(GGUFMetadataManager.GGUFMetaValue metaVal){

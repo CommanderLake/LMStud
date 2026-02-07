@@ -137,5 +137,17 @@
     <Setting Name="CMDToolTimeoutMs" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">60000</Value>
     </Setting>
+    <Setting Name="ApiClientEnable" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="ApiClientBaseUrl" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="ApiClientKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="ApiClientModel" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>

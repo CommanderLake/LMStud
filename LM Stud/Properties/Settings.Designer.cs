@@ -562,5 +562,53 @@ namespace LMStud.Properties {
                 this["CMDToolTimeoutMs"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ApiClientEnable {
+            get {
+                return ((bool)(this["ApiClientEnable"]));
+            }
+            set {
+                this["ApiClientEnable"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ApiClientBaseUrl {
+            get {
+                return ((string)(this["ApiClientBaseUrl"]));
+            }
+            set {
+                this["ApiClientBaseUrl"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ApiClientKey {
+            get {
+                return ((string)(this["ApiClientKey"]));
+            }
+            set {
+                this["ApiClientKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ApiClientModel {
+            get {
+                return ((string)(this["ApiClientModel"]));
+            }
+            set {
+                this["ApiClientModel"] = value;
+            }
+        }
     }
 }

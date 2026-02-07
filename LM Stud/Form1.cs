@@ -245,14 +245,14 @@ namespace LMStud{
 				try{ NativeMethods.ResetChat(); } finally{ GenerationLock.Release(); }
 				NativeMethods.CloseCommandPrompt();
 				NativeMethods.ClearWebCache();
-				RunOnUiThread(() => {
+				Invoke(new MethodInvoker(() => {
 					panelChat.SuspendLayout();
 					foreach(var message in _chatMessages) message.Dispose();
 					panelChat.ResumeLayout();
 					_chatMessages.Clear();
 					labelTokens.Text = NativeMethods.LlamaMemSize() + Resources._Tokens;
 					EndRetokenization();
-				});
+				}));
 			});
 		}
 		private void TextInput_KeyDown(object sender, KeyEventArgs e){
@@ -288,14 +288,14 @@ namespace LMStud{
 				GenerationLock.Wait(-1);
 				NativeMethods.StudError result;
 				try{ result = NativeMethods.RemoveMessageAt(id); } finally{ GenerationLock.Release(); }
-				RunOnUiThread(() => {
+				Invoke(new MethodInvoker(() => {
 					if(result != NativeMethods.StudError.IndexOutOfRange && id < _chatMessages.Count){
 						_chatMessages[id].Dispose();
 						_chatMessages.RemoveAt(id);
 					}
 					if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_session, result);
 					EndRetokenization();
-				});
+				}));
 			});
 		}
 		private void MsgButRegenOnClick(ChatMessage cm){
@@ -312,7 +312,7 @@ namespace LMStud{
 				GenerationLock.Wait(-1);
 				NativeMethods.StudError result;
 				try{ result = NativeMethods.RemoveMessagesStartingAt(idx); } finally{ GenerationLock.Release(); }
-				RunOnUiThread(() => {
+				Invoke(new MethodInvoker(() => {
 					if(result != NativeMethods.StudError.IndexOutOfRange)
 						for(var i = _chatMessages.Count - 1; i >= idx; i--){
 							_chatMessages[i].Dispose();
@@ -325,7 +325,7 @@ namespace LMStud{
 					}
 					EndRetokenization();
 					Generate(role, msg, true);
-				});
+				}));
 			});
 		}
 		private void MsgButEditOnClick(ChatMessage cm){
@@ -352,11 +352,10 @@ namespace LMStud{
 				GenerationLock.Wait(-1);
 				NativeMethods.StudError result;
 				try{ result = NativeMethods.SetMessageAt(idx, cm.Think, cm.Message); } finally{ GenerationLock.Release(); }
-				RunOnUiThread(() => {
-					if(result != NativeMethods.StudError.Success)
-						MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+				Invoke(new MethodInvoker(() => {
+					if(result != NativeMethods.StudError.Success) MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 					EndRetokenization();
-				});
+				}));
 			});
 		}
 		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)(((e.Delta/8) << 16) & 0xffff0000), IntPtr.Zero);}
@@ -385,6 +384,11 @@ namespace LMStud{
 			if(_retokenizeCount > 0) SetStatusMessageVisible(true, Resources.Retokenizing_chat___);
 			else if(_isEditing) SetStatusMessageVisible(true, Resources.Editing_transcription_);
 			else SetStatusMessageVisible(false, null);
+		}
+		private void RunOnUiThread(Action action){
+			if(IsDisposed) return;
+			if(InvokeRequired) Invoke(action);
+			else action();
 		}
 		private void BeginRetokenization(){
 			if(Interlocked.Increment(ref _retokenizeCount) != 1) return;
@@ -424,11 +428,6 @@ namespace LMStud{
 				textInput.Enabled = _retokenizeTextInputEnabled;
 				UpdateStatusMessage();
 			});
-		}
-		private void RunOnUiThread(Action action){
-			if(IsDisposed) return;
-			if(InvokeRequired) BeginInvoke(action);
-			else action();
 		}
 		private void StartEditing(){
 			if(_isEditing) return;
@@ -509,7 +508,8 @@ namespace LMStud{
 			Generate(MessageRole.User, prompt, true);
 		}
 		private void Generate(MessageRole role, string prompt, bool addToChat){
-			if(!LlModelLoaded || string.IsNullOrWhiteSpace(prompt)) return;
+			var useRemote = _apiClientEnable;
+			if((!useRemote && !LlModelLoaded) || string.IsNullOrWhiteSpace(prompt)) return;
 			if(!GenerationLock.Wait(0)) return;
 			if(_generating || _apiGenerating){
 				GenerationLock.Release();
@@ -533,9 +533,13 @@ namespace LMStud{
 				NativeMethods.SetCommittedText("");
 				if(addToChat) textInput.Text = "";
 			}
-			if(checkDialectic.Checked && !_dialecticStarted && role == MessageRole.User){
+			if(!useRemote && checkDialectic.Checked && !_dialecticStarted && role == MessageRole.User){
 				NativeMethods.DialecticStart();
 				_dialecticStarted = true;
+			}
+			if(useRemote){
+				ThreadPool.QueueUserWorkItem(o => {GenerateWithApi(role, newMsg, addToChat);});
+				return;
 			}
 			ThreadPool.QueueUserWorkItem(o => {
 				_msgTokenCount = 0;
@@ -576,6 +580,50 @@ namespace LMStud{
 				} catch(ObjectDisposedException){} finally{ GenerationLock.Release(); }
 			});
 		}
+		private static string RoleToApiRole(MessageRole role){
+			switch(role){
+				case MessageRole.Assistant: return "assistant";
+				case MessageRole.Tool: return "tool";
+				default: return "user";
+			}
+		}
+		private List<ApiClient.ChatMessage> BuildApiMessages(MessageRole role, string prompt, bool addToChat){
+			var messages = new List<ApiClient.ChatMessage>();
+			var systemPrompt = _systemPrompt;
+			if(!string.IsNullOrWhiteSpace(systemPrompt)) messages.Add(new ApiClient.ChatMessage("system", systemPrompt));
+			foreach(var msg in _chatMessages){
+				if(string.IsNullOrWhiteSpace(msg.Message)) continue;
+				messages.Add(new ApiClient.ChatMessage(RoleToApiRole(msg.Role), msg.Message));
+			}
+			if(!addToChat && !string.IsNullOrWhiteSpace(prompt)) messages.Add(new ApiClient.ChatMessage(RoleToApiRole(role), prompt));
+			return messages;
+		}
+		private void GenerateWithApi(MessageRole role, string prompt, bool addToChat){
+			string assistantMsg = null;
+			Exception error = null;
+			try{
+				var messages = BuildApiMessages(role, prompt, addToChat);
+				var client = new ApiClient(_apiClientURL, _apiClientKey, _apiClientModel);
+				assistantMsg = client.CreateChatCompletion(messages, _temp, _nGen, CancellationToken.None);
+			} catch(Exception ex){ error = ex; }
+			try{
+				BeginInvoke(new MethodInvoker(() => {
+					if(error != null){ MessageBox.Show(this, error.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error); }
+					else{
+						if(!string.IsNullOrWhiteSpace(assistantMsg)){
+							var message = AddMessage(MessageRole.Assistant, assistantMsg);
+							message.Generating = false;
+							if(_speak) QueueSpeech(assistantMsg);
+						}
+					}
+					butGen.Text = Resources.Generate;
+					butReset.Enabled = butApply.Enabled = true;
+					_generating = false;
+					foreach(var message in _chatMessages) message.Generating = false;
+					if(checkVoiceInput.CheckState == CheckState.Checked) TryStartSpeechTranscription(false);
+				}));
+			} catch(ObjectDisposedException){} finally{ GenerationLock.Release(); }
+		}
 		internal bool GenerateForApi(byte[] state, string prompt, Action<string> onToken, out byte[] newState, out int tokenCount){
 			newState = null;
 			tokenCount = 0;
@@ -592,16 +640,13 @@ namespace LMStud{
 				return true;
 			} finally{
 				try{ SetState(originalState); } catch{}
-				if(chatSnapshot != IntPtr.Zero)
-					try{ NativeMethods.RestoreChatState(chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
+				if(chatSnapshot != IntPtr.Zero) try{ NativeMethods.RestoreChatState(chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
 				_apiTokenCallback = null;
 				_apiGenerating = false;
 			}
 		}
 		private static int FindSentenceEnd(StringBuilder sb){
-			for(var i = 0; i < sb.Length - 1; i++)
-				if((sb[i] == '.' || sb[i] == '!' || sb[i] == '?') && char.IsWhiteSpace(sb[i + 1]))
-					return i;
+			for(var i = 0; i < sb.Length - 1; i++) if((sb[i] == '.' || sb[i] == '!' || sb[i] == '?') && char.IsWhiteSpace(sb[i + 1])) return i;
 			return -1;
 		}
 		internal byte[] GetState(){

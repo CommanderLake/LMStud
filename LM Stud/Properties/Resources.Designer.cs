@@ -142,15 +142,6 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Done loading: .
-        /// </summary>
-        internal static string Done_loading__ {
-            get {
-                return ResourceManager.GetString("Done_loading__", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Download.
         /// </summary>
         internal static string Download {
@@ -455,15 +446,6 @@ namespace LMStud.Properties {
         internal static string Model_search_error___0_ {
             get {
                 return ResourceManager.GetString("Model_search_error___0_", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Model unloaded.
-        /// </summary>
-        internal static string Model_unloaded {
-            get {
-                return ResourceManager.GetString("Model_unloaded", resourceCulture);
             }
         }
         
@@ -941,6 +923,24 @@ namespace LMStud.Properties {
         internal static string Unable_to_parse_the_chat_message_ {
             get {
                 return ResourceManager.GetString("Unable_to_parse_the_chat_message_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Using API Model: .
+        /// </summary>
+        internal static string Using_API_Model_ {
+            get {
+                return ResourceManager.GetString("Using_API_Model_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Using Model: .
+        /// </summary>
+        internal static string Using_Model_ {
+            get {
+                return ResourceManager.GetString("Using_Model_", resourceCulture);
             }
         }
         

@@ -100,6 +100,14 @@ namespace LMStud
 			this.checkDialectic = new System.Windows.Forms.CheckBox();
 			this.checkAutoScroll = new System.Windows.Forms.CheckBox();
 			this.tabPageSettings = new System.Windows.Forms.TabPage();
+			this.groupBox9 = new System.Windows.Forms.GroupBox();
+			this.comboApiClientModel = new System.Windows.Forms.ComboBox();
+			this.label39 = new System.Windows.Forms.Label();
+			this.textApiClientKey = new System.Windows.Forms.TextBox();
+			this.label38 = new System.Windows.Forms.Label();
+			this.textApiClientUrl = new System.Windows.Forms.TextBox();
+			this.label37 = new System.Windows.Forms.Label();
+			this.checkApiClientEnable = new System.Windows.Forms.CheckBox();
 			this.groupBox8 = new System.Windows.Forms.GroupBox();
 			this.numCmdTimeout = new System.Windows.Forms.NumericUpDown();
 			this.label36 = new System.Windows.Forms.Label();
@@ -229,6 +237,7 @@ namespace LMStud
 			this.tabControl1.SuspendLayout();
 			this.tabPageChat.SuspendLayout();
 			this.tabPageSettings.SuspendLayout();
+			this.groupBox9.SuspendLayout();
 			this.groupBox8.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numCmdTimeout)).BeginInit();
 			this.groupBox7.SuspendLayout();
@@ -821,6 +830,7 @@ namespace LMStud
 			// 
 			// tabPageSettings
 			// 
+			this.tabPageSettings.Controls.Add(this.groupBox9);
 			this.tabPageSettings.Controls.Add(this.groupBox8);
 			this.tabPageSettings.Controls.Add(this.groupBox7);
 			this.tabPageSettings.Controls.Add(this.textModelsPath);
@@ -842,6 +852,57 @@ namespace LMStud
 			resources.ApplyResources(this.tabPageSettings, "tabPageSettings");
 			this.tabPageSettings.Name = "tabPageSettings";
 			this.tabPageSettings.UseVisualStyleBackColor = true;
+			// 
+			// groupBox9
+			// 
+			this.groupBox9.Controls.Add(this.comboApiClientModel);
+			this.groupBox9.Controls.Add(this.label39);
+			this.groupBox9.Controls.Add(this.textApiClientKey);
+			this.groupBox9.Controls.Add(this.label38);
+			this.groupBox9.Controls.Add(this.textApiClientUrl);
+			this.groupBox9.Controls.Add(this.label37);
+			this.groupBox9.Controls.Add(this.checkApiClientEnable);
+			resources.ApplyResources(this.groupBox9, "groupBox9");
+			this.groupBox9.Name = "groupBox9";
+			this.groupBox9.TabStop = false;
+			// 
+			// comboApiClientModel
+			// 
+			resources.ApplyResources(this.comboApiClientModel, "comboApiClientModel");
+			this.comboApiClientModel.FormattingEnabled = true;
+			this.comboApiClientModel.Name = "comboApiClientModel";
+			this.comboApiClientModel.DropDown += new System.EventHandler(this.ComboApiClientModel_DropDown);
+			// 
+			// label39
+			// 
+			resources.ApplyResources(this.label39, "label39");
+			this.label39.Name = "label39";
+			// 
+			// textApiClientKey
+			// 
+			resources.ApplyResources(this.textApiClientKey, "textApiClientKey");
+			this.textApiClientKey.Name = "textApiClientKey";
+			// 
+			// label38
+			// 
+			resources.ApplyResources(this.label38, "label38");
+			this.label38.Name = "label38";
+			// 
+			// textApiClientUrl
+			// 
+			resources.ApplyResources(this.textApiClientUrl, "textApiClientUrl");
+			this.textApiClientUrl.Name = "textApiClientUrl";
+			// 
+			// label37
+			// 
+			resources.ApplyResources(this.label37, "label37");
+			this.label37.Name = "label37";
+			// 
+			// checkApiClientEnable
+			// 
+			resources.ApplyResources(this.checkApiClientEnable, "checkApiClientEnable");
+			this.checkApiClientEnable.Name = "checkApiClientEnable";
+			this.checkApiClientEnable.UseVisualStyleBackColor = true;
 			// 
 			// groupBox8
 			// 
@@ -992,7 +1053,7 @@ namespace LMStud
 			resources.ApplyResources(this.butVADDown, "butVADDown");
 			this.butVADDown.Name = "butVADDown";
 			this.butVADDown.UseVisualStyleBackColor = true;
-			this.butVADDown.Click += new System.EventHandler(this.butDownloadVADModel_Click);
+			this.butVADDown.Click += new System.EventHandler(this.ButDownloadVADModel_Click);
 			// 
 			// radioBasicVAD
 			// 
@@ -1807,6 +1868,8 @@ namespace LMStud
 			this.tabPageChat.PerformLayout();
 			this.tabPageSettings.ResumeLayout(false);
 			this.tabPageSettings.PerformLayout();
+			this.groupBox9.ResumeLayout(false);
+			this.groupBox9.PerformLayout();
 			this.groupBox8.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.numCmdTimeout)).EndInit();
 			this.groupBox7.ResumeLayout(false);
@@ -2022,6 +2085,14 @@ namespace LMStud
 		private System.Windows.Forms.CheckBox checkCMDEnable;
 		private System.Windows.Forms.NumericUpDown numCmdTimeout;
 		private System.Windows.Forms.Label label36;
+		private System.Windows.Forms.GroupBox groupBox9;
+		private System.Windows.Forms.TextBox textApiClientUrl;
+		private System.Windows.Forms.Label label37;
+		private System.Windows.Forms.CheckBox checkApiClientEnable;
+		private System.Windows.Forms.Label label39;
+		private System.Windows.Forms.TextBox textApiClientKey;
+		private System.Windows.Forms.Label label38;
+		private System.Windows.Forms.ComboBox comboApiClientModel;
 	}
 }
 

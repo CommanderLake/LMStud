@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Windows.Forms;
 using LMStud.Properties;
 using Newtonsoft.Json;
@@ -78,7 +79,7 @@ namespace LMStud{
 				}
 				if(reloadSmpl) CreateSampler(minPEff, topPEff, topKEff, tempEff, _repPen);
 			}
-			if(setSystemPrompt) QueueSetSystemPrompt(systemPromptEff);
+			if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPrompt();});
 		}
 		private void PopulateModelSettings(int modelIndex){
 			var path = _models[modelIndex].FilePath;

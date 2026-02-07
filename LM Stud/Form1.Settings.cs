@@ -1,53 +1,58 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
 	public partial class Form1{
-		private string _systemPrompt;
-		private string _modelsPath;
-		private int _ctxSize;
-		private int _gpuLayers;
-		private float _temp;
-		private int _nGen;
-		private NativeMethods.GgmlNumaStrategy _numaStrat;
-		private float _repPen;
-		private int _topK;
-		private float _topP;
-		private float _minP;
-		private int _batchSize;
-		private bool _mMap;
-		private bool _mLock;
-		private int _nThreads;
-		private int _nThreadsBatch;
-		private int _whisperModelIndex;
-		private int _vadModelIndex;
-		private string _wakeWord;
-		private float _wakeWordSimilarity;
-		private float _vadThreshold;
-		private float _freqThreshold;
-		private float _whisperTemp;
-		private bool _whisperUseGPU;
-		private bool _useWhisperVAD;
-		private bool _speak;
-		private CheckState _flashAttn;
-		private string _googleAPIKey;
-		private string _googleSearchID;
-		private int _googleSearchResultCount;
-		private bool _googleSearchEnable;
-		private bool _webpageFetchEnable;
-		private string _fileBaseDir;
-		private bool _fileListEnable;
-		private bool _fileCreateEnable;
-		private bool _fileReadEnable;
-		private bool _fileWriteEnable;
-		private bool _dateTimeEnable;
-		private bool _cmdEnable;
-		private int _cmdTimeoutMs;
+		private bool _apiClientEnable;
+		private string _apiClientKey;
+		private string _apiClientModel;
+		private string _apiClientURL;
 		private bool _apiServerEnable;
 		private int _apiServerPort;
+		private int _batchSize;
+		private bool _cmdEnable;
+		private int _cmdTimeoutMs;
+		private int _ctxSize;
+		private bool _dateTimeEnable;
+		private string _fileBaseDir;
+		private bool _fileCreateEnable;
+		private bool _fileListEnable;
+		private bool _fileReadEnable;
+		private bool _fileWriteEnable;
+		private CheckState _flashAttn;
+		private float _freqThreshold;
 		private int _genDelay;
+		private string _googleAPIKey;
+		private bool _googleSearchEnable;
+		private string _googleSearchID;
+		private int _googleSearchResultCount;
+		private int _gpuLayers;
+		private float _minP;
+		private bool _mLock;
+		private bool _mMap;
+		private string _modelsPath;
+		private int _nGen;
+		private int _nThreads;
+		private int _nThreadsBatch;
+		private NativeMethods.GgmlNumaStrategy _numaStrat;
+		private float _repPen;
+		private bool _speak;
+		private string _systemPrompt;
+		private float _temp;
+		private int _topK;
+		private float _topP;
+		private bool _useWhisperVAD;
+		private int _vadModelIndex;
+		private float _vadThreshold;
+		private string _wakeWord;
+		private float _wakeWordSimilarity;
+		private bool _webpageFetchEnable;
+		private int _whisperModelIndex;
+		private float _whisperTemp;
+		private bool _whisperUseGPU;
 		private void LoadConfig(){
 			_systemPrompt = textSystemPrompt.Text = Settings.Default.SystemPrompt;
 			_modelsPath = textModelsPath.Text = Settings.Default.ModelsDir;
@@ -67,7 +72,7 @@ namespace LMStud{
 			_nThreadsBatch = (int)(numThreadsBatch.Value = Settings.Default.ThreadsBatch);
 			_wakeWord = textWakeWord.Text = Settings.Default.WakeWord;
 			_wakeWordSimilarity = (float)(numWakeWordSimilarity.Value = Settings.Default.WakeWordSimilarity);
-			try { _vadThreshold = (float)(numVadThreshold.Value = Settings.Default.VadThreshold); } catch(ArgumentOutOfRangeException) { _vadThreshold = (float)(numVadThreshold.Value); }
+			try{ _vadThreshold = (float)(numVadThreshold.Value = Settings.Default.VadThreshold); } catch(ArgumentOutOfRangeException){ _vadThreshold = (float)numVadThreshold.Value; }
 			_freqThreshold = (float)(numFreqThreshold.Value = Settings.Default.FreqThreshold);
 			_whisperUseGPU = checkWhisperUseGPU.Checked = Settings.Default.whisperUseGPU;
 			_whisperTemp = (float)(numWhisperTemp.Value = Settings.Default.WhisperTemp);
@@ -90,11 +95,11 @@ namespace LMStud{
 			_apiServerEnable = checkApiServerEnable.Checked = Settings.Default.ApiServerEnable;
 			_apiServerPort = (int)(numApiServerPort.Value = Settings.Default.ApiServerPort);
 			_genDelay = (int)(numGenDelay.Value = Settings.Default.GenDelay);
+			_apiClientEnable = checkApiClientEnable.Checked = Settings.Default.ApiClientEnable;
+			_apiClientURL = textApiClientUrl.Text = Settings.Default.ApiClientBaseUrl;
+			_apiClientKey = textApiClientKey.Text = Settings.Default.ApiClientKey;
+			_apiClientModel = comboApiClientModel.Text = Settings.Default.ApiClientModel;
 			NativeMethods.SetSilenceTimeout(_genDelay);
-			if(_apiServerEnable){
-				_apiServer.Port = _apiServerPort;
-				_apiServer.Start();
-			}
 			NativeMethods.SetFileBaseDir(_fileBaseDir);
 			NativeMethods.SetWakeCommand(_wakeWord);
 			NativeMethods.SetVADThresholds(_vadThreshold, _freqThreshold);
@@ -102,6 +107,11 @@ namespace LMStud{
 			NativeMethods.SetWhisperTemp(_whisperTemp);
 			NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID, _googleSearchResultCount);
 			NativeMethods.SetCommandPromptTimeout(_cmdTimeoutMs);
+			SetModelStatus();
+			if(_apiServerEnable){
+				_apiServer.Port = _apiServerPort;
+				_apiServer.Start();
+			}
 		}
 		private void UpdateSetting<T>(ref T currentValue, T newValue, Action<T> updateAction){
 			if(EqualityComparer<T>.Default.Equals(currentValue, newValue)) return;
@@ -119,6 +129,7 @@ namespace LMStud{
 			var registerTools = false;
 			var setSystemPrompt = false;
 			var modelOverrideChanged = false;
+			var setStatusLabel = false;
 			ModelSettings ms = default;
 			var overrideSettings = LlModelLoaded && _modelSettings.TryGetValue(_models[_modelIndex].FilePath, out ms) && ms.OverrideSettings;
 			UpdateSetting(ref _systemPrompt, textSystemPrompt.Text, value => {
@@ -248,7 +259,6 @@ namespace LMStud{
 				Settings.Default.VadThreshold = numVadThreshold.Value;
 				setVAD = true;
 			});
-			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			UpdateSetting(ref _flashAttn, checkFlashAttn.CheckState, value => {
 				Settings.Default.FlashAttn = (uint)value;
 				if(overrideSettings){
@@ -314,7 +324,8 @@ namespace LMStud{
 				if(value){
 					_apiServer.Port = _apiServerPort;
 					_apiServer.Start();
-				} else _apiServer.Stop();
+				}
+				else{ _apiServer.Stop(); }
 			});
 			UpdateSetting(ref _apiServerPort, (int)numApiServerPort.Value, value => {
 				Settings.Default.ApiServerPort = value;
@@ -328,13 +339,24 @@ namespace LMStud{
 				Settings.Default.GenDelay = value;
 				NativeMethods.SetSilenceTimeout(value);
 			});
+			UpdateSetting(ref _apiClientEnable, checkApiClientEnable.Checked, value => {
+				Settings.Default.ApiClientEnable = value;
+				setStatusLabel = true;
+			});
+			UpdateSetting(ref _apiClientURL, textApiClientUrl.Text, value => {Settings.Default.ApiClientBaseUrl = value;});
+			UpdateSetting(ref _apiClientKey, textApiClientKey.Text, value => {Settings.Default.ApiClientKey = value;});
+			UpdateSetting(ref _apiClientModel, comboApiClientModel.Text, value => {
+				Settings.Default.ApiClientModel = value;
+				setStatusLabel = true;
+			});
 			var flash = overrideSettings ? ms.FlashAttn : _flashAttn;
 			var minP = overrideSettings ? ms.MinP : _minP;
 			var topP = overrideSettings ? ms.TopP : _topP;
 			var topK = overrideSettings ? ms.TopK : _topK;
 			var temp = overrideSettings ? ms.Temp : _temp;
 			if(LlModelLoaded)
-				if(reloadModel && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes) LoadModel(_modelIndex, false);
+				if(reloadModel &&
+					MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes){ LoadModel(_modelIndex, false); }
 				else{
 					if(reloadCtx) CreateContext(_cntCtxMax, _batchSize, flash, _nThreads, _nThreadsBatch);
 					if(reloadSmpl) CreateSampler(minP, topP, topK, temp, _repPen);
@@ -345,7 +367,8 @@ namespace LMStud{
 				if(_whisperModelIndex < 0 || !File.Exists(_whisperModels[_whisperModelIndex])){
 					checkVoiceInput.Checked = false;
 					MessageBox.Show(this, Resources.Error_Whisper_model_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
-				} else{
+				}
+				else{
 					if(checkVoiceInput.CheckState != CheckState.Unchecked) NativeMethods.StopSpeechTranscription();
 					NativeMethods.LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU, _useWhisperVAD, _whisperModels[_vadModelIndex]);
 					if(checkVoiceInput.CheckState != CheckState.Unchecked) NativeMethods.StartSpeechTranscription();
@@ -353,10 +376,8 @@ namespace LMStud{
 			}
 			if(setGoogle) NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID, _googleSearchResultCount);
 			if(registerTools) RegisterTools();
-			if(registerTools || setSystemPrompt){
-				if(LlModelLoaded) QueueSetSystemPrompt(_systemPrompt);
-				else SetSystemPrompt();
-			}
+			if(setStatusLabel) SetModelStatus();
+			if(registerTools || setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPrompt();});
 			if(overrideSettings && modelOverrideChanged) MessageBox.Show(this, Resources.The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 			Settings.Default.Save();
 		}
@@ -384,7 +405,7 @@ The file tools use 1-based line numbers.
 First use list_directory with an empty path before using the file tools to help with coding tasks or other file changes.
 Always read a file and verify its contents before making changes.");
 		}
-		private void butDownloadVADModel_Click(object sender, EventArgs e){
+		private void ButDownloadVADModel_Click(object sender, EventArgs e){
 			HugLoadFiles("ggml-org", "whisper-vad", ".bin");
 			tabControl1.SelectTab(3);
 		}
@@ -393,7 +414,7 @@ Always read a file and verify its contents before making changes.");
 			PopulateWhisperModels(false, true);
 		}
 		private void PopulateWhisperModels(bool whisper, bool vad){
-			if (!ModelsFolderExists(false)) return;
+			if(!ModelsFolderExists(false)) return;
 			UseWaitCursor = true;
 			try{
 				_whisperModels.Clear();
@@ -420,6 +441,13 @@ Always read a file and verify its contents before making changes.");
 					_vadModelIndex = comboVADModel.SelectedIndex;
 				}
 			} finally{ UseWaitCursor = false; }
+		}
+		private void ComboApiClientModel_DropDown(object sender, EventArgs e){
+			try{
+				List<string> clientModels;
+				using(var client = new ApiClient(textApiClientUrl.Text, textApiClientKey.Text, "")){ clientModels = client.ListModels(CancellationToken.None); }
+				foreach(var model in clientModels) comboApiClientModel.Items.Add(model);
+			} catch(Exception ex){ MessageBox.Show(this, ex.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);}
 		}
 	}
 }

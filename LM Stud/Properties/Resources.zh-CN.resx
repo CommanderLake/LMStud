@@ -212,13 +212,10 @@
   <data name="Loading__" xml:space="preserve">
     <value>正在加载：</value>
   </data>
-  <data name="Done_loading__" xml:space="preserve">
-    <value>加载完成：</value>
-  </data>
-  <data name="Model_unloaded" xml:space="preserve">
-    <value>模型已卸载</value>
-  </data>
-  <data name="A_changed_setting_requires_the_model_to_be_reloaded__reload_now_" xml:space="preserve">
+<data name="Using_Model_" xml:space="preserve">
+	<value>使用模型：</value>
+</data>
+<data name="A_changed_setting_requires_the_model_to_be_reloaded__reload_now_" xml:space="preserve">
     <value>设置已更改，需要重新加载模型。是否立即重新加载？</value>
   </data>
   <data name="Folder_not_found" xml:space="preserve">
@@ -421,5 +418,8 @@
 </data>
 <data name="Editing_transcription_" xml:space="preserve">
 	<value>正在编辑转录文本——按 Enter 完成，按 Esc 取消</value>
+</data>
+<data name="Using_API_Model_" xml:space="preserve">
+	<value>使用 API 模型：</value>
 </data>
 </root>

@@ -209,13 +209,10 @@
   <data name="Loading__" xml:space="preserve">
     <value>Loading: </value>
   </data>
-  <data name="Done_loading__" xml:space="preserve">
-    <value>Done loading: </value>
-  </data>
-  <data name="Model_unloaded" xml:space="preserve">
-    <value>Model unloaded</value>
-  </data>
-  <data name="A_changed_setting_requires_the_model_to_be_reloaded__reload_now_" xml:space="preserve">
+<data name="Using_Model_" xml:space="preserve">
+	<value>Using Model: </value>
+</data>
+<data name="A_changed_setting_requires_the_model_to_be_reloaded__reload_now_" xml:space="preserve">
     <value>A changed setting requires the model to be reloaded, reload now?</value>
   </data>
   <data name="Folder_not_found" xml:space="preserve">
@@ -419,4 +416,7 @@
   <data name="Editing_transcription_" xml:space="preserve">
     <value>Editing transcription - Press Enter to finish or Esc to cancel</value>
   </data>
+<data name="Using_API_Model_" xml:space="preserve">
+	<value>Using API Model: </value>
+</data>
 </root>
