@@ -11,7 +11,7 @@ curl -s %BASE%/v1/model
 echo.
 
 echo ==== First chat message (no session) ====
-curl -s -X POST %BASE%/v1/chat/completions ^
+curl -s -X POST %BASE%/v1/responses ^
   -H "Content-Type: application/json" ^
   -d "{\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}]}" > "!RESP!"
 
@@ -22,13 +22,13 @@ type "!RESP!"
 echo.
 
 echo ==== Follow-up message using session ====
-curl -s -X POST %BASE%/v1/chat/completions ^
+curl -s -X POST %BASE%/v1/responses ^
   -H "Content-Type: application/json" ^
   -d "{\"session_id\":\"!SESSION!\",\"messages\":[{\"role\":\"user\",\"content\":\"How are you?\"}]}"
 echo.
 
 echo ==== Reset session ====
-curl -s -X POST %BASE%/v1/chat/reset ^
+curl -s -X POST %BASE%/v1/reset ^
   -H "Content-Type: application/json" ^
   -d "{\"session_id\":\"!SESSION!\"}"
 echo.

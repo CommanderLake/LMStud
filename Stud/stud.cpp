@@ -729,3 +729,37 @@ char* GetContextAsText(){
 	if(out) std::memcpy(out, outStr.c_str(), outStr.size() + 1);
 	return out;
 }
+extern "C" EXPORT void* CaptureChatState(){
+	auto* snapshot = new(std::nothrow) ChatStateSnapshot();
+	if(!snapshot) return nullptr;
+	snapshot->chatMsgs[0] = _session.chatMsgs[0];
+	snapshot->chatMsgs[1] = _session.chatMsgs[1];
+	snapshot->cachedTokens[0] = _session.cachedTokens[0];
+	snapshot->cachedTokens[1] = _session.cachedTokens[1];
+	snapshot->dialState[0] = _session.dialState[0];
+	snapshot->dialState[1] = _session.dialState[1];
+	snapshot->dId = _session.dId;
+	snapshot->prompt = _session.prompt;
+	snapshot->toolsPrompt = _session.toolsPrompt;
+	snapshot->syntax = _session.syntax;
+	snapshot->useJinja = _session.useJinja;
+	snapshot->nBatch = _session.nBatch;
+	return snapshot;
+}
+extern "C" EXPORT void RestoreChatState(void* state){
+	if(!state) return;
+	const auto* snapshot = static_cast<ChatStateSnapshot*>(state);
+	_session.chatMsgs[0] = snapshot->chatMsgs[0];
+	_session.chatMsgs[1] = snapshot->chatMsgs[1];
+	_session.cachedTokens[0] = snapshot->cachedTokens[0];
+	_session.cachedTokens[1] = snapshot->cachedTokens[1];
+	_session.dialState[0] = snapshot->dialState[0];
+	_session.dialState[1] = snapshot->dialState[1];
+	_session.dId = snapshot->dId;
+	_session.prompt = snapshot->prompt;
+	_session.toolsPrompt = snapshot->toolsPrompt;
+	_session.syntax = snapshot->syntax;
+	_session.useJinja = snapshot->useJinja;
+	_session.nBatch = snapshot->nBatch;
+}
+extern "C" EXPORT void FreeChatState(void* state){ delete static_cast<ChatStateSnapshot*>(state); }

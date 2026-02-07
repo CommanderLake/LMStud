@@ -122,9 +122,9 @@ namespace LMStud{
 		}
 		private static string BuildChatEndpoint(string apiBaseUrl){
 			var normalized = apiBaseUrl.EndsWith("/") ? apiBaseUrl : apiBaseUrl + "/";
-			if(normalized.EndsWith("/v1/")) return normalized + "chat/completions";
-			if(normalized.EndsWith("/v1")) return normalized + "/chat/completions";
-			return normalized + "v1/chat/completions";
+			if(normalized.EndsWith("/v1/")) return normalized + "responses";
+			if(normalized.EndsWith("/v1")) return normalized + "/responses";
+			return normalized + "v1/responses";
 		}
 		private static string BuildModelsEndpoint(string apiBaseUrl){
 			var normalized = apiBaseUrl.EndsWith("/") ? apiBaseUrl : apiBaseUrl + "/";
@@ -141,11 +141,6 @@ namespace LMStud{
 				Role = role;
 				Content = content;
 			}
-		}
-		internal sealed class ToolDefinition{
-			public string Description;
-			public string Name;
-			public JToken Parameters;
 		}
 		internal sealed class ToolCall{
 			public string Arguments;

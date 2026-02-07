@@ -320,14 +320,6 @@ namespace LMStud{
 				Settings.Default.CMDToolTimeoutMs = value;
 				NativeMethods.SetCommandPromptTimeout(value);
 			});
-			UpdateSetting(ref _apiServerEnable, checkApiServerEnable.Checked, value => {
-				Settings.Default.ApiServerEnable = value;
-				if(value){
-					_apiServer.Port = _apiServerPort;
-					_apiServer.Start();
-				}
-				else{ _apiServer.Stop(); }
-			});
 			UpdateSetting(ref _apiServerPort, (int)numApiServerPort.Value, value => {
 				Settings.Default.ApiServerPort = value;
 				if(_apiServerEnable){
@@ -335,6 +327,14 @@ namespace LMStud{
 					_apiServer.Port = value;
 					_apiServer.Start();
 				}
+			});
+			UpdateSetting(ref _apiServerEnable, checkApiServerEnable.Checked, value => {
+				Settings.Default.ApiServerEnable = value;
+				if(value){
+					_apiServer.Port = _apiServerPort;
+					_apiServer.Start();
+				}
+				else{ _apiServer.Stop(); }
 			});
 			UpdateSetting(ref _genDelay, (int)numGenDelay.Value, value => {
 				Settings.Default.GenDelay = value;

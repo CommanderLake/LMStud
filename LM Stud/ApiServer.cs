@@ -58,8 +58,8 @@ namespace LMStud{
 				acquired = true;
 				if(method == "GET" && path == "/v1/models") HandleModels(context, useRemoteApi);
 				else if(method == "GET" && path == "/v1/model") HandleModel(context, useRemoteApi);
-				else if(method == "POST" && path == "/v1/chat/completions") HandleChat(context);
-				else if(method == "POST" && path == "/v1/chat/reset") HandleReset(context);
+				else if(method == "POST" && path == "/v1/responses") HandleChat(context);
+				else if(method == "POST" && path == "/v1/reset") HandleReset(context);
 				else context.Response.StatusCode = 404;
 			} catch{ context.Response.StatusCode = 500; } finally{
 				try{ context.Response.OutputStream.Close(); } catch{}
