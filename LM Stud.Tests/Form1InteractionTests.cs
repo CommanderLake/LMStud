@@ -225,6 +225,11 @@ namespace LM_Stud.Tests{
 			public NativeMethods.StudError RemoveMessagesStartingAt(int index){return NativeMethods.StudError.Success;}
 			public NativeMethods.StudError AddMessage(MessageRole role, string message){return NativeMethods.StudError.Success;}
 			public NativeMethods.StudError GenerateWithTools(MessageRole role, string prompt, int nPredict, bool callback){return NativeMethods.StudError.Success;}
+			public IntPtr ExecuteTool(string name, string argsJson){return IntPtr.Zero;}
+			public IntPtr GetToolsJson(out int length){
+				length = 0;
+				return IntPtr.Zero;
+			}
 			public void SetGoogle(string apiKey, string searchEngineID, int resultCount){}
 			public void SetFileBaseDir(string dir){}
 			public void ClearTools(){}

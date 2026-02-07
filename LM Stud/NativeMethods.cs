@@ -73,6 +73,8 @@ namespace LMStud{
 		public static StudError RemoveMessagesStartingAt(int index){return Implementation.RemoveMessagesStartingAt(index);}
 		public static StudError AddMessage(MessageRole role, string message){return Implementation.AddMessage(role, message);}
 		public static StudError GenerateWithTools(MessageRole role, string prompt, int nPredict, bool callback){return Implementation.GenerateWithTools(role, prompt, nPredict, callback);}
+		public static IntPtr ExecuteTool(string name, string argsJson){return Implementation.ExecuteTool(name, argsJson);}
+		public static IntPtr GetToolsJson(out int length){return Implementation.GetToolsJson(out length);}
 		public static void SetGoogle(string apiKey, string searchEngineID, int resultCount){Implementation.SetGoogle(apiKey, searchEngineID, resultCount);}
 		public static void SetFileBaseDir(string dir){Implementation.SetFileBaseDir(dir);}
 		public static void ClearTools(){Implementation.ClearTools();}
@@ -137,6 +139,8 @@ namespace LMStud{
 			StudError RemoveMessagesStartingAt(int index);
 			StudError AddMessage(MessageRole role, string message);
 			StudError GenerateWithTools(MessageRole role, string prompt, int nPredict, bool callback);
+			IntPtr ExecuteTool(string name, string argsJson);
+			IntPtr GetToolsJson(out int length);
 			void SetGoogle(string apiKey, string searchEngineID, int resultCount);
 			void SetFileBaseDir(string dir);
 			void ClearTools();
@@ -202,6 +206,8 @@ namespace LMStud{
 			public StudError RemoveMessagesStartingAt(int index){return NativeExports.RemoveMessagesStartingAt(index);}
 			public StudError AddMessage(MessageRole role, string message){return NativeExports.AddMessage(role, message);}
 			public StudError GenerateWithTools(MessageRole role, string prompt, int nPredict, bool callback){return NativeExports.GenerateWithTools(role, prompt, nPredict, callback);}
+			public IntPtr ExecuteTool(string name, string argsJson){return NativeExports.ExecuteTool(name, argsJson);}
+			public IntPtr GetToolsJson(out int length){return NativeExports.GetToolsJson(out length);}
 			public void SetGoogle(string apiKey, string searchEngineID, int resultCount){NativeExports.SetGoogle(apiKey, searchEngineID, resultCount);}
 			public void SetFileBaseDir(string dir){NativeExports.SetFileBaseDir(dir);}
 			public void ClearTools(){NativeExports.ClearTools();}
@@ -301,6 +307,10 @@ namespace LMStud{
 			internal static extern StudError AddMessage(MessageRole role, string message);
 			[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 			internal static extern StudError GenerateWithTools(MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
+			[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+			internal static extern IntPtr ExecuteTool([MarshalAs(UnmanagedType.LPUTF8Str)] string name, [MarshalAs(UnmanagedType.LPUTF8Str)] string argsJson);
+			[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+			internal static extern IntPtr GetToolsJson(out int length);
 			[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 			internal static extern void SetGoogle(string apiKey, string searchEngineID, int resultCount);
 			[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]

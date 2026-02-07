@@ -22,6 +22,7 @@ extern "C" {
 	EXPORT void RegisterTools(bool dateTime, bool googleSearch, bool webpageFetch, bool fileList, bool fileCreate, bool fileRead, bool fileWrite, bool commandPrompt);
 	EXPORT void CloseCommandPrompt();
 	EXPORT void StopCMDOutput();
+	EXPORT const char* GetToolsJson(int* length);
 }
 std::string JsonEscape(const std::string& in);
 std::string GetArgValue(const char* args, const char* key);

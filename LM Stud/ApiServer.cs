@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using LMStud.Properties;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 namespace LMStud{
 	public class ApiServer{
 		private readonly Form1 _form;
@@ -163,9 +164,31 @@ namespace LMStud{
 						messages.Add(new ApiClient.ChatMessage(message.Role, message.Content));
 					}
 				}
+				var toolsJson = _form.BuildApiToolsJson();
 				var client = CreateApiClient();
-				var assistant = client.CreateChatCompletion(messages, (float)Settings.Default.Temp, (int)Settings.Default.NGen, CancellationToken.None);
+				var result = client.CreateChatCompletion(messages, (float)Settings.Default.Temp, (int)Settings.Default.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
+				List<string> toolOutputs = null;
+				var rounds = 0;
+				string lastToolSignature = null;
+				while(result.ToolCalls != null && result.ToolCalls.Count > 0 && rounds < 5){
+					var toolSignature = string.Join("|", result.ToolCalls.Select(call => $"{call.Id}:{call.Name}:{call.Arguments}"));
+					if(toolSignature == lastToolSignature) throw new InvalidOperationException("Repeated tool calls detected.");
+					lastToolSignature = toolSignature;
+					messages.Add(new ApiClient.ChatMessage("assistant", result.Content){ ToolCalls = result.ToolCalls });
+					foreach(var toolCall in result.ToolCalls){
+						var toolResult = _form.ExecuteToolCall(toolCall);
+						if(toolOutputs == null) toolOutputs = new List<string>();
+						toolOutputs.Add(toolResult);
+						messages.Add(new ApiClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id });
+					}
+					result = client.CreateChatCompletion(messages, (float)Settings.Default.Temp, (int)Settings.Default.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
+					rounds++;
+				}
+				var assistant = result.Content;
 				session.Messages.AddRange(request.Messages ?? new List<Message>());
+				if(toolOutputs != null){
+					foreach(var toolResult in toolOutputs) session.Messages.Add(new Message{ Role = "tool", Content = toolResult });
+				}
 				session.Messages.Add(new Message{ Role = "assistant", Content = assistant });
 				_sessions.Update(session, session.Messages, null, 0);
 				var resp = new{ session_id = session.Id, choices = new[]{ new{ message = new{ role = "assistant", content = assistant } } } };
@@ -182,6 +205,8 @@ namespace LMStud{
 		private class ChatRequest{
 			public List<Message> Messages;
 			[JsonProperty("session_id")] public string SessionId;
+			[JsonProperty("tools")] public JArray Tools;
+			[JsonProperty("tool_choice")] public JToken ToolChoice;
 		}
 		public class Message{
 			public string Content;

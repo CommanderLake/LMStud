@@ -282,6 +282,11 @@ namespace LM_Stud.Tests{
 				cb?.Invoke("assistant response");
 				return NativeMethods.StudError.Success;
 			}
+			public IntPtr ExecuteTool(string name, string argsJson){return IntPtr.Zero;}
+			public IntPtr GetToolsJson(out int length){
+				length = 0;
+				return IntPtr.Zero;
+			}
 			public void SetGoogle(string apiKey, string searchEngineID, int resultCount){}
 			public void SetFileBaseDir(string dir){}
 			public void ClearTools(){}

@@ -112,6 +112,7 @@ namespace LMStud{
 				_apiServer.Port = _apiServerPort;
 				_apiServer.Start();
 			}
+			if(_apiClientEnable) RegisterTools();
 		}
 		private void UpdateSetting<T>(ref T currentValue, T newValue, Action<T> updateAction){
 			if(EqualityComparer<T>.Default.Equals(currentValue, newValue)) return;
@@ -444,8 +445,8 @@ Always read a file and verify its contents before making changes.");
 		}
 		private void ComboApiClientModel_DropDown(object sender, EventArgs e){
 			try{
-				List<string> clientModels;
-				using(var client = new ApiClient(textApiClientUrl.Text, textApiClientKey.Text, "")){ clientModels = client.ListModels(CancellationToken.None); }
+				var client = new ApiClient(textApiClientUrl.Text, textApiClientKey.Text, "");
+				var clientModels = client.ListModels(CancellationToken.None);
 				foreach(var model in clientModels) comboApiClientModel.Items.Add(model);
 			} catch(Exception ex){ MessageBox.Show(this, ex.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);}
 		}

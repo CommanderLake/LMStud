@@ -10,6 +10,7 @@
 using HrClock = std::chrono::high_resolution_clock;
 extern "C" void CloseCommandPrompt();
 extern "C" void StopCMDOutput();
+extern "C" void MarkToolsJsonDirty();
 static bool _gpuOomStud = false;
 static std::string _lastErrorMessage;
 namespace Stud::Backend{
@@ -62,18 +63,41 @@ void BackendInit(){
 	llama_backend_init();
 }
 void AddTool(const char* name, const char* description, const char* parameters, const ToolHandlerFn handler){
-	if(!name || !_hasTools) return;
+	if(!name) return;
 	common_chat_tool tool;
 	tool.name = name;
 	if(description) tool.description = description;
 	if(parameters) tool.parameters = parameters;
 	_tools.push_back(tool);
 	if(handler) _toolHandlers[name] = handler;
+	MarkToolsJsonDirty();
 }
 void ClearTools(){
 	CloseCommandPrompt();
 	_tools.clear();
 	_toolHandlers.clear();
+	MarkToolsJsonDirty();
+}
+static char* CopyCString(const std::string& text){
+	const auto size = text.size();
+	auto* buffer = static_cast<char*>(std::malloc(size + 1));
+	if(!buffer) return nullptr;
+	std::memcpy(buffer, text.data(), size);
+	buffer[size] = '\0';
+	return buffer;
+}
+extern "C" EXPORT char* ExecuteTool(const char* name, const char* argsJson){
+	if(!name || name[0] == '\0') return CopyCString("{\"error\":\"missing tool name\"}");
+	const auto it = _toolHandlers.find(name);
+	if(it == _toolHandlers.end() || !it->second) return CopyCString("{\"error\":\"unknown tool\"}");
+	try{
+		const std::string response = it->second(argsJson ? argsJson : "");
+		return CopyCString(response);
+	} catch(const std::exception& ex){
+		return CopyCString(std::string("{\"error\":\"") + ex.what() + "\"}");
+	} catch(...){
+		return CopyCString("{\"error\":\"tool execution failed\"}");
+	}
 }
 StudError CreateContext(const int nCtx, const int nBatch, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch){
 	if(_session.ctx){

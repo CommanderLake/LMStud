@@ -1,6 +1,8 @@
 #include "tools.h"
 #include "stud.h"
 #include <regex>
+static std::string _toolsJsonCache;
+static bool _toolsJsonDirty = true;
 void SetGoogle(const char* apiKey, const char* searchEngineId, const int resultCount){
 	if(apiKey){ googleAPIKey = apiKey; } else{ googleAPIKey.clear(); }
 	if(searchEngineId){ googleSearchID = searchEngineId; } else{ googleSearchID.clear(); }
@@ -128,4 +130,29 @@ void RegisterTools(const bool dateTime, const bool googleSearch, const bool webp
 		AddTool("command_prompt_start", "Start or restart a Windows command prompt session and return the initial output.", "{\"type\":\"object\",\"properties\":{},\"required\":[]}", StartCommandPromptTool);
 		AddTool("command_prompt_execute", "Execute a command in the active Windows command prompt session.", "{\"type\":\"object\",\"properties\":{\"command\":{\"type\":\"string\"},\"close\":{\"type\":\"boolean\"}},\"required\":[\"command\"]}", CommandPromptExecuteTool);
 	} else CloseCommandPrompt();
+}
+extern "C" void MarkToolsJsonDirty(){ _toolsJsonDirty = true; }
+static void RefreshToolsJsonCache(){
+	if(!_toolsJsonDirty) return;
+	const auto& tools = Stud::Backend::state().tools;
+	std::string json = "[";
+	for(size_t i = 0; i < tools.size(); i++){
+		const auto& tool = tools[i];
+		if(i > 0) json += ",";
+		json += "{\"type\":\"function\",\"function\":{";
+		json += "\"name\":\"" + JsonEscape(tool.name) + "\",";
+		json += "\"description\":\"" + JsonEscape(tool.description) + "\",";
+		json += "\"parameters\":";
+		if(tool.parameters.empty()) json += "{}";
+		else json += tool.parameters;
+		json += "}}";
+	}
+	json += "]";
+	_toolsJsonCache = json;
+	_toolsJsonDirty = false;
+}
+extern "C" EXPORT const char* GetToolsJson(int* length){
+	RefreshToolsJsonCache();
+	if(length) *length = static_cast<int>(_toolsJsonCache.size());
+	return _toolsJsonCache.c_str();
 }

@@ -600,16 +600,42 @@ namespace LMStud{
 		}
 		private void GenerateWithApi(MessageRole role, string prompt, bool addToChat){
 			string assistantMsg = null;
+			List<string> toolOutputs = null;
 			Exception error = null;
 			try{
 				var messages = BuildApiMessages(role, prompt, addToChat);
+				var toolsJson = BuildApiToolsJson();
 				var client = new ApiClient(_apiClientURL, _apiClientKey, _apiClientModel);
-				assistantMsg = client.CreateChatCompletion(messages, _temp, _nGen, CancellationToken.None);
+				var result = client.CreateChatCompletion(messages, _temp, _nGen, toolsJson, null, CancellationToken.None);
+				var rounds = 0;
+				string lastToolSignature = null;
+				while(result.ToolCalls != null && result.ToolCalls.Count > 0 && rounds < 5){
+					var toolSignature = string.Join("|", result.ToolCalls.Select(call => $"{call.Id}:{call.Name}:{call.Arguments}"));
+					if(toolSignature == lastToolSignature) throw new InvalidOperationException("Repeated tool calls detected.");
+					lastToolSignature = toolSignature;
+					messages.Add(new ApiClient.ChatMessage("assistant", result.Content){ ToolCalls = result.ToolCalls });
+					foreach(var toolCall in result.ToolCalls){
+						var toolResult = ExecuteToolCall(toolCall);
+						if(toolOutputs == null) toolOutputs = new List<string>();
+						toolOutputs.Add(toolResult);
+						messages.Add(new ApiClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id });
+					}
+					result = client.CreateChatCompletion(messages, _temp, _nGen, toolsJson, null, CancellationToken.None);
+					rounds++;
+				}
+				assistantMsg = result.Content;
 			} catch(Exception ex){ error = ex; }
 			try{
 				BeginInvoke(new MethodInvoker(() => {
 					if(error != null){ MessageBox.Show(this, error.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error); }
 					else{
+						if(toolOutputs != null){
+							foreach(var output in toolOutputs){
+								if(string.IsNullOrWhiteSpace(output)) continue;
+								var toolMessage = AddMessage(MessageRole.Tool, output);
+								toolMessage.SetRoleText("Tool");
+							}
+						}
 						if(!string.IsNullOrWhiteSpace(assistantMsg)){
 							var message = AddMessage(MessageRole.Assistant, assistantMsg);
 							message.Generating = false;

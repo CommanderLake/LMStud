@@ -1,16 +1,14 @@
+#include "stud.h"
 #include "tools.h"
 #include <Windows.h>
 #include <algorithm>
 #include <atomic>
-#include <cctype>
 #include <mutex>
 #include <string>
 #include <memory>
 #include <chrono>
 #include <vector>
 #include <sstream>
-
-#include "stud.h"
 struct CommandPromptSession{
 	HANDLE process = nullptr;
 	HANDLE stdinWrite = nullptr;
