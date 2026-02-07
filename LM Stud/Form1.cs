@@ -359,18 +359,22 @@ namespace LMStud{
 			});
 		}
 		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)(((e.Delta/8) << 16) & 0xffff0000), IntPtr.Zero);}
-		private ChatMessage AddMessage(MessageRole role, string message){
-			var cm = new ChatMessage(role, message, checkMarkdown.Checked){ Parent = panelChat, Width = panelChat.ClientSize.Width };
-			cm.butDelete.Click += (o, args) => MsgButDeleteOnClick(cm);
-			cm.butRegen.Click += (o, args) => MsgButRegenOnClick(cm);
-			cm.butEdit.Click += (o, args) => MsgButEditOnClick(cm);
-			cm.butCancelEdit.Click += (o, args) => MsgButEditCancelOnClick(cm);
-			cm.butApplyEdit.Click += (o, args) => MsgButEditApplyOnClick(cm);
-			cm.richTextMsg.MouseWheel += RichTextMsgOnMouseWheel;
-			cm.richTextMsg.LinkClicked += RichTextMsgOnLinkClicked;
-			panelChat.Controls.Add(cm);
+		private ChatMessage AddMessage(MessageRole role, string message, bool showInChat = true, List<ApiClient.ToolCall> toolCalls = null, string toolCallId = null){
+			var cm = new ChatMessage(role, message ?? "", checkMarkdown.Checked){ ApiToolCalls = toolCalls, ApiToolCallId = toolCallId };
+			if(showInChat){
+				cm.Parent = panelChat;
+				cm.Width = panelChat.ClientSize.Width;
+				cm.butDelete.Click += (o, args) => MsgButDeleteOnClick(cm);
+				cm.butRegen.Click += (o, args) => MsgButRegenOnClick(cm);
+				cm.butEdit.Click += (o, args) => MsgButEditOnClick(cm);
+				cm.butCancelEdit.Click += (o, args) => MsgButEditCancelOnClick(cm);
+				cm.butApplyEdit.Click += (o, args) => MsgButEditApplyOnClick(cm);
+				cm.richTextMsg.MouseWheel += RichTextMsgOnMouseWheel;
+				cm.richTextMsg.LinkClicked += RichTextMsgOnLinkClicked;
+				panelChat.Controls.Add(cm);
+				panelChat.ScrollToEnd();
+			}
 			_chatMessages.Add(cm);
-			panelChat.ScrollToEnd();
 			return cm;
 		}
 		private static void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){Process.Start(e.LinkText);}
@@ -592,15 +596,37 @@ namespace LMStud{
 			var systemPrompt = _systemPrompt;
 			if(!string.IsNullOrWhiteSpace(systemPrompt)) messages.Add(new ApiClient.ChatMessage("system", systemPrompt));
 			foreach(var msg in _chatMessages){
-				if(string.IsNullOrWhiteSpace(msg.Message)) continue;
-				messages.Add(new ApiClient.ChatMessage(RoleToApiRole(msg.Role), msg.Message));
+				var hasToolCalls = msg.ApiToolCalls != null && msg.ApiToolCalls.Count > 0;
+				if(msg.Role == MessageRole.Tool && string.IsNullOrWhiteSpace(msg.ApiToolCallId)) continue;
+				if(string.IsNullOrWhiteSpace(msg.Message) && !hasToolCalls) continue;
+				var apiMessage = new ApiClient.ChatMessage(RoleToApiRole(msg.Role), msg.Message);
+				if(hasToolCalls) apiMessage.ToolCalls = msg.ApiToolCalls;
+				if(!string.IsNullOrWhiteSpace(msg.ApiToolCallId)) apiMessage.ToolCallId = msg.ApiToolCallId;
+				messages.Add(apiMessage);
 			}
 			if(!addToChat && !string.IsNullOrWhiteSpace(prompt)) messages.Add(new ApiClient.ChatMessage(RoleToApiRole(role), prompt));
 			return messages;
 		}
+		private sealed class ToolCallBatch{
+			public readonly string Content;
+			public readonly List<ApiClient.ToolCall> ToolCalls;
+			public ToolCallBatch(string content, List<ApiClient.ToolCall> toolCalls){
+				Content = content;
+				ToolCalls = toolCalls;
+			}
+		}
+		private sealed class ToolOutputInfo{
+			public readonly string Output;
+			public readonly string ToolCallId;
+			public ToolOutputInfo(string output, string toolCallId){
+				Output = output;
+				ToolCallId = toolCallId;
+			}
+		}
 		private void GenerateWithApi(MessageRole role, string prompt, bool addToChat){
 			string assistantMsg = null;
-			List<string> toolOutputs = null;
+			List<ToolCallBatch> toolCallBatches = null;
+			List<ToolOutputInfo> toolOutputs = null;
 			Exception error = null;
 			try{
 				var messages = BuildApiMessages(role, prompt, addToChat);
@@ -613,11 +639,13 @@ namespace LMStud{
 					var toolSignature = string.Join("|", result.ToolCalls.Select(call => $"{call.Id}:{call.Name}:{call.Arguments}"));
 					if(toolSignature == lastToolSignature) throw new InvalidOperationException("Repeated tool calls detected.");
 					lastToolSignature = toolSignature;
+					if(toolCallBatches == null) toolCallBatches = new List<ToolCallBatch>();
+					toolCallBatches.Add(new ToolCallBatch(result.Content, result.ToolCalls));
 					messages.Add(new ApiClient.ChatMessage("assistant", result.Content){ ToolCalls = result.ToolCalls });
 					foreach(var toolCall in result.ToolCalls){
 						var toolResult = ExecuteToolCall(toolCall);
-						if(toolOutputs == null) toolOutputs = new List<string>();
-						toolOutputs.Add(toolResult);
+						if(toolOutputs == null) toolOutputs = new List<ToolOutputInfo>();
+						toolOutputs.Add(new ToolOutputInfo(toolResult, toolCall.Id));
 						messages.Add(new ApiClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id });
 					}
 					result = client.CreateChatCompletion(messages, _temp, _nGen, toolsJson, null, CancellationToken.None);
@@ -629,10 +657,22 @@ namespace LMStud{
 				BeginInvoke(new MethodInvoker(() => {
 					if(error != null){ MessageBox.Show(this, error.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error); }
 					else{
-						if(toolOutputs != null){
+						if(toolCallBatches != null){
+							var outputIndex = 0;
+							foreach(var batch in toolCallBatches){
+								AddMessage(MessageRole.Assistant, batch.Content, false, batch.ToolCalls, null);
+								if(toolOutputs == null) continue;
+								for(var i = 0; i < batch.ToolCalls.Count && outputIndex < toolOutputs.Count; i++){
+									var output = toolOutputs[outputIndex++];
+									if(string.IsNullOrWhiteSpace(output.Output)) continue;
+									var toolMessage = AddMessage(MessageRole.Tool, output.Output, true, null, output.ToolCallId);
+									toolMessage.SetRoleText("Tool");
+								}
+							}
+						} else if(toolOutputs != null){
 							foreach(var output in toolOutputs){
-								if(string.IsNullOrWhiteSpace(output)) continue;
-								var toolMessage = AddMessage(MessageRole.Tool, output);
+								if(string.IsNullOrWhiteSpace(output.Output)) continue;
+								var toolMessage = AddMessage(MessageRole.Tool, output.Output, true, null, output.ToolCallId);
 								toolMessage.SetRoleText("Tool");
 							}
 						}

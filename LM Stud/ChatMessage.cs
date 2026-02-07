@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -10,6 +11,8 @@ namespace LMStud{
 	}
 	internal partial class ChatMessage : UserControl{
 		internal readonly MessageRole Role;
+		internal List<ApiClient.ToolCall> ApiToolCalls;
+		internal string ApiToolCallId;
 		private bool _markdown;
 		private string _message;
 		private string _think = "";
@@ -36,7 +39,7 @@ namespace LMStud{
 						if(Height != newHeight) Height = newHeight;
 						((MyFlowLayoutPanel)Parent).ScrollToEnd();
 					}));
-				} catch(ObjectDisposedException){}
+				} catch(ObjectDisposedException){} catch(InvalidOperationException){}
 			});
 		}
 		internal bool Markdown{
