@@ -612,7 +612,6 @@ namespace LMStud{
 				var history = ApiClient.BuildInputItems(messages);
 				var toolsJson = BuildApiToolsJson();
 				var client = new ApiClient(_apiClientURL, _apiClientKey, _apiClientModel, _systemPrompt);
-				var rounds = 0;
 				string lastToolSignature = null;
 				while(true){
 					var result = client.CreateChatCompletion(history, _temp, _nGen, toolsJson, null, CancellationToken.None);
@@ -620,18 +619,17 @@ namespace LMStud{
 					var content = result.Content;
 					var toolCalls = result.ToolCalls;
 					if(!string.IsNullOrWhiteSpace(content) || (toolCalls != null && toolCalls.Count > 0)){
-						content = toolCalls.Aggregate(content, (current, toolCall) => current + "\r\nTool name: " + toolCall.Name + "\r\nTool ID: " + toolCall.Id + "\r\nTool arguments: " + toolCall.Arguments);
+						content = toolCalls.Aggregate(content, (current, toolCall) => current + Resources.__Tool_name_ + toolCall.Name + Resources.__Tool_ID_ + toolCall.Id + Resources.__Tool_arguments_ + toolCall.Arguments);
 						var showInChat = !string.IsNullOrWhiteSpace(content);
 						try{
-							BeginInvoke(new MethodInvoker(() => {
+							Invoke(new MethodInvoker(() => {
 								var message = AddMessage(MessageRole.Assistant, "", content ?? "", showInChat, toolCalls);
-								message.Generating = false;
+								message.SetRoleText(Resources.Tool_Call);
 								if(_speak && !string.IsNullOrWhiteSpace(content)) QueueSpeech(content);
 							}));
 						} catch(ObjectDisposedException){}
 					}
 					if(toolCalls == null || toolCalls.Count == 0) break;
-					if(rounds >= 5) break;
 					var toolSignature = string.Join("|", toolCalls.Select(call => $"{call.Id}:{call.Name}:{call.Arguments}"));
 					if(toolSignature == lastToolSignature) throw new InvalidOperationException("Repeated tool calls detected.");
 					lastToolSignature = toolSignature;
@@ -641,17 +639,16 @@ namespace LMStud{
 						history.Add(ApiClient.BuildInputMessagePayload(toolMessage));
 						if(string.IsNullOrWhiteSpace(toolResult)) continue;
 						try{
-							BeginInvoke(new MethodInvoker(() => {
+							Invoke(new MethodInvoker(() => {
 								var toolMessageControl = AddMessage(MessageRole.Tool, "", toolResult, true, null, toolCall.Id);
-								toolMessageControl.SetRoleText("Tool");
+								toolMessageControl.SetRoleText(Resources.Tool_Output);
 							}));
 						} catch(ObjectDisposedException){}
 					}
-					rounds++;
 				}
 			} catch(Exception ex){ error = ex; }
 			try{
-				BeginInvoke(new MethodInvoker(() => {
+				Invoke(new MethodInvoker(() => {
 					if(error != null) MessageBox.Show(this, error.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 					butGen.Text = Resources.Generate;
 					butReset.Enabled = butApply.Enabled = true;
@@ -720,7 +717,7 @@ namespace LMStud{
 					This.BeginInvoke(new MethodInvoker(() => {
 						if(This._cntToolMsg == null){
 							This._cntToolMsg = This.AddMessage(MessageRole.Tool, "", message);
-							This._cntToolMsg.SetRoleText("Tool");
+							This._cntToolMsg.SetRoleText(Resources.Tool_Output);
 						}
 						else{ This._cntToolMsg.UpdateText("", message, true); }
 						This._cntAssMsg = null;

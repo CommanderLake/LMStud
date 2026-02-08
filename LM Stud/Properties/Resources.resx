@@ -419,4 +419,22 @@
 <data name="Using_API_Model_" xml:space="preserve">
 	<value>Using API Model: </value>
 </data>
+<data name="Tool_Output" xml:space="preserve">
+	<value>Tool Output</value>
+</data>
+<data name="Tool_Call" xml:space="preserve">
+	<value>Tool Call</value>
+</data>
+<data name="__Tool_name_" xml:space="preserve">
+	<value>
+Tool name: </value>
+</data>
+<data name="__Tool_ID_" xml:space="preserve">
+	<value>
+Tool ID: </value>
+</data>
+<data name="__Tool_arguments_" xml:space="preserve">
+	<value>
+Tool arguments: </value>
+</data>
 </root>

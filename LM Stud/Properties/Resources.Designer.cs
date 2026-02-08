@@ -61,6 +61,36 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 
+        ///Tool arguments: .
+        /// </summary>
+        internal static string @__Tool_arguments_ {
+            get {
+                return ResourceManager.GetString("__Tool_arguments_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 
+        ///Tool ID: .
+        /// </summary>
+        internal static string @__Tool_ID_ {
+            get {
+                return ResourceManager.GetString("__Tool_ID_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 
+        ///Tool name: .
+        /// </summary>
+        internal static string @__Tool_name_ {
+            get {
+                return ResourceManager.GetString("__Tool_name_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0}: {1}.
         /// </summary>
         internal static string _0____1_ {
@@ -554,6 +584,24 @@ namespace LMStud.Properties {
         internal static string The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_ {
             get {
                 return ResourceManager.GetString("The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tool Call.
+        /// </summary>
+        internal static string Tool_Call {
+            get {
+                return ResourceManager.GetString("Tool_Call", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tool Output.
+        /// </summary>
+        internal static string Tool_Output {
+            get {
+                return ResourceManager.GetString("Tool_Output", resourceCulture);
             }
         }
         
