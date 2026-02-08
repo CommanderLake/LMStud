@@ -31,7 +31,7 @@ namespace LMStud{
 			if(maxTokens > 0) payload["max_output_tokens"] = maxTokens;
 			if(!string.IsNullOrWhiteSpace(toolsJson)){
 				var normalizedTools = NormalizeToolsJson(toolsJson);
-				payload["tools"] = (JToken)normalizedTools ?? new JRaw(toolsJson);
+				payload["tools"] = (JToken)normalizedTools ?? JToken.Parse(toolsJson);
 				payload["tool_choice"] = toolChoice ?? new JValue("auto");
 				payload["parallel_tool_calls"] = true;
 			}
@@ -47,7 +47,10 @@ namespace LMStud{
 		}
 		internal static JToken BuildInputMessagePayload(ChatMessage message){
 			var isToolRole = string.Equals(message.Role, "tool", StringComparison.OrdinalIgnoreCase);
-			if(isToolRole) return new JObject{ ["type"] = "function_call_output", ["call_id"] = message.ToolCallId ?? "", ["output"] = message.Content ?? "" };
+			if(isToolRole){
+				if(string.IsNullOrWhiteSpace(message.ToolCallId)) throw new InvalidOperationException("Tool call output requires a call_id.");
+				return new JObject{ ["type"] = "function_call_output", ["call_id"] = message.ToolCallId, ["output"] = message.Content ?? "" };
+			}
 			return new JObject{ ["role"] = message.Role, ["content"] = message.Content ?? "" };
 		}
 		internal static JArray BuildInputItems(IEnumerable<ChatMessage> messages){
@@ -56,6 +59,13 @@ namespace LMStud{
 			foreach(var message in messages){
 				if(message == null) continue;
 				items.Add(BuildInputMessagePayload(message));
+				if(message.ToolCalls != null)
+					foreach(var toolCall in message.ToolCalls){
+						if(toolCall == null) continue;
+						if(string.IsNullOrWhiteSpace(toolCall.Id) || string.IsNullOrWhiteSpace(toolCall.Name)) continue;
+						var toolItem = new JObject{ ["type"] = "function_call", ["call_id"] = toolCall.Id, ["name"] = toolCall.Name, ["arguments"] = toolCall.Arguments ?? "" };
+						items.Add(toolItem);
+					}
 			}
 			return items;
 		}
@@ -115,27 +125,21 @@ namespace LMStud{
 			var sanitized = new JArray();
 			foreach(var item in output){
 				var clone = item?.DeepClone();
-				NormalizeToolCallIdentifiers(clone);
-				if(clone is JObject obj) obj.Remove("id");
+				RemoveIdFields(clone);
 				sanitized.Add(clone);
 			}
 			return sanitized;
 		}
-		private static void NormalizeToolCallIdentifiers(JToken token){
+		private static void RemoveIdFields(JToken token){
 			if(token == null || token.Type == JTokenType.Null) return;
 			if(token is JObject obj){
-				var type = obj.Value<string>("type");
-				if((string.Equals(type, "tool_call", StringComparison.OrdinalIgnoreCase) || string.Equals(type, "function_call", StringComparison.OrdinalIgnoreCase)) && obj["call_id"] == null &&
-					obj["id"] != null){
-					obj["call_id"] = obj["id"];
-					obj.Remove("id");
-				}
-				foreach(var property in obj.Properties().ToList()) NormalizeToolCallIdentifiers(property.Value);
+				obj.Remove("id");
+				foreach(var property in obj.Properties().ToList()) RemoveIdFields(property.Value);
 				return;
 			}
 			if(token is JArray array)
 				foreach(var item in array)
-					NormalizeToolCallIdentifiers(item);
+					RemoveIdFields(item);
 		}
 		private static string ExtractContentText(JToken contentToken){
 			if(contentToken == null || contentToken.Type == JTokenType.Null) return null;
@@ -161,10 +165,11 @@ namespace LMStud{
 		private static ToolCall ParseToolCallItem(JObject toolCallObj){
 			var name = toolCallObj.Value<string>("name") ?? toolCallObj["function"]?.Value<string>("name");
 			if(string.IsNullOrWhiteSpace(name)) return null;
+			var callId = toolCallObj.Value<string>("call_id");
+			if(string.IsNullOrWhiteSpace(callId)) return null;
 			var argumentsToken = toolCallObj["arguments"] ?? toolCallObj["function"]?["arguments"];
 			var arguments = argumentsToken == null ? "" : argumentsToken.Type == JTokenType.String ? argumentsToken.ToString() : argumentsToken.ToString(Formatting.None);
-			var id = toolCallObj.Value<string>("call_id") ?? toolCallObj.Value<string>("id");
-			return new ToolCall(id, name, arguments);
+			return new ToolCall(callId, name, arguments);
 		}
 		private static List<ToolCall> ParseToolCallsFromContent(JToken contentToken){
 			var contentArray = contentToken as JArray;
@@ -221,18 +226,7 @@ namespace LMStud{
 				var toolCallObj = toolCallToken as JObject;
 				if(toolCallObj == null) continue;
 				var toolCall = ParseToolCallItem(toolCallObj);
-				if(toolCall != null){
-					toolCalls.Add(toolCall);
-					continue;
-				}
-				var functionObj = toolCallObj["function"] as JObject;
-				if(functionObj == null) continue;
-				var name = functionObj.Value<string>("name");
-				if(string.IsNullOrWhiteSpace(name)) continue;
-				var argumentsToken = functionObj["arguments"];
-				var arguments = argumentsToken == null ? "" : argumentsToken.Type == JTokenType.String ? argumentsToken.ToString() : argumentsToken.ToString(Formatting.None);
-				var id = toolCallObj.Value<string>("call_id") ?? toolCallObj.Value<string>("id");
-				toolCalls.Add(new ToolCall(id, name, arguments));
+				if(toolCall != null) toolCalls.Add(toolCall);
 			}
 			return toolCalls.Count > 0 ? toolCalls : null;
 		}
