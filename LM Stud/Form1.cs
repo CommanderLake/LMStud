@@ -230,7 +230,7 @@ namespace LMStud{
 				DialecticPaused = false;
 			}
 		}
-		private void ButGen_Click(object sender, EventArgs e){
+		internal void ButGen_Click(object sender, EventArgs e){
 			if(Generating){
 				DialecticPaused = true;
 				NativeMethods.StopGeneration();
