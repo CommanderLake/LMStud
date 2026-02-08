@@ -11,7 +11,7 @@ namespace LMStud{
 		private const string FetchPrompt = "\nAfter calling the web_search tool you must subsequently call the get_webpage tool with a url followed by the get_webpage_text tool with the id of any relevant preview.";
 		internal volatile bool LlModelLoaded;
 		private string _lastModelPath = "";
-		private volatile bool _populating;
+		internal volatile bool Populating;
 		private int _cntCtxMax;
 		private int _modelCtxMax;
 		private int _modelIndex;
@@ -69,8 +69,8 @@ namespace LMStud{
 			return true;
 		}
 		private void PopulateModels(){
-			if(_populating || !ModelsFolderExists(true)) return;
-			_populating = true;
+			if(Populating || !ModelsFolderExists(true)) return;
+			Populating = true;
 			listViewModels.BeginUpdate();
 			listViewModels.Items.Clear();
 			for(var i = _models.Count - 1; i >= 0; i--) _models[i].Meta.Clear();
@@ -94,7 +94,7 @@ namespace LMStud{
 					try{ Invoke(new MethodInvoker(() => {listViewModels.EndUpdate();})); } catch(Exception e){
 						MessageBox.Show(this, e.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 					}
-					_populating = false;
+					Populating = false;
 				}
 			});
 		}

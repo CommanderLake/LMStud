@@ -2174,7 +2174,7 @@ namespace LMStud
 		private System.Windows.Forms.Button butWhispDown;
 		private System.Windows.Forms.Label label16;
 		private System.Windows.Forms.TextBox textWakeWord;
-		private System.Windows.Forms.CheckBox checkVoiceInput;
+		internal System.Windows.Forms.CheckBox checkVoiceInput;
 		private System.Windows.Forms.CheckBox checkWhisperUseGPU;
 		private System.Windows.Forms.Label label18;
 		private System.Windows.Forms.NumericUpDown numFreqThreshold;

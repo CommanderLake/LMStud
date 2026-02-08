@@ -16,7 +16,7 @@ namespace LMStud{
 		private static NativeMethods.SpeechEndCallback _speechEndCallback;
 		private readonly ApiServer _apiServer;
 		internal readonly List<ChatMessageControl> ChatMessages = new List<ChatMessageControl>();
-		private readonly StringBuilder _speechBuffer = new StringBuilder();
+		internal readonly StringBuilder SpeechBuffer = new StringBuilder();
 		private readonly Stopwatch _swRate = new Stopwatch();
 		private readonly Stopwatch _swTot = new Stopwatch();
 		private readonly SpeechSynthesizer _tts = new SpeechSynthesizer();
@@ -34,17 +34,17 @@ namespace LMStud{
 		private bool _retokenizePanelChatEnabled;
 		private bool _retokenizeTextInputEnabled;
 		internal readonly SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
-		private volatile bool _apiGenerating;
+		internal volatile bool APIGenerating;
 		private Action<string> _apiTokenCallback;
-		private CheckState _checkVoiceInputLast = CheckState.Unchecked;
+		internal CheckState CheckVoiceInputLast = CheckState.Unchecked;
 		private ChatMessageControl _cntAssMsg;
 		private ChatMessageControl _cntToolMsg;
 		private LVColumnClickHandler _columnClickHandler;
-		private string _editOriginalText = "";
-		private bool _firstToken = true;
+		internal string EditOriginalText = "";
+		internal bool FirstToken = true;
 		internal volatile bool Generating;
 		private int _genTokenTotal;
-		private bool _isEditing;
+		internal bool IsEditing;
 		private int _msgTokenCount;
 		private volatile bool _rendering;
 		private bool _whisperLoaded;
@@ -56,11 +56,11 @@ namespace LMStud{
 			//Thread.CurrentThread.CurrentUICulture = culture;
 			//Thread.CurrentThread.CurrentCulture = culture;
 			InitializeComponent();
+			Icon = Resources.LM_Stud_256;
 			_apiServer = new ApiServer(this);
 			_tts.SpeakStarted += TtsOnSpeakStarted;
 			_tts.SpeakCompleted += TtsOnSpeakCompleted;
 			InitializeListViews();
-			Icon = Resources.LM_Stud_256;
 			SetToolTips();
 			LoadConfig();
 			LoadModelSettings();
@@ -119,7 +119,7 @@ namespace LMStud{
 			if(!Settings.Default.LoadAuto) return;
 			checkLoadAuto.Checked = true;
 			ThreadPool.QueueUserWorkItem(o => {
-				while(_populating) Thread.Sleep(10);
+				while(Populating) Thread.Sleep(10);
 				for(var i = 0; i < _models.Count; i++){
 					var model = _models[i];
 					if(model.FilePath != Settings.Default.LastModel) continue;
@@ -170,7 +170,7 @@ namespace LMStud{
 		}
 		private void CheckVoiceInput_CheckedChanged(object sender, EventArgs e){
 			try{
-				if(checkVoiceInput.CheckState != CheckState.Unchecked && _checkVoiceInputLast == CheckState.Unchecked){
+				if(checkVoiceInput.CheckState != CheckState.Unchecked && CheckVoiceInputLast == CheckState.Unchecked){
 					if(_whisperModelIndex < 0 || _whisperModelIndex >= _whisperModels.Count || !File.Exists(_whisperModels[_whisperModelIndex])){
 						checkVoiceInput.Checked = false;
 						MessageBox.Show(this, Resources.Error_Whisper_model_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -208,7 +208,7 @@ namespace LMStud{
 					NativeMethods.StopSpeechTranscription();
 					_voiceInputResumePending = false;
 				}
-			} finally{ _checkVoiceInputLast = checkVoiceInput.CheckState; }
+			} finally{ CheckVoiceInputLast = checkVoiceInput.CheckState; }
 		}
 		private void CheckSpeak_CheckedChanged(object sender, EventArgs e){
 			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
@@ -255,7 +255,7 @@ namespace LMStud{
 			});
 		}
 		private void TextInput_KeyDown(object sender, KeyEventArgs e){
-			if(_isEditing){
+			if(IsEditing){
 				if(e.KeyCode == Keys.Enter && !e.Control && !e.Shift){
 					e.SuppressKeyPress = true;
 					NativeMethods.SetCommittedText(textInput.Text);
@@ -270,7 +270,7 @@ namespace LMStud{
 			}
 		}
 		private void TextInput_MouseDown(object sender, MouseEventArgs e){
-			if(checkVoiceInput.CheckState != CheckState.Unchecked && !_isEditing) StartEditing();
+			if(checkVoiceInput.CheckState != CheckState.Unchecked && !IsEditing) StartEditing();
 		}
 		private void PanelChat_Layout(object sender, LayoutEventArgs e){
 			panelChat.SuspendLayout();
@@ -384,7 +384,7 @@ namespace LMStud{
 		}
 		private void UpdateStatusMessage(){
 			if(_retokenizeCount > 0) SetStatusMessageVisible(true, Resources.Retokenizing_chat___);
-			else if(_isEditing) SetStatusMessageVisible(true, Resources.Editing_transcription_);
+			else if(IsEditing) SetStatusMessageVisible(true, Resources.Editing_transcription_);
 			else SetStatusMessageVisible(false, null);
 		}
 		private void RunOnUiThread(Action action){
@@ -432,20 +432,20 @@ namespace LMStud{
 			});
 		}
 		private void StartEditing(){
-			if(_isEditing) return;
-			_editOriginalText = textInput.Text;
-			_isEditing = true;
+			if(IsEditing) return;
+			EditOriginalText = textInput.Text;
+			IsEditing = true;
 			UpdateStatusMessage();
 			if(checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StopSpeechTranscription();
 		}
 		private void FinishEditing(){
-			_isEditing = false;
+			IsEditing = false;
 			UpdateStatusMessage();
 			if(checkVoiceInput.CheckState != CheckState.Checked) return;
 			TryStartSpeechTranscription(true);
 		}
 		private void CancelEditing(){
-			textInput.Text = _editOriginalText;
+			textInput.Text = EditOriginalText;
 			textInput.SelectionStart = textInput.Text.Length;
 			FinishEditing();
 		}
@@ -466,8 +466,8 @@ namespace LMStud{
 				return;
 			}
 			_voiceInputResumePending = true;
-			if(_isEditing) return;
-			if(Generating || _apiGenerating || _ttsSpeaking || Volatile.Read(ref _ttsPendingCount) > 0) return;
+			if(IsEditing) return;
+			if(Generating || APIGenerating || _ttsSpeaking || Volatile.Read(ref _ttsPendingCount) > 0) return;
 			if(NativeMethods.StartSpeechTranscription()){
 				_voiceInputResumePending = false;
 				return;
@@ -476,7 +476,7 @@ namespace LMStud{
 			if(showErrorOnFailure){
 				MessageBox.Show(this, Resources.Error_starting_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 				checkVoiceInput.Checked = false;
-				_checkVoiceInputLast = checkVoiceInput.CheckState;
+				CheckVoiceInputLast = checkVoiceInput.CheckState;
 			}
 		}
 		private void TtsOnSpeakStarted(object sender, SpeakStartedEventArgs e){
@@ -513,7 +513,7 @@ namespace LMStud{
 			var useRemote = _apiClientEnable;
 			if((!useRemote && !LlModelLoaded) || string.IsNullOrWhiteSpace(prompt)) return;
 			if(!GenerationLock.Wait(0)) return;
-			if(Generating || _apiGenerating){
+			if(Generating || APIGenerating){
 				GenerationLock.Release();
 				return;
 			}
@@ -530,7 +530,7 @@ namespace LMStud{
 			_cntToolMsg = null;
 			foreach(var message in ChatMessages) message.Generating = true;
 			CancelPendingSpeech();
-			_firstToken = true;
+			FirstToken = true;
 			if(role == MessageRole.User){
 				NativeMethods.SetCommittedText("");
 				if(addToChat) textInput.Text = "";
@@ -551,10 +551,10 @@ namespace LMStud{
 				NativeMethods.GenerateWithTools(role, newMsg, _nGen, checkStream.Checked);
 				_swTot.Stop();
 				_swRate.Stop();
-				if(_speechBuffer.Length > 0){
-					var remainingText = _speechBuffer.ToString().Trim();
+				if(SpeechBuffer.Length > 0){
+					var remainingText = SpeechBuffer.ToString().Trim();
 					if(!string.IsNullOrWhiteSpace(remainingText)) QueueSpeech(remainingText);
-					_speechBuffer.Clear();
+					SpeechBuffer.Clear();
 				}
 				try{
 					BeginInvoke(new MethodInvoker(() => {
@@ -661,8 +661,8 @@ namespace LMStud{
 		internal bool GenerateForApi(byte[] state, string prompt, Action<string> onToken, out byte[] newState, out int tokenCount){
 			newState = null;
 			tokenCount = 0;
-			if(!LlModelLoaded || Generating || _apiGenerating || string.IsNullOrWhiteSpace(prompt)) return false;
-			_apiGenerating = true;
+			if(!LlModelLoaded || Generating || APIGenerating || string.IsNullOrWhiteSpace(prompt)) return false;
+			APIGenerating = true;
 			_apiTokenCallback = onToken;
 			var originalState = GetState();
 			var chatSnapshot = NativeMethods.CaptureChatState();
@@ -676,7 +676,7 @@ namespace LMStud{
 				try{ SetState(originalState); } catch{}
 				if(chatSnapshot != IntPtr.Zero) try{ NativeMethods.RestoreChatState(chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
 				_apiTokenCallback = null;
-				_apiGenerating = false;
+				APIGenerating = false;
 			}
 		}
 		private static int FindSentenceEnd(StringBuilder sb){
@@ -700,7 +700,7 @@ namespace LMStud{
 		}
 		internal int GetTokenCount(){return NativeMethods.LlamaMemSize();}
 		private static unsafe void TokenCallback(byte* thinkPtr, int thinkLen, byte* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool){
-			if(This._apiGenerating){
+			if(This.APIGenerating){
 				if(messageLen <= 0) return;
 				var msg = Encoding.UTF8.GetString(messagePtr, messageLen);
 				This._apiTokenCallback?.Invoke(msg);
@@ -734,9 +734,9 @@ namespace LMStud{
 				This.BeginInvoke((MethodInvoker)(() => {
 					try{
 						This._rendering = true;
-						if(This._firstToken){
+						if(This.FirstToken){
 							This.labelPreGen.Text = Resources.First_token_time__ + ftTime + Resources._s;
-							This._firstToken = false;
+							This.FirstToken = false;
 						}
 						if(elapsed >= 1.0){
 							var callsPerSecond = This._msgTokenCount/elapsed;
@@ -750,14 +750,14 @@ namespace LMStud{
 							var i = This._cntAssMsg.TTSPosition;
 							for(; i < This._cntAssMsg.Message.Length; i++){
 								var ch = This._cntAssMsg.Message[i];
-								if(ch != '`' && ch != '*' && ch != '_' && ch != '#') This._speechBuffer.Append(ch);
+								if(ch != '`' && ch != '*' && ch != '_' && ch != '#') This.SpeechBuffer.Append(ch);
 							}
 							This._cntAssMsg.TTSPosition = i;
-							while((i = FindSentenceEnd(This._speechBuffer)) >= 0){
-								var sentence = This._speechBuffer.ToString(0, i + 1).Trim();
+							while((i = FindSentenceEnd(This.SpeechBuffer)) >= 0){
+								var sentence = This.SpeechBuffer.ToString(0, i + 1).Trim();
 								if(!string.IsNullOrWhiteSpace(sentence)) This.QueueSpeech(sentence);
-								This._speechBuffer.Remove(0, i + 1);
-								while(This._speechBuffer.Length > 0 && char.IsWhiteSpace(This._speechBuffer[0])) This._speechBuffer.Remove(0, 1);
+								This.SpeechBuffer.Remove(0, i + 1);
+								while(This.SpeechBuffer.Length > 0 && char.IsWhiteSpace(This.SpeechBuffer[0])) This.SpeechBuffer.Remove(0, 1);
 							}
 						}
 						This.labelTokens.Text = string.Format(Resources._0___1__2_, tokensTotal, This._cntCtxMax, Resources._Tokens);
@@ -769,7 +769,7 @@ namespace LMStud{
 			var thisform = This;
 			if(This.IsDisposed) return;
 			This.BeginInvoke((MethodInvoker)(() => {
-				if(thisform.IsDisposed || This._isEditing) return;
+				if(thisform.IsDisposed || This.IsEditing) return;
 				This.textInput.Text = transcription;
 				This.textInput.SelectionStart = This.textInput.Text.Length;
 			}));
@@ -778,7 +778,7 @@ namespace LMStud{
 			var thisform = This;
 			if(This.IsDisposed) return;
 			This.BeginInvoke((MethodInvoker)(() => {
-				if(thisform.IsDisposed || This._isEditing) return;
+				if(thisform.IsDisposed || This.IsEditing) return;
 				if(This.checkVoiceInput.CheckState != CheckState.Checked) return;
 				NativeMethods.StopSpeechTranscription();
 				This.Generate();
