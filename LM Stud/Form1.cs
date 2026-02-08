@@ -250,7 +250,6 @@ namespace LMStud{
 					foreach(var message in _chatMessages) message.Dispose();
 					panelChat.ResumeLayout();
 					_chatMessages.Clear();
-					_apiLastResponseId = null;
 					labelTokens.Text = NativeMethods.LlamaMemSize() + Resources._Tokens;
 					EndRetokenization();
 				}));
@@ -594,8 +593,6 @@ namespace LMStud{
 		}
 		private List<ApiClient.ChatMessage> BuildApiMessages(MessageRole role, string prompt, bool addToChat){
 			var messages = new List<ApiClient.ChatMessage>();
-			var systemPrompt = _systemPrompt;
-			if(!string.IsNullOrWhiteSpace(systemPrompt)) messages.Add(new ApiClient.ChatMessage("system", systemPrompt));
 			foreach(var msg in _chatMessages){
 				var hasToolCalls = msg.ApiToolCalls != null && msg.ApiToolCalls.Count > 0;
 				if(msg.Role == MessageRole.Tool && string.IsNullOrWhiteSpace(msg.ApiToolCallId)) continue;
@@ -630,12 +627,12 @@ namespace LMStud{
 			List<ToolOutputInfo> toolOutputs = null;
 			Exception error = null;
 			try{
-				var messages = new List<ApiClient.ChatMessage>();
-				if(!string.IsNullOrWhiteSpace(prompt)) messages.Add(new ApiClient.ChatMessage(RoleToApiRole(role), prompt));
+				var messages = BuildApiMessages(role, prompt, addToChat);
+				var history = ApiClient.BuildInputItems(messages);
 				var toolsJson = BuildApiToolsJson();
 				var client = new ApiClient(_apiClientURL, _apiClientKey, _apiClientModel, _systemPrompt);
-				var result = client.CreateChatCompletion(messages, _temp, _nGen, toolsJson, null, _apiLastResponseId, CancellationToken.None);
-				if(!string.IsNullOrWhiteSpace(result.ResponseId)) _apiLastResponseId = result.ResponseId;
+				var result = client.CreateChatCompletion(history, _temp, _nGen, toolsJson, null, CancellationToken.None);
+				ApiClient.AppendOutputItems(history, result);
 				var rounds = 0;
 				string lastToolSignature = null;
 				while(result.ToolCalls != null && result.ToolCalls.Count > 0 && rounds < 5){
@@ -644,15 +641,15 @@ namespace LMStud{
 					lastToolSignature = toolSignature;
 					if(toolCallBatches == null) toolCallBatches = new List<ToolCallBatch>();
 					toolCallBatches.Add(new ToolCallBatch(result.Content, result.ToolCalls));
-					messages.Clear();
 					foreach(var toolCall in result.ToolCalls){
 						var toolResult = ExecuteToolCall(toolCall);
 						if(toolOutputs == null) toolOutputs = new List<ToolOutputInfo>();
 						toolOutputs.Add(new ToolOutputInfo(toolResult, toolCall.Id));
-						messages.Add(new ApiClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id, ToolName = toolCall.Name });
+						var toolMessage = new ApiClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id, ToolName = toolCall.Name };
+						history.Add(ApiClient.BuildInputMessagePayload(toolMessage));
 					}
-					result = client.CreateChatCompletion(messages, _temp, _nGen, toolsJson, null, _apiLastResponseId, CancellationToken.None);
-					if(!string.IsNullOrWhiteSpace(result.ResponseId)) _apiLastResponseId = result.ResponseId;
+					result = client.CreateChatCompletion(history, _temp, _nGen, toolsJson, null, CancellationToken.None);
+					ApiClient.AppendOutputItems(history, result);
 					rounds++;
 				}
 				assistantMsg = result.Content;

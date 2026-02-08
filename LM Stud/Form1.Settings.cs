@@ -10,7 +10,6 @@ namespace LMStud{
 		private string _apiClientKey;
 		private string _apiClientModel;
 		private string _apiClientURL;
-		private string _apiLastResponseId;
 		private bool _apiServerEnable;
 		private int _apiServerPort;
 		private int _batchSize;

@@ -20,16 +20,15 @@ namespace LMStud{
 			_model = model?.Trim() ?? "";
 			_instructions = instructions?.Trim();
 		}
-		internal ChatCompletionResult CreateChatCompletion(IReadOnlyList<ChatMessage> messages, float temperature, int maxTokens, string toolsJson, JToken toolChoice, string previousResponseId,
-			CancellationToken cancellationToken){
+		internal ChatCompletionResult CreateChatCompletion(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice, CancellationToken cancellationToken){
 			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException("API base URL is not configured.");
 			if(string.IsNullOrWhiteSpace(_apiKey)) throw new InvalidOperationException("API key is not configured.");
 			if(string.IsNullOrWhiteSpace(_model)) throw new InvalidOperationException("API model is not configured.");
-			var payload = new JObject{ ["model"] = _model, ["input"] = new JArray(messages.Select(BuildInputMessagePayload)), ["temperature"] = temperature };
+			if(history == null) throw new InvalidOperationException("History is not configured.");
+			var payload = new JObject{ ["model"] = _model, ["input"] = history, ["temperature"] = temperature };
 			if(!string.IsNullOrWhiteSpace(_instructions)) payload["instructions"] = _instructions;
 			payload["store"] = true;
-			if(!string.IsNullOrWhiteSpace(previousResponseId)) payload["previous_response_id"] = previousResponseId;
-			if(maxTokens > 0) payload["max_tokens"] = maxTokens;
+			if(maxTokens > 0) payload["max_output_tokens"] = maxTokens;
 			if(!string.IsNullOrWhiteSpace(toolsJson)){
 				var normalizedTools = NormalizeToolsJson(toolsJson);
 				payload["tools"] = (JToken)normalizedTools ?? new JRaw(toolsJson);
@@ -46,24 +45,30 @@ namespace LMStud{
 				}
 			}
 		}
-		private static JObject BuildInputMessagePayload(ChatMessage message){
+		internal static JToken BuildInputMessagePayload(ChatMessage message){
 			var isToolRole = string.Equals(message.Role, "tool", StringComparison.OrdinalIgnoreCase);
-			JObject payload;
-			if(isToolRole){
-				payload = new JObject{ ["type"] = "function_call_output", ["call_id"] = message.ToolCallId ?? "", ["output"] = message.Content ?? "" };
-				return payload;
+			if(isToolRole) return new JObject{ ["type"] = "function_call_output", ["call_id"] = message.ToolCallId ?? "", ["output"] = message.Content ?? "" };
+			return new JObject{ ["role"] = message.Role, ["content"] = message.Content ?? "" };
+		}
+		internal static JArray BuildInputItems(IEnumerable<ChatMessage> messages){
+			if(messages == null) return new JArray();
+			var items = new JArray();
+			foreach(var message in messages){
+				if(message == null) continue;
+				items.Add(BuildInputMessagePayload(message));
 			}
-			payload = new JObject{ ["role"] = message.Role };
-			var contentItems = new JArray();
-			if(!string.IsNullOrWhiteSpace(message.Content)) contentItems.Add(new JObject{ ["type"] = "input_text", ["text"] = message.Content });
-			payload["content"] = contentItems.Count > 0 ? (JToken)contentItems : JValue.CreateNull();
-			return payload;
+			return items;
+		}
+		internal static void AppendOutputItems(JArray history, ChatCompletionResult result){
+			if(history == null || result?.OutputItems == null) return;
+			foreach(var item in result.OutputItems) history.Add(item);
 		}
 		private static ChatCompletionResult ParseResponseBody(string jsonText){
 			if(string.IsNullOrWhiteSpace(jsonText)) throw new InvalidOperationException("API response did not contain any message.");
 			var root = JObject.Parse(jsonText);
 			var responseId = root.Value<string>("id");
 			if(root["output"] is JArray output){
+				var sanitizedOutput = SanitizeOutputItems(output);
 				string content = null;
 				var toolCalls = new List<ToolCall>();
 				foreach(var item in output.OfType<JObject>()){
@@ -95,7 +100,7 @@ namespace LMStud{
 					if(!string.IsNullOrWhiteSpace(outputText)) content = outputText;
 				}
 				var finalContent = content ?? "";
-				return new ChatCompletionResult(finalContent, finalToolCalls, responseId);
+				return new ChatCompletionResult(finalContent, finalToolCalls, responseId, sanitizedOutput);
 			}
 			var message = ExtractFirstMessage(root);
 			if(message == null) throw new InvalidOperationException("API response did not contain any message.");
@@ -103,7 +108,17 @@ namespace LMStud{
 			var toolCallsFallback = ParseToolCalls(message["tool_calls"]);
 			if(string.IsNullOrWhiteSpace(messageContentFallback) && (toolCallsFallback == null || toolCallsFallback.Count == 0))
 				throw new InvalidOperationException("API response did not contain any content.");
-			return new ChatCompletionResult(messageContentFallback, toolCallsFallback, responseId);
+			return new ChatCompletionResult(messageContentFallback, toolCallsFallback, responseId, null);
+		}
+		private static JArray SanitizeOutputItems(JArray output){
+			if(output == null) return null;
+			var sanitized = new JArray();
+			foreach(var item in output){
+				var clone = item?.DeepClone();
+				if(clone is JObject obj) obj.Remove("id");
+				sanitized.Add(clone);
+			}
+			return sanitized;
 		}
 		private static string ExtractContentText(JToken contentToken){
 			if(contentToken == null || contentToken.Type == JTokenType.Null) return null;
@@ -153,17 +168,24 @@ namespace LMStud{
 				if(toolsArray == null) return null;
 				var normalized = new JArray();
 				foreach(var tool in toolsArray.OfType<JObject>()){
+					var type = tool.Value<string>("type") ?? "function";
 					if(tool["function"] is JObject functionObj){
 						var name = functionObj.Value<string>("name");
 						if(string.IsNullOrWhiteSpace(name)) continue;
-						var normalizedTool = new JObject{ ["type"] = tool.Value<string>("type") ?? "function", ["name"] = name };
+						var normalizedTool = new JObject{ ["type"] = type, ["name"] = name };
 						var description = functionObj.Value<string>("description");
 						if(!string.IsNullOrWhiteSpace(description)) normalizedTool["description"] = description;
 						if(functionObj["parameters"] != null) normalizedTool["parameters"] = functionObj["parameters"];
 						normalized.Add(normalizedTool);
 						continue;
 					}
-					if(!string.IsNullOrWhiteSpace(tool.Value<string>("name"))) normalized.Add(tool);
+					var toolName = tool.Value<string>("name");
+					if(string.IsNullOrWhiteSpace(toolName)) continue;
+					var fallbackTool = new JObject{ ["type"] = type, ["name"] = toolName };
+					var fallbackDescription = tool.Value<string>("description");
+					if(!string.IsNullOrWhiteSpace(fallbackDescription)) fallbackTool["description"] = fallbackDescription;
+					if(tool["parameters"] != null) fallbackTool["parameters"] = tool["parameters"];
+					normalized.Add(fallbackTool);
 				}
 				return normalized.Count > 0 ? normalized : null;
 			} catch(JsonException){ return null; }
@@ -247,12 +269,14 @@ namespace LMStud{
 		}
 		internal sealed class ChatCompletionResult{
 			public string Content;
+			public JArray OutputItems;
 			public string ResponseId;
 			public List<ToolCall> ToolCalls;
-			public ChatCompletionResult(string content, List<ToolCall> toolCalls, string responseId){
+			public ChatCompletionResult(string content, List<ToolCall> toolCalls, string responseId, JArray outputItems){
 				Content = content;
 				ToolCalls = toolCalls;
 				ResponseId = responseId;
+				OutputItems = outputItems;
 			}
 		}
 	}

@@ -47,7 +47,6 @@ namespace LMStud{
 			public string Id = Guid.NewGuid().ToString();
 			public DateTime LastUsed;
 			public List<ApiServer.Message> Messages = new List<ApiServer.Message>();
-			public string LastResponseId;
 			public byte[] State;
 			public int TokenCount;
 		}
