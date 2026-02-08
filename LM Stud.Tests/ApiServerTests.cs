@@ -198,7 +198,7 @@ namespace LM_Stud.Tests{
 			SetField(form, "labelTPS", new ToolStripStatusLabel());
 			SetField(form, "labelPreGen", new ToolStripStatusLabel());
 			SetField(form, "labelTokens", new ToolStripStatusLabel());
-			SetField(form, "labelEditing", new ToolStripStatusLabel());
+			SetField(form, "labelStatusMsg", new ToolStripStatusLabel());
 			var modelInfoType = typeof(Form1).GetNestedType("ModelInfo", BindingFlags.NonPublic);
 			var modelsList = Activator.CreateInstance(typeof(List<>).MakeGenericType(modelInfoType));
 			SetField(form, "_models", modelsList);

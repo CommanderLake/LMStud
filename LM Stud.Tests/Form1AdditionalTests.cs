@@ -52,7 +52,7 @@ namespace LM_Stud.Tests{
 			SetField(form, "labelTPS", new ToolStripStatusLabel());
 			SetField(form, "labelPreGen", new ToolStripStatusLabel());
 			SetField(form, "labelTokens", new ToolStripStatusLabel());
-			SetField(form, "labelEditing", new ToolStripStatusLabel());
+			SetField(form, "labelStatusMsg", new ToolStripStatusLabel());
 			return form;
 		}
 		private static void SetField(object instance, string name, object value){

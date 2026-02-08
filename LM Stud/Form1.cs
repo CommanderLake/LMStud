@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -11,12 +10,12 @@ using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
 	public partial class Form1 : Form{
-		public static Form1 This;
+		internal static Form1 This;
 		private static NativeMethods.TokenCallback _tokenCallback;
 		private static NativeMethods.WhisperCallback _whisperCallback;
 		private static NativeMethods.SpeechEndCallback _speechEndCallback;
 		private readonly ApiServer _apiServer;
-		private readonly List<ChatMessageControl> _chatMessages = new List<ChatMessageControl>();
+		internal readonly List<ChatMessageControl> ChatMessages = new List<ChatMessageControl>();
 		private readonly StringBuilder _speechBuffer = new StringBuilder();
 		private readonly Stopwatch _swRate = new Stopwatch();
 		private readonly Stopwatch _swTot = new Stopwatch();
@@ -43,15 +42,15 @@ namespace LMStud{
 		private LVColumnClickHandler _columnClickHandler;
 		private string _editOriginalText = "";
 		private bool _firstToken = true;
-		private volatile bool _generating;
+		internal volatile bool Generating;
 		private int _genTokenTotal;
 		private bool _isEditing;
 		private int _msgTokenCount;
 		private volatile bool _rendering;
 		private bool _whisperLoaded;
-		private bool _dialecticStarted;
-		private bool _dialecticPaused;
-		public Form1(){
+		internal bool DialecticStarted;
+		internal bool DialecticPaused;
+		internal Form1(){
 			This = this;
 			//var culture = new CultureInfo("zh-CN");
 			//Thread.CurrentThread.CurrentUICulture = culture;
@@ -150,7 +149,7 @@ namespace LMStud{
 			_columnClickHandler.RegisterListView(listViewHugFiles, columnDataTypesHugFiles);
 		}
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e){
-			if(_generating) NativeMethods.StopGeneration();
+			if(Generating) NativeMethods.StopGeneration();
 			if(_whisperLoaded){
 				NativeMethods.StopSpeechTranscription();
 				NativeMethods.UnloadWhisperModel();
@@ -162,12 +161,12 @@ namespace LMStud{
 		private void Form1_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.Escape) return;
 			CancelPendingSpeech();
-			if(!_generating) return;
+			if(!Generating) return;
 			NativeMethods.StopGeneration();
 		}
 		private void ButCodeBlock_Click(object sender, EventArgs e){textInput.Paste("```\r\n\r\n```");}
-		private void CheckMarkdown_CheckedChanged(object sender, EventArgs e){
-			foreach(var message in _chatMessages) message.Markdown = checkMarkdown.Checked;
+		internal void CheckMarkdown_CheckedChanged(object sender, EventArgs e){
+			foreach(var message in ChatMessages) message.Markdown = checkMarkdown.Checked;
 		}
 		private void CheckVoiceInput_CheckedChanged(object sender, EventArgs e){
 			try{
@@ -215,7 +214,7 @@ namespace LMStud{
 			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			Settings.Default.Save();
 		}
-		private void CheckDialectic_CheckedChanged(object sender, EventArgs e){
+		internal void CheckDialectic_CheckedChanged(object sender, EventArgs e){
 			if(checkDialectic.Checked){
 				if(!LlModelLoaded){
 					MessageBox.Show(this, Resources.Load_a_model_first_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
@@ -223,21 +222,21 @@ namespace LMStud{
 					return;
 				}
 				NativeMethods.DialecticInit();
-				_dialecticStarted = false;
-				_dialecticPaused = false;
+				DialecticStarted = false;
+				DialecticPaused = false;
 			} else{
 				NativeMethods.DialecticFree();
-				_dialecticStarted = false;
-				_dialecticPaused = false;
+				DialecticStarted = false;
+				DialecticPaused = false;
 			}
 		}
 		private void ButGen_Click(object sender, EventArgs e){
-			if(_generating){
-				_dialecticPaused = true;
+			if(Generating){
+				DialecticPaused = true;
 				NativeMethods.StopGeneration();
 			} else Generate();
 		}
-		private void ButReset_Click(object sender, EventArgs e){
+		internal void ButReset_Click(object sender, EventArgs e){
 			if(_retokenizeCount > 0) return;
 			BeginRetokenization();
 			ThreadPool.QueueUserWorkItem(_ => {
@@ -247,9 +246,9 @@ namespace LMStud{
 				NativeMethods.ClearWebCache();
 				Invoke(new MethodInvoker(() => {
 					panelChat.SuspendLayout();
-					foreach(var message in _chatMessages) message.Dispose();
+					foreach(var message in ChatMessages) message.Dispose();
 					panelChat.ResumeLayout();
-					_chatMessages.Clear();
+					ChatMessages.Clear();
 					labelTokens.Text = NativeMethods.LlamaMemSize() + Resources._Tokens;
 					EndRetokenization();
 				}));
@@ -279,9 +278,9 @@ namespace LMStud{
 				for(var i = 0; i < panelChat.Controls.Count; ++i) panelChat.Controls[i].Width = panelChat.ClientSize.Width;
 			} finally{ panelChat.ResumeLayout(true); }
 		}
-		private void MsgButDeleteOnClick(ChatMessageControl cm){
-			if(_generating || _retokenizeCount > 0) return;
-			var id = _chatMessages.IndexOf(cm);
+		internal void MsgButDeleteOnClick(ChatMessageControl cm){
+			if(Generating || _retokenizeCount > 0) return;
+			var id = ChatMessages.IndexOf(cm);
 			if(id < 0) return;
 			BeginRetokenization();
 			ThreadPool.QueueUserWorkItem(_ => {
@@ -289,24 +288,24 @@ namespace LMStud{
 				NativeMethods.StudError result;
 				try{ result = NativeMethods.RemoveMessageAt(id); } finally{ GenerationLock.Release(); }
 				Invoke(new MethodInvoker(() => {
-					if(result != NativeMethods.StudError.IndexOutOfRange && id < _chatMessages.Count){
-						_chatMessages[id].Dispose();
-						_chatMessages.RemoveAt(id);
+					if(result != NativeMethods.StudError.IndexOutOfRange && id < ChatMessages.Count){
+						ChatMessages[id].Dispose();
+						ChatMessages.RemoveAt(id);
 					}
 					if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_session, result);
 					EndRetokenization();
 				}));
 			});
 		}
-		private void MsgButRegenOnClick(ChatMessageControl cm){
-			if(!LlModelLoaded || _generating || _retokenizeCount > 0) return;
-			var idx = _chatMessages.IndexOf(cm);
+		internal void MsgButRegenOnClick(ChatMessageControl cm){
+			if(!LlModelLoaded || Generating || _retokenizeCount > 0) return;
+			var idx = ChatMessages.IndexOf(cm);
 			if(idx < 0) return;
-			while(_chatMessages[idx].Role == MessageRole.Assistant)
+			while(ChatMessages[idx].Role == MessageRole.Assistant)
 				if(--idx < 0)
 					return;
-			var role = _chatMessages[idx].Role;
-			var msg = _chatMessages[idx].Message;
+			var role = ChatMessages[idx].Role;
+			var msg = ChatMessages[idx].Message;
 			BeginRetokenization();
 			ThreadPool.QueueUserWorkItem(_ => {
 				GenerationLock.Wait(-1);
@@ -314,9 +313,9 @@ namespace LMStud{
 				try{ result = NativeMethods.RemoveMessagesStartingAt(idx); } finally{ GenerationLock.Release(); }
 				Invoke(new MethodInvoker(() => {
 					if(result != NativeMethods.StudError.IndexOutOfRange)
-						for(var i = _chatMessages.Count - 1; i >= idx; i--){
-							_chatMessages[i].Dispose();
-							_chatMessages.RemoveAt(i);
+						for(var i = ChatMessages.Count - 1; i >= idx; i--){
+							ChatMessages[i].Dispose();
+							ChatMessages.RemoveAt(i);
 						}
 					if(result != NativeMethods.StudError.Success){
 						ShowErrorMessage(Resources.Error_creating_session, result);
@@ -329,19 +328,19 @@ namespace LMStud{
 			});
 		}
 		private void MsgButEditOnClick(ChatMessageControl cm){
-			if(_generating || cm.Editing) return;
-			foreach(var msg in _chatMessages.Where(msg => msg != cm && msg.Editing)) MsgButEditCancelOnClick(msg);
+			if(Generating || cm.Editing) return;
+			foreach(var msg in ChatMessages.Where(msg => msg != cm && msg.Editing)) MsgButEditCancelOnClick(msg);
 			cm.Editing = true;
 			cm.richTextMsg.Focus();
 		}
-		private void MsgButEditCancelOnClick(ChatMessageControl cm){
-			if(_generating || !cm.Editing) return;
+		internal void MsgButEditCancelOnClick(ChatMessageControl cm){
+			if(Generating || !cm.Editing) return;
 			cm.Editing = false;
 			cm.Markdown = checkMarkdown.Checked;
 		}
-		private void MsgButEditApplyOnClick(ChatMessageControl cm){
-			if(_generating || !cm.Editing || _retokenizeCount > 0) return;
-			var idx = _chatMessages.IndexOf(cm);
+		internal void MsgButEditApplyOnClick(ChatMessageControl cm){
+			if(Generating || !cm.Editing || _retokenizeCount > 0) return;
+			var idx = ChatMessages.IndexOf(cm);
 			if(idx < 0) return;
 			if(cm.checkThink.Checked) cm.Think = cm.richTextMsg.Text;
 			else cm.Message = cm.richTextMsg.Text;
@@ -359,7 +358,7 @@ namespace LMStud{
 			});
 		}
 		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)(((e.Delta/8) << 16) & 0xffff0000), IntPtr.Zero);}
-		private ChatMessageControl AddMessage(MessageRole role, string think, string message, bool showInChat = true, List<ApiClient.ToolCall> toolCalls = null, string toolCallId = null){
+		internal ChatMessageControl AddMessage(MessageRole role, string think, string message, bool showInChat = true, List<ApiClient.ToolCall> toolCalls = null, string toolCallId = null){
 			var cm = new ChatMessageControl(role, think, message ?? "", checkMarkdown.Checked){ ApiToolCalls = toolCalls, ApiToolCallId = toolCallId };
 			if(showInChat){
 				cm.Parent = panelChat;
@@ -374,7 +373,7 @@ namespace LMStud{
 				panelChat.Controls.Add(cm);
 				panelChat.ScrollToEnd();
 			}
-			_chatMessages.Add(cm);
+			ChatMessages.Add(cm);
 			return cm;
 		}
 		private static void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){Process.Start(e.LinkText);}
@@ -383,7 +382,6 @@ namespace LMStud{
 			toolStripStatusLabel1.Visible = labelTokens.Visible = labelTPS.Visible = labelPreGen.Visible = !visible;
 			labelStatusMsg.Visible = visible;
 		}
-		[Localizable(true)]
 		private void UpdateStatusMessage(){
 			if(_retokenizeCount > 0) SetStatusMessageVisible(true, Resources.Retokenizing_chat___);
 			else if(_isEditing) SetStatusMessageVisible(true, Resources.Editing_transcription_);
@@ -469,7 +467,7 @@ namespace LMStud{
 			}
 			_voiceInputResumePending = true;
 			if(_isEditing) return;
-			if(_generating || _apiGenerating || _ttsSpeaking || Volatile.Read(ref _ttsPendingCount) > 0) return;
+			if(Generating || _apiGenerating || _ttsSpeaking || Volatile.Read(ref _ttsPendingCount) > 0) return;
 			if(NativeMethods.StartSpeechTranscription()){
 				_voiceInputResumePending = false;
 				return;
@@ -507,7 +505,7 @@ namespace LMStud{
 				}
 			}));
 		}
-		private void Generate(){
+		internal void Generate(){
 			var prompt = textInput.Text;
 			Generate(MessageRole.User, prompt, true);
 		}
@@ -515,31 +513,31 @@ namespace LMStud{
 			var useRemote = _apiClientEnable;
 			if((!useRemote && !LlModelLoaded) || string.IsNullOrWhiteSpace(prompt)) return;
 			if(!GenerationLock.Wait(0)) return;
-			if(_generating || _apiGenerating){
+			if(Generating || _apiGenerating){
 				GenerationLock.Release();
 				return;
 			}
 			if(checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StopSpeechTranscription();
-			_dialecticPaused = false;
-			_generating = true;
-			foreach(var msg in _chatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
+			DialecticPaused = false;
+			Generating = true;
+			foreach(var msg in ChatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
 			butGen.Text = Resources.Stop;
 			butReset.Enabled = butApply.Enabled = false;
 			var newMsg = prompt.Trim();
 			if(addToChat) AddMessage(role, "", newMsg);
-			var seedMsg = checkDialectic.Checked && _chatMessages.Count == 1;
+			var seedMsg = checkDialectic.Checked && ChatMessages.Count == 1;
 			_cntAssMsg = null;
 			_cntToolMsg = null;
-			foreach(var message in _chatMessages) message.Generating = true;
+			foreach(var message in ChatMessages) message.Generating = true;
 			CancelPendingSpeech();
 			_firstToken = true;
 			if(role == MessageRole.User){
 				NativeMethods.SetCommittedText("");
 				if(addToChat) textInput.Text = "";
 			}
-			if(!useRemote && checkDialectic.Checked && !_dialecticStarted && role == MessageRole.User){
+			if(!useRemote && checkDialectic.Checked && !DialecticStarted && role == MessageRole.User){
 				NativeMethods.DialecticStart();
-				_dialecticStarted = true;
+				DialecticStarted = true;
 			}
 			if(useRemote){
 				ThreadPool.QueueUserWorkItem(o => {GenerateWithApi(role, newMsg, addToChat);});
@@ -569,11 +567,11 @@ namespace LMStud{
 						}
 						butGen.Text = Resources.Generate;
 						butReset.Enabled = butApply.Enabled = true;
-						_generating = false;
-						foreach(var message in _chatMessages) message.Generating = false;
+						Generating = false;
+						foreach(var message in ChatMessages) message.Generating = false;
 						if(checkVoiceInput.CheckState == CheckState.Checked) TryStartSpeechTranscription(false);
-						if(checkDialectic.Checked && !_dialecticPaused){
-							var last = _chatMessages.LastOrDefault();
+						if(checkDialectic.Checked && !DialecticPaused){
+							var last = ChatMessages.LastOrDefault();
 							if(last != null){
 								NativeMethods.DialecticSwap();
 								if(seedMsg) NativeMethods.AddMessage(MessageRole.Assistant, prompt);
@@ -593,7 +591,7 @@ namespace LMStud{
 		}
 		private List<ApiClient.ChatMessage> BuildApiMessages(MessageRole role, string prompt, bool addToChat){
 			var messages = new List<ApiClient.ChatMessage>();
-			foreach(var msg in _chatMessages){
+			foreach(var msg in ChatMessages){
 				var hasToolCalls = msg.ApiToolCalls != null && msg.ApiToolCalls.Count > 0;
 				if(msg.Role == MessageRole.Tool && string.IsNullOrWhiteSpace(msg.ApiToolCallId)) continue;
 				if(string.IsNullOrWhiteSpace(msg.Message) && !hasToolCalls) continue;
@@ -617,13 +615,15 @@ namespace LMStud{
 					var result = client.CreateChatCompletion(history, _temp, _nGen, toolsJson, null, CancellationToken.None);
 					ApiClient.AppendOutputItems(history, result);
 					var content = result.Content;
+					var reasoning = result.Reasoning;
 					var toolCalls = result.ToolCalls;
-					if(!string.IsNullOrWhiteSpace(content) || (toolCalls != null && toolCalls.Count > 0)){
-						content = toolCalls.Aggregate(content, (current, toolCall) => current + Resources.__Tool_name_ + toolCall.Name + Resources.__Tool_ID_ + toolCall.Id + Resources.__Tool_arguments_ + toolCall.Arguments);
-						var showInChat = !string.IsNullOrWhiteSpace(content);
+					if(!string.IsNullOrWhiteSpace(content) || (toolCalls != null && toolCalls.Count > 0) || !string.IsNullOrWhiteSpace(reasoning)){
+						if(toolCalls != null && toolCalls.Count > 0)
+							content = toolCalls.Aggregate(content, (current, toolCall) => current + Resources.__Tool_name_ + toolCall.Name + Resources.__Tool_ID_ + toolCall.Id + Resources.__Tool_arguments_ + toolCall.Arguments);
+						var showInChat = !string.IsNullOrWhiteSpace(content) || !string.IsNullOrWhiteSpace(reasoning);
 						try{
 							Invoke(new MethodInvoker(() => {
-								var message = AddMessage(MessageRole.Assistant, "", content ?? "", showInChat, toolCalls);
+								var message = AddMessage(MessageRole.Assistant, reasoning ?? "", content ?? "", showInChat, toolCalls);
 								message.SetRoleText(Resources.Tool_Call);
 								if(_speak && !string.IsNullOrWhiteSpace(content)) QueueSpeech(content);
 							}));
@@ -652,8 +652,8 @@ namespace LMStud{
 					if(error != null) MessageBox.Show(this, error.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 					butGen.Text = Resources.Generate;
 					butReset.Enabled = butApply.Enabled = true;
-					_generating = false;
-					foreach(var message in _chatMessages) message.Generating = false;
+					Generating = false;
+					foreach(var message in ChatMessages) message.Generating = false;
 					if(checkVoiceInput.CheckState == CheckState.Checked) TryStartSpeechTranscription(false);
 				}));
 			} catch(ObjectDisposedException){} finally{ GenerationLock.Release(); }
@@ -661,7 +661,7 @@ namespace LMStud{
 		internal bool GenerateForApi(byte[] state, string prompt, Action<string> onToken, out byte[] newState, out int tokenCount){
 			newState = null;
 			tokenCount = 0;
-			if(!LlModelLoaded || _generating || _apiGenerating || string.IsNullOrWhiteSpace(prompt)) return false;
+			if(!LlModelLoaded || Generating || _apiGenerating || string.IsNullOrWhiteSpace(prompt)) return false;
 			_apiGenerating = true;
 			_apiTokenCallback = onToken;
 			var originalState = GetState();

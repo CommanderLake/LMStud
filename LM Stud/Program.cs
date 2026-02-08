@@ -2,14 +2,16 @@
 using System.Windows.Forms;
 namespace LMStud{
 	internal static class Program{
+		internal static Form1 MainForm;
 		/// <summary>
 		///     The main entry point for the application.
 		/// </summary>
 		[STAThread]
-		private static void Main(){
+		public static void Main(){
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			Application.Run(new Form1());
+			MainForm = new Form1();
+			Application.Run(MainForm);
 		}
 	}
 }

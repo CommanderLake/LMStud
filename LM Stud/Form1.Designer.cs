@@ -2088,8 +2088,7 @@ namespace LMStud
 		}
 
 		#endregion
-
-		private System.Windows.Forms.TextBox textInput;
+		internal System.Windows.Forms.TextBox textInput;
 		private System.Windows.Forms.SplitContainer splitContainer1;
 		private System.Windows.Forms.Button butGen;
 		private System.Windows.Forms.TabControl tabControl1;
@@ -2132,7 +2131,7 @@ namespace LMStud
 		private System.Windows.Forms.ComboBox comboNUMAStrat;
 		private System.Windows.Forms.Button butUnload;
 		private System.Windows.Forms.ToolStripStatusLabel labelTokens;
-		private System.Windows.Forms.CheckBox checkMarkdown;
+		internal System.Windows.Forms.CheckBox checkMarkdown;
 		internal MyFlowLayoutPanel panelChat;
 		private System.Windows.Forms.CheckBox checkLoadAuto;
 		private System.Windows.Forms.SplitContainer splitContainer2;
@@ -2246,7 +2245,7 @@ namespace LMStud
 		private System.Windows.Forms.Label label29;
 		private System.Windows.Forms.ToolStripStatusLabel labelStatusMsg;
 		internal System.Windows.Forms.CheckBox checkAutoScroll;
-		private System.Windows.Forms.CheckBox checkDialectic;
+		internal System.Windows.Forms.CheckBox checkDialectic;
 		private System.Windows.Forms.GroupBox groupJinjaTmplModel;
 		private System.Windows.Forms.Label label30;
 		private System.Windows.Forms.Button butBrowseJinjaTmplModel;

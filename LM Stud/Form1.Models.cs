@@ -159,7 +159,7 @@ namespace LMStud{
 		}
 		private void SetSystemPromptInternal(bool genLock){
 			if(genLock) GenerationLock.Wait(-1);
-			var overrideSettings = _modelSettings.TryGetValue(GetModelPath(_models[_modelIndex].FilePath), out var overrides) && overrides.OverrideSettings;
+			var overrideSettings = _modelSettings.TryGetValue(_models[_modelIndex].FilePath, out var overrides) && overrides.OverrideSettings;
 			var prompt = overrideSettings ? overrides.SystemPrompt : _systemPrompt;
 			NativeMethods.StudError error;
 			try{ error = NativeMethods.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : ""); } finally{
@@ -284,9 +284,9 @@ namespace LMStud{
 			ThreadPool.QueueUserWorkItem(o => {
 				if(genLock) GenerationLock.Wait(-1);
 				try{
-					if(_generating){
+					if(Generating){
 						NativeMethods.StopGeneration();
-						while(_generating) Thread.Sleep(10);
+						while(Generating) Thread.Sleep(10);
 					}
 					ClearRegisteredTools();
 					NativeMethods.FreeModel();

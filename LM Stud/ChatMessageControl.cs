@@ -15,22 +15,22 @@ namespace LMStud{
 		internal string ApiToolCallId;
 		private bool _markdown;
 		private string _message;
-		private string _think = "";
+		private string _think;
 		private bool _generating;
 		private bool _editing;
 		internal int TTSPosition = 0;
 		internal ChatMessageControl(MessageRole role, string message, bool markdown):this(role, "", message, markdown){}
 		internal ChatMessageControl(MessageRole role, string think, string message, bool markdown){
-			Role = role;
-			_markdown = markdown;
 			InitializeComponent();
-			richTextMsg.ContentsResized += RichTextMsgOnContentsResized;
-			labelRole.Text = role.ToString();
+			Role = role;
 			_think = think;
 			_message = message;
+			_markdown = markdown;
+			richTextMsg.ContentsResized += RichTextMsgOnContentsResized;
+			labelRole.Text = role.ToString();
 		}
 		private void ChatMessage_Load(object sender, EventArgs e) {
-			if(_message.Length > 0) UpdateText("", _message, true);
+			if(_message.Length > 0) UpdateText(_think, _message, true);
 		}
 		internal void SetRoleText(string role){labelRole.Text = role;}
 		private void RichTextMsgOnContentsResized(object sender, ContentsResizedEventArgs e){
@@ -103,11 +103,9 @@ namespace LMStud{
 				if(!string.IsNullOrEmpty(_think) && checkThink.Visible == false) checkThink.Visible = true;
 				if(!string.IsNullOrEmpty(_think) && string.IsNullOrEmpty(_message) && !checkThink.Checked){
 					checkThink.Checked = true;
-				}
-				else if(!string.IsNullOrEmpty(_message) && checkThink.Checked){
+				}else if(!string.IsNullOrEmpty(_message) && checkThink.Checked){
 					checkThink.Checked = false;
-				}
-				else{
+				}else{
 					if(render) RenderText();
 				}
 			}
