@@ -19,12 +19,14 @@ namespace LMStud{
 		private bool _generating;
 		private bool _editing;
 		internal int TTSPosition = 0;
-		internal ChatMessageControl(MessageRole role, string message, bool markdown){
+		internal ChatMessageControl(MessageRole role, string message, bool markdown):this(role, "", message, markdown){}
+		internal ChatMessageControl(MessageRole role, string think, string message, bool markdown){
 			Role = role;
 			_markdown = markdown;
 			InitializeComponent();
 			richTextMsg.ContentsResized += RichTextMsgOnContentsResized;
 			labelRole.Text = role.ToString();
+			_think = think;
 			_message = message;
 		}
 		private void ChatMessage_Load(object sender, EventArgs e) {
