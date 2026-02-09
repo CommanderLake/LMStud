@@ -3,7 +3,6 @@
 #include <Windows.h>
 #include <llama.h>
 #include <chat.h>
-#include <mutex>
 #include <vector>
 #include <unordered_map>
 #include <string>

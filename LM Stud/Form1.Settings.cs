@@ -10,6 +10,8 @@ namespace LMStud{
 		private string _apiClientKey;
 		private string _apiClientModel;
 		private string _apiClientURL;
+		private int _apiClientTimeout;
+		internal bool _apiClientStore;
 		private bool _apiServerEnable;
 		private int _apiServerPort;
 		private int _batchSize;
@@ -99,6 +101,8 @@ namespace LMStud{
 			_apiClientURL = textApiClientUrl.Text = Settings.Default.ApiClientBaseUrl;
 			_apiClientKey = textApiClientKey.Text = Settings.Default.ApiClientKey;
 			_apiClientModel = comboApiClientModel.Text = Settings.Default.ApiClientModel;
+			_apiClientTimeout = (int)(numApiClientTimeout.Value = Settings.Default.ApiClientTimeout);
+			_apiClientStore = checkApiClientStore.Checked = Settings.Default.ApiClientStore;
 			NativeMethods.SetSilenceTimeout(_genDelay);
 			NativeMethods.SetFileBaseDir(_fileBaseDir);
 			NativeMethods.SetWakeCommand(_wakeWord);
@@ -107,6 +111,7 @@ namespace LMStud{
 			NativeMethods.SetWhisperTemp(_whisperTemp);
 			NativeMethods.SetGoogle(_googleAPIKey, _googleSearchID, _googleSearchResultCount);
 			NativeMethods.SetCommandPromptTimeout(_cmdTimeoutMs);
+			ApiClient.SetTimeout(_apiClientTimeout);
 			SetModelStatus();
 			if(_apiServerEnable){
 				_apiServer.Port = _apiServerPort;
@@ -350,6 +355,11 @@ namespace LMStud{
 				Settings.Default.ApiClientModel = value;
 				setStatusLabel = true;
 			});
+			UpdateSetting(ref _apiClientTimeout, (int)numApiClientTimeout.Value, value => {
+				Settings.Default.ApiClientTimeout = value;
+				ApiClient.SetTimeout(value);
+			});
+			UpdateSetting(ref _apiClientStore, checkApiClientStore.Checked, value => {Settings.Default.ApiClientStore = value;});
 			var flash = overrideSettings ? ms.FlashAttn : _flashAttn;
 			var minP = overrideSettings ? ms.MinP : _minP;
 			var topP = overrideSettings ? ms.TopP : _topP;
@@ -445,7 +455,7 @@ Always read a file and verify its contents before making changes.");
 		}
 		private void ComboApiClientModel_DropDown(object sender, EventArgs e){
 			try{
-				var client = new ApiClient(textApiClientUrl.Text, textApiClientKey.Text, "", _systemPrompt);
+				var client = new ApiClient(textApiClientUrl.Text, textApiClientKey.Text, "", _apiClientStore, _systemPrompt);
 				var clientModels = client.ListModels(CancellationToken.None);
 				foreach(var model in clientModels) comboApiClientModel.Items.Add(model);
 			} catch(Exception ex){ MessageBox.Show(this, ex.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);}

@@ -505,7 +505,7 @@ namespace LMStud{
 				}
 			}));
 		}
-		internal void Generate(){
+		private void Generate(){
 			var prompt = textInput.Text;
 			Generate(MessageRole.User, prompt, true);
 		}
@@ -540,7 +540,7 @@ namespace LMStud{
 				DialecticStarted = true;
 			}
 			if(useRemote){
-				ThreadPool.QueueUserWorkItem(o => {GenerateWithApi(role, newMsg, addToChat);});
+				ThreadPool.QueueUserWorkItem(o => {GenerateWithApiClient(role, newMsg, addToChat);});
 				return;
 			}
 			ThreadPool.QueueUserWorkItem(o => {
@@ -603,13 +603,13 @@ namespace LMStud{
 			if(!addToChat && !string.IsNullOrWhiteSpace(prompt)) messages.Add(new ApiClient.ChatMessage(RoleToApiRole(role), prompt));
 			return messages;
 		}
-		private void GenerateWithApi(MessageRole role, string prompt, bool addToChat){
+		private void GenerateWithApiClient(MessageRole role, string prompt, bool addToChat){
 			Exception error = null;
 			try{
 				var messages = BuildApiMessages(role, prompt, addToChat);
 				var history = ApiClient.BuildInputItems(messages);
 				var toolsJson = BuildApiToolsJson();
-				var client = new ApiClient(_apiClientURL, _apiClientKey, _apiClientModel, _systemPrompt);
+				var client = new ApiClient(_apiClientURL, _apiClientKey, _apiClientModel, _apiClientStore, _systemPrompt);
 				string lastToolSignature = null;
 				while(true){
 					var result = client.CreateChatCompletion(history, _temp, _nGen, toolsJson, null, CancellationToken.None);
@@ -658,7 +658,7 @@ namespace LMStud{
 				}));
 			} catch(ObjectDisposedException){} finally{ GenerationLock.Release(); }
 		}
-		internal bool GenerateForApi(byte[] state, string prompt, Action<string> onToken, out byte[] newState, out int tokenCount){
+		internal bool GenerateForApiServer(byte[] state, string prompt, Action<string> onToken, out byte[] newState, out int tokenCount){
 			newState = null;
 			tokenCount = 0;
 			if(!LlModelLoaded || Generating || APIGenerating || string.IsNullOrWhiteSpace(prompt)) return false;

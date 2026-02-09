@@ -123,7 +123,7 @@ namespace LM_Stud.Tests{
 			using(var client = new HttpClient()){
 				var payload = new{ messages = new[]{ new{ role = "user", content = "Hello" } } };
 				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/responses", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
-				Assert.IsTrue(response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.Conflict, "Chat should return 200 or 409 depending on native readiness.");
+				Assert.IsTrue(response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.Conflict, "Status code: " + response.StatusCode + "; Chat should return 200 or 409 depending on native readiness.");
 				if(response.StatusCode == HttpStatusCode.OK){
 					var sessionId = response.Headers.Contains("X-Session-Id") ? string.Join("", response.Headers.GetValues("X-Session-Id")) : null;
 					Assert.IsFalse(string.IsNullOrEmpty(sessionId), "Session id header should be present.");

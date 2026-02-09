@@ -27,10 +27,17 @@ curl -s -X POST %BASE%/v1/responses ^
   -d "{\"session_id\":\"!SESSION!\",\"messages\":[{\"role\":\"user\",\"content\":\"How are you?\"}]}"
 echo.
 
+echo ==== One-off message (store=false, session removed after reply) ====
+curl -s -X POST %BASE%/v1/responses ^
+  -H "Content-Type: application/json" ^
+  -d "{\"messages\":[{\"role\":\"user\",\"content\":\"This should not be stored\"}],\"store\":false}"
+echo.
+
 echo ==== Reset session ====
 curl -s -X POST %BASE%/v1/reset ^
   -H "Content-Type: application/json" ^
   -d "{\"session_id\":\"!SESSION!\"}"
+echo.
 echo.
 
 rem ---- Delete the unique response file (comment this out to keep logs)

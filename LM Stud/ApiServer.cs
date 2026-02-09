@@ -17,8 +17,8 @@ namespace LMStud{
 		public int Port = 11434;
 		public ApiServer(Form1 form){_form = form;}
 		public bool IsRunning => _listener != null && _listener.IsListening;
-		private static ApiClient CreateApiClient(){
-			return new ApiClient(Settings.Default.ApiClientBaseUrl, Settings.Default.ApiClientKey, Settings.Default.ApiClientModel, Settings.Default.SystemPrompt);
+		private ApiClient CreateApiClient(){
+			return new ApiClient(Settings.Default.ApiClientBaseUrl, Settings.Default.ApiClientKey, Settings.Default.ApiClientModel, _form._apiClientStore, Settings.Default.SystemPrompt);
 		}
 		public void Start(){
 			if(IsRunning) return;
@@ -130,50 +130,63 @@ namespace LMStud{
 				return;
 			}
 			var messages = request.Messages ?? ParseInputMessages(request.Input);
+			var inputItems = BuildInputItems(request);
+			if((messages == null || messages.Count == 0) && (inputItems == null || inputItems.Count == 0)){
+				ctx.Response.StatusCode = 400;
+				return;
+			}
+			var store = request.Store ?? true;
+			if(Settings.Default.ApiClientEnable){
+				HandleRemoteChat(ctx, request, messages, inputItems, store);
+				return;
+			}
 			if(messages == null || messages.Count == 0){
 				ctx.Response.StatusCode = 400;
 				return;
 			}
-			if(Settings.Default.ApiClientEnable){
-				HandleRemoteChat(ctx, request, messages);
-				return;
-			}
 			var session = _sessions.Get(request.SessionId);
-			ctx.Response.AddHeader("X-Session-Id", session.Id);
-			var prompt = messages.LastOrDefault(m => m.Role == "user")?.Content ?? "";
-			ctx.Response.ContentType = "application/json";
-			var sb = new StringBuilder();
-			void TokenCb(string token){sb.Append(token);}
-			if(!_form.GenerateForApi(session.State, prompt, TokenCb, out var newState, out var tokens)){
-				ctx.Response.StatusCode = 409;
-				return;
+			try{
+				ctx.Response.AddHeader("X-Session-Id", session.Id);
+				var prompt = messages.LastOrDefault(m => m.Role == "user")?.Content ?? "";
+				ctx.Response.ContentType = "application/json";
+				var sb = new StringBuilder();
+				void TokenCb(string token){sb.Append(token);}
+				if(!_form.GenerateForApiServer(session.State, prompt, TokenCb, out var newState, out var tokens)){
+					ctx.Response.StatusCode = 409;
+					return;
+				}
+				var assistant = sb.ToString();
+				session.Messages.Add(new Message{ Role = "user", Content = prompt });
+				session.Messages.Add(new Message{ Role = "assistant", Content = assistant });
+				_sessions.Update(session, session.Messages, newState, tokens);
+				var resp = BuildResponsePayload(assistant, Path.GetFileNameWithoutExtension(Settings.Default.LastModel), session.Id);
+				var json = JsonConvert.SerializeObject(resp);
+				var bytes = Encoding.UTF8.GetBytes(json);
+				ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
+			} finally{
+				if(!store) _sessions.Remove(session.Id);
 			}
-			var assistant = sb.ToString();
-			session.Messages.Add(new Message{ Role = "user", Content = prompt });
-			session.Messages.Add(new Message{ Role = "assistant", Content = assistant });
-			_sessions.Update(session, session.Messages, newState, tokens);
-			var resp = BuildResponsePayload(assistant, Path.GetFileNameWithoutExtension(Settings.Default.LastModel), session.Id);
-			var json = JsonConvert.SerializeObject(resp);
-			var bytes = Encoding.UTF8.GetBytes(json);
-			ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
 		}
-		private void HandleRemoteChat(HttpListenerContext ctx, ChatRequest request, List<Message> incomingMessages){
+		private void HandleRemoteChat(HttpListenerContext ctx, ChatRequest request, List<Message> incomingMessages, JArray inputItems, bool store){
 			var session = _sessions.Get(request.SessionId);
 			ctx.Response.AddHeader("X-Session-Id", session.Id);
 			ctx.Response.ContentType = "application/json";
 			try{
-				var messages = new List<ApiClient.ChatMessage>();
-				foreach(var incoming in incomingMessages ?? Enumerable.Empty<Message>()){
-					if(string.IsNullOrWhiteSpace(incoming?.Role)) continue;
-					if(string.IsNullOrWhiteSpace(incoming.Content)) continue;
-					messages.Add(new ApiClient.ChatMessage(incoming.Role, incoming.Content));
+				var history = inputItems;
+				if(history == null || history.Count == 0){
+					var messages = new List<ApiClient.ChatMessage>();
+					foreach(var incoming in incomingMessages ?? Enumerable.Empty<Message>()){
+						if(string.IsNullOrWhiteSpace(incoming?.Role)) continue;
+						if(string.IsNullOrWhiteSpace(incoming.Content)) continue;
+						messages.Add(new ApiClient.ChatMessage(incoming.Role, incoming.Content));
+					}
+					if(messages.Count == 0){
+						ctx.Response.StatusCode = 400;
+						return;
+					}
+					history = ApiClient.BuildInputItems(messages);
 				}
-				if(messages.Count == 0){
-					ctx.Response.StatusCode = 400;
-					return;
-				}
-				var history = ApiClient.BuildInputItems(messages);
-				var toolsJson = _form.BuildApiToolsJson();
+				var toolsJson = request.Tools != null ? request.Tools.ToString(Formatting.None) : _form.BuildApiToolsJson();
 				var client = CreateApiClient();
 				var result = client.CreateChatCompletion(history, (float)Settings.Default.Temp, (int)Settings.Default.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
 				ApiClient.AppendOutputItems(history, result);
@@ -196,8 +209,8 @@ namespace LMStud{
 					rounds++;
 				}
 				var assistant = result.Content;
-				if(messages.Count > 0){
-					var last = messages.Last();
+				if(incomingMessages != null && incomingMessages.Count > 0){
+					var last = incomingMessages.Last();
 					session.Messages.Add(new Message{ Role = last.Role, Content = last.Content });
 				}
 				if(toolOutputs != null){
@@ -214,34 +227,96 @@ namespace LMStud{
 				var err = JsonConvert.SerializeObject(new{ error = new{ message = ex.Message } });
 				var buf = Encoding.UTF8.GetBytes(err);
 				ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+			} finally{
+				if(!store) _sessions.Remove(session.Id);
 			}
 		}
 		private static object BuildResponsePayload(string assistant, string model, string sessionId){
-			var message = new{ id = "msg_" + Guid.NewGuid().ToString("N"), type = "message", role = "assistant", content = new[]{ new{ type = "output_text", text = assistant ?? "" } } };
+			var text = assistant ?? "";
+			var message = new{ id = "msg_" + Guid.NewGuid().ToString("N"), type = "message", role = "assistant", content = new[]{ new{ type = "output_text", text } } };
 			return new{
 				id = "resp_" + Guid.NewGuid().ToString("N"), @object = "response", created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(), model,
-				session_id = sessionId, output = new[]{ message }
+				session_id = sessionId, output = new[]{ message }, output_text = text
 			};
 		}
-		private static List<Message> ParseInputMessages(JToken input){
-			if(input == null) return null;
-			if(input.Type == JTokenType.String) return new List<Message>{ new Message{ Role = "user", Content = input.ToString() } };
-			if(input.Type == JTokenType.Array){
-				var messages = new List<Message>();
-				foreach(var item in input){
+		private static JArray BuildInputItems(ChatRequest request){
+			if(request == null) return null;
+			var normalized = NormalizeInputItems(request.Input);
+			if(normalized != null && normalized.Count > 0) return normalized;
+			if(request.Messages == null || request.Messages.Count == 0) return null;
+			var messages = new List<ApiClient.ChatMessage>();
+			foreach(var message in request.Messages){
+				if(message == null) continue;
+				if(string.IsNullOrWhiteSpace(message.Role)) continue;
+				messages.Add(new ApiClient.ChatMessage(message.Role, message.Content ?? ""));
+			}
+			return messages.Count > 0 ? ApiClient.BuildInputItems(messages) : null;
+		}
+		private static JArray NormalizeInputItems(JToken input){
+			if(input == null || input.Type == JTokenType.Null) return null;
+			if(input.Type == JTokenType.String){
+				return new JArray(new JObject{ ["role"] = "user", ["content"] = input.ToString() });
+			}
+			if(input is JObject inputObj){
+				return new JArray(inputObj.DeepClone());
+			}
+			if(input is JArray array){
+				var items = new JArray();
+				foreach(var item in array){
+					if(item == null || item.Type == JTokenType.Null) continue;
 					if(item.Type == JTokenType.String){
-						messages.Add(new Message{ Role = "user", Content = item.ToString() });
+						items.Add(new JObject{ ["role"] = "user", ["content"] = item.ToString() });
 						continue;
 					}
-					if(!(item is JObject obj)) continue;
+					if(item is JObject obj) items.Add(obj.DeepClone());
+				}
+				return items.Count > 0 ? items : null;
+			}
+			return null;
+		}
+		private static List<Message> ParseInputMessages(JToken input){
+			if(input == null || input.Type == JTokenType.Null) return null;
+			if(input.Type == JTokenType.String) return new List<Message>{ new Message{ Role = "user", Content = input.ToString() } };
+			var inputItems = input as JArray;
+			if(inputItems == null && input is JObject inputObj) inputItems = new JArray(inputObj);
+			if(inputItems == null) return null;
+			var messages = new List<Message>();
+			foreach(var item in inputItems){
+				if(item == null || item.Type == JTokenType.Null) continue;
+				if(item.Type == JTokenType.String){
+					messages.Add(new Message{ Role = "user", Content = item.ToString() });
+					continue;
+				}
+				if(!(item is JObject obj)) continue;
+				var type = obj.Value<string>("type");
+				if(string.Equals(type, "message", StringComparison.OrdinalIgnoreCase)){
 					var role = obj.Value<string>("role") ?? "user";
 					var content = ExtractContentText(obj["content"]);
 					if(string.IsNullOrWhiteSpace(content)) continue;
 					messages.Add(new Message{ Role = role, Content = content });
+					continue;
 				}
-				return messages;
+				if(string.Equals(type, "input_text", StringComparison.OrdinalIgnoreCase) || string.Equals(type, "output_text", StringComparison.OrdinalIgnoreCase)){
+					var content = obj.Value<string>("text") ?? obj.Value<string>("content");
+					if(string.IsNullOrWhiteSpace(content)) continue;
+					messages.Add(new Message{ Role = "user", Content = content });
+					continue;
+				}
+				if(string.Equals(type, "function_call_output", StringComparison.OrdinalIgnoreCase) || string.Equals(type, "tool_result", StringComparison.OrdinalIgnoreCase)){
+					var content = obj.Value<string>("output") ?? obj.Value<string>("content") ?? obj.Value<string>("text");
+					if(string.IsNullOrWhiteSpace(content)) continue;
+					messages.Add(new Message{ Role = "tool", Content = content });
+					continue;
+				}
+				if(string.Equals(type, "function_call", StringComparison.OrdinalIgnoreCase) || string.Equals(type, "tool_call", StringComparison.OrdinalIgnoreCase)){
+					continue;
+				}
+				var roleFallback = obj.Value<string>("role") ?? "user";
+				var contentFallback = ExtractContentText(obj["content"]) ?? obj.Value<string>("text") ?? obj.Value<string>("content");
+				if(string.IsNullOrWhiteSpace(contentFallback)) continue;
+				messages.Add(new Message{ Role = roleFallback, Content = contentFallback });
 			}
-			return null;
+			return messages.Count > 0 ? messages : null;
 		}
 		private static string ExtractContentText(JToken contentToken){
 			if(contentToken == null || contentToken.Type == JTokenType.Null) return null;
@@ -268,6 +343,7 @@ namespace LMStud{
 			[JsonProperty("input")] public JToken Input;
 			public List<Message> Messages;
 			[JsonProperty("session_id")] public string SessionId;
+			[JsonProperty("store")] public bool? Store;
 			[JsonProperty("tool_choice")] public JToken ToolChoice;
 			[JsonProperty("tools")] public JArray Tools;
 		}

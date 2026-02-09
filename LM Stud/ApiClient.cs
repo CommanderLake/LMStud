@@ -9,16 +9,24 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 namespace LMStud{
 	internal sealed class ApiClient{
-		private static readonly HttpClient HttpClient = new HttpClient();
+		private static HttpClient _httpClient;
 		private readonly string _apiBaseUrl;
 		private readonly string _apiKey;
 		private readonly string _instructions;
 		private readonly string _model;
-		internal ApiClient(string apiBaseUrl, string apiKey, string model, string instructions = null){
+		private readonly bool _apiClientStore;
+		internal ApiClient(string apiBaseUrl, string apiKey, string model, bool apiClientStore, string instructions = null){
+			_apiClientStore = apiClientStore;
 			_apiBaseUrl = apiBaseUrl?.Trim() ?? "";
 			_apiKey = apiKey?.Trim() ?? "";
 			_model = model?.Trim() ?? "";
 			_instructions = instructions?.Trim();
+		}
+		internal static void SetTimeout(int timeout){
+			_httpClient?.Dispose();
+			_httpClient = new HttpClient {
+				Timeout = TimeSpan.FromSeconds(timeout)
+			};
 		}
 		internal ChatCompletionResult CreateChatCompletion(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice, CancellationToken cancellationToken){
 			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException("API base URL is not configured.");
@@ -27,7 +35,7 @@ namespace LMStud{
 			if(history == null) throw new InvalidOperationException("History is not configured.");
 			var payload = new JObject{ ["model"] = _model, ["input"] = history, ["temperature"] = temperature };
 			if(!string.IsNullOrWhiteSpace(_instructions)) payload["instructions"] = _instructions;
-			payload["store"] = true;
+			payload["store"] = _apiClientStore;
 			if(maxTokens > 0) payload["max_output_tokens"] = maxTokens;
 			if(!string.IsNullOrWhiteSpace(toolsJson)){
 				var normalizedTools = NormalizeToolsJson(toolsJson);
@@ -38,7 +46,7 @@ namespace LMStud{
 			using(var request = new HttpRequestMessage(HttpMethod.Post, BuildChatEndpoint(_apiBaseUrl))){
 				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
 				request.Content = new StringContent(payload.ToString(Formatting.None), Encoding.UTF8, "application/json");
-				using(var response = HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
+				using(var response = _httpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
 					var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 					if(!response.IsSuccessStatusCode) throw new InvalidOperationException($"API error ({(int)response.StatusCode}): {body}");
 					return ParseResponseBody(body);
@@ -270,7 +278,7 @@ namespace LMStud{
 			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException("API base URL is not configured.");
 			using(var request = new HttpRequestMessage(HttpMethod.Get, BuildModelsEndpoint(_apiBaseUrl))){
 				if(!string.IsNullOrWhiteSpace(_apiKey)) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
-				using(var response = HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
+				using(var response = _httpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
 					var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 					if(!response.IsSuccessStatusCode) throw new InvalidOperationException($"API error ({(int)response.StatusCode}): {body}");
 					var json = JObject.Parse(body);

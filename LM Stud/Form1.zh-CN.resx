@@ -462,6 +462,30 @@
   <data name="tabPageChat.ToolTip" xml:space="preserve">
     <value />
   </data>
+  <data name="label40.Size" type="System.Drawing.Size, System.Drawing">
+    <value>125, 13</value>
+  </data>
+  <data name="label40.Text" xml:space="preserve">
+    <value>请求超时时间（毫秒）：</value>
+  </data>
+  <data name="label40.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="numericUpDown1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>134, 156</value>
+  </data>
+  <data name="numericUpDown1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>60, 20</value>
+  </data>
+  <data name="numericUpDown1.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="checkApiClientStore.Text" xml:space="preserve">
+    <value>在服务器上存储提示词</value>
+  </data>
+  <data name="checkApiClientStore.ToolTip" xml:space="preserve">
+    <value />
+  </data>
   <data name="comboApiClientModel.ToolTip" xml:space="preserve">
     <value />
   </data>
@@ -1034,6 +1058,9 @@
   </data>
   <data name="statusStrip1.ToolTip" xml:space="preserve">
     <value />
+  </data>
+  <data name="$this.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>Inherit</value>
   </data>
   <data name="$this.ToolTip" xml:space="preserve">
     <value />

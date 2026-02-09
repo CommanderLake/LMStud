@@ -610,5 +610,29 @@ namespace LMStud.Properties {
                 this["ApiClientModel"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ApiClientStore {
+            get {
+                return ((bool)(this["ApiClientStore"]));
+            }
+            set {
+                this["ApiClientStore"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("300")]
+        public decimal ApiClientTimeout {
+            get {
+                return ((decimal)(this["ApiClientTimeout"]));
+            }
+            set {
+                this["ApiClientTimeout"] = value;
+            }
+        }
     }
 }
