@@ -686,7 +686,6 @@ namespace LMStud{
 			tokenCount = 0;
 			if(string.IsNullOrWhiteSpace(prompt)) return false;
 			if(!GenerationLock.Wait(0)) return false;
-			var acquired = true;
 			try{
 				if(!LlModelLoaded || Generating || APIGenerating) return false;
 				APIGenerating = true;
@@ -705,9 +704,7 @@ namespace LMStud{
 					_apiTokenCallback = null;
 					APIGenerating = false;
 				}
-			} finally{
-				if(acquired) GenerationLock.Release();
-			}
+			} finally{ GenerationLock.Release(); }
 		}
 		private static int FindSentenceEnd(StringBuilder sb){
 			for(var i = 0; i < sb.Length - 1; i++) if((sb[i] == '.' || sb[i] == '!' || sb[i] == '?') && char.IsWhiteSpace(sb[i + 1])) return i;
