@@ -236,6 +236,12 @@ std::string ApplyPatchTool(const char* argsJson){
 	std::regex hunkRe(R"(@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@.*)");
 	while(std::getline(patchStream, line)){
 		if(!line.empty() && line.back() == '\r') line.pop_back();
+		if(!inHunk){
+			if(line.rfind("*** Begin Patch", 0) == 0 || line.rfind("*** End Patch", 0) == 0 || line.rfind("*** Update File", 0) == 0
+				|| line.rfind("diff --git", 0) == 0 || line.rfind("--- ", 0) == 0 || line.rfind("+++ ", 0) == 0){
+				continue;
+			}
+		}
 		std::smatch m;
 		if(std::regex_match(line, m, hunkRe)){
 			if(inHunk){
@@ -247,6 +253,7 @@ std::string ApplyPatchTool(const char* argsJson){
 		} else if(inHunk){ cur.lines.push_back(line); }
 	}
 	if(inHunk) hunks.push_back(cur);
+	if(hunks.empty()) return "{\"error\":\"invalid patch: no hunks\"}";
 	auto shorten = [](std::string s){
 		if(s.size() > 40) s = s.substr(0, 37) + "...";
 		return s;

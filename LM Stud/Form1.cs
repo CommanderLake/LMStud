@@ -358,21 +358,19 @@ namespace LMStud{
 			});
 		}
 		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)(((e.Delta/8) << 16) & 0xffff0000), IntPtr.Zero);}
-		internal ChatMessageControl AddMessage(MessageRole role, string think, string message, bool showInChat = true, List<ApiClient.ToolCall> toolCalls = null, string toolCallId = null){
+		internal ChatMessageControl AddMessage(MessageRole role, string think, string message, List<ApiClient.ToolCall> toolCalls = null, string toolCallId = null){
 			var cm = new ChatMessageControl(role, think, message ?? "", checkMarkdown.Checked){ ApiToolCalls = toolCalls, ApiToolCallId = toolCallId };
-			if(showInChat){
-				cm.Parent = panelChat;
-				cm.Width = panelChat.ClientSize.Width;
-				cm.butDelete.Click += (o, args) => MsgButDeleteOnClick(cm);
-				cm.butRegen.Click += (o, args) => MsgButRegenOnClick(cm);
-				cm.butEdit.Click += (o, args) => MsgButEditOnClick(cm);
-				cm.butCancelEdit.Click += (o, args) => MsgButEditCancelOnClick(cm);
-				cm.butApplyEdit.Click += (o, args) => MsgButEditApplyOnClick(cm);
-				cm.richTextMsg.MouseWheel += RichTextMsgOnMouseWheel;
-				cm.richTextMsg.LinkClicked += RichTextMsgOnLinkClicked;
-				panelChat.Controls.Add(cm);
-				panelChat.ScrollToEnd();
-			}
+			cm.Parent = panelChat;
+			cm.Width = panelChat.ClientSize.Width;
+			cm.butDelete.Click += (o, args) => MsgButDeleteOnClick(cm);
+			cm.butRegen.Click += (o, args) => MsgButRegenOnClick(cm);
+			cm.butEdit.Click += (o, args) => MsgButEditOnClick(cm);
+			cm.butCancelEdit.Click += (o, args) => MsgButEditCancelOnClick(cm);
+			cm.butApplyEdit.Click += (o, args) => MsgButEditApplyOnClick(cm);
+			cm.richTextMsg.MouseWheel += RichTextMsgOnMouseWheel;
+			cm.richTextMsg.LinkClicked += RichTextMsgOnLinkClicked;
+			panelChat.Controls.Add(cm);
+			panelChat.ScrollToEnd();
 			ChatMessages.Add(cm);
 			return cm;
 		}
@@ -640,11 +638,10 @@ namespace LMStud{
 					if(!string.IsNullOrWhiteSpace(content) || (toolCalls != null && toolCalls.Count > 0) || !string.IsNullOrWhiteSpace(reasoning)){
 						if(toolCalls != null && toolCalls.Count > 0)
 							content = toolCalls.Aggregate(content, (current, toolCall) => current + Resources.__Tool_name_ + toolCall.Name + Resources.__Tool_ID_ + toolCall.Id + Resources.__Tool_arguments_ + toolCall.Arguments);
-						var showInChat = !string.IsNullOrWhiteSpace(content) || !string.IsNullOrWhiteSpace(reasoning);
 						try{
 							Invoke(new MethodInvoker(() => {
-								var message = AddMessage(MessageRole.Assistant, reasoning ?? "", content ?? "", showInChat, toolCalls);
-								message.SetRoleText(Resources.Tool_Call);
+								var message = AddMessage(MessageRole.Assistant, reasoning ?? "", content ?? "", toolCalls);
+								if(toolCalls != null && toolCalls.Count > 0) message.SetRoleText(Resources.Tool_Call);
 								if(_speak && !string.IsNullOrWhiteSpace(content)) QueueSpeech(content);
 							}));
 						} catch(ObjectDisposedException){}
@@ -660,7 +657,7 @@ namespace LMStud{
 						if(string.IsNullOrWhiteSpace(toolResult)) continue;
 						try{
 							Invoke(new MethodInvoker(() => {
-								var toolMessageControl = AddMessage(MessageRole.Tool, "", toolResult, true, null, toolCall.Id);
+								var toolMessageControl = AddMessage(MessageRole.Tool, "", toolResult, null, toolCall.Id);
 								toolMessageControl.SetRoleText(Resources.Tool_Output);
 							}));
 						} catch(ObjectDisposedException){}
@@ -687,22 +684,29 @@ namespace LMStud{
 		internal bool GenerateForApiServer(byte[] state, string prompt, Action<string> onToken, out byte[] newState, out int tokenCount){
 			newState = null;
 			tokenCount = 0;
-			if(!LlModelLoaded || Generating || APIGenerating || string.IsNullOrWhiteSpace(prompt)) return false;
-			APIGenerating = true;
-			_apiTokenCallback = onToken;
-			var originalState = GetState();
-			var chatSnapshot = NativeMethods.CaptureChatState();
+			if(string.IsNullOrWhiteSpace(prompt)) return false;
+			if(!GenerationLock.Wait(0)) return false;
+			var acquired = true;
 			try{
-				SetState(state);
-				NativeMethods.GenerateWithTools(MessageRole.User, prompt, _nGen, false);
-				newState = GetState();
-				tokenCount = GetTokenCount();
-				return true;
+				if(!LlModelLoaded || Generating || APIGenerating) return false;
+				APIGenerating = true;
+				_apiTokenCallback = onToken;
+				var originalState = GetState();
+				var chatSnapshot = NativeMethods.CaptureChatState();
+				try{
+					SetState(state);
+					NativeMethods.GenerateWithTools(MessageRole.User, prompt, _nGen, false);
+					newState = GetState();
+					tokenCount = GetTokenCount();
+					return true;
+				} finally{
+					try{ SetState(originalState); } catch{}
+					if(chatSnapshot != IntPtr.Zero) try{ NativeMethods.RestoreChatState(chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
+					_apiTokenCallback = null;
+					APIGenerating = false;
+				}
 			} finally{
-				try{ SetState(originalState); } catch{}
-				if(chatSnapshot != IntPtr.Zero) try{ NativeMethods.RestoreChatState(chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
-				_apiTokenCallback = null;
-				APIGenerating = false;
+				if(acquired) GenerationLock.Release();
 			}
 		}
 		private static int FindSentenceEnd(StringBuilder sb){
