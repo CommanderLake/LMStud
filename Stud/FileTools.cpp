@@ -188,12 +188,18 @@ std::string ReplaceLinesTool(const char* argsJson){
 	if(!in.is_open()) return "{\"error\":\"open failed\"}";
 	std::vector<std::string> lines;
 	std::string line;
-	while(std::getline(in, line)){ lines.push_back(line); }
+	while(std::getline(in, line)){
+		if(!line.empty() && line.back() == '\r') line.pop_back();
+		lines.push_back(line);
+	}
 	in.close();
 	if(start > static_cast<int>(lines.size()) || end > static_cast<int>(lines.size())) return "{\"error\":\"range, check line numbers using file_read_lines\"}";
 	std::vector<std::string> newLines;
 	std::stringstream ss(text);
-	while(std::getline(ss, line)){ newLines.push_back(line); }
+	while(std::getline(ss, line)){
+		if(!line.empty() && line.back() == '\r') line.pop_back();
+		newLines.push_back(line);
+	}
 	lines.erase(lines.begin() + (start - 1), lines.begin() + end);
 	lines.insert(lines.begin() + (start - 1), newLines.begin(), newLines.end());
 	std::ofstream out(p, std::ios::trunc);
