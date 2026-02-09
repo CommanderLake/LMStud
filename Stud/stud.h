@@ -87,6 +87,7 @@ EXPORT StudError SetMessageAt(int index, const char* think, const char* message)
 EXPORT StudError RemoveMessageAt(int index);
 EXPORT StudError RemoveMessagesStartingAt(int index);
 EXPORT StudError AddMessage(Stud::MessageRole role, const char* message);
+EXPORT StudError SyncChatMessages(const int* roles, const char** thinks, const char** messages, int count);
 EXPORT StudError GenerateWithTools(Stud::MessageRole role, const char* prompt, int nPredict, bool callback);
 EXPORT void StopGeneration();
 EXPORT const char* GetLastErrorMessage();

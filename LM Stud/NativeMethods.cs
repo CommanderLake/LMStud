@@ -97,6 +97,8 @@ namespace LMStud{
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError AddMessage(MessageRole role, string message);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern StudError SyncChatMessages([MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.I4)] int[] roles, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPUTF8Str)] string[] thinks, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPUTF8Str)] string[] messages, int count);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError GenerateWithTools(MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr ExecuteTool([MarshalAs(UnmanagedType.LPUTF8Str)] string name, [MarshalAs(UnmanagedType.LPUTF8Str)] string argsJson);

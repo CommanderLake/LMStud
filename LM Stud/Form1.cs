@@ -392,6 +392,25 @@ namespace LMStud{
 			if(InvokeRequired) Invoke(action);
 			else action();
 		}
+		private NativeMethods.StudError SyncNativeChatMessages(){
+			if(IsDisposed) return NativeMethods.StudError.Success;
+			int[] roles = Array.Empty<int>();
+			string[] thinks = Array.Empty<string>();
+			string[] messages = Array.Empty<string>();
+			RunOnUiThread(() => {
+				var count = ChatMessages.Count;
+				roles = new int[count];
+				thinks = new string[count];
+				messages = new string[count];
+				for(var i = 0; i < count; i++){
+					var msg = ChatMessages[i];
+					roles[i] = (int)msg.Role;
+					thinks[i] = msg.Think ?? "";
+					messages[i] = msg.Message ?? "";
+				}
+			});
+			return NativeMethods.SyncChatMessages(roles, thinks, messages, roles.Length);
+		}
 		private void BeginRetokenization(){
 			if(Interlocked.Increment(ref _retokenizeCount) != 1) return;
 			RunOnUiThread(() => {
@@ -605,6 +624,7 @@ namespace LMStud{
 		}
 		private void GenerateWithApiClient(MessageRole role, string prompt, bool addToChat){
 			Exception error = null;
+			var syncError = NativeMethods.StudError.Success;
 			try{
 				var messages = BuildApiMessages(role, prompt, addToChat);
 				var history = ApiClient.BuildInputItems(messages);
@@ -646,10 +666,16 @@ namespace LMStud{
 						} catch(ObjectDisposedException){}
 					}
 				}
+				syncError = SyncNativeChatMessages();
 			} catch(Exception ex){ error = ex; }
 			try{
 				Invoke(new MethodInvoker(() => {
 					if(error != null) MessageBox.Show(this, error.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+					if(error == null && syncError != NativeMethods.StudError.Success){
+						if(syncError == NativeMethods.StudError.ConvTooLong)
+							MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+						else MessageBox.Show(this, syncError.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+					}
 					butGen.Text = Resources.Generate;
 					butReset.Enabled = butApply.Enabled = true;
 					Generating = false;

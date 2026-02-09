@@ -466,6 +466,34 @@ StudError AddMessage(const MessageRole role, const char* message){
 	_session.chatMsgs[_session.dId].push_back(msg);
 	return RetokenizeChat();
 }
+StudError SyncChatMessages(const int* roles, const char** thinks, const char** messages, int count){
+	std::vector<common_chat_msg> msgs;
+	if(count > 0){
+		msgs.reserve(static_cast<size_t>(count));
+		for(int i = 0; i < count; ++i){
+			const auto role = static_cast<MessageRole>(roles ? roles[i] : 0);
+			common_chat_msg msg;
+			msg.role = RoleString(role);
+			msg.content = messages && messages[i] ? std::string(messages[i]) : std::string();
+			if(role == MessageRole::Assistant) msg.reasoning_content = thinks && thinks[i] ? std::string(thinks[i]) : std::string();
+			msgs.push_back(std::move(msg));
+		}
+	}
+	_session.chatMsgs[_session.dId] = std::move(msgs);
+	_session.chatMsgs[_session.dId == 0 ? 1 : 0].clear();
+	AlignChatStates();
+	_session.cachedTokens[0].clear();
+	_session.cachedTokens[1].clear();
+	if(!_session.ctx || !_session.smpl[_session.dId] || !_session._vocab) return StudError::Success;
+	auto err = RetokenizeChat(true);
+	const auto dId = _session.dId == 0 ? 1 : 0;
+	if(err != StudError::Success || _session.dialState[dId].empty()) return err;
+	err = DialecticSwap();
+	if(err != StudError::Success) return err;
+	const auto err2 = RetokenizeChat(true);
+	const auto err3 = DialecticSwap();
+	return err2 != StudError::Success ? err2 : err3;
+}
 static std::string OpenToolResponseTag(){
 	switch(_session.syntax.format){
 		case COMMON_CHAT_FORMAT_DEEPSEEK_R1: return "<｜tool▁outputs▁begin｜>";
