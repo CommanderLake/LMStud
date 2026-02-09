@@ -38,8 +38,8 @@ namespace LMStud{
 			using(var request = new HttpRequestMessage(HttpMethod.Post, BuildChatEndpoint(_apiBaseUrl))){
 				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
 				request.Content = new StringContent(payload.ToString(Formatting.None), Encoding.UTF8, "application/json");
-				using(var response = HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult()){
-					var body = response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+				using(var response = HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
+					var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 					if(!response.IsSuccessStatusCode) throw new InvalidOperationException($"API error ({(int)response.StatusCode}): {body}");
 					return ParseResponseBody(body);
 				}
@@ -270,8 +270,8 @@ namespace LMStud{
 			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException("API base URL is not configured.");
 			using(var request = new HttpRequestMessage(HttpMethod.Get, BuildModelsEndpoint(_apiBaseUrl))){
 				if(!string.IsNullOrWhiteSpace(_apiKey)) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
-				using(var response = HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult()){
-					var body = response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+				using(var response = HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
+					var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 					if(!response.IsSuccessStatusCode) throw new InvalidOperationException($"API error ({(int)response.StatusCode}): {body}");
 					var json = JObject.Parse(body);
 					var models = new List<string>();

@@ -102,43 +102,58 @@ std::string ReadFileTool(const char* argsJson){
 	return out;
 }
 std::string SearchFileTool(const char* argsJson){
-	std::string path = GetArgValue(argsJson, "path");
-	std::string keyword = GetArgValue(argsJson, "keyword");
+	const std::string path = GetArgValue(argsJson, "path");
+	const std::string keyword = GetArgValue(argsJson, "keyword");
 	const std::string maxResultsStr = GetArgValue(argsJson, "max_results");
 	const std::string caseSensitiveStr = GetArgValue(argsJson, "case_sensitive");
 	const bool caseSensitive = !(caseSensitiveStr == "false" || caseSensitiveStr == "0");
-	int maxResults = -1;
+	int maxResults = 100;
 	if(!maxResultsStr.empty()){
-		auto[ptr, ec] = std::from_chars(maxResultsStr.data(), maxResultsStr.data() + maxResultsStr.size(), maxResults);
-		if(ec != std::errc() || ptr != maxResultsStr.data() + maxResultsStr.size()){
-			return "{\"error\":\"max_results must be a number\"}";
-		}
+		auto [ptr, ec] = std::from_chars(maxResultsStr.data(), maxResultsStr.data() + maxResultsStr.size(), maxResults);
+		if(ec != std::errc() || ptr != maxResultsStr.data() + maxResultsStr.size() || maxResults <= 0){ return "{\"error\":\"max_results must be a valid positive integer\"}"; }
 	}
-	if(path.empty() || keyword.empty() || maxResults <= 0) return "{\"error\":\"args\"}";
-	std::filesystem::path p = _baseFolder / path;
+	if(keyword.empty()){ return "{\"error\":\"keyword is required\"}"; }
+	const std::filesystem::path p = _baseFolder / path;
 	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
-	if(is_directory(p)) return "{\"error\":\"path is a folder\"}";
-	std::ifstream f(p);
-	if(!f.is_open()) return "{\"error\":\"open failed, try the list_directory tool\"}";
+	const bool isDir = is_directory(p);
+	if(!isDir && !exists(p)){ return "{\"error\":\"file or directory not found\"}"; }
 	std::string json = "{\"matches\":[";
-	std::string line;
-	int lineNo = 1;
 	auto toLower = [](std::string s){
 		std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return static_cast<char>(std::tolower(c, std::locale())); });
 		return s;
 	};
 	const std::string kwSearch = caseSensitive ? keyword : toLower(keyword);
 	int matches = 0;
-	while(std::getline(f, line)){
-		const std::string lineSearch = caseSensitive ? line : toLower(line);
-		if(lineSearch.find(kwSearch) != std::string::npos){
-			json += "{\"line\":" + std::to_string(lineNo) + ",\"text\":\"" + JsonEscape(line) + "\"}";
-			json += ',';
-			++matches;
-			if(matches >= maxResults) break;
+	auto processFile = [&](const std::filesystem::path& filePath, const std::string& fileLabel)-> bool{
+		std::ifstream f(filePath);
+		if(!f.is_open()){
+			return false;
 		}
-		++lineNo;
-	}
+		std::string line;
+		int lineNo = 1;
+		while(std::getline(f, line)){
+			const std::string lineSearch = caseSensitive ? line : toLower(line);
+			if(lineSearch.find(kwSearch) != std::string::npos){
+				json += "{\"line\":" + std::to_string(lineNo) + ",\"text\":\"" + JsonEscape(line) + "\"";
+				if(!fileLabel.empty()) json += ",\"file\":\"" + JsonEscape(fileLabel) + "\"";
+				json += "},";
+				++matches;
+				if(matches >= maxResults) return true;
+			}
+			++lineNo;
+		}
+		return false;
+	};
+	if(isDir){
+		std::error_code ec;
+		for(const auto& entry : std::filesystem::directory_iterator(p, ec)){
+			if(ec) break;
+			if(!entry.is_regular_file(ec)) continue;
+			const std::string fileLabel = relative(entry.path(), _baseFolder, ec).generic_string();
+			if(processFile(entry.path(), fileLabel)) break;
+		}
+		if(ec) return "{\"error\":\"failed to iterate directory\"}";
+	} else{ if(!processFile(p, "")){ return "{\"error\":\"failed to read file\"}"; } }
 	if(json.back() == ',') json.pop_back();
 	json += "]}";
 	return json;

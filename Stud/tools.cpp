@@ -120,10 +120,10 @@ void RegisterTools(const bool dateTime, const bool googleSearch, const bool webp
 	if(fileCreate){ AddTool("file_create", "Create a new file and fill it with text", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"text\":{\"type\":\"string\"},\"overwrite\":{\"type\":\"boolean\"}},\"required\":[\"path\",\"text\"]}", CreateFileTool); }
 	if(fileRead){
 		AddTool("file_read_lines", "Display range of lines from a text file with line numbers", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"}},\"required\":[\"path\"]}", ReadFileTool);
-		AddTool("file_search_keyword", "Search a file for lines containing a keyword", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"keyword\":{\"type\":\"string\"},\"max_results\":{\"type\":\"integer\",\"minimum\":1},\"case_sensitive\":{\"type\":\"boolean\"}},\"required\":[\"path\",\"keyword\",\"max_results\"]}", SearchFileTool);
+		AddTool("file_search_contents", "Search files for lines containing a keyword", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"keyword\":{\"type\":\"string\"},\"max_results\":{\"type\":\"integer\",\"minimum\":1},\"case_sensitive\":{\"type\":\"boolean\"}},\"required\":[\"path\",\"keyword\",\"max_results\"]}", SearchFileTool);
 	}
 	if(fileWrite){
-		AddTool("file_replace_lines", "Replace range of lines in a text file (1 based)", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"},\"text\":{\"type\":\"string\"}},\"required\":[\"path\",\"start\",\"end\",\"text\"]}", ReplaceLinesTool);
+		AddTool("file_replace_lines", "Replace range of lines in a text file", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"start\":{\"type\":\"integer\"},\"end\":{\"type\":\"integer\"},\"text\":{\"type\":\"string\"}},\"required\":[\"path\",\"start\",\"end\",\"text\"]}", ReplaceLinesTool);
 		AddTool("file_apply_diff_patch", "Apply unified diff patch to a file", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"patch\":{\"type\":\"string\"}},\"required\":[\"path\",\"patch\"]}", ApplyPatchTool);
 	}
 	if(commandPrompt){
