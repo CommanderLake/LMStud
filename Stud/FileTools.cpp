@@ -241,12 +241,6 @@ std::string ApplyPatchTool(const char* argsJson){
 		} else if(inHunk){ cur.lines.push_back(line); }
 	}
 	if(inHunk) hunks.push_back(cur);
-	auto trim = [](const std::string& s)-> std::string{
-		const auto b = s.find_first_not_of(" \t");
-		const auto e = s.find_last_not_of(" \t");
-		if(b == std::string::npos) return {};
-		return s.substr(b, e - b + 1);
-	};
 	auto shorten = [](std::string s){
 		if(s.size() > 40) s = s.substr(0, 37) + "...";
 		return s;
@@ -258,16 +252,12 @@ std::string ApplyPatchTool(const char* argsJson){
 		int idx = h.startOld + offset;
 		if(idx < 0 || idx > static_cast<int>(out.size())) return makeError("range");
 		for(const auto& pl : h.lines){
-			if(pl.empty()){
-				if(idx >= static_cast<int>(out.size())) return makeError("context end-of-file at line " + std::to_string(idx + 1));
-				++idx;
-				continue;
-			}
+			if(pl.empty()) return makeError("invalid patch line");
 			char tag = pl[0];
 			std::string text = pl.substr(1);
 			if(tag == ' ' || tag == '-'){
 				if(idx >= static_cast<int>(out.size())) return makeError("context end-of-file at line " + std::to_string(idx + 1));
-				if(trim(out[idx]) != trim(text)) return makeError("context mismatch at line " + std::to_string(idx + 1) + ", file='" + shorten(trim(out[idx])) + "', patch='" + shorten(trim(text)) + "'");
+				if(out[idx] != text) return makeError("context mismatch at line " + std::to_string(idx + 1) + ", file='" + shorten(out[idx]) + "', patch='" + shorten(text) + "'");
 				if(tag == '-'){
 					out.erase(out.begin() + idx);
 					--offset;
@@ -276,9 +266,11 @@ std::string ApplyPatchTool(const char* argsJson){
 				out.insert(out.begin() + idx, text);
 				++idx;
 				++offset;
+			} else if(tag == '\\'){
+				continue;
 			} else{
 				if(idx >= static_cast<int>(out.size())) return makeError("context end-of-file at line " + std::to_string(idx + 1));
-				if(trim(out[idx]) != trim(pl)) return makeError("context mismatch at line " + std::to_string(idx + 1) + ", file='" + shorten(trim(out[idx])) + "', patch='" + shorten(trim(pl)) + "'");
+				if(out[idx] != pl) return makeError("context mismatch at line " + std::to_string(idx + 1) + ", file='" + shorten(out[idx]) + "', patch='" + shorten(pl) + "'");
 				++idx;
 			}
 		}
