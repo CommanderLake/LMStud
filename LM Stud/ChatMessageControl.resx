@@ -135,7 +135,7 @@
     <value>None</value>
   </data>
   <data name="richTextMsg.Size" type="System.Drawing.Size, System.Drawing">
-    <value>188, 14</value>
+    <value>200, 26</value>
   </data>
   <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="richTextMsg.TabIndex" type="System.Int32, mscorlib">
@@ -184,7 +184,7 @@
 </value>
   </data>
   <data name="butDelete.Location" type="System.Drawing.Point, System.Drawing">
-    <value>164, 0</value>
+    <value>176, 0</value>
   </data>
   <data name="butDelete.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -223,7 +223,7 @@
 </value>
   </data>
   <data name="butEdit.Location" type="System.Drawing.Point, System.Drawing">
-    <value>140, 0</value>
+    <value>152, 0</value>
   </data>
   <data name="butEdit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -269,7 +269,7 @@
 </value>
   </data>
   <data name="butRegen.Location" type="System.Drawing.Point, System.Drawing">
-    <value>116, 0</value>
+    <value>128, 0</value>
   </data>
   <data name="butRegen.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -343,7 +343,7 @@
 </value>
   </data>
   <data name="butApplyEdit.Location" type="System.Drawing.Point, System.Drawing">
-    <value>116, 0</value>
+    <value>128, 0</value>
   </data>
   <data name="butApplyEdit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -387,7 +387,7 @@
 </value>
   </data>
   <data name="butCancelEdit.Location" type="System.Drawing.Point, System.Drawing">
-    <value>140, 0</value>
+    <value>152, 0</value>
   </data>
   <data name="butCancelEdit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -423,10 +423,10 @@
     <value>False</value>
   </data>
   <data name="checkThink.Location" type="System.Drawing.Point, System.Drawing">
-    <value>60, 5</value>
+    <value>71, 5</value>
   </data>
   <data name="checkThink.Size" type="System.Drawing.Size, System.Drawing">
-    <value>53, 17</value>
+    <value>54, 17</value>
   </data>
   <data name="checkThink.TabIndex" type="System.Int32, mscorlib">
     <value>5</value>
@@ -456,7 +456,7 @@
     <value>0, 0</value>
   </data>
   <data name="panel1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>188, 38</value>
+    <value>200, 50</value>
   </data>
   <data name="panel1.TabIndex" type="System.Int32, mscorlib">
     <value>5</value>
@@ -479,11 +479,14 @@
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
     <value>6, 13</value>
   </data>
+  <data name="$this.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI Symbol, 8.25pt</value>
+  </data>
   <data name="$this.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
   </data>
   <data name="$this.Size" type="System.Drawing.Size, System.Drawing">
-    <value>188, 38</value>
+    <value>200, 50</value>
   </data>
   <data name="&gt;&gt;$this.Name" xml:space="preserve">
     <value>ChatMessageControl</value>

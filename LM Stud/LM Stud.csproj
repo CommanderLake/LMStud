@@ -136,6 +136,9 @@
     </Compile>
     <Compile Include="GGUFMetadataManager.cs" />
     <Compile Include="LVISorter.cs" />
+    <Compile Include="MarkdownRenderControl.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="MyFlowLayoutPanel.cs">
       <SubType>Component</SubType>
     </Compile>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿//#define newMarkdown
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -18,10 +19,27 @@ namespace LMStud{
 		private string _think;
 		private bool _generating;
 		private bool _editing;
+#if newMarkdown
+		private readonly MarkdownRenderControl _markdownView;
+#endif
 		internal int TTSPosition = 0;
 		internal ChatMessageControl(MessageRole role, string message, bool markdown):this(role, "", message, markdown){}
 		internal ChatMessageControl(MessageRole role, string think, string message, bool markdown){
 			InitializeComponent();
+#if newMarkdown
+			_markdownView = new MarkdownRenderControl {
+				Visible = false,
+				Location = richTextMsg.Location,
+				Size = richTextMsg.Size,
+				Anchor = richTextMsg.Anchor,
+				BackColor = richTextMsg.BackColor,
+				ForeColor = richTextMsg.ForeColor,
+				Font = new System.Drawing.Font("Segoe UI Symbol", richTextMsg.Font.Size, richTextMsg.Font.Style)
+			};
+			_markdownView.ContentHeightChanged += MarkdownViewOnContentHeightChanged;
+			panel1.Controls.Add(_markdownView);
+			_markdownView.BringToFront();
+#endif
 			Role = role;
 			_think = think;
 			_message = message;
@@ -34,10 +52,22 @@ namespace LMStud{
 		}
 		internal void SetRoleText(string role){labelRole.Text = role;}
 		private void RichTextMsgOnContentsResized(object sender, ContentsResizedEventArgs e){
+#if newMarkdown
+			if(_markdownView.Visible) return;
+			ApplyHeight(e.NewRectangle.Height + 32);
+		}
+		private void MarkdownViewOnContentHeightChanged(object sender, EventArgs e){
+			if(!_markdownView.Visible) return;
+			ApplyHeight(_markdownView.AutoScrollMinSize.Height + 32);
+		}
+		private void ApplyHeight(int newHeight){
+#endif
 			ThreadPool.QueueUserWorkItem(o => {//Layout issue workaround
 				try{
 					Invoke(new MethodInvoker(() => {
+#if !newMarkdown
 						var newHeight = e.NewRectangle.Height + 32;
+#endif
 						if(Height != newHeight) Height = newHeight;
 						((MyFlowLayoutPanel)Parent).ScrollToEnd();
 					}));
@@ -80,6 +110,7 @@ namespace LMStud{
 				butApplyEdit.Visible = value;
 				butApplyEdit.Enabled = value;
 				checkThink.Enabled = !value;
+				RenderText();
 			}
 		}
 		internal bool Generating{
@@ -118,6 +149,17 @@ namespace LMStud{
 			return Encoding.ASCII.GetString(rtfOut, rtfLen);
 		}
 		private void RenderText(){
+#if newMarkdown
+			var text = checkThink.Checked ? _think : _message;
+			var useMarkdownView = _markdown && !_editing;
+			_markdownView.Visible = useMarkdownView;
+			richTextMsg.Visible = !useMarkdownView;
+			if(useMarkdownView){
+				_markdownView.MarkdownText = text;
+				ApplyHeight(_markdownView.AutoScrollMinSize.Height + 32);
+				return;
+			}
+#endif
 			if(checkThink.Checked){
 				if(_markdown) richTextMsg.Rtf = MarkdownToRtf(_think);
 				else richTextMsg.Text = _think;

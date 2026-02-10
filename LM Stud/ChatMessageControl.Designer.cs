@@ -99,7 +99,7 @@
 			this.checkThink.UseVisualStyleBackColor = true;
 			this.checkThink.CheckedChanged += new System.EventHandler(this.CheckThink_CheckedChanged);
 			// 
-			// ChatMessage
+			// ChatMessageControl
 			// 
 			resources.ApplyResources(this, "$this");
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
