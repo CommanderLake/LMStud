@@ -1986,7 +1986,7 @@ namespace LMStud
 		private System.Windows.Forms.Label label8;
 		private System.Windows.Forms.Label label3;
 		private System.Windows.Forms.TabPage tabPageModels;
-		private System.Windows.Forms.ListView listViewModels;
+		internal System.Windows.Forms.ListView listViewModels;
 		private System.Windows.Forms.ColumnHeader columnHeader1;
 		private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
 		private System.Windows.Forms.Button butLoad;

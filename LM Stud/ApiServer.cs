@@ -11,7 +11,7 @@ using Newtonsoft.Json.Linq;
 namespace LMStud{
 	public class ApiServer{
 		private readonly Form1 _form;
-		private readonly SessionManager _sessions = new SessionManager();
+		internal readonly SessionManager Sessions = new SessionManager();
 		private CancellationTokenSource _cts;
 		private HttpListener _listener;
 		public int Port = 11434;
@@ -107,7 +107,7 @@ namespace LMStud{
 				}
 			NativeMethods.ResetChat();
 			NativeMethods.CloseCommandPrompt();
-			if(request?.SessionId != null) _sessions.Remove(request.SessionId);
+			if(request?.SessionId != null) Sessions.Remove(request.SessionId);
 			var resp = new{ status = "reset" };
 			var json = JsonConvert.SerializeObject(resp);
 			var bytes = Encoding.UTF8.GetBytes(json);
@@ -144,7 +144,7 @@ namespace LMStud{
 				ctx.Response.StatusCode = 400;
 				return;
 			}
-			var session = _sessions.Get(request.SessionId);
+			var session = Sessions.Get(request.SessionId);
 			try{
 				ctx.Response.AddHeader("X-Session-Id", session.Id);
 				var prompt = messages.LastOrDefault(m => m.Role == "user")?.Content ?? "";
@@ -158,17 +158,17 @@ namespace LMStud{
 				var assistant = sb.ToString();
 				session.Messages.Add(new Message{ Role = "user", Content = prompt });
 				session.Messages.Add(new Message{ Role = "assistant", Content = assistant });
-				_sessions.Update(session, session.Messages, newState, tokens);
+				Sessions.Update(session, session.Messages, newState, tokens);
 				var resp = BuildResponsePayload(assistant, Path.GetFileNameWithoutExtension(Settings.Default.LastModel), session.Id);
 				var json = JsonConvert.SerializeObject(resp);
 				var bytes = Encoding.UTF8.GetBytes(json);
 				ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
 			} finally{
-				if(!store) _sessions.Remove(session.Id);
+				if(!store) Sessions.Remove(session.Id);
 			}
 		}
 		private void HandleRemoteChat(HttpListenerContext ctx, ChatRequest request, List<Message> incomingMessages, JArray inputItems, bool store){
-			var session = _sessions.Get(request.SessionId);
+			var session = Sessions.Get(request.SessionId);
 			ctx.Response.AddHeader("X-Session-Id", session.Id);
 			ctx.Response.ContentType = "application/json";
 			try{
@@ -217,7 +217,7 @@ namespace LMStud{
 					foreach(var toolResult in toolOutputs) session.Messages.Add(new Message{ Role = "tool", Content = toolResult });
 				}
 				session.Messages.Add(new Message{ Role = "assistant", Content = assistant });
-				_sessions.Update(session, session.Messages, null, 0);
+				Sessions.Update(session, session.Messages, null, 0);
 				var resp = BuildResponsePayload(assistant, Settings.Default.ApiClientModel, session.Id);
 				var json = JsonConvert.SerializeObject(resp);
 				var bytes = Encoding.UTF8.GetBytes(json);
@@ -228,7 +228,7 @@ namespace LMStud{
 				var buf = Encoding.UTF8.GetBytes(err);
 				ctx.Response.OutputStream.Write(buf, 0, buf.Length);
 			} finally{
-				if(!store) _sessions.Remove(session.Id);
+				if(!store) Sessions.Remove(session.Id);
 			}
 		}
 		private static object BuildResponsePayload(string assistant, string model, string sessionId){

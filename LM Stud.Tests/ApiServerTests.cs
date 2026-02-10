@@ -131,8 +131,7 @@ namespace LM_Stud.Tests{
 					dynamic result = JsonConvert.DeserializeObject(json);
 					var text = (string)result.output[0].content[0].text;
 					Assert.IsFalse(string.IsNullOrEmpty(text), "Assistant response should contain output text.");
-					var sessionManager = GetSessionManager();
-					var session = sessionManager.Get(sessionId);
+					var session = _apiServer.Sessions.Get(sessionId);
 					Assert.AreEqual(2, session.Messages.Count, "Session should contain user and assistant messages.");
 				}
 			}
@@ -148,8 +147,7 @@ namespace LM_Stud.Tests{
 				sessionId = response.Headers.Contains("X-Session-Id") ? string.Join("", response.Headers.GetValues("X-Session-Id")) : null;
 				Assert.IsFalse(string.IsNullOrEmpty(sessionId), "Chat call should return a session id.");
 			}
-			var sessionManager = GetSessionManager();
-			var existing = sessionManager.Get(sessionId);
+			var existing = _apiServer.Sessions.Get(sessionId);
 			using(var client = new HttpClient()){
 				var resetPayload = new{ session_id = sessionId };
 				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/reset", new StringContent(JsonConvert.SerializeObject(resetPayload), Encoding.UTF8, "application/json"));
@@ -158,7 +156,7 @@ namespace LM_Stud.Tests{
 				dynamic result = JsonConvert.DeserializeObject(json);
 				Assert.AreEqual("reset", (string)result.status, "Reset response should confirm reset state.");
 			}
-			var replacement = sessionManager.Get(sessionId);
+			var replacement = _apiServer.Sessions.Get(sessionId);
 			Assert.AreNotSame(existing, replacement, "Reset should remove the stored session.");
 		}
 		[TestMethod]
@@ -180,25 +178,15 @@ namespace LM_Stud.Tests{
 					} catch(Exception){ await Task.Delay(20); }
 			}
 		}
-		private static void SetField(object instance, string name, object value){
-			var field = instance.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-			if(field == null) throw new InvalidOperationException($"Field '{name}' not found on type '{instance.GetType().FullName}'.");
-			field.SetValue(instance, value);
-		}
 		private static void SetModelList(Form1 form, params string[] models){
-			var field = typeof(Form1).GetField("_models", BindingFlags.Instance | BindingFlags.NonPublic);
-			var list = (IList)field.GetValue(form);
-			list.Clear();
-			var modelInfoType = typeof(Form1).GetNestedType("ModelInfo", BindingFlags.NonPublic);
+			form.listViewModels.Items.Clear();
 			foreach(var model in models){
 				var meta = new List<GGUFMetadataManager.GGUFMetadataEntry>();
-				var instance = Activator.CreateInstance(modelInfoType, model + ".gguf", meta);
-				list.Add(instance);
+				var lvi = new ListViewItem(model);
+				lvi.SubItems.Add("I:\\models\\" + model);
+				lvi.Tag = meta;
+				form.listViewModels.Items.Add(model);
 			}
-		}
-		private SessionManager GetSessionManager(){
-			var field = typeof(ApiServer).GetField("_sessions", BindingFlags.Instance | BindingFlags.NonPublic);
-			return (SessionManager)field.GetValue(_apiServer);
 		}
 	}
 }
