@@ -54,20 +54,19 @@ namespace LMStud{
 		private void RichTextMsgOnContentsResized(object sender, ContentsResizedEventArgs e){
 #if newMarkdown
 			if(_markdownView.Visible) return;
+#endif
 			ApplyHeight(e.NewRectangle.Height + 32);
 		}
+#if newMarkdown
 		private void MarkdownViewOnContentHeightChanged(object sender, EventArgs e){
 			if(!_markdownView.Visible) return;
-			ApplyHeight(_markdownView.AutoScrollMinSize.Height + 32);
+			ApplyHeight(_markdownView.AutoScrollMinSize.Height + 24);
 		}
-		private void ApplyHeight(int newHeight){
 #endif
+		private void ApplyHeight(int newHeight){
 			ThreadPool.QueueUserWorkItem(o => {//Layout issue workaround
 				try{
 					Invoke(new MethodInvoker(() => {
-#if !newMarkdown
-						var newHeight = e.NewRectangle.Height + 32;
-#endif
 						if(Height != newHeight) Height = newHeight;
 						((MyFlowLayoutPanel)Parent).ScrollToEnd();
 					}));

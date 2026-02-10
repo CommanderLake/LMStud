@@ -37,7 +37,7 @@ namespace LMStud{
 		private void Relayout(){
 			var width = Math.Max(10, ClientSize.Width - 8);
 			_renderer.Layout(_markdownText, Font, width, ForeColor, BackColor);
-			AutoScrollMinSize = new Size(0, _renderer.TotalHeight + 8);
+			AutoScrollMinSize = new Size(0, _renderer.TotalHeight);
 			ContentHeightChanged?.Invoke(this, EventArgs.Empty);
 			Invalidate();
 		}
@@ -78,7 +78,7 @@ namespace LMStud{
 		private readonly Dictionary<string, Font> _fontCache = new Dictionary<string, Font>();
 		private readonly List<LinkRegion> _linkRegions = new List<LinkRegion>();
 		private readonly List<DrawOp> _ops = new List<DrawOp>();
-		private readonly StringFormat _stringFormat = new StringFormat(StringFormat.GenericTypographic);
+		private readonly StringFormat _stringFormat = new StringFormat(StringFormat.GenericTypographic){ FormatFlags = StringFormatFlags.MeasureTrailingSpaces };
 		private Color _backColor;
 		private Font _baseFont;
 		private Color _textColor;
@@ -149,7 +149,7 @@ namespace LMStud{
 				}
 				y = AddInlineParagraph(line, y, width, 0, false, 0, null);
 			}
-			TotalHeight = (int)Math.Ceiling(y + 2);
+			TotalHeight = (int)Math.Ceiling(y);
 		}
 		private static bool TryParseHeading(string line, out int level){
 			level = 0;
@@ -230,12 +230,12 @@ namespace LMStud{
 				var color = run.IsLink ? Color.RoyalBlue : run.Kind == InlineKind.Code ? Color.FromArgb(45, 45, 48) : _textColor;
 				foreach(var drawText in EnumerateDrawTokens(run.Text)){
 					if(drawText.Length == 0) continue;
-					var sizeF = TextRenderer.MeasureText(drawText, font, new Size(int.MaxValue, int.MaxValue), TextFormatFlags.NoPadding);
-					if(x + sizeF.Width > width + indent && x > indent && !string.IsNullOrWhiteSpace(drawText)){
+					var tokenWidth = MeasureTextWidth(drawText, font);
+					if(x + tokenWidth > width + indent && x > indent && !string.IsNullOrWhiteSpace(drawText)){
 						x = indent;
 						curY += lineHeight;
 					}
-					var rect = new RectangleF(x, curY, sizeF.Width + 1, lineHeight);
+					var rect = new RectangleF(x, curY, tokenWidth + 1, lineHeight);
 					if(run.Kind == InlineKind.Code){
 						_ops.Add(DrawOp.Rect(rect.X - 1, rect.Y + 1, rect.Width + 2, rect.Height - 2, Color.FromArgb(245, 245, 245)));
 						_ops.Add(DrawOp.StrokeRect(new RectangleF(rect.X - 1, rect.Y + 1, rect.Width + 2, rect.Height - 2), Color.FromArgb(225, 225, 225)));
@@ -243,10 +243,16 @@ namespace LMStud{
 					}
 					else{ _ops.Add(DrawOp.Text(drawText, rect, font, color, run.Strike)); }
 					if(run.IsLink) _linkRegions.Add(new LinkRegion(rect, run.LinkUrl));
-					x += sizeF.Width;
+					x += tokenWidth;
 				}
 			}
 			return curY + lineHeight + (quote ? 2 : 4);
+		}
+		private float MeasureTextWidth(string text, Font font){
+			if(string.IsNullOrEmpty(text)) return 0f;
+			using(var bmp = new Bitmap(1, 1))
+			using(var g = Graphics.FromImage(bmp))
+				return g.MeasureString(text, font, PointF.Empty, _stringFormat).Width;
 		}
 		private static IEnumerable<string> EnumerateDrawTokens(string text){
 			if(string.IsNullOrEmpty(text)) yield break;
@@ -260,7 +266,6 @@ namespace LMStud{
 				}
 				var tokenStart = i;
 				while(i < text.Length && !char.IsWhiteSpace(text[i])) i++;
-				while(i < text.Length && char.IsWhiteSpace(text[i])) i++;
 				yield return text.Substring(tokenStart, i - tokenStart);
 			}
 		}
