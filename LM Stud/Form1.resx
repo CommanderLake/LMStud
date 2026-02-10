@@ -2400,28 +2400,28 @@
   <data name="&gt;&gt;groupBox7.ZOrder" xml:space="preserve">
     <value>2</value>
   </data>
-  <data name="textModelsPath.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+  <data name="textModelsDir.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Left, Right</value>
   </data>
-  <data name="textModelsPath.Location" type="System.Drawing.Point, System.Drawing">
+  <data name="textModelsDir.Location" type="System.Drawing.Point, System.Drawing">
     <value>84, 130</value>
   </data>
-  <data name="textModelsPath.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="textModelsDir.Size" type="System.Drawing.Size, System.Drawing">
     <value>840, 20</value>
   </data>
-  <data name="textModelsPath.TabIndex" type="System.Int32, mscorlib">
+  <data name="textModelsDir.TabIndex" type="System.Int32, mscorlib">
     <value>11</value>
   </data>
-  <data name="&gt;&gt;textModelsPath.Name" xml:space="preserve">
-    <value>textModelsPath</value>
+  <data name="&gt;&gt;textModelsDir.Name" xml:space="preserve">
+    <value>textModelsDir</value>
   </data>
-  <data name="&gt;&gt;textModelsPath.Type" xml:space="preserve">
+  <data name="&gt;&gt;textModelsDir.Type" xml:space="preserve">
     <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;textModelsPath.Parent" xml:space="preserve">
+  <data name="&gt;&gt;textModelsDir.Parent" xml:space="preserve">
     <value>tabPageSettings</value>
   </data>
-  <data name="&gt;&gt;textModelsPath.ZOrder" xml:space="preserve">
+  <data name="&gt;&gt;textModelsDir.ZOrder" xml:space="preserve">
     <value>3</value>
   </data>
   <data name="numGenDelay.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">

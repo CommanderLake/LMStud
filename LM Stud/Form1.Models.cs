@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using LMStud.Properties;
@@ -14,30 +15,19 @@ namespace LMStud{
 		internal volatile bool Populating;
 		private int _cntCtxMax;
 		private int _modelCtxMax;
-		private int _modelIndex;
-		private readonly List<ModelInfo> _models = new List<ModelInfo>();
+		private string _modelPath;
 		private readonly List<string> _whisperModels = new List<string>();
-		private struct ModelInfo{
-			public readonly string FilePath;
-			public readonly List<GGUFMetadataManager.GGUFMetadataEntry> Meta;
-			public ModelInfo(string filePath, List<GGUFMetadataManager.GGUFMetadataEntry> meta){
-				FilePath = filePath;
-				Meta = meta;
-			}
-		}
-		private string GetModelPath(string relativePath){return Path.IsPathRooted(relativePath) ? relativePath : Path.Combine(_modelsPath, relativePath);}
-		private string GetModelPath(int index){return GetModelPath(_models[index].FilePath);}
 		private void CheckLoadAuto_CheckedChanged(object sender, EventArgs e){
-			if(checkLoadAuto.Checked && File.Exists(GetModelPath(Settings.Default.LastModel))) Settings.Default.LoadAuto = true;
+			if(checkLoadAuto.Checked && File.Exists(Settings.Default.LastModel)) Settings.Default.LoadAuto = true;
 			else Settings.Default.LoadAuto = false;
 			Settings.Default.Save();
 		}
 		private void ListViewModels_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e){
 			if(listViewModels.SelectedItems.Count == 1){
 				tabControlModelStuff.Enabled = true;
-				var index = (int)listViewModels.SelectedItems[0].Tag;
-				PopulateMeta(index);
-				PopulateModelSettings(index);
+				var modelPath = listViewModels.SelectedItems[0].SubItems[1].Text;
+				PopulateMeta((List<GGUFMetadataManager.GGUFMetadataEntry>)listViewModels.SelectedItems[0].Tag);
+				PopulateModelSettings(modelPath);
 			} else{
 				listViewMeta.Items.Clear();
 				tabControlModelStuff.Enabled = false;
@@ -48,22 +38,21 @@ namespace LMStud{
 			PopulateModels();
 		}
 		private void ListViewModels_DoubleClick(object sender, EventArgs e){
-			if(listViewModels.SelectedItems.Count == 0) return;
-			LoadModel((int)listViewModels.SelectedItems[0].Tag, false);
+			ButLoad_Click(null, null);
 		}
 		private void ButLoad_Click(object sender, EventArgs e){
 			if(listViewModels.SelectedItems.Count == 0) return;
-			LoadModel((int)listViewModels.SelectedItems[0].Tag, false);
+			LoadModel(listViewModels.SelectedItems[0].SubItems[1].Text, false);
 		}
 		private void ButUnload_Click(object sender, EventArgs e){
 			butUnload.Enabled = false;
 			UnloadModel(true);
 		}
 		private bool ModelsFolderExists(bool showError){
-			if(!Directory.Exists(_modelsPath)){
+			if(!Directory.Exists(_modelsDir)){
 				if(showError) MessageBox.Show(this, Resources.Models_folder_not_found__please_specify_a_valid_folder_in_the_Settings_tab, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 				tabControl1.SelectTab(1);
-				textModelsPath.Focus();
+				textModelsDir.Focus();
 				return false;
 			}
 			return true;
@@ -71,29 +60,29 @@ namespace LMStud{
 		private void PopulateModels(){
 			if(Populating || !ModelsFolderExists(true)) return;
 			Populating = true;
-			listViewModels.BeginUpdate();
-			listViewModels.Items.Clear();
-			for(var i = _models.Count - 1; i >= 0; i--) _models[i].Meta.Clear();
-			_models.Clear();
 			ThreadPool.QueueUserWorkItem(_ => {
 				try{
-					var files = Directory.GetFiles(_modelsPath, "*.gguf", SearchOption.AllDirectories);
+					var files = Directory.GetFiles(_modelsDir, "*.gguf", SearchOption.AllDirectories);
 					var items = new List<ListViewItem>();
 					foreach(var file in files){
 						var meta = GGUFMetadataManager.LoadGGUFMetadata(file);
-						var idx = _models.Count;
-						var relPath = Uri.UnescapeDataString(new Uri(_modelsPath + Path.DirectorySeparatorChar).MakeRelativeUri(new Uri(file)).ToString().Replace('/', Path.DirectorySeparatorChar));
-						_models.Add(new ModelInfo(relPath, meta));
-						var lvi = new ListViewItem(Path.GetFileName(file));
+						var lvi = new ListViewItem(Path.GetFileNameWithoutExtension(file));
 						lvi.SubItems.Add(file);
-						lvi.Tag = idx;
+						lvi.Tag = meta;
 						items.Add(lvi);
 					}
-					Invoke(new MethodInvoker(() => {listViewModels.Items.AddRange(items.ToArray());}));
-				} catch(Exception ex){ Invoke(new MethodInvoker(() => {MessageBox.Show(this, ex.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);})); } finally{
-					try{ Invoke(new MethodInvoker(() => {listViewModels.EndUpdate();})); } catch(Exception e){
-						MessageBox.Show(this, e.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
-					}
+					Invoke(new MethodInvoker(() => {
+						try{
+							listViewModels.BeginUpdate();
+							listViewModels.Items.Clear();
+							listViewModels.Items.AddRange(items.ToArray());
+						} finally{ listViewModels.EndUpdate(); }
+					}));
+				} catch(Exception ex){
+					Invoke(new MethodInvoker(() => {
+						MessageBox.Show(this, ex.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+					}));
+				} finally{
 					Populating = false;
 				}
 			});
@@ -159,7 +148,7 @@ namespace LMStud{
 		}
 		private void SetSystemPromptInternal(bool genLock){
 			if(genLock) GenerationLock.Wait(-1);
-			var overrideSettings = _modelSettings.TryGetValue(_models[_modelIndex].FilePath, out var overrides) && overrides.OverrideSettings;
+			var overrideSettings = _modelSettings.TryGetValue(_modelPath.Substring(_modelsDir.Length), out var overrides) && overrides.OverrideSettings;
 			var prompt = overrideSettings ? overrides.SystemPrompt : _systemPrompt;
 			NativeMethods.StudError error;
 			try{ error = NativeMethods.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : ""); } finally{
@@ -176,7 +165,7 @@ namespace LMStud{
 			try{ SetSystemPromptInternal(genLock); } finally{ EndRetokenization(); }
 		}
 		void SetModelStatus(){
-			butGen.Enabled = butReset.Enabled = _apiClientEnable || LlModelLoaded;
+			butGen.Enabled = butReset.Enabled = (_apiClientEnable || LlModelLoaded) && !Generating;
 			if(_apiClientEnable) toolStripStatusLabel1.Text = Resources.Using_API_Model_ + _apiClientModel;
 			else if(LlModelLoaded) toolStripStatusLabel1.Text = Resources.Using_Model_ + Path.GetFileName(_lastModelPath);
 			else toolStripStatusLabel1.Text = Resources.No_model_loaded;
@@ -210,12 +199,11 @@ namespace LMStud{
 			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_initialising_voice_input, result);
 			return result;
 		}
-		private void LoadModel(int modelIndex, bool autoLoad){
+		private void LoadModel(string modelPath, bool autoLoad){
 			if(!GenerationLock.Wait(1000)) return;
-			var modelKey = _models[modelIndex].FilePath;
-			var modelPath = GetModelPath(modelKey);
 			var fileName = Path.GetFileName(modelPath);
-			var overrideSettings = _modelSettings.TryGetValue(modelKey, out var overrides) && overrides.OverrideSettings;
+			var meta = (List<GGUFMetadataManager.GGUFMetadataEntry>)listViewModels.SelectedItems[0].Tag;
+			var overrideSettings = _modelSettings.TryGetValue(modelPath.Substring(_modelsDir.Length), out var overrides) && overrides.OverrideSettings;
 			var ctxSize = overrideSettings ? overrides.CtxSize : _ctxSize;
 			var gpuLayers = overrideSettings ? overrides.GPULayers : _gpuLayers;
 			var temp = overrideSettings ? overrides.Temp : _temp;
@@ -241,8 +229,8 @@ namespace LMStud{
 							Settings.Default.Save();
 							return;
 						}
-						_modelIndex = modelIndex;
-						_modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(_models[modelIndex].Meta);
+						_modelPath = modelPath;
+						_modelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(meta);
 						if(_modelCtxMax <= 0) _cntCtxMax = ctxSize;
 						else _cntCtxMax = ctxSize > _modelCtxMax ? _modelCtxMax : ctxSize;
 						result = CreateSession(_cntCtxMax, _batchSize, flashAttn, _nThreads, _nThreadsBatch, minP, topP, topK, temp, _repPen);
@@ -261,7 +249,7 @@ namespace LMStud{
 						SetSystemPrompt(false);
 						try{
 							Invoke(new MethodInvoker(() => {
-								Settings.Default.LastModel = modelKey;
+								Settings.Default.LastModel = modelPath;
 								if(checkLoadAuto.Checked && !autoLoad){
 									Settings.Default.LoadAuto = true;
 									Settings.Default.Save();
@@ -271,10 +259,10 @@ namespace LMStud{
 						} catch(ObjectDisposedException){}
 					}
 				} finally{
+					GenerationLock.Release();
 					Invoke(new MethodInvoker(() => {
 						SetModelStatus();
 						butLoad.Enabled = butUnload.Enabled = true;
-						GenerationLock.Release();
 					}));
 				}
 			});
@@ -282,12 +270,9 @@ namespace LMStud{
 		private void UnloadModel(bool genLock){
 			butUnload.Enabled = false;
 			ThreadPool.QueueUserWorkItem(o => {
-				if(genLock) GenerationLock.Wait(-1);
 				try{
-					if(Generating){
-						NativeMethods.StopGeneration();
-						while(Generating) Thread.Sleep(10);
-					}
+					NativeMethods.StopGeneration();
+					if(genLock) GenerationLock.Wait(-1);
 					ClearRegisteredTools();
 					NativeMethods.FreeModel();
 					try{
@@ -313,9 +298,9 @@ namespace LMStud{
 				default: return metaVal.Value?.ToString() ?? "";
 			}
 		}
-		private void PopulateMeta(int index){
+		private void PopulateMeta(List<GGUFMetadataManager.GGUFMetadataEntry> meta){
 			listViewMeta.Items.Clear();
-			foreach(var entry in _models[index].Meta){
+			foreach(var entry in meta){
 				var key = entry.Key ?? "";
 				var valueStr = ConvertValueToString(entry.Val);
 				var lvi = new ListViewItem(key);
@@ -323,8 +308,6 @@ namespace LMStud{
 				listViewMeta.Items.Add(lvi);
 			}
 		}
-		internal IEnumerable<string> GetModelNames(){
-			foreach(var m in _models) yield return Path.GetFileNameWithoutExtension(m.FilePath);
-		}
+		internal IEnumerable<string> GetModelNames(){return from ListViewItem m in listViewModels.Items select m.Text;}
 	}
 }

@@ -28,9 +28,9 @@ namespace LMStud{
 		}
 		private void ButApplyModelSettings_Click(object sender, EventArgs e){
 			if(listViewModels.SelectedItems.Count == 0) return;
-			var modelIndex = (int)listViewModels.SelectedItems[0].Tag;
-			var path = _models[modelIndex].FilePath;
-			_modelSettings.TryGetValue(path, out var oldSettings);
+			var modelPath = listViewModels.SelectedItems[0].SubItems[1].Text;
+			var modelRelPath = modelPath.Substring(_modelsDir.Length);
+			_modelSettings.TryGetValue(modelRelPath, out var oldSettings);
 			var overrideNew = checkOverrideSettings.Checked;
 			var systemPromptNew = textSystemPromptModel.Text;
 			var ctxSizeNew = (int)numCtxSizeModel.Value;
@@ -42,9 +42,9 @@ namespace LMStud{
 			var flashNew = checkFlashAttnModel.CheckState;
 			var jinjaOverrideNew = checkOverrideJinjaModel.Checked;
 			var jinjaTmplNew = textJinjaTmplModel.Text;
-			_modelSettings[path] = new ModelSettings(overrideNew, systemPromptNew, ctxSizeNew, gpuLayersNew, tempNew, minPNew, topPNew, topKNew, flashNew, jinjaOverrideNew, jinjaTmplNew);
+			_modelSettings[modelRelPath] = new ModelSettings(overrideNew, systemPromptNew, ctxSizeNew, gpuLayersNew, tempNew, minPNew, topPNew, topKNew, flashNew, jinjaOverrideNew, jinjaTmplNew);
 			SaveModelSettings();
-			if(_modelIndex != modelIndex || !LlModelLoaded) return;
+			if(_modelPath != modelPath || !LlModelLoaded) return;
 			var overrideOld = oldSettings?.OverrideSettings ?? false;
 			var systemPromptOld = overrideOld ? oldSettings.SystemPrompt : _systemPrompt;
 			var ctxSizeOld = overrideOld ? oldSettings.CtxSize : _ctxSize;
@@ -71,7 +71,7 @@ namespace LMStud{
 			var reloadSmpl = tempOld != tempEff || minPOld != minPEff || topPOld != topPEff || topKOld != topKEff;
 			var setSystemPrompt = systemPromptOld != systemPromptEff;
 			if(reloadModel && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) ==
-				DialogResult.Yes){ LoadModel(_modelIndex, false); } else{
+				DialogResult.Yes){ LoadModel(modelPath, false); } else{
 				if(reloadCtx){
 					if(_modelCtxMax <= 0) _cntCtxMax = ctxSizeEff;
 					else _cntCtxMax = ctxSizeEff > _modelCtxMax ? _modelCtxMax : ctxSizeEff;
@@ -81,9 +81,8 @@ namespace LMStud{
 			}
 			if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPrompt();});
 		}
-		private void PopulateModelSettings(int modelIndex){
-			var path = _models[modelIndex].FilePath;
-			if(_modelSettings.TryGetValue(path, out var ms)){
+		private void PopulateModelSettings(string modelPath){
+			if(_modelSettings.TryGetValue(modelPath.Substring(_modelsDir.Length), out var ms)){
 				checkOverrideSettings.Checked = ms.OverrideSettings;
 				textSystemPromptModel.Text = ms.SystemPrompt;
 				numCtxSizeModel.Value = ms.CtxSize;

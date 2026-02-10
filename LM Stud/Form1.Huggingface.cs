@@ -121,7 +121,7 @@ namespace LMStud{
 		}
 		private void HugDownloadFile(string uploader, string modelName, string variantLabel){
 			var downloadUrl = $"https://huggingface.co/{uploader}/{modelName}/resolve/main/{variantLabel}";
-			var targetDir = Path.Combine(_modelsPath, uploader, modelName);
+			var targetDir = Path.Combine(_modelsDir, uploader, modelName);
 			try{ Directory.CreateDirectory(targetDir); } catch(Exception ex){
 				MessageBox.Show(string.Format(Resources.Failed_to_create_directory___0_, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 				return;

@@ -22,7 +22,6 @@ namespace LMStud{
 		private readonly SpeechSynthesizer _tts = new SpeechSynthesizer();
 		private volatile bool _ttsSpeaking;
 		private int _ttsPendingCount;
-		private volatile bool _voiceInputResumePending;
 		private int _retokenizeCount;
 		private bool _retokenizeButApplyEnabled;
 		private bool _retokenizeButApplyModelSettingsEnabled;
@@ -31,10 +30,8 @@ namespace LMStud{
 		private bool _retokenizeButResetEnabled;
 		private bool _retokenizeButUnloadEnabled;
 		private bool _retokenizeListViewModelsEnabled;
-		private bool _retokenizePanelChatEnabled;
-		private bool _retokenizeTextInputEnabled;
 		internal readonly SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
-		internal volatile bool APIGenerating;
+		internal volatile bool APIServerGenerating;
 		private Action<string> _apiTokenCallback;
 		internal CheckState CheckVoiceInputLast = CheckState.Unchecked;
 		private ChatMessageControl _cntAssMsg;
@@ -68,7 +65,7 @@ namespace LMStud{
 		private void SetToolTip(Control control){toolTip1.SetToolTip(control, Resources.ResourceManager.GetString("ToolTip_" + control.Name));}
 		private void SetToolTips(){
 			SetToolTip(textSystemPrompt);
-			SetToolTip(textModelsPath);
+			SetToolTip(textModelsDir);
 			SetToolTip(numCtxSize);
 			SetToolTip(numGPULayers);
 			SetToolTip(numTemp);
@@ -118,15 +115,7 @@ namespace LMStud{
 			NativeMethods.BackendInit();
 			if(!Settings.Default.LoadAuto) return;
 			checkLoadAuto.Checked = true;
-			ThreadPool.QueueUserWorkItem(o => {
-				while(Populating) Thread.Sleep(10);
-				for(var i = 0; i < _models.Count; i++){
-					var model = _models[i];
-					if(model.FilePath != Settings.Default.LastModel) continue;
-					Invoke(new MethodInvoker(() => {LoadModel(i, true);}));
-					break;
-				}
-			});
+			LoadModel(Settings.Default.LastModel, true);
 		}
 		private void InitializeListViews(){
 			_columnClickHandler = new LVColumnClickHandler();
@@ -206,7 +195,6 @@ namespace LMStud{
 					TryStartSpeechTranscription(true);
 				} else{
 					NativeMethods.StopSpeechTranscription();
-					_voiceInputResumePending = false;
 				}
 			} finally{ CheckVoiceInputLast = checkVoiceInput.CheckState; }
 		}
@@ -237,21 +225,21 @@ namespace LMStud{
 			} else Generate();
 		}
 		internal void ButReset_Click(object sender, EventArgs e){
-			if(_retokenizeCount > 0) return;
-			BeginRetokenization();
+			if(!TryBeginRetokenization()) return;
 			ThreadPool.QueueUserWorkItem(_ => {
-				GenerationLock.Wait(-1);
-				try{ NativeMethods.ResetChat(); } finally{ GenerationLock.Release(); }
-				NativeMethods.CloseCommandPrompt();
-				NativeMethods.ClearWebCache();
-				Invoke(new MethodInvoker(() => {
-					panelChat.SuspendLayout();
-					foreach(var message in ChatMessages) message.Dispose();
-					panelChat.ResumeLayout();
-					ChatMessages.Clear();
-					labelTokens.Text = NativeMethods.LlamaMemSize() + Resources._Tokens;
-					EndRetokenization();
-				}));
+				try{
+					NativeMethods.ResetChat();
+					NativeMethods.CloseCommandPrompt();
+					NativeMethods.ClearWebCache();
+					Invoke(new MethodInvoker(() => {
+						panelChat.SuspendLayout();
+						foreach(var message in ChatMessages) message.Dispose();
+						panelChat.ResumeLayout();
+						ChatMessages.Clear();
+						labelTokens.Text = NativeMethods.LlamaMemSize() + Resources._Tokens;
+						EndRetokenization();
+					}));
+				} finally{ GenerationLock.Release(); }
 			});
 		}
 		private void TextInput_KeyDown(object sender, KeyEventArgs e){
@@ -279,52 +267,52 @@ namespace LMStud{
 			} finally{ panelChat.ResumeLayout(true); }
 		}
 		internal void MsgButDeleteOnClick(ChatMessageControl cm){
-			if(Generating || _retokenizeCount > 0) return;
+			if(Generating) return;
 			var id = ChatMessages.IndexOf(cm);
 			if(id < 0) return;
-			BeginRetokenization();
+			if(!TryBeginRetokenization()) return;
 			ThreadPool.QueueUserWorkItem(_ => {
-				GenerationLock.Wait(-1);
 				NativeMethods.StudError result;
-				try{ result = NativeMethods.RemoveMessageAt(id); } finally{ GenerationLock.Release(); }
-				Invoke(new MethodInvoker(() => {
-					if(result != NativeMethods.StudError.IndexOutOfRange && id < ChatMessages.Count){
-						ChatMessages[id].Dispose();
-						ChatMessages.RemoveAt(id);
-					}
-					if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_session, result);
-					EndRetokenization();
-				}));
+				try{
+					result = NativeMethods.RemoveMessageAt(id);
+					Invoke(new MethodInvoker(() => {
+						if(result != NativeMethods.StudError.IndexOutOfRange && id < ChatMessages.Count){
+							ChatMessages[id].Dispose();
+							ChatMessages.RemoveAt(id);
+						}
+						if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_session, result);
+						EndRetokenization();
+					}));
+				} finally{ GenerationLock.Release(); }
 			});
 		}
 		internal void MsgButRegenOnClick(ChatMessageControl cm){
-			if(!LlModelLoaded || Generating || _retokenizeCount > 0) return;
+			if(!LlModelLoaded || Generating || !TryBeginRetokenization()) return;
 			var idx = ChatMessages.IndexOf(cm);
 			if(idx < 0) return;
-			while(ChatMessages[idx].Role == MessageRole.Assistant)
-				if(--idx < 0)
-					return;
+			while(ChatMessages[idx].Role == MessageRole.Assistant) if(--idx < 0) return;
 			var role = ChatMessages[idx].Role;
 			var msg = ChatMessages[idx].Message;
-			BeginRetokenization();
 			ThreadPool.QueueUserWorkItem(_ => {
-				GenerationLock.Wait(-1);
 				NativeMethods.StudError result;
-				try{ result = NativeMethods.RemoveMessagesStartingAt(idx); } finally{ GenerationLock.Release(); }
-				Invoke(new MethodInvoker(() => {
-					if(result != NativeMethods.StudError.IndexOutOfRange)
-						for(var i = ChatMessages.Count - 1; i >= idx; i--){
-							ChatMessages[i].Dispose();
-							ChatMessages.RemoveAt(i);
-						}
-					if(result != NativeMethods.StudError.Success){
-						ShowErrorMessage(Resources.Error_creating_session, result);
+				var regenerate = false;
+				try{
+					result = NativeMethods.RemoveMessagesStartingAt(idx);
+					Invoke(new MethodInvoker(() => {
+						if(result != NativeMethods.StudError.IndexOutOfRange)
+							for(var i = ChatMessages.Count - 1; i >= idx; i--){
+								ChatMessages[i].Dispose();
+								ChatMessages.RemoveAt(i);
+							}
+						if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_session, result);
+						else regenerate = true;
 						EndRetokenization();
-						return;
-					}
-					EndRetokenization();
-					Generate(role, msg, true);
-				}));
+					}));
+				} finally{ GenerationLock.Release(); }
+				if(regenerate)
+					BeginInvoke(new MethodInvoker(() => {
+						if(!IsDisposed) Generate(role, msg, true);
+					}));
 			});
 		}
 		private void MsgButEditOnClick(ChatMessageControl cm){
@@ -339,22 +327,29 @@ namespace LMStud{
 			cm.Markdown = checkMarkdown.Checked;
 		}
 		internal void MsgButEditApplyOnClick(ChatMessageControl cm){
-			if(Generating || !cm.Editing || _retokenizeCount > 0) return;
+			if(Generating || !cm.Editing) return;
 			var idx = ChatMessages.IndexOf(cm);
-			if(idx < 0) return;
-			if(cm.checkThink.Checked) cm.Think = cm.richTextMsg.Text;
-			else cm.Message = cm.richTextMsg.Text;
-			cm.Editing = false;
-			cm.Markdown = checkMarkdown.Checked;
-			BeginRetokenization();
+			if(idx < 0 || !TryBeginRetokenization()) return;
+			var oldThink = cm.Think;
+			var oldMessage = cm.Message;
+			var newText = cm.richTextMsg.Text;
+			var newThink = cm.checkThink.Checked ? newText : oldThink;
+			var newMessage = cm.checkThink.Checked ? oldMessage : newText;
 			ThreadPool.QueueUserWorkItem(_ => {
-				GenerationLock.Wait(-1);
 				NativeMethods.StudError result;
-				try{ result = NativeMethods.SetMessageAt(idx, cm.Think, cm.Message); } finally{ GenerationLock.Release(); }
-				Invoke(new MethodInvoker(() => {
-					if(result != NativeMethods.StudError.Success) MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-					EndRetokenization();
-				}));
+				try{
+					result = NativeMethods.SetMessageAt(idx, newThink, newMessage);
+					Invoke(new MethodInvoker(() => {
+						if(result == NativeMethods.StudError.Success){
+							cm.Think = newThink;
+							cm.Message = newMessage;
+							cm.Editing = false;
+							cm.Markdown = checkMarkdown.Checked;
+						}
+						else MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+						EndRetokenization();
+					}));
+				} finally{ GenerationLock.Release(); }
 			});
 		}
 		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)(((e.Delta/8) << 16) & 0xffff0000), IntPtr.Zero);}
@@ -374,7 +369,13 @@ namespace LMStud{
 			ChatMessages.Add(cm);
 			return cm;
 		}
-		private static void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){Process.Start(e.LinkText);}
+		private static void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){
+			try{
+				if (!Uri.TryCreate(e.LinkText, UriKind.Absolute, out var link)) return;
+				var psi = new ProcessStartInfo(link.ToString());
+				Process.Start(psi);
+			} catch{}
+		}
 		private void SetStatusMessageVisible(bool visible, string message){
 			if(message != null) labelStatusMsg.Text = message;
 			toolStripStatusLabel1.Visible = labelTokens.Visible = labelTPS.Visible = labelPreGen.Visible = !visible;
@@ -392,9 +393,9 @@ namespace LMStud{
 		}
 		private NativeMethods.StudError SyncNativeChatMessages(){
 			if(IsDisposed) return NativeMethods.StudError.Success;
-			int[] roles = Array.Empty<int>();
-			string[] thinks = Array.Empty<string>();
-			string[] messages = Array.Empty<string>();
+			var roles = Array.Empty<int>();
+			var thinks = Array.Empty<string>();
+			var messages = Array.Empty<string>();
 			RunOnUiThread(() => {
 				var count = ChatMessages.Count;
 				roles = new int[count];
@@ -419,8 +420,6 @@ namespace LMStud{
 				_retokenizeButResetEnabled = butReset.Enabled;
 				_retokenizeButUnloadEnabled = butUnload.Enabled;
 				_retokenizeListViewModelsEnabled = listViewModels.Enabled;
-				_retokenizePanelChatEnabled = panelChat.Enabled;
-				_retokenizeTextInputEnabled = textInput.Enabled;
 				butApply.Enabled = false;
 				butApplyModelSettings.Enabled = false;
 				butGen.Enabled = false;
@@ -428,8 +427,6 @@ namespace LMStud{
 				butReset.Enabled = false;
 				butUnload.Enabled = false;
 				listViewModels.Enabled = false;
-				panelChat.Enabled = false;
-				textInput.Enabled = false;
 				UpdateStatusMessage();
 			});
 		}
@@ -443,10 +440,18 @@ namespace LMStud{
 				butReset.Enabled = _retokenizeButResetEnabled;
 				butUnload.Enabled = _retokenizeButUnloadEnabled;
 				listViewModels.Enabled = _retokenizeListViewModelsEnabled;
-				panelChat.Enabled = _retokenizePanelChatEnabled;
-				textInput.Enabled = _retokenizeTextInputEnabled;
 				UpdateStatusMessage();
 			});
+		}
+		private bool TryBeginRetokenization(){
+			if(Volatile.Read(ref _retokenizeCount) > 0) return false;
+			if(!GenerationLock.Wait(0)) return false;
+			if(Volatile.Read(ref _retokenizeCount) > 0){
+				GenerationLock.Release();
+				return false;
+			}
+			BeginRetokenization();
+			return true;
 		}
 		private void StartEditing(){
 			if(IsEditing) return;
@@ -478,33 +483,20 @@ namespace LMStud{
 			_tts.SpeakAsync(text);
 		}
 		private void TryStartSpeechTranscription(bool showErrorOnFailure){
-			if(checkVoiceInput.CheckState != CheckState.Checked){
-				_voiceInputResumePending = false;
-				return;
-			}
-			_voiceInputResumePending = true;
-			if(IsEditing) return;
-			if(Generating || APIGenerating || _ttsSpeaking || Volatile.Read(ref _ttsPendingCount) > 0) return;
-			if(NativeMethods.StartSpeechTranscription()){
-				_voiceInputResumePending = false;
-				return;
-			}
-			_voiceInputResumePending = false;
-			if(showErrorOnFailure){
-				MessageBox.Show(this, Resources.Error_starting_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
-				checkVoiceInput.Checked = false;
-				CheckVoiceInputLast = checkVoiceInput.CheckState;
-			}
+			if(checkVoiceInput.CheckState != CheckState.Checked) return;
+			if(IsEditing || Generating || APIServerGenerating || _ttsSpeaking || Volatile.Read(ref _ttsPendingCount) > 0) return;
+			if(NativeMethods.StartSpeechTranscription()) return;
+			if(!showErrorOnFailure) return;
+			MessageBox.Show(this, Resources.Error_starting_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+			checkVoiceInput.Checked = false;
+			CheckVoiceInputLast = checkVoiceInput.CheckState;
 		}
 		private void TtsOnSpeakStarted(object sender, SpeakStartedEventArgs e){
 			if(IsDisposed) return;
 			BeginInvoke((MethodInvoker)(() => {
 				if(IsDisposed) return;
 				_ttsSpeaking = true;
-				if(checkVoiceInput.CheckState == CheckState.Checked){
-					NativeMethods.StopSpeechTranscription();
-					_voiceInputResumePending = true;
-				}
+				if(checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StopSpeechTranscription();
 			}));
 		}
 		private void TtsOnSpeakCompleted(object sender, SpeakCompletedEventArgs e){
@@ -516,10 +508,9 @@ namespace LMStud{
 			if(IsDisposed) return;
 			BeginInvoke((MethodInvoker)(() => {
 				if(IsDisposed) return;
-				if(pending <= 0){
-					_ttsSpeaking = false;
-					TryStartSpeechTranscription(false);
-				}
+				if(pending > 0) return;
+				_ttsSpeaking = false;
+				TryStartSpeechTranscription(false);
 			}));
 		}
 		private void Generate(){
@@ -530,7 +521,7 @@ namespace LMStud{
 			var useRemote = _apiClientEnable;
 			if((!useRemote && !LlModelLoaded) || string.IsNullOrWhiteSpace(prompt)) return;
 			if(!GenerationLock.Wait(0)) return;
-			if(Generating || APIGenerating){
+			if(Generating || APIServerGenerating){
 				GenerationLock.Release();
 				return;
 			}
@@ -574,7 +565,7 @@ namespace LMStud{
 					SpeechBuffer.Clear();
 				}
 				try{
-					BeginInvoke(new MethodInvoker(() => {
+					Invoke(new MethodInvoker(() => {
 						var elapsed = _swTot.Elapsed.TotalSeconds;
 						if(_genTokenTotal > 0 && elapsed > 0.0){
 							var callsPerSecond = _genTokenTotal/elapsed;
@@ -582,11 +573,7 @@ namespace LMStud{
 							_swTot.Reset();
 							_swRate.Reset();
 						}
-						butGen.Text = Resources.Generate;
-						butReset.Enabled = butApply.Enabled = true;
-						Generating = false;
-						foreach(var message in ChatMessages) message.Generating = false;
-						if(checkVoiceInput.CheckState == CheckState.Checked) TryStartSpeechTranscription(false);
+						FinishedGenerating();
 						if(checkDialectic.Checked && !DialecticPaused){
 							var last = ChatMessages.LastOrDefault();
 							if(last != null){
@@ -673,13 +660,16 @@ namespace LMStud{
 							MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 						else MessageBox.Show(this, syncError.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 					}
-					butGen.Text = Resources.Generate;
-					butReset.Enabled = butApply.Enabled = true;
-					Generating = false;
-					foreach(var message in ChatMessages) message.Generating = false;
-					if(checkVoiceInput.CheckState == CheckState.Checked) TryStartSpeechTranscription(false);
+					FinishedGenerating();
 				}));
 			} catch(ObjectDisposedException){} finally{ GenerationLock.Release(); }
+		}
+		void FinishedGenerating(){
+			butGen.Text = Resources.Generate;
+			butReset.Enabled = butApply.Enabled = true;
+			Generating = false;
+			foreach(var message in ChatMessages) message.Generating = false;
+			if(checkVoiceInput.CheckState == CheckState.Checked) TryStartSpeechTranscription(false);
 		}
 		internal bool GenerateForApiServer(byte[] state, string prompt, Action<string> onToken, out byte[] newState, out int tokenCount){
 			newState = null;
@@ -687,8 +677,8 @@ namespace LMStud{
 			if(string.IsNullOrWhiteSpace(prompt)) return false;
 			if(!GenerationLock.Wait(0)) return false;
 			try{
-				if(!LlModelLoaded || Generating || APIGenerating) return false;
-				APIGenerating = true;
+				if(!LlModelLoaded || Generating || APIServerGenerating) return false;
+				APIServerGenerating = true;
 				_apiTokenCallback = onToken;
 				var originalState = GetState();
 				var chatSnapshot = NativeMethods.CaptureChatState();
@@ -702,7 +692,7 @@ namespace LMStud{
 					try{ SetState(originalState); } catch{}
 					if(chatSnapshot != IntPtr.Zero) try{ NativeMethods.RestoreChatState(chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
 					_apiTokenCallback = null;
-					APIGenerating = false;
+					APIServerGenerating = false;
 				}
 			} finally{ GenerationLock.Release(); }
 		}
@@ -727,7 +717,7 @@ namespace LMStud{
 		}
 		internal int GetTokenCount(){return NativeMethods.LlamaMemSize();}
 		private static unsafe void TokenCallback(byte* thinkPtr, int thinkLen, byte* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool){
-			if(This.APIGenerating){
+			if(This.APIServerGenerating){
 				if(messageLen <= 0) return;
 				var msg = Encoding.UTF8.GetString(messagePtr, messageLen);
 				This._apiTokenCallback?.Invoke(msg);

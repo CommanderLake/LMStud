@@ -35,7 +35,7 @@ namespace LMStud{
 		private float _minP;
 		private bool _mLock;
 		private bool _mMap;
-		private string _modelsPath;
+		private string _modelsDir;
 		private int _nGen;
 		private int _nThreads;
 		private int _nThreadsBatch;
@@ -57,7 +57,9 @@ namespace LMStud{
 		private bool _whisperUseGPU;
 		private void LoadConfig(){
 			_systemPrompt = textSystemPrompt.Text = Settings.Default.SystemPrompt;
-			_modelsPath = textModelsPath.Text = Settings.Default.ModelsDir;
+			var mp = Settings.Default.ModelsDir;
+			mp = mp[mp.Length - 1] == '\\' || mp[mp.Length - 1] == '/' ? mp : mp + '\\';
+			_modelsDir = textModelsDir.Text = mp;
 			_ctxSize = (int)(numCtxSize.Value = Settings.Default.CtxSize);
 			_gpuLayers = (int)(numGPULayers.Value = Settings.Default.GPULayers);
 			_temp = (float)(numTemp.Value = Settings.Default.Temp);
@@ -137,7 +139,7 @@ namespace LMStud{
 			var modelOverrideChanged = false;
 			var setStatusLabel = false;
 			ModelSettings ms = default;
-			var overrideSettings = LlModelLoaded && _modelSettings.TryGetValue(_models[_modelIndex].FilePath, out ms) && ms.OverrideSettings;
+			var overrideSettings = LlModelLoaded && _modelSettings.TryGetValue(_modelPath.Substring(_modelsDir.Length), out ms) && ms.OverrideSettings;
 			UpdateSetting(ref _systemPrompt, textSystemPrompt.Text, value => {
 				Settings.Default.SystemPrompt = value;
 				if(overrideSettings){
@@ -146,8 +148,9 @@ namespace LMStud{
 				}
 				setSystemPrompt = true;
 			});
-			UpdateSetting(ref _modelsPath, textModelsPath.Text, value => {
-				Settings.Default.ModelsDir = value;
+			UpdateSetting(ref _modelsDir, textModelsDir.Text, mp => {
+				mp = mp[mp.Length - 1] == '\\' || mp[mp.Length - 1] == '/' ? mp : mp + '\\';
+				Settings.Default.ModelsDir = mp;
 				PopulateModels();
 				PopulateWhisperModels(true, true);
 			});
@@ -367,7 +370,7 @@ namespace LMStud{
 			var temp = overrideSettings ? ms.Temp : _temp;
 			if(LlModelLoaded)
 				if(reloadModel &&
-					MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes){ LoadModel(_modelIndex, false); }
+					MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes){ LoadModel(_modelPath, false); }
 				else{
 					if(reloadCtx) CreateContext(_cntCtxMax, _batchSize, flash, _nThreads, _nThreadsBatch);
 					if(reloadSmpl) CreateSampler(minP, topP, topK, temp, _repPen);
@@ -396,16 +399,16 @@ namespace LMStud{
 			Settings.Default.Save();
 		}
 		private void ButBrowse_Click(object sender, EventArgs e){
-			if(folderBrowserDialog1.ShowDialog(this) == DialogResult.OK) textModelsPath.Text = folderBrowserDialog1.SelectedPath;
+			if(folderBrowserDialog1.ShowDialog(this) == DialogResult.OK) textModelsDir.Text = folderBrowserDialog1.SelectedPath;
 		}
 		private void TextModelsPath_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.Enter) return;
-			var path = textModelsPath.Text.Trim();
-			if(Directory.Exists(path)) textModelsPath.Text = path;
+			var path = textModelsDir.Text.Trim();
+			if(Directory.Exists(path)) textModelsDir.Text = path;
 			else MessageBox.Show(this, Resources.Folder_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}
 		private void ComboWhisperModel_DropDown(object sender, EventArgs e){
-			if(!Directory.Exists(_modelsPath)) return;
+			if(!Directory.Exists(_modelsDir)) return;
 			PopulateWhisperModels(true, false);
 		}
 		private void ButWhispDown_Click(object sender, EventArgs e){
@@ -424,7 +427,7 @@ Always read a file and verify its contents before making changes.");
 			tabControl1.SelectTab(3);
 		}
 		private void ComboVADModel_DropDown(object sender, EventArgs e){
-			if(!Directory.Exists(_modelsPath)) return;
+			if(!Directory.Exists(_modelsDir)) return;
 			PopulateWhisperModels(false, true);
 		}
 		private void PopulateWhisperModels(bool whisper, bool vad){
@@ -434,7 +437,7 @@ Always read a file and verify its contents before making changes.");
 				_whisperModels.Clear();
 				if(whisper) comboWhisperModel.Items.Clear();
 				if(vad) comboVADModel.Items.Clear();
-				var files = Directory.GetFiles(_modelsPath, "*.bin", SearchOption.AllDirectories);
+				var files = Directory.GetFiles(_modelsDir, "*.bin", SearchOption.AllDirectories);
 				foreach(var file in files){
 					using(var fs = new FileStream(file, FileMode.Open, FileAccess.Read))
 					using(var br = new BinaryReader(fs)){

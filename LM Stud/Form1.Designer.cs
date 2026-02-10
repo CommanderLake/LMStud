@@ -119,7 +119,7 @@ namespace LMStud
 			this.numApiServerPort = new System.Windows.Forms.NumericUpDown();
 			this.label28 = new System.Windows.Forms.Label();
 			this.checkApiServerEnable = new System.Windows.Forms.CheckBox();
-			this.textModelsPath = new System.Windows.Forms.TextBox();
+			this.textModelsDir = new System.Windows.Forms.TextBox();
 			this.groupBox6 = new System.Windows.Forms.GroupBox();
 			this.numGenDelay = new System.Windows.Forms.NumericUpDown();
 			this.label29 = new System.Windows.Forms.Label();
@@ -654,6 +654,7 @@ namespace LMStud
 			resources.ApplyResources(this.listViewHugSearch, "listViewHugSearch");
 			this.listViewHugSearch.GridLines = true;
 			this.listViewHugSearch.HideSelection = false;
+			this.listViewHugSearch.MultiSelect = false;
 			this.listViewHugSearch.Name = "listViewHugSearch";
 			this.listViewHugSearch.UseCompatibleStateImageBehavior = false;
 			this.listViewHugSearch.View = System.Windows.Forms.View.Details;
@@ -695,6 +696,7 @@ namespace LMStud
 			resources.ApplyResources(this.listViewHugFiles, "listViewHugFiles");
 			this.listViewHugFiles.GridLines = true;
 			this.listViewHugFiles.HideSelection = false;
+			this.listViewHugFiles.MultiSelect = false;
 			this.listViewHugFiles.Name = "listViewHugFiles";
 			this.listViewHugFiles.UseCompatibleStateImageBehavior = false;
 			this.listViewHugFiles.View = System.Windows.Forms.View.Details;
@@ -837,7 +839,7 @@ namespace LMStud
 			this.tabPageSettings.Controls.Add(this.groupBox9);
 			this.tabPageSettings.Controls.Add(this.groupBox8);
 			this.tabPageSettings.Controls.Add(this.groupBox7);
-			this.tabPageSettings.Controls.Add(this.textModelsPath);
+			this.tabPageSettings.Controls.Add(this.textModelsDir);
 			this.tabPageSettings.Controls.Add(this.groupBox6);
 			this.tabPageSettings.Controls.Add(this.groupBox5);
 			this.tabPageSettings.Controls.Add(this.groupBox4);
@@ -912,8 +914,8 @@ namespace LMStud
 			// comboApiClientModel
 			// 
 			resources.ApplyResources(this.comboApiClientModel, "comboApiClientModel");
-			this.comboApiClientModel.FormattingEnabled = true;
 			this.comboApiClientModel.Name = "comboApiClientModel";
+			this.comboApiClientModel.Sorted = true;
 			this.comboApiClientModel.DropDown += new System.EventHandler(this.ComboApiClientModel_DropDown);
 			// 
 			// label39
@@ -1022,13 +1024,13 @@ namespace LMStud
 			this.checkApiServerEnable.Name = "checkApiServerEnable";
 			this.checkApiServerEnable.UseVisualStyleBackColor = true;
 			// 
-			// textModelsPath
+			// textModelsDir
 			// 
-			resources.ApplyResources(this.textModelsPath, "textModelsPath");
-			this.textModelsPath.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
-			this.textModelsPath.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.FileSystem;
-			this.textModelsPath.Name = "textModelsPath";
-			this.textModelsPath.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextModelsPath_KeyDown);
+			resources.ApplyResources(this.textModelsDir, "textModelsDir");
+			this.textModelsDir.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+			this.textModelsDir.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.FileSystem;
+			this.textModelsDir.Name = "textModelsDir";
+			this.textModelsDir.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextModelsPath_KeyDown);
 			// 
 			// groupBox6
 			// 
@@ -1972,7 +1974,7 @@ namespace LMStud
 		private System.Windows.Forms.TextBox textSystemPrompt;
 		private System.Windows.Forms.Button butApply;
 		private System.Windows.Forms.Button butBrowse;
-		private System.Windows.Forms.TextBox textModelsPath;
+		private System.Windows.Forms.TextBox textModelsDir;
 		private System.Windows.Forms.Button butReset;
 		private System.Windows.Forms.NumericUpDown numRepPen;
 		private System.Windows.Forms.Label label6;

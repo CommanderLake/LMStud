@@ -109,7 +109,7 @@ namespace LM_Stud.Tests{
 		[TestMethod]
 		public void ApiGenerating_PreventsNormalGeneration(){
 			_form.Invoke(new MethodInvoker(() => {
-				_form.APIGenerating = true;
+				_form.APIServerGenerating = true;
 				_form.LlModelLoaded = true;
 				var textInput = _form.textInput;
 				textInput.Text = "Test message";
