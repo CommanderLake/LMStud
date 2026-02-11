@@ -69,7 +69,7 @@ namespace LM_Stud.Tests{
 		[TestMethod]
 		public void GetTokenCount_ReturnsMemorySize(){
 			var count = 0;
-			_form.Invoke(new MethodInvoker(() => {count = _form.GetTokenCount();}));
+			_form.Invoke(new MethodInvoker(() => {count = NativeMethods.LlamaMemSize();}));
 			Assert.IsTrue(count >= 0, "Token count should be non-negative.");
 		}
 		[TestMethod]

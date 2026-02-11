@@ -686,7 +686,7 @@ namespace LMStud{
 					SetState(state);
 					NativeMethods.GenerateWithTools(MessageRole.User, prompt, _nGen, false);
 					newState = GetState();
-					tokenCount = GetTokenCount();
+					tokenCount = NativeMethods.LlamaMemSize();
 					return true;
 				} finally{
 					try{ SetState(originalState); } catch{}
@@ -715,7 +715,6 @@ namespace LMStud{
 				fixed(byte* p = state){ NativeMethods.SetStateData((IntPtr)p, state.Length); }
 			}
 		}
-		internal int GetTokenCount(){return NativeMethods.LlamaMemSize();}
 		private static unsafe void TokenCallback(byte* thinkPtr, int thinkLen, byte* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool){
 			if(This.APIServerGenerating){
 				if(messageLen <= 0) return;
@@ -729,17 +728,23 @@ namespace LMStud{
 			if(thinkLen > 0) think = Encoding.UTF8.GetString(thinkPtr, thinkLen);
 			var message = "";
 			if(messageLen > 0) message = Encoding.UTF8.GetString(messagePtr, messageLen);
-			if(tool == 1 || tool == 2){
+			if(tool > 0){// 1 == tool output, 2 = CMD output stream, 3 = tool call details
 				try{
 					This.BeginInvoke(new MethodInvoker(() => {
 						if(This._cntToolMsg == null){
 							This._cntToolMsg = This.AddMessage(MessageRole.Tool, "", message);
-							This._cntToolMsg.SetRoleText(Resources.Tool_Output);
+							switch(tool){
+								case 1:
+								case 2: This._cntToolMsg.SetRoleText(Resources.Tool_Output);
+									break;
+								case 3: This._cntToolMsg.SetRoleText(Resources.Tool_Call);
+									break;
+							}
 						}
 						else{ This._cntToolMsg.UpdateText("", message, true); }
 						This._cntAssMsg = null;
 						This.labelTokens.Text = string.Format(Resources._0___1__2_, tokensTotal, This._cntCtxMax, Resources._Tokens);
-						if(tool == 1) This._cntToolMsg = null;
+						if(tool == 1 || tool == 3) This._cntToolMsg = null;
 					}));
 				} catch(ObjectDisposedException){}
 				return;

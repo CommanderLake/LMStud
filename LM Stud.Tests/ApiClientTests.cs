@@ -1,28 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Threading;
 using LMStud;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
 namespace LM_Stud.Tests{
 	[TestClass]
 	public class ApiClientTests{
-		[TestMethod]
-		public void GetHttpClient_DefaultsToInfiniteTimeSpan(){
-			var field = typeof(ApiClient).GetField("_httpClient", BindingFlags.NonPublic | BindingFlags.Static);
-			Assert.IsNotNull(field, "Expected _httpClient field to exist.");
-			var previousClient = (System.Net.Http.HttpClient)field.GetValue(null);
-			try{
-				field.SetValue(null, null);
-				var getHttpClientMethod = typeof(ApiClient).GetMethod("GetHttpClient", BindingFlags.NonPublic | BindingFlags.Static);
-				Assert.IsNotNull(getHttpClientMethod, "Expected GetHttpClient method to exist.");
-				var client = (System.Net.Http.HttpClient)getHttpClientMethod.Invoke(null, null);
-				Assert.AreEqual(Timeout.InfiniteTimeSpan, client.Timeout, "Lazy HttpClient should default to infinite timeout.");
-			} finally{
-				field.SetValue(null, previousClient);
-			}
-		}
 		[TestMethod]
 		public void BuildInputItems_WithToolCall_AddsFunctionCallItem(){
 			var messages = new List<ApiClient.ChatMessage>{

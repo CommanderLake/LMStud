@@ -283,17 +283,12 @@ namespace LMStud{
 				}
 			}
 		}
-		private static string BuildChatEndpoint(string apiBaseUrl){
-			var normalized = apiBaseUrl.EndsWith("/") ? apiBaseUrl : apiBaseUrl + "/";
-			if(normalized.EndsWith("/v1/")) return normalized + "responses";
-			if(normalized.EndsWith("/v1")) return normalized + "/responses";
-			return normalized + "v1/responses";
-		}
-		private static string BuildModelsEndpoint(string apiBaseUrl){
-			var normalized = apiBaseUrl.EndsWith("/") ? apiBaseUrl : apiBaseUrl + "/";
-			if(normalized.EndsWith("/v1/")) return normalized + "models";
-			if(normalized.EndsWith("/v1")) return normalized + "/models";
-			return normalized + "v1/models";
+		private static string BuildChatEndpoint(string apiBaseUrl){return BuildV1Endpoint(apiBaseUrl, "responses");}
+		private static string BuildModelsEndpoint(string apiBaseUrl){return BuildV1Endpoint(apiBaseUrl, "models");}
+		private static string BuildV1Endpoint(string apiBaseUrl, string resource){
+			var normalized = apiBaseUrl.TrimEnd('/');
+			if(normalized.EndsWith("/v1", StringComparison.OrdinalIgnoreCase)) return normalized + "/" + resource;
+			return normalized + "/v1/" + resource;
 		}
 		internal sealed class ChatMessage{
 			public string Content;
