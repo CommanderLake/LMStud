@@ -675,7 +675,7 @@ namespace LMStud{
 			newState = null;
 			tokenCount = 0;
 			if(string.IsNullOrWhiteSpace(prompt)) return false;
-			if(!GenerationLock.Wait(0)) return false;
+			if(!GenerationLock.Wait(300000)) return false;
 			try{
 				if(!LlModelLoaded || Generating || APIServerGenerating) return false;
 				APIServerGenerating = true;

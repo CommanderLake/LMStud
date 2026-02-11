@@ -43,7 +43,6 @@ namespace LMStud{
 			}
 		}
 		private void HandleContext(HttpListenerContext context){
-			var acquired = false;
 			try{
 				var req = context.Request;
 				var method = req.HttpMethod;
@@ -53,11 +52,6 @@ namespace LMStud{
 					context.Response.StatusCode = 409;
 					return;
 				}
-				if(!_form.GenerationLock.Wait(0)){
-					context.Response.StatusCode = 409;
-					return;
-				}
-				acquired = true;
 				if(method == "GET" && path == "/v1/models") HandleModels(context, useRemoteApi);
 				else if(method == "GET" && path == "/v1/model") HandleModel(context, useRemoteApi);
 				else if(method == "POST" && path == "/v1/responses") HandleChat(context);
@@ -65,7 +59,6 @@ namespace LMStud{
 				else context.Response.StatusCode = 404;
 			} catch{ context.Response.StatusCode = 500; } finally{
 				try{ context.Response.OutputStream.Close(); } catch{}
-				if(acquired) _form.GenerationLock.Release();
 			}
 		}
 		private void HandleModels(HttpListenerContext ctx, bool useRemoteApi){
@@ -97,22 +90,28 @@ namespace LMStud{
 			ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
 		}
 		private void HandleReset(HttpListenerContext ctx){
-			string body;
-			using(var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)){ body = reader.ReadToEnd(); }
-			ChatRequest request = null;
-			if(!string.IsNullOrEmpty(body))
-				try{ request = JsonConvert.DeserializeObject<ChatRequest>(body); } catch{
-					ctx.Response.StatusCode = 400;
-					return;
-				}
-			NativeMethods.ResetChat();
-			NativeMethods.CloseCommandPrompt();
-			if(request?.SessionId != null) Sessions.Remove(request.SessionId);
-			var resp = new{ status = "reset" };
-			var json = JsonConvert.SerializeObject(resp);
-			var bytes = Encoding.UTF8.GetBytes(json);
-			ctx.Response.ContentType = "application/json";
-			ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
+			if(!_form.GenerationLock.Wait(0)){
+				ctx.Response.StatusCode = 409;
+				return;
+			}
+			try{
+				string body;
+				using(var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)){ body = reader.ReadToEnd(); }
+				ChatRequest request = null;
+				if(!string.IsNullOrEmpty(body))
+					try{ request = JsonConvert.DeserializeObject<ChatRequest>(body); } catch{
+						ctx.Response.StatusCode = 400;
+						return;
+					}
+				NativeMethods.ResetChat();
+				NativeMethods.CloseCommandPrompt();
+				if(request?.SessionId != null) Sessions.Remove(request.SessionId);
+				var resp = new{ status = "reset" };
+				var json = JsonConvert.SerializeObject(resp);
+				var bytes = Encoding.UTF8.GetBytes(json);
+				ctx.Response.ContentType = "application/json";
+				ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
+			} finally{ _form.GenerationLock.Release(); }
 		}
 		private void HandleChat(HttpListenerContext ctx){
 			string body;
