@@ -152,8 +152,5 @@
     <Setting Name="ApiClientStore" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="ApiClientTimeout" Type="System.Decimal" Scope="User">
-      <Value Profile="(Default)">300</Value>
-    </Setting>
   </Settings>
 </SettingsFile>

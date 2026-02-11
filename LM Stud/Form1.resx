@@ -1824,66 +1824,6 @@
   <data name="&gt;&gt;tabPageChat.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
-  <data name="label40.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Right</value>
-  </data>
-  <data name="label40.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
-    <value>NoControl</value>
-  </data>
-  <data name="label40.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 158</value>
-  </data>
-  <data name="label40.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>3, 0, 0, 0</value>
-  </data>
-  <data name="label40.Size" type="System.Drawing.Size, System.Drawing">
-    <value>125, 13</value>
-  </data>
-  <data name="label40.TabIndex" type="System.Int32, mscorlib">
-    <value>34</value>
-  </data>
-  <data name="label40.Text" xml:space="preserve">
-    <value>Timeout (seconds):</value>
-  </data>
-  <data name="label40.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
-    <value>MiddleRight</value>
-  </data>
-  <data name="&gt;&gt;label40.Name" xml:space="preserve">
-    <value>label40</value>
-  </data>
-  <data name="&gt;&gt;label40.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;label40.Parent" xml:space="preserve">
-    <value>groupBox9</value>
-  </data>
-  <data name="&gt;&gt;label40.ZOrder" xml:space="preserve">
-    <value>0</value>
-  </data>
-  <data name="numApiClientTimeout.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Right</value>
-  </data>
-  <data name="numApiClientTimeout.Location" type="System.Drawing.Point, System.Drawing">
-    <value>134, 156</value>
-  </data>
-  <data name="numApiClientTimeout.Size" type="System.Drawing.Size, System.Drawing">
-    <value>60, 20</value>
-  </data>
-  <data name="numApiClientTimeout.TabIndex" type="System.Int32, mscorlib">
-    <value>21</value>
-  </data>
-  <data name="&gt;&gt;numApiClientTimeout.Name" xml:space="preserve">
-    <value>numApiClientTimeout</value>
-  </data>
-  <data name="&gt;&gt;numApiClientTimeout.Type" xml:space="preserve">
-    <value>System.Windows.Forms.NumericUpDown, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;numApiClientTimeout.Parent" xml:space="preserve">
-    <value>groupBox9</value>
-  </data>
-  <data name="&gt;&gt;numApiClientTimeout.ZOrder" xml:space="preserve">
-    <value>1</value>
-  </data>
   <data name="checkApiClientStore.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
@@ -1894,7 +1834,7 @@
     <value>NoControl</value>
   </data>
   <data name="checkApiClientStore.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 182</value>
+    <value>6, 156</value>
   </data>
   <data name="checkApiClientStore.Size" type="System.Drawing.Size, System.Drawing">
     <value>188, 17</value>
@@ -1918,7 +1858,7 @@
     <value>groupBox9</value>
   </data>
   <data name="&gt;&gt;checkApiClientStore.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>0</value>
   </data>
   <data name="comboApiClientModel.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -1942,7 +1882,7 @@
     <value>groupBox9</value>
   </data>
   <data name="&gt;&gt;comboApiClientModel.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>1</value>
   </data>
   <data name="label39.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -1978,7 +1918,7 @@
     <value>groupBox9</value>
   </data>
   <data name="&gt;&gt;label39.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>2</value>
   </data>
   <data name="textApiClientKey.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -2002,7 +1942,7 @@
     <value>groupBox9</value>
   </data>
   <data name="&gt;&gt;textApiClientKey.ZOrder" xml:space="preserve">
-    <value>5</value>
+    <value>3</value>
   </data>
   <data name="label38.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -2038,7 +1978,7 @@
     <value>groupBox9</value>
   </data>
   <data name="&gt;&gt;label38.ZOrder" xml:space="preserve">
-    <value>6</value>
+    <value>4</value>
   </data>
   <data name="textApiClientUrl.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -2062,7 +2002,7 @@
     <value>groupBox9</value>
   </data>
   <data name="&gt;&gt;textApiClientUrl.ZOrder" xml:space="preserve">
-    <value>7</value>
+    <value>5</value>
   </data>
   <data name="label37.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -2098,7 +2038,7 @@
     <value>groupBox9</value>
   </data>
   <data name="&gt;&gt;label37.ZOrder" xml:space="preserve">
-    <value>8</value>
+    <value>6</value>
   </data>
   <data name="checkApiClientEnable.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -2134,13 +2074,13 @@
     <value>groupBox9</value>
   </data>
   <data name="&gt;&gt;checkApiClientEnable.ZOrder" xml:space="preserve">
-    <value>9</value>
+    <value>7</value>
   </data>
   <data name="groupBox9.Location" type="System.Drawing.Point, System.Drawing">
     <value>621, 226</value>
   </data>
   <data name="groupBox9.Size" type="System.Drawing.Size, System.Drawing">
-    <value>200, 203</value>
+    <value>200, 177</value>
   </data>
   <data name="groupBox9.TabIndex" type="System.Int32, mscorlib">
     <value>45</value>

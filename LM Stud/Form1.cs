@@ -614,7 +614,7 @@ namespace LMStud{
 				var messages = BuildApiMessages(role, prompt, addToChat);
 				var history = ApiClient.BuildInputItems(messages);
 				var toolsJson = BuildApiToolsJson();
-				var client = new ApiClient(_apiClientURL, _apiClientKey, _apiClientModel, _apiClientStore, _systemPrompt);
+				var client = new ApiClient(_apiClientUrl, _apiClientKey, _apiClientModel, APIClientStore, _systemPrompt);
 				string lastToolSignature = null;
 				while(true){
 					var result = client.CreateChatCompletion(history, _temp, _nGen, toolsJson, null, CancellationToken.None);

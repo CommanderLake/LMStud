@@ -18,7 +18,7 @@ namespace LMStud{
 		public ApiServer(Form1 form){_form = form;}
 		public bool IsRunning => _listener != null && _listener.IsListening;
 		private ApiClient CreateApiClient(){
-			return new ApiClient(Settings.Default.ApiClientBaseUrl, Settings.Default.ApiClientKey, Settings.Default.ApiClientModel, _form._apiClientStore, Settings.Default.SystemPrompt);
+			return new ApiClient(Settings.Default.ApiClientBaseUrl, Settings.Default.ApiClientKey, Settings.Default.ApiClientModel, _form.APIClientStore, Settings.Default.SystemPrompt);
 		}
 		public void Start(){
 			if(IsRunning) return;

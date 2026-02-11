@@ -622,17 +622,5 @@ namespace LMStud.Properties {
                 this["ApiClientStore"] = value;
             }
         }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("300")]
-        public decimal ApiClientTimeout {
-            get {
-                return ((decimal)(this["ApiClientTimeout"]));
-            }
-            set {
-                this["ApiClientTimeout"] = value;
-            }
-        }
     }
 }

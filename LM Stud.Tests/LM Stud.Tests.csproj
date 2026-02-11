@@ -151,6 +151,7 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApiClientTests.cs" />
     <Compile Include="ApiServerTests.cs" />
     <Compile Include="ChatMessageTests.cs" />
     <Compile Include="Form1AdditionalTests.cs" />

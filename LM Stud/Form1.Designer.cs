@@ -101,8 +101,6 @@ namespace LMStud
 			this.checkAutoScroll = new System.Windows.Forms.CheckBox();
 			this.tabPageSettings = new System.Windows.Forms.TabPage();
 			this.groupBox9 = new System.Windows.Forms.GroupBox();
-			this.label40 = new System.Windows.Forms.Label();
-			this.numApiClientTimeout = new System.Windows.Forms.NumericUpDown();
 			this.checkApiClientStore = new System.Windows.Forms.CheckBox();
 			this.comboApiClientModel = new System.Windows.Forms.ComboBox();
 			this.label39 = new System.Windows.Forms.Label();
@@ -241,7 +239,6 @@ namespace LMStud
 			this.tabPageChat.SuspendLayout();
 			this.tabPageSettings.SuspendLayout();
 			this.groupBox9.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.numApiClientTimeout)).BeginInit();
 			this.groupBox8.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numCmdTimeout)).BeginInit();
 			this.groupBox7.SuspendLayout();
@@ -861,8 +858,6 @@ namespace LMStud
 			// 
 			// groupBox9
 			// 
-			this.groupBox9.Controls.Add(this.label40);
-			this.groupBox9.Controls.Add(this.numApiClientTimeout);
 			this.groupBox9.Controls.Add(this.checkApiClientStore);
 			this.groupBox9.Controls.Add(this.comboApiClientModel);
 			this.groupBox9.Controls.Add(this.label39);
@@ -874,36 +869,6 @@ namespace LMStud
 			resources.ApplyResources(this.groupBox9, "groupBox9");
 			this.groupBox9.Name = "groupBox9";
 			this.groupBox9.TabStop = false;
-			// 
-			// label40
-			// 
-			resources.ApplyResources(this.label40, "label40");
-			this.label40.Name = "label40";
-			// 
-			// numApiClientTimeout
-			// 
-			resources.ApplyResources(this.numApiClientTimeout, "numApiClientTimeout");
-			this.numApiClientTimeout.Increment = new decimal(new int[] {
-            100,
-            0,
-            0,
-            0});
-			this.numApiClientTimeout.Maximum = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            0});
-			this.numApiClientTimeout.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            -2147483648});
-			this.numApiClientTimeout.Name = "numApiClientTimeout";
-			this.numApiClientTimeout.Value = new decimal(new int[] {
-            300,
-            0,
-            0,
-            0});
 			// 
 			// checkApiClientStore
 			// 
@@ -1915,7 +1880,6 @@ namespace LMStud
 			this.tabPageSettings.PerformLayout();
 			this.groupBox9.ResumeLayout(false);
 			this.groupBox9.PerformLayout();
-			((System.ComponentModel.ISupportInitialize)(this.numApiClientTimeout)).EndInit();
 			this.groupBox8.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.numCmdTimeout)).EndInit();
 			this.groupBox7.ResumeLayout(false);
@@ -2138,8 +2102,6 @@ namespace LMStud
 		private System.Windows.Forms.TextBox textApiClientKey;
 		private System.Windows.Forms.Label label38;
 		private System.Windows.Forms.ComboBox comboApiClientModel;
-		private System.Windows.Forms.Label label40;
-		private System.Windows.Forms.NumericUpDown numApiClientTimeout;
 		private System.Windows.Forms.CheckBox checkApiClientStore;
 	}
 }
