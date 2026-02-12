@@ -293,6 +293,7 @@ namespace LMStud{
 			while(ChatMessages[idx].Role == MessageRole.Assistant) if(--idx < 0) return;
 			var role = ChatMessages[idx].Role;
 			var msg = ChatMessages[idx].Message;
+			var resetDialecticSeed = checkDialectic.Checked && idx == 0 && role == MessageRole.User;
 			ThreadPool.QueueUserWorkItem(_ => {
 				NativeMethods.StudError result;
 				var regenerate = false;
@@ -311,7 +312,13 @@ namespace LMStud{
 				} finally{ GenerationLock.Release(); }
 				if(regenerate)
 					BeginInvoke(new MethodInvoker(() => {
-						if(!IsDisposed) Generate(role, msg, true);
+						if(IsDisposed) return;
+						if(resetDialecticSeed){
+							NativeMethods.DialecticInit();
+							DialecticStarted = false;
+							DialecticPaused = false;
+						}
+						Generate(role, msg, true);
 					}));
 			});
 		}

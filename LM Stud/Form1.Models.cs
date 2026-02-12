@@ -58,7 +58,7 @@ namespace LMStud{
 			return true;
 		}
 		private void PopulateModels(){
-			if(Populating || !ModelsFolderExists(true)) return;
+			if(Populating || !ModelsFolderExists(true) || !GenerationLock.Wait(0)) return;
 			Populating = true;
 			ThreadPool.QueueUserWorkItem(_ => {
 				try{
@@ -84,6 +84,7 @@ namespace LMStud{
 					}));
 				} finally{
 					Populating = false;
+					GenerationLock.Release();
 				}
 			});
 		}

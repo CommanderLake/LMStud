@@ -566,7 +566,7 @@ private:
 			}
 		}
 	}
-	static constexpr size_t kQueueCapacity = 1024;
+	static constexpr size_t kQueueCapacity = 32;
 	TokenCallbackFn _callbackFn;
 	bool _streamCallback;
 	common_chat_syntax _chatSyntax;
@@ -665,6 +665,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	_session.chatMsgs[_session.dId].push_back(msg);
 	if(cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(), ftTime, 0);
 	outMsg = std::move(msg);
+	OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
 	return StudError::Success;
 }
 StudError GenerateWithTools(const MessageRole role, const char* prompt, const int nPredict, const bool callback){
