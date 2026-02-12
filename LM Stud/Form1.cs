@@ -664,7 +664,7 @@ namespace LMStud{
 				}));
 			} catch(ObjectDisposedException){} finally{ GenerationLock.Release(); }
 		}
-		void FinishedGenerating(){
+		private void FinishedGenerating(){
 			butGen.Text = Resources.Generate;
 			butReset.Enabled = butApply.Enabled = true;
 			Generating = false;

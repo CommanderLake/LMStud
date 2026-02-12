@@ -7,6 +7,8 @@
 #include <minja\minja.hpp>
 #include <minja\chat-template.hpp>
 #include <algorithm>
+#include <mutex>
+#include <thread>
 using HrClock = std::chrono::high_resolution_clock;
 extern "C" void CloseCommandPrompt();
 extern "C" void StopCMDOutput();
@@ -93,11 +95,7 @@ extern "C" EXPORT char* ExecuteTool(const char* name, const char* argsJson){
 	try{
 		const std::string response = it->second(argsJson ? argsJson : "");
 		return CopyCString(response);
-	} catch(const std::exception& ex){
-		return CopyCString(std::string("{\"error\":\"") + ex.what() + "\"}");
-	} catch(...){
-		return CopyCString("{\"error\":\"tool execution failed\"}");
-	}
+	} catch(const std::exception& ex){ return CopyCString(std::string("{\"error\":\"") + ex.what() + "\"}"); } catch(...){ return CopyCString("{\"error\":\"tool execution failed\"}"); }
 }
 StudError CreateContext(const int nCtx, const int nBatch, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch){
 	if(_session.ctx){
@@ -217,9 +215,7 @@ bool HasTool(const char* name){
 }
 void SetTokenCallback(const TokenCallbackFn cb){ _tokenCb = cb; }
 void SetThreadCount(const int n, const int nBatch){ if(_session.ctx) llama_set_n_threads(_session.ctx, n, nBatch); }
-int LlamaMemSize(){
-	return static_cast<int>(_session.cachedTokens[_session.dId].size());
-}
+int LlamaMemSize(){ return static_cast<int>(_session.cachedTokens[_session.dId].size()); }
 int GetStateSize(){
 	if(!_session.ctx) return 0;
 	return static_cast<int>(llama_state_get_size(_session.ctx));
@@ -494,11 +490,108 @@ StudError SyncChatMessages(const int* roles, const char** thinks, const char** m
 	const auto err3 = DialecticSwap();
 	return err2 != StudError::Success ? err2 : err3;
 }
-StudError Generate(const std::vector<common_chat_msg>& messages, const int nPredict, const bool callback, common_chat_msg& outMsg){
-	const auto prepStart = HrClock::now();
-	_stop.store(false);
-	const TokenCallbackFn cb = _tokenCb;
-	const size_t chatStart = _session.chatMsgs[_session.dId].size();
+struct PendingToken{
+	llama_token token;
+	int memSize;
+};
+class AsyncTokenPostProcessor{
+public:
+	AsyncTokenPostProcessor(const TokenCallbackFn callbackFn, const bool streamCallback, const common_chat_syntax& chatSyntax, const HrClock::time_point& prepStart, std::string& responseText, common_chat_msg& parsedMsg, double& firstTokenTime) : _callbackFn(callbackFn),
+		_streamCallback(streamCallback), _chatSyntax(chatSyntax), _prepStart(prepStart), _responseText(responseText), _parsedMsg(parsedMsg), _firstTokenTime(firstTokenTime), _queue(kQueueCapacity){ _worker = std::thread([this](){ WorkerLoop(); }); }
+	~AsyncTokenPostProcessor(){ Close(); }
+	StudError Error() const{ return _asyncError.load(std::memory_order_acquire); }
+	void Close(){
+		const bool wasClosed = _queueClosed.exchange(true, std::memory_order_acq_rel);
+		if(!wasClosed) _queueCv.notify_all();
+		if(_worker.joinable()) _worker.join();
+	}
+	StudError Enqueue(const llama_token token, const int memSize){
+		for(;;){
+			const StudError error = Error();
+			if(error != StudError::Success) return error;
+			const size_t head = _queueHead.load(std::memory_order_acquire);
+			const size_t tail = _queueTail.load(std::memory_order_relaxed);
+			if((tail - head) < kQueueCapacity){
+				_queue[tail % kQueueCapacity] = PendingToken{token, memSize};
+				_queueTail.store(tail + 1, std::memory_order_release);
+				if(tail == head) _queueCv.notify_one();
+				return StudError::Success;
+			}
+			std::this_thread::yield();
+		}
+	}
+private:
+	void EmitStreamingCallback(const int memSize){
+		if(!_callbackFn || !_streamCallback || _pendingCallbackTokens <= 0) return;
+		_parsedMsg = common_chat_parse(_responseText, true, _chatSyntax);
+		_callbackFn(_parsedMsg.reasoning_content.c_str(), static_cast<int>(_parsedMsg.reasoning_content.length()), _parsedMsg.content.c_str(), static_cast<int>(_parsedMsg.content.length()), _pendingCallbackTokens, memSize, _firstTokenTime, 0);
+		_pendingCallbackTokens = 0;
+		_lastCallbackTime = std::chrono::steady_clock::now();
+	}
+	void WorkerLoop(){
+		constexpr auto kMinCallbackInterval = std::chrono::milliseconds(16);
+		constexpr int kMaxTokensPerCallback = 8;
+		int lastMemSize = 0;
+		for(;;){
+			const size_t head = _queueHead.load(std::memory_order_relaxed);
+			const size_t tail = _queueTail.load(std::memory_order_acquire);
+			if(head == tail){
+				if(_queueClosed.load(std::memory_order_acquire)){
+					EmitStreamingCallback(lastMemSize);
+					return;
+				}
+				if(_pendingCallbackTokens > 0 && std::chrono::steady_clock::now() - _lastCallbackTime >= kMinCallbackInterval){ EmitStreamingCallback(lastMemSize); }
+				std::unique_lock<std::mutex> lock(_queueWaitMutex);
+				_queueCv.wait_for(lock, std::chrono::milliseconds(1), [&](){ return _queueClosed.load(std::memory_order_acquire) || _queueHead.load(std::memory_order_relaxed) != _queueTail.load(std::memory_order_acquire); });
+				continue;
+			}
+			const PendingToken pending = _queue[head % kQueueCapacity];
+			_queueHead.store(head + 1, std::memory_order_release);
+			char buf[256];
+			const int n = llama_token_to_piece(_session._vocab, pending.token, buf, sizeof buf, 0, false);
+			if(n < 0){
+				_asyncError.store(StudError::CantConvertToken, std::memory_order_release);
+				_queueClosed.store(true, std::memory_order_release);
+				_queueCv.notify_all();
+				return;
+			}
+			if(_firstTokenTime == 0.0) _firstTokenTime = std::chrono::duration<double>(HrClock::now() - _prepStart).count();
+			_responseText.append(buf, static_cast<size_t>(n));
+			if(n > 0){
+				lastMemSize = pending.memSize;
+				++_pendingCallbackTokens;
+				const bool reachedBatchSize = _pendingCallbackTokens >= kMaxTokensPerCallback;
+				const bool reachedRateLimit = std::chrono::steady_clock::now() - _lastCallbackTime >= kMinCallbackInterval;
+				if(reachedBatchSize || reachedRateLimit) EmitStreamingCallback(lastMemSize);
+			}
+		}
+	}
+	static constexpr size_t kQueueCapacity = 1024;
+	TokenCallbackFn _callbackFn;
+	bool _streamCallback;
+	common_chat_syntax _chatSyntax;
+	HrClock::time_point _prepStart;
+	std::string& _responseText;
+	common_chat_msg& _parsedMsg;
+	double& _firstTokenTime;
+	std::vector<PendingToken> _queue;
+	std::atomic<size_t> _queueHead{0};
+	std::atomic<size_t> _queueTail{0};
+	std::atomic<bool> _queueClosed{false};
+	std::atomic<StudError> _asyncError{StudError::Success};
+	std::mutex _queueWaitMutex;
+	std::condition_variable _queueCv;
+	std::thread _worker;
+	std::chrono::steady_clock::time_point _lastCallbackTime = std::chrono::steady_clock::now();
+	int _pendingCallbackTokens = 0;
+};
+static StudError RollbackGenerate(const size_t chatStart, const size_t newMessageCount, common_chat_msg& outMsg, const StudError error){
+	_session.chatMsgs[_session.dId].resize(chatStart + newMessageCount);
+	const auto rtErr = RetokenizeChat(true);
+	outMsg = common_chat_msg();
+	return rtErr != StudError::Success ? rtErr : error;
+}
+static StudError DecodePromptMessages(const std::vector<common_chat_msg>& messages, common_chat_msg& outMsg){
 	for(const auto& message : messages){
 		const auto formatted = common_chat_format_single(_chatTemplates.get(), _session.chatMsgs[_session.dId], message, !message.role._Equal("assistant"), _session.useJinja && message.role._Equal("assistant"));
 		const int nPromptTokens = -llama_tokenize(_session._vocab, formatted.c_str(), formatted.size(), nullptr, 0, true, true);
@@ -511,19 +604,19 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 		size_t p = 0;
 		while(p < promptTokens.size() && !_stop.load()){
 			const int nEval = std::min<int>(_session.nBatch, promptTokens.size() - p);
-			llama_batch batch = llama_batch_get_one(&promptTokens[p], nEval);
+			const llama_batch batch = llama_batch_get_one(&promptTokens[p], nEval);
 			const int nCtx = llama_n_ctx(_session.ctx);
 			const int nCtxUsed = LlamaMemSize();
 			if(nCtxUsed + batch.n_tokens > nCtx){
 				_session.chatMsgs[_session.dId].pop_back();
-				auto rtErr = RetokenizeChat(true);
+				const auto rtErr = RetokenizeChat(true);
 				outMsg = common_chat_msg();
 				return rtErr != StudError::Success ? rtErr : StudError::ConvTooLong;
 			}
-			auto result = llama_decode(_session.ctx, batch);
+			const auto result = llama_decode(_session.ctx, batch);
 			if(result != 0){
 				_session.chatMsgs[_session.dId].pop_back();
-				auto rtErr = RetokenizeChat(true);
+				const auto rtErr = RetokenizeChat(true);
 				outMsg = common_chat_msg();
 				if(result == 1) return rtErr != StudError::Success ? rtErr : StudError::ConvTooLong;
 				return rtErr != StudError::Success ? rtErr : StudError::LlamaDecodeError;
@@ -533,45 +626,46 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 			p += nEval;
 		}
 	}
-	auto handleError = [&](StudError error){
-		_session.chatMsgs[_session.dId].resize(chatStart + messages.size());
-		const auto rtErr = RetokenizeChat(true);
-		outMsg = common_chat_msg();
-		return rtErr != StudError::Success ? rtErr : error;
-	};
-	auto status = StudError::Success;
+	return StudError::Success;
+}
+StudError Generate(const std::vector<common_chat_msg>& messages, const int nPredict, const bool callback, common_chat_msg& outMsg){
+	const auto prepStart = HrClock::now();
+	_stop.store(false);
+	const TokenCallbackFn cb = _tokenCb;
+	const size_t chatStart = _session.chatMsgs[_session.dId].size();
+	const auto promptErr = DecodePromptMessages(messages, outMsg);
+	if(promptErr != StudError::Success) return promptErr;
 	std::string response;
 	common_chat_msg msg;
-	ToolCtx tool;
 	double ftTime = 0.0;
+	AsyncTokenPostProcessor postProcessor(cb, callback, _session.syntax, prepStart, response, msg, ftTime);
+	auto failWith = [&](StudError error){
+		postProcessor.Close();
+		return RollbackGenerate(chatStart, messages.size(), outMsg, error);
+	};
 	int i = 0;
 	while((nPredict < 0 || i < nPredict) && !_stop.load()){
-		if(LlamaMemSize() + 1 > llama_n_ctx(_session.ctx)) return handleError(StudError::ConvTooLong);
+		const StudError pendingError = postProcessor.Error();
+		if(pendingError != StudError::Success) return failWith(pendingError);
+		if(LlamaMemSize() + 1 > llama_n_ctx(_session.ctx)) return failWith(StudError::ConvTooLong);
 		auto newTokenId = llama_sampler_sample(_session.smpl[_session.dId], _session.ctx, -1);
-		auto isEog = llama_vocab_is_eog(_session._vocab, newTokenId);
-		auto decodeErr = llama_decode(_session.ctx, llama_batch_get_one(&newTokenId, 1));
-		if(decodeErr != 0) return handleError(decodeErr == 1 ? StudError::ConvTooLong : StudError::LlamaDecodeError);
+		const auto isEog = llama_vocab_is_eog(_session._vocab, newTokenId);
+		const auto decodeErr = llama_decode(_session.ctx, llama_batch_get_one(&newTokenId, 1));
+		if(decodeErr != 0) return failWith(decodeErr == 1 ? StudError::ConvTooLong : StudError::LlamaDecodeError);
 		llama_sampler_accept(_session.smpl[_session.dId], newTokenId);
 		_session.cachedTokens[_session.dId].push_back(newTokenId);
 		if(isEog) break;
-		char buf[256];
-		const int n = llama_token_to_piece(_session._vocab, newTokenId, buf, sizeof buf, 0, false);
-		if(n < 0) return handleError(StudError::CantConvertToken);
-		if(ftTime == 0.0) ftTime = std::chrono::duration<double>(HrClock::now() - prepStart).count();
-		std::string tokenStr(buf, n);
-		response += tokenStr;
+		const auto enqueueErr = postProcessor.Enqueue(newTokenId, LlamaMemSize());
+		if(enqueueErr != StudError::Success) return failWith(enqueueErr);
 		++i;
-		if(cb && callback && !tokenStr.empty()){
-			msg = common_chat_parse(response, true, _session.syntax);
-			cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), 1, LlamaMemSize(), ftTime, 0);
-		}
 	}
+	postProcessor.Close();
+	if(postProcessor.Error() != StudError::Success) return RollbackGenerate(chatStart, messages.size(), outMsg, postProcessor.Error());
 	msg = common_chat_parse(response, false, _session.syntax);
 	_session.chatMsgs[_session.dId].push_back(msg);
 	if(cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(), ftTime, 0);
 	outMsg = std::move(msg);
-	//OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
-	return status;
+	return StudError::Success;
 }
 StudError GenerateWithTools(const MessageRole role, const char* prompt, const int nPredict, const bool callback){
 	common_chat_msg msg;
