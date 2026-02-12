@@ -27,7 +27,7 @@ namespace LMStud{
 			CantCreateContext = -3,
 			CantCreateSampler = -4,
 			CantApplyTemplate = -5,
-			ConvTooLong = -6,
+			ContextFull = -6,
 			LlamaDecodeError = -7,
 			IndexOutOfRange = -8,
 			CantTokenizePrompt = -9,

@@ -106,8 +106,8 @@ namespace LMStud{
 				case NativeMethods.StudError.CantApplyTemplate:
 					detail = Resources.The_chat_template_could_not_be_applied_;
 					break;
-				case NativeMethods.StudError.ConvTooLong:
-					detail = Resources.The_conversation_is_too_long_for_the_context_window_;
+				case NativeMethods.StudError.ContextFull:
+					detail = Resources.Context_full;
 					break;
 				case NativeMethods.StudError.LlamaDecodeError:
 					detail = Resources.The_model_backend_returned_a_decode_error_;

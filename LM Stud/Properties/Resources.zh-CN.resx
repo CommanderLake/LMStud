@@ -138,10 +138,7 @@
 <data name="Error_starting_voice_input" xml:space="preserve">
 	<value>开始语音输入时出错。</value>
 </data>
-  <data name="Conversation_too_long_for_context" xml:space="preserve">
-    <value>对话过长，已超出上下文窗口限制。</value>
-  </data>
-  <data name="Generate" xml:space="preserve">
+<data name="Generate" xml:space="preserve">
     <value>生成</value>
   </data>
   <data name="_0_F2__Tok_s" xml:space="preserve">
@@ -347,9 +344,9 @@
   <data name="The_chat_template_could_not_be_applied_" xml:space="preserve">
     <value>无法应用聊天模板。</value>
   </data>
-  <data name="The_conversation_is_too_long_for_the_context_window_" xml:space="preserve">
-    <value>对话长度超出上下文窗口限制。</value>
-  </data>
+<data name="Context_full" xml:space="preserve">
+	<value>上下文已满。</value>
+</data>
   <data name="The_model_backend_returned_a_decode_error_" xml:space="preserve">
     <value>模型后端返回解码错误。</value>
   </data>

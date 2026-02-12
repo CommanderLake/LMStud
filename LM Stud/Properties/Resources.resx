@@ -136,10 +136,7 @@
   <data name="Error_starting_voice_input" xml:space="preserve">
     <value>Error starting voice input.</value>
   </data>
-  <data name="Conversation_too_long_for_context" xml:space="preserve">
-    <value>Conversation too long for context.</value>
-  </data>
-  <data name="Generate" xml:space="preserve">
+<data name="Generate" xml:space="preserve">
     <value>Generate</value>
   </data>
   <data name="_0_F2__Tok_s" xml:space="preserve">
@@ -344,9 +341,9 @@
   <data name="The_chat_template_could_not_be_applied_" xml:space="preserve">
     <value>The chat template could not be applied.</value>
   </data>
-  <data name="The_conversation_is_too_long_for_the_context_window_" xml:space="preserve">
-    <value>The conversation is too long for the context window.</value>
-  </data>
+<data name="Context_full" xml:space="preserve">
+	<value>Context full.</value>
+</data>
   <data name="The_model_backend_returned_a_decode_error_" xml:space="preserve">
     <value>The model backend returned a decode error.</value>
   </data>

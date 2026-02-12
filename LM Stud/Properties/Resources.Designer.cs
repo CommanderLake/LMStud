@@ -163,11 +163,11 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Conversation too long for context..
+        ///   Looks up a localized string similar to Context full..
         /// </summary>
-        internal static string Conversation_too_long_for_context {
+        internal static string Context_full {
             get {
-                return ResourceManager.GetString("Conversation_too_long_for_context", resourceCulture);
+                return ResourceManager.GetString("Context_full", resourceCulture);
             }
         }
         
@@ -539,15 +539,6 @@ namespace LMStud.Properties {
         internal static string The_chat_template_could_not_be_applied_ {
             get {
                 return ResourceManager.GetString("The_chat_template_could_not_be_applied_", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The conversation is too long for the context window..
-        /// </summary>
-        internal static string The_conversation_is_too_long_for_the_context_window_ {
-            get {
-                return ResourceManager.GetString("The_conversation_is_too_long_for_the_context_window_", resourceCulture);
             }
         }
         

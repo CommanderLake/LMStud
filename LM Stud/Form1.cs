@@ -346,7 +346,7 @@ namespace LMStud{
 							cm.Editing = false;
 							cm.Markdown = checkMarkdown.Checked;
 						}
-						else MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+						else MessageBox.Show(this, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 						EndRetokenization();
 					}));
 				} finally{ GenerationLock.Release(); }
@@ -552,11 +552,12 @@ namespace LMStud{
 				return;
 			}
 			ThreadPool.QueueUserWorkItem(o => {
+				var lockHeld = true;
 				_msgTokenCount = 0;
 				_genTokenTotal = 0;
 				_swTot.Restart();
 				_swRate.Restart();
-				NativeMethods.GenerateWithTools(role, newMsg, _nGen, checkStream.Checked);
+				var generationError = NativeMethods.GenerateWithTools(role, newMsg, _nGen, checkStream.Checked);
 				_swTot.Stop();
 				_swRate.Stop();
 				if(SpeechBuffer.Length > 0){
@@ -566,6 +567,12 @@ namespace LMStud{
 				}
 				try{
 					Invoke(new MethodInvoker(() => {
+						string followupPrompt = null;
+						if(generationError != NativeMethods.StudError.Success){
+							if(generationError == NativeMethods.StudError.ContextFull)
+								MessageBox.Show(this, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+							else MessageBox.Show(this, generationError.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+						}
 						var elapsed = _swTot.Elapsed.TotalSeconds;
 						if(_genTokenTotal > 0 && elapsed > 0.0){
 							var callsPerSecond = _genTokenTotal/elapsed;
@@ -574,16 +581,21 @@ namespace LMStud{
 							_swRate.Reset();
 						}
 						FinishedGenerating();
+						if(generationError != NativeMethods.StudError.Success) return;
 						if(checkDialectic.Checked && !DialecticPaused){
 							var last = ChatMessages.LastOrDefault();
 							if(last != null){
 								NativeMethods.DialecticSwap();
 								if(seedMsg) NativeMethods.AddMessage(MessageRole.Assistant, prompt);
-								Generate(MessageRole.User, last.Message, false);
+								followupPrompt = last.Message;
 							}
 						}
+						if(string.IsNullOrWhiteSpace(followupPrompt)) return;
+						GenerationLock.Release();
+						lockHeld = false;
+						Generate(MessageRole.User, followupPrompt, false);
 					}));
-				} catch(ObjectDisposedException){} finally{ GenerationLock.Release(); }
+				} catch(ObjectDisposedException){} finally{ if(lockHeld) GenerationLock.Release(); }
 			});
 		}
 		private static string RoleToApiRole(MessageRole role){
@@ -656,8 +668,8 @@ namespace LMStud{
 				Invoke(new MethodInvoker(() => {
 					if(error != null) MessageBox.Show(this, error.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 					if(error == null && syncError != NativeMethods.StudError.Success){
-						if(syncError == NativeMethods.StudError.ConvTooLong)
-							MessageBox.Show(this, Resources.Conversation_too_long_for_context, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+						if(syncError == NativeMethods.StudError.ContextFull)
+							MessageBox.Show(this, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 						else MessageBox.Show(this, syncError.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 					}
 					FinishedGenerating();
