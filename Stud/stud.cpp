@@ -532,7 +532,10 @@ struct PendingToken{
 class AsyncTokenPostProcessor{
 public:
 	AsyncTokenPostProcessor(const TokenCallbackFn callbackFn, const bool streamCallback, const common_chat_syntax& chatSyntax, const HrClock::time_point& prepStart, std::string& responseText, common_chat_msg& parsedMsg, double& firstTokenTime) : _callbackFn(callbackFn),
-		_streamCallback(streamCallback), _chatSyntax(chatSyntax), _prepStart(prepStart), _responseText(responseText), _parsedMsg(parsedMsg), _firstTokenTime(firstTokenTime), _queue(kQueueCapacity){ _worker = std::thread([this](){ WorkerLoop(); }); }
+		_streamCallback(streamCallback), _chatSyntax(chatSyntax), _prepStart(prepStart), _responseText(responseText), _parsedMsg(parsedMsg), _firstTokenTime(firstTokenTime), _queue(kQueueCapacity){ 
+		_chatSyntax.parse_tool_calls = false;
+		_worker = std::thread([this]{ WorkerLoop(); });
+	}
 	~AsyncTokenPostProcessor(){ Close(); }
 	StudError Error() const{ return _asyncError.load(std::memory_order_acquire); }
 	void Close(){
@@ -601,7 +604,7 @@ private:
 			}
 		}
 	}
-	static constexpr size_t kQueueCapacity = 32;
+	static constexpr size_t kQueueCapacity = 128;
 	TokenCallbackFn _callbackFn;
 	bool _streamCallback;
 	common_chat_syntax _chatSyntax;
