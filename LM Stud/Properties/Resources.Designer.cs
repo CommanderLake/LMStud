@@ -154,6 +154,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to API server.
+        /// </summary>
+        internal static string API_server {
+            get {
+                return ResourceManager.GetString("API_server", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cancel.
         /// </summary>
         internal static string Cancel {
@@ -168,6 +177,33 @@ namespace LMStud.Properties {
         internal static string Context_full {
             get {
                 return ResourceManager.GetString("Context_full", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Dialectic enable.
+        /// </summary>
+        internal static string Dialectic_enable {
+            get {
+                return ResourceManager.GetString("Dialectic_enable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DialecticInit.
+        /// </summary>
+        internal static string DialecticInit {
+            get {
+                return ResourceManager.GetString("DialecticInit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DialecticStart.
+        /// </summary>
+        internal static string DialecticStart {
+            get {
+                return ResourceManager.GetString("DialecticStart", resourceCulture);
             }
         }
         
@@ -245,6 +281,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Error deleting message.
+        /// </summary>
+        internal static string Error_deleting_message {
+            get {
+                return ResourceManager.GetString("Error_deleting_message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Error initialising voice input.
         /// </summary>
         internal static string Error_initialising_voice_input {
@@ -304,6 +349,15 @@ namespace LMStud.Properties {
         internal static string Error_reading_file___0_ {
             get {
                 return ResourceManager.GetString("Error_reading_file___0_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error regenerating message.
+        /// </summary>
+        internal static string Error_regenerating_message {
+            get {
+                return ResourceManager.GetString("Error_regenerating_message", resourceCulture);
             }
         }
         
@@ -403,6 +457,15 @@ namespace LMStud.Properties {
         internal static string Generate {
             get {
                 return ResourceManager.GetString("Generate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to GetStateData.
+        /// </summary>
+        internal static string GetStateData {
+            get {
+                return ResourceManager.GetString("GetStateData", resourceCulture);
             }
         }
         
@@ -521,6 +584,15 @@ namespace LMStud.Properties {
         internal static string Retokenizing_chat___ {
             get {
                 return ResourceManager.GetString("Retokenizing_chat___", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SetStateData.
+        /// </summary>
+        internal static string SetStateData {
+            get {
+                return ResourceManager.GetString("SetStateData", resourceCulture);
             }
         }
         

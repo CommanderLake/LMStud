@@ -15,5 +15,6 @@ enum class StudError{
 	GpuOutOfMemory = -12,
 	CantLoadWhisperModel = -13,
 	CantLoadVADModel = -14,
-	CantInitAudioCapture = -15
+	CantInitAudioCapture = -15,
+	Generic = -16
 };

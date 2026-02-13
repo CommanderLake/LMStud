@@ -434,4 +434,28 @@ Tool ID: </value>
 	<value>
 Tool arguments: </value>
 </data>
+<data name="Error_deleting_message" xml:space="preserve">
+	<value>Error deleting message</value>
+</data>
+<data name="Error_regenerating_message" xml:space="preserve">
+	<value>Error regenerating message</value>
+</data>
+<data name="API_server" xml:space="preserve">
+	<value>API server</value>
+</data>
+<data name="GetStateData" xml:space="preserve">
+	<value>GetStateData</value>
+</data>
+<data name="SetStateData" xml:space="preserve">
+	<value>SetStateData</value>
+</data>
+<data name="DialecticStart" xml:space="preserve">
+	<value>DialecticStart</value>
+</data>
+<data name="DialecticInit" xml:space="preserve">
+	<value>DialecticInit</value>
+</data>
+<data name="Dialectic_enable" xml:space="preserve">
+	<value>Dialectic enable</value>
+</data>
 </root>

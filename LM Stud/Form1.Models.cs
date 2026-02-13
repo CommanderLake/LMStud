@@ -89,7 +89,7 @@ namespace LMStud{
 			});
 		}
 		[Localizable(true)]
-		private void ShowErrorMessage(string action, NativeMethods.StudError error){
+		private void ShowError(string action, NativeMethods.StudError error){
 			string detail;
 			switch(error){
 				case NativeMethods.StudError.CantLoadModel:
@@ -137,6 +137,9 @@ namespace LMStud{
 				case NativeMethods.StudError.CantInitAudioCapture:
 					detail = Resources.Error_initializing_audio_capture_;
 					break;
+				case NativeMethods.StudError.Generic:
+					detail = "";
+					break;
 				default:
 					detail = error.ToString();
 					break;
@@ -144,8 +147,12 @@ namespace LMStud{
 			var extra = NativeMethods.GetLastError();
 			NativeMethods.ClearLastErrorMessage();
 			if(!string.IsNullOrEmpty(extra)) detail += "\r\n\r\n" + extra;
-			void ShowMessage(){MessageBox.Show(this, string.Format(Resources._0____1_, action, detail), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}
-			if(InvokeRequired){ Invoke(new MethodInvoker(ShowMessage)); } else ShowMessage();
+			ShowError(action, detail, false);
+		}
+		private void ShowError(string action, string error, bool addNativeMsg){
+			void ShowMessage(){MessageBox.Show(this, string.Format(Resources._0____1_, action, error), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}
+			if(InvokeRequired) Invoke(new MethodInvoker(ShowMessage));
+			else ShowMessage();
 		}
 		private void SetSystemPromptInternal(bool genLock){
 			if(genLock) GenerationLock.Wait(-1);
@@ -155,7 +162,7 @@ namespace LMStud{
 			try{ error = NativeMethods.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : ""); } finally{
 				if(genLock) GenerationLock.Release();
 			}
-			if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_setting_system_prompt, error);
+			if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowError(Resources.Error_setting_system_prompt, error);
 		}
 		private void SetSystemPrompt(bool genLock = true){
 			if(!LlModelLoaded){
@@ -173,31 +180,31 @@ namespace LMStud{
 		}
 		NativeMethods.StudError LoadModel(string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){
 			var result = NativeMethods.LoadModel(filename, jinjaTemplate, nGPULayers, mMap, mLock, numaStrategy);
-			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_loading_model, result);
+			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_loading_model, result);
 			return result;
 		}
 		NativeMethods.StudError CreateSession(int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
 			var result = NativeMethods.CreateSession(nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty);
-			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_session, result);
+			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_session, result);
 			return result;
 		}
 		NativeMethods.StudError CreateContext(int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch){
 			GenerationLock.Wait(-1);
 			NativeMethods.StudError result;
 			try{ result = NativeMethods.CreateContext(nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch); } finally{ GenerationLock.Release(); }
-			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_context, result);
+			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_context, result);
 			return result;
 		}
 		NativeMethods.StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty){
 			GenerationLock.Wait(-1);
 			NativeMethods.StudError result;
 			try{ result = NativeMethods.CreateSampler(minP, topP, topK, temp, repeatPenalty); } finally{ GenerationLock.Release(); }
-			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_sampler, result);
+			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_sampler, result);
 			return result;
 		}
 		NativeMethods.StudError LoadWhisperModel(string modelPath, int nThreads, bool useGPU, bool useVAD, string vadModel){
 			var result = NativeMethods.LoadWhisperModel(modelPath, nThreads, useGPU, useVAD, vadModel);
-			if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_initialising_voice_input, result);
+			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_initialising_voice_input, result);
 			return result;
 		}
 		private void LoadModel(string modelPath, bool autoLoad){

@@ -36,7 +36,8 @@ namespace LMStud{
 			GpuOutOfMemory = -12,
 			CantLoadWhisperModel = -13,
 			CantLoadVADModel = -14,
-			CantInitAudioCapture = -15
+			CantInitAudioCapture = -15,
+			Generic = -16
 		}
 		public static string GetLastError(){
 			var ptr = GetLastErrorMessage();
@@ -73,13 +74,13 @@ namespace LMStud{
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern int GetStateSize();
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern void GetStateData(IntPtr dst, int size);
+		internal static extern StudError GetStateData(IntPtr dst, int size);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern void SetStateData(IntPtr src, int size);
+		internal static extern StudError SetStateData(IntPtr src, int size);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern void DialecticInit();
+		internal static extern StudError DialecticInit();
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern void DialecticStart();
+		internal static extern bool DialecticStart();
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError DialecticSwap();
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]

@@ -31,7 +31,7 @@ namespace Stud{
 		std::string toolsPrompt;
 		common_chat_syntax syntax;
 		bool useJinja = true;
-		int nBatch = 1;
+		int batchSize = 1;
 	};
 	struct ToolCtx{
 		bool inThink = false;
@@ -75,10 +75,10 @@ EXPORT void SetTokenCallback(Stud::TokenCallbackFn cb);
 EXPORT void SetThreadCount(int n, int nBatch);
 EXPORT int LlamaMemSize();
 EXPORT int GetStateSize();
-EXPORT void GetStateData(unsigned char* dst, int size);
-EXPORT void SetStateData(const unsigned char* src, int size);
-EXPORT void DialecticInit();
-EXPORT void DialecticStart();
+EXPORT StudError GetStateData(unsigned char* dst, int size);
+EXPORT StudError SetStateData(const unsigned char* src, int size);
+EXPORT StudError DialecticInit();
+EXPORT StudError DialecticStart();
 EXPORT StudError DialecticSwap();
 EXPORT void DialecticFree();
 EXPORT StudError RetokenizeChat(bool rebuildMemory);

@@ -148,7 +148,7 @@ StudError CreateSession(const int nCtx, const int nBatch, const unsigned int fla
 	_session.syntax.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
 	auto result = CreateContext(nCtx, nBatch, flashAttn, nThreads, nThreadsBatch);
 	if(result != StudError::Success) return result;
-	_session.nBatch = nBatch;
+	_session.batchSize = nBatch;
 	result = CreateSampler(minP, topP, topK, temp, repeatPenalty);
 	if(result != StudError::Success) return result;
 	return StudError::Success;
@@ -220,30 +220,56 @@ int GetStateSize(){
 	if(!_session.ctx) return 0;
 	return static_cast<int>(llama_state_get_size(_session.ctx));
 }
-void GetStateData(unsigned char* dst, int size){ if(_session.ctx) llama_state_get_data(_session.ctx, dst, size); }
-void SetStateData(const unsigned char* src, int size){ if(_session.ctx) llama_state_set_data(_session.ctx, src, size); }
-void DialecticInit(){
+StudError GetStateData(unsigned char* dst, int size){
+	if(!_session.ctx || !dst || size <= 0){
+		_lastErrorMessage = "Invalid Parameter";
+		return StudError::Generic;
+	}
+	const auto expected = static_cast<size_t>(size);
+	const auto copied = llama_state_get_data(_session.ctx, dst, expected);
+	if(copied != expected){
+		_lastErrorMessage = "llama_state_get_data copied " + std::to_string(copied) + " bytes, expected " + std::to_string(expected);
+		return StudError::Generic;
+	}
+	return StudError::Success;
+}
+StudError SetStateData(const unsigned char* src, int size){
+	if(!_session.ctx || !src || size <= 0){
+		_lastErrorMessage = "Invalid Parameter";
+		return StudError::Generic;
+	}
+	const auto expected = static_cast<size_t>(size);
+	const auto read = llama_state_set_data(_session.ctx, src, expected);
+	if(read != expected){
+		_lastErrorMessage = "llama_state_set_data read " + std::to_string(read) + " bytes, expected " + std::to_string(expected);
+		return StudError::Generic;
+	}
+	return StudError::Success;
+}
+StudError DialecticInit(){
 	const int size = GetStateSize();
-	if(size <= 0) return;
+	if(size <= 0){
+		_lastErrorMessage = "llama_state_get_size returned invalid size:" + std::to_string(size);
+		return StudError::Generic;
+	}
 	_session.dialState[0].assign(size, 0);
 	_session.dialState[1].assign(size, 0);
-	GetStateData(_session.dialState[0].data(), size);
-	GetStateData(_session.dialState[1].data(), size);
+	const auto err = GetStateData(_session.dialState[0].data(), size);
+	if(err != StudError::Success){
+		return err;
+	}
+	memcpy(_session.dialState[1].data(), _session.dialState[0].data(), size);
 	_session.dId = 0;
+	return StudError::Success;
 }
-void DialecticStart(){
-	if(_session.dialState[0].empty()) return;
+StudError DialecticStart(){
+	if(_session.dialState[0].empty()){
+		_lastErrorMessage = "Dialectic states not initialised";
+		return StudError::Generic;
+	}
 	const int size = static_cast<int>(_session.dialState[0].size());
 	SetStateData(_session.dialState[_session.dId].data(), size);
-}
-StudError DialecticSwap(){
-	if(_session.dialState[0].empty()) return StudError::Success;
-	AlignChatStates();
-	const int size = static_cast<int>(_session.dialState[0].size());
-	GetStateData(_session.dialState[_session.dId].data(), size);
-	_session.dId = 1 - _session.dId;
-	SetStateData(_session.dialState[_session.dId].data(), size);
-	return RetokenizeChat(true);
+	return StudError::Success;
 }
 void DialecticFree(){
 	_session.dialState[0].clear();
@@ -317,18 +343,18 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	llama_sampler_reset(_session.smpl[_session.dId]);
 	for(size_t i = 0; i < prefix; ++i){ llama_sampler_accept(_session.smpl[_session.dId], promptTokens[i]); }
 	const size_t decodeEnd = newSize - suffix;
-	const int batchSize = std::min(_session.nBatch, static_cast<int>(decodeEnd - prefix));
+	const int batchSize = std::min(_session.batchSize, static_cast<int>(decodeEnd - prefix));
 	if(batchSize > 0){
-		for(size_t i = prefix; i < decodeEnd; i += _session.nBatch){
-			const int nEval = std::min<int>(_session.nBatch, decodeEnd - i);
-			auto batch = llama_batch_get_one(&promptTokens[i], nEval);
+		for(size_t i = prefix; i < decodeEnd; i += _session.batchSize){
+			const int nTokens = std::min<int>(_session.batchSize, decodeEnd - i);
+			auto batch = llama_batch_get_one(&promptTokens[i], nTokens);
 			if(llama_decode(_session.ctx, batch) != 0){
 				if(_session.llMem) llama_memory_clear(_session.llMem, true);
 				_session.cachedTokens[_session.dId].clear();
 				if(_session.smpl[_session.dId]) llama_sampler_reset(_session.smpl[_session.dId]);
 				return StudError::LlamaDecodeError;
 			}
-			for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl[_session.dId], promptTokens[i + j]); }
+			for(int j = 0; j < nTokens; ++j){ llama_sampler_accept(_session.smpl[_session.dId], promptTokens[i + j]); }
 		}
 	}
 	for(size_t i = decodeEnd; i < newSize; ++i){ llama_sampler_accept(_session.smpl[_session.dId], promptTokens[i]); }
@@ -353,6 +379,15 @@ static void AlignChatStates(){
 		} else if(msg.role._Equal("user")){ msg.role = "assistant"; }
 		shorter->push_back(std::move(msg));
 	}
+}
+StudError DialecticSwap(){
+	if(_session.dialState[0].empty()) return StudError::Success;
+	AlignChatStates();
+	const int size = static_cast<int>(_session.dialState[_session.dId].size());
+	GetStateData(_session.dialState[_session.dId].data(), size);
+	_session.dId = 1 - _session.dId;
+	SetStateData(_session.dialState[_session.dId].data(), size);
+	return RetokenizeChat(true);
 }
 StudError ResetChat(){
 	_session.chatMsgs[0].clear();
@@ -603,7 +638,7 @@ static StudError DecodePromptMessages(const std::vector<common_chat_msg>& messag
 		_session.chatMsgs[_session.dId].push_back(message);
 		size_t p = 0;
 		while(p < promptTokens.size() && !_stop.load()){
-			const int nEval = std::min<int>(_session.nBatch, promptTokens.size() - p);
+			const int nEval = std::min<int>(_session.batchSize, promptTokens.size() - p);
 			const llama_batch batch = llama_batch_get_one(&promptTokens[p], nEval);
 			const int nCtx = llama_n_ctx(_session.ctx);
 			const int nCtxUsed = LlamaMemSize();
@@ -665,7 +700,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	_session.chatMsgs[_session.dId].push_back(msg);
 	if(cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(), ftTime, 0);
 	outMsg = std::move(msg);
-	OutputDebugStringA(("\n---\n" + std::string(GetContextAsText()) + "\n---\n").c_str());
+	OutputDebugStringA(("\n!!! CONTEXT START !!!\n" + std::string(GetContextAsText()) + "\n!!! CONTEXT END !!!\n").c_str());
 	return StudError::Success;
 }
 StudError GenerateWithTools(const MessageRole role, const char* prompt, const int nPredict, const bool callback){
@@ -731,7 +766,7 @@ extern "C" EXPORT void* CaptureChatState(){
 	snapshot->toolsPrompt = _session.toolsPrompt;
 	snapshot->syntax = _session.syntax;
 	snapshot->useJinja = _session.useJinja;
-	snapshot->nBatch = _session.nBatch;
+	snapshot->nBatch = _session.batchSize;
 	return snapshot;
 }
 extern "C" EXPORT void RestoreChatState(void* state){
@@ -748,6 +783,6 @@ extern "C" EXPORT void RestoreChatState(void* state){
 	_session.toolsPrompt = snapshot->toolsPrompt;
 	_session.syntax = snapshot->syntax;
 	_session.useJinja = snapshot->useJinja;
-	_session.nBatch = snapshot->nBatch;
+	_session.batchSize = snapshot->nBatch;
 }
 extern "C" EXPORT void FreeChatState(void* state){ delete static_cast<ChatStateSnapshot*>(state); }

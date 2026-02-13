@@ -209,7 +209,11 @@ namespace LMStud{
 					checkDialectic.Checked = false;
 					return;
 				}
-				NativeMethods.DialecticInit();
+				var err = NativeMethods.DialecticInit();
+				if(err != NativeMethods.StudError.Success){
+					ShowError(Resources.Dialectic_enable, err);
+					return;
+				}
 				DialecticStarted = false;
 				DialecticPaused = false;
 			} else{
@@ -280,7 +284,7 @@ namespace LMStud{
 							ChatMessages[id].Dispose();
 							ChatMessages.RemoveAt(id);
 						}
-						if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_session, result);
+						if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_deleting_message, result);
 						EndRetokenization();
 					}));
 				} finally{ GenerationLock.Release(); }
@@ -305,7 +309,7 @@ namespace LMStud{
 								ChatMessages[i].Dispose();
 								ChatMessages.RemoveAt(i);
 							}
-						if(result != NativeMethods.StudError.Success) ShowErrorMessage(Resources.Error_creating_session, result);
+						if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_regenerating_message, result);
 						else regenerate = true;
 						EndRetokenization();
 					}));
@@ -538,12 +542,11 @@ namespace LMStud{
 			foreach(var msg in ChatMessages.Where(msg => msg.Editing)) MsgButEditCancelOnClick(msg);
 			butGen.Text = Resources.Stop;
 			butReset.Enabled = butApply.Enabled = false;
+			foreach(var message in ChatMessages) message.Generating = true;
 			var newMsg = prompt.Trim();
 			if(addToChat) AddMessage(role, "", newMsg);
-			var seedMsg = checkDialectic.Checked && ChatMessages.Count == 1;
 			_cntAssMsg = null;
 			_cntToolMsg = null;
-			foreach(var message in ChatMessages) message.Generating = true;
 			CancelPendingSpeech();
 			FirstToken = true;
 			if(role == MessageRole.User){
@@ -592,9 +595,14 @@ namespace LMStud{
 						if(checkDialectic.Checked && !DialecticPaused){
 							var last = ChatMessages.LastOrDefault();
 							if(last != null){
-								NativeMethods.DialecticSwap();
-								if(seedMsg) NativeMethods.AddMessage(MessageRole.Assistant, prompt);
-								followupPrompt = last.Message;
+								var dialecticError = NativeMethods.DialecticSwap();
+								if(dialecticError == NativeMethods.StudError.Success) followupPrompt = last.Message;
+								else{
+									if(dialecticError == NativeMethods.StudError.ContextFull)
+										MessageBox.Show(this, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+									else MessageBox.Show(this, dialecticError.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+									return;
+								}
 							}
 						}
 						if(string.IsNullOrWhiteSpace(followupPrompt)) return;
@@ -708,7 +716,7 @@ namespace LMStud{
 					tokenCount = NativeMethods.LlamaMemSize();
 					return true;
 				} finally{
-					try{ SetState(originalState); } catch{}
+					SetState(originalState);
 					if(chatSnapshot != IntPtr.Zero) try{ NativeMethods.RestoreChatState(chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
 					_apiTokenCallback = null;
 					APIServerGenerating = false;
@@ -722,17 +730,25 @@ namespace LMStud{
 		internal byte[] GetState(){
 			var size = NativeMethods.GetStateSize();
 			var data = new byte[size];
+			NativeMethods.StudError err;
 			unsafe{
-				fixed(byte* p = data){ NativeMethods.GetStateData((IntPtr)p, size); }
+				fixed(byte* p = data){
+					err = NativeMethods.GetStateData((IntPtr)p, size);
+				}
 			}
+			if(err != NativeMethods.StudError.Success) ShowError(Resources.API_server, "GetStateData", true);
 			return data;
 		}
 		internal void SetState(byte[] state){
-			NativeMethods.ResetChat();
-			if(state == null || state.Length == 0) return;
-			unsafe{
-				fixed(byte* p = state){ NativeMethods.SetStateData((IntPtr)p, state.Length); }
+			if(state == null || state.Length == 0){
+				ShowError("Api server", "SetState", false);
+				return;
 			}
+			NativeMethods.StudError err;
+			unsafe{
+				fixed(byte* p = state){ err = NativeMethods.SetStateData((IntPtr)p, state.Length); }
+			}
+			if(err != NativeMethods.StudError.Success) ShowError(Resources.API_server, "SetStateData", true);
 		}
 		private static unsafe void TokenCallback(byte* thinkPtr, int thinkLen, byte* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool){
 			if(This.APIServerGenerating){
