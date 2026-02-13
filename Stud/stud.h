@@ -31,6 +31,7 @@ namespace Stud{
 		std::string toolsPrompt;
 		common_chat_syntax syntax;
 		bool useJinja = true;
+		bool assNextGen = false;
 		int batchSize = 1;
 	};
 	struct ToolCtx{

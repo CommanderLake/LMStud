@@ -46,6 +46,7 @@ struct ChatStateSnapshot{
 	std::string toolsPrompt;
 	common_chat_syntax syntax{};
 	bool useJinja = true;
+	bool forceAddAssistantNextGeneration = false;
 	int nBatch = 1;
 };
 extern "C" EXPORT const char* GetLastErrorMessage(){ return _lastErrorMessage.c_str(); }
@@ -361,23 +362,54 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	_session.cachedTokens[_session.dId] = std::move(promptTokens);
 	return StudError::Success;
 }
+static StudError DecodeSinglePromptMessage(const common_chat_msg& message, const int dId, const bool addAss, const bool appendToChat = true){
+	const auto formatted = common_chat_format_single(_chatTemplates.get(), _session.chatMsgs[dId], message, addAss, _session.useJinja && message.role._Equal("assistant"));
+	const int nPromptTokens = -llama_tokenize(_session._vocab, formatted.c_str(), formatted.size(), nullptr, 0, true, true);
+	std::vector<llama_token> promptTokens(nPromptTokens);
+	if(llama_tokenize(_session._vocab, formatted.c_str(), formatted.size(), promptTokens.data(), promptTokens.size(), true, true) < 0){ return StudError::CantTokenizePrompt; }
+	if(appendToChat) _session.chatMsgs[dId].push_back(message);
+	size_t p = 0;
+	while(p < promptTokens.size() && !_stop.load()){
+		const int nEval = std::min<int>(_session.batchSize, promptTokens.size() - p);
+		const llama_batch batch = llama_batch_get_one(&promptTokens[p], nEval);
+		const int nCtx = llama_n_ctx(_session.ctx);
+		const int nCtxUsed = static_cast<int>(_session.cachedTokens[dId].size());
+		if(nCtxUsed + batch.n_tokens > nCtx){
+			if(appendToChat) _session.chatMsgs[dId].pop_back();
+			return StudError::ConvTooLong;
+		}
+		const auto result = llama_decode(_session.ctx, batch);
+		if(result != 0){
+			if(appendToChat) _session.chatMsgs[dId].pop_back();
+			if(result == 1) return StudError::ConvTooLong;
+			return StudError::LlamaDecodeError;
+		}
+		for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl[dId], promptTokens[p + j]); }
+		_session.cachedTokens[dId].insert(_session.cachedTokens[dId].end(), promptTokens.begin() + p, promptTokens.begin() + p + nEval);
+		p += nEval;
+	}
+	return StudError::Success;
+}
 static void AlignChatStates(){
 	auto& a = _session.chatMsgs[0];
 	auto& b = _session.chatMsgs[1];
 	if(a.size() == b.size()) return;
-	const auto* longer = &a;
-	auto* shorter = &b;
-	if(a.size() < b.size()){
-		longer = &b;
-		shorter = &a;
-	}
-	for(auto i = shorter->size(); i < longer->size(); ++i){
-		auto msg = (*longer)[i];
+	const int longerId = a.size() >= b.size() ? 0 : 1;
+	const int shorterId = 1 - longerId;
+	auto& longer = _session.chatMsgs[longerId];
+	auto& shorter = _session.chatMsgs[shorterId];
+	for(size_t i = shorter.size(); i < longer.size(); ++i){
+		auto msg = longer[i];
 		if(msg.role._Equal("assistant")){
 			msg.role = "user";
 			msg.reasoning_content.clear();
 		} else if(msg.role._Equal("user")){ msg.role = "assistant"; }
-		shorter->push_back(std::move(msg));
+		const bool mirroredRoleIsAssistant = msg.role._Equal("assistant");
+		shorter.push_back(msg);
+		if(_session.ctx && _session.smpl[shorterId] && _session._vocab && !_session.dialState[shorterId].empty() && _session.dId == shorterId){
+			const auto err = DecodeSinglePromptMessage(shorter.back(), shorterId, mirroredRoleIsAssistant, false);
+			if(err == StudError::Success) _session.assNextGen = mirroredRoleIsAssistant;
+		}
 	}
 }
 StudError DialecticSwap(){
@@ -387,13 +419,14 @@ StudError DialecticSwap(){
 	GetStateData(_session.dialState[_session.dId].data(), size);
 	_session.dId = 1 - _session.dId;
 	SetStateData(_session.dialState[_session.dId].data(), size);
-	return RetokenizeChat(true);//TODO: manually add new message to other context with add_ass
+	return StudError::Success;
 }
 StudError ResetChat(){
 	_session.chatMsgs[0].clear();
 	_session.chatMsgs[1].clear();
 	_session.cachedTokens[0].clear();
 	_session.cachedTokens[1].clear();
+	_session.assNextGen = false;
 	if(!_session.ctx || !_session.smpl[_session.dId] || !_session._vocab){
 		DialecticFree();
 		return StudError::Success;
@@ -512,6 +545,7 @@ StudError SyncChatMessages(const int* roles, const char** thinks, const char** m
 	}
 	_session.chatMsgs[_session.dId] = std::move(msgs);
 	_session.chatMsgs[_session.dId == 0 ? 1 : 0].clear();
+	_session.assNextGen = false;
 	AlignChatStates();
 	_session.cachedTokens[0].clear();
 	_session.cachedTokens[1].clear();
@@ -631,37 +665,13 @@ static StudError RollbackGenerate(const size_t chatStart, const size_t newMessag
 }
 static StudError DecodePromptMessages(const std::vector<common_chat_msg>& messages, common_chat_msg& outMsg){
 	for(const auto& message : messages){
-		const auto formatted = common_chat_format_single(_chatTemplates.get(), _session.chatMsgs[_session.dId], message, !message.role._Equal("assistant"), _session.useJinja && message.role._Equal("assistant"));
-		const int nPromptTokens = -llama_tokenize(_session._vocab, formatted.c_str(), formatted.size(), nullptr, 0, true, true);
-		std::vector<llama_token> promptTokens(nPromptTokens);
-		if(llama_tokenize(_session._vocab, formatted.c_str(), formatted.size(), promptTokens.data(), promptTokens.size(), true, true) < 0){
+		const bool addAss = _session.assNextGen || !message.role._Equal("assistant");
+		_session.assNextGen = false;
+		const auto err = DecodeSinglePromptMessage(message, _session.dId, addAss);
+		if(err != StudError::Success){
+			const auto rtErr = RetokenizeChat(true);
 			outMsg = common_chat_msg();
-			return StudError::CantTokenizePrompt;
-		}
-		_session.chatMsgs[_session.dId].push_back(message);
-		size_t p = 0;
-		while(p < promptTokens.size() && !_stop.load()){
-			const int nEval = std::min<int>(_session.batchSize, promptTokens.size() - p);
-			const llama_batch batch = llama_batch_get_one(&promptTokens[p], nEval);
-			const int nCtx = llama_n_ctx(_session.ctx);
-			const int nCtxUsed = LlamaMemSize();
-			if(nCtxUsed + batch.n_tokens > nCtx){
-				_session.chatMsgs[_session.dId].pop_back();
-				const auto rtErr = RetokenizeChat(true);
-				outMsg = common_chat_msg();
-				return rtErr != StudError::Success ? rtErr : StudError::ConvTooLong;
-			}
-			const auto result = llama_decode(_session.ctx, batch);
-			if(result != 0){
-				_session.chatMsgs[_session.dId].pop_back();
-				const auto rtErr = RetokenizeChat(true);
-				outMsg = common_chat_msg();
-				if(result == 1) return rtErr != StudError::Success ? rtErr : StudError::ConvTooLong;
-				return rtErr != StudError::Success ? rtErr : StudError::LlamaDecodeError;
-			}
-			for(int j = 0; j < nEval; ++j){ llama_sampler_accept(_session.smpl[_session.dId], promptTokens[p + j]); }
-			_session.cachedTokens[_session.dId].insert(_session.cachedTokens[_session.dId].end(), promptTokens.begin() + p, promptTokens.begin() + p + nEval);
-			p += nEval;
+			return rtErr != StudError::Success ? rtErr : err;
 		}
 	}
 	return StudError::Success;
@@ -769,6 +779,7 @@ extern "C" EXPORT void* CaptureChatState(){
 	snapshot->toolsPrompt = _session.toolsPrompt;
 	snapshot->syntax = _session.syntax;
 	snapshot->useJinja = _session.useJinja;
+	snapshot->forceAddAssistantNextGeneration = _session.assNextGen;
 	snapshot->nBatch = _session.batchSize;
 	return snapshot;
 }
@@ -786,6 +797,7 @@ extern "C" EXPORT void RestoreChatState(void* state){
 	_session.toolsPrompt = snapshot->toolsPrompt;
 	_session.syntax = snapshot->syntax;
 	_session.useJinja = snapshot->useJinja;
+	_session.assNextGen = snapshot->forceAddAssistantNextGeneration;
 	_session.batchSize = snapshot->nBatch;
 }
 extern "C" EXPORT void FreeChatState(void* state){ delete static_cast<ChatStateSnapshot*>(state); }
