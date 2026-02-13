@@ -837,6 +837,9 @@ namespace LMStud{
 			This.BeginInvoke((MethodInvoker)(() => {
 				if(thisform.IsDisposed || This.IsEditing) return;
 				if(This.checkVoiceInput.CheckState != CheckState.Checked) return;
+				var prompt = This.textInput.Text;
+				if(string.IsNullOrWhiteSpace(prompt)) return;
+				if(!This._apiClientEnable && !This.LlModelLoaded) return;
 				NativeMethods.StopSpeechTranscription();
 				This.Generate();
 			}));

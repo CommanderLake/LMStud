@@ -371,7 +371,7 @@ static void AlignChatStates(){
 		longer = &b;
 		shorter = &a;
 	}
-	for(size_t i = shorter->size(); i < longer->size(); ++i){
+	for(auto i = shorter->size(); i < longer->size(); ++i){
 		auto msg = (*longer)[i];
 		if(msg.role._Equal("assistant")){
 			msg.role = "user";
@@ -387,7 +387,7 @@ StudError DialecticSwap(){
 	GetStateData(_session.dialState[_session.dId].data(), size);
 	_session.dId = 1 - _session.dId;
 	SetStateData(_session.dialState[_session.dId].data(), size);
-	return RetokenizeChat(true);
+	return RetokenizeChat(true);//TODO: manually add new message to other context with add_ass
 }
 StudError ResetChat(){
 	_session.chatMsgs[0].clear();

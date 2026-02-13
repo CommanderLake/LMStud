@@ -226,7 +226,6 @@ bool StartSpeechTranscription(){
 					std::lock_guard<std::mutex> lock(_committedMutex);
 					if(!_committed.empty()){
 						if(_speechEndCallback) _speechEndCallback();
-						_committed.clear();
 					}
 				}
 				continue;
