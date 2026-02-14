@@ -14,13 +14,13 @@ namespace LMStud{
 		internal readonly SessionManager Sessions = new SessionManager();
 		private CancellationTokenSource _cts;
 		private HttpListener _listener;
-		public int Port = 11434;
-		public ApiServer(Form1 form){_form = form;}
-		public bool IsRunning => _listener != null && _listener.IsListening;
+		internal int Port = 11434;
+		internal ApiServer(Form1 form){_form = form;}
+		internal bool IsRunning => _listener != null && _listener.IsListening;
 		private ApiClient CreateApiClient(){
 			return new ApiClient(Settings.Default.ApiClientBaseUrl, Settings.Default.ApiClientKey, Settings.Default.ApiClientModel, _form.APIClientStore, Settings.Default.SystemPrompt);
 		}
-		public void Start(){
+		internal void Start(){
 			if(IsRunning) return;
 			_cts = new CancellationTokenSource();
 			_listener = new HttpListener();
@@ -28,7 +28,7 @@ namespace LMStud{
 			_listener.Start();
 			ThreadPool.QueueUserWorkItem(o => {ListenLoop(_cts.Token);});
 		}
-		public void Stop(){
+		internal void Stop(){
 			if(!IsRunning) return;
 			_cts.Cancel();
 			try{ _listener.Stop(); } catch{}
@@ -52,42 +52,12 @@ namespace LMStud{
 					context.Response.StatusCode = 409;
 					return;
 				}
-				if(method == "GET" && path == "/v1/models") HandleModels(context, useRemoteApi);
-				else if(method == "GET" && path == "/v1/model") HandleModel(context, useRemoteApi);
-				else if(method == "POST" && path == "/v1/responses") HandleChat(context);
+				if(method == "POST" && path == "/v1/responses") HandleChat(context);
 				else if(method == "POST" && path == "/v1/reset") HandleReset(context);
 				else context.Response.StatusCode = 404;
 			} catch{ context.Response.StatusCode = 500; } finally{
 				try{ context.Response.OutputStream.Close(); } catch{}
 			}
-		}
-		private void HandleModels(HttpListenerContext ctx, bool useRemoteApi){
-			List<string> models;
-			if(useRemoteApi)
-				try{
-					var client = CreateApiClient();
-					models = client.ListModels(CancellationToken.None);
-				} catch(Exception ex){
-					ctx.Response.StatusCode = 502;
-					var err = JsonConvert.SerializeObject(new{ error = new{ message = ex.Message } });
-					var buf = Encoding.UTF8.GetBytes(err);
-					ctx.Response.OutputStream.Write(buf, 0, buf.Length);
-					return;
-				}
-			else models = _form.GetModelNames().ToList();
-			var obj = new{ data = models.Select(m => new{ id = m }).ToArray() };
-			var json = JsonConvert.SerializeObject(obj);
-			var bytes = Encoding.UTF8.GetBytes(json);
-			ctx.Response.ContentType = "application/json";
-			ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
-		}
-		private void HandleModel(HttpListenerContext ctx, bool useRemoteApi){
-			var model = useRemoteApi ? Settings.Default.ApiClientModel : Path.GetFileNameWithoutExtension(Settings.Default.LastModel);
-			var obj = new{ model };
-			var json = JsonConvert.SerializeObject(obj);
-			var bytes = Encoding.UTF8.GetBytes(json);
-			ctx.Response.ContentType = "application/json";
-			ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
 		}
 		private void HandleReset(HttpListenerContext ctx){
 			if(!_form.GenerationLock.Wait(0)){
@@ -103,10 +73,18 @@ namespace LMStud{
 						ctx.Response.StatusCode = 400;
 						return;
 					}
-				NativeMethods.ResetChat();
-				NativeMethods.CloseCommandPrompt();
-				if(request?.SessionId != null) Sessions.Remove(request.SessionId);
-				var resp = new{ status = "reset" };
+				var resetScope = request?.ResetScope;
+				var hasSession = !string.IsNullOrWhiteSpace(request?.SessionId);
+				if(string.IsNullOrWhiteSpace(resetScope)) resetScope = hasSession ? "session" : "global";
+				if(string.Equals(resetScope, "session", StringComparison.OrdinalIgnoreCase)){
+					if(hasSession) Sessions.Remove(request.SessionId);
+				}
+				else{
+					Sessions.Clear();
+					NativeMethods.ResetChat();
+					NativeMethods.CloseCommandPrompt();
+				}
+				var resp = new{ status = "reset", scope = resetScope.ToLowerInvariant() };
 				var json = JsonConvert.SerializeObject(resp);
 				var bytes = Encoding.UTF8.GetBytes(json);
 				ctx.Response.ContentType = "application/json";
@@ -155,9 +133,12 @@ namespace LMStud{
 					return;
 				}
 				var assistant = sb.ToString();
-				session.Messages.Add(new Message{ Role = "user", Content = prompt });
-				session.Messages.Add(new Message{ Role = "assistant", Content = assistant });
-				Sessions.Update(session, session.Messages, newState, tokens);
+				Sessions.Apply(session, s => {
+					s.Messages.Add(new Message{ Role = "user", Content = prompt });
+					s.Messages.Add(new Message{ Role = "assistant", Content = assistant });
+					s.State = newState;
+					s.TokenCount = tokens;
+				});
 				var resp = BuildResponsePayload(assistant, Path.GetFileNameWithoutExtension(Settings.Default.LastModel), session.Id);
 				var json = JsonConvert.SerializeObject(resp);
 				var bytes = Encoding.UTF8.GetBytes(json);
@@ -171,20 +152,14 @@ namespace LMStud{
 			ctx.Response.AddHeader("X-Session-Id", session.Id);
 			ctx.Response.ContentType = "application/json";
 			try{
-				var history = inputItems;
-				if(history == null || history.Count == 0){
-					var messages = new List<ApiClient.ChatMessage>();
-					foreach(var incoming in incomingMessages ?? Enumerable.Empty<Message>()){
-						if(string.IsNullOrWhiteSpace(incoming?.Role)) continue;
-						if(string.IsNullOrWhiteSpace(incoming.Content)) continue;
-						messages.Add(new ApiClient.ChatMessage(incoming.Role, incoming.Content));
-					}
-					if(messages.Count == 0){
-						ctx.Response.StatusCode = 400;
-						return;
-					}
-					history = ApiClient.BuildInputItems(messages);
+				var incomingDelta = BuildIncomingDelta(incomingMessages, inputItems);
+				if(incomingDelta == null || incomingDelta.Count == 0){
+					ctx.Response.StatusCode = 400;
+					return;
 				}
+				var persisted = BuildPersistedHistory(session.Messages);
+				foreach(var item in incomingDelta) persisted.Add(item);
+				var history = persisted;
 				var toolsJson = request.Tools != null ? request.Tools.ToString(Formatting.None) : _form.BuildApiToolsJson();
 				var client = CreateApiClient();
 				var result = client.CreateChatCompletion(history, (float)Settings.Default.Temp, (int)Settings.Default.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
@@ -208,14 +183,18 @@ namespace LMStud{
 					rounds++;
 				}
 				var assistant = result.Content;
-				if(incomingMessages != null && incomingMessages.Count > 0){
-					var last = incomingMessages.Last();
-					session.Messages.Add(new Message{ Role = last.Role, Content = last.Content });
-				}
-				if(toolOutputs != null)
-					foreach(var toolResult in toolOutputs) session.Messages.Add(new Message{ Role = "tool", Content = toolResult });
-				session.Messages.Add(new Message{ Role = "assistant", Content = assistant });
-				Sessions.Update(session, session.Messages, null, 0);
+				Sessions.Apply(session, s => {
+					foreach(var deltaMessage in incomingDelta){
+						var parsed = ParseInputItemToMessage(deltaMessage);
+						if(parsed != null) s.Messages.Add(parsed);
+					}
+					if(toolOutputs != null)
+						foreach(var toolResult in toolOutputs)
+							s.Messages.Add(new Message{ Role = "tool", Content = toolResult });
+					s.Messages.Add(new Message{ Role = "assistant", Content = assistant });
+					s.State = null;
+					s.TokenCount = 0;
+				});
 				var resp = BuildResponsePayload(assistant, Settings.Default.ApiClientModel, session.Id);
 				var json = JsonConvert.SerializeObject(resp);
 				var bytes = Encoding.UTF8.GetBytes(json);
@@ -253,6 +232,34 @@ namespace LMStud{
 				messages.Add(new ApiClient.ChatMessage(message.Role, message.Content ?? ""));
 			}
 			return messages.Count > 0 ? ApiClient.BuildInputItems(messages) : null;
+		}
+		private static JArray BuildPersistedHistory(List<Message> messages){
+			var history = new JArray();
+			if(messages == null) return history;
+			foreach(var message in messages){
+				if(string.IsNullOrWhiteSpace(message?.Role)) continue;
+				if(string.IsNullOrWhiteSpace(message.Content)) continue;
+				history.Add(new JObject{ ["role"] = message.Role, ["content"] = message.Content });
+			}
+			return history;
+		}
+		private static JArray BuildIncomingDelta(List<Message> incomingMessages, JArray inputItems){
+			if(incomingMessages != null && incomingMessages.Count > 0){
+				var last = incomingMessages.LastOrDefault(m => !string.IsNullOrWhiteSpace(m?.Role) && !string.IsNullOrWhiteSpace(m.Content));
+				if(last == null) return null;
+				return new JArray(new JObject{ ["role"] = last.Role, ["content"] = last.Content });
+			}
+			if(inputItems == null || inputItems.Count == 0) return null;
+			var lastItem = inputItems.LastOrDefault();
+			if(lastItem == null) return null;
+			return new JArray(lastItem.DeepClone());
+		}
+		private static Message ParseInputItemToMessage(JToken item){
+			if(!(item is JObject obj)) return null;
+			var role = obj.Value<string>("role") ?? "user";
+			var content = ExtractContentText(obj["content"]) ?? obj.Value<string>("text");
+			if(string.IsNullOrWhiteSpace(content)) return null;
+			return new Message{ Role = role, Content = content };
 		}
 		private static JArray NormalizeInputItems(JToken input){
 			if(input == null || input.Type == JTokenType.Null) return null;
@@ -342,6 +349,7 @@ namespace LMStud{
 			[JsonProperty("store")] public bool? Store;
 			[JsonProperty("tool_choice")] public JToken ToolChoice;
 			[JsonProperty("tools")] public JArray Tools;
+			[JsonProperty("scope")] public string ResetScope;
 		}
 		public class Message{
 			public string Content;

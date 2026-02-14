@@ -6,10 +6,6 @@ rem ---- Make a unique, safe filename like response_20251003_091423_217.json
 for /f %%I in ('powershell -NoProfile -Command "[DateTime]::UtcNow.ToString(\"yyyyMMdd_HHmmss_fff\")"') do set "STAMP=%%I"
 set "RESP=response_!STAMP!.json"
 
-echo ==== Get available models ====
-curl -s %BASE%/v1/model
-echo.
-
 echo ==== First chat message (no session) ====
 curl -s -X POST %BASE%/v1/responses ^
   -H "Content-Type: application/json" ^

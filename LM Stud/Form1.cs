@@ -720,7 +720,11 @@ namespace LMStud{
 				var originalState = GetState();
 				var chatSnapshot = NativeMethods.CaptureChatState();
 				try{
-					SetState(state);
+					if(state != null && state.Length > 0) SetState(state);
+					else{
+						var resetResult = NativeMethods.ResetChat();
+						if(resetResult != NativeMethods.StudError.Success) return false;
+					}
 					NativeMethods.GenerateWithTools(MessageRole.User, prompt, _nGen, false);
 					newState = GetState();
 					tokenCount = NativeMethods.LlamaMemSize();

@@ -173,9 +173,31 @@ namespace LM_Stud.Tests{
 				var json = await response.Content.ReadAsStringAsync();
 				dynamic result = JsonConvert.DeserializeObject(json);
 				Assert.AreEqual("reset", (string)result.status, "Reset response should confirm reset state.");
+				Assert.AreEqual("session", (string)result.scope, "Reset with a session id should default to session scope.");
 			}
 			var replacement = _apiServer.Sessions.Get(sessionId);
 			Assert.AreNotSame(existing, replacement, "Reset should remove the stored session.");
+		}
+		[TestMethod]
+		public async Task HandleReset_GlobalScope_ClearsAllSessions(){
+			_apiServer.Start();
+			await WaitForServerAsync();
+			var s1 = _apiServer.Sessions.Get("global-reset-1");
+			_apiServer.Sessions.Update(s1, new List<ApiServer.Message>{ new ApiServer.Message{ Role = "user", Content = "a" } }, null, 0);
+			var s2 = _apiServer.Sessions.Get("global-reset-2");
+			_apiServer.Sessions.Update(s2, new List<ApiServer.Message>{ new ApiServer.Message{ Role = "user", Content = "b" } }, null, 0);
+			using(var client = new HttpClient()){
+				var resetPayload = new{ scope = "global" };
+				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/reset", new StringContent(JsonConvert.SerializeObject(resetPayload), Encoding.UTF8, "application/json"));
+				Assert.AreEqual(HttpStatusCode.OK, response.StatusCode, "Global reset should return success.");
+				var json = await response.Content.ReadAsStringAsync();
+				dynamic result = JsonConvert.DeserializeObject(json);
+				Assert.AreEqual("global", (string)result.scope, "Response should confirm global reset scope.");
+			}
+			var replacement1 = _apiServer.Sessions.Get("global-reset-1");
+			var replacement2 = _apiServer.Sessions.Get("global-reset-2");
+			Assert.AreEqual(0, replacement1.Messages.Count, "Global reset should clear existing sessions.");
+			Assert.AreEqual(0, replacement2.Messages.Count, "Global reset should clear existing sessions.");
 		}
 		[TestMethod]
 		public async Task InvalidEndpoint_Returns404(){

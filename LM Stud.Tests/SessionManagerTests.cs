@@ -53,6 +53,14 @@ namespace LM_Stud.Tests{
 			Assert.AreEqual(tokenCount, session.TokenCount, "Token count should be updated.");
 		}
 		[TestMethod]
+		public void Update_ClonesStateArray(){
+			var session = _sessionManager.Get("state-copy");
+			var state = new byte[]{ 1, 2, 3 };
+			_sessionManager.Update(session, new List<ApiServer.Message>(), state, 0);
+			state[0] = 9;
+			Assert.AreEqual(1, session.State[0], "Session state should be isolated from caller mutations.");
+		}
+		[TestMethod]
 		public void Remove_WithExistingId_RemovesSession(){
 			var sessionId = "test-session-1";
 			var session1 = _sessionManager.Get(sessionId);

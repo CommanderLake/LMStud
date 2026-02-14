@@ -318,6 +318,5 @@ namespace LMStud{
 				listViewMeta.Items.Add(lvi);
 			}
 		}
-		internal IEnumerable<string> GetModelNames(){return from ListViewItem m in listViewModels.Items select m.Text;}
 	}
 }

@@ -11,7 +11,6 @@ namespace LMStud{
 			_maxSessions = maxSessions;
 			_maxTokens = maxTokens;
 		}
-		private int TotalTokens => _sessions.Values.Sum(s => s.TokenCount);
 		public Session Get(string id){
 			lock(_sync){
 				if(!string.IsNullOrEmpty(id) && _sessions.TryGetValue(id, out var sess)){
@@ -25,10 +24,19 @@ namespace LMStud{
 			}
 		}
 		public void Update(Session session, List<ApiServer.Message> messages, byte[] state, int tokenCount){
+			if(session == null) return;
 			lock(_sync){
-				session.Messages = messages;
-				session.State = state;
+				session.Messages = CloneMessages(messages);
+				session.State = CloneState(state);
 				session.TokenCount = tokenCount;
+				session.LastUsed = DateTime.UtcNow;
+				Evict();
+			}
+		}
+		public void Apply(Session session, Action<Session> update){
+			if(session == null || update == null) return;
+			lock(_sync){
+				update(session);
 				session.LastUsed = DateTime.UtcNow;
 				Evict();
 			}
@@ -36,6 +44,24 @@ namespace LMStud{
 		public void Remove(string id){
 			if(string.IsNullOrEmpty(id)) return;
 			lock(_sync){ _sessions.Remove(id); }
+		}
+		public void Clear(){
+			lock(_sync){ _sessions.Clear(); }
+		}
+		private static List<ApiServer.Message> CloneMessages(IEnumerable<ApiServer.Message> messages){
+			var clone = new List<ApiServer.Message>();
+			if(messages == null) return clone;
+			foreach(var message in messages){
+				if(message == null) continue;
+				clone.Add(new ApiServer.Message{ Role = message.Role, Content = message.Content });
+			}
+			return clone;
+		}
+		private static byte[] CloneState(byte[] state){
+			if(state == null) return null;
+			var clone = new byte[state.Length];
+			Array.Copy(state, clone, state.Length);
+			return clone;
 		}
 		private void Evict(){
 			while(_sessions.Count > _maxSessions || _sessions.Values.Sum(s => s.TokenCount) > _maxTokens){
