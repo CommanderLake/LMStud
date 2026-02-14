@@ -115,7 +115,12 @@ namespace LMStud{
 			NativeMethods.BackendInit();
 			if(!Settings.Default.LoadAuto) return;
 			checkLoadAuto.Checked = true;
-			LoadModel(Settings.Default.LastModel, true);
+			ThreadPool.QueueUserWorkItem(o => {
+				while(_populating) Thread.Sleep(10);
+				var modelPath = ModelsDir + Settings.Default.LastModel;
+				var modelLvi = listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item => item.SubItems[1].Text == modelPath);
+				if(modelLvi != null) LoadModel(modelLvi, true);
+			});
 		}
 		private void InitializeListViews(){
 			_columnClickHandler = new LVColumnClickHandler();

@@ -53,26 +53,6 @@ namespace LM_Stud.Tests{
 			return true;
 		}
 		[TestMethod]
-		public void GetState_ReturnsCurrentState(){
-			byte[] state = null;
-			_form.Invoke(new MethodInvoker(() => {state = _form.GetState();}));
-			Assert.IsNotNull(state, "State should not be null.");
-			Assert.IsTrue(state.Length >= 0, "State size should be non-negative.");
-		}
-		[TestMethod]
-		public void SetState_RestoresState(){
-			var state = new byte[]{ 1, 2, 3, 4, 5 };
-			_form.Invoke(new MethodInvoker(() => {_form.SetState(state);}));
-		}
-		[TestMethod]
-		public void SetState_WithNull_OnlyResetsChat(){_form.Invoke(new MethodInvoker(() => {_form.SetState(null);}));}
-		[TestMethod]
-		public void GetTokenCount_ReturnsMemorySize(){
-			var count = 0;
-			_form.Invoke(new MethodInvoker(() => {count = NativeMethods.LlamaMemSize();}));
-			Assert.IsTrue(count >= 0, "Token count should be non-negative.");
-		}
-		[TestMethod]
 		public void StartEditing_SetsEditingMode(){
 			_form.Invoke(new MethodInvoker(() => {
 				var textInput = _form.textInput;

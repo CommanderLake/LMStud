@@ -139,7 +139,7 @@ namespace LMStud{
 					s.State = newState;
 					s.TokenCount = tokens;
 				});
-				var resp = BuildResponsePayload(assistant, Path.GetFileNameWithoutExtension(Settings.Default.LastModel), session.Id);
+				var resp = BuildResponsePayload(assistant, Path.GetFileNameWithoutExtension(_form.LoadedModel.SubItems[1].Text), session.Id);
 				var json = JsonConvert.SerializeObject(resp);
 				var bytes = Encoding.UTF8.GetBytes(json);
 				ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);

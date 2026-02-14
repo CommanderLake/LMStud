@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace LM_Stud.Tests{
 	[TestClass]
 	public class Form1InteractionTests{
+		private static Form1 _form;
 		[ClassInitialize]
 		public static void ClassInitialize(TestContext context){
 			var t = new Thread(Program.Main);
@@ -13,95 +14,92 @@ namespace LM_Stud.Tests{
 			t.IsBackground = true;
 			t.Start();
 			while(Program.MainForm == null) Thread.Sleep(10);
+			_form = Program.MainForm;
 		}
 		[ClassCleanup]
 		public static void ClassCleanup(){
-			Program.MainForm.Close();
-			Program.MainForm.Dispose();
+			_form.Invoke(new MethodInvoker(() => {
+				Program.MainForm.Close();
+				Program.MainForm.Dispose();
+			}));
 		}
 		[TestMethod]
 		public void Generate_WithWhitespaceInput_DoesNotAddMessage(){
-			var form = Program.MainForm;
-			form.LlModelLoaded = true;
-			form.Invoke(new MethodInvoker(() => {
-				form.textInput.Text = "   ";
-				form.ButGen_Click(null, null);
+			_form.LlModelLoaded = true;
+			_form.Invoke(new MethodInvoker(() => {
+				_form.textInput.Text = "   ";
+				_form.ButGen_Click(null, null);
 			}));
 			Thread.Sleep(100);
-			Assert.AreEqual(0, form.ChatMessages.Count, "Whitespace input should not enqueue a chat message.");
+			Assert.AreEqual(0, _form.ChatMessages.Count, "Whitespace input should not enqueue a chat message.");
 		}
 		[TestMethod]
 		public void Generate_WhenSemaphoreUnavailable_DoesNotProceed(){
-			var form = Program.MainForm;
-			form.LlModelLoaded = true;
-			form.GenerationLock.Wait();
-			form.Invoke(new MethodInvoker(() => {
-				form.textInput.Text = "Hello";
-				form.ButGen_Click(null, null);
+			_form.LlModelLoaded = true;
+			_form.GenerationLock.Wait();
+			_form.Invoke(new MethodInvoker(() => {
+				_form.textInput.Text = "Hello";
+				_form.ButGen_Click(null, null);
 			}));
-			form.GenerationLock.Release();
-			Assert.AreEqual(0, form.ChatMessages.Count, "Generation should not start when the semaphore cannot be acquired.");
-			Assert.IsFalse(form.Generating, "Generating flag must remain false when generation is skipped.");
+			_form.GenerationLock.Release();
+			Assert.AreEqual(0, _form.ChatMessages.Count, "Generation should not start when the semaphore cannot be acquired.");
+			Assert.IsFalse(_form.Generating, "Generating flag must remain false when generation is skipped.");
 		}
 		[TestMethod]
 		public void DialecticToggle_EnablesWhenModelLoaded(){
-			var form = Program.MainForm;
-			form.LlModelLoaded = true;
-			form.Invoke(new MethodInvoker(() => {
-				form.checkDialectic.Checked = true;
-				form.CheckDialectic_CheckedChanged(form.checkDialectic, EventArgs.Empty);
+			_form.LlModelLoaded = true;
+			_form.Invoke(new MethodInvoker(() => {
+				_form.checkDialectic.Checked = true;
+				_form.CheckDialectic_CheckedChanged(_form.checkDialectic, EventArgs.Empty);
 			}));
-			Assert.IsTrue(form.checkDialectic.Checked, "Checkbox should stay checked when enabling dialectic mode succeeds.");
-			Assert.IsFalse(form.DialecticStarted, "Dialectic should reset start flag when enabling.");
-			Assert.IsFalse(form.DialecticPaused, "Dialectic should reset pause flag when enabling.");
+			Assert.IsTrue(_form.checkDialectic.Checked, "Checkbox should stay checked when enabling dialectic mode succeeds.");
+			Assert.IsFalse(_form.DialecticStarted, "Dialectic should reset start flag when enabling.");
+			Assert.IsFalse(_form.DialecticPaused, "Dialectic should reset pause flag when enabling.");
 		}
 		[TestMethod]
 		public void DialecticToggle_DisablesClearingState(){
-			var form = Program.MainForm;
-			form.LlModelLoaded = true;
-			form.DialecticStarted = true;
-			form.DialecticPaused = true;
-			form.Invoke(new MethodInvoker(() => {
-				form.checkDialectic.Checked = false;
-				form.CheckDialectic_CheckedChanged(form.checkDialectic, EventArgs.Empty);
+			_form.LlModelLoaded = true;
+			_form.DialecticStarted = true;
+			_form.DialecticPaused = true;
+			_form.Invoke(new MethodInvoker(() => {
+				_form.checkDialectic.Checked = false;
+				_form.CheckDialectic_CheckedChanged(_form.checkDialectic, EventArgs.Empty);
 			}));
-			Assert.IsFalse(form.checkDialectic.Checked, "Checkbox should remain unchecked after disabling.");
-			Assert.IsFalse(form.DialecticStarted, "Disabling should clear start flag.");
-			Assert.IsFalse(form.DialecticPaused, "Disabling should clear pause flag.");
+			Assert.IsFalse(_form.checkDialectic.Checked, "Checkbox should remain unchecked after disabling.");
+			Assert.IsFalse(_form.DialecticStarted, "Disabling should clear start flag.");
+			Assert.IsFalse(_form.DialecticPaused, "Disabling should clear pause flag.");
 		}
 		[TestMethod]
 		public void MarkdownToggle_AppliesToExistingMessages(){
-			var form = Program.MainForm;
-			form.Invoke(new MethodInvoker(() => {form.ButReset_Click(null, null);}));
+			_form.Invoke(new MethodInvoker(() => {_form.ButReset_Click(null, null);}));
 			Thread.Sleep(100);
 			ChatMessageControl message = null;
-			form.Invoke(new MethodInvoker(() => {
+			_form.Invoke(new MethodInvoker(() => {
 				NativeMethods.AddMessage(MessageRole.User, "Original");
-				message = form.AddMessage(MessageRole.User, "", "Original");
+				message = _form.AddMessage(MessageRole.User, "", "Original");
 			}));
 			Thread.Sleep(100);
-			form.Invoke(new MethodInvoker(() => {
-				form.checkMarkdown.Checked = true;
-				form.CheckMarkdown_CheckedChanged(form.checkMarkdown, EventArgs.Empty);
+			_form.Invoke(new MethodInvoker(() => {
+				_form.checkMarkdown.Checked = true;
+				_form.CheckMarkdown_CheckedChanged(_form.checkMarkdown, EventArgs.Empty);
 			}));
 			Thread.Sleep(100);
 			Assert.IsTrue(message.Markdown, "Existing messages should adopt the checkbox markdown setting.");
 		}
 		[TestMethod]
 		public void EditCancel_LeavesMessageUnchanged(){
-			var form = Program.MainForm;
-			form.Invoke(new MethodInvoker(() => {form.ButReset_Click(null, null);}));
+			_form.Invoke(new MethodInvoker(() => {_form.ButReset_Click(null, null);}));
 			Thread.Sleep(100);
 			ChatMessageControl message = null;
-			form.Invoke(new MethodInvoker(() => {
+			_form.Invoke(new MethodInvoker(() => {
 				NativeMethods.AddMessage(MessageRole.User, "Original");
-				message = form.AddMessage(MessageRole.User, "", "Original");
+				message = _form.AddMessage(MessageRole.User, "", "Original");
 			}));
 			Thread.Sleep(100);
-			form.Invoke(new MethodInvoker(() => {
+			_form.Invoke(new MethodInvoker(() => {
 				message.Editing = true;
-				form.checkMarkdown.Checked = true;
-				form.MsgButEditCancelOnClick(message);
+				_form.checkMarkdown.Checked = true;
+				_form.MsgButEditCancelOnClick(message);
 			}));
 			Thread.Sleep(100);
 			Assert.IsFalse(message.Editing, "Cancel should exit edit mode.");
@@ -110,19 +108,18 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public void EditApply_WritesBackEditedText(){
-			var form = Program.MainForm;
-			form.Invoke(new MethodInvoker(() => {form.ButReset_Click(null, null);}));
+			_form.Invoke(new MethodInvoker(() => {_form.ButReset_Click(null, null);}));
 			Thread.Sleep(100);
 			ChatMessageControl message = null;
-			form.Invoke(new MethodInvoker(() => {
+			_form.Invoke(new MethodInvoker(() => {
 				NativeMethods.AddMessage(MessageRole.User, "Original");
-				message = form.AddMessage(MessageRole.User, "", "Original");
+				message = _form.AddMessage(MessageRole.User, "", "Original");
 			}));
 			Thread.Sleep(100);
-			form.Invoke(new MethodInvoker(() => {
+			_form.Invoke(new MethodInvoker(() => {
 				message.Editing = true;
 				message.richTextMsg.Text = "Updated";
-				form.MsgButEditApplyOnClick(message);
+				_form.MsgButEditApplyOnClick(message);
 			}));
 			Thread.Sleep(100);
 			Assert.IsFalse(message.Editing, "Apply should leave edit mode.");
@@ -130,39 +127,37 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public void DeleteMessage_RemovesFromChat(){
-			var form = Program.MainForm;
-			form.Invoke(new MethodInvoker(() => {form.ButReset_Click(null, null);}));
+			_form.Invoke(new MethodInvoker(() => {_form.ButReset_Click(null, null);}));
 			Thread.Sleep(100);
 			ChatMessageControl message = null;
-			form.Invoke(new MethodInvoker(() => {
+			_form.Invoke(new MethodInvoker(() => {
 				NativeMethods.AddMessage(MessageRole.User, "To Delete");
-				message = form.AddMessage(MessageRole.User, "", "To Delete");
+				message = _form.AddMessage(MessageRole.User, "", "To Delete");
 			}));
 			Thread.Sleep(100);
-			form.Invoke(new MethodInvoker(() => {
-				form.LlModelLoaded = true;
-				form.MsgButDeleteOnClick(message);
+			_form.Invoke(new MethodInvoker(() => {
+				_form.LlModelLoaded = true;
+				_form.MsgButDeleteOnClick(message);
 			}));
 			Thread.Sleep(100);
-			Assert.AreEqual(0, form.ChatMessages.Count, "Message should be removed from collection after delete.");
+			Assert.AreEqual(0, _form.ChatMessages.Count, "Message should be removed from collection after delete.");
 		}
 		[TestMethod]
 		public void Regenerate_WhenAlreadyGenerating_DoesNothing(){
-			var form = Program.MainForm;
-			form.Invoke(new MethodInvoker(() => {form.ButReset_Click(null, null);}));
+			_form.Invoke(new MethodInvoker(() => {_form.ButReset_Click(null, null);}));
 			Thread.Sleep(100);
 			ChatMessageControl message = null;
-			form.Invoke(new MethodInvoker(() => {
+			_form.Invoke(new MethodInvoker(() => {
 				NativeMethods.AddMessage(MessageRole.Assistant, "Assistant");
-				message = form.AddMessage(MessageRole.Assistant, "", "Assistant");
+				message = _form.AddMessage(MessageRole.Assistant, "", "Assistant");
 			}));
 			Thread.Sleep(100);
-			form.Invoke(new MethodInvoker(() => {
-				form.Generating = true;
-				form.MsgButRegenOnClick(message);
+			_form.Invoke(new MethodInvoker(() => {
+				_form.Generating = true;
+				_form.MsgButRegenOnClick(message);
 			}));
 			Thread.Sleep(100);
-			Assert.AreEqual(1, form.ChatMessages.Count, "Regenerate should not mutate messages while generation is active.");
+			Assert.AreEqual(1, _form.ChatMessages.Count, "Regenerate should not mutate messages while generation is active.");
 		}
 	}
 }

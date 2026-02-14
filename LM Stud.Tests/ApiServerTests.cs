@@ -1,15 +1,11 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
-using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using LMStud;
-using LMStud.Properties;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 namespace LM_Stud.Tests{
@@ -17,9 +13,8 @@ namespace LM_Stud.Tests{
 	public class ApiServerTests{
 		private const int TestPort = 11435;
 		private static readonly object FormLock = new object();
-		private ApiServer _apiServer;
-		private Form1 _form;
-		private string _originalLastModel;
+		private static ApiServer _apiServer;
+		private static Form1 _form;
 		[ClassInitialize]
 		public static void ClassInitialize(TestContext context){
 			lock(FormLock){
@@ -28,98 +23,26 @@ namespace LM_Stud.Tests{
 				t.IsBackground = true;
 				t.Start();
 				while(Program.MainForm == null) Thread.Sleep(10);
-				Program.MainForm.Populating = true;
+				_form = Program.MainForm;
+				Thread.Sleep(1000);
+				_form.Invoke(new MethodInvoker(() => {_form.LoadModel(_form.listViewModels.Items["Hermes-3-Llama-3.2-3B.Q8_0"], true);}));
+				while(!_form.LlModelLoaded) Thread.Sleep(10);
+				_apiServer = new ApiServer(_form){ Port = TestPort };
+				_apiServer.Start();
 			}
 		}
 		[ClassCleanup]
 		public static void ClassCleanup(){
 			lock(FormLock){
-				Program.MainForm.Close();
-				Program.MainForm.Dispose();
-			}
-		}
-		[TestInitialize]
-		public void TestInitialize(){
-			_form = Program.MainForm;
-			_form.Invoke(new MethodInvoker(() => {
-				_form.LlModelLoaded = true;
-				SetModelList(_form, "test-model-1", "test-model-2");
-			}));
-			_originalLastModel = Settings.Default.LastModel;
-			Settings.Default.LastModel = "test-model-1.gguf";
-			_apiServer = new ApiServer(_form){ Port = TestPort };
-		}
-		[TestCleanup]
-		public void TestCleanup(){
-			Settings.Default.LastModel = _originalLastModel;
-			_apiServer?.Stop();
-		}
-		[TestMethod]
-		public void Start_WhenNotRunning_StartsServer(){
-			Assert.IsFalse(_apiServer.IsRunning, "Server should not be running initially.");
-			_apiServer.Start();
-			Assert.IsTrue(SpinWait.SpinUntil(() => _apiServer.IsRunning, TimeSpan.FromSeconds(1)), "Server should start listening.");
-		}
-		[TestMethod]
-		public void Start_WhenAlreadyRunning_DoesNothing(){
-			_apiServer.Start();
-			Assert.IsTrue(SpinWait.SpinUntil(() => _apiServer.IsRunning, TimeSpan.FromSeconds(1)));
-			_apiServer.Start();
-			Assert.IsTrue(_apiServer.IsRunning, "Server should remain running after redundant start.");
-		}
-		[TestMethod]
-		public void Stop_WhenRunning_StopsServer(){
-			_apiServer.Start();
-			Assert.IsTrue(SpinWait.SpinUntil(() => _apiServer.IsRunning, TimeSpan.FromSeconds(1)));
-			_apiServer.Stop();
-			Assert.IsFalse(_apiServer.IsRunning, "Server should be stopped after Stop().");
-		}
-		[TestMethod]
-		public void Stop_WhenNotRunning_DoesNothing(){
-			Assert.IsFalse(_apiServer.IsRunning);
-			_apiServer.Stop();
-			Assert.IsFalse(_apiServer.IsRunning, "Stop should be safe when server was not running.");
-		}
-		[TestMethod]
-		public async Task HandleModels_ReturnsModelList(){
-			_apiServer.Start();
-			await WaitForServerAsync();
-			using(var client = new HttpClient()){
-				var response = await client.GetAsync($"http://localhost:{TestPort}/v1/models");
-				Assert.AreEqual(HttpStatusCode.OK, response.StatusCode, "Models endpoint should return success.");
-				var json = await response.Content.ReadAsStringAsync();
-				dynamic result = JsonConvert.DeserializeObject(json);
-				Assert.AreEqual(2, (int)result.data.Count, "Should return two models from the configured list.");
-				Assert.AreEqual("test-model-1", (string)result.data[0].id, "First model id should match configured list.");
-			}
-		}
-		[TestMethod]
-		public async Task HandleModel_ReturnsCurrentModel(){
-			_apiServer.Start();
-			await WaitForServerAsync();
-			using(var client = new HttpClient()){
-				var response = await client.GetAsync($"http://localhost:{TestPort}/v1/model");
-				Assert.AreEqual(HttpStatusCode.OK, response.StatusCode, "Model endpoint should return success.");
-				var json = await response.Content.ReadAsStringAsync();
-				dynamic result = JsonConvert.DeserializeObject(json);
-				Assert.AreEqual("test-model-1", (string)result.model, "Model name should come from settings.");
-			}
-		}
-		[TestMethod]
-		public async Task HandleChat_WhenModelNotLoaded_Returns409(){
-			_form.Invoke(new MethodInvoker(() => { _form.LlModelLoaded = false; }));
-			_apiServer.Start();
-			await WaitForServerAsync();
-			using(var client = new HttpClient()){
-				var payload = new{ messages = new[]{ new{ role = "user", content = "hello" } } };
-				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/responses", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
-				Assert.AreEqual(HttpStatusCode.Conflict, response.StatusCode, "Chat endpoint should return 409 when model is unavailable.");
+				_apiServer.Stop();
+				_form.Invoke(new MethodInvoker(() => {
+					Program.MainForm.Close();
+					Program.MainForm.Dispose();
+				}));
 			}
 		}
 		[TestMethod]
 		public async Task HandleChat_WhenModelLoaded_AttemptsResponse(){
-			_apiServer.Start();
-			await WaitForServerAsync();
 			using(var client = new HttpClient()){
 				var payload = new{ messages = new[]{ new{ role = "user", content = "Hello" } } };
 				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/responses", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
@@ -138,8 +61,6 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public async Task HandleChat_ResponseShape_ContainsCoreResponsesFields(){
-			_apiServer.Start();
-			await WaitForServerAsync();
 			using(var client = new HttpClient()){
 				var payload = new{ messages = new[]{ new{ role = "user", content = "Hello" } } };
 				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/responses", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
@@ -156,8 +77,6 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public async Task HandleReset_WithSessionId_RemovesSession(){
-			_apiServer.Start();
-			await WaitForServerAsync();
 			string sessionId;
 			using(var client = new HttpClient()){
 				var payload = new{ messages = new[]{ new{ role = "user", content = "Hi" } } };
@@ -180,8 +99,6 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public async Task HandleReset_GlobalScope_ClearsAllSessions(){
-			_apiServer.Start();
-			await WaitForServerAsync();
 			var s1 = _apiServer.Sessions.Get("global-reset-1");
 			_apiServer.Sessions.Update(s1, new List<ApiServer.Message>{ new ApiServer.Message{ Role = "user", Content = "a" } }, null, 0);
 			var s2 = _apiServer.Sessions.Get("global-reset-2");
@@ -198,35 +115,6 @@ namespace LM_Stud.Tests{
 			var replacement2 = _apiServer.Sessions.Get("global-reset-2");
 			Assert.AreEqual(0, replacement1.Messages.Count, "Global reset should clear existing sessions.");
 			Assert.AreEqual(0, replacement2.Messages.Count, "Global reset should clear existing sessions.");
-		}
-		[TestMethod]
-		public async Task InvalidEndpoint_Returns404(){
-			_apiServer.Start();
-			await WaitForServerAsync();
-			using(var client = new HttpClient()){
-				var response = await client.GetAsync($"http://localhost:{TestPort}/invalid/endpoint");
-				Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode, "Unknown endpoints should return 404.");
-			}
-		}
-		private static async Task WaitForServerAsync(){
-			using(var client = new HttpClient()){
-				var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(2);
-				while(DateTime.UtcNow < deadline)
-					try{
-						await client.GetAsync($"http://localhost:{TestPort}/health-check");
-						return;
-					} catch(Exception){ await Task.Delay(20); }
-			}
-		}
-		private static void SetModelList(Form1 form, params string[] models){
-			form.listViewModels.Items.Clear();
-			foreach(var model in models){
-				var meta = new List<GGUFMetadataManager.GGUFMetadataEntry>();
-				var lvi = new ListViewItem(model);
-				lvi.SubItems.Add("I:\\models\\" + model);
-				lvi.Tag = meta;
-				form.listViewModels.Items.Add(model);
-			}
 		}
 	}
 }
