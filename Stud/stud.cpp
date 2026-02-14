@@ -396,7 +396,7 @@ static void AlignChatStates(){
 	if(a.size() == b.size()) return;
 	const int longerId = a.size() >= b.size() ? 0 : 1;
 	const int shorterId = 1 - longerId;
-	auto& longer = _session.chatMsgs[longerId];
+	const auto& longer = _session.chatMsgs[longerId];
 	auto& shorter = _session.chatMsgs[shorterId];
 	for(size_t i = shorter.size(); i < longer.size(); ++i){
 		auto msg = longer[i];

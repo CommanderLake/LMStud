@@ -404,22 +404,32 @@ namespace LMStud{
 		}
 		private NativeMethods.StudError SyncNativeChatMessages(){
 			if(IsDisposed) return NativeMethods.StudError.Success;
-			var roles = Array.Empty<int>();
+			var roles = Array.Empty<MessageRole>();
 			var thinks = Array.Empty<string>();
 			var messages = Array.Empty<string>();
 			RunOnUiThread(() => {
 				var count = ChatMessages.Count;
-				roles = new int[count];
+				roles = new MessageRole[count];
 				thinks = new string[count];
 				messages = new string[count];
 				for(var i = 0; i < count; i++){
 					var msg = ChatMessages[i];
-					roles[i] = (int)msg.Role;
+					roles[i] = msg.Role;
 					thinks[i] = msg.Think ?? "";
 					messages[i] = msg.Message ?? "";
 				}
 			});
-			return NativeMethods.SyncChatMessages(roles, thinks, messages, roles.Length);
+			var result = NativeMethods.ResetChat();
+			if(result != NativeMethods.StudError.Success) return result;
+			for(var i = 0; i < roles.Length; i++){
+				result = NativeMethods.AddMessage(roles[i], messages[i]);
+				if(result != NativeMethods.StudError.Success) return result;
+				if(roles[i] == MessageRole.Assistant && !string.IsNullOrEmpty(thinks[i])){
+					result = NativeMethods.SetMessageAt(i, thinks[i], messages[i]);
+					if(result != NativeMethods.StudError.Success) return result;
+				}
+			}
+			return NativeMethods.StudError.Success;
 		}
 		private void BeginRetokenization(){
 			if(Interlocked.Increment(ref _retokenizeCount) != 1) return;
@@ -741,7 +751,7 @@ namespace LMStud{
 		}
 		internal void SetState(byte[] state){
 			if(state == null || state.Length == 0){
-				ShowError("Api server", "SetState", false);
+				ShowError("Api server", "SetState\r\n\r\nstate is null", false);
 				return;
 			}
 			NativeMethods.StudError err;

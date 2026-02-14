@@ -156,13 +156,15 @@ namespace LMStud{
 		}
 		private void SetSystemPromptInternal(bool genLock){
 			if(genLock) GenerationLock.Wait(-1);
-			var overrideSettings = _modelSettings.TryGetValue(_modelPath.Substring(_modelsDir.Length), out var overrides) && overrides.OverrideSettings;
-			var prompt = overrideSettings ? overrides.SystemPrompt : _systemPrompt;
-			NativeMethods.StudError error;
-			try{ error = NativeMethods.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : ""); } finally{
+			try{
+				string prompt;
+				if(_modelPath != null && _modelSettings.TryGetValue(_modelPath.Substring(_modelsDir.Length), out var overrides) && overrides.OverrideSettings) prompt = overrides.SystemPrompt;
+				else prompt = _systemPrompt;
+				var error = NativeMethods.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : "");
+				if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowError(Resources.Error_setting_system_prompt, error);
+			} finally{
 				if(genLock) GenerationLock.Release();
 			}
-			if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowError(Resources.Error_setting_system_prompt, error);
 		}
 		private void SetSystemPrompt(bool genLock = true){
 			if(!LlModelLoaded){

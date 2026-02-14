@@ -212,9 +212,8 @@ namespace LMStud{
 					var last = incomingMessages.Last();
 					session.Messages.Add(new Message{ Role = last.Role, Content = last.Content });
 				}
-				if(toolOutputs != null){
+				if(toolOutputs != null)
 					foreach(var toolResult in toolOutputs) session.Messages.Add(new Message{ Role = "tool", Content = toolResult });
-				}
 				session.Messages.Add(new Message{ Role = "assistant", Content = assistant });
 				Sessions.Update(session, session.Messages, null, 0);
 				var resp = BuildResponsePayload(assistant, Settings.Default.ApiClientModel, session.Id);
@@ -232,10 +231,14 @@ namespace LMStud{
 		}
 		private static object BuildResponsePayload(string assistant, string model, string sessionId){
 			var text = assistant ?? "";
-			var message = new{ id = "msg_" + Guid.NewGuid().ToString("N"), type = "message", role = "assistant", content = new[]{ new{ type = "output_text", text } } };
+			var createdAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+			var message = new{
+				id = "msg_" + Guid.NewGuid().ToString("N"), type = "message", status = "completed", role = "assistant",
+				content = new[]{ new{ type = "output_text", text } }
+			};
 			return new{
-				id = "resp_" + Guid.NewGuid().ToString("N"), @object = "response", created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(), model,
-				session_id = sessionId, output = new[]{ message }, output_text = text
+				id = "resp_" + Guid.NewGuid().ToString("N"), @object = "response", created_at = createdAt, status = "completed",
+				model, session_id = sessionId, output = new[]{ message }
 			};
 		}
 		private static JArray BuildInputItems(ChatRequest request){
@@ -253,12 +256,8 @@ namespace LMStud{
 		}
 		private static JArray NormalizeInputItems(JToken input){
 			if(input == null || input.Type == JTokenType.Null) return null;
-			if(input.Type == JTokenType.String){
-				return new JArray(new JObject{ ["role"] = "user", ["content"] = input.ToString() });
-			}
-			if(input is JObject inputObj){
-				return new JArray(inputObj.DeepClone());
-			}
+			if(input.Type == JTokenType.String) return new JArray(new JObject{ ["role"] = "user", ["content"] = input.ToString() });
+			if(input is JObject inputObj) return new JArray(inputObj.DeepClone());
 			if(input is JArray array){
 				var items = new JArray();
 				foreach(var item in array){
@@ -307,9 +306,7 @@ namespace LMStud{
 					messages.Add(new Message{ Role = "tool", Content = content });
 					continue;
 				}
-				if(string.Equals(type, "function_call", StringComparison.OrdinalIgnoreCase) || string.Equals(type, "tool_call", StringComparison.OrdinalIgnoreCase)){
-					continue;
-				}
+				if(string.Equals(type, "function_call", StringComparison.OrdinalIgnoreCase) || string.Equals(type, "tool_call", StringComparison.OrdinalIgnoreCase)) continue;
 				var roleFallback = obj.Value<string>("role") ?? "user";
 				var contentFallback = ExtractContentText(obj["content"]) ?? obj.Value<string>("text") ?? obj.Value<string>("content");
 				if(string.IsNullOrWhiteSpace(contentFallback)) continue;

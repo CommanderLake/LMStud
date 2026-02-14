@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -43,6 +44,7 @@ namespace LMStud{
 				using(var response = ApiHttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
 					var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 					if(!response.IsSuccessStatusCode) throw new InvalidOperationException($"API error ({(int)response.StatusCode}): {body}");
+					//File.WriteAllText("E:\\response.txt", body);
 					return ParseResponseBody(body);
 				}
 			}

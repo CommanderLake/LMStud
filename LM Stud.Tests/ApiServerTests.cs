@@ -137,6 +137,24 @@ namespace LM_Stud.Tests{
 			}
 		}
 		[TestMethod]
+		public async Task HandleChat_ResponseShape_ContainsCoreResponsesFields(){
+			_apiServer.Start();
+			await WaitForServerAsync();
+			using(var client = new HttpClient()){
+				var payload = new{ messages = new[]{ new{ role = "user", content = "Hello" } } };
+				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/responses", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
+				if(response.StatusCode != HttpStatusCode.OK) Assert.Inconclusive("Chat endpoint did not return 200 in this environment.");
+				var json = await response.Content.ReadAsStringAsync();
+				dynamic result = JsonConvert.DeserializeObject(json);
+				Assert.AreEqual("response", (string)result.@object, "Response object type should be 'response'.");
+				Assert.AreEqual("completed", (string)result.status, "Response status should be completed.");
+				Assert.IsTrue((long)result.created_at > 0, "Response should include created_at unix timestamp.");
+				Assert.AreEqual("message", (string)result.output[0].type, "Output item should be an assistant message.");
+				Assert.AreEqual("completed", (string)result.output[0].status, "Assistant message should be completed.");
+				Assert.AreEqual("output_text", (string)result.output[0].content[0].type, "Assistant content type should be output_text.");
+			}
+		}
+		[TestMethod]
 		public async Task HandleReset_WithSessionId_RemovesSession(){
 			_apiServer.Start();
 			await WaitForServerAsync();
