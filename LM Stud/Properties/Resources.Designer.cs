@@ -145,7 +145,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to An index was out of range..
+        ///   Looks up a localized string similar to An index was out of range.
         /// </summary>
         internal static string An_index_was_out_of_range_ {
             get {
@@ -308,7 +308,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error initializing audio capture..
+        ///   Looks up a localized string similar to Error initializing audio capture.
         /// </summary>
         internal static string Error_initializing_audio_capture_ {
             get {
@@ -335,7 +335,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error loading VAD model..
+        ///   Looks up a localized string similar to Error loading VAD model.
         /// </summary>
         internal static string Error_loading_VAD_model_ {
             get {
@@ -344,7 +344,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error loading Whisper model..
+        ///   Looks up a localized string similar to Error loading Whisper model.
         /// </summary>
         internal static string Error_loading_Whisper_model_ {
             get {
@@ -380,7 +380,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error starting voice input..
+        ///   Looks up a localized string similar to Error starting voice input.
         /// </summary>
         internal static string Error_starting_voice_input {
             get {
@@ -389,7 +389,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error Whisper model not found..
+        ///   Looks up a localized string similar to Error Whisper model not found.
         /// </summary>
         internal static string Error_Whisper_model_not_found {
             get {
@@ -398,7 +398,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Failed to convert a token..
+        ///   Looks up a localized string similar to Failed to convert a token.
         /// </summary>
         internal static string Failed_to_convert_a_token_ {
             get {
@@ -416,7 +416,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Failed to create the model context..
+        ///   Looks up a localized string similar to Failed to create the model context.
         /// </summary>
         internal static string Failed_to_create_the_model_context_ {
             get {
@@ -425,7 +425,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Failed to create the sampler..
+        ///   Looks up a localized string similar to Failed to create the sampler.
         /// </summary>
         internal static string Failed_to_create_the_sampler_ {
             get {
@@ -434,7 +434,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Failed to tokenize the prompt..
+        ///   Looks up a localized string similar to Failed to tokenize the prompt.
         /// </summary>
         internal static string Failed_to_tokenize_the_prompt_ {
             get {
@@ -575,6 +575,15 @@ namespace LMStud.Properties {
         internal static string No_model_loaded {
             get {
                 return ResourceManager.GetString("No_model_loaded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please enter a valid API base URL.
+        /// </summary>
+        internal static string Please_enter_a_valid_API_base_URL {
+            get {
+                return ResourceManager.GetString("Please_enter_a_valid_API_base_URL", resourceCulture);
             }
         }
         
@@ -1092,7 +1101,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unable to parse the chat message..
+        ///   Looks up a localized string similar to Unable to parse the chat message.
         /// </summary>
         internal static string Unable_to_parse_the_chat_message_ {
             get {
@@ -1101,7 +1110,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unknown API error..
+        ///   Looks up a localized string similar to Unknown API error.
         /// </summary>
         internal static string Unknown_API_error_ {
             get {

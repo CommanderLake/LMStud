@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
@@ -413,7 +414,7 @@ namespace LMStud{
 			textSystemPrompt.SelectAll();
 			textSystemPrompt.Paste(@"The list_directory and file tools operate relative to a base directory.
 The file tools use 1-based line numbers.
-First use list_directory with an empty path before using the file tools to help with coding tasks or other file changes.
+If file tools are required, first use list_directory with an empty path.
 Always read a file and verify its contents before making changes.");
 		}
 		private void ButDownloadVADModel_Click(object sender, EventArgs e){
@@ -453,11 +454,12 @@ Always read a file and verify its contents before making changes.");
 				}
 			} finally{ UseWaitCursor = false; }
 		}
+		[Localizable(true)]
 		private void ComboApiClientModel_DropDown(object sender, EventArgs e){
 			try{
 				var apiUrl = textApiClientUrl.Text?.Trim();
 				if(!Uri.TryCreate(apiUrl, UriKind.Absolute, out var parsedUri) || (parsedUri.Scheme != Uri.UriSchemeHttp && parsedUri.Scheme != Uri.UriSchemeHttps)){
-					ShowError(Resources.API_Server, "Please enter a valid API base URL before loading models.", false);
+					ShowError(Resources.API_Server, Resources.Please_enter_a_valid_API_base_URL, false);
 					return;
 				}
 				var client = new ApiClient(parsedUri.ToString(), textApiClientKey.Text, "", APIClientStore, _systemPrompt);

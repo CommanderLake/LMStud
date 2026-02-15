@@ -473,4 +473,7 @@
 	<value>
 工具名称：</value>
 </data>
+<data name="Please_enter_a_valid_API_base_URL" xml:space="preserve">
+	<value>请输入有效的 API 基本 URL</value>
+</data>
 </root>

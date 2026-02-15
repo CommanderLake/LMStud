@@ -482,4 +482,7 @@ Tool arguments: </value>
 <data name="API_Client" xml:space="preserve">
 	<value>API Client</value>
 </data>
+<data name="Please_enter_a_valid_API_base_URL" xml:space="preserve">
+	<value>Please enter a valid API base URL</value>
+</data>
 </root>
