@@ -8,7 +8,7 @@ namespace LM_Stud.Tests{
 	public class SessionManagerTests{
 		private SessionManager _sessionManager;
 		[TestInitialize]
-		public void TestInitialize(){_sessionManager = new SessionManager(3, 1000);}
+		public void TestInitialize(){_sessionManager = new SessionManager(3);}
 		[TestMethod]
 		public void Get_WithNewId_CreatesNewSession(){
 			var sessionId = "test-session-1";

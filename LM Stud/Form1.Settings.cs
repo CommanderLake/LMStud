@@ -455,10 +455,15 @@ Always read a file and verify its contents before making changes.");
 		}
 		private void ComboApiClientModel_DropDown(object sender, EventArgs e){
 			try{
-				var client = new ApiClient(textApiClientUrl.Text, textApiClientKey.Text, "", APIClientStore, _systemPrompt);
+				var apiUrl = textApiClientUrl.Text?.Trim();
+				if(!Uri.TryCreate(apiUrl, UriKind.Absolute, out var parsedUri) || (parsedUri.Scheme != Uri.UriSchemeHttp && parsedUri.Scheme != Uri.UriSchemeHttps)){
+					ShowError(Resources.API_Server, "Please enter a valid API base URL before loading models.", false);
+					return;
+				}
+				var client = new ApiClient(parsedUri.ToString(), textApiClientKey.Text, "", APIClientStore, _systemPrompt);
 				var clientModels = client.ListModels(CancellationToken.None);
 				foreach(var model in clientModels) comboApiClientModel.Items.Add(model);
-			} catch(Exception ex){ MessageBox.Show(this, ex.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);}
+			} catch(Exception ex){ ShowApiClientError(Resources.API_Client, ex); }
 		}
 	}
 }

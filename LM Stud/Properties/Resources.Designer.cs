@@ -154,11 +154,38 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to API server.
+        ///   Looks up a localized string similar to API Client.
         /// </summary>
-        internal static string API_server {
+        internal static string API_Client {
             get {
-                return ResourceManager.GetString("API_server", resourceCulture);
+                return ResourceManager.GetString("API_Client", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to API endpoint not found.
+        /// </summary>
+        internal static string API_endpoint_not_found {
+            get {
+                return ResourceManager.GetString("API_endpoint_not_found", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to API Server.
+        /// </summary>
+        internal static string API_Server {
+            get {
+                return ResourceManager.GetString("API_Server", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Authentication failed.
+        /// </summary>
+        internal static string Authentication_failed {
+            get {
+                return ResourceManager.GetString("Authentication_failed", resourceCulture);
             }
         }
         
@@ -186,24 +213,6 @@ namespace LMStud.Properties {
         internal static string Dialectic_enable {
             get {
                 return ResourceManager.GetString("Dialectic_enable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to DialecticInit.
-        /// </summary>
-        internal static string DialecticInit {
-            get {
-                return ResourceManager.GetString("DialecticInit", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to DialecticStart.
-        /// </summary>
-        internal static string DialecticStart {
-            get {
-                return ResourceManager.GetString("DialecticStart", resourceCulture);
             }
         }
         
@@ -579,6 +588,24 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Rate limit exceeded.
+        /// </summary>
+        internal static string Rate_limit_exceeded {
+            get {
+                return ResourceManager.GetString("Rate_limit_exceeded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Received an invalid response from the API server.
+        /// </summary>
+        internal static string Received_an_invalid_response_from_the_API_server {
+            get {
+                return ResourceManager.GetString("Received_an_invalid_response_from_the_API_server", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Retokenizing chat....
         /// </summary>
         internal static string Retokenizing_chat___ {
@@ -602,6 +629,33 @@ namespace LMStud.Properties {
         internal static string Stop {
             get {
                 return ResourceManager.GetString("Stop", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The API request timed out.
+        /// </summary>
+        internal static string The_API_request_timed_out {
+            get {
+                return ResourceManager.GetString("The_API_request_timed_out", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The API request was canceled before completion.
+        /// </summary>
+        internal static string The_API_request_was_canceled_before_completion {
+            get {
+                return ResourceManager.GetString("The_API_request_was_canceled_before_completion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The API server encountered an error.
+        /// </summary>
+        internal static string The_API_server_encountered_an_error {
+            get {
+                return ResourceManager.GetString("The_API_server_encountered_an_error", resourceCulture);
             }
         }
         
@@ -1029,11 +1083,29 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unable to connect to the API server.
+        /// </summary>
+        internal static string Unable_to_connect_to_the_API_server {
+            get {
+                return ResourceManager.GetString("Unable_to_connect_to_the_API_server", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unable to parse the chat message..
         /// </summary>
         internal static string Unable_to_parse_the_chat_message_ {
             get {
                 return ResourceManager.GetString("Unable_to_parse_the_chat_message_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown API error..
+        /// </summary>
+        internal static string Unknown_API_error_ {
+            get {
+                return ResourceManager.GetString("Unknown_API_error_", resourceCulture);
             }
         }
         

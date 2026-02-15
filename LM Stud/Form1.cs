@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -648,6 +649,7 @@ namespace LMStud{
 			if(!addToChat && !string.IsNullOrWhiteSpace(prompt)) messages.Add(new ApiClient.ChatMessage(RoleToApiRole(role), prompt));
 			return messages;
 		}
+		[Localizable(true)]
 		private void GenerateWithApiClient(MessageRole role, string prompt, bool addToChat){
 			Exception error = null;
 			var syncError = NativeMethods.StudError.Success;
@@ -695,12 +697,8 @@ namespace LMStud{
 			} catch(Exception ex){ error = ex; }
 			try{
 				Invoke(new MethodInvoker(() => {
-					if(error != null) MessageBox.Show(this, error.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
-					if(error == null && syncError != NativeMethods.StudError.Success){
-						if(syncError == NativeMethods.StudError.ContextFull)
-							MessageBox.Show(this, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-						else MessageBox.Show(this, syncError.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
-					}
+					if(error != null) ShowApiClientError(Resources.API_Client, error);
+					if(error == null && syncError != NativeMethods.StudError.Success && syncError != NativeMethods.StudError.ContextFull) ShowError(Resources.API_Client, syncError.ToString(), true);
 					FinishedGenerating();
 				}));
 			} catch(ObjectDisposedException){} finally{ GenerationLock.Release(); }
@@ -745,7 +743,7 @@ namespace LMStud{
 			for(var i = 0; i < sb.Length - 1; i++) if((sb[i] == '.' || sb[i] == '!' || sb[i] == '?') && char.IsWhiteSpace(sb[i + 1])) return i;
 			return -1;
 		}
-		internal byte[] GetState(){
+		private byte[] GetState(){
 			var size = NativeMethods.GetStateSize();
 			var data = new byte[size];
 			NativeMethods.StudError err;
@@ -754,7 +752,7 @@ namespace LMStud{
 					err = NativeMethods.GetStateData((IntPtr)p, size);
 				}
 			}
-			if(err != NativeMethods.StudError.Success) ShowError(Resources.API_server, "GetStateData", true);
+			if(err != NativeMethods.StudError.Success) ShowError(Resources.API_Server, "GetStateData", true);
 			return data;
 		}
 		internal void SetState(byte[] state){
@@ -766,7 +764,7 @@ namespace LMStud{
 			unsafe{
 				fixed(byte* p = state){ err = NativeMethods.SetStateData((IntPtr)p, state.Length); }
 			}
-			if(err != NativeMethods.StudError.Success) ShowError(Resources.API_server, "SetStateData", true);
+			if(err != NativeMethods.StudError.Success) ShowError(Resources.API_Server, "SetStateData", true);
 		}
 		private static unsafe void TokenCallback(byte* thinkPtr, int thinkLen, byte* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool){
 			if(This.APIServerGenerating){

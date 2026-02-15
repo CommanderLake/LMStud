@@ -2,9 +2,13 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Net.Http;
+using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using LMStud.Properties;
+using Newtonsoft.Json;
 namespace LMStud{
 	public partial class Form1{
 		private const string DefaultPrompt = "Assist the user to the best of your ability.";
@@ -150,9 +154,46 @@ namespace LMStud{
 			ShowError(action, detail, false);
 		}
 		private void ShowError(string action, string error, bool addNativeMsg){
+			if(addNativeMsg){
+				var extra = NativeMethods.GetLastError();
+				NativeMethods.ClearLastErrorMessage();
+				if(!string.IsNullOrWhiteSpace(extra)) error += "\r\n\r\n" + extra;
+			}
 			void ShowMessage(){MessageBox.Show(this, string.Format(Resources._0____1_, action, error), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}
 			if(InvokeRequired) Invoke(new MethodInvoker(ShowMessage));
 			else ShowMessage();
+		}
+		private static Exception GetInnermostException(Exception exception){
+			var current = exception;
+			while(current?.InnerException != null) current = current.InnerException;
+			return current;
+		}
+		private static string GetApiClientFriendlyError(Exception exception){
+			if(exception == null) return Resources.Unknown_API_error_;
+			var root = GetInnermostException(exception);
+			switch(root){
+				case SocketException _:
+				case HttpRequestException _: return Resources.Unable_to_connect_to_the_API_server;
+				case TaskCanceledException _:
+				case TimeoutException _: return Resources.The_API_request_timed_out;
+				case OperationCanceledException _: return Resources.The_API_request_was_canceled_before_completion;
+				case JsonException _: return Resources.Received_an_invalid_response_from_the_API_server;
+				case InvalidOperationException _:{
+					var message = root.Message ?? "";
+					if(message.IndexOf("401", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("403", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.Authentication_failed;
+					if(message.IndexOf("404", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.API_endpoint_not_found;
+					if(message.IndexOf("429", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.Rate_limit_exceeded;
+					if(message.IndexOf("500", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("502", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("503", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.The_API_server_encountered_an_error;
+					break;
+				}
+			}
+			return root.Message;
+		}
+		private void ShowApiClientError(string action, Exception exception){
+			var detail = GetApiClientFriendlyError(exception);
+			var technical = exception?.Message;
+			if(!string.IsNullOrWhiteSpace(technical) && !string.Equals(technical, detail, StringComparison.Ordinal)) detail += "\r\n\r\n" + technical;
+			ShowError(action, detail, false);
 		}
 		private void SetSystemPromptInternal(bool genLock){
 			if(genLock) GenerationLock.Wait(-1);

@@ -125,9 +125,9 @@
     <value>LM Stud</value>
     <comment>产品名，通常建议保留原文</comment>
   </data>
-  <data name="Error_Whisper_model_not_found" xml:space="preserve">
-    <value>错误：未找到 Whisper 模型。</value>
-  </data>
+<data name="Error_Whisper_model_not_found" xml:space="preserve">
+	<value>错误：未找到 Whisper 模型</value>
+</data>
   <data name="VAD_model_not_found__use_Basic_VAD_" xml:space="preserve">
     <value>未找到 VAD 模型，是否使用基础 VAD？</value>
     <comment>VAD: Voice Activity Detection 语音活动检测</comment>
@@ -136,7 +136,7 @@
 	<value>初始化语音输入时出错</value>
 </data>
 <data name="Error_starting_voice_input" xml:space="preserve">
-	<value>开始语音输入时出错。</value>
+	<value>开始语音输入时出错</value>
 </data>
 <data name="Generate" xml:space="preserve">
     <value>生成</value>
@@ -335,12 +335,12 @@
   <data name="No_model_has_been_loaded_" xml:space="preserve">
     <value>尚未加载任何模型。</value>
   </data>
-  <data name="Failed_to_create_the_model_context_" xml:space="preserve">
-    <value>创建模型上下文失败。</value>
-  </data>
-  <data name="Failed_to_create_the_sampler_" xml:space="preserve">
-    <value>创建采样器失败。</value>
-  </data>
+<data name="Failed_to_create_the_model_context_" xml:space="preserve">
+	<value>创建模型上下文失败</value>
+</data>
+<data name="Failed_to_create_the_sampler_" xml:space="preserve">
+	<value>创建采样器失败</value>
+</data>
   <data name="The_chat_template_could_not_be_applied_" xml:space="preserve">
     <value>无法应用聊天模板。</value>
   </data>
@@ -350,21 +350,21 @@
   <data name="The_model_backend_returned_a_decode_error_" xml:space="preserve">
     <value>模型后端返回解码错误。</value>
   </data>
-  <data name="An_index_was_out_of_range_" xml:space="preserve">
-    <value>索引超出范围。</value>
-  </data>
-  <data name="Failed_to_tokenize_the_prompt_" xml:space="preserve">
-    <value>对提示词进行分词（Tokenize）失败。</value>
-  </data>
-  <data name="Failed_to_convert_a_token_" xml:space="preserve">
-    <value>转换 Token 失败。</value>
-  </data>
+<data name="An_index_was_out_of_range_" xml:space="preserve">
+	<value>索引超出范围</value>
+</data>
+<data name="Failed_to_tokenize_the_prompt_" xml:space="preserve">
+	<value>对提示词进行分词（Tokenize）失败</value>
+</data>
+<data name="Failed_to_convert_a_token_" xml:space="preserve">
+	<value>转换 Token 失败</value>
+</data>
   <data name="The_GPU_is_out_of_memory_" xml:space="preserve">
     <value>GPU 内存不足。</value>
   </data>
-  <data name="Unable_to_parse_the_chat_message_" xml:space="preserve">
-    <value>无法解析聊天消息。</value>
-  </data>
+<data name="Unable_to_parse_the_chat_message_" xml:space="preserve">
+	<value>无法解析聊天消息</value>
+</data>
   <data name="Error_loading_model" xml:space="preserve">
     <value>加载模型时出错</value>
   </data>
@@ -384,13 +384,13 @@
     <value>未加载模型</value>
   </data>
 <data name="Error_loading_Whisper_model_" xml:space="preserve">
-	<value>加载 Whisper 模型时出错。</value>
+	<value>加载 Whisper 模型时出错</value>
 </data>
 <data name="Error_loading_VAD_model_" xml:space="preserve">
-	<value>加载 VAD 模型时出错。</value>
+	<value>加载 VAD 模型时出错</value>
 </data>
 <data name="Error_initializing_audio_capture_" xml:space="preserve">
-	<value>初始化音频捕获时出错。</value>
+	<value>初始化音频捕获时出错</value>
 </data>
 <data name="ToolTip_numGenDelay" xml:space="preserve">
 	<value>在“语音输入”完全启用时，用户说完话后自动生成回复的延迟时间。</value>
@@ -418,5 +418,59 @@
 </data>
 <data name="Using_API_Model_" xml:space="preserve">
 	<value>使用 API 模型：</value>
+</data>
+<data name="API_Client" xml:space="preserve">
+	<value>API客户端</value>
+</data>
+<data name="API_Server" xml:space="preserve">
+	<value>API服务器</value>
+</data>
+<data name="API_endpoint_not_found" xml:space="preserve">
+	<value>未找到 API 端点</value>
+</data>
+<data name="Authentication_failed" xml:space="preserve">
+	<value>认证失败</value>
+</data>
+<data name="Dialectic_enable" xml:space="preserve">
+	<value>启用辩证模式</value>
+</data>
+<data name="Error_deleting_message" xml:space="preserve">
+	<value>删除消息时出错</value>
+</data>
+<data name="Error_regenerating_message" xml:space="preserve">
+	<value>重新生成消息时出错</value>
+</data>
+<data name="Rate_limit_exceeded" xml:space="preserve">
+	<value>超出速率限制</value>
+</data>
+<data name="Received_an_invalid_response_from_the_API_server" xml:space="preserve">
+	<value>从 API 服务器收到无效响应</value>
+</data>
+<data name="The_API_request_timed_out" xml:space="preserve">
+	<value>API 请求超时</value>
+</data>
+<data name="The_API_request_was_canceled_before_completion" xml:space="preserve">
+	<value>API 请求在完成前被取消</value>
+</data>
+<data name="The_API_server_encountered_an_error" xml:space="preserve">
+	<value>API 服务器遇到错误</value>
+</data>
+<data name="Tool_Call" xml:space="preserve">
+	<value>工具调用</value>
+</data>
+<data name="Unable_to_connect_to_the_API_server" xml:space="preserve">
+	<value>无法连接到 API 服务器</value>
+</data>
+<data name="__Tool_arguments_" xml:space="preserve">
+	<value>
+工具参数：</value>
+</data>
+<data name="__Tool_ID_" xml:space="preserve">
+	<value>
+工具编号：</value>
+</data>
+<data name="__Tool_name_" xml:space="preserve">
+	<value>
+工具名称：</value>
 </data>
 </root>

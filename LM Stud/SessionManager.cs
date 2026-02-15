@@ -4,12 +4,10 @@ using System.Linq;
 namespace LMStud{
 	internal class SessionManager{
 		private readonly int _maxSessions;
-		private readonly int _maxTokens;
 		private readonly Dictionary<string, Session> _sessions = new Dictionary<string, Session>();
 		private readonly object _sync = new object();
-		public SessionManager(int maxSessions = 32, int maxTokens = 128000){
+		public SessionManager(int maxSessions = 32){
 			_maxSessions = maxSessions;
-			_maxTokens = maxTokens;
 		}
 		public Session Get(string id){
 			lock(_sync){
@@ -64,7 +62,7 @@ namespace LMStud{
 			return clone;
 		}
 		private void Evict(){
-			while(_sessions.Count > _maxSessions || _sessions.Values.Sum(s => s.TokenCount) > _maxTokens){
+			while(_sessions.Count > _maxSessions){
 				var lru = _sessions.Values.OrderBy(s => s.LastUsed).First();
 				_sessions.Remove(lru.Id);
 			}

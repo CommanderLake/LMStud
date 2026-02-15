@@ -124,18 +124,18 @@
   <data name="LM_Stud" xml:space="preserve">
     <value>LM Stud</value>
   </data>
-  <data name="Error_Whisper_model_not_found" xml:space="preserve">
-    <value>Error Whisper model not found.</value>
-  </data>
+<data name="Error_Whisper_model_not_found" xml:space="preserve">
+	<value>Error Whisper model not found</value>
+</data>
   <data name="VAD_model_not_found__use_Basic_VAD_" xml:space="preserve">
     <value>VAD model not found, use Basic VAD?</value>
   </data>
   <data name="Error_initialising_voice_input" xml:space="preserve">
     <value>Error initialising voice input</value>
   </data>
-  <data name="Error_starting_voice_input" xml:space="preserve">
-    <value>Error starting voice input.</value>
-  </data>
+<data name="Error_starting_voice_input" xml:space="preserve">
+	<value>Error starting voice input</value>
+</data>
 <data name="Generate" xml:space="preserve">
     <value>Generate</value>
   </data>
@@ -332,12 +332,12 @@
   <data name="No_model_has_been_loaded_" xml:space="preserve">
     <value>No model has been loaded.</value>
   </data>
-  <data name="Failed_to_create_the_model_context_" xml:space="preserve">
-    <value>Failed to create the model context.</value>
-  </data>
-  <data name="Failed_to_create_the_sampler_" xml:space="preserve">
-    <value>Failed to create the sampler.</value>
-  </data>
+<data name="Failed_to_create_the_model_context_" xml:space="preserve">
+	<value>Failed to create the model context</value>
+</data>
+<data name="Failed_to_create_the_sampler_" xml:space="preserve">
+	<value>Failed to create the sampler</value>
+</data>
   <data name="The_chat_template_could_not_be_applied_" xml:space="preserve">
     <value>The chat template could not be applied.</value>
   </data>
@@ -347,21 +347,21 @@
   <data name="The_model_backend_returned_a_decode_error_" xml:space="preserve">
     <value>The model backend returned a decode error.</value>
   </data>
-  <data name="An_index_was_out_of_range_" xml:space="preserve">
-    <value>An index was out of range.</value>
-  </data>
-  <data name="Failed_to_tokenize_the_prompt_" xml:space="preserve">
-    <value>Failed to tokenize the prompt.</value>
-  </data>
-  <data name="Failed_to_convert_a_token_" xml:space="preserve">
-    <value>Failed to convert a token.</value>
-  </data>
+<data name="An_index_was_out_of_range_" xml:space="preserve">
+	<value>An index was out of range</value>
+</data>
+<data name="Failed_to_tokenize_the_prompt_" xml:space="preserve">
+	<value>Failed to tokenize the prompt</value>
+</data>
+<data name="Failed_to_convert_a_token_" xml:space="preserve">
+	<value>Failed to convert a token</value>
+</data>
   <data name="The_GPU_is_out_of_memory_" xml:space="preserve">
     <value>The GPU is out of memory.</value>
   </data>
-  <data name="Unable_to_parse_the_chat_message_" xml:space="preserve">
-    <value>Unable to parse the chat message.</value>
-  </data>
+<data name="Unable_to_parse_the_chat_message_" xml:space="preserve">
+	<value>Unable to parse the chat message</value>
+</data>
   <data name="Error_loading_model" xml:space="preserve">
     <value>Error loading model</value>
   </data>
@@ -383,15 +383,15 @@
   <data name="No_model_loaded" xml:space="preserve">
     <value>No model loaded</value>
   </data>
-  <data name="Error_loading_Whisper_model_" xml:space="preserve">
-    <value>Error loading Whisper model.</value>
-  </data>
-  <data name="Error_loading_VAD_model_" xml:space="preserve">
-    <value>Error loading VAD model.</value>
-  </data>
-  <data name="Error_initializing_audio_capture_" xml:space="preserve">
-    <value>Error initializing audio capture.</value>
-  </data>
+<data name="Error_loading_Whisper_model_" xml:space="preserve">
+	<value>Error loading Whisper model</value>
+</data>
+<data name="Error_loading_VAD_model_" xml:space="preserve">
+	<value>Error loading VAD model</value>
+</data>
+<data name="Error_initializing_audio_capture_" xml:space="preserve">
+	<value>Error initializing audio capture</value>
+</data>
   <data name="ToolTip_numGenDelay" xml:space="preserve">
     <value>Delay before automatic response generation after speech input ends (only when ‘Speech input’ is fully enabled).</value>
   </data>
@@ -440,8 +440,8 @@ Tool arguments: </value>
 <data name="Error_regenerating_message" xml:space="preserve">
 	<value>Error regenerating message</value>
 </data>
-<data name="API_server" xml:space="preserve">
-	<value>API server</value>
+<data name="API_Server" xml:space="preserve">
+	<value>API Server</value>
 </data>
 <data name="GetStateData" xml:space="preserve">
 	<value>GetStateData</value>
@@ -449,13 +449,37 @@ Tool arguments: </value>
 <data name="SetStateData" xml:space="preserve">
 	<value>SetStateData</value>
 </data>
-<data name="DialecticStart" xml:space="preserve">
-	<value>DialecticStart</value>
-</data>
-<data name="DialecticInit" xml:space="preserve">
-	<value>DialecticInit</value>
-</data>
 <data name="Dialectic_enable" xml:space="preserve">
 	<value>Dialectic enable</value>
+</data>
+<data name="Unknown_API_error_" xml:space="preserve">
+	<value>Unknown API error</value>
+</data>
+<data name="Unable_to_connect_to_the_API_server" xml:space="preserve">
+	<value>Unable to connect to the API server</value>
+</data>
+<data name="The_API_request_timed_out" xml:space="preserve">
+	<value>The API request timed out</value>
+</data>
+<data name="The_API_request_was_canceled_before_completion" xml:space="preserve">
+	<value>The API request was canceled before completion</value>
+</data>
+<data name="Received_an_invalid_response_from_the_API_server" xml:space="preserve">
+	<value>Received an invalid response from the API server</value>
+</data>
+<data name="Authentication_failed" xml:space="preserve">
+	<value>Authentication failed</value>
+</data>
+<data name="API_endpoint_not_found" xml:space="preserve">
+	<value>API endpoint not found</value>
+</data>
+<data name="Rate_limit_exceeded" xml:space="preserve">
+	<value>Rate limit exceeded</value>
+</data>
+<data name="The_API_server_encountered_an_error" xml:space="preserve">
+	<value>The API server encountered an error</value>
+</data>
+<data name="API_Client" xml:space="preserve">
+	<value>API Client</value>
 </data>
 </root>
