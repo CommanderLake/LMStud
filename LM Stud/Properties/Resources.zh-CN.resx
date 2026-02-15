@@ -200,7 +200,7 @@
   <data name="_0___1__2_" xml:space="preserve">
     <value>{0}/{1}{2}</value>
   </data>
-  <data name="Models_folder_not_found__please_specify_a_valid_folder_in_the_Settings_tab" xml:space="preserve">
+  <data name="Models_folder_not_found_" xml:space="preserve">
     <value>未找到模型文件夹，请在“设置”选项卡中指定一个有效文件夹。</value>
   </data>
   <data name="Error_setting_system_prompt" xml:space="preserve">
@@ -377,7 +377,7 @@
   <data name="Error_creating_sampler" xml:space="preserve">
     <value>创建采样器时出错</value>
   </data>
-<data name="The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_" xml:space="preserve">
+<data name="The_modified_settings_are_overridden_" xml:space="preserve">
     <value>修改的设置已被当前模型的“模型设置”覆盖。</value>
   </data>
   <data name="No_model_loaded" xml:space="preserve">

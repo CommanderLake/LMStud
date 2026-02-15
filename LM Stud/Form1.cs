@@ -118,7 +118,7 @@ namespace LMStud{
 			checkLoadAuto.Checked = true;
 			ThreadPool.QueueUserWorkItem(o => {
 				while(_populating) Thread.Sleep(10);
-				var modelPath = ModelsDir + Settings.Default.LastModel;
+				var modelPath = _modelsDir + Settings.Default.LastModel;
 				var modelLvi = listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item => item.SubItems[1].Text == modelPath);
 				if(modelLvi != null) LoadModel(modelLvi, true);
 			});

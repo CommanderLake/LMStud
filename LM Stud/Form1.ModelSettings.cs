@@ -29,7 +29,7 @@ namespace LMStud{
 		private void ButApplyModelSettings_Click(object sender, EventArgs e){
 			if(listViewModels.SelectedItems.Count == 0) return;
 			var selectedModel = listViewModels.SelectedItems[0];
-			var modelRelPath = selectedModel.SubItems[1].Text.Substring(ModelsDir.Length);
+			var modelRelPath = selectedModel.SubItems[1].Text.Substring(_modelsDir.Length);
 			_modelSettings.TryGetValue(modelRelPath, out var oldSettings);
 			var overrideNew = checkOverrideSettings.Checked;
 			var systemPromptNew = textSystemPromptModel.Text;
@@ -81,7 +81,7 @@ namespace LMStud{
 			if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPrompt();});
 		}
 		private void PopulateModelSettings(string modelPath){
-			if(_modelSettings.TryGetValue(modelPath.Substring(ModelsDir.Length), out var ms)){
+			if(_modelSettings.TryGetValue(modelPath.Substring(_modelsDir.Length), out var ms)){
 				checkOverrideSettings.Checked = ms.OverrideSettings;
 				textSystemPromptModel.Text = ms.SystemPrompt;
 				numCtxSizeModel.Value = ms.CtxSize;

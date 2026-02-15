@@ -35,7 +35,7 @@ namespace LMStud{
 		private float _minP;
 		private bool _mLock;
 		private bool _mMap;
-		internal string ModelsDir;
+		private string _modelsDir;
 		private int _nGen;
 		private int _nThreads;
 		private int _nThreadsBatch;
@@ -59,7 +59,7 @@ namespace LMStud{
 			_systemPrompt = textSystemPrompt.Text = Settings.Default.SystemPrompt;
 			var mp = Settings.Default.ModelsDir;
 			mp = mp[mp.Length - 1] == '\\' || mp[mp.Length - 1] == '/' ? mp : mp + '\\';
-			ModelsDir = textModelsDir.Text = mp;
+			_modelsDir = textModelsDir.Text = mp;
 			_ctxSize = (int)(numCtxSize.Value = Settings.Default.CtxSize);
 			_gpuLayers = (int)(numGPULayers.Value = Settings.Default.GPULayers);
 			_temp = (float)(numTemp.Value = Settings.Default.Temp);
@@ -138,7 +138,7 @@ namespace LMStud{
 			var setStatusLabel = false;
 			var loadedModel = LoadedModel;
 			ModelSettings ms = default;
-			var overrideSettings = LlModelLoaded && _modelSettings.TryGetValue(loadedModel.SubItems[1].Text.Substring(ModelsDir.Length), out ms) && ms.OverrideSettings;
+			var overrideSettings = LlModelLoaded && _modelSettings.TryGetValue(loadedModel.SubItems[1].Text.Substring(_modelsDir.Length), out ms) && ms.OverrideSettings;
 			UpdateSetting(ref _systemPrompt, textSystemPrompt.Text, value => {
 				Settings.Default.SystemPrompt = value;
 				if(overrideSettings){
@@ -147,7 +147,7 @@ namespace LMStud{
 				}
 				setSystemPrompt = true;
 			});
-			UpdateSetting(ref ModelsDir, textModelsDir.Text, mp => {
+			UpdateSetting(ref _modelsDir, textModelsDir.Text, mp => {
 				mp = mp[mp.Length - 1] == '\\' || mp[mp.Length - 1] == '/' ? mp : mp + '\\';
 				Settings.Default.ModelsDir = mp;
 				PopulateModels();
@@ -390,7 +390,7 @@ namespace LMStud{
 			if(registerTools) RegisterTools();
 			if(setStatusLabel) SetModelStatus();
 			if(registerTools || setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPrompt();});
-			if(overrideSettings && modelOverrideChanged) MessageBox.Show(this, Resources.The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
+			if(overrideSettings && modelOverrideChanged) MessageBox.Show(this, Resources.The_modified_settings_are_overridden_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 			Settings.Default.Save();
 		}
 		private void ButBrowse_Click(object sender, EventArgs e){
@@ -403,7 +403,7 @@ namespace LMStud{
 			else MessageBox.Show(this, Resources.Folder_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}
 		private void ComboWhisperModel_DropDown(object sender, EventArgs e){
-			if(!Directory.Exists(ModelsDir)) return;
+			if(!Directory.Exists(_modelsDir)) return;
 			PopulateWhisperModels(true, false);
 		}
 		private void ButWhispDown_Click(object sender, EventArgs e){
@@ -422,7 +422,7 @@ Always read a file and verify its contents before making changes.");
 			tabControl1.SelectTab(3);
 		}
 		private void ComboVADModel_DropDown(object sender, EventArgs e){
-			if(!Directory.Exists(ModelsDir)) return;
+			if(!Directory.Exists(_modelsDir)) return;
 			PopulateWhisperModels(false, true);
 		}
 		private void PopulateWhisperModels(bool whisper, bool vad){
@@ -432,7 +432,7 @@ Always read a file and verify its contents before making changes.");
 				_whisperModels.Clear();
 				if(whisper) comboWhisperModel.Items.Clear();
 				if(vad) comboVADModel.Items.Clear();
-				var files = Directory.GetFiles(ModelsDir, "*.bin", SearchOption.AllDirectories);
+				var files = Directory.GetFiles(_modelsDir, "*.bin", SearchOption.AllDirectories);
 				foreach(var file in files){
 					using(var fs = new FileStream(file, FileMode.Open, FileAccess.Read))
 					using(var br = new BinaryReader(fs)){

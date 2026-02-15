@@ -197,7 +197,7 @@
   <data name="_0___1__2_" xml:space="preserve">
     <value>{0}/{1}{2}</value>
   </data>
-  <data name="Models_folder_not_found__please_specify_a_valid_folder_in_the_Settings_tab" xml:space="preserve">
+  <data name="Models_folder_not_found_" xml:space="preserve">
     <value>Models folder not found, please specify a valid folder in the Settings tab.</value>
   </data>
   <data name="Error_setting_system_prompt" xml:space="preserve">
@@ -374,7 +374,7 @@
   <data name="Error_creating_sampler" xml:space="preserve">
     <value>Error creating sampler</value>
   </data>
-  <data name="The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_" xml:space="preserve">
+  <data name="The_modified_settings_are_overridden_" xml:space="preserve">
     <value>The modified settings are overridden by the Model Settings for this model.</value>
   </data>
   <data name="Max_context_size_of_last_loaded_model" xml:space="preserve">

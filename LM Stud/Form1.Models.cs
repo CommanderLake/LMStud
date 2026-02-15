@@ -21,7 +21,7 @@ namespace LMStud{
 		internal ListViewItem LoadedModel;
 		private readonly List<string> _whisperModels = new List<string>();
 		private void CheckLoadAuto_CheckedChanged(object sender, EventArgs e){
-			if(checkLoadAuto.Checked && File.Exists(ModelsDir + Settings.Default.LastModel)) Settings.Default.LoadAuto = true;
+			if(checkLoadAuto.Checked && File.Exists(_modelsDir + Settings.Default.LastModel)) Settings.Default.LoadAuto = true;
 			else Settings.Default.LoadAuto = false;
 			Settings.Default.Save();
 		}
@@ -51,8 +51,8 @@ namespace LMStud{
 			UnloadModel(true);
 		}
 		private bool ModelsFolderExists(bool showError){
-			if(!Directory.Exists(ModelsDir)){
-				if(showError) MessageBox.Show(this, Resources.Models_folder_not_found__please_specify_a_valid_folder_in_the_Settings_tab, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+			if(!Directory.Exists(_modelsDir)){
+				if(showError) MessageBox.Show(this, Resources.Models_folder_not_found_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 				tabControl1.SelectTab(1);
 				textModelsDir.Focus();
 				return false;
@@ -65,7 +65,7 @@ namespace LMStud{
 			ThreadPool.QueueUserWorkItem(_ => {
 				try{
 					if(!GenerationLock.Wait(-1)) return;
-					var files = Directory.GetFiles(ModelsDir, "*.gguf", SearchOption.AllDirectories);
+					var files = Directory.GetFiles(_modelsDir, "*.gguf", SearchOption.AllDirectories);
 					var items = new List<ListViewItem>();
 					foreach(var file in files){
 						var meta = GGUFMetadataManager.LoadGGUFMetadata(file);
@@ -199,7 +199,7 @@ namespace LMStud{
 			if(genLock) GenerationLock.Wait(-1);
 			try{
 				string prompt;
-				if(LoadedModel != null && _modelSettings.TryGetValue(LoadedModel.SubItems[1].Text.Substring(ModelsDir.Length), out var overrides) && overrides.OverrideSettings) prompt = overrides.SystemPrompt;
+				if(LoadedModel != null && _modelSettings.TryGetValue(LoadedModel.SubItems[1].Text.Substring(_modelsDir.Length), out var overrides) && overrides.OverrideSettings) prompt = overrides.SystemPrompt;
 				else prompt = _systemPrompt;
 				var error = NativeMethods.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, _googleSearchEnable && _webpageFetchEnable ? FetchPrompt : "");
 				if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowError(Resources.Error_setting_system_prompt, error);
@@ -258,7 +258,7 @@ namespace LMStud{
 				return;
 			}
 			butLoad.Enabled = butUnload.Enabled = false;
-			var modelsDir = ModelsDir;
+			var modelsDir = _modelsDir;
 			var fileName = Path.GetFileName(modelPath);
 			var meta = (List<GGUFMetadataManager.GGUFMetadataEntry>)modelLvi.Tag;
 			ThreadPool.QueueUserWorkItem(o => {

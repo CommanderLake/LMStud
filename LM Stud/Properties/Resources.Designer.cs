@@ -554,9 +554,9 @@ namespace LMStud.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Models folder not found, please specify a valid folder in the Settings tab..
         /// </summary>
-        internal static string Models_folder_not_found__please_specify_a_valid_folder_in_the_Settings_tab {
+        internal static string Models_folder_not_found_ {
             get {
-                return ResourceManager.GetString("Models_folder_not_found__please_specify_a_valid_folder_in_the_Settings_tab", resourceCulture);
+                return ResourceManager.GetString("Models_folder_not_found_", resourceCulture);
             }
         }
         
@@ -707,9 +707,9 @@ namespace LMStud.Properties {
         /// <summary>
         ///   Looks up a localized string similar to The modified settings are overridden by the Model Settings for this model..
         /// </summary>
-        internal static string The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_ {
+        internal static string The_modified_settings_are_overridden_ {
             get {
-                return ResourceManager.GetString("The_modified_settings_are_overridden_by_the_Model_Settings_for_this_model_", resourceCulture);
+                return ResourceManager.GetString("The_modified_settings_are_overridden_", resourceCulture);
             }
         }
         
