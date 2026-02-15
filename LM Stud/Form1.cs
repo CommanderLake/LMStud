@@ -425,14 +425,13 @@ namespace LMStud{
 				}
 			});
 			var result = NativeMethods.ResetChat();
-			if(result != NativeMethods.StudError.Success) return result;
+			if(result != NativeMethods.StudError.Success && result != NativeMethods.StudError.ModelNotLoaded) return result;
 			for(var i = 0; i < roles.Length; i++){
 				result = NativeMethods.AddMessage(roles[i], messages[i]);
-				if(result != NativeMethods.StudError.Success) return result;
-				if(roles[i] == MessageRole.Assistant && !string.IsNullOrEmpty(thinks[i])){
-					result = NativeMethods.SetMessageAt(i, thinks[i], messages[i]);
-					if(result != NativeMethods.StudError.Success) return result;
-				}
+				if(result != NativeMethods.StudError.Success && result != NativeMethods.StudError.ModelNotLoaded) return result;
+				if(roles[i] != MessageRole.Assistant || string.IsNullOrEmpty(thinks[i])) continue;
+				result = NativeMethods.SetMessageAt(i, thinks[i], messages[i]);
+				if(result != NativeMethods.StudError.Success && result != NativeMethods.StudError.ModelNotLoaded) return result;
 			}
 			return NativeMethods.StudError.Success;
 		}

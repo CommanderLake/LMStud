@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -25,8 +24,6 @@ namespace LMStud{
 		}
 		internal ChatCompletionResult CreateChatCompletion(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice, CancellationToken cancellationToken){
 			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException("API base URL is not configured.");
-			if(string.IsNullOrWhiteSpace(_apiKey)) throw new InvalidOperationException("API key is not configured.");
-			if(string.IsNullOrWhiteSpace(_model)) throw new InvalidOperationException("API model is not configured.");
 			if(history == null) throw new InvalidOperationException("History is not configured.");
 			var payload = new JObject{ ["model"] = _model, ["input"] = history, ["temperature"] = temperature };
 			if(!string.IsNullOrWhiteSpace(_instructions)) payload["instructions"] = _instructions;

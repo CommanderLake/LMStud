@@ -46,7 +46,7 @@ struct ChatStateSnapshot{
 	std::string toolsPrompt;
 	common_chat_syntax syntax{};
 	bool useJinja = true;
-	bool forceAddAssistantNextGeneration = false;
+	bool addNextGen = false;
 	int nBatch = 1;
 };
 extern "C" EXPORT const char* GetLastErrorMessage(){ return _lastErrorMessage.c_str(); }
@@ -713,7 +713,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	_session.chatMsgs[_session.dId].push_back(msg);
 	if(cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(), ftTime, 0);
 	outMsg = std::move(msg);
-	OutputDebugStringA(("\n!!! CONTEXT START !!!\n" + std::string(GetContextAsText()) + "\n!!! CONTEXT END !!!\n").c_str());
+	//OutputDebugStringA(("\n!!! CONTEXT START !!!\n" + std::string(GetContextAsText()) + "\n!!! CONTEXT END !!!\n").c_str());
 	return StudError::Success;
 }
 StudError GenerateWithTools(const MessageRole role, const char* prompt, const int nPredict, const bool callback){
@@ -779,7 +779,7 @@ extern "C" EXPORT void* CaptureChatState(){
 	snapshot->toolsPrompt = _session.toolsPrompt;
 	snapshot->syntax = _session.syntax;
 	snapshot->useJinja = _session.useJinja;
-	snapshot->forceAddAssistantNextGeneration = _session.assNextGen;
+	snapshot->addNextGen = _session.assNextGen;
 	snapshot->nBatch = _session.batchSize;
 	return snapshot;
 }
@@ -797,7 +797,7 @@ extern "C" EXPORT void RestoreChatState(void* state){
 	_session.toolsPrompt = snapshot->toolsPrompt;
 	_session.syntax = snapshot->syntax;
 	_session.useJinja = snapshot->useJinja;
-	_session.assNextGen = snapshot->forceAddAssistantNextGeneration;
+	_session.assNextGen = snapshot->addNextGen;
 	_session.batchSize = snapshot->nBatch;
 }
 extern "C" EXPORT void FreeChatState(void* state){ delete static_cast<ChatStateSnapshot*>(state); }
