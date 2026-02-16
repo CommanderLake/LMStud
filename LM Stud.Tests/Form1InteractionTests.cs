@@ -25,7 +25,7 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public void Generate_WithWhitespaceInput_DoesNotAddMessage(){
-			_form.LlModelLoaded = true;
+			Common.LlModelLoaded = true;
 			_form.Invoke(new MethodInvoker(() => {
 				_form.textInput.Text = "   ";
 				_form.ButGen_Click(null, null);
@@ -35,7 +35,7 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public void Generate_WhenSemaphoreUnavailable_DoesNotProceed(){
-			_form.LlModelLoaded = true;
+			Common.LlModelLoaded = true;
 			_form.GenerationLock.Wait();
 			_form.Invoke(new MethodInvoker(() => {
 				_form.textInput.Text = "Hello";
@@ -47,7 +47,7 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public void DialecticToggle_EnablesWhenModelLoaded(){
-			_form.LlModelLoaded = true;
+			Common.LlModelLoaded = true;
 			_form.Invoke(new MethodInvoker(() => {
 				_form.checkDialectic.Checked = true;
 				_form.CheckDialectic_CheckedChanged(_form.checkDialectic, EventArgs.Empty);
@@ -58,7 +58,7 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public void DialecticToggle_DisablesClearingState(){
-			_form.LlModelLoaded = true;
+			Common.LlModelLoaded = true;
 			_form.DialecticStarted = true;
 			_form.DialecticPaused = true;
 			_form.Invoke(new MethodInvoker(() => {
@@ -136,7 +136,7 @@ namespace LM_Stud.Tests{
 			}));
 			Thread.Sleep(100);
 			_form.Invoke(new MethodInvoker(() => {
-				_form.LlModelLoaded = true;
+				Common.LlModelLoaded = true;
 				_form.MsgButDeleteOnClick(message);
 			}));
 			Thread.Sleep(100);

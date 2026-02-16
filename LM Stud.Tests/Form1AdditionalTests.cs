@@ -61,7 +61,7 @@ namespace LM_Stud.Tests{
 			}));
 			_form.Invoke(new MethodInvoker(() => {Invoke(_form, "StartEditing");}));
 			Assert.IsTrue(_form.IsEditing, "Should be in editing mode.");
-			Assert.AreEqual("Initial text", _form.EditOriginalText, "Original text should be saved.");
+			Assert.AreEqual("Initial text", _form.InputEditOldText, "Original text should be saved.");
 		}
 		[TestMethod]
 		public void FinishEditing_ExitsEditingMode(){
@@ -74,7 +74,7 @@ namespace LM_Stud.Tests{
 			_form.Invoke(new MethodInvoker(() => {
 				var textInput = _form.textInput;
 				_form.IsEditing = true;
-				_form.EditOriginalText = "Original";
+				_form.InputEditOldText = "Original";
 				textInput.Text = "Modified";
 			}));
 			_form.Invoke(new MethodInvoker(() => {Invoke(_form, "CancelEditing");}));
@@ -90,7 +90,7 @@ namespace LM_Stud.Tests{
 		public void ApiGenerating_PreventsNormalGeneration(){
 			_form.Invoke(new MethodInvoker(() => {
 				_form.APIServerGenerating = true;
-				_form.LlModelLoaded = true;
+				Common.LlModelLoaded = true;
 				var textInput = _form.textInput;
 				textInput.Text = "Test message";
 			}));

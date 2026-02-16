@@ -52,7 +52,7 @@ namespace LMStud{
 					var items = new List<ListViewItem>();
 					foreach(var modelToken in models){
 						var model = (JObject)modelToken;
-						var hfModel = model.ToObject<HugModel>();
+						var hfModel = model.ToObject<Form1.HugModel>();
 						if(hfModel?.ID == null) continue;
 						var parts = hfModel.ID.Split('/');
 						var uploader = parts.Length > 1 ? parts[0] : "";
@@ -121,7 +121,7 @@ namespace LMStud{
 		}
 		private void HugDownloadFile(string uploader, string modelName, string variantLabel){
 			var downloadUrl = $"https://huggingface.co/{uploader}/{modelName}/resolve/main/{variantLabel}";
-			var targetDir = Path.Combine(_modelsDir, uploader, modelName);
+			var targetDir = Path.Combine(Common.ModelsDir, uploader, modelName);
 			try{ Directory.CreateDirectory(targetDir); } catch(Exception ex){
 				MessageBox.Show(string.Format(Resources.Failed_to_create_directory___0_, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 				return;

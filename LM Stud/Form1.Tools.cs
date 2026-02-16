@@ -6,7 +6,7 @@ namespace LMStud{
 		private string _toolsJsonCache;
 		private bool _toolsJsonCacheDirty = true;
 		private void RegisterTools(){
-			NativeMethods.RegisterTools(_dateTimeEnable, _googleSearchEnable, _webpageFetchEnable, _fileListEnable, _fileCreateEnable, _fileReadEnable, _fileWriteEnable, _cmdEnable);
+			NativeMethods.RegisterTools(Common.DateTimeEnable, Common.GoogleSearchEnable, Common.WebpageFetchEnable, Common.FileListEnable, Common.FileCreateEnable, Common.FileReadEnable, Common.FileWriteEnable, Common.CMDEnable);
 			InvalidateToolsJsonCache();
 		}
 		private void ClearRegisteredTools(){
@@ -15,7 +15,7 @@ namespace LMStud{
 			InvalidateToolsJsonCache();
 		}
 		private bool ToolsEnabled(){
-			return _dateTimeEnable || _googleSearchEnable || _webpageFetchEnable || _fileListEnable || _fileCreateEnable || _fileReadEnable || _fileWriteEnable || _cmdEnable;
+			return Common.DateTimeEnable || Common.GoogleSearchEnable || Common.WebpageFetchEnable || Common.FileListEnable || Common.FileCreateEnable || Common.FileReadEnable || Common.FileWriteEnable || Common.CMDEnable;
 		}
 		internal string BuildApiToolsJson(){
 			if(!ToolsEnabled()) return null;

@@ -1,0 +1,57 @@
+﻿using System.Windows.Forms;
+namespace LMStud{
+	internal static class Common{
+		internal static bool APIClientEnable;
+		internal static string APIClientKey;
+		internal static string APIClientModel;
+		internal static string APIClientUrl;
+		internal static bool APIClientStore;
+		internal static bool APIServerEnable;
+		internal static int APIServerPort;
+		internal static int BatchSize;
+		internal static bool CMDEnable;
+		internal static int CMDTimeoutMs;
+		internal static int CtxSize;
+		internal static bool DateTimeEnable;
+		internal static string FileBaseDir;
+		internal static bool FileCreateEnable;
+		internal static bool FileListEnable;
+		internal static bool FileReadEnable;
+		internal static bool FileWriteEnable;
+		internal static CheckState FlashAttn;
+		internal static float FreqThreshold;
+		internal static int GenDelay;
+		internal static string GoogleAPIKey;
+		internal static bool GoogleSearchEnable;
+		internal static string GoogleSearchID;
+		internal static int GoogleSearchResultCount;
+		internal static int GPULayers;
+		internal static float MinP;
+		internal static bool MLock;
+		internal static bool MMap;
+		internal static string ModelsDir;
+		internal static int NGen;
+		internal static int NThreads;
+		internal static int NThreadsBatch;
+		internal static NativeMethods.GgmlNumaStrategy NumaStrat;
+		internal static float RepPen;
+		internal static bool Speak;
+		internal static string SystemPrompt;
+		internal static float Temp;
+		internal static int TopK;
+		internal static float TopP;
+		internal static bool UseWhisperVAD;
+		internal static string VADModel;
+		internal static float VADThreshold;
+		internal static string WakeWord;
+		internal static float WakeWordSimilarity;
+		internal static bool WebpageFetchEnable;
+		internal static string WhisperModel;
+		internal static float WhisperTemp;
+		internal static bool WhisperUseGPU;
+		internal static volatile bool LlModelLoaded;
+		internal static int CntCtxMax;
+		internal static int ModelCtxMax;
+		internal static ListViewItem LoadedModel;
+	}
+}

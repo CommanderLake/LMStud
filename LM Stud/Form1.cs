@@ -30,7 +30,7 @@ namespace LMStud{
 		private ChatMessageControl _cntAssMsg;
 		private ChatMessageControl _cntToolMsg;
 		private LVColumnClickHandler _columnClickHandler;
-		internal string EditOriginalText = "";
+		internal string InputEditOldText = "";
 		internal bool FirstToken = true;
 		internal volatile bool Generating;
 		private int _genTokenTotal;
@@ -118,10 +118,12 @@ namespace LMStud{
 			if(!Settings.Default.LoadAuto) return;
 			checkLoadAuto.Checked = true;
 			ThreadPool.QueueUserWorkItem(o => {
-				while(_populating) Thread.Sleep(10);
-				var modelPath = _modelsDir + Settings.Default.LastModel;
-				var modelLvi = listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item => item.SubItems[1].Text == modelPath);
-				if(modelLvi != null) LoadModel(modelLvi, true);
+				try{
+					_populateLock.Wait(-1);
+					var modelPath = Common.ModelsDir + Settings.Default.LastModel;
+					var modelLvi = listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item => item.SubItems[1].Text == modelPath);
+					if(modelLvi != null) LoadModel(modelLvi, true);
+				} finally{ _populateLock.Release(); }
 			});
 		}
 		private void InitializeListViews(){
@@ -167,25 +169,27 @@ namespace LMStud{
 		private void CheckVoiceInput_CheckedChanged(object sender, EventArgs e){
 			try{
 				if(checkVoiceInput.CheckState != CheckState.Unchecked && CheckVoiceInputLast == CheckState.Unchecked){
-					if(_whisperModelIndex < 0 || _whisperModelIndex >= _whisperModels.Count || !File.Exists(_whisperModels[_whisperModelIndex])){
+					var vadModelPath = Common.ModelsDir + Common.VADModel;
+					var whisperModelPath = Common.ModelsDir + Common.WhisperModel;
+					if(!File.Exists(whisperModelPath)){
 						checkVoiceInput.Checked = false;
 						MessageBox.Show(this, Resources.Error_Whisper_model_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 						tabControl1.SelectTab(1);
 						comboWhisperModel.Focus();
 						return;
 					}
-					if(_useWhisperVAD)
-						if(_vadModelIndex < 0 || _vadModelIndex >= _whisperModels.Count || !File.Exists(_whisperModels[_vadModelIndex])){
+					if(Common.UseWhisperVAD)
+						if(!File.Exists(vadModelPath)){
 							if(MessageBox.Show(this, Resources.VAD_model_not_found__use_Basic_VAD_, Resources.LM_Stud, MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation) != DialogResult.OK){
 								checkVoiceInput.Checked = false;
 								return;
 							}
 							radioBasicVAD.Checked = true;
-							_useWhisperVAD = Settings.Default.UseWhisperVAD = false;
+							Common.UseWhisperVAD = Settings.Default.UseWhisperVAD = false;
 							Settings.Default.Save();
 						}
 					if(!_whisperLoaded){
-						var result = LoadWhisperModel(_whisperModels[_whisperModelIndex], _nThreads, _whisperUseGPU, _useWhisperVAD, _useWhisperVAD ? _whisperModels[_vadModelIndex] : "");
+						var result = LoadWhisperModel(whisperModelPath, Common.NThreads, Common.WhisperUseGPU, Common.UseWhisperVAD, Common.UseWhisperVAD ? vadModelPath : "");
 						if(result == NativeMethods.StudError.Success){
 							_whisperLoaded = true;
 							_whisperCallback = WhisperCallback;
@@ -206,12 +210,12 @@ namespace LMStud{
 			} finally{ CheckVoiceInputLast = checkVoiceInput.CheckState; }
 		}
 		private void CheckSpeak_CheckedChanged(object sender, EventArgs e){
-			UpdateSetting(ref _speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
+			UpdateSetting(ref Common.Speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			Settings.Default.Save();
 		}
 		internal void CheckDialectic_CheckedChanged(object sender, EventArgs e){
 			if(checkDialectic.Checked){
-				if(!LlModelLoaded){
+				if(!Common.LlModelLoaded){
 					MessageBox.Show(this, Resources.Load_a_model_first_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 					checkDialectic.Checked = false;
 					return;
@@ -298,7 +302,7 @@ namespace LMStud{
 			});
 		}
 		internal void MsgButRegenOnClick(ChatMessageControl cm){
-			if(!LlModelLoaded || Generating || !TryBeginRetokenization()) return;
+			if(!Common.LlModelLoaded || Generating || !TryBeginRetokenization()) return;
 			var idx = ChatMessages.IndexOf(cm);
 			if(idx < 0) return;
 			while(ChatMessages[idx].Role == MessageRole.Assistant) if(--idx < 0) return;
@@ -482,7 +486,7 @@ namespace LMStud{
 		}
 		private void StartEditing(){
 			if(IsEditing) return;
-			EditOriginalText = textInput.Text;
+			InputEditOldText = textInput.Text;
 			IsEditing = true;
 			UpdateStatusMessage();
 			if(checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StopSpeechTranscription();
@@ -494,7 +498,7 @@ namespace LMStud{
 			TryStartSpeechTranscription(true);
 		}
 		private void CancelEditing(){
-			textInput.Text = EditOriginalText;
+			textInput.Text = InputEditOldText;
 			textInput.SelectionStart = textInput.Text.Length;
 			FinishEditing();
 		}
@@ -545,8 +549,8 @@ namespace LMStud{
 			Generate(MessageRole.User, prompt, true);
 		}
 		private void Generate(MessageRole role, string prompt, bool addToChat){
-			var useRemote = _apiClientEnable;
-			if((!useRemote && !LlModelLoaded) || string.IsNullOrWhiteSpace(prompt)) return;
+			var useRemote = Common.APIClientEnable;
+			if((!useRemote && !Common.LlModelLoaded) || string.IsNullOrWhiteSpace(prompt)) return;
 			if(!GenerationLock.Wait(0)) return;
 			if(Generating || APIServerGenerating){
 				GenerationLock.Release();
@@ -583,7 +587,7 @@ namespace LMStud{
 				_genTokenTotal = 0;
 				_swTot.Restart();
 				_swRate.Restart();
-				var generationError = NativeMethods.GenerateWithTools(role, newMsg, _nGen, checkStream.Checked);
+				var generationError = NativeMethods.GenerateWithTools(role, newMsg, Common.NGen, checkStream.Checked);
 				_swTot.Stop();
 				_swRate.Stop();
 				if(SpeechBuffer.Length > 0){
@@ -657,10 +661,10 @@ namespace LMStud{
 				var messages = BuildApiMessages(role, prompt, addToChat);
 				var history = ApiClient.BuildInputItems(messages);
 				var toolsJson = BuildApiToolsJson();
-				var client = new ApiClient(_apiClientUrl, _apiClientKey, _apiClientModel, APIClientStore, _systemPrompt);
+				var client = new ApiClient(Common.APIClientUrl, Common.APIClientKey, Common.APIClientModel, Common.APIClientStore, Common.SystemPrompt);
 				string lastToolSignature = null;
 				while(true){
-					var result = client.CreateChatCompletion(history, _temp, _nGen, toolsJson, null, CancellationToken.None);
+					var result = client.CreateChatCompletion(history, Common.Temp, Common.NGen, toolsJson, null, CancellationToken.None);
 					ApiClient.AppendOutputItems(history, result);
 					var content = result.Content;
 					var reasoning = result.Reasoning;
@@ -672,7 +676,7 @@ namespace LMStud{
 							Invoke(new MethodInvoker(() => {
 								var message = AddMessage(MessageRole.Assistant, reasoning ?? "", content ?? "", toolCalls);
 								if(toolCalls != null && toolCalls.Count > 0) message.SetRoleText(Resources.Tool_Call);
-								if(_speak && !string.IsNullOrWhiteSpace(content)) QueueSpeech(content);
+								if(Common.Speak && !string.IsNullOrWhiteSpace(content)) QueueSpeech(content);
 							}));
 						} catch(ObjectDisposedException){}
 					}
@@ -716,7 +720,7 @@ namespace LMStud{
 			if(string.IsNullOrWhiteSpace(prompt)) return false;
 			if(!GenerationLock.Wait(300000)) return false;
 			try{
-				if(!LlModelLoaded || Generating || APIServerGenerating) return false;
+				if(!Common.LlModelLoaded || Generating || APIServerGenerating) return false;
 				APIServerGenerating = true;
 				_apiTokenCallback = onToken;
 				var originalState = GetState();
@@ -727,7 +731,7 @@ namespace LMStud{
 						var resetResult = NativeMethods.ResetChat();
 						if(resetResult != NativeMethods.StudError.Success) return false;
 					}
-					NativeMethods.GenerateWithTools(MessageRole.User, prompt, _nGen, false);
+					NativeMethods.GenerateWithTools(MessageRole.User, prompt, Common.NGen, false);
 					newState = GetState();
 					tokenCount = NativeMethods.LlamaMemSize();
 					return true;
@@ -794,7 +798,7 @@ namespace LMStud{
 						}
 						else{ This._cntToolMsg.UpdateText("", message, true); }
 						This._cntAssMsg = null;
-						This.labelTokens.Text = string.Format(Resources._0___1__2_, tokensTotal, This._cntCtxMax, Resources._Tokens);
+						This.labelTokens.Text = string.Format(Resources._0___1__2_, tokensTotal, Common.CntCtxMax, Resources._Tokens);
 						if(tool == 1 || tool == 3) This._cntToolMsg = null;
 					}));
 				} catch(ObjectDisposedException){}
@@ -819,7 +823,7 @@ namespace LMStud{
 						if(This._cntAssMsg == null) This._cntAssMsg = This.AddMessage(MessageRole.Assistant, "", "");
 						var lastThink = This._cntAssMsg.checkThink.Checked;
 						This._cntAssMsg.UpdateText(think, message, renderToken);
-						if(This._speak && !This._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(message)){
+						if(Common.Speak && !This._cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(message)){
 							var i = This._cntAssMsg.TTSPosition;
 							for(; i < This._cntAssMsg.Message.Length; i++){
 								var ch = This._cntAssMsg.Message[i];
@@ -833,7 +837,7 @@ namespace LMStud{
 								while(This.SpeechBuffer.Length > 0 && char.IsWhiteSpace(This.SpeechBuffer[0])) This.SpeechBuffer.Remove(0, 1);
 							}
 						}
-						This.labelTokens.Text = string.Format(Resources._0___1__2_, tokensTotal, This._cntCtxMax, Resources._Tokens);
+						This.labelTokens.Text = string.Format(Resources._0___1__2_, tokensTotal, Common.CntCtxMax, Resources._Tokens);
 					} catch(ObjectDisposedException){} finally{ This._rendering = false; }
 				}));
 			} catch(ObjectDisposedException){}
@@ -855,7 +859,7 @@ namespace LMStud{
 				if(This.checkVoiceInput.CheckState != CheckState.Checked) return;
 				var prompt = This.textInput.Text;
 				if(string.IsNullOrWhiteSpace(prompt)) return;
-				if(!This._apiClientEnable && !This.LlModelLoaded) return;
+				if(!Common.APIClientEnable && !Common.LlModelLoaded) return;
 				NativeMethods.StopSpeechTranscription();
 				This.Generate();
 			}));

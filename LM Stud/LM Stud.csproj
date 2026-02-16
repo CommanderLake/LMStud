@@ -112,6 +112,7 @@
     <Compile Include="ChatMessageControl.Designer.cs">
       <DependentUpon>ChatMessageControl.cs</DependentUpon>
     </Compile>
+    <Compile Include="Common.cs" />
     <Compile Include="Form1.ModelSettings.cs">
       <SubType>Form</SubType>
     </Compile>

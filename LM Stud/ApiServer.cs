@@ -18,7 +18,7 @@ namespace LMStud{
 		internal ApiServer(Form1 form){_form = form;}
 		internal bool IsRunning => _listener != null && _listener.IsListening;
 		private ApiClient CreateApiClient(){
-			return new ApiClient(Settings.Default.ApiClientBaseUrl, Settings.Default.ApiClientKey, Settings.Default.ApiClientModel, _form.APIClientStore, Settings.Default.SystemPrompt);
+			return new ApiClient(Settings.Default.ApiClientBaseUrl, Settings.Default.ApiClientKey, Settings.Default.ApiClientModel, Common.APIClientStore, Settings.Default.SystemPrompt);
 		}
 		internal void Start(){
 			if(IsRunning) return;
@@ -48,7 +48,7 @@ namespace LMStud{
 				var method = req.HttpMethod;
 				var path = req.Url.AbsolutePath;
 				var useRemoteApi = Settings.Default.ApiClientEnable;
-				if(!useRemoteApi && !_form.LlModelLoaded){
+				if(!useRemoteApi && !Common.LlModelLoaded){
 					context.Response.StatusCode = 409;
 					return;
 				}
@@ -139,7 +139,7 @@ namespace LMStud{
 					s.State = newState;
 					s.TokenCount = tokens;
 				});
-				var resp = BuildResponsePayload(assistant, Path.GetFileNameWithoutExtension(_form.LoadedModel.SubItems[1].Text), session.Id);
+				var resp = BuildResponsePayload(assistant, Path.GetFileNameWithoutExtension(Common.LoadedModel.SubItems[1].Text), session.Id);
 				var json = JsonConvert.SerializeObject(resp);
 				var bytes = Encoding.UTF8.GetBytes(json);
 				ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);

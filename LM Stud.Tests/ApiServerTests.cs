@@ -26,7 +26,7 @@ namespace LM_Stud.Tests{
 				_form = Program.MainForm;
 				Thread.Sleep(1000);
 				_form.Invoke(new MethodInvoker(() => {_form.LoadModel(_form.listViewModels.Items["Hermes-3-Llama-3.2-3B.Q8_0"], true);}));
-				while(!_form.LlModelLoaded) Thread.Sleep(10);
+				while(!Common.LlModelLoaded) Thread.Sleep(10);
 				_apiServer = new ApiServer(_form){ Port = TestPort };
 				_apiServer.Start();
 			}
