@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -24,13 +23,6 @@ namespace LMStud{
 		private volatile bool _ttsSpeaking;
 		private int _ttsPendingCount;
 		private int _retokenizeCount;
-		private bool _retokenizeButApplyEnabled;
-		private bool _retokenizeButApplyModelSettingsEnabled;
-		private bool _retokenizeButGenEnabled;
-		private bool _retokenizeButLoadEnabled;
-		private bool _retokenizeButResetEnabled;
-		private bool _retokenizeButUnloadEnabled;
-		private bool _retokenizeListViewModelsEnabled;
 		internal readonly SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
 		internal volatile bool APIServerGenerating;
 		private Action<string> _apiTokenCallback;
@@ -48,6 +40,15 @@ namespace LMStud{
 		private bool _whisperLoaded;
 		internal bool DialecticStarted;
 		internal bool DialecticPaused;
+		private struct FormControlStates{
+			internal static bool ButApplyEnabled;
+			internal static bool ButApplyModelSettingsEnabled;
+			internal static bool ButGenEnabled;
+			internal static bool ButLoadEnabled;
+			internal static bool ButResetEnabled;
+			internal static bool ButUnloadEnabled;
+			internal static bool ListViewModelsEnabled;
+		}
 		internal Form1(){
 			This = this;
 			//var culture = new CultureInfo("zh-CN");
@@ -439,13 +440,13 @@ namespace LMStud{
 		private void BeginRetokenization(){
 			if(Interlocked.Increment(ref _retokenizeCount) != 1) return;
 			RunOnUiThread(() => {
-				_retokenizeButApplyEnabled = butApply.Enabled;
-				_retokenizeButApplyModelSettingsEnabled = butApplyModelSettings.Enabled;
-				_retokenizeButGenEnabled = butGen.Enabled;
-				_retokenizeButLoadEnabled = butLoad.Enabled;
-				_retokenizeButResetEnabled = butReset.Enabled;
-				_retokenizeButUnloadEnabled = butUnload.Enabled;
-				_retokenizeListViewModelsEnabled = listViewModels.Enabled;
+				FormControlStates.ButApplyEnabled = butApply.Enabled;
+				FormControlStates.ButApplyModelSettingsEnabled = butApplyModelSettings.Enabled;
+				FormControlStates.ButGenEnabled = butGen.Enabled;
+				FormControlStates.ButLoadEnabled = butLoad.Enabled;
+				FormControlStates.ButResetEnabled = butReset.Enabled;
+				FormControlStates.ButUnloadEnabled = butUnload.Enabled;
+				FormControlStates.ListViewModelsEnabled = listViewModels.Enabled;
 				butApply.Enabled = false;
 				butApplyModelSettings.Enabled = false;
 				butGen.Enabled = false;
@@ -459,13 +460,13 @@ namespace LMStud{
 		private void EndRetokenization(){
 			if(Interlocked.Decrement(ref _retokenizeCount) != 0) return;
 			RunOnUiThread(() => {
-				butApply.Enabled = _retokenizeButApplyEnabled;
-				butApplyModelSettings.Enabled = _retokenizeButApplyModelSettingsEnabled;
-				butGen.Enabled = _retokenizeButGenEnabled;
-				butLoad.Enabled = _retokenizeButLoadEnabled;
-				butReset.Enabled = _retokenizeButResetEnabled;
-				butUnload.Enabled = _retokenizeButUnloadEnabled;
-				listViewModels.Enabled = _retokenizeListViewModelsEnabled;
+				butApply.Enabled = FormControlStates.ButApplyEnabled;
+				butApplyModelSettings.Enabled = FormControlStates.ButApplyModelSettingsEnabled;
+				butGen.Enabled = FormControlStates.ButGenEnabled;
+				butLoad.Enabled = FormControlStates.ButLoadEnabled;
+				butReset.Enabled = FormControlStates.ButResetEnabled;
+				butUnload.Enabled = FormControlStates.ButUnloadEnabled;
+				listViewModels.Enabled = FormControlStates.ListViewModelsEnabled;
 				UpdateStatusMessage();
 			});
 		}
@@ -649,7 +650,6 @@ namespace LMStud{
 			if(!addToChat && !string.IsNullOrWhiteSpace(prompt)) messages.Add(new ApiClient.ChatMessage(RoleToApiRole(role), prompt));
 			return messages;
 		}
-		[Localizable(true)]
 		private void GenerateWithApiClient(MessageRole role, string prompt, bool addToChat){
 			Exception error = null;
 			var syncError = NativeMethods.StudError.Success;
@@ -677,8 +677,8 @@ namespace LMStud{
 						} catch(ObjectDisposedException){}
 					}
 					if(toolCalls == null || toolCalls.Count == 0) break;
-					var toolSignature = string.Join("|", toolCalls.Select(call => $"{call.Id}:{call.Name}:{call.Arguments}"));
-					if(toolSignature == lastToolSignature) throw new InvalidOperationException("Repeated tool calls detected.");
+					var toolSignature = string.Join("|", toolCalls.Select(call => string.Format(Resources._0___1___2_, call.Id, call.Name, call.Arguments)));
+					if(toolSignature == lastToolSignature) throw new InvalidOperationException(Resources.Repeated_tool_calls_detected);
 					lastToolSignature = toolSignature;
 					foreach(var toolCall in toolCalls){
 						var toolResult = ExecuteToolCall(toolCall);

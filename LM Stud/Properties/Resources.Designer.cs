@@ -100,6 +100,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0}:{1}:{2}.
+        /// </summary>
+        internal static string _0___1___2_ {
+            get {
+                return ResourceManager.GetString("_0___1___2_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0}/{1}{2}.
         /// </summary>
         internal static string _0___1__2_ {
@@ -611,6 +620,15 @@ namespace LMStud.Properties {
         internal static string Received_an_invalid_response_from_the_API_server {
             get {
                 return ResourceManager.GetString("Received_an_invalid_response_from_the_API_server", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Repeated tool calls detected.
+        /// </summary>
+        internal static string Repeated_tool_calls_detected {
+            get {
+                return ResourceManager.GetString("Repeated_tool_calls_detected", resourceCulture);
             }
         }
         

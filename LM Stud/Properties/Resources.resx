@@ -485,4 +485,10 @@ Tool arguments: </value>
 <data name="Please_enter_a_valid_API_base_URL" xml:space="preserve">
 	<value>Please enter a valid API base URL</value>
 </data>
+<data name="Repeated_tool_calls_detected" xml:space="preserve">
+	<value>Repeated tool calls detected</value>
+</data>
+<data name="_0___1___2_" xml:space="preserve">
+	<value>{0}:{1}:{2}</value>
+</data>
 </root>
