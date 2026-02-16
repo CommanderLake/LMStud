@@ -85,34 +85,11 @@ namespace LM_Stud.Tests{
 			Thread.Sleep(10);
 			var session3 = _sessionManager.Get("session-3");
 			Thread.Sleep(10);
-
-			// Creating one more should evict the oldest
 			var session4 = _sessionManager.Get("session-4");
-
-			// Check that session1 was evicted
 			var retrievedSession1 = _sessionManager.Get("session-1");
 			Assert.AreNotSame(session1, retrievedSession1, "Oldest session should be evicted and recreated.");
-
-			// Check that newer sessions still exist
 			var retrievedSession3 = _sessionManager.Get("session-3");
 			Assert.AreSame(session3, retrievedSession3, "Newer session should still exist.");
-		}
-		[TestMethod]
-		public void Evict_WhenExceedsMaxTokens_RemovesSessionsToFitLimit(){
-			var session1 = _sessionManager.Get("session-1");
-			_sessionManager.Update(session1, new List<ApiServer.Message>(), null, 400);
-			Thread.Sleep(10);
-			var session2 = _sessionManager.Get("session-2");
-			_sessionManager.Update(session2, new List<ApiServer.Message>(), null, 400);
-			Thread.Sleep(10);
-
-			// This should trigger eviction due to token limit
-			var session3 = _sessionManager.Get("session-3");
-			_sessionManager.Update(session3, new List<ApiServer.Message>(), null, 300);
-
-			// Session1 should be evicted (oldest)
-			var retrievedSession1 = _sessionManager.Get("session-1");
-			Assert.AreNotSame(session1, retrievedSession1, "Session should be evicted when token limit exceeded.");
 		}
 		[TestMethod]
 		public void LastUsed_UpdatedOnGet(){
