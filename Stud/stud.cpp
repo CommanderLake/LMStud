@@ -296,9 +296,11 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	in.use_jinja = _session.useJinja;
 	in.messages = msgs;
 	in.add_generation_prompt = false;
-	in.tools = _tools;
-	in.tool_choice = COMMON_CHAT_TOOL_CHOICE_AUTO;
-	in.parallel_tool_calls = true;
+	if(_hasTools){
+		in.tools = _tools;
+		in.tool_choice = COMMON_CHAT_TOOL_CHOICE_AUTO;
+		in.parallel_tool_calls = true;
+	}
 	in.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
 	common_chat_params chatData;
 	try{ chatData = common_chat_templates_apply(_chatTemplates.get(), in); } catch(std::exception& e){
