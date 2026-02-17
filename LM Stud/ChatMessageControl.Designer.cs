@@ -42,6 +42,8 @@
 			this.richTextMsg.CausesValidation = false;
 			this.richTextMsg.Name = "richTextMsg";
 			this.richTextMsg.ReadOnly = true;
+			this.richTextMsg.ContentsResized += new System.Windows.Forms.ContentsResizedEventHandler(this.RichTextMsgOnContentsResized);
+			this.richTextMsg.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(RichTextMsgOnLinkClicked);
 			// 
 			// butDelete
 			// 

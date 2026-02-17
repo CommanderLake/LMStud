@@ -1928,7 +1928,7 @@ namespace LMStud
 		#endregion
 		internal System.Windows.Forms.TextBox textInput;
 		private System.Windows.Forms.SplitContainer splitContainer1;
-		private System.Windows.Forms.Button butGen;
+		internal System.Windows.Forms.Button butGen;
 		private System.Windows.Forms.TabControl tabControl1;
 		private System.Windows.Forms.TabPage tabPageChat;
 		private System.Windows.Forms.TabPage tabPageSettings;
@@ -1936,10 +1936,10 @@ namespace LMStud
 		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.TextBox textSystemPrompt;
-		private System.Windows.Forms.Button butApply;
+		internal System.Windows.Forms.Button butApply;
 		private System.Windows.Forms.Button butBrowse;
 		private System.Windows.Forms.TextBox textModelsDir;
-		private System.Windows.Forms.Button butReset;
+		internal System.Windows.Forms.Button butReset;
 		private System.Windows.Forms.NumericUpDown numRepPen;
 		private System.Windows.Forms.Label label6;
 		private System.Windows.Forms.NumericUpDown numTemp;
@@ -1968,7 +1968,7 @@ namespace LMStud
 		private System.Windows.Forms.Label label12;
 		private System.Windows.Forms.ComboBox comboNUMAStrat;
 		private System.Windows.Forms.Button butUnload;
-		private System.Windows.Forms.ToolStripStatusLabel labelTokens;
+		internal System.Windows.Forms.ToolStripStatusLabel labelTokens;
 		internal System.Windows.Forms.CheckBox checkMarkdown;
 		internal MyFlowLayoutPanel panelChat;
 		private System.Windows.Forms.CheckBox checkLoadAuto;
@@ -1978,7 +1978,7 @@ namespace LMStud
 		private System.Windows.Forms.ColumnHeader columnHeader4;
 		private System.Windows.Forms.GroupBox groupAdvanced;
 		private System.Windows.Forms.GroupBox groupCommon;
-		private System.Windows.Forms.ToolStripStatusLabel labelTPS;
+		internal System.Windows.Forms.ToolStripStatusLabel labelTPS;
 		private System.Windows.Forms.Button butCodeBlock;
 		private System.Windows.Forms.TabPage tabPageHuggingFace;
 		private System.Windows.Forms.SplitContainer splitContainer3;
@@ -2003,7 +2003,7 @@ namespace LMStud
 		private System.Windows.Forms.Label label14;
 		private System.Windows.Forms.GroupBox groupCPUParams;
 		private System.Windows.Forms.ToolTip toolTip1;
-		private System.Windows.Forms.ToolStripStatusLabel labelPreGen;
+		internal System.Windows.Forms.ToolStripStatusLabel labelPreGen;
 		private System.Windows.Forms.CheckBox checkMLock;
 		private System.Windows.Forms.CheckBox checkMMap;
 		private System.Windows.Forms.GroupBox groupBox1;
@@ -2020,7 +2020,7 @@ namespace LMStud
 		private System.Windows.Forms.NumericUpDown numVadThreshold;
 		private System.Windows.Forms.CheckBox checkSpeak;
 		private System.Windows.Forms.CheckBox checkFlashAttn;
-		private System.Windows.Forms.CheckBox checkStream;
+		internal System.Windows.Forms.CheckBox checkStream;
 		private System.Windows.Forms.GroupBox groupBox2;
 		private System.Windows.Forms.Label label20;
 		private System.Windows.Forms.Label label19;

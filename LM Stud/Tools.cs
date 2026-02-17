@@ -1,23 +1,23 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
-namespace LMStud{
-	public partial class Form1{
-		private string _toolsJsonCache;
-		private bool _toolsJsonCacheDirty = true;
-		private void RegisterTools(){
+namespace LMStud {
+	internal class Tools {
+		private static string _toolsJsonCache;
+		private static bool _toolsJsonCacheDirty = true;
+		internal static void RegisterTools(){
 			NativeMethods.RegisterTools(Common.DateTimeEnable, Common.GoogleSearchEnable, Common.WebpageFetchEnable, Common.FileListEnable, Common.FileCreateEnable, Common.FileReadEnable, Common.FileWriteEnable, Common.CMDEnable);
 			InvalidateToolsJsonCache();
 		}
-		private void ClearRegisteredTools(){
+		internal static void ClearRegisteredTools(){
 			NativeMethods.ClearTools();
 			NativeMethods.ClearWebCache();
 			InvalidateToolsJsonCache();
 		}
-		private bool ToolsEnabled(){
+		private static bool ToolsEnabled(){
 			return Common.DateTimeEnable || Common.GoogleSearchEnable || Common.WebpageFetchEnable || Common.FileListEnable || Common.FileCreateEnable || Common.FileReadEnable || Common.FileWriteEnable || Common.CMDEnable;
 		}
-		internal string BuildApiToolsJson(){
+		internal static string BuildApiToolsJson(){
 			if(!ToolsEnabled()) return null;
 			if(!_toolsJsonCacheDirty && !string.IsNullOrWhiteSpace(_toolsJsonCache)) return _toolsJsonCache;
 			var ptr = NativeMethods.GetToolsJson(out var length);
@@ -28,11 +28,11 @@ namespace LMStud{
 			_toolsJsonCacheDirty = false;
 			return _toolsJsonCache;
 		}
-		private void InvalidateToolsJsonCache(){
+		private static void InvalidateToolsJsonCache(){
 			_toolsJsonCacheDirty = true;
 			_toolsJsonCache = null;
 		}
-		internal string ExecuteToolCall(ApiClient.ToolCall toolCall){
+		internal static string ExecuteToolCall(ApiClient.ToolCall toolCall){
 			if(toolCall == null || string.IsNullOrWhiteSpace(toolCall.Name)) return "{\"error\":\"missing tool name\"}";
 			var ptr = NativeMethods.ExecuteTool(toolCall.Name, toolCall.Arguments ?? "");
 			if(ptr == IntPtr.Zero) return "{\"error\":\"tool execution failed\"}";

@@ -1,6 +1,7 @@
 ﻿//#define newMarkdown
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -44,7 +45,6 @@ namespace LMStud{
 			_think = think;
 			_message = message;
 			_markdown = markdown;
-			richTextMsg.ContentsResized += RichTextMsgOnContentsResized;
 			labelRole.Text = role.ToString();
 		}
 		private void ChatMessage_Load(object sender, EventArgs e) {
@@ -166,6 +166,13 @@ namespace LMStud{
 				if(_markdown) richTextMsg.Rtf = MarkdownToRtf(_message);
 				else richTextMsg.Text = _message;
 			}
+		}
+		private static void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){
+			try{
+				if(!Uri.TryCreate(e.LinkText, UriKind.Absolute, out var link)) return;
+				var psi = new ProcessStartInfo(link.ToString());
+				Process.Start(psi);
+			} catch{}
 		}
 	}
 }

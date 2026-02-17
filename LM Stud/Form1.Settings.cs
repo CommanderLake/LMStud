@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
 	public partial class Form1{
-		private List<string> _whisperModels = new List<string>();
+		private readonly List<string> _whisperModels = new List<string>();
 		private void LoadConfig(){
 			var mp = Settings.Default.ModelsDir;
 			mp = mp[mp.Length - 1] == '\\' || mp[mp.Length - 1] == '/' ? mp : mp + '\\';
@@ -72,7 +71,7 @@ namespace LMStud{
 				_apiServer.Port = Common.APIServerPort;
 				_apiServer.Start();
 			}
-			if(Common.APIClientEnable) RegisterTools();
+			if(Common.APIClientEnable) Tools.RegisterTools();
 		}
 		private void UpdateSetting<T>(ref T currentValue, T newValue, Action<T> updateAction){
 			if(EqualityComparer<T>.Default.Equals(currentValue, newValue)) return;
@@ -341,7 +340,7 @@ namespace LMStud{
 				}
 			}
 			if(setGoogle) NativeMethods.SetGoogle(Common.GoogleAPIKey, Common.GoogleSearchID, Common.GoogleSearchResultCount);
-			if(registerTools) RegisterTools();
+			if(registerTools) Tools.RegisterTools();
 			if(setStatusLabel) SetModelStatus();
 			if(registerTools || setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPrompt();});
 			if(overrideSettings && modelOverrideChanged) MessageBox.Show(this, Resources.The_modified_settings_are_overridden_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -402,7 +401,6 @@ Always read a file and verify its contents before making changes.");
 				if(vad) comboVADModel.SelectedIndex = comboVADModel.Items.IndexOf(Path.GetFileName(Common.VADModel));
 			} finally{ UseWaitCursor = false; }
 		}
-		[Localizable(true)]
 		private void ComboApiClientModel_DropDown(object sender, EventArgs e){
 			try{
 				var apiUrl = textApiClientUrl.Text?.Trim();

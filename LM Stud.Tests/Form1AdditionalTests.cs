@@ -89,7 +89,7 @@ namespace LM_Stud.Tests{
 		[TestMethod]
 		public void ApiGenerating_PreventsNormalGeneration(){
 			_form.Invoke(new MethodInvoker(() => {
-				_form.APIServerGenerating = true;
+				Generation.APIServerGenerating = true;
 				Common.LlModelLoaded = true;
 				var textInput = _form.textInput;
 				textInput.Text = "Test message";
@@ -100,7 +100,7 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public void SpeechBuffer_AccumulatesText(){
-			var speechBuffer = _form.SpeechBuffer;
+			var speechBuffer = _form.TTS.Pending;
 			_form.Invoke(new MethodInvoker(() => {speechBuffer.Clear();}));
 			_form.Invoke(new MethodInvoker(() => {
 				speechBuffer.Append("Hello ");
@@ -120,9 +120,9 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public void FirstToken_FlagReset(){
-			_form.Invoke(new MethodInvoker(() => {_form.FirstToken = false;}));
-			_form.Invoke(new MethodInvoker(() => {_form.FirstToken = true;}));
-			Assert.IsTrue(_form.FirstToken, "First token flag should be set.");
+			_form.Invoke(new MethodInvoker(() => {Generation.FirstToken = false;}));
+			_form.Invoke(new MethodInvoker(() => {Generation.FirstToken = true;}));
+			Assert.IsTrue(Generation.FirstToken, "First token flag should be set.");
 		}
 	}
 }

@@ -56,7 +56,7 @@ namespace LMStud{
 			if(!_populateLock.Wait(0) || !ModelsFolderExists(true)) return;
 			ThreadPool.QueueUserWorkItem(_ => {
 				try{
-					if(!GenerationLock.Wait(-1)) return;
+					if(!Generation.GenerationLock.Wait(-1)) return;
 					var files = Directory.GetFiles(Common.ModelsDir, "*.gguf", SearchOption.AllDirectories);
 					var items = new List<ListViewItem>();
 					foreach(var file in files){
@@ -80,7 +80,7 @@ namespace LMStud{
 					}));
 				} finally{
 					_populateLock.Release();
-					GenerationLock.Release();
+					Generation.GenerationLock.Release();
 				}
 			});
 		}
@@ -144,7 +144,7 @@ namespace LMStud{
 			if(!string.IsNullOrEmpty(extra)) detail += "\r\n\r\n" + extra;
 			ShowError(action, detail, false);
 		}
-		private void ShowError(string action, string error, bool addNativeMsg){
+		internal void ShowError(string action, string error, bool addNativeMsg){
 			if(addNativeMsg){
 				var extra = NativeMethods.GetLastError();
 				NativeMethods.ClearLastErrorMessage();
@@ -180,14 +180,14 @@ namespace LMStud{
 			}
 			return root.Message;
 		}
-		private void ShowApiClientError(string action, Exception exception){
+		internal void ShowApiClientError(string action, Exception exception){
 			var detail = GetApiClientFriendlyError(exception);
 			var technical = exception?.Message;
 			if(!string.IsNullOrWhiteSpace(technical) && !string.Equals(technical, detail, StringComparison.Ordinal)) detail += "\r\n\r\n" + technical;
 			ShowError(action, detail, false);
 		}
 		private void SetSystemPromptInternal(bool genLock){
-			if(genLock) GenerationLock.Wait(-1);
+			if(genLock) Generation.GenerationLock.Wait(-1);
 			try{
 				string prompt;
 				if(Common.LoadedModel != null && _modelSettings.TryGetValue(Common.LoadedModel.SubItems[1].Text.Substring(Common.ModelsDir.Length), out var overrides) && overrides.OverrideSettings) prompt = overrides.SystemPrompt;
@@ -195,7 +195,7 @@ namespace LMStud{
 				var error = NativeMethods.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, Common.GoogleSearchEnable && Common.WebpageFetchEnable ? FetchPrompt : "");
 				if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowError(Resources.Error_setting_system_prompt, error);
 			} finally{
-				if(genLock) GenerationLock.Release();
+				if(genLock) Generation.GenerationLock.Release();
 			}
 		}
 		private void SetSystemPrompt(bool genLock = true){
@@ -207,7 +207,7 @@ namespace LMStud{
 			try{ SetSystemPromptInternal(genLock); } finally{ EndRetokenization(); }
 		}
 		void SetModelStatus(){
-			butGen.Enabled = butReset.Enabled = (Common.APIClientEnable || Common.LlModelLoaded) && !Generating;
+			butGen.Enabled = butReset.Enabled = (Common.APIClientEnable || Common.LlModelLoaded) && !Generation.Generating;
 			if(Common.APIClientEnable) toolStripStatusLabel1.Text = Resources.Using_API_Model_ + Common.APIClientModel;
 			else if(Common.LlModelLoaded) toolStripStatusLabel1.Text = Resources.Using_Model_ + Common.LoadedModel.Text;
 			else toolStripStatusLabel1.Text = Resources.No_model_loaded;
@@ -223,16 +223,16 @@ namespace LMStud{
 			return result;
 		}
 		NativeMethods.StudError CreateContext(int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch){
-			GenerationLock.Wait(-1);
+			Generation.GenerationLock.Wait(-1);
 			NativeMethods.StudError result;
-			try{ result = NativeMethods.CreateContext(nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch); } finally{ GenerationLock.Release(); }
+			try{ result = NativeMethods.CreateContext(nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch); } finally{ Generation.GenerationLock.Release(); }
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_context, result);
 			return result;
 		}
 		NativeMethods.StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty){
-			GenerationLock.Wait(-1);
+			Generation.GenerationLock.Wait(-1);
 			NativeMethods.StudError result;
-			try{ result = NativeMethods.CreateSampler(minP, topP, topK, temp, repeatPenalty); } finally{ GenerationLock.Release(); }
+			try{ result = NativeMethods.CreateSampler(minP, topP, topK, temp, repeatPenalty); } finally{ Generation.GenerationLock.Release(); }
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_sampler, result);
 			return result;
 		}
@@ -263,7 +263,7 @@ namespace LMStud{
 				var flashAttn = overrideSettings ? overrides.FlashAttn : Common.FlashAttn;
 				var jinjaTmpl = overrides != null && overrides.OverrideJinja && File.Exists(overrides.JinjaTemplate) ? File.ReadAllText(overrides.JinjaTemplate) : null;
 				try{
-					if(!GenerationLock.Wait(-1)) return;
+					if(!Generation.GenerationLock.Wait(-1)) return;
 					if(Common.LlModelLoaded) UnloadModelInternal(false);
 					Invoke(new MethodInvoker(() => {toolStripStatusLabel1.Text = Resources.Loading__ + fileName;}));
 					unsafe{
@@ -286,9 +286,9 @@ namespace LMStud{
 							while(Common.LlModelLoaded) Thread.Sleep(10);
 							return;
 						}
-						_tokenCallback = TokenCallback;
+						_tokenCallback = Generation.TokenCallback;
 						NativeMethods.SetTokenCallback(_tokenCallback);
-						RegisterTools();
+						Tools.RegisterTools();
 						SetSystemPrompt(false);
 						try{
 							BeginInvoke(new MethodInvoker(() => {
@@ -302,7 +302,7 @@ namespace LMStud{
 						} catch(ObjectDisposedException){}
 					}
 				} finally{
-					GenerationLock.Release();
+					Generation.GenerationLock.Release();
 					BeginInvoke(new MethodInvoker(() => {
 						SetModelStatus();
 						butLoad.Enabled = butUnload.Enabled = true;
@@ -313,8 +313,8 @@ namespace LMStud{
 		private void UnloadModelInternal(bool genLock){
 			try{
 				NativeMethods.StopGeneration();
-				if(genLock) GenerationLock.Wait(-1);
-				ClearRegisteredTools();
+				if(genLock) Generation.GenerationLock.Wait(-1);
+				Tools.ClearRegisteredTools();
 				NativeMethods.FreeModel();
 				try{
 					BeginInvoke(new MethodInvoker(() => {
@@ -325,7 +325,7 @@ namespace LMStud{
 			} finally{
 				Common.LoadedModel = null;
 				Common.LlModelLoaded = false;
-				if(genLock) GenerationLock.Release();
+				if(genLock) Generation.GenerationLock.Release();
 			}
 		}
 		private void UnloadModel(bool genLock){

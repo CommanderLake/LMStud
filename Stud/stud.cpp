@@ -391,8 +391,8 @@ static StudError DecodeSinglePromptMessage(const common_chat_msg& message, const
 	return StudError::Success;
 }
 static void AlignChatStates(){
-	auto& a = _session.chatMsgs[0];
-	auto& b = _session.chatMsgs[1];
+	const auto& a = _session.chatMsgs[0];
+	const auto& b = _session.chatMsgs[1];
 	if(a.size() == b.size()) return;
 	const int longerId = a.size() >= b.size() ? 0 : 1;
 	const int shorterId = 1 - longerId;

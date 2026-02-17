@@ -57,16 +57,15 @@ namespace LMStud{
 		internal static JArray BuildInputItems(IEnumerable<ChatMessage> messages){
 			if(messages == null) return new JArray();
 			var items = new JArray();
-			foreach(var message in messages){
-				if(message == null) continue;
+			foreach(var message in messages.Where(message => message != null)){
 				items.Add(BuildInputMessagePayload(message));
-				if(message.ToolCalls != null)
-					foreach(var toolCall in message.ToolCalls){
-						if(toolCall == null) continue;
-						if(string.IsNullOrWhiteSpace(toolCall.Id) || string.IsNullOrWhiteSpace(toolCall.Name)) continue;
-						var toolItem = new JObject{ ["type"] = "function_call", ["call_id"] = toolCall.Id, ["name"] = toolCall.Name, ["arguments"] = toolCall.Arguments ?? "" };
-						items.Add(toolItem);
-					}
+				if(message.ToolCalls == null) continue;
+				foreach(var toolCall in message.ToolCalls){
+					if(toolCall == null) continue;
+					if(string.IsNullOrWhiteSpace(toolCall.Id) || string.IsNullOrWhiteSpace(toolCall.Name)) continue;
+					var toolItem = new JObject{ ["type"] = "function_call", ["call_id"] = toolCall.Id, ["name"] = toolCall.Name, ["arguments"] = toolCall.Arguments ?? "" };
+					items.Add(toolItem);
+				}
 			}
 			return items;
 		}

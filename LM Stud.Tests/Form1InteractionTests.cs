@@ -36,14 +36,14 @@ namespace LM_Stud.Tests{
 		[TestMethod]
 		public void Generate_WhenSemaphoreUnavailable_DoesNotProceed(){
 			Common.LlModelLoaded = true;
-			_form.GenerationLock.Wait();
+			Generation.GenerationLock.Wait();
 			_form.Invoke(new MethodInvoker(() => {
 				_form.textInput.Text = "Hello";
 				_form.ButGen_Click(null, null);
 			}));
-			_form.GenerationLock.Release();
+			Generation.GenerationLock.Release();
 			Assert.AreEqual(0, _form.ChatMessages.Count, "Generation should not start when the semaphore cannot be acquired.");
-			Assert.IsFalse(_form.Generating, "Generating flag must remain false when generation is skipped.");
+			Assert.IsFalse(Generation.Generating, "Generating flag must remain false when generation is skipped.");
 		}
 		[TestMethod]
 		public void DialecticToggle_EnablesWhenModelLoaded(){
@@ -53,21 +53,21 @@ namespace LM_Stud.Tests{
 				_form.CheckDialectic_CheckedChanged(_form.checkDialectic, EventArgs.Empty);
 			}));
 			Assert.IsTrue(_form.checkDialectic.Checked, "Checkbox should stay checked when enabling dialectic mode succeeds.");
-			Assert.IsFalse(_form.DialecticStarted, "Dialectic should reset start flag when enabling.");
-			Assert.IsFalse(_form.DialecticPaused, "Dialectic should reset pause flag when enabling.");
+			Assert.IsFalse(Generation.DialecticStarted, "Dialectic should reset start flag when enabling.");
+			Assert.IsFalse(Generation.DialecticPaused, "Dialectic should reset pause flag when enabling.");
 		}
 		[TestMethod]
 		public void DialecticToggle_DisablesClearingState(){
 			Common.LlModelLoaded = true;
-			_form.DialecticStarted = true;
-			_form.DialecticPaused = true;
+			Generation.DialecticStarted = true;
+			Generation.DialecticPaused = true;
 			_form.Invoke(new MethodInvoker(() => {
 				_form.checkDialectic.Checked = false;
 				_form.CheckDialectic_CheckedChanged(_form.checkDialectic, EventArgs.Empty);
 			}));
 			Assert.IsFalse(_form.checkDialectic.Checked, "Checkbox should remain unchecked after disabling.");
-			Assert.IsFalse(_form.DialecticStarted, "Disabling should clear start flag.");
-			Assert.IsFalse(_form.DialecticPaused, "Disabling should clear pause flag.");
+			Assert.IsFalse(Generation.DialecticStarted, "Disabling should clear start flag.");
+			Assert.IsFalse(Generation.DialecticPaused, "Disabling should clear pause flag.");
 		}
 		[TestMethod]
 		public void MarkdownToggle_AppliesToExistingMessages(){
@@ -153,7 +153,7 @@ namespace LM_Stud.Tests{
 			}));
 			Thread.Sleep(100);
 			_form.Invoke(new MethodInvoker(() => {
-				_form.Generating = true;
+				Generation.Generating = true;
 				_form.MsgButRegenOnClick(message);
 			}));
 			Thread.Sleep(100);

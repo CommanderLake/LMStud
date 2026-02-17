@@ -60,7 +60,7 @@ namespace LMStud{
 			}
 		}
 		private void HandleReset(HttpListenerContext ctx){
-			if(!_form.GenerationLock.Wait(0)){
+			if(!Generation.GenerationLock.Wait(0)){
 				ctx.Response.StatusCode = 409;
 				return;
 			}
@@ -89,7 +89,7 @@ namespace LMStud{
 				var bytes = Encoding.UTF8.GetBytes(json);
 				ctx.Response.ContentType = "application/json";
 				ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
-			} finally{ _form.GenerationLock.Release(); }
+			} finally{ Generation.GenerationLock.Release(); }
 		}
 		private void HandleChat(HttpListenerContext ctx){
 			string body;
@@ -128,7 +128,7 @@ namespace LMStud{
 				ctx.Response.ContentType = "application/json";
 				var sb = new StringBuilder();
 				void TokenCb(string token){sb.Append(token);}
-				if(!_form.GenerateForApiServer(session.State, prompt, TokenCb, out var newState, out var tokens)){
+				if(!_form.Generation.GenerateForApiServer(session.State, prompt, TokenCb, out var newState, out var tokens)){
 					ctx.Response.StatusCode = 409;
 					return;
 				}
@@ -160,7 +160,7 @@ namespace LMStud{
 				var persisted = BuildPersistedHistory(session.Messages);
 				foreach(var item in incomingDelta) persisted.Add(item);
 				var history = persisted;
-				var toolsJson = request.Tools != null ? request.Tools.ToString(Formatting.None) : _form.BuildApiToolsJson();
+				var toolsJson = request.Tools != null ? request.Tools.ToString(Formatting.None) : Tools.BuildApiToolsJson();
 				var client = CreateApiClient();
 				var result = client.CreateChatCompletion(history, (float)Settings.Default.Temp, (int)Settings.Default.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
 				ApiClient.AppendOutputItems(history, result);
@@ -172,7 +172,7 @@ namespace LMStud{
 					if(toolSignature == lastToolSignature) throw new InvalidOperationException("Repeated tool calls detected.");
 					lastToolSignature = toolSignature;
 					foreach(var toolCall in result.ToolCalls){
-						var toolResult = _form.ExecuteToolCall(toolCall);
+						var toolResult = Tools.ExecuteToolCall(toolCall);
 						if(toolOutputs == null) toolOutputs = new List<string>();
 						toolOutputs.Add(toolResult);
 						var toolMessage = new ApiClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id, ToolName = toolCall.Name };
