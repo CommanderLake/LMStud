@@ -167,40 +167,41 @@ namespace LMStud {
 				var messages = BuildApiMessages(role, prompt, addToChat);
 				var history = APIClient.BuildInputItems(messages);
 				var toolsJson = Tools.BuildApiToolsJson();
-				var client = new APIClient(Common.APIClientUrl, Common.APIClientKey, Common.APIClientModel, Common.APIClientStore, Common.SystemPrompt);
-				string lastToolSignature = null;
-				while(true){
-					var result = client.CreateChatCompletion(history, Common.Temp, Common.NGen, toolsJson, null, CancellationToken.None);
-					APIClient.AppendOutputItems(history, result);
-					var content = result.Content;
-					var reasoning = result.Reasoning;
-					var toolCalls = result.ToolCalls;
-					if(!string.IsNullOrWhiteSpace(content) || (toolCalls != null && toolCalls.Count > 0) || !string.IsNullOrWhiteSpace(reasoning)){
-						if(toolCalls != null && toolCalls.Count > 0)
-							content = toolCalls.Aggregate(content, (current, toolCall) => current + Resources.__Tool_name_ + toolCall.Name + Resources.__Tool_ID_ + toolCall.Id + Resources.__Tool_arguments_ + toolCall.Arguments);
-						try{
-							MainForm.Invoke(new MethodInvoker(() => {
-								var message = MainForm.AddMessage(MessageRole.Assistant, reasoning ?? "", content ?? "", toolCalls);
-								if(toolCalls != null && toolCalls.Count > 0) message.SetRoleText(Resources.Tool_Call);
-								if(Common.Speak && !string.IsNullOrWhiteSpace(content)) TTS.QueueSpeech(content);
-							}));
-						} catch(ObjectDisposedException){}
-					}
-					if(toolCalls == null || toolCalls.Count == 0) break;
-					var toolSignature = string.Join("|", toolCalls.Select(call => string.Format(Resources._0___1___2_, call.Id, call.Name, call.Arguments)));
-					if(toolSignature == lastToolSignature) throw new InvalidOperationException(Resources.Repeated_tool_calls_detected);
-					lastToolSignature = toolSignature;
-					foreach(var toolCall in toolCalls){
-						var toolResult = Tools.ExecuteToolCall(toolCall);
-						var toolMessage = new APIClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id, ToolName = toolCall.Name };
-						history.Add(APIClient.BuildInputMessagePayload(toolMessage));
-						if(string.IsNullOrWhiteSpace(toolResult)) continue;
-						try{
-							MainForm.Invoke(new MethodInvoker(() => {
-								var toolMessageControl = MainForm.AddMessage(MessageRole.Tool, "", toolResult, null, toolCall.Id);
-								toolMessageControl.SetRoleText(Resources.Tool_Output);
-							}));
-						} catch(ObjectDisposedException){}
+				using(var client = new APIClient(Common.APIClientUrl, Common.APIClientKey, Common.APIClientModel, Common.APIClientStore, Common.SystemPrompt)){
+					string lastToolSignature = null;
+					while(true){
+						var result = client.CreateChatCompletion(history, Common.Temp, Common.NGen, toolsJson, null, CancellationToken.None);
+						APIClient.AppendOutputItems(history, result);
+						var content = result.Content;
+						var reasoning = result.Reasoning;
+						var toolCalls = result.ToolCalls;
+						if(!string.IsNullOrWhiteSpace(content) || (toolCalls != null && toolCalls.Count > 0) || !string.IsNullOrWhiteSpace(reasoning)){
+							if(toolCalls != null && toolCalls.Count > 0)
+								content = toolCalls.Aggregate(content, (current, toolCall) => current + Resources.__Tool_name_ + toolCall.Name + Resources.__Tool_ID_ + toolCall.Id + Resources.__Tool_arguments_ + toolCall.Arguments);
+							try{
+								MainForm.Invoke(new MethodInvoker(() => {
+									var message = MainForm.AddMessage(MessageRole.Assistant, reasoning ?? "", content ?? "", toolCalls);
+									if(toolCalls != null && toolCalls.Count > 0) message.SetRoleText(Resources.Tool_Call);
+									if(Common.Speak && !string.IsNullOrWhiteSpace(content)) TTS.QueueSpeech(content);
+								}));
+							} catch(ObjectDisposedException){}
+						}
+						if(toolCalls == null || toolCalls.Count == 0) break;
+						var toolSignature = string.Join("|", toolCalls.Select(call => string.Format(Resources._0___1___2_, call.Id, call.Name, call.Arguments)));
+						if(toolSignature == lastToolSignature) throw new InvalidOperationException(Resources.Repeated_tool_calls_detected);
+						lastToolSignature = toolSignature;
+						foreach(var toolCall in toolCalls){
+							var toolResult = Tools.ExecuteToolCall(toolCall);
+							var toolMessage = new APIClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id, ToolName = toolCall.Name };
+							history.Add(APIClient.BuildInputMessagePayload(toolMessage));
+							if(string.IsNullOrWhiteSpace(toolResult)) continue;
+							try{
+								MainForm.Invoke(new MethodInvoker(() => {
+									var toolMessageControl = MainForm.AddMessage(MessageRole.Tool, "", toolResult, null, toolCall.Id);
+									toolMessageControl.SetRoleText(Resources.Tool_Output);
+								}));
+							} catch(ObjectDisposedException){}
+						}
 					}
 				}
 				syncError = SyncNativeChatMessages();

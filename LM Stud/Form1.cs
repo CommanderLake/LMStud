@@ -45,6 +45,26 @@ namespace LMStud{
 			LoadConfig();
 			LoadModelSettings();
 		}
+		private void Form1_Load(object sender, EventArgs e){
+			NativeMethods.SetHWnd(Handle);
+			NativeMethods.CurlGlobalInit();
+			PopulateModels();
+			PopulateWhisperModels(true, true);
+			NativeMethods.BackendInit();
+			if(Common.APIClientEnable) Tools.RegisterTools();
+			ApiServer = new APIServer();
+			if(Common.APIServerEnable) ApiServer.Start();
+			if(!Settings.Default.LoadAuto) return;
+			checkLoadAuto.Checked = true;
+			ThreadPool.QueueUserWorkItem(o => {
+				try{
+					_populateLock.Wait(-1);
+					var modelPath = Common.ModelsDir + Settings.Default.LastModel;
+					var modelLvi = listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item => item.SubItems[1].Text == modelPath);
+					if(modelLvi != null) LoadModel(modelLvi, true);
+				} finally{ _populateLock.Release(); }
+			});
+		}
 		private void SetToolTip(Control control){toolTip1.SetToolTip(control, Resources.ResourceManager.GetString("ToolTip_" + control.Name));}
 		private void SetToolTips(){
 			SetToolTip(textSystemPrompt);
@@ -90,25 +110,6 @@ namespace LMStud{
 			SetToolTip(numCmdTimeout);
 			SetToolTip(textJinjaTmplModel);
 		}
-		private void Form1_Load(object sender, EventArgs e){
-			NativeMethods.SetHWnd(Handle);
-			NativeMethods.CurlGlobalInit();
-			PopulateModels();
-			PopulateWhisperModels(true, true);
-			NativeMethods.BackendInit();
-			ApiServer = new APIServer();
-			if(Common.APIServerEnable) ApiServer.Start();
-			if(!Settings.Default.LoadAuto) return;
-			checkLoadAuto.Checked = true;
-			ThreadPool.QueueUserWorkItem(o => {
-				try{
-					_populateLock.Wait(-1);
-					var modelPath = Common.ModelsDir + Settings.Default.LastModel;
-					var modelLvi = listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item => item.SubItems[1].Text == modelPath);
-					if(modelLvi != null) LoadModel(modelLvi, true);
-				} finally{ _populateLock.Release(); }
-			});
-		}
 		private void InitializeListViews(){
 			_columnClickHandler = new LVColumnClickHandler();
 			var columnDataTypesHugSearch = new[]{
@@ -135,6 +136,7 @@ namespace LMStud{
 				NativeMethods.StopSpeechTranscription();
 				NativeMethods.UnloadWhisperModel();
 			}
+			ApiServer.Stop();
 			NativeMethods.CloseCommandPrompt();
 			NativeMethods.CurlGlobalCleanup();
 		}

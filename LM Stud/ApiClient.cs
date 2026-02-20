@@ -11,7 +11,7 @@ using LMStud.Properties;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 namespace LMStud{
-	internal sealed class APIClient{
+	internal sealed class APIClient : IDisposable{
 		private readonly HttpClient _apiHttpClient = new HttpClient{Timeout = Timeout.InfiniteTimeSpan};
 		private readonly string _apiBaseUrl;
 		private readonly string _apiKey;
@@ -24,6 +24,9 @@ namespace LMStud{
 			_apiKey = apiKey?.Trim() ?? "";
 			_model = model?.Trim() ?? "";
 			_instructions = instructions?.Trim();
+		}
+		public void Dispose(){
+			_apiHttpClient?.Dispose();
 		}
 		internal ChatCompletionResult CreateChatCompletion(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice, CancellationToken cancellationToken){
 			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException("API base URL is not configured.");

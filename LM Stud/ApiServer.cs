@@ -145,6 +145,7 @@ namespace LMStud{
 			var session = Sessions.Get(request.SessionId);
 			ctx.Response.AddHeader("X-Session-Id", session.Id);
 			ctx.Response.ContentType = "application/json";
+			APIClient client = null;
 			try{
 				var incomingDelta = BuildIncomingDelta(incomingMessages, inputItems);
 				if(incomingDelta == null || incomingDelta.Count == 0){
@@ -153,11 +154,10 @@ namespace LMStud{
 				}
 				var persisted = BuildPersistedHistory(session.Messages);
 				foreach(var item in incomingDelta) persisted.Add(item);
-				var history = persisted;
 				var toolsJson = request.Tools != null ? request.Tools.ToString(Formatting.None) : Tools.BuildApiToolsJson();
-				var client = new APIClient(Common.APIClientUrl, Common.APIClientKey, Common.APIClientModel, Common.APIClientStore, Common.SystemPrompt);
-				var result = client.CreateChatCompletion(history, (float)Settings.Default.Temp, (int)Settings.Default.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
-				APIClient.AppendOutputItems(history, result);
+				client = new APIClient(Common.APIClientUrl, Common.APIClientKey, Common.APIClientModel, Common.APIClientStore, Common.SystemPrompt);
+				var result = client.CreateChatCompletion(persisted, (float)Settings.Default.Temp, (int)Settings.Default.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
+				APIClient.AppendOutputItems(persisted, result);
 				List<string> toolOutputs = null;
 				var rounds = 0;
 				string lastToolSignature = null;
@@ -170,10 +170,10 @@ namespace LMStud{
 						if(toolOutputs == null) toolOutputs = new List<string>();
 						toolOutputs.Add(toolResult);
 						var toolMessage = new APIClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id, ToolName = toolCall.Name };
-						history.Add(APIClient.BuildInputMessagePayload(toolMessage));
+						persisted.Add(APIClient.BuildInputMessagePayload(toolMessage));
 					}
-					result = client.CreateChatCompletion(history, (float)Settings.Default.Temp, (int)Settings.Default.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
-					APIClient.AppendOutputItems(history, result);
+					result = client.CreateChatCompletion(persisted, (float)Settings.Default.Temp, (int)Settings.Default.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
+					APIClient.AppendOutputItems(persisted, result);
 					rounds++;
 				}
 				var assistant = result.Content;
@@ -200,6 +200,7 @@ namespace LMStud{
 				ctx.Response.OutputStream.Write(buf, 0, buf.Length);
 			} finally{
 				if(!store) Sessions.Remove(session.Id);
+				client?.Dispose();
 			}
 		}
 		private static object BuildResponsePayload(string assistant, string model, string sessionId){

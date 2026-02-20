@@ -55,8 +55,10 @@ namespace LMStud{
 		private void PopulateModels(){
 			if(!_populateLock.Wait(0) || !ModelsFolderExists(true)) return;
 			ThreadPool.QueueUserWorkItem(_ => {
+				var locked = false;
 				try{
-					if(!Generation.GenerationLock.Wait(-1)) return;
+					if(!Generation.GenerationLock.Wait(30000)) return;
+					locked = true;
 					var files = Directory.GetFiles(Common.ModelsDir, "*.gguf", SearchOption.AllDirectories);
 					var items = new List<ListViewItem>();
 					foreach(var file in files){
@@ -80,7 +82,7 @@ namespace LMStud{
 					}));
 				} finally{
 					_populateLock.Release();
-					Generation.GenerationLock.Release();
+					if(locked) Generation.GenerationLock.Release();
 				}
 			});
 		}

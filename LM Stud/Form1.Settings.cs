@@ -66,9 +66,6 @@ namespace LMStud{
 			NativeMethods.SetWhisperTemp(Common.WhisperTemp);
 			NativeMethods.SetGoogle(Common.GoogleAPIKey, Common.GoogleSearchID, Common.GoogleSearchResultCount);
 			NativeMethods.SetCommandPromptTimeout(Common.CMDTimeoutMs);
-			SetModelStatus();
-			if(Common.APIServerEnable) ApiServer.Start();
-			if(Common.APIClientEnable) Tools.RegisterTools();
 		}
 		private void UpdateSetting<T>(ref T currentValue, T newValue, Action<T> updateAction){
 			if(EqualityComparer<T>.Default.Equals(currentValue, newValue)) return;
@@ -403,8 +400,8 @@ Always read a file and verify its contents before making changes.");
 					ShowError(Resources.API_Server, Resources.Please_enter_a_valid_API_base_URL, false);
 					return;
 				}
-				var client = new APIClient(parsedUri.ToString(), textApiClientKey.Text, "", Common.APIClientStore, Common.SystemPrompt);
-				var clientModels = client.GetModels(CancellationToken.None);
+				List<string> clientModels;
+				using(var client = new APIClient(parsedUri.ToString(), textApiClientKey.Text, "", Common.APIClientStore, Common.SystemPrompt)){ clientModels = client.GetModels(CancellationToken.None); }
 				foreach(var model in clientModels) comboApiClientModel.Items.Add(model);
 			} catch(Exception ex){ APIClient.ShowApiClientError(Resources.API_Client, ex); }
 		}
