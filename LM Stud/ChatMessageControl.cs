@@ -13,7 +13,7 @@ namespace LMStud{
 	}
 	internal partial class ChatMessageControl : UserControl{
 		internal readonly MessageRole Role;
-		internal List<ApiClient.ToolCall> ApiToolCalls;
+		internal List<APIClient.ToolCall> ApiToolCalls;
 		internal string ApiToolCallId;
 		private bool _markdown;
 		private string _message;
@@ -167,7 +167,7 @@ namespace LMStud{
 				else richTextMsg.Text = _message;
 			}
 		}
-		private static void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){
+		private void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){
 			try{
 				if(!Uri.TryCreate(e.LinkText, UriKind.Absolute, out var link)) return;
 				var psi = new ProcessStartInfo(link.ToString());

@@ -104,8 +104,8 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ApiClient.cs" />
-    <Compile Include="ApiServer.cs" />
+    <Compile Include="APIClient.cs" />
+    <Compile Include="APIServer.cs" />
     <Compile Include="ChatMessageControl.cs">
       <SubType>UserControl</SubType>
     </Compile>

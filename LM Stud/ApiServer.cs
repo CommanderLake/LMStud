@@ -9,22 +9,16 @@ using LMStud.Properties;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 namespace LMStud{
-	public class ApiServer{
-		private readonly Form1 _form;
+	public class APIServer{
 		internal readonly SessionManager Sessions = new SessionManager();
 		private CancellationTokenSource _cts;
 		private HttpListener _listener;
-		internal int Port = 11434;
-		internal ApiServer(Form1 form){_form = form;}
-		internal bool IsRunning => _listener != null && _listener.IsListening;
-		private ApiClient CreateApiClient(){
-			return new ApiClient(Settings.Default.ApiClientBaseUrl, Settings.Default.ApiClientKey, Settings.Default.ApiClientModel, Common.APIClientStore, Settings.Default.SystemPrompt);
-		}
+		private bool IsRunning => _listener != null && _listener.IsListening;
 		internal void Start(){
 			if(IsRunning) return;
 			_cts = new CancellationTokenSource();
 			_listener = new HttpListener();
-			_listener.Prefixes.Add($"http://*:{Port}/");
+			_listener.Prefixes.Add($"http://*:{Common.APIServerPort}/");
 			_listener.Start();
 			ThreadPool.QueueUserWorkItem(o => {ListenLoop(_cts.Token);});
 		}
@@ -47,7 +41,7 @@ namespace LMStud{
 				var req = context.Request;
 				var method = req.HttpMethod;
 				var path = req.Url.AbsolutePath;
-				var useRemoteApi = Settings.Default.ApiClientEnable;
+				var useRemoteApi = Settings.Default.APIClientEnable;
 				if(!useRemoteApi && !Common.LlModelLoaded){
 					context.Response.StatusCode = 409;
 					return;
@@ -113,7 +107,7 @@ namespace LMStud{
 				return;
 			}
 			var store = request.Store ?? true;
-			if(Settings.Default.ApiClientEnable){
+			if(Settings.Default.APIClientEnable){
 				HandleRemoteChat(ctx, request, messages, inputItems, store);
 				return;
 			}
@@ -128,7 +122,7 @@ namespace LMStud{
 				ctx.Response.ContentType = "application/json";
 				var sb = new StringBuilder();
 				void TokenCb(string token){sb.Append(token);}
-				if(!_form.Generation.GenerateForApiServer(session.State, prompt, TokenCb, out var newState, out var tokens)){
+				if(!Generation.GenerateForApiServer(session.State, prompt, TokenCb, out var newState, out var tokens)){
 					ctx.Response.StatusCode = 409;
 					return;
 				}
@@ -161,9 +155,9 @@ namespace LMStud{
 				foreach(var item in incomingDelta) persisted.Add(item);
 				var history = persisted;
 				var toolsJson = request.Tools != null ? request.Tools.ToString(Formatting.None) : Tools.BuildApiToolsJson();
-				var client = CreateApiClient();
+				var client = new APIClient(Common.APIClientUrl, Common.APIClientKey, Common.APIClientModel, Common.APIClientStore, Common.SystemPrompt);
 				var result = client.CreateChatCompletion(history, (float)Settings.Default.Temp, (int)Settings.Default.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
-				ApiClient.AppendOutputItems(history, result);
+				APIClient.AppendOutputItems(history, result);
 				List<string> toolOutputs = null;
 				var rounds = 0;
 				string lastToolSignature = null;
@@ -175,11 +169,11 @@ namespace LMStud{
 						var toolResult = Tools.ExecuteToolCall(toolCall);
 						if(toolOutputs == null) toolOutputs = new List<string>();
 						toolOutputs.Add(toolResult);
-						var toolMessage = new ApiClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id, ToolName = toolCall.Name };
-						history.Add(ApiClient.BuildInputMessagePayload(toolMessage));
+						var toolMessage = new APIClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id, ToolName = toolCall.Name };
+						history.Add(APIClient.BuildInputMessagePayload(toolMessage));
 					}
 					result = client.CreateChatCompletion(history, (float)Settings.Default.Temp, (int)Settings.Default.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
-					ApiClient.AppendOutputItems(history, result);
+					APIClient.AppendOutputItems(history, result);
 					rounds++;
 				}
 				var assistant = result.Content;
@@ -195,7 +189,7 @@ namespace LMStud{
 					s.State = null;
 					s.TokenCount = 0;
 				});
-				var resp = BuildResponsePayload(assistant, Settings.Default.ApiClientModel, session.Id);
+				var resp = BuildResponsePayload(assistant, Settings.Default.APIClientModel, session.Id);
 				var json = JsonConvert.SerializeObject(resp);
 				var bytes = Encoding.UTF8.GetBytes(json);
 				ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
@@ -225,13 +219,13 @@ namespace LMStud{
 			var normalized = NormalizeInputItems(request.Input);
 			if(normalized != null && normalized.Count > 0) return normalized;
 			if(request.Messages == null || request.Messages.Count == 0) return null;
-			var messages = new List<ApiClient.ChatMessage>();
+			var messages = new List<APIClient.ChatMessage>();
 			foreach(var message in request.Messages){
 				if(message == null) continue;
 				if(string.IsNullOrWhiteSpace(message.Role)) continue;
-				messages.Add(new ApiClient.ChatMessage(message.Role, message.Content ?? ""));
+				messages.Add(new APIClient.ChatMessage(message.Role, message.Content ?? ""));
 			}
-			return messages.Count > 0 ? ApiClient.BuildInputItems(messages) : null;
+			return messages.Count > 0 ? APIClient.BuildInputItems(messages) : null;
 		}
 		private static JArray BuildPersistedHistory(List<Message> messages){
 			var history = new JArray();
@@ -332,10 +326,9 @@ namespace LMStud{
 						sb.Append(item);
 						continue;
 					}
-					if(item is JObject obj){
-						var text = obj.Value<string>("text") ?? obj.Value<string>("content");
-						if(!string.IsNullOrWhiteSpace(text)) sb.Append(text);
-					}
+					if(!(item is JObject obj)) continue;
+					var text = obj.Value<string>("text") ?? obj.Value<string>("content");
+					if(!string.IsNullOrWhiteSpace(text)) sb.Append(text);
 				}
 				return sb.Length > 0 ? sb.ToString() : null;
 			}

@@ -21,7 +21,7 @@ namespace LMStud{
 				return newSession;
 			}
 		}
-		public void Update(Session session, List<ApiServer.Message> messages, byte[] state, int tokenCount){
+		public void Update(Session session, List<APIServer.Message> messages, byte[] state, int tokenCount){
 			if(session == null) return;
 			lock(_sync){
 				session.Messages = CloneMessages(messages);
@@ -46,12 +46,12 @@ namespace LMStud{
 		public void Clear(){
 			lock(_sync){ _sessions.Clear(); }
 		}
-		private static List<ApiServer.Message> CloneMessages(IEnumerable<ApiServer.Message> messages){
-			var clone = new List<ApiServer.Message>();
+		private static List<APIServer.Message> CloneMessages(IEnumerable<APIServer.Message> messages){
+			var clone = new List<APIServer.Message>();
 			if(messages == null) return clone;
 			foreach(var message in messages){
 				if(message == null) continue;
-				clone.Add(new ApiServer.Message{ Role = message.Role, Content = message.Content });
+				clone.Add(new APIServer.Message{ Role = message.Role, Content = message.Content });
 			}
 			return clone;
 		}
@@ -70,7 +70,7 @@ namespace LMStud{
 		internal class Session{
 			public string Id = Guid.NewGuid().ToString();
 			public DateTime LastUsed;
-			public List<ApiServer.Message> Messages = new List<ApiServer.Message>();
+			public List<APIServer.Message> Messages = new List<APIServer.Message>();
 			public byte[] State;
 			public int TokenCount;
 		}

@@ -8,18 +8,18 @@ using LMStud.Properties;
 namespace LMStud{
 	public partial class Form1 : Form{
 		internal static Form1 This;
+		internal APIServer ApiServer;
 		private static NativeMethods.TokenCallback _tokenCallback;
 		private static NativeMethods.WhisperCallback _whisperCallback;
 		private static NativeMethods.SpeechEndCallback _speechEndCallback;
 		internal readonly List<ChatMessageControl> ChatMessages = new List<ChatMessageControl>();
-		private readonly ApiServer _apiServer;
-		private int _retokenizeCount;
 		internal CheckState CheckVoiceInputLast = CheckState.Unchecked;
 		private LVColumnClickHandler _columnClickHandler;
 		internal string InputEditOldText = "";
-		internal bool IsEditing;
 		internal volatile bool Rendering;
+		private int _retokenizeCount;
 		private bool _whisperLoaded;
+		internal bool IsEditing;
 		private struct FormControlStates{
 			internal static bool ButApplyEnabled;
 			internal static bool ButApplyModelSettingsEnabled;
@@ -29,8 +29,6 @@ namespace LMStud{
 			internal static bool ButUnloadEnabled;
 			internal static bool ListViewModelsEnabled;
 		}
-		internal readonly Generation Generation;
-		internal readonly TTS TTS;
 		internal Form1(){
 			This = this;
 			//var culture = new CultureInfo("zh-CN");
@@ -38,10 +36,10 @@ namespace LMStud{
 			//Thread.CurrentThread.CurrentCulture = culture;
 			InitializeComponent();
 			Icon = Resources.LM_Stud_256;
-			Generation = new Generation(this);
-			TTS = new TTS(this);
+			Generation.MainForm = this;
 			STT.MainForm = this;
-			_apiServer = new ApiServer(this);
+			TTS.MainForm = this;
+			TTS.SetHandlers();
 			InitializeListViews();
 			SetToolTips();
 			LoadConfig();
@@ -98,6 +96,8 @@ namespace LMStud{
 			PopulateModels();
 			PopulateWhisperModels(true, true);
 			NativeMethods.BackendInit();
+			ApiServer = new APIServer();
+			if(Common.APIServerEnable) ApiServer.Start();
 			if(!Settings.Default.LoadAuto) return;
 			checkLoadAuto.Checked = true;
 			ThreadPool.QueueUserWorkItem(o => {
@@ -135,7 +135,6 @@ namespace LMStud{
 				NativeMethods.StopSpeechTranscription();
 				NativeMethods.UnloadWhisperModel();
 			}
-			TTS?.Dispose();
 			NativeMethods.CloseCommandPrompt();
 			NativeMethods.CurlGlobalCleanup();
 		}
@@ -355,7 +354,7 @@ namespace LMStud{
 			});
 		}
 		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)(((e.Delta/8) << 16) & 0xffff0000), IntPtr.Zero);}
-		internal ChatMessageControl AddMessage(MessageRole role, string think, string message, List<ApiClient.ToolCall> toolCalls = null, string toolCallId = null){
+		internal ChatMessageControl AddMessage(MessageRole role, string think, string message, List<APIClient.ToolCall> toolCalls = null, string toolCallId = null){
 			var cm = new ChatMessageControl(role, think, message ?? "", checkMarkdown.Checked){ ApiToolCalls = toolCalls, ApiToolCallId = toolCallId };
 			cm.Parent = panelChat;
 			cm.Width = panelChat.ClientSize.Width;
@@ -428,20 +427,20 @@ namespace LMStud{
 			BeginRetokenization();
 			return true;
 		}
-		private void StartEditing(){
+		internal void StartEditing(){
 			if(IsEditing) return;
 			InputEditOldText = textInput.Text;
 			IsEditing = true;
 			UpdateStatusMessage();
 			if(checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StopSpeechTranscription();
 		}
-		private void FinishEditing(){
+		internal void FinishEditing(){
 			IsEditing = false;
 			UpdateStatusMessage();
 			if(checkVoiceInput.CheckState != CheckState.Checked) return;
 			STT.TryStartSpeechTranscription(true);
 		}
-		private void CancelEditing(){
+		internal void CancelEditing(){
 			textInput.Text = InputEditOldText;
 			textInput.SelectionStart = textInput.Text.Length;
 			FinishEditing();

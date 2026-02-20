@@ -52,7 +52,7 @@ namespace LMStud{
 					var items = new List<ListViewItem>();
 					foreach(var modelToken in models){
 						var model = (JObject)modelToken;
-						var hfModel = model.ToObject<Form1.HugModel>();
+						var hfModel = model.ToObject<HugModel>();
 						if(hfModel?.ID == null) continue;
 						var parts = hfModel.ID.Split('/');
 						var uploader = parts.Length > 1 ? parts[0] : "";

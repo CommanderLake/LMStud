@@ -3,19 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
+using LMStud.Properties;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 namespace LMStud{
-	internal sealed class ApiClient{
-		private static readonly HttpClient ApiHttpClient = new HttpClient{Timeout = Timeout.InfiniteTimeSpan};
+	internal sealed class APIClient{
+		private readonly HttpClient _apiHttpClient = new HttpClient{Timeout = Timeout.InfiniteTimeSpan};
 		private readonly string _apiBaseUrl;
 		private readonly string _apiKey;
 		private readonly string _instructions;
 		private readonly string _model;
 		private readonly bool _apiClientStore;
-		internal ApiClient(string apiBaseUrl, string apiKey, string model, bool apiClientStore, string instructions = null){
+		internal APIClient(string apiBaseUrl, string apiKey, string model, bool apiClientStore, string instructions = null){
 			_apiClientStore = apiClientStore;
 			_apiBaseUrl = apiBaseUrl?.Trim() ?? "";
 			_apiKey = apiKey?.Trim() ?? "";
@@ -38,7 +41,7 @@ namespace LMStud{
 			using(var request = new HttpRequestMessage(HttpMethod.Post, BuildChatEndpoint(_apiBaseUrl))){
 				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
 				request.Content = new StringContent(payload.ToString(Formatting.None), Encoding.UTF8, "application/json");
-				using(var response = ApiHttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
+				using(var response = _apiHttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
 					var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 					if(!response.IsSuccessStatusCode) throw new InvalidOperationException($"API error ({(int)response.StatusCode}): {body}");
 					//File.WriteAllText("E:\\response.txt", body);
@@ -187,8 +190,7 @@ namespace LMStud{
 			return ExtractContentText(reasoningItem);
 		}
 		private static string ExtractReasoningTextFromContent(JToken contentToken){
-			var contentArray = contentToken as JArray;
-			if(contentArray == null) return null;
+			if(!(contentToken is JArray contentArray)) return null;
 			var sb = new StringBuilder();
 			foreach(var item in contentArray.OfType<JObject>()){
 				var type = item.Value<string>("type");
@@ -208,8 +210,7 @@ namespace LMStud{
 			return new ToolCall(callId, name, arguments);
 		}
 		private static List<ToolCall> ParseToolCallsFromContent(JToken contentToken){
-			var contentArray = contentToken as JArray;
-			if(contentArray == null) return null;
+			if(!(contentToken is JArray contentArray)) return null;
 			var toolCalls = new List<ToolCall>();
 			foreach(var item in contentArray.OfType<JObject>()){
 				var type = item.Value<string>("type");
@@ -222,8 +223,7 @@ namespace LMStud{
 		private static JArray NormalizeToolsJson(string toolsJson){
 			try{
 				var parsed = JToken.Parse(toolsJson);
-				var toolsArray = parsed as JArray;
-				if(toolsArray == null) return null;
+				if(!(parsed is JArray toolsArray)) return null;
 				var normalized = new JArray();
 				foreach(var tool in toolsArray.OfType<JObject>()){
 					var type = tool.Value<string>("type") ?? "function";
@@ -249,28 +249,25 @@ namespace LMStud{
 			} catch(JsonException){ return null; }
 		}
 		private static JObject ExtractFirstMessage(JObject root){
-			var choices = root["choices"] as JArray;
-			if(choices == null || choices.Count == 0) return null;
+			if(!(root["choices"] is JArray choices) || choices.Count == 0) return null;
 			var first = choices[0] as JObject;
 			return first?["message"] as JObject;
 		}
 		private static List<ToolCall> ParseToolCalls(JToken toolCallsToken){
-			var toolCallsArray = toolCallsToken as JArray;
-			if(toolCallsArray == null) return null;
+			if(!(toolCallsToken is JArray toolCallsArray)) return null;
 			var toolCalls = new List<ToolCall>();
 			foreach(var toolCallToken in toolCallsArray){
-				var toolCallObj = toolCallToken as JObject;
-				if(toolCallObj == null) continue;
+				if(!(toolCallToken is JObject toolCallObj)) continue;
 				var toolCall = ParseToolCallItem(toolCallObj);
 				if(toolCall != null) toolCalls.Add(toolCall);
 			}
 			return toolCalls.Count > 0 ? toolCalls : null;
 		}
-		internal List<string> ListModels(CancellationToken cancellationToken){
+		internal List<string> GetModels(CancellationToken cancellationToken){
 			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException("API base URL is not configured.");
 			using(var request = new HttpRequestMessage(HttpMethod.Get, BuildModelsEndpoint(_apiBaseUrl))){
 				if(!string.IsNullOrWhiteSpace(_apiKey)) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
-				using(var response = ApiHttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
+				using(var response = _apiHttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
 					var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 					if(!response.IsSuccessStatusCode) throw new InvalidOperationException($"API error ({(int)response.StatusCode}): {body}");
 					var json = JObject.Parse(body);
@@ -287,6 +284,35 @@ namespace LMStud{
 			var normalized = apiBaseUrl.TrimEnd('/');
 			if(normalized.EndsWith("/v1", StringComparison.OrdinalIgnoreCase)) return normalized + "/" + resource;
 			return normalized + "/v1/" + resource;
+		}
+		private static string GetApiClientFriendlyError(Exception exception){
+			if(exception == null) return Resources.Unknown_API_error_;
+			var root = exception;
+			while(root?.InnerException != null) root = root.InnerException;
+			switch(root){
+				case SocketException _:
+				case HttpRequestException _: return Resources.Unable_to_connect_to_the_API_server;
+				case TaskCanceledException _:
+				case TimeoutException _: return Resources.The_API_request_timed_out;
+				case OperationCanceledException _: return Resources.The_API_request_was_canceled_before_completion;
+				case JsonException _: return Resources.Received_an_invalid_response_from_the_API_server;
+				case InvalidOperationException _:{
+					var message = root.Message ?? "";
+					if(message.IndexOf("401", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("403", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.Authentication_failed;
+					if(message.IndexOf("404", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.API_endpoint_not_found;
+					if(message.IndexOf("429", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.Rate_limit_exceeded;
+					if(message.IndexOf("500", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("502", StringComparison.OrdinalIgnoreCase) >= 0 ||
+						message.IndexOf("503", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.The_API_server_encountered_an_error;
+					break;
+				}
+			}
+			return root?.Message;
+		}
+		internal static void ShowApiClientError(string action, Exception exception){
+			var detail = GetApiClientFriendlyError(exception);
+			var technical = exception?.Message;
+			if(!string.IsNullOrWhiteSpace(technical) && !string.Equals(technical, detail, StringComparison.Ordinal)) detail += "\r\n\r\n" + technical;
+			Program.MainForm.ShowError(action, detail, false);
 		}
 		internal sealed class ChatMessage{
 			public string Content;

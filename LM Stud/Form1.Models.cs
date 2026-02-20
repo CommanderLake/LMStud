@@ -154,38 +154,6 @@ namespace LMStud{
 			if(InvokeRequired) Invoke(new MethodInvoker(ShowMessage));
 			else ShowMessage();
 		}
-		private static Exception GetInnermostException(Exception exception){
-			var current = exception;
-			while(current?.InnerException != null) current = current.InnerException;
-			return current;
-		}
-		private static string GetApiClientFriendlyError(Exception exception){
-			if(exception == null) return Resources.Unknown_API_error_;
-			var root = GetInnermostException(exception);
-			switch(root){
-				case SocketException _:
-				case HttpRequestException _: return Resources.Unable_to_connect_to_the_API_server;
-				case TaskCanceledException _:
-				case TimeoutException _: return Resources.The_API_request_timed_out;
-				case OperationCanceledException _: return Resources.The_API_request_was_canceled_before_completion;
-				case JsonException _: return Resources.Received_an_invalid_response_from_the_API_server;
-				case InvalidOperationException _:{
-					var message = root.Message ?? "";
-					if(message.IndexOf("401", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("403", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.Authentication_failed;
-					if(message.IndexOf("404", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.API_endpoint_not_found;
-					if(message.IndexOf("429", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.Rate_limit_exceeded;
-					if(message.IndexOf("500", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("502", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("503", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.The_API_server_encountered_an_error;
-					break;
-				}
-			}
-			return root.Message;
-		}
-		internal void ShowApiClientError(string action, Exception exception){
-			var detail = GetApiClientFriendlyError(exception);
-			var technical = exception?.Message;
-			if(!string.IsNullOrWhiteSpace(technical) && !string.Equals(technical, detail, StringComparison.Ordinal)) detail += "\r\n\r\n" + technical;
-			ShowError(action, detail, false);
-		}
 		private void SetSystemPromptInternal(bool genLock){
 			if(genLock) Generation.GenerationLock.Wait(-1);
 			try{
@@ -206,37 +174,37 @@ namespace LMStud{
 			BeginRetokenization();
 			try{ SetSystemPromptInternal(genLock); } finally{ EndRetokenization(); }
 		}
-		void SetModelStatus(){
+		private void SetModelStatus(){
 			butGen.Enabled = butReset.Enabled = (Common.APIClientEnable || Common.LlModelLoaded) && !Generation.Generating;
 			if(Common.APIClientEnable) toolStripStatusLabel1.Text = Resources.Using_API_Model_ + Common.APIClientModel;
 			else if(Common.LlModelLoaded) toolStripStatusLabel1.Text = Resources.Using_Model_ + Common.LoadedModel.Text;
 			else toolStripStatusLabel1.Text = Resources.No_model_loaded;
 		}
-		NativeMethods.StudError LoadModel(string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){
+		private NativeMethods.StudError LoadModel(string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){
 			var result = NativeMethods.LoadModel(filename, jinjaTemplate, nGPULayers, mMap, mLock, numaStrategy);
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_loading_model, result);
 			return result;
 		}
-		NativeMethods.StudError CreateSession(int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
+		private NativeMethods.StudError CreateSession(int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
 			var result = NativeMethods.CreateSession(nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty);
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_session, result);
 			return result;
 		}
-		NativeMethods.StudError CreateContext(int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch){
+		private NativeMethods.StudError CreateContext(int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch){
 			Generation.GenerationLock.Wait(-1);
 			NativeMethods.StudError result;
 			try{ result = NativeMethods.CreateContext(nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch); } finally{ Generation.GenerationLock.Release(); }
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_context, result);
 			return result;
 		}
-		NativeMethods.StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty){
+		private NativeMethods.StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty){
 			Generation.GenerationLock.Wait(-1);
 			NativeMethods.StudError result;
 			try{ result = NativeMethods.CreateSampler(minP, topP, topK, temp, repeatPenalty); } finally{ Generation.GenerationLock.Release(); }
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_sampler, result);
 			return result;
 		}
-		NativeMethods.StudError LoadWhisperModel(string modelPath, int nThreads, bool useGPU, bool useVAD, string vadModel){
+		private NativeMethods.StudError LoadWhisperModel(string modelPath, int nThreads, bool useGPU, bool useVAD, string vadModel){
 			var result = NativeMethods.LoadWhisperModel(modelPath, nThreads, useGPU, useVAD, vadModel);
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_initialising_voice_input, result);
 			return result;
@@ -332,7 +300,7 @@ namespace LMStud{
 			butUnload.Enabled = false;
 			ThreadPool.QueueUserWorkItem(o => UnloadModelInternal(genLock));
 		}
-		private string ConvertValueToString(GGUFMetadataManager.GGUFMetaValue metaVal){
+		private static string ConvertValueToString(GGUFMetadataManager.GGUFMetaValue metaVal){
 			switch(metaVal.Type){
 				case GGUFMetadataManager.GGUFType.ARRAY:
 					if(!(metaVal.Value is List<object> list)) return "[]";

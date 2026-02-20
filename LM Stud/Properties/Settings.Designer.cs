@@ -506,24 +506,24 @@ namespace LMStud.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool ApiServerEnable {
+        public bool APIServerEnable {
             get {
-                return ((bool)(this["ApiServerEnable"]));
+                return ((bool)(this["APIServerEnable"]));
             }
             set {
-                this["ApiServerEnable"] = value;
+                this["APIServerEnable"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("11434")]
-        public decimal ApiServerPort {
+        public decimal APIServerPort {
             get {
-                return ((decimal)(this["ApiServerPort"]));
+                return ((decimal)(this["APIServerPort"]));
             }
             set {
-                this["ApiServerPort"] = value;
+                this["APIServerPort"] = value;
             }
         }
         
@@ -566,60 +566,60 @@ namespace LMStud.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool ApiClientEnable {
+        public bool APIClientEnable {
             get {
-                return ((bool)(this["ApiClientEnable"]));
+                return ((bool)(this["APIClientEnable"]));
             }
             set {
-                this["ApiClientEnable"] = value;
+                this["APIClientEnable"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string ApiClientBaseUrl {
+        public string APIClientUrl {
             get {
-                return ((string)(this["ApiClientBaseUrl"]));
+                return ((string)(this["APIClientUrl"]));
             }
             set {
-                this["ApiClientBaseUrl"] = value;
+                this["APIClientUrl"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string ApiClientKey {
+        public string APIClientKey {
             get {
-                return ((string)(this["ApiClientKey"]));
+                return ((string)(this["APIClientKey"]));
             }
             set {
-                this["ApiClientKey"] = value;
+                this["APIClientKey"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string ApiClientModel {
+        public string APIClientModel {
             get {
-                return ((string)(this["ApiClientModel"]));
+                return ((string)(this["APIClientModel"]));
             }
             set {
-                this["ApiClientModel"] = value;
+                this["APIClientModel"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool ApiClientStore {
+        public bool APIClientStore {
             get {
-                return ((bool)(this["ApiClientStore"]));
+                return ((bool)(this["APIClientStore"]));
             }
             set {
-                this["ApiClientStore"] = value;
+                this["APIClientStore"] = value;
             }
         }
     }

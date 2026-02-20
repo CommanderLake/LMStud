@@ -13,7 +13,6 @@ namespace LM_Stud.Tests{
 	public class ApiServerTests{
 		private const int TestPort = 11435;
 		private static readonly object FormLock = new object();
-		private static ApiServer _apiServer;
 		private static Form1 _form;
 		[ClassInitialize]
 		public static void ClassInitialize(TestContext context){
@@ -26,15 +25,15 @@ namespace LM_Stud.Tests{
 				_form = Program.MainForm;
 				Thread.Sleep(1000);
 				_form.Invoke(new MethodInvoker(() => {_form.LoadModel(_form.listViewModels.Items["Hermes-3-Llama-3.2-3B.Q8_0"], true);}));
-				while(!Common.LlModelLoaded) Thread.Sleep(10);
-				_apiServer = new ApiServer(_form){ Port = TestPort };
-				_apiServer.Start();
+				Common.APIServerPort = TestPort;
+				while(!Common.LlModelLoaded || _form.ApiServer == null) Thread.Sleep(10);
+				_form.ApiServer.Start();
 			}
 		}
 		[ClassCleanup]
 		public static void ClassCleanup(){
 			lock(FormLock){
-				_apiServer.Stop();
+				_form.ApiServer.Stop();
 				_form.Invoke(new MethodInvoker(() => {
 					Program.MainForm.Close();
 					Program.MainForm.Dispose();
@@ -54,7 +53,7 @@ namespace LM_Stud.Tests{
 					dynamic result = JsonConvert.DeserializeObject(json);
 					var text = (string)result.output[0].content[0].text;
 					Assert.IsFalse(string.IsNullOrEmpty(text), "Assistant response should contain output text.");
-					var session = _apiServer.Sessions.Get(sessionId);
+					var session = _form.ApiServer.Sessions.Get(sessionId);
 					Assert.AreEqual(2, session.Messages.Count, "Session should contain user and assistant messages.");
 				}
 			}
@@ -84,7 +83,7 @@ namespace LM_Stud.Tests{
 				sessionId = response.Headers.Contains("X-Session-Id") ? string.Join("", response.Headers.GetValues("X-Session-Id")) : null;
 				Assert.IsFalse(string.IsNullOrEmpty(sessionId), "Chat call should return a session id.");
 			}
-			var existing = _apiServer.Sessions.Get(sessionId);
+			var existing = _form.ApiServer.Sessions.Get(sessionId);
 			using(var client = new HttpClient()){
 				var resetPayload = new{ session_id = sessionId };
 				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/reset", new StringContent(JsonConvert.SerializeObject(resetPayload), Encoding.UTF8, "application/json"));
@@ -94,15 +93,15 @@ namespace LM_Stud.Tests{
 				Assert.AreEqual("reset", (string)result.status, "Reset response should confirm reset state.");
 				Assert.AreEqual("session", (string)result.scope, "Reset with a session id should default to session scope.");
 			}
-			var replacement = _apiServer.Sessions.Get(sessionId);
+			var replacement = _form.ApiServer.Sessions.Get(sessionId);
 			Assert.AreNotSame(existing, replacement, "Reset should remove the stored session.");
 		}
 		[TestMethod]
 		public async Task HandleReset_GlobalScope_ClearsAllSessions(){
-			var s1 = _apiServer.Sessions.Get("global-reset-1");
-			_apiServer.Sessions.Update(s1, new List<ApiServer.Message>{ new ApiServer.Message{ Role = "user", Content = "a" } }, null, 0);
-			var s2 = _apiServer.Sessions.Get("global-reset-2");
-			_apiServer.Sessions.Update(s2, new List<ApiServer.Message>{ new ApiServer.Message{ Role = "user", Content = "b" } }, null, 0);
+			var s1 = _form.ApiServer.Sessions.Get("global-reset-1");
+			_form.ApiServer.Sessions.Update(s1, new List<APIServer.Message>{ new APIServer.Message{ Role = "user", Content = "a" } }, null, 0);
+			var s2 = _form.ApiServer.Sessions.Get("global-reset-2");
+			_form.ApiServer.Sessions.Update(s2, new List<APIServer.Message>{ new APIServer.Message{ Role = "user", Content = "b" } }, null, 0);
 			using(var client = new HttpClient()){
 				var resetPayload = new{ scope = "global" };
 				var response = await client.PostAsync($"http://localhost:{TestPort}/v1/reset", new StringContent(JsonConvert.SerializeObject(resetPayload), Encoding.UTF8, "application/json"));
@@ -111,8 +110,8 @@ namespace LM_Stud.Tests{
 				dynamic result = JsonConvert.DeserializeObject(json);
 				Assert.AreEqual("global", (string)result.scope, "Response should confirm global reset scope.");
 			}
-			var replacement1 = _apiServer.Sessions.Get("global-reset-1");
-			var replacement2 = _apiServer.Sessions.Get("global-reset-2");
+			var replacement1 = _form.ApiServer.Sessions.Get("global-reset-1");
+			var replacement2 = _form.ApiServer.Sessions.Get("global-reset-2");
 			Assert.AreEqual(0, replacement1.Messages.Count, "Global reset should clear existing sessions.");
 			Assert.AreEqual(0, replacement2.Messages.Count, "Global reset should clear existing sessions.");
 		}

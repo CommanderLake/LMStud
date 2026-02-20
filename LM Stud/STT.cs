@@ -2,12 +2,11 @@
 using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud {
-	internal class STT {
+	internal static class STT {
 		internal static Form1 MainForm;
-		internal STT(Form1 form){MainForm = form;}
 		internal static void TryStartSpeechTranscription(bool showErrorOnFailure){
 			if(MainForm.checkVoiceInput.CheckState != CheckState.Checked) return;
-			if(MainForm.IsEditing || Generation.Generating || Generation.APIServerGenerating || MainForm.TTS.TTSSpeaking || Volatile.Read(ref MainForm.TTS.TTSPendingCount) > 0) return;
+			if(MainForm.IsEditing || Generation.Generating || Generation.APIServerGenerating || TTS.TTSSpeaking || Volatile.Read(ref TTS.TTSPendingCount) > 0) return;
 			if(NativeMethods.StartSpeechTranscription()) return;
 			if(!showErrorOnFailure) return;
 			MessageBox.Show(MainForm, Resources.Error_starting_voice_input, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);

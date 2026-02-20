@@ -43,7 +43,7 @@ namespace LM_Stud.Tests{
 		public void Update_ModifiesSessionData(){
 			var sessionId = "test-session-1";
 			var session = _sessionManager.Get(sessionId);
-			var messages = new List<ApiServer.Message>{ new ApiServer.Message{ Role = "user", Content = "test" } };
+			var messages = new List<APIServer.Message>{ new APIServer.Message{ Role = "user", Content = "test" } };
 			var state = new byte[]{ 1, 2, 3 };
 			var tokenCount = 50;
 			_sessionManager.Update(session, messages, state, tokenCount);
@@ -56,7 +56,7 @@ namespace LM_Stud.Tests{
 		public void Update_ClonesStateArray(){
 			var session = _sessionManager.Get("state-copy");
 			var state = new byte[]{ 1, 2, 3 };
-			_sessionManager.Update(session, new List<ApiServer.Message>(), state, 0);
+			_sessionManager.Update(session, new List<APIServer.Message>(), state, 0);
 			state[0] = 9;
 			Assert.AreEqual(1, session.State[0], "Session state should be isolated from caller mutations.");
 		}
@@ -106,7 +106,7 @@ namespace LM_Stud.Tests{
 			var session = _sessionManager.Get(sessionId);
 			var initialTime = session.LastUsed;
 			Thread.Sleep(50);
-			_sessionManager.Update(session, new List<ApiServer.Message>(), null, 0);
+			_sessionManager.Update(session, new List<APIServer.Message>(), null, 0);
 			Assert.IsTrue(session.LastUsed > initialTime, "LastUsed should be updated on Update.");
 		}
 		[TestMethod]
@@ -118,7 +118,7 @@ namespace LM_Stud.Tests{
 					try{
 						for(var j = 0; j < 10; j++){
 							var session = _sessionManager.Get($"session-{Thread.CurrentThread.ManagedThreadId}-{j}");
-							_sessionManager.Update(session, new List<ApiServer.Message>(), null, 10);
+							_sessionManager.Update(session, new List<APIServer.Message>(), null, 10);
 							Thread.Sleep(1);
 						}
 					} catch(Exception ex){

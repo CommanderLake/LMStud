@@ -122,10 +122,10 @@
     <Setting Name="UseWhisperVAD" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="ApiServerEnable" Type="System.Boolean" Scope="User">
+    <Setting Name="APIServerEnable" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="ApiServerPort" Type="System.Decimal" Scope="User">
+    <Setting Name="APIServerPort" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">11434</Value>
     </Setting>
     <Setting Name="GenDelay" Type="System.Decimal" Scope="User">
@@ -137,19 +137,19 @@
     <Setting Name="CMDToolTimeoutMs" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">60000</Value>
     </Setting>
-    <Setting Name="ApiClientEnable" Type="System.Boolean" Scope="User">
+    <Setting Name="APIClientEnable" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="ApiClientBaseUrl" Type="System.String" Scope="User">
+    <Setting Name="APIClientUrl" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
-    <Setting Name="ApiClientKey" Type="System.String" Scope="User">
+    <Setting Name="APIClientKey" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
-    <Setting Name="ApiClientModel" Type="System.String" Scope="User">
+    <Setting Name="APIClientModel" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
-    <Setting Name="ApiClientStore" Type="System.Boolean" Scope="User">
+    <Setting Name="APIClientStore" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
   </Settings>

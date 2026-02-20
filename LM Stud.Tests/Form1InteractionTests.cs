@@ -15,6 +15,9 @@ namespace LM_Stud.Tests{
 			t.Start();
 			while(Program.MainForm == null) Thread.Sleep(10);
 			_form = Program.MainForm;
+			Thread.Sleep(1000);
+			_form.Invoke(new MethodInvoker(() => {_form.LoadModel(_form.listViewModels.Items["Hermes-3-Llama-3.2-3B.Q8_0"], true);}));
+			while(!Common.LlModelLoaded) Thread.Sleep(10);
 		}
 		[ClassCleanup]
 		public static void ClassCleanup(){
@@ -25,7 +28,6 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public void Generate_WithWhitespaceInput_DoesNotAddMessage(){
-			Common.LlModelLoaded = true;
 			_form.Invoke(new MethodInvoker(() => {
 				_form.textInput.Text = "   ";
 				_form.ButGen_Click(null, null);
@@ -35,7 +37,6 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public void Generate_WhenSemaphoreUnavailable_DoesNotProceed(){
-			Common.LlModelLoaded = true;
 			Generation.GenerationLock.Wait();
 			_form.Invoke(new MethodInvoker(() => {
 				_form.textInput.Text = "Hello";
@@ -47,7 +48,6 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public void DialecticToggle_EnablesWhenModelLoaded(){
-			Common.LlModelLoaded = true;
 			_form.Invoke(new MethodInvoker(() => {
 				_form.checkDialectic.Checked = true;
 				_form.CheckDialectic_CheckedChanged(_form.checkDialectic, EventArgs.Empty);
@@ -58,7 +58,6 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public void DialecticToggle_DisablesClearingState(){
-			Common.LlModelLoaded = true;
 			Generation.DialecticStarted = true;
 			Generation.DialecticPaused = true;
 			_form.Invoke(new MethodInvoker(() => {
@@ -136,7 +135,6 @@ namespace LM_Stud.Tests{
 			}));
 			Thread.Sleep(100);
 			_form.Invoke(new MethodInvoker(() => {
-				Common.LlModelLoaded = true;
 				_form.MsgButDeleteOnClick(message);
 			}));
 			Thread.Sleep(100);

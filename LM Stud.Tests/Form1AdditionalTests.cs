@@ -27,18 +27,6 @@ namespace LM_Stud.Tests{
 			_form.Invoke(new MethodInvoker(() => {_form.ButReset_Click(null, null);}));
 			Thread.Sleep(100);
 		}
-		private static void Invoke(object instance, string name, params object[] parameters){
-			if(parameters == null) parameters = Array.Empty<object>();
-			var methods = instance.GetType().GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-			foreach(var candidate in methods){
-				if(candidate.Name != name) continue;
-				var parameterInfos = candidate.GetParameters();
-				if(!ParametersMatch(parameterInfos, parameters)) continue;
-				candidate.Invoke(instance, parameters);
-				return;
-			}
-			throw new InvalidOperationException($"Method '{name}' with matching signature not found.");
-		}
 		private static bool ParametersMatch(ParameterInfo[] parameterInfos, object[] parameters){
 			if(parameterInfos.Length != parameters.Length) return false;
 			for(var i = 0; i < parameterInfos.Length; i++){
@@ -59,14 +47,14 @@ namespace LM_Stud.Tests{
 				textInput.Text = "Initial text";
 				_form.IsEditing = false;
 			}));
-			_form.Invoke(new MethodInvoker(() => {Invoke(_form, "StartEditing");}));
+			_form.Invoke(new MethodInvoker(() => {_form.StartEditing();}));
 			Assert.IsTrue(_form.IsEditing, "Should be in editing mode.");
 			Assert.AreEqual("Initial text", _form.InputEditOldText, "Original text should be saved.");
 		}
 		[TestMethod]
 		public void FinishEditing_ExitsEditingMode(){
 			_form.Invoke(new MethodInvoker(() => {_form.IsEditing = true;}));
-			_form.Invoke(new MethodInvoker(() => {Invoke(_form, "FinishEditing");}));
+			_form.Invoke(new MethodInvoker(() => {_form.FinishEditing();}));
 			Assert.IsFalse(_form.IsEditing, "Should not be in editing mode.");
 		}
 		[TestMethod]
@@ -77,7 +65,7 @@ namespace LM_Stud.Tests{
 				_form.InputEditOldText = "Original";
 				textInput.Text = "Modified";
 			}));
-			_form.Invoke(new MethodInvoker(() => {Invoke(_form, "CancelEditing");}));
+			_form.Invoke(new MethodInvoker(() => {_form.CancelEditing();}));
 			string restored = null;
 			_form.Invoke(new MethodInvoker(() => {
 				var textInput = _form.textInput;
@@ -94,13 +82,13 @@ namespace LM_Stud.Tests{
 				var textInput = _form.textInput;
 				textInput.Text = "Test message";
 			}));
-			_form.Invoke(new MethodInvoker(() => {Invoke(_form, "Generate");}));
+			_form.Invoke(new MethodInvoker(Generation.Generate));
 			var messages = _form.ChatMessages;
 			Assert.AreEqual(0, messages.Count, "Should not add message when API is generating.");
 		}
 		[TestMethod]
 		public void SpeechBuffer_AccumulatesText(){
-			var speechBuffer = _form.TTS.Pending;
+			var speechBuffer = TTS.Pending;
 			_form.Invoke(new MethodInvoker(() => {speechBuffer.Clear();}));
 			_form.Invoke(new MethodInvoker(() => {
 				speechBuffer.Append("Hello ");

@@ -9,12 +9,12 @@ namespace LMStud{
 	public partial class Form1{
 		private static readonly string ModelSettingsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LM Stud");
 		private static readonly string ModelSettingsFile = Path.Combine(ModelSettingsFolder, "ModelSettings.json");
-		private readonly Dictionary<string, Form1.ModelSettings> _modelSettings = new Dictionary<string, Form1.ModelSettings>();
+		private readonly Dictionary<string, ModelSettings> _modelSettings = new Dictionary<string, ModelSettings>();
 		private void LoadModelSettings(){
 			if(!File.Exists(ModelSettingsFile)) return;
 			try{
 				var json = File.ReadAllText(ModelSettingsFile);
-				var dict = JsonConvert.DeserializeObject<Dictionary<string, Form1.ModelSettings>>(json);
+				var dict = JsonConvert.DeserializeObject<Dictionary<string, ModelSettings>>(json);
 				if(dict == null) return;
 				foreach(var kv in dict) _modelSettings[kv.Key] = kv.Value;
 			} catch{}
@@ -42,7 +42,7 @@ namespace LMStud{
 			var flashNew = checkFlashAttnModel.CheckState;
 			var jinjaOverrideNew = checkOverrideJinjaModel.Checked;
 			var jinjaTmplNew = textJinjaTmplModel.Text;
-			_modelSettings[modelRelPath] = new Form1.ModelSettings(overrideNew, systemPromptNew, ctxSizeNew, gpuLayersNew, tempNew, minPNew, topPNew, topKNew, flashNew, jinjaOverrideNew, jinjaTmplNew);
+			_modelSettings[modelRelPath] = new ModelSettings(overrideNew, systemPromptNew, ctxSizeNew, gpuLayersNew, tempNew, minPNew, topPNew, topKNew, flashNew, jinjaOverrideNew, jinjaTmplNew);
 			SaveModelSettings();
 			if(Common.LoadedModel != selectedModel || !Common.LlModelLoaded) return;
 			var overrideOld = oldSettings?.OverrideSettings ?? false;

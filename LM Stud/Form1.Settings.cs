@@ -50,14 +50,14 @@ namespace LMStud{
 			Common.DateTimeEnable = checkDateTimeEnable.Checked = Settings.Default.DateTimeEnable;
 			Common.CMDEnable = checkCMDEnable.Checked = Settings.Default.CMDToolEnable;
 			Common.CMDTimeoutMs = (int)(numCmdTimeout.Value = Settings.Default.CMDToolTimeoutMs);
-			Common.APIServerEnable = checkApiServerEnable.Checked = Settings.Default.ApiServerEnable;
-			Common.APIServerPort = (int)(numApiServerPort.Value = Settings.Default.ApiServerPort);
+			Common.APIServerEnable = checkApiServerEnable.Checked = Settings.Default.APIServerEnable;
+			Common.APIServerPort = (int)(numApiServerPort.Value = Settings.Default.APIServerPort);
 			Common.GenDelay = (int)(numGenDelay.Value = Settings.Default.GenDelay);
-			Common.APIClientEnable = checkApiClientEnable.Checked = Settings.Default.ApiClientEnable;
-			Common.APIClientUrl = textApiClientUrl.Text = Settings.Default.ApiClientBaseUrl;
-			Common.APIClientKey = textApiClientKey.Text = Settings.Default.ApiClientKey;
-			Common.APIClientModel = comboApiClientModel.Text = Settings.Default.ApiClientModel;
-			Common.APIClientStore = checkApiClientStore.Checked = Settings.Default.ApiClientStore;
+			Common.APIClientEnable = checkApiClientEnable.Checked = Settings.Default.APIClientEnable;
+			Common.APIClientUrl = textApiClientUrl.Text = Settings.Default.APIClientUrl;
+			Common.APIClientKey = textApiClientKey.Text = Settings.Default.APIClientKey;
+			Common.APIClientModel = comboApiClientModel.Text = Settings.Default.APIClientModel;
+			Common.APIClientStore = checkApiClientStore.Checked = Settings.Default.APIClientStore;
 			NativeMethods.SetSilenceTimeout(Common.GenDelay);
 			NativeMethods.SetFileBaseDir(Common.FileBaseDir);
 			NativeMethods.SetWakeCommand(Common.WakeWord);
@@ -67,10 +67,7 @@ namespace LMStud{
 			NativeMethods.SetGoogle(Common.GoogleAPIKey, Common.GoogleSearchID, Common.GoogleSearchResultCount);
 			NativeMethods.SetCommandPromptTimeout(Common.CMDTimeoutMs);
 			SetModelStatus();
-			if(Common.APIServerEnable){
-				_apiServer.Port = Common.APIServerPort;
-				_apiServer.Start();
-			}
+			if(Common.APIServerEnable) ApiServer.Start();
 			if(Common.APIClientEnable) Tools.RegisterTools();
 		}
 		private void UpdateSetting<T>(ref T currentValue, T newValue, Action<T> updateAction){
@@ -282,36 +279,34 @@ namespace LMStud{
 				NativeMethods.SetCommandPromptTimeout(value);
 			});
 			UpdateSetting(ref Common.APIServerPort, (int)numApiServerPort.Value, value => {
-				Settings.Default.ApiServerPort = value;
+				Settings.Default.APIServerPort = value;
 				if(Common.APIServerEnable){
-					_apiServer.Stop();
-					_apiServer.Port = value;
-					_apiServer.Start();
+					ApiServer.Stop();
+					ApiServer.Start();
 				}
 			});
 			UpdateSetting(ref Common.APIServerEnable, checkApiServerEnable.Checked, value => {
-				Settings.Default.ApiServerEnable = value;
+				Settings.Default.APIServerEnable = value;
 				if(value){
-					_apiServer.Port = Common.APIServerPort;
-					_apiServer.Start();
+					ApiServer.Start();
 				}
-				else{ _apiServer.Stop(); }
+				else{ ApiServer.Stop(); }
 			});
 			UpdateSetting(ref Common.GenDelay, (int)numGenDelay.Value, value => {
 				Settings.Default.GenDelay = value;
 				NativeMethods.SetSilenceTimeout(value);
 			});
 			UpdateSetting(ref Common.APIClientEnable, checkApiClientEnable.Checked, value => {
-				Settings.Default.ApiClientEnable = value;
+				Settings.Default.APIClientEnable = value;
 				setStatusLabel = true;
 			});
-			UpdateSetting(ref Common.APIClientUrl, textApiClientUrl.Text, value => {Settings.Default.ApiClientBaseUrl = value;});
-			UpdateSetting(ref Common.APIClientKey, textApiClientKey.Text, value => {Settings.Default.ApiClientKey = value;});
+			UpdateSetting(ref Common.APIClientUrl, textApiClientUrl.Text, value => {Settings.Default.APIClientUrl = value;});
+			UpdateSetting(ref Common.APIClientKey, textApiClientKey.Text, value => {Settings.Default.APIClientKey = value;});
 			UpdateSetting(ref Common.APIClientModel, comboApiClientModel.Text, value => {
-				Settings.Default.ApiClientModel = value;
+				Settings.Default.APIClientModel = value;
 				setStatusLabel = true;
 			});
-			UpdateSetting(ref Common.APIClientStore, checkApiClientStore.Checked, value => {Settings.Default.ApiClientStore = value;});
+			UpdateSetting(ref Common.APIClientStore, checkApiClientStore.Checked, value => {Settings.Default.APIClientStore = value;});
 			var flash = overrideSettings ? ms.FlashAttn : Common.FlashAttn;
 			var minP = overrideSettings ? ms.MinP : Common.MinP;
 			var topP = overrideSettings ? ms.TopP : Common.TopP;
@@ -408,10 +403,10 @@ Always read a file and verify its contents before making changes.");
 					ShowError(Resources.API_Server, Resources.Please_enter_a_valid_API_base_URL, false);
 					return;
 				}
-				var client = new ApiClient(parsedUri.ToString(), textApiClientKey.Text, "", Common.APIClientStore, Common.SystemPrompt);
-				var clientModels = client.ListModels(CancellationToken.None);
+				var client = new APIClient(parsedUri.ToString(), textApiClientKey.Text, "", Common.APIClientStore, Common.SystemPrompt);
+				var clientModels = client.GetModels(CancellationToken.None);
 				foreach(var model in clientModels) comboApiClientModel.Items.Add(model);
-			} catch(Exception ex){ ShowApiClientError(Resources.API_Client, ex); }
+			} catch(Exception ex){ APIClient.ShowApiClientError(Resources.API_Client, ex); }
 		}
 	}
 }

@@ -2,9 +2,9 @@
 using System.Runtime.InteropServices;
 using System.Text;
 namespace LMStud {
-	internal class Tools {
+	internal static class Tools {
 		private static string _toolsJsonCache;
-		private static bool _toolsJsonCacheDirty = true;
+		private static volatile bool _toolsJsonCacheDirty = true;
 		internal static void RegisterTools(){
 			NativeMethods.RegisterTools(Common.DateTimeEnable, Common.GoogleSearchEnable, Common.WebpageFetchEnable, Common.FileListEnable, Common.FileCreateEnable, Common.FileReadEnable, Common.FileWriteEnable, Common.CMDEnable);
 			InvalidateToolsJsonCache();
@@ -32,7 +32,7 @@ namespace LMStud {
 			_toolsJsonCacheDirty = true;
 			_toolsJsonCache = null;
 		}
-		internal static string ExecuteToolCall(ApiClient.ToolCall toolCall){
+		internal static string ExecuteToolCall(APIClient.ToolCall toolCall){
 			if(toolCall == null || string.IsNullOrWhiteSpace(toolCall.Name)) return "{\"error\":\"missing tool name\"}";
 			var ptr = NativeMethods.ExecuteTool(toolCall.Name, toolCall.Arguments ?? "");
 			if(ptr == IntPtr.Zero) return "{\"error\":\"tool execution failed\"}";
