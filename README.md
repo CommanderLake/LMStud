@@ -1,4 +1,4 @@
-Copyright (c) 2025 CommanderLake
+﻿Copyright (c) 2026 CommanderLake
 All rights reserved.
 
 # 🦙 LM Stud – Local LLMs Minus the Lard
@@ -21,8 +21,8 @@ All rights reserved.
 | ✅ | **Built-in Google Search + webpage fetch** (super-visible setup below). |
 | ✅ | Optional speech I/O with `whisper.cpp`—talk smack to your computer. |
 | ✅ | Tiny memory footprint—smaller than RGB keyboard driver. |
-| ✅ | Model API handler for remote endpoints. |
 | ✅ | Dialectic mode with dual samplers for side-by-side debates. |
+| ✅ | API Client and Server using the OpenAI Responses API format |
 
 ---
 
