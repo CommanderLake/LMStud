@@ -73,6 +73,7 @@ namespace LMStud{
 			public List<APIServer.Message> Messages = new List<APIServer.Message>();
 			public byte[] State;
 			public int TokenCount;
+			public string LastBackend;
 		}
 	}
 }

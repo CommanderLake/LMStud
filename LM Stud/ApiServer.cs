@@ -116,6 +116,7 @@ namespace LMStud{
 				return;
 			}
 			var session = Sessions.Get(request.SessionId);
+			ResetSessionForModeSwitch(session, false);
 			try{
 				ctx.Response.AddHeader("X-Session-Id", session.Id);
 				var prompt = messages.LastOrDefault(m => m.Role == "user")?.Content ?? "";
@@ -128,6 +129,7 @@ namespace LMStud{
 				}
 				var assistant = sb.ToString();
 				Sessions.Apply(session, s => {
+					s.LastBackend = "local";
 					s.Messages.Add(new Message{ Role = "user", Content = prompt });
 					s.Messages.Add(new Message{ Role = "assistant", Content = assistant });
 					s.State = newState;
@@ -152,10 +154,12 @@ namespace LMStud{
 					ctx.Response.StatusCode = 400;
 					return;
 				}
+				ResetSessionForModeSwitch(session, true);
 				var persisted = BuildPersistedHistory(session.Messages);
 				foreach(var item in incomingDelta) persisted.Add(item);
 				var toolsJson = request.Tools != null ? request.Tools.ToString(Formatting.None) : Tools.BuildApiToolsJson();
-				client = new APIClient(Common.APIClientUrl, Common.APIClientKey, Common.APIClientModel, Common.APIClientStore, Common.SystemPrompt);
+				var instructions = request.Instructions ?? Common.SystemPrompt;
+				client = new APIClient(Common.APIClientUrl, Common.APIClientKey, Common.APIClientModel, false, instructions);
 				var result = client.CreateChatCompletion(persisted, (float)Settings.Default.Temp, (int)Settings.Default.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
 				APIClient.AppendOutputItems(persisted, result);
 				List<string> toolOutputs = null;
@@ -188,6 +192,7 @@ namespace LMStud{
 					s.Messages.Add(new Message{ Role = "assistant", Content = assistant });
 					s.State = null;
 					s.TokenCount = 0;
+					s.LastBackend = "remote";
 				});
 				var resp = BuildResponsePayload(assistant, Settings.Default.APIClientModel, session.Id);
 				var json = JsonConvert.SerializeObject(resp);
@@ -202,6 +207,17 @@ namespace LMStud{
 				if(!store) Sessions.Remove(session.Id);
 				client?.Dispose();
 			}
+		}
+		private void ResetSessionForModeSwitch(SessionManager.Session session, bool useRemoteApi){
+			if(session == null) return;
+			var expected = useRemoteApi ? "remote" : "local";
+			Sessions.Apply(session, s => {
+				if(string.IsNullOrEmpty(s.LastBackend) || s.LastBackend == expected) return;
+				s.Messages.Clear();
+				s.State = null;
+				s.TokenCount = 0;
+				s.LastBackend = expected;
+			});
 		}
 		private static object BuildResponsePayload(string assistant, string model, string sessionId){
 			var text = assistant ?? "";
@@ -338,6 +354,7 @@ namespace LMStud{
 		}
 		private class ChatRequest{
 			[JsonProperty("input")] public JToken Input;
+			[JsonProperty("instructions")] public string Instructions;
 			public List<Message> Messages;
 			[JsonProperty("session_id")] public string SessionId;
 			[JsonProperty("store")] public bool? Store;
