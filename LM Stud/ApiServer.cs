@@ -119,7 +119,11 @@ namespace LMStud{
 			ResetSessionForModeSwitch(session, false);
 			try{
 				ctx.Response.AddHeader("X-Session-Id", session.Id);
-				var prompt = messages.LastOrDefault(m => m.Role == "user")?.Content ?? "";
+				var prompt = ExtractLatestUserPrompt(messages, inputItems);
+				if(string.IsNullOrWhiteSpace(prompt)){
+					ctx.Response.StatusCode = 400;
+					return;
+				}
 				ctx.Response.ContentType = "application/json";
 				var sb = new StringBuilder();
 				void TokenCb(string token){sb.Append(token);}
@@ -264,6 +268,19 @@ namespace LMStud{
 			var lastItem = inputItems.LastOrDefault();
 			if(lastItem == null) return null;
 			return new JArray(lastItem.DeepClone());
+		}
+		private static string ExtractLatestUserPrompt(List<Message> messages, JArray inputItems){
+			if(messages != null && messages.Count > 0){
+				var userPrompt = messages.LastOrDefault(m => string.Equals(m?.Role, "user", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(m.Content))?.Content;
+				if(!string.IsNullOrWhiteSpace(userPrompt)) return userPrompt;
+			}
+			if(inputItems == null || inputItems.Count == 0) return null;
+			for(var i = inputItems.Count - 1; i >= 0; i--){
+				var parsed = ParseInputItemToMessage(inputItems[i]);
+				if(!string.Equals(parsed?.Role, "user", StringComparison.OrdinalIgnoreCase)) continue;
+				if(!string.IsNullOrWhiteSpace(parsed.Content)) return parsed.Content;
+			}
+			return null;
 		}
 		private static Message ParseInputItemToMessage(JToken item){
 			if(!(item is JObject obj)) return null;

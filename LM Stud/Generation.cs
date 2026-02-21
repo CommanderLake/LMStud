@@ -12,6 +12,8 @@ namespace LMStud {
 		internal static readonly SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
 		internal static volatile bool Generating;
 		internal static volatile bool APIServerGenerating;
+		private static readonly object APICancelSync = new object();
+		private static CancellationTokenSource _apiGenerationCts;
 		private static Action<string> _apiTokenCallback;
 		private static readonly Stopwatch SwRate = new Stopwatch();
 		private static readonly Stopwatch SwTot = new Stopwatch();
@@ -56,6 +58,7 @@ namespace LMStud {
 				DialecticStarted = true;
 			}
 			if(useRemote){
+				SetApiGenerationCancellation(new CancellationTokenSource());
 				ThreadPool.QueueUserWorkItem(o => {GenerateWithApiClient(role, newMsg, addToChat);});
 				return;
 			}
@@ -163,6 +166,7 @@ namespace LMStud {
 		private static void GenerateWithApiClient(MessageRole role, string prompt, bool addToChat){
 			Exception error = null;
 			var syncError = NativeMethods.StudError.Success;
+			var cancellationToken = GetApiGenerationCancellationToken();
 			try{
 				var messages = BuildApiMessages(role, prompt, addToChat);
 				var history = APIClient.BuildInputItems(messages);
@@ -170,7 +174,7 @@ namespace LMStud {
 				using(var client = new APIClient(Common.APIClientUrl, Common.APIClientKey, Common.APIClientModel, Common.APIClientStore, Common.SystemPrompt)){
 					string lastToolSignature = null;
 					while(true){
-						var result = client.CreateChatCompletion(history, Common.Temp, Common.NGen, toolsJson, null, CancellationToken.None);
+						var result = client.CreateChatCompletion(history, Common.Temp, Common.NGen, toolsJson, null, cancellationToken);
 						APIClient.AppendOutputItems(history, result);
 						var content = result.Content;
 						var reasoning = result.Reasoning;
@@ -205,6 +209,8 @@ namespace LMStud {
 					}
 				}
 				syncError = SyncNativeChatMessages();
+			} catch(OperationCanceledException){
+				error = null;
 			} catch(Exception ex){ error = ex; }
 			try{
 				MainForm.Invoke(new MethodInvoker(() => {
@@ -212,7 +218,35 @@ namespace LMStud {
 					if(error == null && syncError != NativeMethods.StudError.Success && syncError != NativeMethods.StudError.ContextFull) MainForm.ShowError(Resources.API_Client, syncError.ToString(), true);
 					MainForm.FinishedGenerating();
 				}));
-			} catch(ObjectDisposedException){} finally{ GenerationLock.Release(); }
+			} catch(ObjectDisposedException){} finally{
+				ClearApiGenerationCancellation();
+				GenerationLock.Release();
+			}
+		}
+		internal static void StopActiveGeneration(){
+			CancelApiGeneration();
+			NativeMethods.StopGeneration();
+		}
+		private static void SetApiGenerationCancellation(CancellationTokenSource cts){
+			lock(APICancelSync){
+				_apiGenerationCts?.Dispose();
+				_apiGenerationCts = cts;
+			}
+		}
+		private static CancellationToken GetApiGenerationCancellationToken(){
+			lock(APICancelSync){ return _apiGenerationCts?.Token ?? CancellationToken.None; }
+		}
+		private static void CancelApiGeneration(){
+			lock(APICancelSync){
+				if(_apiGenerationCts == null) return;
+				if(!_apiGenerationCts.IsCancellationRequested) _apiGenerationCts.Cancel();
+			}
+		}
+		private static void ClearApiGenerationCancellation(){
+			lock(APICancelSync){
+				_apiGenerationCts?.Dispose();
+				_apiGenerationCts = null;
+			}
 		}
 		private static byte[] GetState(){
 			var size = NativeMethods.GetStateSize();

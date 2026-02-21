@@ -131,7 +131,7 @@ namespace LMStud{
 			_columnClickHandler.RegisterListView(listViewHugFiles, columnDataTypesHugFiles);
 		}
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e){
-			if(Generation.Generating) NativeMethods.StopGeneration();
+			if(Generation.Generating) Generation.StopActiveGeneration();
 			if(_whisperLoaded){
 				NativeMethods.StopSpeechTranscription();
 				NativeMethods.UnloadWhisperModel();
@@ -144,7 +144,7 @@ namespace LMStud{
 			if(e.KeyCode != Keys.Escape) return;
 			TTS.CancelPendingSpeech();
 			if(!Generation.Generating) return;
-			NativeMethods.StopGeneration();
+			Generation.StopActiveGeneration();
 		}
 		private void ButCodeBlock_Click(object sender, EventArgs e){textInput.Paste("```\r\n\r\n```");}
 		internal void CheckMarkdown_CheckedChanged(object sender, EventArgs e){
@@ -217,7 +217,7 @@ namespace LMStud{
 		internal void ButGen_Click(object sender, EventArgs e){
 			if(Generation.Generating){
 				Generation.DialecticPaused = true;
-				NativeMethods.StopGeneration();
+				Generation.StopActiveGeneration();
 			} else Generation.Generate();
 		}
 		internal void ButReset_Click(object sender, EventArgs e){

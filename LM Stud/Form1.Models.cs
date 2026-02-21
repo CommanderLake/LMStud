@@ -282,7 +282,7 @@ namespace LMStud{
 		}
 		private void UnloadModelInternal(bool genLock){
 			try{
-				NativeMethods.StopGeneration();
+				Generation.StopActiveGeneration();
 				if(genLock) Generation.GenerationLock.Wait(-1);
 				Tools.ClearRegisteredTools();
 				NativeMethods.FreeModel();
