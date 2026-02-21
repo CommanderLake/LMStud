@@ -187,7 +187,7 @@ namespace LMStud{
 							return;
 						}
 					}
-					STT.TryStartSpeechTranscription(true);
+					STT.RequestStart(true);
 				} else{
 					NativeMethods.StopSpeechTranscription();
 				}
@@ -248,7 +248,7 @@ namespace LMStud{
 					e.SuppressKeyPress = true;
 					CancelEditing();
 				}
-			} else if(e.KeyCode != Keys.Enter && checkVoiceInput.CheckState != CheckState.Unchecked){ StartEditing(); } else if(e.KeyCode == Keys.Enter && !e.Control && !e.Shift && butGen.Enabled){
+			} else if(e.KeyCode != Keys.Enter && e.KeyCode != Keys.Escape && checkVoiceInput.CheckState != CheckState.Unchecked){ StartEditing(); } else if(e.KeyCode == Keys.Enter && !e.Control && !e.Shift && butGen.Enabled){
 				e.SuppressKeyPress = true;
 				ButGen_Click(null, null);
 			}
@@ -440,7 +440,7 @@ namespace LMStud{
 			IsEditing = false;
 			UpdateStatusMessage();
 			if(checkVoiceInput.CheckState != CheckState.Checked) return;
-			STT.TryStartSpeechTranscription(true);
+			STT.RequestStart(true);
 		}
 		internal void CancelEditing(){
 			textInput.Text = InputEditOldText;
@@ -452,7 +452,7 @@ namespace LMStud{
 			butReset.Enabled = butApply.Enabled = true;
 			Generation.Generating = false;
 			foreach(var message in ChatMessages) message.Generating = false;
-			if(checkVoiceInput.CheckState == CheckState.Checked) STT.TryStartSpeechTranscription(false);
+			if(checkVoiceInput.CheckState == CheckState.Checked) STT.RequestStart(false);
 		}
 		private void TextInput_DragEnter(object sender, DragEventArgs e){
 			if(e.Data.GetDataPresent(DataFormats.FileDrop)) e.Effect = DragDropEffects.Copy;

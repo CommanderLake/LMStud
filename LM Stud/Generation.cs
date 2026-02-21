@@ -7,7 +7,7 @@ using System.Threading;
 using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud {
-	internal class Generation{
+	internal static class Generation{
 		internal static Form1 MainForm;
 		internal static readonly SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
 		internal static volatile bool Generating;
@@ -261,6 +261,7 @@ namespace LMStud {
 					if(chatSnapshot != IntPtr.Zero) try{ NativeMethods.RestoreChatState(chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
 					_apiTokenCallback = null;
 					APIServerGenerating = false;
+					try{ MainForm.Invoke((MethodInvoker)(() => STT.RetryStart())); } catch(ObjectDisposedException){}
 				}
 			} finally{ GenerationLock.Release(); }
 		}

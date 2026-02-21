@@ -18,7 +18,7 @@ namespace LMStud {
 			SS.SpeakAsyncCancelAll();
 			Interlocked.Exchange(ref TTSPendingCount, 0);
 			TTSSpeaking = false;
-			STT.TryStartSpeechTranscription(false);
+			STT.RequestStart(false);
 		}
 		internal static void QueueSpeech(string text){
 			if(string.IsNullOrWhiteSpace(text)) return;
@@ -44,7 +44,7 @@ namespace LMStud {
 				if(MainForm.IsDisposed) return;
 				if(pending > 0) return;
 				TTSSpeaking = false;
-				STT.TryStartSpeechTranscription(false);
+				STT.RequestStart(false);
 			}));
 		}
 	}
