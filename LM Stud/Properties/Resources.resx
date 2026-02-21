@@ -491,4 +491,7 @@ Tool arguments: </value>
 <data name="_0___1___2_" xml:space="preserve">
 	<value>{0}:{1}:{2}</value>
 </data>
+<data name="Models_folder_not_found" xml:space="preserve">
+	<value>Models folder not found</value>
+</data>
 </root>

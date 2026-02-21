@@ -67,12 +67,13 @@ namespace LMStud{
 			NativeMethods.SetGoogle(Common.GoogleAPIKey, Common.GoogleSearchID, Common.GoogleSearchResultCount);
 			NativeMethods.SetCommandPromptTimeout(Common.CMDTimeoutMs);
 		}
-		private void UpdateSetting<T>(ref T currentValue, T newValue, Action<T> updateAction){
+		private static void UpdateSetting<T>(ref T currentValue, T newValue, Action<T> updateAction){
 			if(EqualityComparer<T>.Default.Equals(currentValue, newValue)) return;
 			currentValue = newValue;
 			updateAction(newValue);
 		}
 		private void ButApply_Click(object sender, EventArgs e){
+			var popModels = false;
 			var reloadModel = false;
 			var reloadCtx = false;
 			var reloadSmpl = false;
@@ -95,12 +96,16 @@ namespace LMStud{
 				}
 				setSystemPrompt = true;
 			});
-			UpdateSetting(ref Common.ModelsDir, textModelsDir.Text, mp => {
-				mp = mp[mp.Length - 1] == '\\' || mp[mp.Length - 1] == '/' ? mp : mp + '\\';
-				Settings.Default.ModelsDir = mp;
-				PopulateModels();
-				PopulateWhisperModels(true, true);
-			});
+			if(Directory.Exists(textModelsDir.Text))
+				UpdateSetting(ref Common.ModelsDir, textModelsDir.Text, mp => {
+					mp = mp[mp.Length - 1] == '\\' || mp[mp.Length - 1] == '/' ? mp : mp + '\\';
+					textModelsDir.Text = Common.ModelsDir = Settings.Default.ModelsDir = mp;
+					popModels = true;
+				});
+			else{
+				MessageBox.Show(this, Resources.Models_folder_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+				textModelsDir.Text = Common.ModelsDir = Settings.Default.ModelsDir;
+			}
 			UpdateSetting(ref Common.CtxSize, (int)numCtxSize.Value, value => {
 				Settings.Default.CtxSize = value;
 				if(overrideSettings){
@@ -179,11 +184,14 @@ namespace LMStud{
 				UpdateSetting(ref Common.NThreadsBatch, (int)numThreadsBatch.Value, value => {Settings.Default.ThreadsBatch = value;});
 				NativeMethods.SetThreadCount((int)numThreads.Value, (int)numThreadsBatch.Value);
 			}
-			UpdateSetting(ref Common.WhisperModel, _whisperModels[comboWhisperModel.SelectedIndex].Substring(Common.ModelsDir.Length), value => {
+			string GetModelString(int index){
+				return index < 0 ? "" : _whisperModels[index].Substring(Common.ModelsDir.Length);
+			}
+			UpdateSetting(ref Common.WhisperModel, GetModelString(comboWhisperModel.SelectedIndex), value => {
 				Settings.Default.WhisperModel = value;
 				reloadWhisper = true;
 			});
-			UpdateSetting(ref Common.VADModel, _whisperModels[comboVADModel.SelectedIndex].Substring(Common.ModelsDir.Length), value => {
+			UpdateSetting(ref Common.VADModel, GetModelString(comboVADModel.SelectedIndex), value => {
 				Settings.Default.VADModel = value;
 				reloadWhisper = true;
 			});
@@ -284,10 +292,8 @@ namespace LMStud{
 			});
 			UpdateSetting(ref Common.APIServerEnable, checkApiServerEnable.Checked, value => {
 				Settings.Default.APIServerEnable = value;
-				if(value){
-					ApiServer.Start();
-				}
-				else{ ApiServer.Stop(); }
+				if(value) ApiServer.Start();
+				else ApiServer.Stop();
 			});
 			UpdateSetting(ref Common.GenDelay, (int)numGenDelay.Value, value => {
 				Settings.Default.GenDelay = value;
@@ -304,6 +310,10 @@ namespace LMStud{
 				setStatusLabel = true;
 			});
 			UpdateSetting(ref Common.APIClientStore, checkApiClientStore.Checked, value => {Settings.Default.APIClientStore = value;});
+			if(popModels){
+				PopulateModels();
+				PopulateWhisperModels(true, true);
+			}
 			var flash = overrideSettings ? ms.FlashAttn : Common.FlashAttn;
 			var minP = overrideSettings ? ms.MinP : Common.MinP;
 			var topP = overrideSettings ? ms.TopP : Common.TopP;

@@ -561,6 +561,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Models folder not found.
+        /// </summary>
+        internal static string Models_folder_not_found {
+            get {
+                return ResourceManager.GetString("Models_folder_not_found", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Models folder not found, please specify a valid folder in the Settings tab..
         /// </summary>
         internal static string Models_folder_not_found_ {

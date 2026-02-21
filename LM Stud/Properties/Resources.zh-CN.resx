@@ -476,4 +476,7 @@
 <data name="_0___1___2_" xml:space="preserve">
 	<value>{0}：{1}：{2}</value>
 </data>
+<data name="Models_folder_not_found" xml:space="preserve">
+	<value>未找到模型文件夹</value>
+</data>
 </root>

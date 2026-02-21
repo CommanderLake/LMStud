@@ -81,7 +81,8 @@ namespace LMStud{
 			if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPrompt();});
 		}
 		private void PopulateModelSettings(string modelPath){
-			if(_modelSettings.TryGetValue(modelPath.Substring(Common.ModelsDir.Length), out var ms)){
+			var relPath = modelPath.Substring(Common.ModelsDir.Length);
+			if(_modelSettings.TryGetValue(relPath, out var ms)){
 				checkOverrideSettings.Checked = ms.OverrideSettings;
 				textSystemPromptModel.Text = ms.SystemPrompt;
 				numCtxSizeModel.Value = ms.CtxSize;
