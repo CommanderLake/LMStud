@@ -130,13 +130,11 @@ StudError CreateSamplerInternal(const float minP, const float topP, const int to
 	smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
 	if(!smpl){ return StudError::CantCreateSampler; }
 	llama_sampler_chain_add(smpl, llama_sampler_init_penalties(128, repeatPenalty, 0.0f, 0.0f));
-	// Optional: DRY (sequence) penalty immediately after penalties
-	// llama_sampler_chain_add(_session.smpl, llama_sampler_init_dry(0.8f, 1.8f, -1));
+	llama_sampler_chain_add(smpl, llama_sampler_init_temp(temp));
 	if(topK > 0) llama_sampler_chain_add(smpl, llama_sampler_init_top_k(topK));
 	if(topP < 1.0f) llama_sampler_chain_add(smpl, llama_sampler_init_top_p(topP, 1));
-	llama_sampler_chain_add(smpl, llama_sampler_init_temp(temp));
-	llama_sampler_chain_add(smpl, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
 	if(minP > 0.0f) llama_sampler_chain_add(smpl, llama_sampler_init_min_p(minP, 1));
+	llama_sampler_chain_add(smpl, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
 	return StudError::Success;
 }
 StudError CreateSampler(const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
