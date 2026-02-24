@@ -322,6 +322,7 @@ bool ExecuteCommand(const std::string& command, std::string& output, std::string
 		error = "Session not active";
 		return false;
 	}
+	stop.store(false);
 	DWORD available = 0;
 	if(PeekNamedPipe(g_cmdSession.stdoutRead, nullptr, 0, nullptr, &available, nullptr) && available > 0){
 		char buffer[4096];
@@ -383,6 +384,6 @@ extern "C" EXPORT void CloseCommandPrompt(){
 	InternalCloseCommandPrompt(true);
 }
 extern "C" EXPORT void SetCommandPromptTimeout(const int timeoutMs){
-	g_cmdTimeoutMs.store(timeoutMs > 0 ? static_cast<DWORD>(timeoutMs) : INFINITY);
+	g_cmdTimeoutMs.store(timeoutMs > 0 ? static_cast<DWORD>(timeoutMs) : INFINITE);
 }
 extern "C" EXPORT void StopCMDOutput(){ stop.store(true); }
