@@ -285,7 +285,6 @@ namespace LMStud{
 			try{
 				Generation.StopActiveGeneration();
 				if(genLock) Generation.GenerationLock.Wait(-1);
-				Tools.ClearRegisteredTools();
 				NativeMethods.FreeModel();
 				try{
 					BeginInvoke(new MethodInvoker(() => {

@@ -107,8 +107,10 @@ std::string SearchFileTool(const char* argsJson){
 	const std::string maxResultsStr = GetArgValue(argsJson, "max_results");
 	const std::string caseSensitiveStr = GetArgValue(argsJson, "case_sensitive");
 	const std::string recursiveStr = GetArgValue(argsJson, "recursive");
+	const std::string useRegexStr = GetArgValue(argsJson, "use_regex");
 	const bool caseSensitive = !(caseSensitiveStr == "false" || caseSensitiveStr == "0");
 	const bool recursive = recursiveStr == "true" || recursiveStr == "1";
+	const bool useRegex = useRegexStr == "true" || useRegexStr == "1";
 	int maxResults = 100;
 	if(!maxResultsStr.empty()){
 		auto[ptr, ec] = std::from_chars(maxResultsStr.data(), maxResultsStr.data() + maxResultsStr.size(), maxResults);
@@ -125,6 +127,16 @@ std::string SearchFileTool(const char* argsJson){
 		return s;
 	};
 	const std::string kwSearch = caseSensitive ? keyword : toLower(keyword);
+	std::regex kwRegex;
+	if(useRegex){
+		try{
+			auto flags = std::regex_constants::ECMAScript;
+			if(!caseSensitive) flags |= std::regex_constants::icase;
+			kwRegex = std::regex(keyword, flags);
+		} catch(const std::regex_error&){
+			return "{\"error\":\"invalid regex keyword\"}";
+		}
+	}
 	int matches = 0;
 	auto processFile = [&](const std::filesystem::path& filePath, const std::string& fileLabel)-> bool{
 		std::ifstream f(filePath);
@@ -134,8 +146,14 @@ std::string SearchFileTool(const char* argsJson){
 		std::string line;
 		int lineNo = 1;
 		while(std::getline(f, line)){
-			const std::string lineSearch = caseSensitive ? line : toLower(line);
-			if(lineSearch.find(kwSearch) != std::string::npos){
+			bool lineMatched = false;
+			if(useRegex){
+				lineMatched = std::regex_search(line, kwRegex);
+			} else{
+				const std::string lineSearch = caseSensitive ? line : toLower(line);
+				lineMatched = lineSearch.find(kwSearch) != std::string::npos;
+			}
+			if(lineMatched){
 				json += "{\"line\":" + std::to_string(lineNo) + ",\"text\":\"" + JsonEscape(line) + "\"";
 				if(!fileLabel.empty()) json += ",\"file\":\"" + JsonEscape(fileLabel) + "\"";
 				json += "},";
