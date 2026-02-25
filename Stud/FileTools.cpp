@@ -106,10 +106,12 @@ std::string SearchFileTool(const char* argsJson){
 	const std::string keyword = GetArgValue(argsJson, "keyword");
 	const std::string maxResultsStr = GetArgValue(argsJson, "max_results");
 	const std::string caseSensitiveStr = GetArgValue(argsJson, "case_sensitive");
+	const std::string recursiveStr = GetArgValue(argsJson, "recursive");
 	const bool caseSensitive = !(caseSensitiveStr == "false" || caseSensitiveStr == "0");
+	const bool recursive = recursiveStr == "true" || recursiveStr == "1";
 	int maxResults = 100;
 	if(!maxResultsStr.empty()){
-		auto [ptr, ec] = std::from_chars(maxResultsStr.data(), maxResultsStr.data() + maxResultsStr.size(), maxResults);
+		auto[ptr, ec] = std::from_chars(maxResultsStr.data(), maxResultsStr.data() + maxResultsStr.size(), maxResults);
 		if(ec != std::errc() || ptr != maxResultsStr.data() + maxResultsStr.size() || maxResults <= 0){ return "{\"error\":\"max_results must be a valid positive integer\"}"; }
 	}
 	if(keyword.empty()){ return "{\"error\":\"keyword is required\"}"; }
@@ -146,11 +148,20 @@ std::string SearchFileTool(const char* argsJson){
 	};
 	if(isDir){
 		std::error_code ec;
-		for(const auto& entry : std::filesystem::directory_iterator(p, ec)){
-			if(ec) break;
-			if(!entry.is_regular_file(ec)) continue;
-			const std::string fileLabel = relative(entry.path(), _baseFolder, ec).generic_string();
-			if(processFile(entry.path(), fileLabel)) break;
+		if(recursive){
+			for(const auto& entry : std::filesystem::recursive_directory_iterator(p, ec)){
+				if(ec) break;
+				if(!entry.is_regular_file(ec)) continue;
+				const std::string fileLabel = relative(entry.path(), _baseFolder, ec).generic_string();
+				if(processFile(entry.path(), fileLabel)) break;
+			}
+		} else{
+			for(const auto& entry : std::filesystem::directory_iterator(p, ec)){
+				if(ec) break;
+				if(!entry.is_regular_file(ec)) continue;
+				const std::string fileLabel = relative(entry.path(), _baseFolder, ec).generic_string();
+				if(processFile(entry.path(), fileLabel)) break;
+			}
 		}
 		if(ec) return "{\"error\":\"failed to iterate directory\"}";
 	} else{ if(!processFile(p, "")){ return "{\"error\":\"failed to read file\"}"; } }

@@ -494,4 +494,7 @@ Tool arguments: </value>
 <data name="Models_folder_not_found" xml:space="preserve">
 	<value>Models folder not found</value>
 </data>
+<data name="API_Client_enabled__local_model_will_not_be_used_" xml:space="preserve">
+	<value>API Client enabled, local model will not be used.</value>
+</data>
 </root>

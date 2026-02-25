@@ -479,4 +479,16 @@
 <data name="Models_folder_not_found" xml:space="preserve">
 	<value>未找到模型文件夹</value>
 </data>
+<data name="API_Client_enabled__local_model_will_not_be_used_" xml:space="preserve">
+	<value>已启用 API 客户端，将不使用本地模型。</value>
+</data>
+<data name="Repeated_tool_calls_detected" xml:space="preserve">
+	<value>检测到重复的工具调用</value>
+</data>
+<data name="Tool_Output" xml:space="preserve">
+	<value>工具输出</value>
+</data>
+<data name="Unknown_API_error_" xml:space="preserve">
+	<value>未知的 API 错误</value>
+</data>
 </root>

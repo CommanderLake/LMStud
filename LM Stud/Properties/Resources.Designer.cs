@@ -172,6 +172,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to API Client enabled, local model will not be used..
+        /// </summary>
+        internal static string API_Client_enabled__local_model_will_not_be_used_ {
+            get {
+                return ResourceManager.GetString("API_Client_enabled__local_model_will_not_be_used_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to API endpoint not found.
         /// </summary>
         internal static string API_endpoint_not_found {
