@@ -164,7 +164,12 @@ std::string SearchFileTool(const char* argsJson){
 			}
 		}
 		if(ec) return "{\"error\":\"failed to iterate directory\"}";
-	} else{ if(!processFile(p, "")){ return "{\"error\":\"failed to read file\"}"; } }
+	} else{
+		std::ifstream f(p);
+		if(!f.is_open()) return "{\"error\":\"failed to read file\"}";
+		f.close();
+		processFile(p, "");
+	}
 	if(json.back() == ',') json.pop_back();
 	json += "]}";
 	return json;
