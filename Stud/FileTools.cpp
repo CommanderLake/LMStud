@@ -122,11 +122,29 @@ std::string SearchFileTool(const char* argsJson){
 	const bool isDir = is_directory(p);
 	if(!isDir && !exists(p)){ return "{\"error\":\"file or directory not found\"}"; }
 	std::string json = "{\"matches\":[";
+	auto trim = [](const std::string& s){
+		const auto start = s.find_first_not_of(" \t\r\n");
+		if(start == std::string::npos) return std::string();
+		const auto end = s.find_last_not_of(" \t\r\n");
+		return s.substr(start, end - start + 1);
+	};
 	auto toLower = [](std::string s){
 		std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return static_cast<char>(std::tolower(c, std::locale())); });
 		return s;
 	};
-	const std::string kwSearch = caseSensitive ? keyword : toLower(keyword);
+	std::vector<std::string> keywords;
+	if(!useRegex){
+		size_t start = 0;
+		while(start <= keyword.size()){
+			const size_t sep = keyword.find('|', start);
+			const size_t len = sep == std::string::npos ? keyword.size() - start : sep - start;
+			const std::string token = trim(keyword.substr(start, len));
+			if(!token.empty()){ keywords.push_back(caseSensitive ? token : toLower(token)); }
+			if(sep == std::string::npos) break;
+			start = sep + 1;
+		}
+		if(keywords.empty()) return "{\"error\":\"keyword is required\"}";
+	}
 	std::regex kwRegex;
 	if(useRegex){
 		try{
@@ -151,7 +169,12 @@ std::string SearchFileTool(const char* argsJson){
 				lineMatched = std::regex_search(line, kwRegex);
 			} else{
 				const std::string lineSearch = caseSensitive ? line : toLower(line);
-				lineMatched = lineSearch.find(kwSearch) != std::string::npos;
+				for(const auto& kwSearch : keywords){
+					if(lineSearch.find(kwSearch) != std::string::npos){
+						lineMatched = true;
+						break;
+					}
+				}
 			}
 			if(lineMatched){
 				json += "{\"line\":" + std::to_string(lineNo) + ",\"text\":\"" + JsonEscape(line) + "\"";
