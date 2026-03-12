@@ -1,5 +1,5 @@
-﻿Copyright (c) 2026 CommanderLake
-All rights reserved.
+﻿Copyright (c) 2026 CommanderLake  
+All rights reserved. Limited private-use permission is described in the [License](#license) section below.
 
 # 🦙 LM Stud – Local LLMs Minus the Lard
 
@@ -98,11 +98,16 @@ All rights reserved.
 
 ## License
 
-No license granted. All rights reserved.  
-Viewing and forking on GitHub are permitted under GitHub’s Terms of Service.  
-No other rights are granted; any use, redistribution, or modification outside GitHub requires prior written permission.
+Copyright (c) 2026 CommanderLake  
+All rights reserved.
+
+No right is granted to reproduce, redistribute, publish, sublicense, or share this software or any modified version of it, whether in source or compiled form, except as permitted below.
+
+You may download, clone, view, modify, compile and use the source code and official releases privately for personal or internal use.
+
+Public redistribution is not permitted. This includes, without limitation, posting copies or modified versions in other repositories, creating mirrors, sharing release files, or distributing compiled builds to third parties.
 
 ### Disclaimer
 
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,  
-INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE and NON-INFRINGEMENT, TO THE MAXIMUM EXTENT PERMITTED BY LAW.
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT, TO THE MAXIMUM EXTENT PERMITTED BY LAW.
