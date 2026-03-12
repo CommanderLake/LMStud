@@ -295,7 +295,7 @@ namespace LMStud{
 			});
 		}
 		internal void MsgButRegenOnClick(ChatMessageControl cm){
-			if(!Common.LlModelLoaded || Generation.Generating || !TryBeginRetokenization()) return;
+			if(Generation.Generating || !TryBeginRetokenization()) return;
 			var idx = ChatMessages.IndexOf(cm);
 			if(idx < 0) return;
 			while(ChatMessages[idx].Role == MessageRole.Assistant) if(--idx < 0) return;
@@ -313,7 +313,7 @@ namespace LMStud{
 								ChatMessages[i].Dispose();
 								ChatMessages.RemoveAt(i);
 							}
-						if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_regenerating_message, result);
+						if(result != NativeMethods.StudError.Success && !(Common.APIClientEnable && result == NativeMethods.StudError.ModelNotLoaded)) ShowError(Resources.Error_regenerating_message, result);
 						else regenerate = true;
 						EndRetokenization();
 					}));
