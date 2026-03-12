@@ -149,7 +149,16 @@ namespace LMStud{
 			if(!Generation.Generating) return;
 			Generation.StopActiveGeneration();
 		}
+		private void Form1_ResizeBegin(object sender, EventArgs e){
+			panelChat.AutoScrollEnable = false;
+		}
+		private void Form1_ResizeEnd(object sender, EventArgs e) {
+			panelChat.AutoScrollEnable = checkAutoScroll.Checked;
+		}
 		private void ButCodeBlock_Click(object sender, EventArgs e){textInput.Paste("```\r\n\r\n```");}
+		private void CheckAutoScroll_CheckedChanged(object sender, EventArgs e){
+			panelChat.AutoScrollEnable = checkAutoScroll.Checked;
+		}
 		internal void CheckMarkdown_CheckedChanged(object sender, EventArgs e){
 			foreach(var message in ChatMessages) message.Markdown = checkMarkdown.Checked;
 		}

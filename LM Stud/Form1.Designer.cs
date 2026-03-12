@@ -830,6 +830,7 @@ namespace LMStud
 			this.checkAutoScroll.CheckState = System.Windows.Forms.CheckState.Checked;
 			this.checkAutoScroll.Name = "checkAutoScroll";
 			this.checkAutoScroll.UseVisualStyleBackColor = true;
+			this.checkAutoScroll.CheckedChanged += new System.EventHandler(this.CheckAutoScroll_CheckedChanged);
 			// 
 			// tabPageSettings
 			// 
@@ -1845,6 +1846,8 @@ namespace LMStud
 			this.Name = "Form1";
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
 			this.Load += new System.EventHandler(this.Form1_Load);
+			this.ResizeBegin += new System.EventHandler(this.Form1_ResizeBegin);
+			this.ResizeEnd += new System.EventHandler(this.Form1_ResizeEnd);
 			this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
 			this.splitContainer1.Panel1.ResumeLayout(false);
 			this.splitContainer1.Panel2.ResumeLayout(false);

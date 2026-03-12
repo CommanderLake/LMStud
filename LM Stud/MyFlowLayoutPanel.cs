@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 namespace LMStud{
-	public class MyFlowLayoutPanel : FlowLayoutPanel{
+	internal class MyFlowLayoutPanel : FlowLayoutPanel{
 		private const int WmVscroll = 0x0115;
 		private const int WsHscroll = 0x00100000;
 		private const int WsVscroll = 0x00200000;
@@ -15,6 +15,7 @@ namespace LMStud{
 		private readonly IntPtr _sbBottom = (IntPtr)7;
 		private bool _scrollable = true;
 		private bool _userScrolling;
+		internal bool AutoScrollEnable = true;
 		protected override CreateParams CreateParams{
 			get{
 				var cp = base.CreateParams;
@@ -64,8 +65,7 @@ namespace LMStud{
 			base.WndProc(ref m);
 		}
 		internal void ScrollToEnd(){
-			if(!_scrollable || Handle == IntPtr.Zero || !Form1.This.checkAutoScroll.Checked) return;
-			if(_userScrolling) return;
+			if(!AutoScrollEnable || !_scrollable || _userScrolling || Handle == IntPtr.Zero) return;
 			var m = Message.Create(Handle, WmVscroll, _sbBottom, IntPtr.Zero);
 			base.WndProc(ref m);
 		}

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -12,14 +13,18 @@ namespace LMStud{
 		Tool
 	}
 	internal partial class ChatMessageControl : UserControl{
+		private readonly Font _font;
 		internal readonly MessageRole Role;
 		internal List<APIClient.ToolCall> ApiToolCalls;
 		internal string ApiToolCallId;
 		private bool _markdown;
+		private bool _markdownLast;
 		private string _message;
 		private string _think;
 		private bool _generating;
 		private bool _editing;
+		private bool _autoScroll = true;
+		private const int HeightOffset = 32;
 #if newMarkdown
 		private readonly MarkdownRenderControl _markdownView;
 #endif
@@ -27,6 +32,7 @@ namespace LMStud{
 		internal ChatMessageControl(MessageRole role, string message, bool markdown):this(role, "", message, markdown){}
 		internal ChatMessageControl(MessageRole role, string think, string message, bool markdown){
 			InitializeComponent();
+			_font = richTextMsg.Font;
 #if newMarkdown
 			_markdownView = new MarkdownRenderControl {
 				Visible = false,
@@ -55,7 +61,8 @@ namespace LMStud{
 #if newMarkdown
 			if(_markdownView.Visible) return;
 #endif
-			ApplyHeight(e.NewRectangle.Height + 32);
+			var newHeight = e.NewRectangle.Height + HeightOffset;
+			if(newHeight != Height) ApplyHeight(newHeight);
 		}
 #if newMarkdown
 		private void MarkdownViewOnContentHeightChanged(object sender, EventArgs e){
@@ -67,17 +74,28 @@ namespace LMStud{
 			ThreadPool.QueueUserWorkItem(o => {//Layout issue workaround
 				try{
 					Invoke(new MethodInvoker(() => {
-						if(Height != newHeight) Height = newHeight;
-						((MyFlowLayoutPanel)Parent).ScrollToEnd();
+						if(Height == newHeight) return;
+						Height = newHeight;
+						if((bool)o) ((MyFlowLayoutPanel)Parent).ScrollToEnd();
 					}));
 				} catch(ObjectDisposedException){} catch(InvalidOperationException){}
-			});
+			}, _autoScroll);
 		}
 		internal bool Markdown{
 			get => _markdown;
 			set{
-				_markdown = value;
-				RenderText();
+				if(Editing) _markdownLast = value;
+				else{
+					_markdown = value;
+					_autoScroll = false;
+					try{
+						RenderText();
+						if(_markdown) return;
+						richTextMsg.SelectAll();
+						richTextMsg.SelectionFont = _font;
+						richTextMsg.Select(0, 0);
+					} finally{ _autoScroll = true; }
+				}
 			}
 		}
 		internal string Think{
@@ -97,7 +115,6 @@ namespace LMStud{
 		internal bool Editing{
 			get => _editing;
 			set{
-				_editing = value;
 				richTextMsg.ReadOnly = !value;
 				butDelete.Enabled = !value;
 				butEdit.Enabled = !value;
@@ -109,6 +126,11 @@ namespace LMStud{
 				butApplyEdit.Visible = value;
 				butApplyEdit.Enabled = value;
 				checkThink.Enabled = !value;
+				if(value){
+					_markdownLast = _markdown;
+					Markdown = false;
+				} else _markdown = _markdownLast;
+				_editing = value;
 				RenderText();
 			}
 		}
