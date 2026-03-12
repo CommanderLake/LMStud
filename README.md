@@ -55,6 +55,16 @@ All rights reserved. Limited private-use permission is described in the [License
 
 ## Quick-Start Build
 
+### Prerequisites
+```text
+- Windows 7/10/11
+- Visual Studio 2017 or later (Desktop development with C++ + .NET desktop development)
+- .NET Framework 4.8 developer targeting pack
+- Windows SDK 10.0.17763.0 or later
+- CMake (for llama.cpp / whisper.cpp builds)
+- Optional NVIDIA CUDA toolkit + compatible driver (if using CUDA builds)
+```
+
 ### Build llama.cpp
 ```text
 1. Install Visual Studio with C# and C++ development tools
