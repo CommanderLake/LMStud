@@ -283,30 +283,31 @@ std::string ApplyPatchTool(const char* argsJson){
 	}
 	in.close();
 	struct Hunk{
-		int startOld;
+		int startOld = -1;
 		std::vector<std::string> lines;
 	};
 	std::vector<Hunk> hunks;
 	std::istringstream patchStream(patchStr);
 	Hunk cur;
 	bool inHunk = false;
-	std::regex hunkRe(R"(@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@.*)");
+	std::regex hunkRe(R"(^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@.*$)");
+	auto isIgnoredPatchLine = [](const std::string& patchLine)-> bool{
+		return patchLine.rfind("*** Begin Patch", 0) == 0 || patchLine.rfind("*** End Patch", 0) == 0 || patchLine.rfind("*** Update File", 0) == 0
+			|| patchLine.rfind("diff --git", 0) == 0 || patchLine.rfind("--- ", 0) == 0 || patchLine.rfind("+++ ", 0) == 0
+			|| patchLine.rfind("```", 0) == 0;
+	};
 	while(std::getline(patchStream, line)){
 		if(!line.empty() && line.back() == '\r') line.pop_back();
-		if(!inHunk){
-			if(line.rfind("*** Begin Patch", 0) == 0 || line.rfind("*** End Patch", 0) == 0 || line.rfind("*** Update File", 0) == 0
-				|| line.rfind("diff --git", 0) == 0 || line.rfind("--- ", 0) == 0 || line.rfind("+++ ", 0) == 0){
-				continue;
-			}
-		}
+		if(isIgnoredPatchLine(line)) continue;
 		std::smatch m;
-		if(std::regex_match(line, m, hunkRe)){
+		if(line == "@@" || std::regex_match(line, m, hunkRe)){
 			if(inHunk){
 				hunks.push_back(cur);
 				cur.lines.clear();
+				cur.startOld = -1;
 			}
 			inHunk = true;
-			cur.startOld = std::stoi(m[1]) - 1;
+			if(m.size() > 1 && m[1].matched) cur.startOld = std::stoi(m[1]) - 1;
 		} else if(inHunk){ cur.lines.push_back(line); }
 	}
 	if(inHunk) hunks.push_back(cur);
@@ -316,15 +317,50 @@ std::string ApplyPatchTool(const char* argsJson){
 		return s;
 	};
 	auto makeError = [](const std::string& msg)-> std::string{ return "{\"error\":\"" + JsonEscape(msg) + "\"}"; };
+	auto findSequence = [](const std::vector<std::string>& haystack, const std::vector<std::string>& needle)-> int{
+		if(needle.empty()) return 0;
+		if(needle.size() > haystack.size()) return -1;
+		for(size_t i = 0; i + needle.size() <= haystack.size(); ++i){
+			bool match = true;
+			for(size_t j = 0; j < needle.size(); ++j){
+				if(haystack[i + j] != needle[j]){
+					match = false;
+					break;
+				}
+			}
+			if(match) return static_cast<int>(i);
+		}
+		return -1;
+	};
 	auto out = lines;
 	int offset = 0;
 	for(const auto& h : hunks){
-		int idx = h.startOld + offset;
-		if(idx < 0 || idx > static_cast<int>(out.size())) return makeError("range");
+		int idx = -1;
+		if(h.startOld >= 0){
+			idx = h.startOld + offset;
+			if(idx < 0 || idx > static_cast<int>(out.size())) return makeError("range");
+		} else{
+			std::vector<std::string> anchor;
+			for(const auto& pl : h.lines){
+				if(pl.empty()){
+					anchor.push_back("");
+					continue;
+				}
+				char tag = pl[0];
+				if(tag == ' ' || tag == '-') anchor.push_back(pl.substr(1));
+				else if(tag != '+' && tag != '\\') return makeError("invalid patch line");
+			}
+			if(anchor.empty()) return makeError("cannot locate hunk without context");
+			idx = findSequence(out, anchor);
+			if(idx < 0) return makeError("context mismatch: could not locate hunk");
+		}
 		for(const auto& pl : h.lines){
-			if(pl.empty()) return makeError("invalid patch line");
-			char tag = pl[0];
-			std::string text = pl.substr(1);
+			char tag = " "[0];
+			std::string text;
+			if(!pl.empty()){
+				tag = pl[0];
+				text = pl.substr(1);
+			}
 			if(tag == ' ' || tag == '-'){
 				if(idx >= static_cast<int>(out.size())) return makeError("context end-of-file at line " + std::to_string(idx + 1));
 				if(out[idx] != text) return makeError("context mismatch at line " + std::to_string(idx + 1) + ", file='" + shorten(out[idx]) + "', patch='" + shorten(text) + "'");
