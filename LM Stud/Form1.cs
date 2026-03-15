@@ -334,12 +334,14 @@ namespace LMStud{
 			if(Generation.Generating || cm.Editing) return;
 			foreach(var msg in ChatMessages.Where(msg => msg != cm && msg.Editing)) MsgButEditCancelOnClick(msg);
 			cm.Editing = true;
+			panelChat.AutoScrollEnable = false;
 			cm.richTextMsg.Focus();
 		}
 		internal void MsgButEditCancelOnClick(ChatMessageControl cm){
 			if(Generation.Generating || !cm.Editing) return;
 			cm.Editing = false;
 			cm.Markdown = checkMarkdown.Checked;
+			if(ChatMessages.All(msg => !msg.Editing)) panelChat.AutoScrollEnable = checkAutoScroll.Checked;
 		}
 		internal void MsgButEditApplyOnClick(ChatMessageControl cm){
 			if(Generation.Generating || !cm.Editing) return;
@@ -360,6 +362,7 @@ namespace LMStud{
 							cm.Message = newMessage;
 							cm.Editing = false;
 							cm.Markdown = checkMarkdown.Checked;
+							if(ChatMessages.All(msg => !msg.Editing)) panelChat.AutoScrollEnable = checkAutoScroll.Checked;
 						}
 						else MessageBox.Show(this, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 						EndRetokenization();

@@ -131,7 +131,9 @@ namespace LMStud{
 					Markdown = false;
 				} else _markdown = _markdownLast;
 				_editing = value;
+				_autoScroll = false;
 				RenderText();
+				_autoScroll = true;
 			}
 		}
 		internal bool Generating{
