@@ -11,6 +11,7 @@
 #include <sstream>
 #include <cstring>
 #include <cctype>
+#include <fstream>
 static std::mutex _committedMutex;
 static std::atomic<bool> _wakeWordDetected{false};
 static bool _gpuOomSpeech = false;
@@ -131,13 +132,45 @@ float Similarity(const std::string& s0, const std::string& s1){
 	const float dist = prevCol[len1 - 1];
 	return 1.0f - dist / std::max(s0.size(), s1.size());
 }
+static bool SavePCMBufferToWav(const std::vector<float>& pcm, const std::string& path, const int sampleRate){
+	if(pcm.empty()) return false;
+	std::ofstream out(path, std::ios::binary);
+	if(!out.is_open()) return false;
+	const uint16_t channels = 1;
+	const uint16_t bitsPerSample = 16;
+	const uint32_t byteRate = sampleRate*channels*bitsPerSample/8;
+	const uint16_t blockAlign = channels*bitsPerSample/8;
+	const uint32_t dataSize = static_cast<uint32_t>(pcm.size()*sizeof(int16_t));
+	const uint32_t riffSize = 36 + dataSize;
+	out.write("RIFF", 4);
+	out.write(reinterpret_cast<const char*>(&riffSize), sizeof(riffSize));
+	out.write("WAVE", 4);
+	out.write("fmt ", 4);
+	const uint32_t fmtSize = 16;
+	const uint16_t audioFormat = 1;
+	out.write(reinterpret_cast<const char*>(&fmtSize), sizeof(fmtSize));
+	out.write(reinterpret_cast<const char*>(&audioFormat), sizeof(audioFormat));
+	out.write(reinterpret_cast<const char*>(&channels), sizeof(channels));
+	out.write(reinterpret_cast<const char*>(&sampleRate), sizeof(sampleRate));
+	out.write(reinterpret_cast<const char*>(&byteRate), sizeof(byteRate));
+	out.write(reinterpret_cast<const char*>(&blockAlign), sizeof(blockAlign));
+	out.write(reinterpret_cast<const char*>(&bitsPerSample), sizeof(bitsPerSample));
+	out.write("data", 4);
+	out.write(reinterpret_cast<const char*>(&dataSize), sizeof(dataSize));
+	for(const float sample : pcm){
+		const float clamped = std::max(-1.0f, std::min(1.0f, sample));
+		const int16_t pcm16 = static_cast<int16_t>(clamped*std::numeric_limits<int16_t>::max());
+		out.write(reinterpret_cast<const char*>(&pcm16), sizeof(pcm16));
+	}
+	return out.good();
+}
 bool StartSpeechTranscription(){
 	if(!_whisperCtx || !_audioCapture || _transcriptionThread.joinable()){ return false; }
 	_wakeWordDetected.store(false);
 	_transcriptionRunning.store(true);
 	_transcriptionThread = std::thread([]{
 		const int stepMs = 500;
-		const int nSamplesStep = 1e-3*stepMs*WHISPER_SAMPLE_RATE;
+		const int nSamplesStep = stepMs*WHISPER_SAMPLE_RATE/1000;
 		std::vector<float> pcmBuffer;
 		std::vector<float> pcmStep;
 		auto getWords = [](const std::string& s) -> std::vector<std::string>{
@@ -175,12 +208,14 @@ bool StartSpeechTranscription(){
 		};
 		std::string pending;
 		std::string lastOutput;
+		int debugWavIndex = 0;
 		bool speaking = false;
 		auto lastSpeech = std::chrono::steady_clock::now();
 		_audioCapture->resume();
+		_audioCapture->clear();
 		while(_transcriptionRunning.load()){
 			while(_transcriptionRunning.load()){
-				_audioCapture->get(stepMs, pcmStep);
+				_audioCapture->get(0, pcmStep);
 				if(static_cast<int>(pcmStep.size()) > 2*nSamplesStep){
 					_audioCapture->clear();
 					continue;
@@ -209,19 +244,21 @@ bool StartSpeechTranscription(){
 			} else{ hasSpeech = VadSimple(pcmStep, WHISPER_SAMPLE_RATE); }
 			auto now = std::chrono::steady_clock::now();
 			if(!hasSpeech){
-				if(speaking && now - lastSpeech > std::chrono::milliseconds(std::min(1000, _silenceTimeoutMs.load()))){
+				if(speaking && !pending.empty()){
 					OutputDebugStringA("Commit and clear\n");
 					speaking = false;
 					{
 						std::lock_guard<std::mutex> lock(_committedMutex);
 						_committed += pending;
 					}
+					//SavePCMBufferToWav(pcmBuffer, "E:\\speech\\pcmBuffer_debug_" + std::to_string(debugWavIndex++) + ".wav", WHISPER_SAMPLE_RATE);
 					pending.clear();
 					lastOutput.clear();
 					pcmBuffer.clear();
 					if(_whisperCallback) _whisperCallback(_committed.c_str());
 				}
-				if(!speaking && _wakeWordDetected.load() && now - lastSpeech > std::chrono::milliseconds(_silenceTimeoutMs.load())){
+				if(_wakeWordDetected.load() && now - lastSpeech > std::chrono::milliseconds(_silenceTimeoutMs.load())){
+					speaking = false;
 					_wakeWordDetected.exchange(false);
 					std::lock_guard<std::mutex> lock(_committedMutex);
 					if(!_committed.empty()){
