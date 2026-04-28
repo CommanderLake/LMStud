@@ -7,8 +7,11 @@ namespace LMStud{
 			var firstCandidate = candidates[0] as JObject;
 			var contentToken = firstCandidate?["content"]?["parts"];
 			var content = APIResponseParserCommon.ExtractContentText(contentToken);
-			if(string.IsNullOrWhiteSpace(content)) return false;
-			result = new APIClient.ChatCompletionResult(content, null, null, responseId, null);
+			var toolCalls = APIResponseParserCommon.ParseToolCallsFromContent(contentToken);
+			if((toolCalls == null || toolCalls.Count == 0) && firstCandidate?["content"] is JObject contentObj && contentObj["tool_calls"] is JArray directToolCalls)
+				toolCalls = APIResponseParserCommon.ParseToolCalls(directToolCalls);
+			if(string.IsNullOrWhiteSpace(content) && (toolCalls == null || toolCalls.Count == 0)) return false;
+			result = new APIClient.ChatCompletionResult(content ?? "", null, toolCalls, responseId, null);
 			return true;
 		}
 	}

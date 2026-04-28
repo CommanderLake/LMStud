@@ -74,6 +74,7 @@ namespace LMStud{
 			public byte[] State;
 			public int TokenCount;
 			public string LastBackend;
+			public readonly List<APIServer.ToolRecord> ToolRecords = new List<APIServer.ToolRecord>();
 		}
 	}
 }

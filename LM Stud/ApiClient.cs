@@ -32,16 +32,23 @@ namespace LMStud{
 			var responsesPayload = BuildResponsesPayload(history, temperature, maxTokens, toolsJson, toolChoice);
 			var responsesError = TrySendChatRequest(BuildResponsesEndpoint(_apiBaseUrl), responsesPayload, cancellationToken, out var responsesResult);
 			if(responsesResult != null) return responsesResult;
+			if(!ShouldFallbackToChatCompletions(responsesError)) throw responsesError ?? new InvalidOperationException("API response did not contain any message.");
 			var chatCompletionsPayload = BuildChatCompletionsPayload(history, temperature, maxTokens, toolsJson, toolChoice);
 			var chatCompletionsError = TrySendChatRequest(BuildChatCompletionsEndpoint(_apiBaseUrl), chatCompletionsPayload, cancellationToken, out var chatCompletionsResult);
 			if(chatCompletionsResult != null) return chatCompletionsResult;
 			throw chatCompletionsError ?? responsesError ?? new InvalidOperationException("API response did not contain any message.");
 		}
+		private static bool ShouldFallbackToChatCompletions(InvalidOperationException error){
+			if(error == null) return true;
+			var message = error.Message ?? "";
+			return message.IndexOf("404", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				message.IndexOf("not found", StringComparison.OrdinalIgnoreCase) >= 0;
+		}
 		private InvalidOperationException TrySendChatRequest(string endpoint, JObject payload, CancellationToken cancellationToken, out ChatCompletionResult result){
 			result = null;
 			try{
 				using(var request = new HttpRequestMessage(HttpMethod.Post, endpoint)){
-					request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+					if(!string.IsNullOrWhiteSpace(_apiKey)) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
 					request.Content = new StringContent(payload.ToString(Formatting.None), Encoding.UTF8, "application/json");
 					using(var response = _apiHttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
 						var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();

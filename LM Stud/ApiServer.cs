@@ -161,27 +161,29 @@ namespace LMStud{
 					return;
 				}
 				ResetSessionForModeSwitch(session, true);
-				var persisted = BuildPersistedHistory(session.Messages);
+				var persisted = BuildPersistedHistory(session.Messages, session.ToolRecords);
 				foreach(var item in incomingDelta) persisted.Add(item);
 				var toolsJson = request.Tools != null ? request.Tools.ToString(Formatting.None) : Tools.BuildApiToolsJson();
 				var instructions = request.Instructions ?? Common.SystemPrompt;
 				client = new APIClient(Common.APIClientUrl, Common.APIClientKey, Common.APIClientModel, false, instructions);
 				var result = client.CreateChatCompletion(persisted, (float)Settings.Default.Temp, (int)Settings.Default.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
 				APIClient.AppendOutputItems(persisted, result);
-				List<string> toolOutputs = null;
+					List<string> toolOutputs = null;
+					var toolRecords = new List<ToolRecord>();
 				var rounds = 0;
 				string lastToolSignature = null;
 				while(result.ToolCalls != null && result.ToolCalls.Count > 0 && rounds < 5){
 					var toolSignature = string.Join("|", result.ToolCalls.Select(call => $"{call.Id}:{call.Name}:{call.Arguments}"));
 					if(toolSignature == lastToolSignature) throw new InvalidOperationException("Repeated tool calls detected.");
 					lastToolSignature = toolSignature;
-					foreach(var toolCall in result.ToolCalls){
-						var toolResult = Tools.ExecuteToolCall(toolCall);
-						if(toolOutputs == null) toolOutputs = new List<string>();
-						toolOutputs.Add(toolResult);
-						var toolMessage = new APIClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id, ToolName = toolCall.Name };
-						persisted.Add(APIClient.BuildInputMessagePayload(toolMessage));
-					}
+						foreach(var toolCall in result.ToolCalls){
+							var toolResult = Tools.ExecuteToolCall(toolCall);
+							if(toolOutputs == null) toolOutputs = new List<string>();
+							toolOutputs.Add(toolResult);
+							toolRecords.Add(new ToolRecord{ CallId = toolCall.Id, Name = toolCall.Name, Output = toolResult });
+							var toolMessage = new APIClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id, ToolName = toolCall.Name };
+							persisted.Add(APIClient.BuildInputMessagePayload(toolMessage));
+						}
 					result = client.CreateChatCompletion(persisted, (float)Settings.Default.Temp, (int)Settings.Default.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
 					APIClient.AppendOutputItems(persisted, result);
 					rounds++;
@@ -192,9 +194,10 @@ namespace LMStud{
 						var parsed = ParseInputItemToMessage(deltaMessage);
 						if(parsed != null) s.Messages.Add(parsed);
 					}
-					if(toolOutputs != null)
-						foreach(var toolResult in toolOutputs)
-							s.Messages.Add(new Message{ Role = "tool", Content = toolResult });
+						if(toolOutputs != null)
+							foreach(var toolResult in toolOutputs)
+								s.Messages.Add(new Message{ Role = "tool", Content = toolResult });
+						if(toolRecords.Count > 0) s.ToolRecords.AddRange(toolRecords);
 					s.Messages.Add(new Message{ Role = "assistant", Content = assistant });
 					s.State = null;
 					s.TokenCount = 0;
@@ -220,11 +223,12 @@ namespace LMStud{
 			var expected = useRemoteApi ? "remote" : "local";
 			Sessions.Apply(session, s => {
 				if(string.IsNullOrEmpty(s.LastBackend) || s.LastBackend == expected) return;
-				s.Messages.Clear();
-				s.State = null;
-				s.TokenCount = 0;
-				s.LastBackend = expected;
-			});
+					s.Messages.Clear();
+					s.State = null;
+					s.TokenCount = 0;
+					s.ToolRecords.Clear();
+					s.LastBackend = expected;
+				});
 		}
 		private static object BuildResponsePayload(string assistant, string model, string sessionId){
 			var text = assistant ?? "";
@@ -259,12 +263,20 @@ namespace LMStud{
 			}
 			return messages.Count > 0 ? APIClient.BuildInputItems(messages) : null;
 		}
-		private static JArray BuildPersistedHistory(List<Message> messages){
+		private static JArray BuildPersistedHistory(List<Message> messages, List<ToolRecord> toolRecords){
 			var history = new JArray();
 			if(messages == null) return history;
 			foreach(var message in messages){
 				if(string.IsNullOrWhiteSpace(message?.Role)) continue;
 				if(string.IsNullOrWhiteSpace(message.Content)) continue;
+				if(string.Equals(message.Role, "tool", StringComparison.OrdinalIgnoreCase)){
+					var record = toolRecords?.FirstOrDefault(t => !t.Consumed && string.Equals(t.Output, message.Content, StringComparison.Ordinal));
+					if(record != null && !string.IsNullOrWhiteSpace(record.CallId)){
+						history.Add(new JObject{ ["type"] = "function_call_output", ["call_id"] = record.CallId, ["output"] = message.Content });
+						record.Consumed = true;
+						continue;
+					}
+				}
 				history.Add(new JObject{ ["role"] = message.Role, ["content"] = message.Content });
 			}
 			return history;
@@ -276,9 +288,9 @@ namespace LMStud{
 				return new JArray(new JObject{ ["role"] = last.Role, ["content"] = last.Content });
 			}
 			if(inputItems == null || inputItems.Count == 0) return null;
-			var lastItem = inputItems.LastOrDefault();
-			if(lastItem == null) return null;
-			return new JArray(lastItem.DeepClone());
+			var delta = new JArray();
+			foreach(var item in inputItems) delta.Add(item.DeepClone());
+			return delta;
 		}
 		private static string ExtractLatestUserPrompt(List<Message> messages, JArray inputItems){
 			if(messages != null && messages.Count > 0){
@@ -389,6 +401,12 @@ namespace LMStud{
 			[JsonProperty("store")] public bool? Store;
 			[JsonProperty("tool_choice")] public JToken ToolChoice;
 			[JsonProperty("tools")] public JArray Tools;
+		}
+		public class ToolRecord{
+			public string CallId;
+			public string Name;
+			public string Output;
+			internal bool Consumed;
 		}
 		public class Message{
 			public string Content;
