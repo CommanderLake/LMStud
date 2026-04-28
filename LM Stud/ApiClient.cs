@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using LMStud.Parsers;
 using LMStud.Properties;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;

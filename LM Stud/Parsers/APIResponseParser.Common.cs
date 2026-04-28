@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-namespace LMStud{
+namespace LMStud.Parsers{
 	internal static class APIResponseParserCommon{
 		internal static JArray SanitizeOutputItems(JArray output){
 			if(output == null) return null;

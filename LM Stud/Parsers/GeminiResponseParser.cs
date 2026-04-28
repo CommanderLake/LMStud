@@ -1,5 +1,5 @@
 using Newtonsoft.Json.Linq;
-namespace LMStud{
+namespace LMStud.Parsers{
 	internal sealed class GeminiResponseParser : IAPIResponseFormatParser{
 		public bool TryParse(JObject root, string responseId, out APIClient.ChatCompletionResult result){
 			result = null;

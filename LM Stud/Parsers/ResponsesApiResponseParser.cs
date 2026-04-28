@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
-namespace LMStud{
+namespace LMStud.Parsers{
 	internal sealed class ResponsesApiResponseParser : IAPIResponseFormatParser{
 		public bool TryParse(JObject root, string responseId, out APIClient.ChatCompletionResult result){
 			result = null;

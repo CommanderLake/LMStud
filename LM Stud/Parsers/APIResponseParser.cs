@@ -1,6 +1,6 @@
 using System;
 using Newtonsoft.Json.Linq;
-namespace LMStud{
+namespace LMStud.Parsers{
 	internal interface IAPIResponseFormatParser{
 		bool TryParse(JObject root, string responseId, out APIClient.ChatCompletionResult result);
 	}
