@@ -42,8 +42,14 @@ namespace LMStud{
 		private static bool ShouldFallbackToChatCompletions(InvalidOperationException error){
 			if(error == null) return true;
 			var message = error.Message ?? "";
-			return message.IndexOf("404", StringComparison.OrdinalIgnoreCase) >= 0 ||
-				message.IndexOf("not found", StringComparison.OrdinalIgnoreCase) >= 0;
+			if(message.IndexOf("404", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("405", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				message.IndexOf("501", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("not found", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				message.IndexOf("not implemented", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+			if(message.IndexOf("400", StringComparison.OrdinalIgnoreCase) < 0) return false;
+			return message.IndexOf("unknown", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("unsupported", StringComparison.OrdinalIgnoreCase) >= 0 ||
+					message.IndexOf("invalid", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("parallel_tool_calls", StringComparison.OrdinalIgnoreCase) >= 0 ||
+					message.IndexOf("tool_choice", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("max_output_tokens", StringComparison.OrdinalIgnoreCase) >= 0 ||
+					message.IndexOf("input", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("responses", StringComparison.OrdinalIgnoreCase) >= 0;
 		}
 		private InvalidOperationException TrySendChatRequest(string endpoint, JObject payload, CancellationToken cancellationToken, out ChatCompletionResult result){
 			result = null;

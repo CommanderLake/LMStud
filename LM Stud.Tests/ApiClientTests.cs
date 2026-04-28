@@ -33,16 +33,18 @@ namespace LM_Stud.Tests{
 			Assert.AreEqual("function_call_output", (string)payload["type"], "Tool message should map to function call output.");
 			Assert.AreEqual("call_123", (string)payload["call_id"], "Call id should be included for tool messages.");
 		}
-		[TestMethod]
-		public void CreateChatCompletion_WhenResponsesEndpointFails_FallsBackToChatCompletions(){
+		[DataTestMethod]
+		[DataRow(39591, 404, "{\"error\":\"missing\"}", DisplayName = "404 endpoint missing")]
+		[DataRow(39592, 400, "{\"error\":\"unsupported parameter: parallel_tool_calls\"}", DisplayName = "400 unsupported parameter")]
+		public void CreateChatCompletion_FallsBackToChatCompletions(int port, int responsesStatusCode, string responsesBody){
 			using(var listener = new HttpListener()){
-				var baseUrl = "http://127.0.0.1:39591/";
+				var baseUrl = $"http://127.0.0.1:{port}/";
 				listener.Prefixes.Add(baseUrl);
 				listener.Start();
 				var server = Task.Run(() => {
 					var responsesCtx = listener.GetContext();
-					responsesCtx.Response.StatusCode = 404;
-					using(var writer = new StreamWriter(responsesCtx.Response.OutputStream, Encoding.UTF8, 1024, true)) writer.Write("{\"error\":\"missing\"}");
+					responsesCtx.Response.StatusCode = responsesStatusCode;
+					using(var writer = new StreamWriter(responsesCtx.Response.OutputStream, Encoding.UTF8, 1024, true)) writer.Write(responsesBody);
 					responsesCtx.Response.Close();
 					var chatCtx = listener.GetContext();
 					chatCtx.Response.StatusCode = 200;
@@ -53,10 +55,11 @@ namespace LM_Stud.Tests{
 				});
 				var client = new APIClient(baseUrl, "", "test-model", false);
 				var history = new JArray{ new JObject{ ["role"] = "user", ["content"] = "hello" } };
-				var result = client.CreateChatCompletion(history, 0.2f, 128, null, null, CancellationToken.None);
+				var result = client.CreateChatCompletion(history, 0.2f, 128, "[]", null, CancellationToken.None);
 				Assert.AreEqual("fallback ok", result.Content, "Client should use chat completions as a fallback.");
 				Assert.IsTrue(server.Wait(1000), "Test server should finish handling both requests.");
 			}
 		}
+
 	}
 }
