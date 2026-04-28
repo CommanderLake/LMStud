@@ -142,6 +142,13 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="NativeMethods.cs" />
+    <Compile Include="Parsers\AnthropicResponseParser.cs" />
+    <Compile Include="Parsers\APIResponseParser.Common.cs" />
+    <Compile Include="Parsers\APIResponseParser.cs" />
+    <Compile Include="Parsers\ChatCompletionsResponseParser.cs" />
+    <Compile Include="Parsers\GeminiResponseParser.cs" />
+    <Compile Include="Parsers\OllamaResponseParser.cs" />
+    <Compile Include="Parsers\ResponsesApiResponseParser.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SessionManager.cs" />

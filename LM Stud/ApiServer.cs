@@ -46,7 +46,8 @@ namespace LMStud{
 					context.Response.StatusCode = 409;
 					return;
 				}
-				if(method == "POST" && path == "/v1/responses") HandleChat(context);
+				if(method == "POST" && path == "/v1/responses") HandleChat(context, false);
+				else if(method == "POST" && path == "/v1/chat/completions") HandleChat(context, true);
 				else if(method == "POST" && path == "/v1/reset") HandleReset(context);
 				else context.Response.StatusCode = 404;
 			} catch{ context.Response.StatusCode = 500; } finally{
@@ -85,7 +86,7 @@ namespace LMStud{
 				ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
 			} finally{ Generation.GenerationLock.Release(); }
 		}
-		private void HandleChat(HttpListenerContext ctx){
+		private void HandleChat(HttpListenerContext ctx, bool outputChatCompletions){
 			string body;
 			using(var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)){ body = reader.ReadToEnd(); }
 			ChatRequest request;
@@ -108,7 +109,7 @@ namespace LMStud{
 			}
 			var store = request.Store ?? true;
 			if(Settings.Default.APIClientEnable){
-				HandleRemoteChat(ctx, request, messages, inputItems, store);
+				HandleRemoteChat(ctx, request, messages, inputItems, store, outputChatCompletions);
 				return;
 			}
 			if(messages == null || messages.Count == 0){
@@ -139,7 +140,8 @@ namespace LMStud{
 					s.State = newState;
 					s.TokenCount = tokens;
 				});
-				var resp = BuildResponsePayload(assistant, Path.GetFileNameWithoutExtension(Common.LoadedModel.SubItems[1].Text), session.Id);
+				var resp = outputChatCompletions ? BuildChatCompletionsPayload(assistant, Path.GetFileNameWithoutExtension(Common.LoadedModel.SubItems[1].Text), session.Id)
+					: BuildResponsePayload(assistant, Path.GetFileNameWithoutExtension(Common.LoadedModel.SubItems[1].Text), session.Id);
 				var json = JsonConvert.SerializeObject(resp);
 				var bytes = Encoding.UTF8.GetBytes(json);
 				ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
@@ -147,7 +149,7 @@ namespace LMStud{
 				if(!store) Sessions.Remove(session.Id);
 			}
 		}
-		private void HandleRemoteChat(HttpListenerContext ctx, ChatRequest request, List<Message> incomingMessages, JArray inputItems, bool store){
+		private void HandleRemoteChat(HttpListenerContext ctx, ChatRequest request, List<Message> incomingMessages, JArray inputItems, bool store, bool outputChatCompletions){
 			var session = Sessions.Get(request.SessionId);
 			ctx.Response.AddHeader("X-Session-Id", session.Id);
 			ctx.Response.ContentType = "application/json";
@@ -198,7 +200,8 @@ namespace LMStud{
 					s.TokenCount = 0;
 					s.LastBackend = "remote";
 				});
-				var resp = BuildResponsePayload(assistant, Settings.Default.APIClientModel, session.Id);
+				var resp = outputChatCompletions ? BuildChatCompletionsPayload(assistant, Settings.Default.APIClientModel, session.Id)
+					: BuildResponsePayload(assistant, Settings.Default.APIClientModel, session.Id);
 				var json = JsonConvert.SerializeObject(resp);
 				var bytes = Encoding.UTF8.GetBytes(json);
 				ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
@@ -233,6 +236,14 @@ namespace LMStud{
 			return new{
 				id = "resp_" + Guid.NewGuid().ToString("N"), @object = "response", created_at = createdAt, status = "completed",
 				model, session_id = sessionId, output = new[]{ message }
+			};
+		}
+		private static object BuildChatCompletionsPayload(string assistant, string model, string sessionId){
+			var text = assistant ?? "";
+			var createdAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+			return new{
+				id = "chatcmpl_" + Guid.NewGuid().ToString("N"), @object = "chat.completion", created = createdAt, model,
+				session_id = sessionId, choices = new[]{ new{ index = 0, message = new{ role = "assistant", content = text }, finish_reason = "stop" } }
 			};
 		}
 		private static JArray BuildInputItems(ChatRequest request){
@@ -373,11 +384,11 @@ namespace LMStud{
 			[JsonProperty("input")] public JToken Input;
 			[JsonProperty("instructions")] public string Instructions;
 			public List<Message> Messages;
+			[JsonProperty("scope")] public string ResetScope;
 			[JsonProperty("session_id")] public string SessionId;
 			[JsonProperty("store")] public bool? Store;
 			[JsonProperty("tool_choice")] public JToken ToolChoice;
 			[JsonProperty("tools")] public JArray Tools;
-			[JsonProperty("scope")] public string ResetScope;
 		}
 		public class Message{
 			public string Content;
