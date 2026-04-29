@@ -1,7 +1,4 @@
-﻿Copyright (c) 2026 CommanderLake  
-All rights reserved. Limited private-use permission is described in the [License](#license) section below.
-
-# 🦙 LM Stud – Local LLMs Minus the Lard
+﻿# 🦙 LM Stud – Local LLMs Minus the Lard
 
 > **TL;DR**  
 > A WinForms chat client for `llama.cpp`, `whisper.cpp` and your questionable life choices.  
