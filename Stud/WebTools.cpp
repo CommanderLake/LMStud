@@ -1,5 +1,6 @@
 #include "tools.h"
 #include "hug.h"
+#include "JSONCommon.h"
 #include <charconv>
 #include <regex>
 #include <curl\curl.h>

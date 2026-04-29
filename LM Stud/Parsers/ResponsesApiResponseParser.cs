@@ -50,7 +50,7 @@ namespace LMStud.Parsers{
 				var outputReasoning = APIResponseParserCommon.ExtractReasoningText(root["reasoning"] as JObject) ?? APIResponseParserCommon.ExtractContentText(root["reasoning"]);
 				if(!string.IsNullOrWhiteSpace(outputReasoning)) reasoning = outputReasoning;
 			}
-			result = new APIClient.ChatCompletionResult(content ?? "", reasoning, finalToolCalls, responseId, sanitizedOutput);
+			result = new APIClient.ChatCompletionResult(content ?? "", reasoning, finalToolCalls, responseId, sanitizedOutput, APIResponseParserCommon.ExtractTotalTokens(root));
 			return true;
 		}
 	}

@@ -4,6 +4,7 @@ namespace LMStud{
 		internal static bool APIClientEnable;
 		internal static string APIClientKey;
 		internal static string APIClientModel;
+		internal static string APIClientReasoningEffort;
 		internal static string APIClientUrl;
 		internal static bool APIClientStore;
 		internal static bool APIServerEnable;

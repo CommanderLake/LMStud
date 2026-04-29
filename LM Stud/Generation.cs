@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using LMStud.Parsers;
 using LMStud.Properties;
 namespace LMStud {
 	internal static class Generation{
@@ -127,13 +129,21 @@ namespace LMStud {
 				var hasToolCalls = msg.ApiToolCalls != null && msg.ApiToolCalls.Count > 0;
 				if(msg.Role == MessageRole.Tool && string.IsNullOrWhiteSpace(msg.ApiToolCallId)) continue;
 				if(string.IsNullOrWhiteSpace(msg.Message) && !hasToolCalls) continue;
-				var apiMessage = new APIClient.ChatMessage(RoleToApiRole(msg.Role), msg.Message);
+				var apiMessage = new APIClient.ChatMessage(RoleToApiRole(msg.Role), hasToolCalls ? StripToolCallDisplayText(msg.Message) : msg.Message);
 				if(hasToolCalls) apiMessage.ToolCalls = msg.ApiToolCalls;
 				if(!string.IsNullOrWhiteSpace(msg.ApiToolCallId)) apiMessage.ToolCallId = msg.ApiToolCallId;
 				messages.Add(apiMessage);
 			}
 			if(!addToChat && !string.IsNullOrWhiteSpace(prompt)) messages.Add(new APIClient.ChatMessage(RoleToApiRole(role), prompt));
 			return messages;
+		}
+		private static string StripToolCallDisplayText(string content){
+			if(string.IsNullOrEmpty(content)) return content;
+			var index = content.IndexOf(Resources.__Tool_name_, StringComparison.Ordinal);
+			if(index < 0) index = content.IndexOf("\nTool name:", StringComparison.OrdinalIgnoreCase);
+			if(index < 0) index = content.IndexOf("\n工具名称", StringComparison.Ordinal);
+			if(index < 0) return content;
+			return content.Substring(0, index).TrimEnd();
 		}
 		private static NativeMethods.StudError SyncNativeChatMessages(){
 			if(MainForm.IsDisposed) return NativeMethods.StudError.Success;
@@ -174,7 +184,8 @@ namespace LMStud {
 				using(var client = new APIClient(Common.APIClientUrl, Common.APIClientKey, Common.APIClientModel, Common.APIClientStore, Common.SystemPrompt)){
 					string lastToolSignature = null;
 					while(true){
-						var result = client.CreateChatCompletion(history, Common.Temp, Common.NGen, toolsJson, null, cancellationToken);
+						var result = client.CreateChatCompletion(history, Common.Temp, Common.NGen, toolsJson, null, APIClient.BuildReasoningPayload(Common.APIClientReasoningEffort), cancellationToken);
+						UpdateApiTotalTokensLabel(result.TotalTokens);
 						APIClient.AppendOutputItems(history, result);
 						var content = result.Content;
 						var reasoning = result.Reasoning;
@@ -223,6 +234,15 @@ namespace LMStud {
 				GenerationLock.Release();
 			}
 		}
+		private static string FormatTokenLabel(int tokenCount){
+			return Common.CntCtxMax > 0 ? string.Format(Resources._0___1__2_, tokenCount, Common.CntCtxMax, Resources._Tokens) : tokenCount + Resources._Tokens;
+		}
+		private static void UpdateApiTotalTokensLabel(int? totalTokens){
+			if(!totalTokens.HasValue || MainForm == null || MainForm.IsDisposed) return;
+			try{
+				MainForm.BeginInvoke(new MethodInvoker(() => { MainForm.labelTokens.Text = FormatTokenLabel(totalTokens.Value); }));
+			} catch(ObjectDisposedException){} catch(InvalidOperationException){}
+		}
 		internal static void StopActiveGeneration(){
 			CancelApiGeneration();
 			NativeMethods.StopGeneration();
@@ -269,25 +289,43 @@ namespace LMStud {
 			}
 			if(err != NativeMethods.StudError.Success) MainForm.ShowError(Resources.API_Server, "SetStateData", true);
 		}
-		internal static bool GenerateForApiServer(byte[] state, string prompt, Action<string> onToken, out byte[] newState, out int tokenCount){
+		internal static bool GenerateForApiServer(byte[] state, IntPtr chatState, string historyJson, MessageRole role, string prompt, string toolsJson, out APIClient.ChatCompletionResult result, out byte[] newState, out IntPtr newChatState, out int tokenCount){
+			result = null;
 			newState = null;
+			newChatState = IntPtr.Zero;
 			tokenCount = 0;
-			if(string.IsNullOrWhiteSpace(prompt)) return false;
+			if(prompt == null) return false;
 			if(!GenerationLock.Wait(300000)) return false;
 			try{
 				if(!Common.LlModelLoaded || Generating || APIServerGenerating) return false;
 				APIServerGenerating = true;
-				_apiTokenCallback = onToken;
+				_apiTokenCallback = null;
 				var originalState = GetState();
 				var chatSnapshot = NativeMethods.CaptureChatState();
 				try{
-					if(state != null && state.Length > 0) SetState(state);
+					// llama state does not include Stud's chat messages/cached token metadata; restore both or start fresh.
+					if(!string.IsNullOrWhiteSpace(historyJson)){
+						var resetResult = NativeMethods.ResetChat();
+						if(resetResult != NativeMethods.StudError.Success) return false;
+						var syncResult = NativeMethods.SyncChatMessagesJson(historyJson);
+						if(syncResult != NativeMethods.StudError.Success) return false;
+					}
+					else if(state != null && state.Length > 0 && chatState != IntPtr.Zero){
+						SetState(state);
+						NativeMethods.RestoreChatState(chatState);
+					}
 					else{
 						var resetResult = NativeMethods.ResetChat();
 						if(resetResult != NativeMethods.StudError.Success) return false;
 					}
-					NativeMethods.GenerateWithTools(MessageRole.User, prompt, Common.NGen, false);
+					var generationError = NativeMethods.GenerateForAPI(role, prompt, toolsJson, Common.NGen, out var responsePtr);
+					if(generationError != NativeMethods.StudError.Success) return false;
+					if(responsePtr == IntPtr.Zero) return false;
+					try{ result = APIResponseParser.ParseResponseBody(ReadNativeUtf8(responsePtr)); }
+					finally{ NativeMethods.FreeMemory(responsePtr); }
 					newState = GetState();
+					newChatState = NativeMethods.CaptureChatState();
+					if(newChatState == IntPtr.Zero) return false;
 					tokenCount = NativeMethods.LlamaMemSize();
 					return true;
 				} finally{
@@ -298,6 +336,14 @@ namespace LMStud {
 					try{ MainForm.Invoke((MethodInvoker)(() => STT.RetryStart())); } catch(ObjectDisposedException){}
 				}
 			} finally{ GenerationLock.Release(); }
+		}
+		private static string ReadNativeUtf8(IntPtr ptr){
+			if(ptr == IntPtr.Zero) return null;
+			var length = 0;
+			while(Marshal.ReadByte(ptr, length) != 0) length++;
+			var buffer = new byte[length];
+			Marshal.Copy(ptr, buffer, 0, length);
+			return Encoding.UTF8.GetString(buffer);
 		}
 		private static int FindSentenceEnd(StringBuilder sb){
 			for(var i = 0; i < sb.Length - 1; i++) if((sb[i] == '.' || sb[i] == '!' || sb[i] == '?') && char.IsWhiteSpace(sb[i + 1])) return i;
@@ -331,7 +377,7 @@ namespace LMStud {
 						}
 						else{ _cntToolMsg.UpdateText("", message, true); }
 						_cntAssMsg = null;
-						MainForm.labelTokens.Text = string.Format(Resources._0___1__2_, tokensTotal, Common.CntCtxMax, Resources._Tokens);
+						MainForm.labelTokens.Text = FormatTokenLabel(tokensTotal);
 						if(tool == 1 || tool == 3) _cntToolMsg = null;
 					}));
 				} catch(ObjectDisposedException){}
@@ -370,7 +416,7 @@ namespace LMStud {
 								while(TTS.Pending.Length > 0 && char.IsWhiteSpace(TTS.Pending[0])) TTS.Pending.Remove(0, 1);
 							}
 						}
-						MainForm.labelTokens.Text = string.Format(Resources._0___1__2_, tokensTotal, Common.CntCtxMax, Resources._Tokens);
+						MainForm.labelTokens.Text = FormatTokenLabel(tokensTotal);
 					} catch(ObjectDisposedException){} finally{ MainForm.Rendering = false; }
 				}));
 			} catch(ObjectDisposedException){}

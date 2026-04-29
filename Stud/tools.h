@@ -24,8 +24,6 @@ extern "C" {
 	EXPORT void StopCMDOutput();
 	EXPORT const char* GetToolsJson(int* length);
 }
-std::string JsonEscape(const std::string& in);
-std::string GetArgValue(const char* args, const char* key);
 std::string GoogleSearch(const char* query);
 std::string GetWebpage(const char* argsJson);
 std::string GetWebTag(const char* argsJson);

@@ -57,6 +57,7 @@ namespace LMStud{
 			Common.APIClientUrl = textApiClientUrl.Text = Settings.Default.APIClientUrl;
 			Common.APIClientKey = textApiClientKey.Text = Settings.Default.APIClientKey;
 			Common.APIClientModel = comboApiClientModel.Text = Settings.Default.APIClientModel;
+			Common.APIClientReasoningEffort = Settings.Default.APIClientReasoningEffort;
 			Common.APIClientStore = checkApiClientStore.Checked = Settings.Default.APIClientStore;
 			NativeMethods.SetSilenceTimeout(Common.GenDelay);
 			NativeMethods.SetFileBaseDir(Common.FileBaseDir);
@@ -302,6 +303,7 @@ namespace LMStud{
 			UpdateSetting(ref Common.APIClientEnable, checkApiClientEnable.Checked, value => {
 				Settings.Default.APIClientEnable = value;
 				setStatusLabel = true;
+				registerTools = true;
 			});
 			UpdateSetting(ref Common.APIClientUrl, textApiClientUrl.Text, value => {Settings.Default.APIClientUrl = value;});
 			UpdateSetting(ref Common.APIClientKey, textApiClientKey.Text, value => {Settings.Default.APIClientKey = value;});

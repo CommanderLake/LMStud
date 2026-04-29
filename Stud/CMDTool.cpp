@@ -1,5 +1,6 @@
 #include "stud.h"
 #include "tools.h"
+#include "JSONCommon.h"
 #include <Windows.h>
 #include <algorithm>
 #include <atomic>
@@ -117,7 +118,6 @@ bool ReadUntilMarker(const CommandPromptSession& session, const std::string& mar
 	}
 	const auto start = std::chrono::steady_clock::now();
 	bool markerFound = false;
-	size_t markerPos = std::string::npos;
 	while(true){
 		if(WaitForSingleObject(session.process, 0) == WAIT_OBJECT_0){
 			DWORD exitCode = 0;
@@ -148,7 +148,7 @@ bool ReadUntilMarker(const CommandPromptSession& session, const std::string& mar
 			if(read > 0){
 				output.append(buffer, read);
 				if(!marker.empty() && !markerFound){
-					markerPos = output.find(marker);
+					const size_t markerPos = output.find(marker);
 					if(markerPos != std::string::npos){
 						markerFound = true;
 						Sleep(50);

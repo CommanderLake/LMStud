@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LMStud;
+using LMStud.Parsers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
 namespace LM_Stud.Tests{
@@ -19,10 +20,38 @@ namespace LM_Stud.Tests{
 				}
 			};
 			var items = APIClient.BuildInputItems(messages);
-			Assert.AreEqual(2, items.Count, "Message and tool call items should be emitted.");
-			Assert.AreEqual("assistant", (string)items[0]["role"], "First item should be the assistant message payload.");
-			Assert.AreEqual("function_call", (string)items[1]["type"], "Second item should be a function call.");
-			Assert.AreEqual("call_1", (string)items[1]["call_id"], "Tool call id should be preserved.");
+			Assert.AreEqual(1, items.Count, "Assistant tool calls without text should emit just the Responses function call item.");
+			Assert.AreEqual("function_call", (string)items[0]["type"], "Tool call should use the Responses function call item shape.");
+			Assert.AreEqual("call_1", (string)items[0]["call_id"], "Tool call id should be preserved.");
+		}
+		[TestMethod]
+		public void AppendOutputItems_WithAssistantMessage_NormalizesForResponsesInput(){
+			var history = new JArray();
+			var output = new JArray(new JObject{
+				["type"] = "message", ["status"] = "completed", ["role"] = "assistant",
+				["content"] = new JArray(new JObject{ ["type"] = "output_text", ["text"] = "hello" })
+			});
+			var result = new APIClient.ChatCompletionResult("hello", null, null, "resp_1", output);
+			APIClient.AppendOutputItems(history, result);
+			Assert.AreEqual(1, history.Count, "Assistant output message should become one input message.");
+			Assert.AreEqual("assistant", (string)history[0]["role"], "Assistant role should be preserved.");
+			Assert.AreEqual("hello", (string)history[0]["content"], "Output text should be replayed as input content.");
+		}
+		[TestMethod]
+		public void ParseResponseBody_WithResponsesUsage_ReadsTotalTokens(){
+			var json = @"{
+				""id"": ""resp_test"",
+				""object"": ""response"",
+				""output"": [
+					{ ""type"": ""message"", ""role"": ""assistant"", ""content"": [
+						{ ""type"": ""output_text"", ""text"": ""ok"" }
+					] }
+				],
+				""usage"": { ""input_tokens"": 3, ""output_tokens"": 2, ""total_tokens"": 5 }
+			}";
+			var result = APIResponseParser.ParseResponseBody(json);
+			Assert.AreEqual("ok", result.Content, "Responses output text should parse.");
+			Assert.AreEqual(5, result.TotalTokens, "usage.total_tokens should be surfaced.");
 		}
 		[TestMethod]
 		public void BuildInputMessagePayload_WithToolRole_RequiresCallId(){
@@ -32,6 +61,31 @@ namespace LM_Stud.Tests{
 			var payload = (JObject)APIClient.BuildInputMessagePayload(toolMessage);
 			Assert.AreEqual("function_call_output", (string)payload["type"], "Tool message should map to function call output.");
 			Assert.AreEqual("call_123", (string)payload["call_id"], "Call id should be included for tool messages.");
+		}
+		[TestMethod]
+		public void CreateChatCompletion_WithReasoning_AddsReasoningToResponsesPayload(){
+			using(var listener = new HttpListener()){
+				var baseUrl = "http://127.0.0.1:39593/";
+				string requestBody = null;
+				listener.Prefixes.Add(baseUrl);
+				listener.Start();
+				var server = Task.Run(() => {
+					var ctx = listener.GetContext();
+					using(var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)){ requestBody = reader.ReadToEnd(); }
+					ctx.Response.StatusCode = 200;
+					ctx.Response.ContentType = "application/json";
+					using(var writer = new StreamWriter(ctx.Response.OutputStream, Encoding.UTF8, 1024, true))
+						writer.Write("{\"id\":\"resp_test\",\"output\":[{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"ok\"}]}]}");
+					ctx.Response.Close();
+				});
+				var client = new APIClient(baseUrl, "", "test-model", false);
+				var history = new JArray{ new JObject{ ["role"] = "user", ["content"] = "hello" } };
+				var result = client.CreateChatCompletion(history, 0.2f, 128, null, null, new JObject{ ["effort"] = "low" }, CancellationToken.None);
+				Assert.AreEqual("ok", result.Content, "Responses result should parse.");
+				Assert.IsTrue(server.Wait(1000), "Test server should finish handling the request.");
+				var payload = JObject.Parse(requestBody);
+				Assert.AreEqual("low", (string)payload["reasoning"]?["effort"], "Reasoning effort should be forwarded to the Responses payload.");
+			}
 		}
 		[DataTestMethod]
 		[DataRow(39591, 404, "{\"error\":\"missing\"}", DisplayName = "404 endpoint missing")]

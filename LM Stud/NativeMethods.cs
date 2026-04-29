@@ -48,7 +48,7 @@ namespace LMStud{
 			Marshal.Copy(ptr, buffer, 0, length);
 			return Encoding.UTF8.GetString(buffer);
 		}
-		private const string DllName = "stud";
+		private const string DllName = "Stud.dll";
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void SetHWnd(IntPtr hWnd);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
@@ -100,7 +100,11 @@ namespace LMStud{
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError SyncChatMessages([MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.I4)] int[] roles, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)] string[] thinks, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)] string[] messages, int count);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern StudError SyncChatMessagesJson([MarshalAs(UnmanagedType.LPUTF8Str)] string messagesJson);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError GenerateWithTools(MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern StudError GenerateForAPI(MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, [MarshalAs(UnmanagedType.LPUTF8Str)] string toolsJson, int nPredict, out IntPtr responseJson);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr ExecuteTool([MarshalAs(UnmanagedType.LPUTF8Str)] string name, [MarshalAs(UnmanagedType.LPUTF8Str)] string argsJson);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]

@@ -51,10 +51,8 @@ namespace LMStud{
 			PopulateModels();
 			PopulateWhisperModels(true, true);
 			NativeMethods.BackendInit();
-			if(Common.APIClientEnable){
-				Tools.RegisterTools();
-				SetModelStatus();
-			}
+			Tools.RegisterTools();
+			if(Common.APIClientEnable) SetModelStatus();
 			ApiServer = new APIServer();
 			if(Common.APIServerEnable) ApiServer.Start();
 			if(!Settings.Default.LoadAuto) return;

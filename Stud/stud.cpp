@@ -1,5 +1,6 @@
 ﻿#include "stud.h"
 #include "hug.h"
+#include "JSONCommon.h"
 #include <filesystem>
 #include <chrono>
 #include <regex>
@@ -7,6 +8,7 @@
 #include <minja\minja.hpp>
 #include <minja\chat-template.hpp>
 #include <algorithm>
+#include <cstring>
 #include <mutex>
 #include <thread>
 using HrClock = std::chrono::high_resolution_clock;
@@ -89,6 +91,16 @@ static char* CopyCString(const std::string& text){
 	buffer[size] = '\0';
 	return buffer;
 }
+static std::string GenerateToolCallId(){
+	static std::atomic<unsigned long long> counter{0};
+	const auto id = counter.fetch_add(1, std::memory_order_relaxed);
+	const auto ticks = std::chrono::duration_cast<std::chrono::microseconds>(HrClock::now().time_since_epoch()).count();
+	return "call_" + std::to_string(ticks) + "_" + std::to_string(id);
+}
+static void EnsureToolCallIds(common_chat_msg& msg){
+	for(auto& toolCall : msg.tool_calls)
+		if(toolCall.id.empty()) toolCall.id = GenerateToolCallId();
+}
 extern "C" EXPORT char* ExecuteTool(const char* name, const char* argsJson){
 	if(!name || name[0] == '\0') return CopyCString("{\"error\":\"missing tool name\"}");
 	const auto it = _toolHandlers.find(name);
@@ -98,6 +110,64 @@ extern "C" EXPORT char* ExecuteTool(const char* name, const char* argsJson){
 		return CopyCString(response);
 	} catch(const std::exception& ex){ return CopyCString(std::string("{\"error\":\"") + ex.what() + "\"}"); } catch(...){ return CopyCString("{\"error\":\"tool execution failed\"}"); }
 }
+static StudError RegisterAPIToolSchemas(const char* toolsJson){
+	_tools.clear();
+	_toolHandlers.clear();
+	MarkToolsJsonDirty();
+	const char* p = SkipJsonWhitespace(toolsJson);
+	if(!p || !*p) return StudError::Success;
+	std::string toolsRoot(p);
+	std::string toolsProperty;
+	if(*p == '{' && GetJsonPropertyRaw(toolsRoot, "tools", toolsProperty)) toolsRoot = toolsProperty;
+	p = SkipJsonWhitespace(toolsRoot.c_str());
+	if(!p || !*p || IsJsonNull(toolsRoot)) return StudError::Success;
+	const auto toolObjects = ExtractJsonObjects(p);
+	if(toolObjects.empty()){
+		if(*p == '[') return StudError::Success;
+		_lastErrorMessage = "API tools must be a JSON object or array.";
+		return StudError::ChatParseError;
+	}
+	for(const auto& toolObject : toolObjects){
+		std::string type;
+		GetJsonStringProperty(toolObject, "type", type);
+		if(!type.empty() && type != "function") continue;
+		std::string functionObject;
+		std::string toolDefinition = toolObject;
+		if(GetJsonPropertyRaw(toolObject, "function", functionObject)){
+			const char* functionStart = SkipJsonWhitespace(functionObject.c_str());
+			if(functionStart && *functionStart == '{') toolDefinition = functionObject;
+		}
+		std::string name;
+		if(!GetJsonStringProperty(toolDefinition, "name", name) || name.empty()) continue;
+		std::string description;
+		GetJsonStringProperty(toolDefinition, "description", description);
+		std::string parameters;
+		if(!GetJsonPropertyRaw(toolDefinition, "parameters", parameters))
+			GetJsonPropertyRaw(toolDefinition, "input_schema", parameters);
+		if(parameters.empty() || IsJsonNull(parameters)) parameters = "{}";
+		AddTool(name.c_str(), description.c_str(), parameters.c_str(), nullptr);
+	}
+	return StudError::Success;
+}
+class ScopedAPITools{
+public:
+	ScopedAPITools() : _toolsSnapshot(_tools), _handlersSnapshot(_toolHandlers), _syntaxSnapshot(_session.syntax){}
+	~ScopedAPITools(){ Restore(); }
+	static StudError Use(const char* toolsJson){ return RegisterAPIToolSchemas(toolsJson); }
+	void Restore(){
+		if(_restored) return;
+		_tools = std::move(_toolsSnapshot);
+		_toolHandlers = std::move(_handlersSnapshot);
+		_session.syntax = _syntaxSnapshot;
+		MarkToolsJsonDirty();
+		_restored = true;
+	}
+private:
+	std::vector<common_chat_tool> _toolsSnapshot;
+	std::unordered_map<std::string, ToolHandlerFn> _handlersSnapshot;
+	common_chat_syntax _syntaxSnapshot{};
+	bool _restored = false;
+};
 StudError CreateContext(const int nCtx, const int nBatch, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch){
 	if(_session.ctx){
 		llama_free(_session.ctx);
@@ -282,8 +352,22 @@ std::string RoleString(const MessageRole role){
 		default: return std::string();
 	}
 }
-StudError RetokenizeChat(bool rebuildMemory = false){
-	if(!_session.ctx || !_session.smpl[_session.dId] || !_session._vocab) return StudError::ModelNotLoaded;
+static StudError UpdateChatSyntax(const common_chat_params& chatData, const bool parseToolCalls){
+	_session.syntax.format = chatData.format;
+	_session.syntax.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
+	_session.syntax.reasoning_in_content = false;
+	_session.syntax.thinking_forced_open = chatData.thinking_forced_open;
+	_session.syntax.parse_tool_calls = parseToolCalls;
+	try{
+		_session.syntax.parser = common_peg_arena();
+		if(!chatData.parser.empty()) _session.syntax.parser.load(chatData.parser);
+	} catch(std::exception& e){
+		_lastErrorMessage = e.what();
+		return StudError::ChatParseError;
+	}
+	return StudError::Success;
+}
+static StudError BuildChatTemplateParams(common_chat_params& chatData, const bool addGenerationPrompt, const bool includeTools){
 	std::vector<common_chat_msg> msgs;
 	std::string prompt(_session.prompt);
 	if(_hasTools && !_session.toolsPrompt.empty()) prompt += _session.toolsPrompt;
@@ -293,20 +377,28 @@ StudError RetokenizeChat(bool rebuildMemory = false){
 	common_chat_templates_inputs in;
 	in.use_jinja = _session.useJinja;
 	in.messages = msgs;
-	in.add_generation_prompt = false;
-	if(_hasTools){
+	in.add_generation_prompt = addGenerationPrompt;
+	if(includeTools){
 		in.tools = _tools;
 		in.tool_choice = COMMON_CHAT_TOOL_CHOICE_AUTO;
 		in.parallel_tool_calls = true;
 	}
 	in.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
-	common_chat_params chatData;
 	try{ chatData = common_chat_templates_apply(_chatTemplates.get(), in); } catch(std::exception& e){
 		_lastErrorMessage = e.what();
 		OutputDebugStringA((std::string("EXCEPTION:\r\n") + e.what()).c_str());
 		return StudError::CantApplyTemplate;
 	}
-	_session.syntax.format = chatData.format;
+	return StudError::Success;
+}
+StudError RetokenizeChat(bool rebuildMemory = false){
+	if(!_session.ctx || !_session.smpl[_session.dId] || !_session._vocab) return StudError::ModelNotLoaded;
+	const bool toolsEnabled = _hasTools && !_tools.empty();
+	common_chat_params chatData;
+	const auto applyErr = BuildChatTemplateParams(chatData, false, toolsEnabled);
+	if(applyErr != StudError::Success) return applyErr;
+	const auto syntaxErr = UpdateChatSyntax(chatData, toolsEnabled);
+	if(syntaxErr != StudError::Success) return syntaxErr;
 	const int nPrompt = -llama_tokenize(_session._vocab, chatData.prompt.c_str(), chatData.prompt.size(), nullptr, 0, true, true);
 	std::vector<llama_token> promptTokens(nPrompt);
 	llama_tokenize(_session._vocab, chatData.prompt.c_str(), chatData.prompt.size(), promptTokens.data(), promptTokens.size(), true, true);
@@ -530,19 +622,8 @@ StudError AddMessage(const MessageRole role, const char* message){
 	_session.chatMsgs[_session.dId].push_back(msg);
 	return RetokenizeChat();
 }
-StudError SyncChatMessages(const int* roles, const char** thinks, const char** messages, int count){
-	std::vector<common_chat_msg> msgs;
-	if(count > 0){
-		msgs.reserve(static_cast<size_t>(count));
-		for(int i = 0; i < count; ++i){
-			const auto role = static_cast<MessageRole>(roles ? roles[i] : 0);
-			common_chat_msg msg;
-			msg.role = RoleString(role);
-			msg.content = messages && messages[i] ? std::string(messages[i]) : std::string();
-			if(role == MessageRole::Assistant) msg.reasoning_content = thinks && thinks[i] ? std::string(thinks[i]) : std::string();
-			msgs.push_back(std::move(msg));
-		}
-	}
+static StudError ReplaceChatMessages(std::vector<common_chat_msg>&& msgs){
+	for(auto& msg : msgs) EnsureToolCallIds(msg);
 	_session.chatMsgs[_session.dId] = std::move(msgs);
 	_session.chatMsgs[_session.dId == 0 ? 1 : 0].clear();
 	_session.assNextGen = false;
@@ -558,6 +639,32 @@ StudError SyncChatMessages(const int* roles, const char** thinks, const char** m
 	const auto err2 = RetokenizeChat(true);
 	const auto err3 = DialecticSwap();
 	return err2 != StudError::Success ? err2 : err3;
+}
+StudError SyncChatMessages(const int* roles, const char** thinks, const char** messages, int count){
+	std::vector<common_chat_msg> msgs;
+	if(count > 0){
+		msgs.reserve(static_cast<size_t>(count));
+		for(int i = 0; i < count; ++i){
+			const auto role = static_cast<MessageRole>(roles ? roles[i] : 0);
+			common_chat_msg msg;
+			msg.role = RoleString(role);
+			msg.content = messages && messages[i] ? std::string(messages[i]) : std::string();
+			if(role == MessageRole::Assistant) msg.reasoning_content = thinks && thinks[i] ? std::string(thinks[i]) : std::string();
+			msgs.push_back(std::move(msg));
+		}
+	}
+	return ReplaceChatMessages(std::move(msgs));
+}
+StudError SyncChatMessagesJson(const char* messagesJson){
+	std::vector<common_chat_msg> msgs;
+	const char* p = SkipJsonWhitespace(messagesJson);
+	if(p && *p){
+		try{ msgs = common_chat_msgs_parse_oaicompat(std::string(p)); } catch(const std::exception& e){
+			_lastErrorMessage = e.what();
+			return StudError::ChatParseError;
+		}
+	}
+	return ReplaceChatMessages(std::move(msgs));
 }
 struct PendingToken{
 	llama_token token;
@@ -676,7 +783,7 @@ static StudError DecodePromptMessages(const std::vector<common_chat_msg>& messag
 	}
 	return StudError::Success;
 }
-StudError Generate(const std::vector<common_chat_msg>& messages, const int nPredict, const bool callback, common_chat_msg& outMsg){
+StudError Generate(const std::vector<common_chat_msg>& messages, const int nPredict, const bool callback, common_chat_msg& outMsg, const bool emitFinalCallback = true){
 	const auto prepStart = HrClock::now();
 	_stop.store(false);
 	const TokenCallbackFn cb = _tokenCb;
@@ -709,9 +816,15 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	}
 	postProcessor.Close();
 	if(postProcessor.Error() != StudError::Success) return RollbackGenerate(chatStart, messages.size(), outMsg, postProcessor.Error());
-	msg = common_chat_parse(response, false, _session.syntax);
+	try{
+		msg = common_chat_parse(response, false, _session.syntax);
+		EnsureToolCallIds(msg);
+	} catch(std::exception& e){
+		_lastErrorMessage = e.what();
+		return RollbackGenerate(chatStart, messages.size(), outMsg, StudError::ChatParseError);
+	}
 	_session.chatMsgs[_session.dId].push_back(msg);
-	if(cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(), ftTime, 0);
+	if(emitFinalCallback && cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(), ftTime, 0);
 	outMsg = std::move(msg);
 	//OutputDebugStringA(("\n!!! CONTEXT START !!!\n" + std::string(GetContextAsText()) + "\n!!! CONTEXT END !!!\n").c_str());
 	return StudError::Success;
@@ -750,6 +863,68 @@ StudError GenerateWithTools(const MessageRole role, const char* prompt, const in
 			return StudError::ChatParseError;
 		}
 	} while(toolCalled);
+	return StudError::Success;
+}
+static std::string BuildAPIResponseJson(const common_chat_msg& msg){
+	const bool hasContent = !msg.content.empty();
+	const bool hasToolCalls = !msg.tool_calls.empty();
+	std::string json = "{";
+	json += "\"role\":\"assistant\",";
+	json += "\"content\":" + JsonString(msg.content) + ",";
+	json += "\"reasoning\":" + JsonString(msg.reasoning_content) + ",";
+	json += "\"finish_reason\":\"";
+	json += hasToolCalls ? "tool_calls" : "stop";
+	json += "\",";
+	json += "\"tool_calls\":[";
+	for(size_t i = 0; i < msg.tool_calls.size(); ++i){
+		const auto& toolCall = msg.tool_calls[i];
+		if(i > 0) json += ",";
+		json += "{\"id\":" + JsonString(toolCall.id) + ",\"type\":\"function\",\"function\":{";
+		json += "\"name\":" + JsonString(toolCall.name) + ",";
+		json += "\"arguments\":" + JsonString(toolCall.arguments);
+		json += "}}";
+	}
+	json += "],\"output\":[";
+	bool hasOutputItem = false;
+	if(hasContent){
+		json += "{\"type\":\"message\",\"status\":\"completed\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":" + JsonString(msg.content) + "}]}";
+		hasOutputItem = true;
+	}
+	for(const auto& toolCall : msg.tool_calls){
+		if(hasOutputItem) json += ",";
+		json += "{\"type\":\"function_call\",\"status\":\"completed\",";
+		json += "\"call_id\":" + JsonString(toolCall.id) + ",";
+		json += "\"name\":" + JsonString(toolCall.name) + ",";
+		json += "\"arguments\":" + JsonString(toolCall.arguments);
+		json += "}";
+		hasOutputItem = true;
+	}
+	json += "]}";
+	return json;
+}
+StudError GenerateForAPI(const MessageRole role, const char* prompt, const char* toolsJson, const int nPredict, char** responseJson){
+	if(responseJson) *responseJson = nullptr;
+	if(!responseJson){
+		_lastErrorMessage = "responseJson is null.";
+		return StudError::Generic;
+	}
+	ScopedAPITools apiTools;
+	const auto toolsErr = apiTools.Use(toolsJson);
+	if(toolsErr != StudError::Success) return toolsErr;
+	const auto retokenizeErr = RetokenizeChat();
+	if(retokenizeErr != StudError::Success) return retokenizeErr;
+	common_chat_msg inputMsg;
+	inputMsg.role = RoleString(role);
+	inputMsg.content = prompt ? std::string(prompt) : std::string();
+	std::vector<common_chat_msg> messages{inputMsg};
+	common_chat_msg outputMsg;
+	const auto generateErr = Generate(messages, nPredict, false, outputMsg, false);
+	if(generateErr != StudError::Success) return generateErr;
+	*responseJson = CopyCString(BuildAPIResponseJson(outputMsg));
+	if(!*responseJson){
+		_lastErrorMessage = "Unable to allocate API generation response.";
+		return StudError::Generic;
+	}
 	return StudError::Success;
 }
 void StopGeneration(){

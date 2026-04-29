@@ -5,6 +5,7 @@ namespace LMStud{
 	internal class SessionManager{
 		private readonly int _maxSessions;
 		private readonly Dictionary<string, Session> _sessions = new Dictionary<string, Session>();
+		private readonly Dictionary<string, string> _responseSessions = new Dictionary<string, string>();
 		private readonly object _sync = new object();
 		public SessionManager(int maxSessions = 32){
 			_maxSessions = maxSessions;
@@ -26,6 +27,7 @@ namespace LMStud{
 			lock(_sync){
 				session.Messages = CloneMessages(messages);
 				session.State = CloneState(state);
+				session.ClearNativeChatState();
 				session.TokenCount = tokenCount;
 				session.LastUsed = DateTime.UtcNow;
 				Evict();
@@ -39,19 +41,38 @@ namespace LMStud{
 				Evict();
 			}
 		}
+		public string GetSessionIdForResponse(string responseId){
+			if(string.IsNullOrWhiteSpace(responseId)) return null;
+			lock(_sync){ return _responseSessions.TryGetValue(responseId, out var sessionId) ? sessionId : null; }
+		}
+		public void RememberResponse(string responseId, Session session){
+			if(string.IsNullOrWhiteSpace(responseId) || session == null) return;
+			lock(_sync){ _responseSessions[responseId] = session.Id; }
+		}
 		public void Remove(string id){
 			if(string.IsNullOrEmpty(id)) return;
-			lock(_sync){ _sessions.Remove(id); }
+			lock(_sync){
+				if(_sessions.TryGetValue(id, out var session)) session.ClearNativeChatState();
+				_sessions.Remove(id);
+				RemoveResponseIdsForSession(id);
+			}
 		}
 		public void Clear(){
-			lock(_sync){ _sessions.Clear(); }
+			lock(_sync){
+				foreach(var session in _sessions.Values) session.ClearNativeChatState();
+				_sessions.Clear();
+				_responseSessions.Clear();
+			}
 		}
 		private static List<APIServer.Message> CloneMessages(IEnumerable<APIServer.Message> messages){
 			var clone = new List<APIServer.Message>();
 			if(messages == null) return clone;
 			foreach(var message in messages){
 				if(message == null) continue;
-				clone.Add(new APIServer.Message{ Role = message.Role, Content = message.Content });
+				clone.Add(new APIServer.Message{
+					Role = message.Role, Content = message.Content, ToolCallId = message.ToolCallId,
+					ToolCalls = message.ToolCalls == null ? null : new List<APIClient.ToolCall>(message.ToolCalls)
+				});
 			}
 			return clone;
 		}
@@ -64,8 +85,14 @@ namespace LMStud{
 		private void Evict(){
 			while(_sessions.Count > _maxSessions){
 				var lru = _sessions.Values.OrderBy(s => s.LastUsed).First();
+				lru.ClearNativeChatState();
 				_sessions.Remove(lru.Id);
+				RemoveResponseIdsForSession(lru.Id);
 			}
+		}
+		private void RemoveResponseIdsForSession(string sessionId){
+			foreach(var responseId in _responseSessions.Where(pair => pair.Value == sessionId).Select(pair => pair.Key).ToList())
+				_responseSessions.Remove(responseId);
 		}
 		internal class Session{
 			public string Id = Guid.NewGuid().ToString();
@@ -74,7 +101,14 @@ namespace LMStud{
 			public byte[] State;
 			public int TokenCount;
 			public string LastBackend;
+			public string ToolsJson;
+			public IntPtr NativeChatState;
 			public readonly List<APIServer.ToolRecord> ToolRecords = new List<APIServer.ToolRecord>();
+			public void SetNativeChatState(IntPtr state){
+				if(NativeChatState != IntPtr.Zero && NativeChatState != state) NativeMethods.FreeChatState(NativeChatState);
+				NativeChatState = state;
+			}
+			public void ClearNativeChatState(){ SetNativeChatState(IntPtr.Zero); }
 		}
 	}
 }

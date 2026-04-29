@@ -1,5 +1,7 @@
 #include "tools.h"
 #include "stud.h"
+#include "JSONCommon.h"
+#include <ctime>
 #include <regex>
 static std::string _toolsJsonCache;
 static bool _toolsJsonDirty = true;
@@ -7,97 +9,6 @@ void SetGoogle(const char* apiKey, const char* searchEngineId, const int resultC
 	if(apiKey){ googleAPIKey = apiKey; } else{ googleAPIKey.clear(); }
 	if(searchEngineId){ googleSearchID = searchEngineId; } else{ googleSearchID.clear(); }
 	if(resultCount >= 1 && resultCount <= 100) googleResultCount = resultCount;
-}
-std::string JsonEscape(const std::string& in){
-	std::string out;
-	out.reserve(in.size());
-	for(const char c : in){
-		switch(c){
-			case '"': out += "\\\"";
-				break;
-			case '\\': out += "\\\\";
-				break;
-			case '\n': out += "\\n";
-				break;
-			case '\r': out += "\\r";
-				break;
-			case '\t': out += "\\t";
-				break;
-			default: out += c;
-				break;
-		}
-	}
-	return out;
-}
-static std::string GetJsonValue(const char* json, const char* key){
-	if(!json || !key) return "";
-	const char* p = strstr(json, key);
-	if(!p) return "";
-	p = strchr(p, ':');
-	if(!p) return "";
-	++p;
-	while(*p == ' ' || *p == '\t') ++p;
-	if(*p == '\"'){
-		++p;
-		std::string val;
-		bool esc = false;
-		while(*p){
-			const char c = *p++;
-			if(esc){
-				switch(c){
-					case 'n': val += '\n';
-						break;
-					case 'r': val += '\r';
-						break;
-					case 't': val += '\t';
-						break;
-					case '"': val += '"';
-						break;
-					case '\\': val += '\\';
-						break;
-					default: val += c;
-						break;
-				}
-				esc = false;
-			} else if(c == '\\'){ esc = true; } else if(c == '\"') break;
-			else val += c;
-		}
-		return val;
-	}
-	const char* end = p;
-	while(*end && *end != ',' && *end != '}' && *end != ' ') ++end;
-	if(end > p) return std::string(p, end);
-	return "";
-}
-std::string GetArgValue(const char* args, const char* key){
-	if(!args || !key) return "";
-	std::string paramTag = "<parameter=";
-	paramTag += key;
-	paramTag += ">";
-	const char* p = strstr(args, paramTag.c_str());
-	if(p){
-		p += paramTag.size();
-		const char* end = strstr(p, "</parameter>");
-		if(end){
-			while(*p=='\n' || *p=='\r') ++p;
-			const char* e = end;
-			while(e>p && (*(e-1)=='\n' || *(e-1)=='\r')) --e;
-			return std::string(p, e);
-		}
-	}
-	std::string openTag = "<";
-	openTag += key;
-	openTag += ">";
-	p = strstr(args, openTag.c_str());
-	if(p){
-		p += openTag.size();
-		std::string closeTag = "</";
-		closeTag += key;
-		closeTag += ">";
-		const char* end = strstr(p, closeTag.c_str());
-		if(end) return std::string(p, end);
-	}
-	return GetJsonValue(args, key);
 }
 std::string GetLongDateTime(const char* argsJson){
 	const auto now = std::time(nullptr);

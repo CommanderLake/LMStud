@@ -1,4 +1,5 @@
 #include "tools.h"
+#include "JSONCommon.h"
 #include <charconv>
 #include <filesystem>
 #include <sstream>

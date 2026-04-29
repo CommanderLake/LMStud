@@ -16,6 +16,11 @@ namespace LMStud.Parsers{
 			}
 			return sanitized;
 		}
+		internal static int? ExtractTotalTokens(JObject root){
+			var totalTokens = root?["usage"]?["total_tokens"];
+			if(totalTokens == null || totalTokens.Type == JTokenType.Null) return null;
+			return totalTokens.Value<int>();
+		}
 		internal static string ExtractContentText(JToken contentToken){
 			if(contentToken == null || contentToken.Type == JTokenType.Null) return null;
 			if(contentToken.Type == JTokenType.String) return contentToken.ToString();
