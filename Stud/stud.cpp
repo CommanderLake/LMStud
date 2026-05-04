@@ -1,17 +1,16 @@
 ﻿#include "stud.h"
 #include "hug.h"
 #include "JSONCommon.h"
-#include <nlohmann/json.hpp>
+#include <nlohmann\json.hpp>
 #include <filesystem>
 #include <chrono>
 #include <regex>
 #include <unordered_map>
-#include <minja\minja.hpp>
-#include <minja\chat-template.hpp>
 #include <algorithm>
 #include <cstring>
 #include <mutex>
 #include <thread>
+#include <jinja\parser.h>
 using HrClock = std::chrono::high_resolution_clock;
 extern "C" void CloseCommandPrompt();
 extern "C" void StopCMDOutput();
@@ -34,7 +33,7 @@ namespace{
 	auto& _tokenCb = backend.tokenCallback;
 	auto& _tools = backend.tools;
 	auto& _toolHandlers = backend.toolHandlers;
-	auto& _hasTools = backend.hasTools;
+	auto& _caps = backend.caps;
 }
 using Stud::MessageRole;
 using Stud::ToolCtx;
@@ -47,8 +46,7 @@ struct ChatStateSnapshot{
 	int dId = 0;
 	std::string prompt;
 	std::string toolsPrompt;
-	common_chat_syntax syntax{};
-	bool useJinja = true;
+	common_chat_parser_params syntax{};
 	bool addNextGen = false;
 	int batchSize = 1;
 };
@@ -166,7 +164,7 @@ public:
 private:
 	std::vector<common_chat_tool> _toolsSnapshot;
 	std::unordered_map<std::string, ToolHandlerFn> _handlersSnapshot;
-	common_chat_syntax _syntaxSnapshot{};
+	common_chat_parser_params _syntaxSnapshot{};
 	bool _restored = false;
 };
 StudError CreateContext(const int nCtx, const int batchSize, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch){
@@ -259,24 +257,18 @@ StudError LoadModel(const char* filename, const char* jinjaTemplate, const int n
 	llama_log_set(nullptr, nullptr);
 	if(!_llModel){ return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantLoadModel; }
 	_session._vocab = llama_model_get_vocab(_llModel);
-	const auto bosStr = llama_vocab_get_text(_session._vocab, llama_vocab_bos(_session._vocab));
-	const auto eosStr = llama_vocab_get_text(_session._vocab, llama_vocab_eos(_session._vocab));
 	std::string tmplSrc;
 	if(jinjaTemplate && jinjaTemplate[0] != '\0'){
-		_chatTemplates = common_chat_templates_init(_llModel, jinjaTemplate, bosStr, eosStr);
+		_chatTemplates = common_chat_templates_init(_llModel, jinjaTemplate);
 		tmplSrc = jinjaTemplate;
 	} else{
 		_chatTemplates = common_chat_templates_init(_llModel, "");
 		tmplSrc = llama_model_chat_template(_llModel, nullptr);
 	}
-	_hasTools = false;
-	if(!tmplSrc.empty()){
-		try{
-			const minja::chat_template tmpl(tmplSrc, bosStr, eosStr);
-			_hasTools = tmpl.original_caps().supports_tools;
-			_session.useJinja = true;
-		} catch(...){ _session.useJinja = false; }
-	} else{ _session.useJinja = false; }
+	jinja::lexer lex;
+	jinja::lexer_result lexed = lex.tokenize(tmplSrc);
+	jinja::program prog = jinja::parse_from_tokens(lexed);
+	_caps = jinja::caps_get(prog);
 	return StudError::Success;
 }
 bool HasTool(const char* name){
@@ -353,11 +345,11 @@ std::string RoleString(const MessageRole role){
 		default: return std::string();
 	}
 }
-static StudError LoadChatSyntax(common_chat_syntax& syntax, const common_chat_params& chatData, const bool parseToolCalls){
+static StudError LoadChatSyntax(common_chat_parser_params& syntax, const common_chat_params& chatData, const bool parseToolCalls){
 	syntax.format = chatData.format;
 	syntax.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
 	syntax.reasoning_in_content = false;
-	syntax.thinking_forced_open = chatData.thinking_forced_open;
+	syntax.generation_prompt = chatData.generation_prompt;
 	syntax.parse_tool_calls = parseToolCalls;
 	try{
 		syntax.parser = common_peg_arena();
@@ -379,13 +371,13 @@ static bool TokenizePrompt(const std::string& prompt, std::vector<llama_token>& 
 }
 static StudError BuildChatTemplateParamsForMessages(common_chat_params& chatData, const std::vector<common_chat_msg>& chatMsgs, const bool addGenerationPrompt, const bool includeTools){
 	const auto hasUser = std::any_of(chatMsgs.begin(), chatMsgs.end(), [](const common_chat_msg& msg){
-		return msg.role._Equal("user");
+		return msg.role == "user";
 	});
 	if(!hasUser){
 		chatData = common_chat_params();
 		return StudError::Success;
 	}
-	const bool useTools = includeTools && _hasTools && !_tools.empty();
+	const bool useTools = includeTools && !_tools.empty();
 	std::vector<common_chat_msg> msgs;
 	std::string prompt(_session.prompt);
 	if(useTools && !_session.toolsPrompt.empty()) prompt += _session.toolsPrompt;
@@ -393,13 +385,13 @@ static StudError BuildChatTemplateParamsForMessages(common_chat_params& chatData
 	msgs.insert(msgs.end(), chatMsgs.begin(), chatMsgs.end());
 	for(auto& msg : msgs) if(msg.content.empty()) msg.content = " ";
 	common_chat_templates_inputs in;
-	in.use_jinja = _session.useJinja;
+	in.use_jinja = true;
 	in.messages = msgs;
 	in.add_generation_prompt = addGenerationPrompt;
 	if(useTools){
 		in.tools = _tools;
 		in.tool_choice = COMMON_CHAT_TOOL_CHOICE_AUTO;
-		in.parallel_tool_calls = true;
+		in.parallel_tool_calls = _caps.supports_parallel_tool_calls;
 	}
 	in.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
 	try{ chatData = common_chat_templates_apply(_chatTemplates.get(), in); } catch(std::exception& e){
@@ -411,9 +403,9 @@ static StudError BuildChatTemplateParamsForMessages(common_chat_params& chatData
 }
 StudError RetokenizeChat(bool rebuildMemory = false){
 	if(!_session.ctx || !_session.smpl[_session.dId] || !_session._vocab) return StudError::ModelNotLoaded;
-	const bool toolsEnabled = _hasTools && !_tools.empty();
+	const bool toolsEnabled = !_tools.empty();
 	const auto hasUser = std::any_of(_session.chatMsgs[_session.dId].begin(), _session.chatMsgs[_session.dId].end(), [](const common_chat_msg& msg){
-		return msg.role._Equal("user");
+		return msg.role == "user";
 	});
 	if(!hasUser){
 		if(_session.llMem) llama_memory_clear(_session.llMem, true);
@@ -506,17 +498,17 @@ static StudError DecodePromptText(const std::string& prompt, const int dId, cons
 	return StudError::Success;
 }
 static StudError DecodeSinglePromptMessage(const common_chat_msg& message, const int dId, const bool addAss, const bool appendToChat = true){
-	if(appendToChat && message.role._Equal("user") && _session.chatMsgs[dId].empty() && _session.cachedTokens[dId].empty()){
+	if(appendToChat && message.role == "user" && _session.chatMsgs[dId].empty() && _session.cachedTokens[dId].empty()){
 		std::vector<common_chat_msg> chatMsgs{message};
 		common_chat_params chatData;
-		const bool toolsEnabled = _hasTools && !_tools.empty();
+		const bool toolsEnabled = !_tools.empty();
 		auto err = BuildChatTemplateParamsForMessages(chatData, chatMsgs, addAss, toolsEnabled);
 		if(err != StudError::Success) return err;
 		err = LoadChatSyntax(_session.syntax, chatData, toolsEnabled);
 		return err == StudError::Success ? DecodePromptText(chatData.prompt, dId, &message) : err;
 	}
 	std::string formatted;
-	try{ formatted = common_chat_format_single(_chatTemplates.get(), _session.chatMsgs[dId], message, addAss, _session.useJinja && message.role._Equal("assistant")); } catch(std::exception& e){
+	try{ formatted = common_chat_format_single(_chatTemplates.get(), _session.chatMsgs[dId], message, addAss, message.role._Equal("assistant")); } catch(std::exception& e){
 		_lastErrorMessage = e.what();
 		OutputDebugStringA((std::string("EXCEPTION:\r\n") + e.what()).c_str());
 		return StudError::CantApplyTemplate;
@@ -711,10 +703,10 @@ struct PendingToken{
 	llama_token token;
 	int memSize;
 };
-static common_chat_msg ParseGeneratedMessage(const std::string& response, const common_chat_syntax& syntax, bool isPartial);
+static common_chat_msg ParseGeneratedMessage(const std::string& response, const common_chat_parser_params& syntax, bool isPartial);
 class AsyncTokenPostProcessor{
 public:
-	AsyncTokenPostProcessor(const TokenCallbackFn callbackFn, const bool streamCallback, const common_chat_syntax& chatSyntax, const HrClock::time_point& prepStart, std::string& responseText, common_chat_msg& parsedMsg, double& firstTokenTime) : _callbackFn(callbackFn),
+	AsyncTokenPostProcessor(const TokenCallbackFn callbackFn, const bool streamCallback, const common_chat_parser_params& chatSyntax, const HrClock::time_point& prepStart, std::string& responseText, common_chat_msg& parsedMsg, double& firstTokenTime) : _callbackFn(callbackFn),
 		_streamCallback(streamCallback), _chatSyntax(chatSyntax), _prepStart(prepStart), _responseText(responseText), _parsedMsg(parsedMsg), _firstTokenTime(firstTokenTime), _queue(kQueueCapacity){ 
 		_chatSyntax.parse_tool_calls = false;
 		_worker = std::thread([this]{ WorkerLoop(); });
@@ -790,7 +782,7 @@ private:
 	static constexpr size_t kQueueCapacity = 128;
 	TokenCallbackFn _callbackFn;
 	bool _streamCallback;
-	common_chat_syntax _chatSyntax;
+	common_chat_parser_params _chatSyntax;
 	HrClock::time_point _prepStart;
 	std::string& _responseText;
 	common_chat_msg& _parsedMsg;
@@ -825,15 +817,13 @@ static StudError DecodePromptMessages(const std::vector<common_chat_msg>& messag
 	}
 	return StudError::Success;
 }
-static common_chat_msg ParseGeneratedMessage(const std::string& response, const common_chat_syntax& syntax, const bool isPartial){
+static common_chat_msg ParseGeneratedMessage(const std::string& response, const common_chat_parser_params& syntax, const bool isPartial){
 	try{ return common_chat_parse(response, isPartial, syntax); } catch(std::exception& e){
 		if(!isPartial && syntax.parse_tool_calls) throw;
 		OutputDebugStringA((std::string("CHAT PARSE FALLBACK:\r\n") + e.what()).c_str());
-		common_chat_syntax fallback;
+		common_chat_parser_params fallback;
 		fallback.reasoning_format = syntax.reasoning_format;
 		fallback.reasoning_in_content = syntax.reasoning_in_content;
-		fallback.thinking_forced_open = syntax.thinking_forced_open;
-		fallback.parse_tool_calls = false;
 		return common_chat_parse(response, isPartial, fallback);
 	}
 }
@@ -844,8 +834,8 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	const size_t chatStart = _session.chatMsgs[_session.dId].size();
 	const auto promptErr = DecodePromptMessages(messages, outMsg);
 	if(promptErr != StudError::Success) return promptErr;
-	const bool toolsEnabled = _hasTools && !_tools.empty();
-	common_chat_syntax streamSyntax = _session.syntax;
+	const bool toolsEnabled = !_tools.empty();
+	common_chat_parser_params streamSyntax = _session.syntax;
 	if(callback){
 		common_chat_params streamChatData;
 		auto streamSyntaxErr = BuildChatTemplateParamsForMessages(streamChatData, _session.chatMsgs[_session.dId], true, false);
@@ -900,7 +890,7 @@ StudError GenerateWithTools(const MessageRole role, const char* prompt, const in
 	msg.role = RoleString(role);
 	msg.content = std::string(prompt);
 	std::vector<common_chat_msg> msgs{msg};
-	if(!_hasTools || _tools.empty()){ return Generate(msgs, nPredict, callback, msg); }
+	if(_tools.empty()){ return Generate(msgs, nPredict, callback, msg); }
 	const TokenCallbackFn cb = _tokenCb;
 	bool toolCalled;
 	do{
@@ -1019,7 +1009,6 @@ extern "C" EXPORT void* CaptureChatState(){
 	snapshot->prompt = _session.prompt;
 	snapshot->toolsPrompt = _session.toolsPrompt;
 	snapshot->syntax = _session.syntax;
-	snapshot->useJinja = _session.useJinja;
 	snapshot->addNextGen = _session.assNextGen;
 	snapshot->batchSize = _session.batchSize;
 	return snapshot;
@@ -1037,7 +1026,6 @@ extern "C" EXPORT void RestoreChatState(void* state){
 	_session.prompt = snapshot->prompt;
 	_session.toolsPrompt = snapshot->toolsPrompt;
 	_session.syntax = snapshot->syntax;
-	_session.useJinja = snapshot->useJinja;
 	_session.assNextGen = snapshot->addNextGen;
 	_session.batchSize = snapshot->batchSize;
 }

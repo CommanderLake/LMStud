@@ -7,8 +7,9 @@
 #include <unordered_map>
 #include <string>
 #include <atomic>
+#include <jinja\caps.h>
 #pragma comment(lib, "llama.lib")
-#pragma comment(lib, "common.lib")
+#pragma comment(lib, "llama-common.lib")
 #pragma comment(lib, "ggml.lib")
 #pragma comment(lib, "ggml-base.lib")
 #define EXPORT __declspec(dllexport)
@@ -29,8 +30,7 @@ namespace Stud{
 		int dId = 0;
 		std::string prompt;
 		std::string toolsPrompt;
-		common_chat_syntax syntax;
-		bool useJinja = true;
+		common_chat_parser_params syntax;
 		bool assNextGen = false;
 		int batchSize = 1;
 	};
@@ -51,7 +51,7 @@ namespace Stud{
 			TokenCallbackFn tokenCallback = nullptr;
 			std::vector<common_chat_tool> tools;
 			std::unordered_map<std::string, ToolHandlerFn> toolHandlers;
-			bool hasTools = false;
+			jinja::caps caps;
 		};
 		BackendState& state();
 	}
