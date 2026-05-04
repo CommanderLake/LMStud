@@ -84,7 +84,7 @@ namespace LMStud {
 						if(generationError != NativeMethods.StudError.Success){
 							if(generationError == NativeMethods.StudError.ContextFull)
 								MessageBox.Show(MainForm, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-							else MessageBox.Show(MainForm, generationError.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+							else MainForm.ShowError("Generation", generationError);
 						}
 						var elapsed = SwTot.Elapsed.TotalSeconds;
 						if(_genTokenTotal > 0 && elapsed > 0.0){
@@ -103,7 +103,8 @@ namespace LMStud {
 								else{
 									if(dialecticError == NativeMethods.StudError.ContextFull)
 										MessageBox.Show(MainForm, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-									else MessageBox.Show(MainForm, dialecticError.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+									else
+										MainForm.ShowError("Generation", dialecticError);
 									return;
 								}
 							}

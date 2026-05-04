@@ -198,6 +198,7 @@ namespace LMStud
 			this.label1 = new System.Windows.Forms.Label();
 			this.textSystemPrompt = new System.Windows.Forms.TextBox();
 			this.tabPageModels = new System.Windows.Forms.TabPage();
+			this.butExtract = new System.Windows.Forms.Button();
 			this.checkLoadAuto = new System.Windows.Forms.CheckBox();
 			this.butUnload = new System.Windows.Forms.Button();
 			this.butLoad = new System.Windows.Forms.Button();
@@ -211,6 +212,7 @@ namespace LMStud
 			this.labelStatusMsg = new System.Windows.Forms.ToolStripStatusLabel();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+			this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -1737,6 +1739,7 @@ namespace LMStud
 			// 
 			// tabPageModels
 			// 
+			this.tabPageModels.Controls.Add(this.butExtract);
 			this.tabPageModels.Controls.Add(this.splitContainer2);
 			this.tabPageModels.Controls.Add(this.checkLoadAuto);
 			this.tabPageModels.Controls.Add(this.butUnload);
@@ -1744,6 +1747,13 @@ namespace LMStud
 			resources.ApplyResources(this.tabPageModels, "tabPageModels");
 			this.tabPageModels.Name = "tabPageModels";
 			this.tabPageModels.UseVisualStyleBackColor = true;
+			// 
+			// butExtract
+			// 
+			resources.ApplyResources(this.butExtract, "butExtract");
+			this.butExtract.Name = "butExtract";
+			this.butExtract.UseVisualStyleBackColor = true;
+			this.butExtract.Click += new System.EventHandler(this.ButExtract_Click);
 			// 
 			// checkLoadAuto
 			// 
@@ -1833,6 +1843,10 @@ namespace LMStud
 			// openFileDialog1
 			// 
 			resources.ApplyResources(this.openFileDialog1, "openFileDialog1");
+			// 
+			// saveFileDialog1
+			// 
+			resources.ApplyResources(this.saveFileDialog1, "saveFileDialog1");
 			// 
 			// Form1
 			// 
@@ -2106,6 +2120,8 @@ namespace LMStud
 		private System.Windows.Forms.Label label38;
 		private System.Windows.Forms.ComboBox comboApiClientModel;
 		private System.Windows.Forms.CheckBox checkApiClientStore;
+		private System.Windows.Forms.Button butExtract;
+		private System.Windows.Forms.SaveFileDialog saveFileDialog1;
 	}
 }
 

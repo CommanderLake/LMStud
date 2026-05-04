@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -42,6 +43,47 @@ namespace LMStud{
 		private void ButUnload_Click(object sender, EventArgs e){
 			butUnload.Enabled = false;
 			UnloadModel(true);
+		}
+		private void ButExtract_Click(object sender, EventArgs e){
+			const string action = "Extract Template";
+			if(listViewModels.SelectedItems.Count == 0){
+				ShowError(action, "Select a model first.", false);
+				return;
+			}
+			var selected = listViewModels.SelectedItems[0];
+			var modelPath = selected.SubItems[1].Text;
+			var meta = selected.Tag as List<GGUFMetadataManager.GGUFMetadataEntry>;
+			if(meta == null){
+				if(!File.Exists(modelPath)){
+					ShowError(action, "Model file not found\r\n\r\n" + modelPath, false);
+					return;
+				}
+				meta = GGUFMetadataManager.LoadGGUFMetadata(modelPath);
+			}
+			string template = null;
+			foreach(var entry in meta){
+				if(!string.Equals(entry.Key, "tokenizer.chat_template", StringComparison.Ordinal)) continue;
+				template = entry.Val.Value as string;
+				break;
+			}
+			if(string.IsNullOrWhiteSpace(template)){
+				foreach(var entry in meta){
+					if(entry.Key == null || !entry.Key.EndsWith(".chat_template", StringComparison.Ordinal)) continue;
+					template = entry.Val.Value as string;
+					if(!string.IsNullOrWhiteSpace(template)) break;
+				}
+			}
+			if(string.IsNullOrWhiteSpace(template)){
+				MessageBox.Show(this, "No Jinja chat template was found in the selected model.", Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
+				return;
+			}
+			saveFileDialog1.Title = action;
+			if(saveFileDialog1.ShowDialog(this) != DialogResult.OK) return;
+			try{
+				File.WriteAllText(saveFileDialog1.FileName, template, new UTF8Encoding(false));
+			} catch(Exception ex){
+				ShowError(action, ex.Message, false);
+			}
 		}
 		private bool ModelsFolderExists(bool showError){
 			if(!Directory.Exists(Common.ModelsDir)){
@@ -86,7 +128,7 @@ namespace LMStud{
 				}
 			});
 		}
-		private void ShowError(string action, NativeMethods.StudError error){
+		internal void ShowError(string action, NativeMethods.StudError error){
 			string detail;
 			switch(error){
 				case NativeMethods.StudError.CantLoadModel:
