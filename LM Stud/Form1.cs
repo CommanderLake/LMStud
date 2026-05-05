@@ -25,7 +25,6 @@ namespace LMStud{
 			internal static bool ButApplyModelSettingsEnabled;
 			internal static bool ButGenEnabled;
 			internal static bool ButLoadEnabled;
-			internal static bool ButResetEnabled;
 			internal static bool ButUnloadEnabled;
 			internal static bool ListViewModelsEnabled;
 		}
@@ -406,14 +405,12 @@ namespace LMStud{
 				FormControlStates.ButApplyModelSettingsEnabled = butApplyModelSettings.Enabled;
 				FormControlStates.ButGenEnabled = butGen.Enabled;
 				FormControlStates.ButLoadEnabled = butLoad.Enabled;
-				FormControlStates.ButResetEnabled = butReset.Enabled;
 				FormControlStates.ButUnloadEnabled = butUnload.Enabled;
 				FormControlStates.ListViewModelsEnabled = listViewModels.Enabled;
 				butApply.Enabled = false;
 				butApplyModelSettings.Enabled = false;
 				butGen.Enabled = false;
 				butLoad.Enabled = false;
-				butReset.Enabled = false;
 				butUnload.Enabled = false;
 				listViewModels.Enabled = false;
 				UpdateStatusMessage();
@@ -426,7 +423,7 @@ namespace LMStud{
 				butApplyModelSettings.Enabled = FormControlStates.ButApplyModelSettingsEnabled;
 				butGen.Enabled = FormControlStates.ButGenEnabled;
 				butLoad.Enabled = FormControlStates.ButLoadEnabled;
-				butReset.Enabled = FormControlStates.ButResetEnabled;
+				butReset.Enabled = true;
 				butUnload.Enabled = FormControlStates.ButUnloadEnabled;
 				listViewModels.Enabled = FormControlStates.ListViewModelsEnabled;
 				UpdateStatusMessage();

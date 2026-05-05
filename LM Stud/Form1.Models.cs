@@ -219,7 +219,8 @@ namespace LMStud{
 			try{ SetSystemPromptInternal(genLock); } finally{ EndRetokenization(); }
 		}
 		private void SetModelStatus(){
-			butGen.Enabled = butReset.Enabled = (Common.APIClientEnable || Common.LlModelLoaded) && !Generation.Generating;
+			butGen.Enabled = (Common.APIClientEnable || Common.LlModelLoaded) && !Generation.Generating;
+			butReset.Enabled = !Generation.Generating;
 			if(Common.APIClientEnable) toolStripStatusLabel1.Text = Resources.Using_API_Model_ + Common.APIClientModel;
 			else if(Common.LlModelLoaded) toolStripStatusLabel1.Text = Resources.Using_Model_ + Common.LoadedModel.Text;
 			else toolStripStatusLabel1.Text = Resources.No_model_loaded;
