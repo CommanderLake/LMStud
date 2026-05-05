@@ -45,7 +45,7 @@ void RegisterTools(const bool dateTime, const bool googleSearch, const bool webp
 extern "C" void MarkToolsJsonDirty(){ _toolsJsonDirty = true; }
 static void RefreshToolsJsonCache(){
 	if(!_toolsJsonDirty) return;
-	const auto& tools = Stud::Backend::state().tools;
+	const auto& tools = Stud::inst.tools;
 	std::string json = "[";
 	for(size_t i = 0; i < tools.size(); i++){
 		const auto& tool = tools[i];

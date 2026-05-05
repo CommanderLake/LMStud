@@ -34,27 +34,31 @@ namespace Stud{
 		bool assNextGen = false;
 		int batchSize = 1;
 	};
-	struct ToolCtx{
-		bool inThink = false;
-		bool inCall = false;
-		std::string buf;
-	};
 	using ToolHandlerFn = std::string(*)(const char*);
 	using TokenCallbackFn = void(*)(const char* thinkPtr, int thinkLen, const char* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool);
-	namespace Backend{
-		struct BackendState{
-			HWND hWnd = nullptr;
-			llama_model* model = nullptr;
-			ChatSession session;
-			std::atomic_bool stop{false};
-			common_chat_templates_ptr chatTemplates = nullptr;
-			TokenCallbackFn tokenCallback = nullptr;
-			std::vector<common_chat_tool> tools;
-			std::unordered_map<std::string, ToolHandlerFn> toolHandlers;
-			jinja::caps caps;
-		};
-		BackendState& state();
-	}
+	struct BackendState{
+		HWND hWnd = nullptr;
+		llama_model* llModel = nullptr;
+		ChatSession session;
+		std::atomic_bool stop{false};
+		common_chat_templates_ptr chatTemplates = nullptr;
+		TokenCallbackFn tokenCb = nullptr;
+		std::vector<common_chat_tool> tools;
+		std::unordered_map<std::string, ToolHandlerFn> toolHandlers;
+		jinja::caps caps;
+	};
+	struct ChatStateSnapshot{
+		std::vector<common_chat_msg> chatMsgs[2];
+		std::vector<llama_token> cachedTokens[2];
+		std::vector<unsigned char> dialState[2];
+		int dId = 0;
+		std::string prompt;
+		std::string toolsPrompt;
+		common_chat_parser_params syntax{};
+		bool addNextGen = false;
+		int batchSize = 1;
+	};
+	inline BackendState inst;
 }
 extern "C" {
 EXPORT void SetHWnd(HWND hWnd);

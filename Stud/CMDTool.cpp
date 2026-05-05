@@ -228,7 +228,7 @@ void NormalizeCommandOutput(std::string& text){
 }
 void StreamToolOutput(const std::string& text){
 	if(text.empty()) return;
-	const auto cb = Stud::Backend::state().tokenCallback;
+	const auto cb = Stud::inst.tokenCb;
 	if(!cb) return;
 	cb(nullptr, 0, text.c_str(), static_cast<int>(text.size()), 0, LlamaMemSize(), 0.0, 2);
 }
