@@ -10,8 +10,8 @@
 
 namespace LMStud.Properties {
     using System;
-    
-    
+
+
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -23,15 +23,15 @@ namespace LMStud.Properties {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -45,7 +45,7 @@ namespace LMStud.Properties {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -59,9 +59,9 @@ namespace LMStud.Properties {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to 
+        ///   Looks up a localized string similar to
         ///Tool arguments: .
         /// </summary>
         internal static string @__Tool_arguments_ {
@@ -69,9 +69,9 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("__Tool_arguments_", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to 
+        ///   Looks up a localized string similar to
         ///Tool ID: .
         /// </summary>
         internal static string @__Tool_ID_ {
@@ -79,9 +79,9 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("__Tool_ID_", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to 
+        ///   Looks up a localized string similar to
         ///Tool name: .
         /// </summary>
         internal static string @__Tool_name_ {
@@ -89,7 +89,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("__Tool_name_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0}: {1}.
         /// </summary>
@@ -98,7 +98,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("_0____1_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0}:{1}:{2}.
         /// </summary>
@@ -107,7 +107,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("_0___1___2_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0}/{1}{2}.
         /// </summary>
@@ -116,7 +116,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("_0___1__2_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0:F2} Tok/s.
         /// </summary>
@@ -125,7 +125,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("_0_F2__Tok_s", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to  s.
         /// </summary>
@@ -134,7 +134,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("_s", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to  Tokens.
         /// </summary>
@@ -143,7 +143,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("_Tokens", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A changed setting requires the model to be reloaded, reload now?.
         /// </summary>
@@ -152,7 +152,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("A_changed_setting_requires_the_model_to_be_reloaded__reload_now_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to An index was out of range.
         /// </summary>
@@ -161,7 +161,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("An_index_was_out_of_range_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to API Client.
         /// </summary>
@@ -170,7 +170,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("API_Client", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to API Client enabled, local model will not be used..
         /// </summary>
@@ -179,7 +179,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("API_Client_enabled__local_model_will_not_be_used_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to API endpoint not found.
         /// </summary>
@@ -188,7 +188,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("API_endpoint_not_found", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to API Server.
         /// </summary>
@@ -197,7 +197,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("API_Server", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Authentication failed.
         /// </summary>
@@ -206,7 +206,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Authentication_failed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cancel.
         /// </summary>
@@ -215,7 +215,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Cancel", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Context full..
         /// </summary>
@@ -224,7 +224,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Context_full", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Dialectic enable.
         /// </summary>
@@ -233,7 +233,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Dialectic_enable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Download.
         /// </summary>
@@ -242,7 +242,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Download", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Download failed: {0}.
         /// </summary>
@@ -251,7 +251,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Download_failed___0_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Download failed with error code: {0}.
         /// </summary>
@@ -260,7 +260,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Download_failed_with_error_code___0_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Downloaded {0} to:
         ///{1}.
@@ -270,7 +270,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Downloaded__0__to___1_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Editing transcription - Press Enter to finish or Esc to cancel.
         /// </summary>
@@ -279,7 +279,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Editing_transcription_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error creating context.
         /// </summary>
@@ -288,7 +288,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_creating_context", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error creating sampler.
         /// </summary>
@@ -297,7 +297,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_creating_sampler", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error creating session.
         /// </summary>
@@ -306,7 +306,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_creating_session", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error deleting message.
         /// </summary>
@@ -315,7 +315,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_deleting_message", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error initialising voice input.
         /// </summary>
@@ -324,7 +324,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_initialising_voice_input", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error initializing audio capture.
         /// </summary>
@@ -333,7 +333,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_initializing_audio_capture_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error loading files for .
         /// </summary>
@@ -342,7 +342,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_loading_files_for_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error loading model.
         /// </summary>
@@ -351,7 +351,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_loading_model", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error loading VAD model.
         /// </summary>
@@ -360,7 +360,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_loading_VAD_model_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error loading Whisper model.
         /// </summary>
@@ -369,7 +369,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_loading_Whisper_model_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error reading file: {0}.
         /// </summary>
@@ -378,7 +378,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_reading_file___0_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error regenerating message.
         /// </summary>
@@ -387,7 +387,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_regenerating_message", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error setting system prompt.
         /// </summary>
@@ -396,7 +396,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_setting_system_prompt", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error starting voice input.
         /// </summary>
@@ -405,7 +405,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_starting_voice_input", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error Whisper model not found.
         /// </summary>
@@ -414,7 +414,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_Whisper_model_not_found", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to convert a token.
         /// </summary>
@@ -423,7 +423,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Failed_to_convert_a_token_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to create directory: {0}.
         /// </summary>
@@ -432,7 +432,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Failed_to_create_directory___0_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to create the model context.
         /// </summary>
@@ -441,7 +441,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Failed_to_create_the_model_context_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to create the sampler.
         /// </summary>
@@ -450,7 +450,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Failed_to_create_the_sampler_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to tokenize the prompt.
         /// </summary>
@@ -459,7 +459,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Failed_to_tokenize_the_prompt_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to First token time: .
         /// </summary>
@@ -468,7 +468,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("First_token_time__", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Folder not found.
         /// </summary>
@@ -477,7 +477,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Folder_not_found", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Generate.
         /// </summary>
@@ -486,7 +486,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Generate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to GetStateData.
         /// </summary>
@@ -495,7 +495,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("GetStateData", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to HTTP Error loading files for .
         /// </summary>
@@ -504,7 +504,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("HTTP_Error_loading_files_for_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to JSON Parse Error for .
         /// </summary>
@@ -513,7 +513,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("JSON_Parse_Error_for_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to LM Stud.
         /// </summary>
@@ -522,7 +522,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("LM_Stud", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
@@ -532,7 +532,7 @@ namespace LMStud.Properties {
                 return ((System.Drawing.Icon)(obj));
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Load a model first..
         /// </summary>
@@ -541,7 +541,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Load_a_model_first_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Loading: .
         /// </summary>
@@ -550,7 +550,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Loading__", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Maximum context size of the last loaded model: .
         /// </summary>
@@ -559,7 +559,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Max_context_size_of_last_loaded_model", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Model search error: {0}.
         /// </summary>
@@ -568,7 +568,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Model_search_error___0_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Models folder not found.
         /// </summary>
@@ -577,7 +577,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Models_folder_not_found", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Models folder not found, please specify a valid folder in the Settings tab..
         /// </summary>
@@ -586,7 +586,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Models_folder_not_found_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to No model has been loaded..
         /// </summary>
@@ -595,7 +595,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("No_model_has_been_loaded_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to No model loaded.
         /// </summary>
@@ -604,7 +604,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("No_model_loaded", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Please enter a valid API base URL.
         /// </summary>
@@ -613,7 +613,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Please_enter_a_valid_API_base_URL", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Please select an item from both lists..
         /// </summary>
@@ -622,7 +622,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Please_select_an_item_from_both_lists_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Rate limit exceeded.
         /// </summary>
@@ -631,7 +631,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Rate_limit_exceeded", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Received an invalid response from the API server.
         /// </summary>
@@ -640,7 +640,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Received_an_invalid_response_from_the_API_server", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Repeated tool calls detected.
         /// </summary>
@@ -649,7 +649,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Repeated_tool_calls_detected", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Retokenizing chat....
         /// </summary>
@@ -658,7 +658,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Retokenizing_chat___", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SetStateData.
         /// </summary>
@@ -667,7 +667,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("SetStateData", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Stop.
         /// </summary>
@@ -676,7 +676,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Stop", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The API request timed out.
         /// </summary>
@@ -685,7 +685,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("The_API_request_timed_out", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The API request was canceled before completion.
         /// </summary>
@@ -694,7 +694,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("The_API_request_was_canceled_before_completion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The API server encountered an error.
         /// </summary>
@@ -703,7 +703,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("The_API_server_encountered_an_error", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The chat template could not be applied..
         /// </summary>
@@ -712,7 +712,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("The_chat_template_could_not_be_applied_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The GPU is out of memory..
         /// </summary>
@@ -721,7 +721,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("The_GPU_is_out_of_memory_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The model backend returned a decode error..
         /// </summary>
@@ -730,7 +730,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("The_model_backend_returned_a_decode_error_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The model could not be loaded..
         /// </summary>
@@ -739,7 +739,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("The_model_could_not_be_loaded_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The modified settings are overridden by the Model Settings for this model..
         /// </summary>
@@ -748,7 +748,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("The_modified_settings_are_overridden_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Tool Call.
         /// </summary>
@@ -757,7 +757,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Tool_Call", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Tool Output.
         /// </summary>
@@ -766,367 +766,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Tool_Output", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Download Whisper VAD models..
-        /// </summary>
-        internal static string ToolTip_butVADDown {
-            get {
-                return ResourceManager.GetString("ToolTip_butVADDown", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Enable the tool for creating new files under the base path..
-        /// </summary>
-        internal static string ToolTip_checkFileCreateEnable {
-            get {
-                return ResourceManager.GetString("ToolTip_checkFileCreateEnable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Enable the tool for listing the contents of a folder under the base path..
-        /// </summary>
-        internal static string ToolTip_checkFileListEnable {
-            get {
-                return ResourceManager.GetString("ToolTip_checkFileListEnable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Enable the tool for reading the contents of files under the base path..
-        /// </summary>
-        internal static string ToolTip_checkFileReadEnable {
-            get {
-                return ResourceManager.GetString("ToolTip_checkFileReadEnable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Enable the tool for writing to files under the base path..
-        /// </summary>
-        internal static string ToolTip_checkFileWriteEnable {
-            get {
-                return ResourceManager.GetString("ToolTip_checkFileWriteEnable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Enable Flash Attention. The filled state lets Llama.cpp choose automatically..
-        /// </summary>
-        internal static string ToolTip_checkFlashAttn {
-            get {
-                return ResourceManager.GetString("ToolTip_checkFlashAttn", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Lock the model in RAM..
-        /// </summary>
-        internal static string ToolTip_checkMLock {
-            get {
-                return ResourceManager.GetString("ToolTip_checkMLock", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Map the model file to memory for on-demand loading, may improve model load times..
-        /// </summary>
-        internal static string ToolTip_checkMMap {
-            get {
-                return ResourceManager.GetString("ToolTip_checkMMap", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Speak the generated responses using the computers default voice..
-        /// </summary>
-        internal static string ToolTip_checkSpeak {
-            get {
-                return ResourceManager.GetString("ToolTip_checkSpeak", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to An intermediate check state (filled in) means it will transcribe spoken words without generating, when checked it will automatically generate..
-        /// </summary>
-        internal static string ToolTip_checkVoiceInput {
-            get {
-                return ResourceManager.GetString("ToolTip_checkVoiceInput", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to NUMA (Non-Uniform Memory Access) strategy. Adjust if using multi-socket CPUs or specific memory configurations..
-        /// </summary>
-        internal static string ToolTip_comboNUMAStrat {
-            get {
-                return ResourceManager.GetString("ToolTip_comboNUMAStrat", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Select the Whisper VAD model used for speech detection..
-        /// </summary>
-        internal static string ToolTip_comboVADModel {
-            get {
-                return ResourceManager.GetString("ToolTip_comboVADModel", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Parameters controlling text generation on CPU..
-        /// </summary>
-        internal static string ToolTip_groupCPUParams {
-            get {
-                return ResourceManager.GetString("ToolTip_groupCPUParams", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Parameters for the pre-generation step (batch preparation)..
-        /// </summary>
-        internal static string ToolTip_groupCPUParamsBatch {
-            get {
-                return ResourceManager.GetString("ToolTip_groupCPUParamsBatch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Set an instruction to optimize the way the assistant uses the file tools..
-        /// </summary>
-        internal static string ToolTip_linkFileInstruction {
-            get {
-                return ResourceManager.GetString("ToolTip_linkFileInstruction", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Batch size for processing tokens during generation. Higher values can improve performance at the cost of higher RAM usage..
-        /// </summary>
-        internal static string ToolTip_numBatchSize {
-            get {
-                return ResourceManager.GetString("ToolTip_numBatchSize", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Configure the timeout for commands, 0 means no timeout..
-        /// </summary>
-        internal static string ToolTip_numCmdTimeout {
-            get {
-                return ResourceManager.GetString("ToolTip_numCmdTimeout", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Context size (max tokens). Higher values improve memory but use more RAM..
-        /// </summary>
-        internal static string ToolTip_numCtxSize {
-            get {
-                return ResourceManager.GetString("ToolTip_numCtxSize", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to High-pass filter cutoff frequency. Higher values reduce low frequency noise..
-        /// </summary>
-        internal static string ToolTip_numFreqThreshold {
-            get {
-                return ResourceManager.GetString("ToolTip_numFreqThreshold", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Delay before automatic response generation after speech input ends (only when ‘Speech input’ is fully enabled)..
-        /// </summary>
-        internal static string ToolTip_numGenDelay {
-            get {
-                return ResourceManager.GetString("ToolTip_numGenDelay", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Number of layers to offload to GPU, more layers improve performance but increase GPU memory usage..
-        /// </summary>
-        internal static string ToolTip_numGPULayers {
-            get {
-                return ResourceManager.GetString("ToolTip_numGPULayers", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Min-P sampling: keeps only tokens whose individual probability is at least this fraction of the top token’s probability, trimming unlikely options and reducing noise..
-        /// </summary>
-        internal static string ToolTip_numMinP {
-            get {
-                return ResourceManager.GetString("ToolTip_numMinP", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Number of tokens to generate per response (max length of the AI&apos;s reply), -1 = no limit..
-        /// </summary>
-        internal static string ToolTip_numNGen {
-            get {
-                return ResourceManager.GetString("ToolTip_numNGen", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Repetition penalty reduces repetitive outputs. Higher values strongly discourage repeated phrases..
-        /// </summary>
-        internal static string ToolTip_numRepPen {
-            get {
-                return ResourceManager.GetString("ToolTip_numRepPen", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Temperature controls randomness. Lower values make responses more deterministic; higher values produce more creative outputs..
-        /// </summary>
-        internal static string ToolTip_numTemp {
-            get {
-                return ResourceManager.GetString("ToolTip_numTemp", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to CPU threads for token generation. Typically, around 75% of your physical cores is optimal to prevent oversaturating the memory controller..
-        /// </summary>
-        internal static string ToolTip_numThreads {
-            get {
-                return ResourceManager.GetString("ToolTip_numThreads", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to CPU threads used for batch preparation..
-        /// </summary>
-        internal static string ToolTip_numThreadsBatch {
-            get {
-                return ResourceManager.GetString("ToolTip_numThreadsBatch", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Top-K sampling: limits token choice to the K most probable tokens, improving coherency..
-        /// </summary>
-        internal static string ToolTip_numTopK {
-            get {
-                return ResourceManager.GetString("ToolTip_numTopK", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Top-P sampling: controls diversity by choosing from the smallest possible set of tokens whose cumulative probability exceeds this threshold..
-        /// </summary>
-        internal static string ToolTip_numTopP {
-            get {
-                return ResourceManager.GetString("ToolTip_numTopP", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Voice Activity Detection threshold: for Basic VAD this sets loudness, for Whisper VAD this sets speech probability..
-        /// </summary>
-        internal static string ToolTip_numVadThreshold {
-            get {
-                return ResourceManager.GetString("ToolTip_numVadThreshold", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Set how similar the detected wake word must be to activate transcription..
-        /// </summary>
-        internal static string ToolTip_numWakeWordSimilarity {
-            get {
-                return ResourceManager.GetString("ToolTip_numWakeWordSimilarity", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Use simple energy-based voice activity detection..
-        /// </summary>
-        internal static string ToolTip_radioBasicVAD {
-            get {
-                return ResourceManager.GetString("ToolTip_radioBasicVAD", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Use Whisper&apos;s neural VAD model for speech detection..
-        /// </summary>
-        internal static string ToolTip_radioWhisperVAD {
-            get {
-                return ResourceManager.GetString("ToolTip_radioWhisperVAD", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to File access is relative to this path and canonically restricted to files and folders under this path only..
-        /// </summary>
-        internal static string ToolTip_textFileBasePath {
-            get {
-                return ResourceManager.GetString("ToolTip_textFileBasePath", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to A Google API key is required to use the search tool, you can get a free one for 100 searches per day..
-        /// </summary>
-        internal static string ToolTip_textGoogleApiKey {
-            get {
-                return ResourceManager.GetString("ToolTip_textGoogleApiKey", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Create your own Google Programmable Search Engine and copy its &quot;Search engine ID&quot; here..
-        /// </summary>
-        internal static string ToolTip_textGoogleSearchID {
-            get {
-                return ResourceManager.GetString("ToolTip_textGoogleSearchID", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Specify the path to a text file containing a Jinja template, this file must remain in place..
-        /// </summary>
-        internal static string ToolTip_textJinjaTmplModel {
-            get {
-                return ResourceManager.GetString("ToolTip_textJinjaTmplModel", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Path to the folder containing your .gguf model files..
-        /// </summary>
-        internal static string ToolTip_textModelsPath {
-            get {
-                return ResourceManager.GetString("ToolTip_textModelsPath", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Tell the AI who or what to be, how to respond, or provide initial context..
-        /// </summary>
-        internal static string ToolTip_textSystemPrompt {
-            get {
-                return ResourceManager.GetString("ToolTip_textSystemPrompt", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Optional wake word phrase required before transcription begins..
-        /// </summary>
-        internal static string ToolTip_textWakeWord {
-            get {
-                return ResourceManager.GetString("ToolTip_textWakeWord", resourceCulture);
-            }
-        }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to connect to the API server.
         /// </summary>
@@ -1135,7 +775,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Unable_to_connect_to_the_API_server", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to parse the chat message.
         /// </summary>
@@ -1144,7 +784,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Unable_to_parse_the_chat_message_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unknown API error.
         /// </summary>
@@ -1153,7 +793,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Unknown_API_error_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Using API Model: .
         /// </summary>
@@ -1162,7 +802,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Using_API_Model_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Using Model: .
         /// </summary>
@@ -1171,7 +811,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Using_Model_", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to VAD model not found, use Basic VAD?.
         /// </summary>

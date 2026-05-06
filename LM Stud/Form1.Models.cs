@@ -306,7 +306,7 @@ namespace LMStud{
 									Settings.Default.LoadAuto = true;
 									Settings.Default.Save();
 								}
-								toolTip1.SetToolTip(numCtxSize, Resources.ToolTip_numCtxSize + "\r\n" + Resources.Max_context_size_of_last_loaded_model + Common.ModelCtxMax);
+								toolTip1.SetToolTip(numCtxSize, _numCtxSizeToolTip + "\r\n" + Resources.Max_context_size_of_last_loaded_model + Common.ModelCtxMax);
 								if(Common.APIClientEnable) MessageBox.Show(this, Resources.API_Client_enabled__local_model_will_not_be_used_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 							}));
 						} catch(ObjectDisposedException){}
@@ -327,7 +327,7 @@ namespace LMStud{
 				NativeMethods.FreeModel();
 				try{
 					BeginInvoke(new MethodInvoker(() => {
-						toolTip1.SetToolTip(numCtxSize, Resources.ToolTip_numCtxSize);
+						toolTip1.SetToolTip(numCtxSize, _numCtxSizeToolTip);
 						SetModelStatus();
 					}));
 				} catch(ObjectDisposedException){}

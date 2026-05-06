@@ -19,6 +19,7 @@ namespace LMStud{
 		internal volatile bool Rendering;
 		private int _retokenizeCount;
 		private bool _whisperLoaded;
+		private string _numCtxSizeToolTip;
 		internal bool IsEditing;
 		private struct FormControlStates{
 			internal static bool ButApplyEnabled;
@@ -40,7 +41,7 @@ namespace LMStud{
 			TTS.MainForm = this;
 			TTS.SetHandlers();
 			InitializeListViews();
-			SetToolTips();
+			_numCtxSizeToolTip = toolTip1.GetToolTip(numCtxSize);
 			LoadConfig();
 			LoadModelSettings();
 		}
@@ -64,51 +65,6 @@ namespace LMStud{
 					if(modelLvi != null) LoadModel(modelLvi, true);
 				} finally{ PopulateLock.Release(); }
 			});
-		}
-		private void SetToolTip(Control control){toolTip1.SetToolTip(control, Resources.ResourceManager.GetString("ToolTip_" + control.Name));}
-		private void SetToolTips(){
-			SetToolTip(textSystemPrompt);
-			SetToolTip(textModelsDir);
-			SetToolTip(numCtxSize);
-			SetToolTip(numGPULayers);
-			SetToolTip(numTemp);
-			SetToolTip(numNGen);
-			SetToolTip(comboNUMAStrat);
-			SetToolTip(numRepPen);
-			SetToolTip(numTopK);
-			SetToolTip(numTopP);
-			SetToolTip(numMinP);
-			SetToolTip(numBatchSize);
-			SetToolTip(groupCPUParams);
-			SetToolTip(numThreads);
-			SetToolTip(checkMMap);
-			SetToolTip(checkMLock);
-			SetToolTip(checkFlashAttn);
-			SetToolTip(groupCPUParamsBatch);
-			SetToolTip(numThreadsBatch);
-			SetToolTip(numVadThreshold);
-			SetToolTip(numFreqThreshold);
-			SetToolTip(checkSpeak);
-			SetToolTip(checkVoiceInput);
-			SetToolTip(textGoogleApiKey);
-			SetToolTip(textGoogleSearchID);
-			SetToolTip(checkFileListEnable);
-			SetToolTip(checkFileCreateEnable);
-			SetToolTip(checkFileReadEnable);
-			SetToolTip(checkFileWriteEnable);
-			SetToolTip(textFileBasePath);
-			SetToolTip(linkFileInstruction);
-			SetToolTip(numWakeWordSimilarity);
-			SetToolTip(textWakeWord);
-			SetToolTip(radioBasicVAD);
-			SetToolTip(radioWhisperVAD);
-			SetToolTip(comboVADModel);
-			SetToolTip(butVADDown);
-			SetToolTip(checkApiServerEnable);
-			SetToolTip(numApiServerPort);
-			SetToolTip(numGenDelay);
-			SetToolTip(numCmdTimeout);
-			SetToolTip(textJinjaTmplModel);
 		}
 		private void InitializeListViews(){
 			_columnClickHandler = new LVColumnClickHandler();

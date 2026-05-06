@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -215,114 +215,6 @@
   <data name="Folder_not_found" xml:space="preserve">
     <value>Folder not found</value>
   </data>
-  <data name="ToolTip_textSystemPrompt" xml:space="preserve">
-    <value>Tell the AI who or what to be, how to respond, or provide initial context.</value>
-  </data>
-  <data name="ToolTip_textModelsPath" xml:space="preserve">
-    <value>Path to the folder containing your .gguf model files.</value>
-  </data>
-  <data name="ToolTip_numCtxSize" xml:space="preserve">
-    <value>Context size (max tokens). Higher values improve memory but use more RAM.</value>
-  </data>
-  <data name="ToolTip_numGPULayers" xml:space="preserve">
-    <value>Number of layers to offload to GPU, more layers improve performance but increase GPU memory usage.</value>
-  </data>
-  <data name="ToolTip_numTemp" xml:space="preserve">
-    <value>Temperature controls randomness. Lower values make responses more deterministic; higher values produce more creative outputs.</value>
-  </data>
-  <data name="ToolTip_numNGen" xml:space="preserve">
-    <value>Number of tokens to generate per response (max length of the AI's reply), -1 = no limit.</value>
-  </data>
-  <data name="ToolTip_comboNUMAStrat" xml:space="preserve">
-    <value>NUMA (Non-Uniform Memory Access) strategy. Adjust if using multi-socket CPUs or specific memory configurations.</value>
-  </data>
-  <data name="ToolTip_numRepPen" xml:space="preserve">
-    <value>Repetition penalty reduces repetitive outputs. Higher values strongly discourage repeated phrases.</value>
-  </data>
-  <data name="ToolTip_numTopK" xml:space="preserve">
-    <value>Top-K sampling: limits token choice to the K most probable tokens, improving coherency.</value>
-  </data>
-  <data name="ToolTip_numTopP" xml:space="preserve">
-    <value>Top-P sampling: controls diversity by choosing from the smallest possible set of tokens whose cumulative probability exceeds this threshold.</value>
-  </data>
-  <data name="ToolTip_numMinP" xml:space="preserve">
-    <value>Min-P sampling: keeps only tokens whose individual probability is at least this fraction of the top token’s probability, trimming unlikely options and reducing noise.</value>
-  </data>
-  <data name="ToolTip_numBatchSize" xml:space="preserve">
-    <value>Batch size for processing tokens during generation. Higher values can improve performance at the cost of higher RAM usage.</value>
-  </data>
-  <data name="ToolTip_groupCPUParams" xml:space="preserve">
-    <value>Parameters controlling text generation on CPU.</value>
-  </data>
-  <data name="ToolTip_numThreads" xml:space="preserve">
-    <value>CPU threads for token generation. Typically, around 75% of your physical cores is optimal to prevent oversaturating the memory controller.</value>
-  </data>
-  <data name="ToolTip_checkMMap" xml:space="preserve">
-    <value>Map the model file to memory for on-demand loading, may improve model load times.</value>
-  </data>
-  <data name="ToolTip_checkMLock" xml:space="preserve">
-    <value>Lock the model in RAM.</value>
-  </data>
-  <data name="ToolTip_groupCPUParamsBatch" xml:space="preserve">
-    <value>Parameters for the pre-generation step (batch preparation).</value>
-  </data>
-  <data name="ToolTip_numThreadsBatch" xml:space="preserve">
-    <value>CPU threads used for batch preparation.</value>
-  </data>
-  <data name="ToolTip_numVadThreshold" xml:space="preserve">
-    <value>Voice Activity Detection threshold: for Basic VAD this sets loudness, for Whisper VAD this sets speech probability.</value>
-  </data>
-  <data name="ToolTip_numFreqThreshold" xml:space="preserve">
-    <value>High-pass filter cutoff frequency. Higher values reduce low frequency noise.</value>
-  </data>
-  <data name="ToolTip_checkSpeak" xml:space="preserve">
-    <value>Speak the generated responses using the computers default voice.</value>
-  </data>
-  <data name="ToolTip_checkVoiceInput" xml:space="preserve">
-    <value>An intermediate check state (filled in) means it will transcribe spoken words without generating, when checked it will automatically generate.</value>
-  </data>
-  <data name="ToolTip_textGoogleApiKey" xml:space="preserve">
-    <value>A Google API key is required to use the search tool, you can get a free one for 100 searches per day.</value>
-  </data>
-  <data name="ToolTip_textGoogleSearchID" xml:space="preserve">
-    <value>Create your own Google Programmable Search Engine and copy its "Search engine ID" here.</value>
-  </data>
-  <data name="ToolTip_checkFileListEnable" xml:space="preserve">
-    <value>Enable the tool for listing the contents of a folder under the base path.</value>
-  </data>
-  <data name="ToolTip_checkFileCreateEnable" xml:space="preserve">
-    <value>Enable the tool for creating new files under the base path.</value>
-  </data>
-  <data name="ToolTip_checkFileReadEnable" xml:space="preserve">
-    <value>Enable the tool for reading the contents of files under the base path.</value>
-  </data>
-  <data name="ToolTip_checkFileWriteEnable" xml:space="preserve">
-    <value>Enable the tool for writing to files under the base path.</value>
-  </data>
-  <data name="ToolTip_textFileBasePath" xml:space="preserve">
-    <value>File access is relative to this path and canonically restricted to files and folders under this path only.</value>
-  </data>
-  <data name="ToolTip_linkFileInstruction" xml:space="preserve">
-    <value>Set an instruction to optimize the way the assistant uses the file tools.</value>
-  </data>
-  <data name="ToolTip_numWakeWordSimilarity" xml:space="preserve">
-    <value>Set how similar the detected wake word must be to activate transcription.</value>
-  </data>
-  <data name="ToolTip_textWakeWord" xml:space="preserve">
-    <value>Optional wake word phrase required before transcription begins.</value>
-  </data>
-  <data name="ToolTip_radioBasicVAD" xml:space="preserve">
-    <value>Use simple energy-based voice activity detection.</value>
-  </data>
-  <data name="ToolTip_radioWhisperVAD" xml:space="preserve">
-    <value>Use Whisper's neural VAD model for speech detection.</value>
-  </data>
-  <data name="ToolTip_comboVADModel" xml:space="preserve">
-    <value>Select the Whisper VAD model used for speech detection.</value>
-  </data>
-  <data name="ToolTip_butVADDown" xml:space="preserve">
-    <value>Download Whisper VAD models.</value>
-  </data>
   <data name="_0____1_" xml:space="preserve">
     <value>{0}: {1}</value>
   </data>
@@ -392,23 +284,11 @@
 <data name="Error_initializing_audio_capture_" xml:space="preserve">
 	<value>Error initializing audio capture</value>
 </data>
-  <data name="ToolTip_numGenDelay" xml:space="preserve">
-    <value>Delay before automatic response generation after speech input ends (only when ‘Speech input’ is fully enabled).</value>
-  </data>
   <data name="Load_a_model_first_" xml:space="preserve">
     <value>Load a model first.</value>
   </data>
-  <data name="ToolTip_textJinjaTmplModel" xml:space="preserve">
-    <value>Specify the path to a text file containing a Jinja template, this file must remain in place.</value>
-  </data>
-  <data name="ToolTip_checkFlashAttn" xml:space="preserve">
-    <value>Enable Flash Attention. The filled state lets Llama.cpp choose automatically.</value>
-  </data>
   <data name="Retokenizing_chat___" xml:space="preserve">
     <value>Retokenizing chat...</value>
-  </data>
-  <data name="ToolTip_numCmdTimeout" xml:space="preserve">
-    <value>Configure the timeout for commands, 0 means no timeout.</value>
   </data>
   <data name="Editing_transcription_" xml:space="preserve">
     <value>Editing transcription - Press Enter to finish or Esc to cancel</value>

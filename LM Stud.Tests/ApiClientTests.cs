@@ -149,7 +149,7 @@ namespace LM_Stud.Tests{
 				Assert.AreEqual("low", (string)payload["reasoning"]?["effort"], "Reasoning effort should be forwarded to the Responses payload.");
 			}
 		}
-		[DataTestMethod]
+		[TestMethod]
 		[DataRow(39591, 404, "{\"error\":\"missing\"}", DisplayName = "404 endpoint missing")]
 		[DataRow(39592, 400, "{\"error\":\"unsupported parameter: parallel_tool_calls\"}", DisplayName = "400 unsupported parameter")]
 		public void CreateChatCompletion_FallsBackToChatCompletions(int port, int responsesStatusCode, string responsesBody){

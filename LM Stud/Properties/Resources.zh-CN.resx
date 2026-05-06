@@ -215,114 +215,6 @@
   <data name="Folder_not_found" xml:space="preserve">
     <value>未找到文件夹</value>
   </data>
-  <data name="ToolTip_textSystemPrompt" xml:space="preserve">
-    <value>告诉 AI 它的角色、行为方式，或提供初始上下文（即系统提示词）。</value>
-  </data>
-  <data name="ToolTip_textModelsPath" xml:space="preserve">
-    <value>包含 .gguf 模型文件的文件夹路径。</value>
-  </data>
-  <data name="ToolTip_numCtxSize" xml:space="preserve">
-    <value>上下文窗口大小（最大 Token 数）。值越高，模型的“记忆”能力越强，但会消耗更多内存。</value>
-  </data>
-  <data name="ToolTip_numGPULayers" xml:space="preserve">
-    <value>要卸载到 GPU 的模型层数。层数越多，性能越好，但会增加显存（VRAM）使用量。</value>
-  </data>
-  <data name="ToolTip_numTemp" xml:space="preserve">
-    <value>温度（Temperature）控制生成内容的随机性。值越低，响应越确定；值越高，输出越具创造性。</value>
-  </data>
-  <data name="ToolTip_numNGen" xml:space="preserve">
-    <value>每次响应生成 Token 的数量（即 AI 回复的最大长度）。-1 表示无限制。</value>
-  </data>
-  <data name="ToolTip_comboNUMAStrat" xml:space="preserve">
-    <value>NUMA（非统一内存访问）策略。如果使用多路 CPU 或特定的内存配置，调整此项可能提升性能。</value>
-  </data>
-  <data name="ToolTip_numRepPen" xml:space="preserve">
-    <value>重复惩罚（Repetition Penalty）用于减少重复的输出。值越高，对重复短语的抑制越强。</value>
-  </data>
-  <data name="ToolTip_numTopK" xml:space="preserve">
-    <value>Top-K 采样：将 Token 的选择范围限制在 K 个最可能的候选项内，以提高连贯性。</value>
-  </data>
-  <data name="ToolTip_numTopP" xml:space="preserve">
-    <value>Top-P 采样：从累积概率超过阈值的最小 Token 集合中进行选择，以控制内容的多样性。</value>
-  </data>
-  <data name="ToolTip_numMinP" xml:space="preserve">
-    <value>Min-P 采样：仅保留那些概率至少为最高概率 Token 一定比例的候选项，用于削减不太可能的选项并降低噪声。</value>
-  </data>
-  <data name="ToolTip_numBatchSize" xml:space="preserve">
-    <value>生成期间处理 Token 的批处理大小。较高的值可以提高性能，但会消耗更多内存。</value>
-  </data>
-  <data name="ToolTip_groupCPUParams" xml:space="preserve">
-    <value>控制在 CPU 上生成文本的参数。</value>
-  </data>
-  <data name="ToolTip_numThreads" xml:space="preserve">
-    <value>用于生成 Token 的 CPU 线程数。通常，设置为物理核心数的 75% 左右是最佳选择，以避免内存控制器过载。</value>
-  </data>
-  <data name="ToolTip_checkMMap" xml:space="preserve">
-    <value>将模型文件映射到内存中以便按需加载，可以缩短模型加载时间。</value>
-  </data>
-  <data name="ToolTip_checkMLock" xml:space="preserve">
-    <value>将模型锁定在内存（RAM）中，防止被交换到磁盘。</value>
-  </data>
-  <data name="ToolTip_groupCPUParamsBatch" xml:space="preserve">
-    <value>用于预生成阶段（批处理准备）的参数。</value>
-  </data>
-  <data name="ToolTip_numThreadsBatch" xml:space="preserve">
-    <value>用于批处理准备的 CPU 线程数。</value>
-  </data>
-<data name="ToolTip_numVadThreshold" xml:space="preserve">
-	<value>语音活动检测阈值：在基础 VAD 中表示响度，在 Whisper VAD 中表示语音概率。</value>
-</data>
-  <data name="ToolTip_numFreqThreshold" xml:space="preserve">
-    <value>高通滤波器截止频率。值越高，能滤除的低频噪声越多。</value>
-  </data>
-  <data name="ToolTip_checkSpeak" xml:space="preserve">
-    <value>使用计算机的默认语音朗读生成的回复。</value>
-  </data>
-  <data name="ToolTip_checkVoiceInput" xml:space="preserve">
-    <value>中间选中状态（填充方块）表示仅转录语音而不生成回复；完全选中状态表示在转录后自动生成回复。</value>
-  </data>
-  <data name="ToolTip_textGoogleApiKey" xml:space="preserve">
-    <value>使用搜索工具需要 Google API 密钥，您可以免费获取一个（每天 100 次搜索）。</value>
-  </data>
-  <data name="ToolTip_textGoogleSearchID" xml:space="preserve">
-    <value>创建您自己的 Google Programmable Search Engine，并将其“搜索引擎 ID”复制到此处。</value>
-  </data>
-  <data name="ToolTip_checkFileListEnable" xml:space="preserve">
-    <value>启用工具：列出指定基础路径下的文件夹内容。</value>
-  </data>
-  <data name="ToolTip_checkFileCreateEnable" xml:space="preserve">
-    <value>启用工具：在指定基础路径下创建新文件。</value>
-  </data>
-  <data name="ToolTip_checkFileReadEnable" xml:space="preserve">
-    <value>启用工具：读取指定基础路径下的文件内容。</value>
-  </data>
-  <data name="ToolTip_checkFileWriteEnable" xml:space="preserve">
-    <value>启用工具：向指定基础路径下的文件写入内容。</value>
-  </data>
-  <data name="ToolTip_textFileBasePath" xml:space="preserve">
-    <value>文件访问均基于此相对路径，并严格限制在此路径下的文件和文件夹。</value>
-  </data>
-  <data name="ToolTip_linkFileInstruction" xml:space="preserve">
-    <value>设置一条指令，用于优化助手使用文件工具的方式。</value>
-  </data>
-  <data name="ToolTip_numWakeWordSimilarity" xml:space="preserve">
-    <value>设置检测到的唤醒词与目标唤醒词的相似度阈值，达到该阈值才能激活转录。</value>
-  </data>
-  <data name="ToolTip_textWakeWord" xml:space="preserve">
-    <value>可选的唤醒词。在开始语音转录前，必须先说出此短语。</value>
-  </data>
-  <data name="ToolTip_radioBasicVAD" xml:space="preserve">
-    <value>使用基于能量的简单语音活动检测。</value>
-  </data>
-  <data name="ToolTip_radioWhisperVAD" xml:space="preserve">
-    <value>使用 Whisper 的神经网络 VAD 模型进行语音检测。</value>
-  </data>
-  <data name="ToolTip_comboVADModel" xml:space="preserve">
-    <value>选择用于语音检测的 Whisper VAD 模型。</value>
-  </data>
-  <data name="ToolTip_butVADDown" xml:space="preserve">
-    <value>下载 Whisper VAD 模型。</value>
-  </data>
   <data name="_0____1_" xml:space="preserve">
     <value>{0}：{1}</value>
   </data>
@@ -389,26 +281,14 @@
 <data name="Error_initializing_audio_capture_" xml:space="preserve">
 	<value>初始化音频捕获时出错</value>
 </data>
-<data name="ToolTip_numGenDelay" xml:space="preserve">
-	<value>在“语音输入”完全启用时，用户说完话后自动生成回复的延迟时间。</value>
-</data>
 <data name="Max_context_size_of_last_loaded_model" xml:space="preserve">
 	<value>上次加载的模型最大上下文大小：</value>
 </data>
 <data name="Load_a_model_first_" xml:space="preserve">
 	<value>首先加载一个模型。</value>
 </data>
-<data name="ToolTip_textJinjaTmplModel" xml:space="preserve">
-	<value>指定包含 Jinja 模板的文本文件路径，该文件必须保持在原位置。</value>
-</data>
-<data name="ToolTip_checkFlashAttn" xml:space="preserve">
-	<value>启用 Flash Attention。填充状态表示由 Llama.cpp 自动选择。</value>
-</data>
 <data name="Retokenizing_chat___" xml:space="preserve">
 	<value>正在重新分词…</value>
-</data>
-<data name="ToolTip_numCmdTimeout" xml:space="preserve">
-	<value>配置命令超时时间，0 表示不超时。</value>
 </data>
 <data name="Editing_transcription_" xml:space="preserve">
 	<value>正在编辑转录文本——按 Enter 完成，按 Esc 取消</value>
@@ -417,16 +297,16 @@
 	<value>使用 API 模型：</value>
 </data>
 <data name="API_Client" xml:space="preserve">
-	<value>API客户端</value>
+	<value>API 客户端</value>
 </data>
 <data name="API_Server" xml:space="preserve">
-	<value>API服务器</value>
+	<value>API 服务器</value>
 </data>
 <data name="API_endpoint_not_found" xml:space="preserve">
 	<value>未找到 API 端点</value>
 </data>
 <data name="Authentication_failed" xml:space="preserve">
-	<value>认证失败</value>
+	<value>身份验证失败</value>
 </data>
 <data name="Dialectic_enable" xml:space="preserve">
 	<value>启用辩证模式</value>
@@ -464,7 +344,7 @@
 </data>
 <data name="__Tool_ID_" xml:space="preserve">
 	<value>
-工具编号：</value>
+工具 ID：</value>
 </data>
 <data name="__Tool_name_" xml:space="preserve">
 	<value>

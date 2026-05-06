@@ -117,32 +117,11 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="panelChat.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer1.Panel1.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="textInput.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer1.Panel2.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer1.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="columnHeader1.Text" xml:space="preserve">
     <value>名称</value>
   </data>
   <data name="columnHeader2.Text" xml:space="preserve">
     <value>完整路径</value>
-  </data>
-  <data name="listViewModels.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer2.Panel1.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="label30.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
@@ -165,14 +144,8 @@
   <data name="label30.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
-  <data name="label30.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="butBrowseJinjaTmplModel.Text" xml:space="preserve">
     <value>浏览</value>
-  </data>
-  <data name="butBrowseJinjaTmplModel.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="textJinjaTmplModel.Location" type="System.Drawing.Point, System.Drawing">
     <value>49, 42</value>
@@ -181,19 +154,13 @@
     <value>145, 20</value>
   </data>
   <data name="textJinjaTmplModel.ToolTip" xml:space="preserve">
-    <value />
+    <value>指定包含 Jinja 模板的文本文件路径，该文件必须保持在原位置。</value>
   </data>
   <data name="checkOverrideJinjaModel.Text" xml:space="preserve">
     <value>自定义</value>
   </data>
-  <data name="checkOverrideJinjaModel.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="groupJinjaTmplModel.Text" xml:space="preserve">
     <value>Jinja 模板</value>
-  </data>
-  <data name="groupJinjaTmplModel.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="labelSystemPromptModel.Size" type="System.Drawing.Size, System.Drawing">
     <value>73, 13</value>
@@ -201,17 +168,8 @@
   <data name="labelSystemPromptModel.Text" xml:space="preserve">
     <value>系统提示词：</value>
   </data>
-  <data name="labelSystemPromptModel.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="textSystemPromptModel.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="butApplyModelSettings.Text" xml:space="preserve">
     <value>应用</value>
-  </data>
-  <data name="butApplyModelSettings.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="checkOverrideSettings.Size" type="System.Drawing.Size, System.Drawing">
     <value>122, 17</value>
@@ -219,83 +177,32 @@
   <data name="checkOverrideSettings.Text" xml:space="preserve">
     <value>为此模型覆盖设置</value>
   </data>
-  <data name="checkOverrideSettings.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="numMinPModel.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="numTopKModel.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="numTopPModel.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="label27.Text" xml:space="preserve">
     <value>Min-P：</value>
-  </data>
-  <data name="label27.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="checkFlashAttnModel.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="label31.Text" xml:space="preserve">
     <value>Top-K：</value>
   </data>
-  <data name="label31.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="label32.Text" xml:space="preserve">
     <value>Top-P：</value>
-  </data>
-  <data name="label32.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="groupAdvancedModel.Text" xml:space="preserve">
     <value>高级选项</value>
   </data>
-  <data name="groupAdvancedModel.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="numCtxSizeModel.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="numGPULayersModel.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="numTempModel.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="label33.Text" xml:space="preserve">
     <value>上下文大小：</value>
-  </data>
-  <data name="label33.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="label34.Text" xml:space="preserve">
     <value>温度：</value>
   </data>
-  <data name="label34.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="label35.Text" xml:space="preserve">
     <value>GPU 层数：</value>
-  </data>
-  <data name="label35.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="groupCommonModel.Text" xml:space="preserve">
     <value>通用参数</value>
   </data>
-  <data name="groupCommonModel.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="tabPageModelSettings.Text" xml:space="preserve">
     <value>模型设置</value>
-  </data>
-  <data name="tabPageModelSettings.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="columnHeader3.Text" xml:space="preserve">
     <value>元数据条目</value>
@@ -303,23 +210,8 @@
   <data name="columnHeader4.Text" xml:space="preserve">
     <value>值</value>
   </data>
-  <data name="listViewMeta.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="tabPageMetadata.Text" xml:space="preserve">
     <value>元数据</value>
-  </data>
-  <data name="tabPageMetadata.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="tabControlModelStuff.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer2.Panel2.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer2.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="columnHeader5.Text" xml:space="preserve">
     <value>名称</value>
@@ -342,26 +234,11 @@
   <data name="columnHeader14.Text" xml:space="preserve">
     <value>修改时间</value>
   </data>
-  <data name="listViewHugSearch.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer3.Panel1.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="columnHeader8.Text" xml:space="preserve">
     <value>文件名</value>
   </data>
   <data name="columnHeader10.Text" xml:space="preserve">
     <value>大小</value>
-  </data>
-  <data name="listViewHugFiles.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer3.Panel2.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="splitContainer3.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="checkSpeak.Location" type="System.Drawing.Point, System.Drawing">
     <value>425, 930</value>
@@ -373,7 +250,7 @@
     <value>语音合成</value>
   </data>
   <data name="checkSpeak.ToolTip" xml:space="preserve">
-    <value />
+    <value>使用计算机的默认语音朗读生成的回复。</value>
   </data>
   <data name="checkVoiceInput.Location" type="System.Drawing.Point, System.Drawing">
     <value>345, 930</value>
@@ -385,13 +262,10 @@
     <value>语音输入</value>
   </data>
   <data name="checkVoiceInput.ToolTip" xml:space="preserve">
-    <value />
+    <value>中间选中状态（填充方块）表示仅转录语音而不生成回复；完全选中状态表示在转录后自动生成回复。</value>
   </data>
   <data name="checkMarkdown.Location" type="System.Drawing.Point, System.Drawing">
     <value>263, 930</value>
-  </data>
-  <data name="checkMarkdown.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="checkStream.Size" type="System.Drawing.Size, System.Drawing">
     <value>74, 17</value>
@@ -399,239 +273,167 @@
   <data name="checkStream.Text" xml:space="preserve">
     <value>流式输出</value>
   </data>
-  <data name="checkStream.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="butCodeBlock.Text" xml:space="preserve">
     <value>插入代码块</value>
-  </data>
-  <data name="butCodeBlock.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="butReset.Text" xml:space="preserve">
     <value>重置</value>
   </data>
-  <data name="butReset.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="butGen.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="butSearch.Text" xml:space="preserve">
     <value>搜索</value>
-  </data>
-  <data name="butSearch.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="textSearchTerm.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="label13.Text" xml:space="preserve">
     <value>搜索模型：</value>
   </data>
-  <data name="label13.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="progressBar1.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="butDownload.Text" xml:space="preserve">
     <value>下载</value>
   </data>
-  <data name="butDownload.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="checkDialectic.Size" type="System.Drawing.Size, System.Drawing">
-    <value>62, 17</value>
+    <value>74, 17</value>
   </data>
-<data name="checkDialectic.Text" xml:space="preserve">
-	<value>辩证推理</value>
-</data>
-  <data name="checkDialectic.ToolTip" xml:space="preserve">
-    <value />
+  <data name="checkDialectic.Text" xml:space="preserve">
+    <value>辩证推理</value>
+  </data>
+  <data name="checkAutoScroll.Size" type="System.Drawing.Size, System.Drawing">
+    <value>71, 17</value>
   </data>
   <data name="checkAutoScroll.Text" xml:space="preserve">
     <value>自动滚动</value>
   </data>
-  <data name="checkAutoScroll.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="tabPageChat.Text" xml:space="preserve">
     <value>聊天</value>
   </data>
-  <data name="tabPageChat.ToolTip" xml:space="preserve">
-    <value />
+  <data name="comboApiClientReasonSummary.Items" xml:space="preserve">
+    <value>未指定</value>
   </data>
-  <data name="label40.Size" type="System.Drawing.Size, System.Drawing">
-    <value>125, 13</value>
+  <data name="comboApiClientReasonSummary.Items1" xml:space="preserve">
+    <value>自动</value>
+  </data>
+  <data name="comboApiClientReasonSummary.Items2" xml:space="preserve">
+    <value>简洁</value>
+  </data>
+  <data name="comboApiClientReasonSummary.Items3" xml:space="preserve">
+    <value>详细</value>
+  </data>
+  <data name="comboApiClientReasonSummary.ToolTip" xml:space="preserve">
+    <value>为兼容的模型和 API 指定推理摘要的详细程度。</value>
+  </data>
+  <data name="label41.Text" xml:space="preserve">
+    <value>推理摘要：</value>
+  </data>
+  <data name="comboApiClientReasonEffort.Items" xml:space="preserve">
+    <value>未指定</value>
+  </data>
+  <data name="comboApiClientReasonEffort.Items1" xml:space="preserve">
+    <value>无</value>
+  </data>
+  <data name="comboApiClientReasonEffort.Items2" xml:space="preserve">
+    <value>低</value>
+  </data>
+  <data name="comboApiClientReasonEffort.Items3" xml:space="preserve">
+    <value>中</value>
+  </data>
+  <data name="comboApiClientReasonEffort.Items4" xml:space="preserve">
+    <value>高</value>
+  </data>
+  <data name="comboApiClientReasonEffort.Items5" xml:space="preserve">
+    <value>极高</value>
+  </data>
+  <data name="comboApiClientReasonEffort.ToolTip" xml:space="preserve">
+    <value>为兼容的模型和 API 指定推理强度。</value>
   </data>
   <data name="label40.Text" xml:space="preserve">
-    <value>请求超时时间（毫秒）：</value>
-  </data>
-  <data name="label40.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="numericUpDown1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>134, 156</value>
-  </data>
-  <data name="numericUpDown1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>60, 20</value>
-  </data>
-  <data name="numericUpDown1.ToolTip" xml:space="preserve">
-    <value />
+    <value>推理强度：</value>
   </data>
   <data name="checkApiClientStore.Text" xml:space="preserve">
     <value>在服务器上存储提示词</value>
   </data>
-  <data name="checkApiClientStore.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="comboApiClientModel.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="label39.Text" xml:space="preserve">
     <value>模型</value>
-  </data>
-  <data name="label39.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="textApiClientKey.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="label38.Text" xml:space="preserve">
     <value>API 密钥：</value>
   </data>
-  <data name="label38.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="textApiClientUrl.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="label37.Text" xml:space="preserve">
-    <value>网址：</value>
-  </data>
-  <data name="label37.ToolTip" xml:space="preserve">
-    <value />
+    <value>URL：</value>
   </data>
   <data name="checkApiClientEnable.Text" xml:space="preserve">
     <value>启用</value>
   </data>
-  <data name="checkApiClientEnable.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="groupBox9.ToolTip" xml:space="preserve">
-    <value />
+  <data name="groupBox9.Text" xml:space="preserve">
+    <value>API 客户端</value>
   </data>
   <data name="numCmdTimeout.ToolTip" xml:space="preserve">
-    <value />
+    <value>配置命令超时时间，0 表示不超时。</value>
   </data>
   <data name="label36.Text" xml:space="preserve">
     <value>超时（毫秒）：</value>
   </data>
-  <data name="label36.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="checkCMDEnable.Text" xml:space="preserve">
     <value>启用</value>
-  </data>
-  <data name="checkCMDEnable.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="groupBox8.Text" xml:space="preserve">
     <value>命令提示符工具</value>
   </data>
-  <data name="groupBox8.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="numApiServerPort.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="label28.Text" xml:space="preserve">
     <value>端口：</value>
-  </data>
-  <data name="label28.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="checkApiServerEnable.Text" xml:space="preserve">
     <value>启用</value>
   </data>
-  <data name="checkApiServerEnable.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-<data name="groupBox7.Text" xml:space="preserve">
-	<value>API服务器</value>
-</data>
-  <data name="groupBox7.ToolTip" xml:space="preserve">
-    <value />
+  <data name="groupBox7.Text" xml:space="preserve">
+    <value>API 服务器</value>
   </data>
   <data name="textModelsDir.ToolTip" xml:space="preserve">
-    <value />
+    <value>包含 .gguf 模型文件的文件夹路径。</value>
   </data>
   <data name="numGenDelay.ToolTip" xml:space="preserve">
-    <value />
+    <value>在“语音输入”完全启用时，用户说完话后自动生成回复的延迟时间。</value>
   </data>
   <data name="label29.Text" xml:space="preserve">
     <value>等待生成 (毫秒)：</value>
   </data>
-  <data name="label29.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="numVadThreshold.ToolTip" xml:space="preserve">
-    <value />
+    <value>语音活动检测阈值：在基础 VAD 中表示响度，在 Whisper VAD 中表示语音概率。</value>
   </data>
   <data name="butVADDown.Text" xml:space="preserve">
     <value>下载 VAD 模型...</value>
   </data>
   <data name="butVADDown.ToolTip" xml:space="preserve">
-    <value />
+    <value>下载 Whisper VAD 模型。</value>
   </data>
   <data name="radioBasicVAD.Text" xml:space="preserve">
     <value>使用基础 VAD</value>
   </data>
   <data name="radioBasicVAD.ToolTip" xml:space="preserve">
-    <value />
+    <value>使用基于能量的简单语音活动检测。</value>
   </data>
   <data name="radioWhisperVAD.Text" xml:space="preserve">
     <value>使用 Whisper VAD</value>
   </data>
   <data name="radioWhisperVAD.ToolTip" xml:space="preserve">
-    <value />
+    <value>使用 Whisper 的神经网络 VAD 模型进行语音检测。</value>
   </data>
   <data name="label17.Text" xml:space="preserve">
     <value>VAD 阈值：</value>
   </data>
-  <data name="label17.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="comboVADModel.ToolTip" xml:space="preserve">
-    <value />
+    <value>选择用于语音检测的 Whisper VAD 模型。</value>
   </data>
   <data name="label26.Text" xml:space="preserve">
     <value>Whisper VAD 模型：</value>
   </data>
-  <data name="label26.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="groupBox6.Text" xml:space="preserve">
     <value>语音活动检测 (VAD)</value>
-  </data>
-  <data name="groupBox6.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="checkDateTimeEnable.Text" xml:space="preserve">
     <value>启用</value>
   </data>
-  <data name="checkDateTimeEnable.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="groupBox5.Text" xml:space="preserve">
     <value>日期时间工具</value>
   </data>
-  <data name="groupBox5.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="textFileBasePath.ToolTip" xml:space="preserve">
-    <value />
+    <value>文件访问均基于此相对路径，并严格限制在此路径下的文件和文件夹。</value>
   </data>
   <data name="linkFileInstruction.Location" type="System.Drawing.Point, System.Drawing">
     <value>36, 88</value>
@@ -643,190 +445,124 @@
     <value>使用推荐的系统提示词</value>
   </data>
   <data name="linkFileInstruction.ToolTip" xml:space="preserve">
-    <value />
+    <value>设置一条指令，用于优化助手使用文件工具的方式。</value>
   </data>
   <data name="label22.Text" xml:space="preserve">
     <value>基础路径：</value>
-  </data>
-  <data name="label22.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="checkFileWriteEnable.Text" xml:space="preserve">
     <value>写入文件</value>
   </data>
   <data name="checkFileWriteEnable.ToolTip" xml:space="preserve">
-    <value />
+    <value>启用工具：向指定基础路径下的文件写入内容。</value>
   </data>
   <data name="checkFileCreateEnable.Text" xml:space="preserve">
     <value>创建文件</value>
   </data>
   <data name="checkFileCreateEnable.ToolTip" xml:space="preserve">
-    <value />
+    <value>启用工具：在指定基础路径下创建新文件。</value>
   </data>
   <data name="checkFileReadEnable.Text" xml:space="preserve">
     <value>读取文件</value>
   </data>
   <data name="checkFileReadEnable.ToolTip" xml:space="preserve">
-    <value />
+    <value>启用工具：读取指定基础路径下的文件内容。</value>
   </data>
   <data name="checkFileListEnable.Text" xml:space="preserve">
     <value>列出目录</value>
   </data>
   <data name="checkFileListEnable.ToolTip" xml:space="preserve">
-    <value />
+    <value>启用工具：列出指定基础路径下的文件夹内容。</value>
   </data>
   <data name="groupBox4.Text" xml:space="preserve">
     <value>文件工具</value>
   </data>
-  <data name="groupBox4.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="checkWebpageFetchEnable.Text" xml:space="preserve">
     <value>启用</value>
-  </data>
-  <data name="checkWebpageFetchEnable.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="groupBox3.Text" xml:space="preserve">
     <value>网页抓取工具</value>
   </data>
-  <data name="groupBox3.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="numGoogleResults.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="textGoogleSearchID.ToolTip" xml:space="preserve">
-    <value />
+    <value>创建您自己的 Google Programmable Search Engine，并将其“搜索引擎 ID”复制到此处。</value>
   </data>
   <data name="textGoogleApiKey.ToolTip" xml:space="preserve">
-    <value />
+    <value>使用搜索工具需要 Google API 密钥，您可以免费获取一个（每天 100 次搜索）。</value>
   </data>
   <data name="label21.Text" xml:space="preserve">
     <value>结果数量：</value>
   </data>
-  <data name="label21.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="checkGoogleEnable.Text" xml:space="preserve">
     <value>启用</value>
-  </data>
-  <data name="checkGoogleEnable.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="label20.Text" xml:space="preserve">
     <value>搜索引擎 ID：</value>
   </data>
-  <data name="label20.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="label19.Text" xml:space="preserve">
     <value>API 密钥：</value>
   </data>
-  <data name="label19.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="groupBox2.Text" xml:space="preserve">
-    <value>谷歌搜索工具</value>
-  </data>
-  <data name="groupBox2.ToolTip" xml:space="preserve">
-    <value />
+    <value>Google 搜索工具</value>
   </data>
   <data name="numWakeWordSimilarity.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="numWhisperTemp.ToolTip" xml:space="preserve">
-    <value />
+    <value>设置检测到的唤醒词与目标唤醒词的相似度阈值，达到该阈值才能激活转录。</value>
   </data>
   <data name="numFreqThreshold.ToolTip" xml:space="preserve">
-    <value />
+    <value>高通滤波器截止频率。值越高，能滤除的低频噪声越多。</value>
   </data>
   <data name="textWakeWord.ToolTip" xml:space="preserve">
-    <value />
+    <value>可选的唤醒词。在开始语音转录前，必须先说出此短语。</value>
   </data>
   <data name="label25.Text" xml:space="preserve">
     <value>唤醒词相似度：</value>
   </data>
-  <data name="label25.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="label24.Text" xml:space="preserve">
     <value>温度：</value>
-  </data>
-  <data name="label24.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="label18.Text" xml:space="preserve">
     <value>高通滤波阈值：</value>
   </data>
-  <data name="label18.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="checkWhisperUseGPU.Text" xml:space="preserve">
     <value>使用 GPU</value>
-  </data>
-  <data name="checkWhisperUseGPU.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="label16.Text" xml:space="preserve">
     <value>唤醒词：</value>
   </data>
-  <data name="label16.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="butWhispDown.Text" xml:space="preserve">
     <value>下载 Whisper.cpp 模型...</value>
-  </data>
-  <data name="butWhispDown.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="comboWhisperModel.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="label15.Text" xml:space="preserve">
     <value>Whisper.cpp 模型：</value>
   </data>
-  <data name="label15.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="groupBox1.Text" xml:space="preserve">
     <value>语音输入设置</value>
   </data>
-  <data name="groupBox1.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="numThreadsBatch.ToolTip" xml:space="preserve">
-    <value />
+    <value>用于批处理准备的 CPU 线程数。</value>
   </data>
   <data name="label14.Text" xml:space="preserve">
     <value>线程数：</value>
-  </data>
-  <data name="label14.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="groupCPUParamsBatch.Text" xml:space="preserve">
     <value>CPU 批处理参数</value>
   </data>
   <data name="groupCPUParamsBatch.ToolTip" xml:space="preserve">
-    <value />
+    <value>用于预生成阶段（批处理准备）的参数。</value>
   </data>
   <data name="numThreads.ToolTip" xml:space="preserve">
-    <value />
+    <value>用于生成 Token 的 CPU 线程数。通常，设置为物理核心数的 75% 左右是最佳选择，以避免内存控制器过载。</value>
   </data>
   <data name="label2.Text" xml:space="preserve">
     <value>线程数：</value>
-  </data>
-  <data name="label2.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="groupCPUParams.Text" xml:space="preserve">
     <value>CPU 参数</value>
   </data>
   <data name="groupCPUParams.ToolTip" xml:space="preserve">
-    <value />
+    <value>控制在 CPU 上生成文本的参数。</value>
   </data>
   <data name="numMinP.ToolTip" xml:space="preserve">
-    <value />
+    <value>Min-P 采样：仅保留那些概率至少为最高概率 Token 一定比例的候选项，用于削减不太可能的选项并降低噪声。</value>
   </data>
   <data name="comboNUMAStrat.Items" xml:space="preserve">
     <value>禁用</value>
@@ -844,136 +580,91 @@
     <value>计数</value>
   </data>
   <data name="comboNUMAStrat.ToolTip" xml:space="preserve">
-    <value />
+    <value>NUMA（非统一内存访问）策略。如果使用多路 CPU 或特定的内存配置，调整此项可能提升性能。</value>
   </data>
   <data name="numRepPen.ToolTip" xml:space="preserve">
-    <value />
+    <value>重复惩罚（Repetition Penalty）用于减少重复的输出。值越高，对重复短语的抑制越强。</value>
   </data>
   <data name="numBatchSize.ToolTip" xml:space="preserve">
-    <value />
+    <value>生成期间处理 Token 的批处理大小。较高的值可以提高性能，但会消耗更多内存。</value>
   </data>
   <data name="numTopK.ToolTip" xml:space="preserve">
-    <value />
+    <value>Top-K 采样：将 Token 的选择范围限制在 K 个最可能的候选项内，以提高连贯性。</value>
   </data>
   <data name="numTopP.ToolTip" xml:space="preserve">
-    <value />
+    <value>Top-P 采样：从累积概率超过阈值的最小 Token 集合中进行选择，以控制内容的多样性。</value>
   </data>
   <data name="label23.Text" xml:space="preserve">
     <value>Min-P：</value>
   </data>
-  <data name="label23.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="checkFlashAttn.ToolTip" xml:space="preserve">
-    <value />
+    <value>启用 Flash Attention。填充状态表示由 Llama.cpp 自动选择。</value>
   </data>
   <data name="checkMLock.Text" xml:space="preserve">
     <value>锁定内存 (MLock)</value>
   </data>
   <data name="checkMLock.ToolTip" xml:space="preserve">
-    <value />
+    <value>将模型锁定在内存（RAM）中，防止被交换到磁盘。</value>
   </data>
   <data name="checkMMap.Text" xml:space="preserve">
     <value>内存映射 (MMap)</value>
   </data>
   <data name="checkMMap.ToolTip" xml:space="preserve">
-    <value />
+    <value>将模型文件映射到内存中以便按需加载，可以缩短模型加载时间。</value>
   </data>
   <data name="label6.Text" xml:space="preserve">
     <value>重复惩罚：</value>
   </data>
-  <data name="label6.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="label12.Text" xml:space="preserve">
     <value>NUMA 策略：</value>
-  </data>
-  <data name="label12.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="label11.Text" xml:space="preserve">
     <value>批处理大小：</value>
   </data>
-  <data name="label11.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="label8.Text" xml:space="preserve">
     <value>Top-K：</value>
-  </data>
-  <data name="label8.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="label9.Text" xml:space="preserve">
     <value>Top-P：</value>
   </data>
-  <data name="label9.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="groupAdvanced.Text" xml:space="preserve">
     <value>高级选项</value>
   </data>
-  <data name="groupAdvanced.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="numCtxSize.ToolTip" xml:space="preserve">
-    <value />
+    <value>上下文窗口大小（最大 Token 数）。值越高，模型的“记忆”能力越强，但会消耗更多内存。</value>
   </data>
   <data name="numGPULayers.ToolTip" xml:space="preserve">
-    <value />
+    <value>要卸载到 GPU 的模型层数。层数越多，性能越好，但会增加显存（VRAM）使用量。</value>
   </data>
   <data name="numNGen.ToolTip" xml:space="preserve">
-    <value />
+    <value>每次响应生成 Token 的数量（即 AI 回复的最大长度）。-1 表示无限制。</value>
   </data>
   <data name="numTemp.ToolTip" xml:space="preserve">
-    <value />
+    <value>温度（Temperature）控制生成内容的随机性。值越低，响应越确定；值越高，输出越具创造性。</value>
   </data>
   <data name="label5.Text" xml:space="preserve">
     <value>上下文大小：</value>
   </data>
-  <data name="label5.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="label7.Text" xml:space="preserve">
     <value>温度：</value>
-  </data>
-  <data name="label7.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="label10.Text" xml:space="preserve">
     <value>GPU 层数：</value>
   </data>
-  <data name="label10.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="label4.Text" xml:space="preserve">
     <value>生成 Token 数量：</value>
-  </data>
-  <data name="label4.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="groupCommon.Text" xml:space="preserve">
     <value>通用参数</value>
   </data>
-  <data name="groupCommon.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="label3.Text" xml:space="preserve">
     <value>模型文件夹：</value>
-  </data>
-  <data name="label3.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="butBrowse.Text" xml:space="preserve">
     <value>浏览...</value>
   </data>
-  <data name="butBrowse.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="butApply.Text" xml:space="preserve">
     <value>应用</value>
-  </data>
-  <data name="butApply.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="label1.Size" type="System.Drawing.Size, System.Drawing">
     <value>73, 13</value>
@@ -981,17 +672,11 @@
   <data name="label1.Text" xml:space="preserve">
     <value>系统提示词：</value>
   </data>
-  <data name="label1.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="textSystemPrompt.ToolTip" xml:space="preserve">
-    <value />
+    <value>告诉 AI 它的角色、行为方式，或提供初始上下文（即系统提示词）。</value>
   </data>
   <data name="tabPageSettings.Text" xml:space="preserve">
     <value>设置</value>
-  </data>
-  <data name="tabPageSettings.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="checkLoadAuto.Size" type="System.Drawing.Size, System.Drawing">
     <value>134, 17</value>
@@ -999,73 +684,43 @@
   <data name="checkLoadAuto.Text" xml:space="preserve">
     <value>启动时加载上个模型</value>
   </data>
-  <data name="checkLoadAuto.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="butUnload.Text" xml:space="preserve">
     <value>卸载</value>
-  </data>
-  <data name="butUnload.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="butLoad.Text" xml:space="preserve">
     <value>加载</value>
   </data>
-  <data name="butLoad.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="tabPageModels.Text" xml:space="preserve">
     <value>模型管理</value>
   </data>
-  <data name="tabPageModels.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="tabPageHuggingFace.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="tabControl1.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="toolStripStatusLabel1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>67, 17</value>
+    <value>68, 19</value>
   </data>
   <data name="toolStripStatusLabel1.Text" xml:space="preserve">
     <value>未加载模型</value>
   </data>
   <data name="labelTokens.Size" type="System.Drawing.Size, System.Drawing">
-    <value>49, 17</value>
+    <value>51, 19</value>
   </data>
   <data name="labelTokens.Text" xml:space="preserve">
     <value>0 Token</value>
   </data>
   <data name="labelTPS.Size" type="System.Drawing.Size, System.Drawing">
-    <value>65, 17</value>
+    <value>68, 19</value>
   </data>
   <data name="labelTPS.Text" xml:space="preserve">
     <value>0 Token/秒</value>
   </data>
   <data name="labelPreGen.Size" type="System.Drawing.Size, System.Drawing">
-    <value>77, 17</value>
+    <value>80, 19</value>
   </data>
   <data name="labelPreGen.Text" xml:space="preserve">
     <value>预生成时间：</value>
   </data>
   <data name="labelStatusMsg.Size" type="System.Drawing.Size, System.Drawing">
-    <value>278, 17</value>
+    <value>278, 19</value>
   </data>
   <data name="labelStatusMsg.Text" xml:space="preserve">
     <value>正在编辑转录文本——按 Enter 完成，按 Esc 取消</value>
   </data>
-  <data name="statusStrip1.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="$this.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
-    <value>Inherit</value>
-  </data>
-  <data name="$this.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-<data name="groupBox9.Text" xml:space="preserve">
-	<value>API客户端</value>
-</data>
 </root>
