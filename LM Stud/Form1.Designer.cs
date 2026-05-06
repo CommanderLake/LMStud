@@ -101,6 +101,10 @@ namespace LMStud
 			this.checkAutoScroll = new System.Windows.Forms.CheckBox();
 			this.tabPageSettings = new System.Windows.Forms.TabPage();
 			this.groupBox9 = new System.Windows.Forms.GroupBox();
+			this.comboApiClientReasonSummary = new System.Windows.Forms.ComboBox();
+			this.label41 = new System.Windows.Forms.Label();
+			this.comboApiClientReasonEffort = new System.Windows.Forms.ComboBox();
+			this.label40 = new System.Windows.Forms.Label();
 			this.checkApiClientStore = new System.Windows.Forms.CheckBox();
 			this.comboApiClientModel = new System.Windows.Forms.ComboBox();
 			this.label39 = new System.Windows.Forms.Label();
@@ -861,6 +865,10 @@ namespace LMStud
 			// 
 			// groupBox9
 			// 
+			this.groupBox9.Controls.Add(this.comboApiClientReasonSummary);
+			this.groupBox9.Controls.Add(this.label41);
+			this.groupBox9.Controls.Add(this.comboApiClientReasonEffort);
+			this.groupBox9.Controls.Add(this.label40);
 			this.groupBox9.Controls.Add(this.checkApiClientStore);
 			this.groupBox9.Controls.Add(this.comboApiClientModel);
 			this.groupBox9.Controls.Add(this.label39);
@@ -872,6 +880,42 @@ namespace LMStud
 			resources.ApplyResources(this.groupBox9, "groupBox9");
 			this.groupBox9.Name = "groupBox9";
 			this.groupBox9.TabStop = false;
+			// 
+			// comboApiClientReasonSummary
+			// 
+			resources.ApplyResources(this.comboApiClientReasonSummary, "comboApiClientReasonSummary");
+			this.comboApiClientReasonSummary.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.comboApiClientReasonSummary.Items.AddRange(new object[] {
+            resources.GetString("comboApiClientReasonSummary.Items"),
+            resources.GetString("comboApiClientReasonSummary.Items1"),
+            resources.GetString("comboApiClientReasonSummary.Items2"),
+            resources.GetString("comboApiClientReasonSummary.Items3")});
+			this.comboApiClientReasonSummary.Name = "comboApiClientReasonSummary";
+			this.toolTip1.SetToolTip(this.comboApiClientReasonSummary, resources.GetString("comboApiClientReasonSummary.ToolTip"));
+			// 
+			// label41
+			// 
+			resources.ApplyResources(this.label41, "label41");
+			this.label41.Name = "label41";
+			// 
+			// comboApiClientReasonEffort
+			// 
+			resources.ApplyResources(this.comboApiClientReasonEffort, "comboApiClientReasonEffort");
+			this.comboApiClientReasonEffort.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.comboApiClientReasonEffort.Items.AddRange(new object[] {
+            resources.GetString("comboApiClientReasonEffort.Items"),
+            resources.GetString("comboApiClientReasonEffort.Items1"),
+            resources.GetString("comboApiClientReasonEffort.Items2"),
+            resources.GetString("comboApiClientReasonEffort.Items3"),
+            resources.GetString("comboApiClientReasonEffort.Items4"),
+            resources.GetString("comboApiClientReasonEffort.Items5")});
+			this.comboApiClientReasonEffort.Name = "comboApiClientReasonEffort";
+			this.toolTip1.SetToolTip(this.comboApiClientReasonEffort, resources.GetString("comboApiClientReasonEffort.ToolTip"));
+			// 
+			// label40
+			// 
+			resources.ApplyResources(this.label40, "label40");
+			this.label40.Name = "label40";
 			// 
 			// checkApiClientStore
 			// 
@@ -2122,6 +2166,10 @@ namespace LMStud
 		private System.Windows.Forms.CheckBox checkApiClientStore;
 		private System.Windows.Forms.Button butExtract;
 		private System.Windows.Forms.SaveFileDialog saveFileDialog1;
+		private System.Windows.Forms.ComboBox comboApiClientReasonSummary;
+		private System.Windows.Forms.Label label41;
+		private System.Windows.Forms.ComboBox comboApiClientReasonEffort;
+		private System.Windows.Forms.Label label40;
 	}
 }
 

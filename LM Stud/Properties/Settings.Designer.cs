@@ -613,10 +613,10 @@ namespace LMStud.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string APIClientReasoningEffort {
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int APIClientReasoningEffort {
             get {
-                return ((string)(this["APIClientReasoningEffort"]));
+                return ((int)(this["APIClientReasoningEffort"]));
             }
             set {
                 this["APIClientReasoningEffort"] = value;
@@ -632,6 +632,18 @@ namespace LMStud.Properties {
             }
             set {
                 this["APIClientStore"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int APIClientReasoningSummary {
+            get {
+                return ((int)(this["APIClientReasoningSummary"]));
+            }
+            set {
+                this["APIClientReasoningSummary"] = value;
             }
         }
     }

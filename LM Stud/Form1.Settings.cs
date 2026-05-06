@@ -57,7 +57,8 @@ namespace LMStud{
 			Common.APIClientUrl = textApiClientUrl.Text = Settings.Default.APIClientUrl;
 			Common.APIClientKey = textApiClientKey.Text = Settings.Default.APIClientKey;
 			Common.APIClientModel = comboApiClientModel.Text = Settings.Default.APIClientModel;
-			Common.APIClientReasoningEffort = Settings.Default.APIClientReasoningEffort;
+			Common.APIClientReasoningEffort = comboApiClientReasonEffort.SelectedIndex = Settings.Default.APIClientReasoningEffort;
+			Common.APIClientReasoningSummary = comboApiClientReasonSummary.SelectedIndex = Settings.Default.APIClientReasoningSummary;
 			Common.APIClientStore = checkApiClientStore.Checked = Settings.Default.APIClientStore;
 			NativeMethods.SetSilenceTimeout(Common.GenDelay);
 			NativeMethods.SetFileBaseDir(Common.FileBaseDir);
@@ -97,12 +98,13 @@ namespace LMStud{
 				}
 				setSystemPrompt = true;
 			});
-			if(Directory.Exists(textModelsDir.Text))
+			if(Directory.Exists(textModelsDir.Text)){
 				UpdateSetting(ref Common.ModelsDir, textModelsDir.Text, mp => {
 					mp = mp[mp.Length - 1] == '\\' || mp[mp.Length - 1] == '/' ? mp : mp + '\\';
 					textModelsDir.Text = Common.ModelsDir = Settings.Default.ModelsDir = mp;
 					popModels = true;
 				});
+			}
 			else{
 				MessageBox.Show(this, Resources.Models_folder_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 				textModelsDir.Text = Common.ModelsDir = Settings.Default.ModelsDir;
@@ -185,9 +187,7 @@ namespace LMStud{
 				UpdateSetting(ref Common.NThreadsBatch, (int)numThreadsBatch.Value, value => {Settings.Default.ThreadsBatch = value;});
 				NativeMethods.SetThreadCount((int)numThreads.Value, (int)numThreadsBatch.Value);
 			}
-			string GetModelString(int index){
-				return index < 0 ? "" : _whisperModels[index].Substring(Common.ModelsDir.Length);
-			}
+			string GetModelString(int index){return index < 0 ? "" : _whisperModels[index].Substring(Common.ModelsDir.Length);}
 			UpdateSetting(ref Common.WhisperModel, GetModelString(comboWhisperModel.SelectedIndex), value => {
 				Settings.Default.WhisperModel = value;
 				reloadWhisper = true;
@@ -316,6 +316,8 @@ namespace LMStud{
 				PopulateModels();
 				PopulateWhisperModels(true, true);
 			}
+			UpdateSetting(ref Common.APIClientReasoningEffort, comboApiClientReasonEffort.SelectedIndex, value => {Settings.Default.APIClientReasoningEffort = value;});
+			UpdateSetting(ref Common.APIClientReasoningSummary, comboApiClientReasonSummary.SelectedIndex, value => {Settings.Default.APIClientReasoningSummary = value;});
 			var flash = overrideSettings ? ms.FlashAttn : Common.FlashAttn;
 			var minP = overrideSettings ? ms.MinP : Common.MinP;
 			var topP = overrideSettings ? ms.TopP : Common.TopP;
@@ -323,7 +325,8 @@ namespace LMStud{
 			var temp = overrideSettings ? ms.Temp : Common.Temp;
 			if(Common.LlModelLoaded)
 				if(reloadModel &&
-					MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes){ LoadModel(loadedModel, false); }
+					MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) ==
+					DialogResult.Yes){ LoadModel(loadedModel, false); }
 				else{
 					if(reloadCtx) CreateContext(Common.CntCtxMax, Common.BatchSize, flash, Common.NThreads, Common.NThreadsBatch);
 					if(reloadSmpl) CreateSampler(minP, topP, topK, temp, Common.RepPen);
@@ -336,7 +339,8 @@ namespace LMStud{
 				if(Common.WhisperModel == null || !File.Exists(whisperModelPath)){
 					checkVoiceInput.Checked = false;
 					MessageBox.Show(this, Resources.Error_Whisper_model_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
-				}else{
+				}
+				else{
 					if(checkVoiceInput.CheckState != CheckState.Unchecked) NativeMethods.StopSpeechTranscription();
 					var vadPath = Common.UseWhisperVAD && File.Exists(vadModelPath) ? vadModelPath : "";
 					NativeMethods.LoadWhisperModel(whisperModelPath, Common.NThreads, Common.WhisperUseGPU, Common.UseWhisperVAD, vadPath);
@@ -413,9 +417,13 @@ Always read a file and verify its contents before making changes.");
 					return;
 				}
 				List<string> clientModels;
-				using(var client = new APIClient(parsedUri.ToString(), textApiClientKey.Text, "", Common.APIClientStore, Common.SystemPrompt)){ clientModels = client.GetModels(CancellationToken.None); }
+				using(var client = new APIClient(parsedUri.ToString(), textApiClientKey.Text, "", Common.APIClientStore, Common.SystemPrompt)){
+					clientModels = client.GetModels(CancellationToken.None);
+				}
 				foreach(var model in clientModels) comboApiClientModel.Items.Add(model);
 			} catch(Exception ex){ APIClient.ShowApiClientError(Resources.API_Client, ex); }
 		}
+		internal string GetReasoningEffort(){return Common.APIClientReasoningEffort > 0 ? (string)comboApiClientReasonEffort.Items[Common.APIClientReasoningEffort] : null;}
+		internal string GetReasoningSummaryType(){return Common.APIClientReasoningSummary > 0 ? (string)comboApiClientReasonSummary.Items[Common.APIClientReasoningSummary] : null;}
 	}
 }

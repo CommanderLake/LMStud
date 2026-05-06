@@ -185,7 +185,7 @@ namespace LMStud {
 				using(var client = new APIClient(Common.APIClientUrl, Common.APIClientKey, Common.APIClientModel, Common.APIClientStore, Common.SystemPrompt)){
 					string lastToolSignature = null;
 					while(true){
-						var result = client.CreateChatCompletion(history, Common.Temp, Common.NGen, toolsJson, null, APIClient.BuildReasoningPayload(Common.APIClientReasoningEffort), cancellationToken);
+						var result = client.CreateChatCompletion(history, Common.Temp, Common.NGen, toolsJson, null, cancellationToken);
 						UpdateApiTotalTokensLabel(result.TotalTokens);
 						APIClient.AppendOutputItems(history, result);
 						var content = result.Content;

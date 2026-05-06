@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
-using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using LMStud.Properties;
-using Newtonsoft.Json;
 namespace LMStud{
 	public partial class Form1{
 		private const string DefaultPrompt = "Assist the user to the best of your ability.";

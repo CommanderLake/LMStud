@@ -80,7 +80,7 @@ namespace LM_Stud.Tests{
 				});
 				var client = new APIClient(baseUrl, "", "test-model", false);
 				var history = new JArray{ new JObject{ ["role"] = "user", ["content"] = "hello" } };
-				var result = client.CreateChatCompletion(history, 0.2f, 128, null, null, new JObject{ ["effort"] = "low" }, CancellationToken.None);
+				var result = client.CreateChatCompletion(history, 0.5f, 128, null, null, CancellationToken.None);
 				Assert.AreEqual("ok", result.Content, "Responses result should parse.");
 				Assert.IsTrue(server.Wait(1000), "Test server should finish handling the request.");
 				var payload = JObject.Parse(requestBody);
@@ -109,7 +109,7 @@ namespace LM_Stud.Tests{
 				});
 				var client = new APIClient(baseUrl, "", "test-model", false);
 				var history = new JArray{ new JObject{ ["role"] = "user", ["content"] = "hello" } };
-				var result = client.CreateChatCompletion(history, 0.2f, 128, "[]", null, CancellationToken.None);
+				var result = client.CreateChatCompletion(history, 0.5f, 128, "[]", null, CancellationToken.None);
 				Assert.AreEqual("fallback ok", result.Content, "Client should use chat completions as a fallback.");
 				Assert.IsTrue(server.Wait(1000), "Test server should finish handling both requests.");
 			}

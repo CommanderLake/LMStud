@@ -51,7 +51,7 @@ namespace LMStud{
 				var req = context.Request;
 				var method = req.HttpMethod;
 				var path = req.Url.AbsolutePath;
-				var useRemoteApi = Settings.Default.APIClientEnable;
+				var useRemoteApi = Common.APIClientEnable;
 				if(!useRemoteApi && !Common.LlModelLoaded){
 					context.Response.StatusCode = 409;
 					return;
@@ -119,7 +119,7 @@ namespace LMStud{
 				return;
 			}
 			var store = request.Store ?? true;
-			if(Settings.Default.APIClientEnable){
+			if(Common.APIClientEnable){
 				HandleRemoteChat(ctx, request, messages, inputItems, store, outputChatCompletions);
 				return;
 			}
@@ -179,8 +179,7 @@ namespace LMStud{
 				var toolsJson = ResolveClientToolsJson(session, request);
 				var instructions = request.Instructions ?? Common.SystemPrompt;
 				client = new APIClient(Common.APIClientUrl, Common.APIClientKey, Common.APIClientModel, false, instructions);
-				var result = client.CreateChatCompletion(persisted, (float)Settings.Default.Temp, (int)Settings.Default.NGen, toolsJson, request.ToolChoice,
-					request.Reasoning ?? APIClient.BuildReasoningPayload(Common.APIClientReasoningEffort), CancellationToken.None);
+				var result = client.CreateChatCompletion(persisted, Common.Temp, Common.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
 				APIClient.AppendOutputItems(persisted, result);
 				Sessions.Apply(session, s => {
 					if(request.Tools != null) s.ToolsJson = toolsJson;
@@ -193,8 +192,7 @@ namespace LMStud{
 					s.TokenCount = result.TotalTokens ?? 0;
 					s.LastBackend = "remote";
 				});
-				var resp = outputChatCompletions ? BuildChatCompletionsPayload(result, Settings.Default.APIClientModel, session.Id)
-					: BuildResponsePayload(result, Settings.Default.APIClientModel, session.Id);
+				var resp = outputChatCompletions ? BuildChatCompletionsPayload(result, Common.APIClientModel, session.Id) : BuildResponsePayload(result, Common.APIClientModel, session.Id);
 				Sessions.RememberResponse(resp.Value<string>("id"), session);
 				var json = JsonConvert.SerializeObject(resp, Formatting.Indented);
 				var bytes = Encoding.UTF8.GetBytes(json);
@@ -553,7 +551,6 @@ namespace LMStud{
 			[JsonProperty("scope")] public string ResetScope;
 			[JsonProperty("session_id")] public string SessionId;
 			[JsonProperty("previous_response_id")] public string PreviousResponseId;
-			[JsonProperty("reasoning")] public JToken Reasoning;
 			[JsonProperty("store")] public bool? Store;
 			[JsonProperty("tool_choice")] public JToken ToolChoice;
 			[JsonProperty("tools")] public JArray Tools;

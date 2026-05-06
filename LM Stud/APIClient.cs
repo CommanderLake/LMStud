@@ -29,12 +29,9 @@ namespace LMStud{
 		}
 		public void Dispose(){_apiHttpClient?.Dispose();}
 		internal ChatCompletionResult CreateChatCompletion(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice, CancellationToken cancellationToken){
-			return CreateChatCompletion(history, temperature, maxTokens, toolsJson, toolChoice, null, cancellationToken);
-		}
-		internal ChatCompletionResult CreateChatCompletion(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice, JToken reasoning, CancellationToken cancellationToken){
 			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException("API base URL is not configured.");
 			if(history == null) throw new InvalidOperationException("History is not configured.");
-			var responsesPayload = BuildResponsesPayload(history, temperature, maxTokens, toolsJson, toolChoice, reasoning);
+			var responsesPayload = BuildResponsesPayload(history, temperature, maxTokens, toolsJson, toolChoice);
 			var responsesError = TrySendChatRequest(BuildResponsesEndpoint(_apiBaseUrl), responsesPayload, cancellationToken, out var responsesResult);
 			if(responsesResult != null) return responsesResult;
 			if(!ShouldFallbackToChatCompletions(responsesError)) throw responsesError ?? new InvalidOperationException("API response did not contain any message.");
@@ -55,17 +52,17 @@ namespace LMStud{
 					message.IndexOf("tool_choice", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("max_output_tokens", StringComparison.OrdinalIgnoreCase) >= 0 ||
 					message.IndexOf("input", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("responses", StringComparison.OrdinalIgnoreCase) >= 0;
 		}
-		private InvalidOperationException TrySendChatRequest(string endpoint, JObject payload, CancellationToken cancellationToken, out ChatCompletionResult result){
+		private InvalidOperationException TrySendChatRequest(string endpoint, JToken payload, CancellationToken cancellationToken, out ChatCompletionResult result){
 			result = null;
 			try{
 				using(var request = new HttpRequestMessage(HttpMethod.Post, endpoint)){
 					if(!string.IsNullOrWhiteSpace(_apiKey)) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
 					var content = payload.ToString(Formatting.Indented);
 					request.Content = new StringContent(content, Encoding.UTF8, "application/json");
-					//File.AppendAllText("E:\\\\response.txt", content + "\r\n");
+					File.AppendAllText("E:\\\\response1.txt", content + "\r\n");
 					using(var response = _apiHttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
 						var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-						//File.AppendAllText("E:\\\\response.txt", body + "\r\n\r\n");
+						File.AppendAllText("E:\\\\response1.txt", body + "\r\n\r\n");
 						if(!response.IsSuccessStatusCode) throw new InvalidOperationException($"API error ({(int)response.StatusCode}): {body}");
 						result = APIResponseParser.ParseResponseBody(body);
 						return null;
@@ -73,13 +70,19 @@ namespace LMStud{
 				}
 			} catch(InvalidOperationException ex){ return ex; } catch(Exception ex){ return new InvalidOperationException(ex.Message, ex); }
 		}
-		private JObject BuildResponsesPayload(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice, JToken reasoning){
+		private JObject BuildResponsesPayload(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice){
 			var payload = new JObject{ ["model"] = _model, ["input"] = history, ["temperature"] = temperature };
 			if(!string.IsNullOrWhiteSpace(_instructions)) payload["instructions"] = _instructions;
 			payload["store"] = _apiClientStore;
 			if(maxTokens > 0) payload["max_output_tokens"] = maxTokens;
-			var reasoningPayload = NormalizeReasoning(reasoning);
-			if(reasoningPayload != null) payload["reasoning"] = reasoningPayload;
+			var effort = Program.MainForm.GetReasoningEffort();
+			var summaryType = Program.MainForm.GetReasoningSummaryType();
+			if(effort != null || summaryType != null){
+				var reasoningPayload = new JObject();
+				if(effort != null) reasoningPayload["effort"] = effort;
+				if(summaryType != null) reasoningPayload["summary"] = summaryType;
+				payload["reasoning"] = reasoningPayload;
+			}
 			if(!string.IsNullOrWhiteSpace(toolsJson)){
 				var normalizedTools = NormalizeToolsJson(toolsJson);
 				payload["tools"] = (JToken)normalizedTools ?? JToken.Parse(toolsJson);
@@ -87,15 +90,6 @@ namespace LMStud{
 				payload["parallel_tool_calls"] = true;
 			}
 			return payload;
-		}
-		internal static JObject BuildReasoningPayload(string effort){
-			effort = effort?.Trim();
-			return string.IsNullOrWhiteSpace(effort) ? null : new JObject{ ["effort"] = effort };
-		}
-		private static JToken NormalizeReasoning(JToken reasoning){
-			if(reasoning == null || reasoning.Type == JTokenType.Null) return null;
-			if(reasoning.Type == JTokenType.String) return BuildReasoningPayload(reasoning.ToString());
-			return reasoning.DeepClone();
 		}
 		private JObject BuildChatCompletionsPayload(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice){
 			var messages = ConvertHistoryToChatCompletionMessages(history);
@@ -305,7 +299,7 @@ namespace LMStud{
 				Arguments = arguments;
 			}
 		}
-		internal sealed class ChatCompletionResult : Exception{
+		internal sealed class ChatCompletionResult{
 			public string Content;
 			public JArray OutputItems;
 			public string Reasoning;
