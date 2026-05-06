@@ -59,10 +59,10 @@ namespace LMStud{
 					if(!string.IsNullOrWhiteSpace(_apiKey)) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
 					var content = payload.ToString(Formatting.Indented);
 					request.Content = new StringContent(content, Encoding.UTF8, "application/json");
-					File.AppendAllText("E:\\\\response1.txt", content + "\r\n");
+					//File.AppendAllText("E:\\\\response1.txt", content + "\r\n");
 					using(var response = _apiHttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
 						var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-						File.AppendAllText("E:\\\\response1.txt", body + "\r\n\r\n");
+						//File.AppendAllText("E:\\\\response1.txt", body + "\r\n\r\n");
 						if(!response.IsSuccessStatusCode) throw new InvalidOperationException($"API error ({(int)response.StatusCode}): {body}");
 						result = APIResponseParser.ParseResponseBody(body);
 						return null;
