@@ -8,6 +8,7 @@ namespace LMStud{
 		internal static int APIClientReasoningSummary;
 		internal static string APIClientUrl;
 		internal static bool APIClientStore;
+		internal static string ActiveModelSlotName;
 		internal static bool APIServerEnable;
 		internal static int APIServerPort;
 		internal static int BatchSize;

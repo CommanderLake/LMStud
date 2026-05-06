@@ -355,6 +355,15 @@ namespace LMStud{
 			if(registerTools || setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPrompt();});
 			if(overrideSettings && modelOverrideChanged) MessageBox.Show(this, Resources.The_modified_settings_are_overridden_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 			Settings.Default.Save();
+			if(Common.APIClientEnable){
+				ModelSlotManager.SyncMainFromApiSettings();
+				ApplyActiveSlotToRuntime(true);
+				PopulateSlotsList();
+			} else if(Common.LlModelLoaded){
+				ModelSlotManager.SyncMainFromLoadedLocal();
+				ApplyActiveSlotToRuntime(true);
+				PopulateSlotsList();
+			}
 		}
 		private void ButBrowse_Click(object sender, EventArgs e){
 			if(folderBrowserDialog1.ShowDialog(this) == DialogResult.OK) textModelsDir.Text = folderBrowserDialog1.SelectedPath;

@@ -32,9 +32,13 @@ namespace LMStud{
 		private void ListViewModels_DoubleClick(object sender, EventArgs e){
 			ButLoad_Click(null, null);
 		}
-		private void ButLoad_Click(object sender, EventArgs e){
-			if(listViewModels.SelectedItems.Count == 0) return;
-			LoadModel(listViewModels.SelectedItems[0], false);
+		private void ButLoad_Click(object sender, EventArgs e) {
+			if(listViewModels.SelectedItems.Count == 1){
+				LoadModel(listViewModels.SelectedItems[0], false, "main");
+				return;
+			}
+			if(TryLoadSelectedSlot()) return;
+			ShowError("Load Model", "Select a model first.", false);
 		}
 		private void ButUnload_Click(object sender, EventArgs e){
 			butUnload.Enabled = false;
@@ -217,9 +221,13 @@ namespace LMStud{
 		private void SetModelStatus(){
 			butGen.Enabled = (Common.APIClientEnable || Common.LlModelLoaded) && !Generation.Generating;
 			butReset.Enabled = !Generation.Generating;
-			if(Common.APIClientEnable) toolStripStatusLabel1.Text = Resources.Using_API_Model_ + Common.APIClientModel;
+			var activeSlot = ModelSlotManager.GetActiveChatSlot();
+			var loadedSlot = ModelSlotManager.GetLoadedLocalSlot();
+			if(Common.APIClientEnable && activeSlot != null) toolStripStatusLabel1.Text = "Using slot " + activeSlot.Name + ": " + activeSlot.DisplayModel();
+			else if(Common.LlModelLoaded && activeSlot != null && activeSlot.Source == ModelSlotSource.Local) toolStripStatusLabel1.Text = "Using slot " + activeSlot.Name + ": " + Common.LoadedModel.Text;
 			else if(Common.LlModelLoaded) toolStripStatusLabel1.Text = Resources.Using_Model_ + Common.LoadedModel.Text;
 			else toolStripStatusLabel1.Text = Resources.No_model_loaded;
+			if(Common.APIClientEnable && loadedSlot != null) toolStripStatusLabel1.Text += " | Loaded: " + loadedSlot.Name;
 		}
 		private NativeMethods.StudError LoadModel(string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){
 			var result = NativeMethods.LoadModel(filename, jinjaTemplate, nGPULayers, mMap, mLock, numaStrategy);
@@ -250,7 +258,8 @@ namespace LMStud{
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_initialising_voice_input, result);
 			return result;
 		}
-		internal void LoadModel(ListViewItem modelLvi, bool autoLoad){
+		internal void LoadModel(ListViewItem modelLvi, bool autoLoad){LoadModel(modelLvi, autoLoad, "main");}
+		internal void LoadModel(ListViewItem modelLvi, bool autoLoad, string slotName){
 			var modelPath = modelLvi.SubItems[1].Text;
 			if(!File.Exists(modelPath)){
 				ShowError("LoadModel", "Model file not found\r\n\r\n" + modelPath, false);
@@ -261,6 +270,9 @@ namespace LMStud{
 			var modelsDir = Common.ModelsDir;
 			var fileName = Path.GetFileName(modelPath);
 			var meta = (List<GGUFMetadataManager.GGUFMetadataEntry>)modelLvi.Tag;
+			var targetSlot = ModelSlotManager.GetSlot(slotName);
+			var makeSlotChat = string.Equals(slotName, "main", StringComparison.OrdinalIgnoreCase) || (targetSlot != null && targetSlot.HasUse(ModelSlotUse.Chat)) ||
+				(ModelSlotManager.GetActiveChatSlot()?.Source == ModelSlotSource.Local && !Common.APIClientEnable);
 			ThreadPool.QueueUserWorkItem(o => {
 				var overrideSettings = _modelSettings.TryGetValue(modelPath.Substring(modelsDir.Length), out var overrides) && overrides.OverrideSettings;
 				var ctxSize = overrideSettings ? overrides.CtxSize : Common.CtxSize;
@@ -299,6 +311,8 @@ namespace LMStud{
 						NativeMethods.SetTokenCallback(_tokenCallback);
 						Tools.RegisterTools();
 						SetSystemPrompt(false);
+						ModelSlotManager.LoadLocalIntoSlot(slotName, modelPath, makeSlotChat);
+						ApplyActiveSlotToRuntime(true);
 						try{
 							BeginInvoke(new MethodInvoker(() => {
 								Settings.Default.LastModel = modelPath.Substring(modelsDir.Length);
@@ -307,7 +321,6 @@ namespace LMStud{
 									Settings.Default.Save();
 								}
 								toolTip1.SetToolTip(numCtxSize, _numCtxSizeToolTip + "\r\n" + Resources.Max_context_size_of_last_loaded_model + Common.ModelCtxMax);
-								if(Common.APIClientEnable) MessageBox.Show(this, Resources.API_Client_enabled__local_model_will_not_be_used_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 							}));
 						} catch(ObjectDisposedException){}
 					}
@@ -315,6 +328,7 @@ namespace LMStud{
 					Generation.GenerationLock.Release();
 					BeginInvoke(new MethodInvoker(() => {
 						SetModelStatus();
+						PopulateSlotsList();
 						butLoad.Enabled = butUnload.Enabled = true;
 					}));
 				}
@@ -334,6 +348,7 @@ namespace LMStud{
 			} finally{
 				Common.LoadedModel = null;
 				Common.LlModelLoaded = false;
+				try{ BeginInvoke(new MethodInvoker(PopulateSlotsList)); } catch(ObjectDisposedException){}
 				if(genLock) Generation.GenerationLock.Release();
 			}
 		}

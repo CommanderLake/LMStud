@@ -40,10 +40,14 @@ namespace LMStud{
 			STT.MainForm = this;
 			TTS.MainForm = this;
 			TTS.SetHandlers();
+			InitializeSlotUi();
 			InitializeListViews();
 			_numCtxSizeToolTip = toolTip1.GetToolTip(numCtxSize);
 			LoadConfig();
+			ModelSlotManager.Load();
+			ApplyActiveSlotToRuntime(true, false);
 			LoadModelSettings();
+			PopulateSlotsList();
 		}
 		private void Form1_Load(object sender, EventArgs e){
 			NativeMethods.SetHWnd(Handle);
@@ -83,6 +87,7 @@ namespace LMStud{
 			};
 			_columnClickHandler.RegisterListView(listViewModels);
 			_columnClickHandler.RegisterListView(listViewMeta);
+			_columnClickHandler.RegisterListView(listViewSlots);
 			_columnClickHandler.RegisterListView(listViewHugSearch, columnDataTypesHugSearch, 4, SortOrder.Descending);
 			_columnClickHandler.RegisterListView(listViewHugFiles, columnDataTypesHugFiles);
 		}
