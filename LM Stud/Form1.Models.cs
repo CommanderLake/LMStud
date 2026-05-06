@@ -9,7 +9,7 @@ namespace LMStud{
 	public partial class Form1{
 		private const string DefaultPrompt = "Assist the user to the best of your ability.";
 		private const string FetchPrompt = "\nAfter calling the web_search tool you must subsequently call the get_webpage tool with a url followed by the get_webpage_text tool with the id of any relevant preview.";
-		private volatile SemaphoreSlim _populateLock = new SemaphoreSlim(1, 1);
+		internal volatile SemaphoreSlim PopulateLock = new SemaphoreSlim(1, 1);
 		private void CheckLoadAuto_CheckedChanged(object sender, EventArgs e){
 			if(checkLoadAuto.Checked && File.Exists(Common.ModelsDir + Settings.Default.LastModel)) Settings.Default.LoadAuto = true;
 			else Settings.Default.LoadAuto = false;
@@ -91,7 +91,7 @@ namespace LMStud{
 			return true;
 		}
 		private void PopulateModels(){
-			if(!_populateLock.Wait(0) || !ModelsFolderExists(true)) return;
+			if(!PopulateLock.Wait(0) || !ModelsFolderExists(true)) return;
 			ThreadPool.QueueUserWorkItem(_ => {
 				var locked = false;
 				try{
@@ -119,7 +119,7 @@ namespace LMStud{
 						MessageBox.Show(this, ex.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 					}));
 				} finally{
-					_populateLock.Release();
+					PopulateLock.Release();
 					if(locked) Generation.GenerationLock.Release();
 				}
 			});

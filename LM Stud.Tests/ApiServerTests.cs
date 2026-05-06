@@ -23,7 +23,9 @@ namespace LM_Stud.Tests{
 				t.Start();
 				while(Program.MainForm == null) Thread.Sleep(10);
 				_form = Program.MainForm;
-				Thread.Sleep(1000);
+retry:			try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); } catch { Thread.Sleep(10); goto retry; }
+				_form.PopulateLock.Wait();
+				_form.PopulateLock.Release();
 				_form.Invoke(new MethodInvoker(() => {_form.LoadModel(_form.listViewModels.Items["Hermes-3-Llama-3.2-3B.Q8_0"], true);}));
 				Common.APIServerPort = TestPort;
 				while(!Common.LlModelLoaded || _form.ApiServer == null) Thread.Sleep(10);
@@ -33,7 +35,7 @@ namespace LM_Stud.Tests{
 		[ClassCleanup]
 		public static void ClassCleanup(){
 			lock(FormLock){
-				_form.ApiServer.Stop();
+				_form.ApiServer?.Stop();
 				_form.Invoke(new MethodInvoker(() => {
 					Program.MainForm.Close();
 					Program.MainForm.Dispose();

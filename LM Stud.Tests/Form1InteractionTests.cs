@@ -15,16 +15,60 @@ namespace LM_Stud.Tests{
 			t.Start();
 			while(Program.MainForm == null) Thread.Sleep(10);
 			_form = Program.MainForm;
-			Thread.Sleep(1000);
+retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); } catch { Thread.Sleep(10); goto retry; }
+			_form.PopulateLock.Wait();
+			_form.PopulateLock.Release();
 			_form.Invoke(new MethodInvoker(() => {_form.LoadModel(_form.listViewModels.Items["Hermes-3-Llama-3.2-3B.Q8_0"], true);}));
 			while(!Common.LlModelLoaded) Thread.Sleep(10);
 		}
 		[ClassCleanup]
 		public static void ClassCleanup(){
+			ResetInteractionState();
+			try{
+				if(!_form.IsDisposed && _form.IsHandleCreated)
+					_form.Invoke(new MethodInvoker(() => {
+						Program.MainForm?.Close();
+						Program.MainForm?.Dispose();
+						Program.MainForm = null;
+					}));
+			} catch(ObjectDisposedException){} catch(InvalidOperationException){} catch(NullReferenceException){} finally{
+				if(ReferenceEquals(Program.MainForm, _form)) Program.MainForm = null;
+			}
+		}
+		[TestInitialize]
+		public void TestInitialize(){
+			ResetInteractionState();
+		}
+		[TestCleanup]
+		public void TestCleanup(){
+			Generation.Generating = false;
+			Generation.APIServerGenerating = false;
+			Generation.DialecticStarted = false;
+			Generation.DialecticPaused = false;
+		}
+		private static void ResetInteractionState(){
+			Generation.Generating = false;
+			Generation.APIServerGenerating = false;
+			Generation.DialecticStarted = false;
+			Generation.DialecticPaused = false;
 			_form.Invoke(new MethodInvoker(() => {
-				Program.MainForm.Close();
-				Program.MainForm.Dispose();
+				_form.textInput.Text = "";
+				_form.checkMarkdown.Checked = false;
+				_form.checkDialectic.Checked = false;
+				_form.ButReset_Click(null, null);
 			}));
+			var deadline = DateTime.UtcNow.AddSeconds(30);
+			while(DateTime.UtcNow < deadline){
+				if(Generation.GenerationLock.Wait(50)){
+					try{
+						var count = 0;
+						_form.Invoke(new MethodInvoker(() => { count = _form.ChatMessages.Count; }));
+						if(count == 0) return;
+					} finally{ Generation.GenerationLock.Release(); }
+				}
+				Thread.Sleep(10);
+			}
+			Assert.Fail("Timed out waiting for chat reset.");
 		}
 		[TestMethod]
 		public void Generate_WithWhitespaceInput_DoesNotAddMessage(){

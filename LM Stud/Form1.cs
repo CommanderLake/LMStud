@@ -58,11 +58,11 @@ namespace LMStud{
 			checkLoadAuto.Checked = true;
 			ThreadPool.QueueUserWorkItem(o => {
 				try{
-					_populateLock.Wait(-1);
+					PopulateLock.Wait(-1);
 					var modelPath = Common.ModelsDir + Settings.Default.LastModel;
 					var modelLvi = listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item => item.SubItems[1].Text == modelPath);
 					if(modelLvi != null) LoadModel(modelLvi, true);
-				} finally{ _populateLock.Release(); }
+				} finally{ PopulateLock.Release(); }
 			});
 		}
 		private void SetToolTip(Control control){toolTip1.SetToolTip(control, Resources.ResourceManager.GetString("ToolTip_" + control.Name));}

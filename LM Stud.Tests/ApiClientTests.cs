@@ -5,6 +5,7 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using LMStud;
 using LMStud.Parsers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -12,6 +13,55 @@ using Newtonsoft.Json.Linq;
 namespace LM_Stud.Tests{
 	[TestClass]
 	public class ApiClientTests{
+		private static Form1 _form;
+		private static int _originalReasoningEffort;
+		private static int _originalReasoningSummary;
+		private static bool _ownsForm;
+		[ClassInitialize]
+		public static void ClassInitialize(TestContext context){
+			if(Program.MainForm == null || Program.MainForm.IsDisposed){
+				_ownsForm = true;
+				Exception startupError = null;
+				var t = new Thread(() => {
+					try{ Program.Main(); }
+					catch(Exception ex){ startupError = ex; }
+				});
+				t.SetApartmentState(ApartmentState.STA);
+				t.IsBackground = true;
+				t.Start();
+				var deadline = DateTime.UtcNow.AddSeconds(15);
+				while(Program.MainForm == null || Program.MainForm.IsDisposed){
+					if(startupError != null) throw startupError;
+					if(DateTime.UtcNow > deadline) Assert.Fail("Program.Main did not create MainForm in time.");
+					Thread.Sleep(10);
+				}
+			}
+			_form = Program.MainForm;
+			Thread.Sleep(1000);
+			_originalReasoningEffort = Common.APIClientReasoningEffort;
+			_originalReasoningSummary = Common.APIClientReasoningSummary;
+		}
+		[ClassCleanup]
+		public static void ClassCleanup(){
+			Common.APIClientReasoningEffort = _originalReasoningEffort;
+			Common.APIClientReasoningSummary = _originalReasoningSummary;
+			if(!_ownsForm || _form == null) return;
+			try{
+				if(!_form.IsDisposed && _form.IsHandleCreated)
+					_form.Invoke(new MethodInvoker(() => {
+						Program.MainForm?.Close();
+						Program.MainForm?.Dispose();
+						Program.MainForm = null;
+					}));
+			} catch(ObjectDisposedException){} catch(InvalidOperationException){} catch(NullReferenceException){} finally{
+				if(ReferenceEquals(Program.MainForm, _form)) Program.MainForm = null;
+			}
+		}
+		[TestCleanup]
+		public void TestCleanup(){
+			Common.APIClientReasoningEffort = _originalReasoningEffort;
+			Common.APIClientReasoningSummary = _originalReasoningSummary;
+		}
 		[TestMethod]
 		public void BuildInputItems_WithToolCall_AddsFunctionCallItem(){
 			var messages = new List<APIClient.ChatMessage>{
@@ -38,6 +88,17 @@ namespace LM_Stud.Tests{
 			Assert.AreEqual("hello", (string)history[0]["content"], "Output text should be replayed as input content.");
 		}
 		[TestMethod]
+		public void AppendOutputItems_WithToolCallsWithoutOutputItems_ReplaysToolCall(){
+			var history = new JArray();
+			var toolCalls = new List<APIClient.ToolCall>{ new APIClient.ToolCall("call_1", "lookup", "{\"term\":\"weather\"}") };
+			var result = new APIClient.ChatCompletionResult("", null, toolCalls, "chatcmpl_1", null);
+			APIClient.AppendOutputItems(history, result);
+			Assert.AreEqual(1, history.Count, "Fallback parsers should still replay assistant tool calls.");
+			Assert.AreEqual("function_call", (string)history[0]["type"], "Tool call should be replayed in Responses input shape.");
+			Assert.AreEqual("call_1", (string)history[0]["call_id"], "Tool call id should be preserved for the following tool output.");
+			Assert.AreEqual("lookup", (string)history[0]["name"], "Tool name should be preserved.");
+		}
+		[TestMethod]
 		public void ParseResponseBody_WithResponsesUsage_ReadsTotalTokens(){
 			var json = @"{
 				""id"": ""resp_test"",
@@ -56,7 +117,7 @@ namespace LM_Stud.Tests{
 		[TestMethod]
 		public void BuildInputMessagePayload_WithToolRole_RequiresCallId(){
 			var toolMessage = new APIClient.ChatMessage("tool", "ok");
-			Assert.ThrowsException<InvalidOperationException>(() => APIClient.BuildInputMessagePayload(toolMessage));
+			Assert.ThrowsExactly<InvalidOperationException>(() => APIClient.BuildInputMessagePayload(toolMessage));
 			toolMessage.ToolCallId = "call_123";
 			var payload = (JObject)APIClient.BuildInputMessagePayload(toolMessage);
 			Assert.AreEqual("function_call_output", (string)payload["type"], "Tool message should map to function call output.");
@@ -67,6 +128,7 @@ namespace LM_Stud.Tests{
 			using(var listener = new HttpListener()){
 				var baseUrl = "http://127.0.0.1:39593/";
 				string requestBody = null;
+				Common.APIClientReasoningEffort = 2;
 				listener.Prefixes.Add(baseUrl);
 				listener.Start();
 				var server = Task.Run(() => {

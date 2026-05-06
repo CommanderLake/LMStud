@@ -68,7 +68,7 @@ namespace LMStud{
 						return null;
 					}
 				}
-			} catch(InvalidOperationException ex){ return ex; } catch(Exception ex){ return new InvalidOperationException(ex.Message, ex); }
+			} catch(OperationCanceledException){ throw; } catch(InvalidOperationException ex){ return ex; } catch(Exception ex){ return new InvalidOperationException(ex.Message, ex); }
 		}
 		private JObject BuildResponsesPayload(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice){
 			var payload = new JObject{ ["model"] = _model, ["input"] = history, ["temperature"] = temperature };
@@ -154,8 +154,14 @@ namespace LMStud{
 			return items;
 		}
 		internal static void AppendOutputItems(JArray history, ChatCompletionResult result){
-			if(history == null || result?.OutputItems == null) return;
-			foreach(var item in result.OutputItems) history.Add(ConvertOutputItemToInputItem(item));
+			if(history == null || result == null) return;
+			if(result.OutputItems != null){
+				foreach(var item in result.OutputItems) history.Add(ConvertOutputItemToInputItem(item));
+				return;
+			}
+			if(string.IsNullOrWhiteSpace(result.Content) && (result.ToolCalls == null || result.ToolCalls.Count == 0)) return;
+			var message = new ChatMessage("assistant", result.Content ?? ""){ ToolCalls = result.ToolCalls };
+			foreach(var item in BuildInputItems(new[]{ message })) history.Add(item);
 		}
 		private static JToken ConvertOutputItemToInputItem(JToken item){
 			if(!(item is JObject obj)) return item?.DeepClone();
