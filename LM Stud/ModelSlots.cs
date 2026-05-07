@@ -205,9 +205,12 @@ namespace LMStud{
 			if(slot == null || slot.Source != ModelSlotSource.Local || !Common.LlModelLoaded || Common.LoadedModel == null) return false;
 			return SamePath(slot.ResolveLocalPath(), Common.LoadedModel.SubItems[1].Text);
 		}
+		internal static bool CanServeApiSlot(ModelSlot slot){
+			return slot != null && slot.Source == ModelSlotSource.Api && !string.IsNullOrWhiteSpace(slot.ApiBaseUrl) && !string.IsNullOrWhiteSpace(slot.ApiModel);
+		}
 		internal static string GetSlotState(ModelSlot slot){
 			if(slot == null) return "";
-			if(slot.Source == ModelSlotSource.Api) return string.IsNullOrWhiteSpace(slot.ApiBaseUrl) || string.IsNullOrWhiteSpace(slot.ApiModel) ? "Incomplete" : "Ready";
+			if(slot.Source == ModelSlotSource.Api) return CanServeApiSlot(slot) ? "Ready" : "Incomplete";
 			var path = slot.ResolveLocalPath();
 			if(string.IsNullOrWhiteSpace(path)) return "Empty";
 			if(!File.Exists(path)) return "Missing";

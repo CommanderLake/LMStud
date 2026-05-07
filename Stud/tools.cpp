@@ -1,5 +1,6 @@
 #include "tools.h"
 #include "stud.h"
+#include "StudState.h"
 #include "JSONCommon.h"
 #include <ctime>
 #include <regex>
@@ -45,7 +46,7 @@ void RegisterTools(const bool dateTime, const bool googleSearch, const bool webp
 extern "C" void MarkToolsJsonDirty(){ _toolsJsonDirty = true; }
 static void RefreshToolsJsonCache(){
 	if(!_toolsJsonDirty) return;
-	const auto& tools = Stud::inst.tools;
+	const auto& tools = Stud::state.tools;
 	std::string json = "[";
 	for(size_t i = 0; i < tools.size(); i++){
 		const auto& tool = tools[i];

@@ -56,5 +56,10 @@ namespace LMStud{
 		internal static int CntCtxMax;
 		internal static int ModelCtxMax;
 		internal static ListViewItem LoadedModel;
+		internal static readonly string[] ReasoningEffortValues = { null, "none", "low", "medium", "high", "xhigh" };
+		internal static readonly string[] ReasoningSummaryValues = { null, "auto", "concise", "detailed" };
+		internal static string GetReasoningEffort() { return GetReasoningValue(ReasoningEffortValues, Common.APIClientReasoningEffort); }
+		internal static string GetReasoningSummaryType() { return GetReasoningValue(ReasoningSummaryValues, Common.APIClientReasoningSummary); }
+		internal static string GetReasoningValue(string[] values, int index) { return index > 0 && index < values.Length ? values[index] : null; }
 	}
 }

@@ -75,8 +75,8 @@ namespace LMStud{
 			if(!string.IsNullOrWhiteSpace(_instructions)) payload["instructions"] = _instructions;
 			payload["store"] = _apiClientStore;
 			if(maxTokens > 0) payload["max_output_tokens"] = maxTokens;
-			var effort = Program.MainForm.GetReasoningEffort();
-			var summaryType = Program.MainForm.GetReasoningSummaryType();
+			var effort = Common.GetReasoningEffort();
+			var summaryType = Common.GetReasoningSummaryType();
 			if(effort != null || summaryType != null){
 				var reasoningPayload = new JObject();
 				if(effort != null) reasoningPayload["effort"] = effort;

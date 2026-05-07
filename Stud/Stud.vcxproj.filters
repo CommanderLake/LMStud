@@ -33,6 +33,9 @@
     <ClInclude Include="StudError.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="StudState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="JSONCommon.h">
       <Filter>Header Files</Filter>
     </ClInclude>

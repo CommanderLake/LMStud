@@ -6,8 +6,6 @@ using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
 	public partial class Form1{
-		private static readonly string[] ReasoningEffortValues = { null, "none", "low", "medium", "high", "xhigh" };
-		private static readonly string[] ReasoningSummaryValues = { null, "auto", "concise", "detailed" };
 		private readonly List<string> _whisperModels = new List<string>();
 		private void LoadConfig(){
 			var mp = Settings.Default.ModelsDir;
@@ -434,8 +432,5 @@ Always read a file and verify its contents before making changes.");
 				foreach(var model in clientModels) comboApiClientModel.Items.Add(model);
 			} catch(Exception ex){ APIClient.ShowApiClientError(Resources.API_Client, ex); }
 		}
-		internal string GetReasoningEffort(){return GetReasoningValue(ReasoningEffortValues, Common.APIClientReasoningEffort);}
-		internal string GetReasoningSummaryType(){return GetReasoningValue(ReasoningSummaryValues, Common.APIClientReasoningSummary);}
-		private static string GetReasoningValue(string[] values, int index){return index > 0 && index < values.Length ? values[index] : null;}
 	}
 }

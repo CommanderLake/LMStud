@@ -43,7 +43,7 @@ namespace LMStud{
 			while(!token.IsCancellationRequested){
 				HttpListenerContext ctx;
 				try{ ctx = _listener.GetContext(); } catch{ break; }
-				HandleContext(ctx);
+				ThreadPool.QueueUserWorkItem(_ => HandleContext(ctx));
 			}
 		}
 		private void HandleContext(HttpListenerContext context){
@@ -124,15 +124,19 @@ namespace LMStud{
 			var store = request.Store ?? true;
 			var slot = ModelSlotManager.ResolveServerSlot(request.Model);
 			if(slot == null){
-				ctx.Response.StatusCode = 404;
+				WriteError(ctx, 404, "model_not_found", string.IsNullOrWhiteSpace(request.Model) ? "No default model slot is configured." : "Model slot not found: " + request.Model);
 				return;
 			}
 			if(slot.Source == ModelSlotSource.Api){
+				if(!ModelSlotManager.CanServeApiSlot(slot)){
+					WriteError(ctx, 409, "slot_incomplete", "API slot is missing an API URL or model: " + slot.Name);
+					return;
+				}
 				HandleRemoteChat(ctx, request, messages, inputItems, store, outputChatCompletions, slot);
 				return;
 			}
 			if(!ModelSlotManager.CanServeLocalSlot(slot)){
-				ctx.Response.StatusCode = 409;
+				WriteError(ctx, 409, "slot_not_loaded", "Local slot is not loaded: " + slot.Name);
 				return;
 			}
 			var session = Sessions.Get(ResolveSessionId(ctx, request));
@@ -142,14 +146,14 @@ namespace LMStud{
 				ctx.Response.AddHeader("X-Session-Id", session.Id);
 				var historyMessages = ExtractHistoryAndLatestInput(messages, inputItems, out var latestInput);
 				if(latestInput?.Content == null){
-					ctx.Response.StatusCode = 400;
+					WriteError(ctx, 400, "invalid_request", "Request did not contain a user input message.");
 					return;
 				}
 				ctx.Response.ContentType = "application/json";
 				var toolsJson = ResolveClientToolsJson(session, request);
 				var historyJson = historyMessages != null && historyMessages.Count > 0 ? BuildChatHistoryJson(historyMessages) : null;
 				if(!Generation.GenerateForApiServer(session.State, session.NativeChatState, historyJson, ToNativeRole(latestInput.Role), latestInput.Content, toolsJson, out var result, out var newState, out newChatState, out var tokens)){
-					ctx.Response.StatusCode = 409;
+					WriteError(ctx, 409, "generation_busy", "The local backend is busy or could not generate a response.");
 					return;
 				}
 				Sessions.Apply(session, s => {
@@ -182,7 +186,7 @@ namespace LMStud{
 			try{
 				var incomingDelta = BuildIncomingDelta(incomingMessages, inputItems);
 				if(incomingDelta == null || incomingDelta.Count == 0){
-					ctx.Response.StatusCode = 400;
+					WriteError(ctx, 400, "invalid_request", "Request did not contain a new input message.");
 					return;
 				}
 				ResetSessionForModeSwitch(session, "remote:" + slot.Name);
@@ -211,14 +215,18 @@ namespace LMStud{
 				var bytes = Encoding.UTF8.GetBytes(json);
 				ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
 			} catch(Exception ex){
-				ctx.Response.StatusCode = 502;
-				var err = JsonConvert.SerializeObject(new{ error = new{ message = ex.Message } }, Formatting.Indented);
-				var buf = Encoding.UTF8.GetBytes(err);
-				ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+				WriteError(ctx, 502, "upstream_error", ex.Message);
 			} finally{
 				if(!store) Sessions.Remove(session.Id);
 				client?.Dispose();
 			}
+		}
+		private static void WriteError(HttpListenerContext ctx, int statusCode, string code, string message){
+			ctx.Response.StatusCode = statusCode;
+			ctx.Response.ContentType = "application/json";
+			var err = JsonConvert.SerializeObject(new{ error = new{ code = code, message = message } }, Formatting.Indented);
+			var buf = Encoding.UTF8.GetBytes(err);
+			ctx.Response.OutputStream.Write(buf, 0, buf.Length);
 		}
 		private void ResetSessionForModeSwitch(SessionManager.Session session, string backendKey){
 			if(session == null) return;

@@ -1,17 +1,8 @@
-﻿#pragma once
+#pragma once
 #include "StudError.h"
 #include <Windows.h>
 #include <llama.h>
-#include <chat.h>
-#include <vector>
-#include <unordered_map>
 #include <string>
-#include <atomic>
-#include <jinja\caps.h>
-#pragma comment(lib, "llama.lib")
-#pragma comment(lib, "llama-common.lib")
-#pragma comment(lib, "ggml.lib")
-#pragma comment(lib, "ggml-base.lib")
 #define EXPORT __declspec(dllexport)
 namespace Stud{
 	enum class MessageRole{
@@ -19,46 +10,8 @@ namespace Stud{
 		Assistant,
 		Tool
 	};
-	struct ChatSession{
-		llama_context* ctx = nullptr;
-		const llama_vocab* _vocab = nullptr;
-		llama_sampler* smpl[2] = {nullptr, nullptr};
-		llama_memory_t llMem = nullptr;
-		std::vector<common_chat_msg> chatMsgs[2];
-		std::vector<llama_token> cachedTokens[2];
-		std::vector<unsigned char> dialState[2];
-		int dId = 0;
-		std::string prompt;
-		std::string toolsPrompt;
-		common_chat_parser_params syntax;
-		bool assNextGen = false;
-		int batchSize = 1;
-	};
 	using ToolHandlerFn = std::string(*)(const char*);
 	using TokenCallbackFn = void(*)(const char* thinkPtr, int thinkLen, const char* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool);
-	struct BackendState{
-		HWND hWnd = nullptr;
-		llama_model* llModel = nullptr;
-		ChatSession session;
-		std::atomic_bool stop{false};
-		common_chat_templates_ptr chatTemplates = nullptr;
-		TokenCallbackFn tokenCb = nullptr;
-		std::vector<common_chat_tool> tools;
-		std::unordered_map<std::string, ToolHandlerFn> toolHandlers;
-		jinja::caps caps;
-	};
-	struct ChatStateSnapshot{
-		std::vector<common_chat_msg> chatMsgs[2];
-		std::vector<llama_token> cachedTokens[2];
-		std::vector<unsigned char> dialState[2];
-		int dId = 0;
-		std::string prompt;
-		std::string toolsPrompt;
-		common_chat_parser_params syntax{};
-		bool addNextGen = false;
-		int batchSize = 1;
-	};
-	inline BackendState inst;
 }
 extern "C" {
 EXPORT void SetHWnd(HWND hWnd);
@@ -71,7 +24,6 @@ EXPORT StudError CreateContext(int nCtx, int nBatch, unsigned int flashAttn, int
 EXPORT StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty);
 EXPORT StudError CreateSession(int nCtx, int nBatch, unsigned int flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
 EXPORT void DestroySession();
-static void AlignChatStates();
 EXPORT StudError ResetChat();
 EXPORT void FreeModel();
 EXPORT StudError LoadModel(const char* filename, const char* jinjaTemplate, int nGPULayers, bool mMap, bool mLock, ggml_numa_strategy numaStrategy);
