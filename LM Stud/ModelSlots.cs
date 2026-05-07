@@ -94,8 +94,12 @@ namespace LMStud{
 		}
 		internal static ModelSlot GetLoadedLocalSlot(){
 			lock(Sync){
-				if(!Common.LlModelLoaded || Common.LoadedModel == null) return null;
-				var loadedPath = Common.LoadedModel.SubItems[1].Text;
+				if(Common.LoadedLocalSlots.Count == 0) return null;
+				var active = FindSlotInternal(ActiveChatSlotName);
+				if(active != null && Common.LoadedLocalSlots.TryGetValue(active.Name, out var activeItem) && SamePath(active.ResolveLocalPath(), activeItem.SubItems[1].Text) && NativeMethods.IsModelSlotLoaded(active.Name)) return active.Clone();
+				var loaded = Common.LoadedLocalSlots.FirstOrDefault(kv => NativeMethods.IsModelSlotLoaded(kv.Key));
+				var loadedPath = loaded.Value?.SubItems[1].Text;
+				if(string.IsNullOrWhiteSpace(loadedPath)) return null;
 				return SlotsInternal.FirstOrDefault(slot => slot.Source == ModelSlotSource.Local && SamePath(slot.ResolveLocalPath(), loadedPath))?.Clone();
 			}
 		}
@@ -122,6 +126,17 @@ namespace LMStud{
 				EnsureSingleChatSlot();
 			}
 			Save();
+		}
+		internal static bool SetActiveChatSlot(string name){
+			lock(Sync){
+				var slot = FindSlotInternal(name);
+				if(slot == null) return false;
+				ActiveChatSlotName = slot.Name;
+				slot.Use |= ModelSlotUse.Chat;
+				EnsureSingleChatSlot();
+			}
+			Save();
+			return true;
 		}
 		internal static bool Remove(string name){
 			lock(Sync){
@@ -202,8 +217,9 @@ namespace LMStud{
 			return array;
 		}
 		internal static bool CanServeLocalSlot(ModelSlot slot){
-			if(slot == null || slot.Source != ModelSlotSource.Local || !Common.LlModelLoaded || Common.LoadedModel == null) return false;
-			return SamePath(slot.ResolveLocalPath(), Common.LoadedModel.SubItems[1].Text);
+			if(slot == null || slot.Source != ModelSlotSource.Local) return false;
+			if(!Common.LoadedLocalSlots.TryGetValue(slot.Name, out var loadedModel) || loadedModel == null) return false;
+			return SamePath(slot.ResolveLocalPath(), loadedModel.SubItems[1].Text) && NativeMethods.IsModelSlotLoaded(slot.Name);
 		}
 		internal static bool CanServeApiSlot(ModelSlot slot){
 			return slot != null && slot.Source == ModelSlotSource.Api && !string.IsNullOrWhiteSpace(slot.ApiBaseUrl) && !string.IsNullOrWhiteSpace(slot.ApiModel);
@@ -355,6 +371,8 @@ namespace LMStud{
 				return new ModelSlot{ Name = MainSlotName, Source = ModelSlotSource.Api, ApiBaseUrl = Common.APIClientUrl, ApiKey = Common.APIClientKey, ApiModel = Common.APIClientModel };
 			if(Common.LlModelLoaded && Common.LoadedModel != null)
 				return new ModelSlot{ Name = MainSlotName, Source = ModelSlotSource.Local, LocalPath = Common.LoadedModel.SubItems[1].Text };
+			foreach(var loaded in Common.LoadedLocalSlots)
+				if(loaded.Value != null && NativeMethods.IsModelSlotLoaded(loaded.Key)) return new ModelSlot{ Name = loaded.Key, Source = ModelSlotSource.Local, LocalPath = loaded.Value.SubItems[1].Text };
 			return null;
 		}
 		private sealed class ModelSlotConfig{

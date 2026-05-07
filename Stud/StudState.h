@@ -3,6 +3,7 @@
 #include <atomic>
 #include <chat.h>
 #include <jinja\caps.h>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 namespace Stud{
@@ -29,16 +30,22 @@ namespace Stud{
 		bool assistantNextGeneration = false;
 		int batchSize = 1;
 	};
-	struct StudState{
-		HWND hWnd = nullptr;
+	struct ModelRuntime{
 		llama_model* llModel = nullptr;
 		ChatSession session;
-		std::atomic_bool stop{false};
 		common_chat_templates_ptr chatTemplates = nullptr;
+		jinja::caps caps;
+		std::string slotName = "main";
+	};
+	struct StudState{
+		HWND hWnd = nullptr;
+		ModelRuntime defaultRuntime;
+		ModelRuntime* activeRuntime = nullptr;
+		std::unordered_map<std::string, std::unique_ptr<ModelRuntime>> runtimes;
+		std::atomic_bool stop{false};
 		TokenCallbackFn tokenCb = nullptr;
 		std::vector<common_chat_tool> tools;
 		std::unordered_map<std::string, ToolHandlerFn> toolHandlers;
-		jinja::caps caps;
 	};
 	struct ChatStateSnapshot{
 		ChatLaneSnapshot lanes[2];
@@ -50,4 +57,5 @@ namespace Stud{
 		int batchSize = 1;
 	};
 	inline StudState state;
+	inline ModelRuntime& runtime(){ return state.activeRuntime ? *state.activeRuntime : state.defaultRuntime; }
 }

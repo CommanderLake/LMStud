@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -17,13 +18,19 @@ namespace LMStud{
 		}
 		private void ListViewModels_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e){
 			if(listViewModels.SelectedItems.Count == 1){
-				tabControlModelStuff.Enabled = true;
+				SetModelSpecificTabsEnabled(true);
 				PopulateMeta((List<GGUFMetadataManager.GGUFMetadataEntry>)listViewModels.SelectedItems[0].Tag);
 				PopulateModelSettings(listViewModels.SelectedItems[0].SubItems[1].Text);
 			} else{
 				listViewMeta.Items.Clear();
-				tabControlModelStuff.Enabled = false;
+				SetModelSpecificTabsEnabled(false);
 			}
+		}
+		private void SetModelSpecificTabsEnabled(bool enabled){
+			tabControlModelStuff.Enabled = true;
+			foreach(Control control in tabPageModelSettings.Controls) control.Enabled = enabled;
+			foreach(Control control in tabPageMetadata.Controls) control.Enabled = enabled;
+			if(!enabled && tabControlModelStuff.SelectedTab != tabPageSlots) tabControlModelStuff.SelectedTab = tabPageSlots;
 		}
 		private void ListViewModels_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.F5) return;
@@ -37,12 +44,11 @@ namespace LMStud{
 				LoadModel(listViewModels.SelectedItems[0], false, "main");
 				return;
 			}
-			if(TryLoadSelectedSlot()) return;
-			ShowError("Load Model", "Select a model first.", false);
+			ShowError("Load Main", "Select a model first.", false);
 		}
 		private void ButUnload_Click(object sender, EventArgs e){
-			butUnload.Enabled = false;
-			UnloadModel(true);
+			butUnloadMain.Enabled = false;
+			UnloadModel(true, "main");
 		}
 		private void ButExtract_Click(object sender, EventArgs e){
 			const string action = "Extract Template";
@@ -202,7 +208,8 @@ namespace LMStud{
 			if(genLock) Generation.GenerationLock.Wait(-1);
 			try{
 				string prompt;
-				if(Common.LoadedModel != null && _modelSettings.TryGetValue(Common.LoadedModel.SubItems[1].Text.Substring(Common.ModelsDir.Length), out var overrides) && overrides.OverrideSettings) prompt = overrides.SystemPrompt;
+				var loadedModel = Common.LoadedModel;
+				if(loadedModel != null && _modelSettings.TryGetValue(loadedModel.SubItems[1].Text.Substring(Common.ModelsDir.Length), out var overrides) && overrides.OverrideSettings) prompt = overrides.SystemPrompt;
 				else prompt = Common.SystemPrompt;
 				var error = NativeMethods.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, Common.GoogleSearchEnable && Common.WebpageFetchEnable ? FetchPrompt : "");
 				if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowError(Resources.Error_setting_system_prompt, error);
@@ -219,15 +226,24 @@ namespace LMStud{
 			try{ SetSystemPromptInternal(genLock); } finally{ EndRetokenization(); }
 		}
 		private void SetModelStatus(){
-			butGen.Enabled = (Common.APIClientEnable || Common.LlModelLoaded) && !Generation.Generating;
-			butReset.Enabled = !Generation.Generating;
 			var activeSlot = ModelSlotManager.GetActiveChatSlot();
 			var loadedSlot = ModelSlotManager.GetLoadedLocalSlot();
+			var activeLoadedModel = GetLoadedModelForSlot(activeSlot);
+			var activeLocalLoaded = activeLoadedModel != null;
+			if(activeLocalLoaded) Common.LoadedModel = activeLoadedModel;
+			butGen.Enabled = (Common.APIClientEnable || activeLocalLoaded) && !Generation.Generating;
+			butReset.Enabled = !Generation.Generating;
+			butUnloadMain.Enabled = Common.LoadedLocalSlots.ContainsKey("main") && NativeMethods.IsModelSlotLoaded("main");
 			if(Common.APIClientEnable && activeSlot != null) toolStripStatusLabel1.Text = "Using slot " + activeSlot.Name + ": " + activeSlot.DisplayModel();
-			else if(Common.LlModelLoaded && activeSlot != null && activeSlot.Source == ModelSlotSource.Local) toolStripStatusLabel1.Text = "Using slot " + activeSlot.Name + ": " + Common.LoadedModel.Text;
-			else if(Common.LlModelLoaded) toolStripStatusLabel1.Text = Resources.Using_Model_ + Common.LoadedModel.Text;
+			else if(activeLocalLoaded && activeSlot != null) toolStripStatusLabel1.Text = "Using slot " + activeSlot.Name + ": " + activeLoadedModel.Text;
+			else if(Common.LlModelLoaded && Common.LoadedModel != null) toolStripStatusLabel1.Text = Resources.Using_Model_ + Common.LoadedModel.Text;
 			else toolStripStatusLabel1.Text = Resources.No_model_loaded;
 			if(Common.APIClientEnable && loadedSlot != null) toolStripStatusLabel1.Text += " | Loaded: " + loadedSlot.Name;
+		}
+		private static ListViewItem GetLoadedModelForSlot(ModelSlot slot){
+			if(slot == null || slot.Source != ModelSlotSource.Local) return null;
+			if(!Common.LoadedLocalSlots.TryGetValue(slot.Name, out var loadedModel)) return null;
+			return ModelSlotManager.CanServeLocalSlot(slot) ? loadedModel : null;
 		}
 		private NativeMethods.StudError LoadModel(string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){
 			var result = NativeMethods.LoadModel(filename, jinjaTemplate, nGPULayers, mMap, mLock, numaStrategy);
@@ -266,7 +282,7 @@ namespace LMStud{
 				checkLoadAuto.Checked = false;
 				return;
 			}
-			butLoad.Enabled = butUnload.Enabled = false;
+			SetModelLoadButtonsEnabled(false);
 			var modelsDir = Common.ModelsDir;
 			var fileName = Path.GetFileName(modelPath);
 			var meta = (List<GGUFMetadataManager.GGUFMetadataEntry>)modelLvi.Tag;
@@ -285,13 +301,20 @@ namespace LMStud{
 				var jinjaTmpl = overrides != null && overrides.OverrideJinja && File.Exists(overrides.JinjaTemplate) ? File.ReadAllText(overrides.JinjaTemplate) : null;
 				try{
 					if(!Generation.GenerationLock.Wait(-1)) return;
-					if(Common.LlModelLoaded) UnloadModelInternal(false);
 					Invoke(new MethodInvoker(() => {toolStripStatusLabel1.Text = Resources.Loading__ + fileName;}));
 					unsafe{
-						var result = LoadModel(modelPath, jinjaTmpl, gpuLayers, Common.MMap, Common.MLock, Common.NumaStrat);
+						var result = NativeMethods.ActivateModelSlot(slotName);
+						if(result != NativeMethods.StudError.Success){
+							ShowError("Activate slot", result);
+							return;
+						}
+						result = LoadModel(modelPath, jinjaTmpl, gpuLayers, Common.MMap, Common.MLock, Common.NumaStrat);
 						if(result != NativeMethods.StudError.Success){
 							Settings.Default.LoadAuto = false;
 							Settings.Default.Save();
+							Common.LoadedLocalSlots.Remove(slotName);
+							Common.LlModelLoaded = Common.LoadedLocalSlots.Count > 0;
+							Common.LoadedModel = Common.LoadedLocalSlots.TryGetValue(Common.ActiveModelSlotName ?? "", out var activeLoadedAfterLoadFailure) ? activeLoadedAfterLoadFailure : Common.LoadedLocalSlots.Values.FirstOrDefault();
 							return;
 						}
 						Common.LoadedModel = modelLvi;
@@ -303,8 +326,10 @@ namespace LMStud{
 						if(result != NativeMethods.StudError.Success){
 							Settings.Default.LoadAuto = false;
 							Settings.Default.Save();
-							Invoke(new MethodInvoker(() => UnloadModel(false)));
-							while(Common.LlModelLoaded) Thread.Sleep(10);
+							NativeMethods.FreeModelSlot(slotName);
+							Common.LoadedLocalSlots.Remove(slotName);
+							Common.LlModelLoaded = Common.LoadedLocalSlots.Count > 0;
+							Common.LoadedModel = Common.LoadedLocalSlots.TryGetValue(Common.ActiveModelSlotName ?? "", out var activeLoadedAfterSessionFailure) ? activeLoadedAfterSessionFailure : Common.LoadedLocalSlots.Values.FirstOrDefault();
 							return;
 						}
 						_tokenCallback = Generation.TokenCallback;
@@ -312,6 +337,7 @@ namespace LMStud{
 						Tools.RegisterTools();
 						SetSystemPrompt(false);
 						ModelSlotManager.LoadLocalIntoSlot(slotName, modelPath, makeSlotChat);
+						Common.LoadedLocalSlots[slotName] = modelLvi;
 						ApplyActiveSlotToRuntime(true);
 						try{
 							BeginInvoke(new MethodInvoker(() => {
@@ -329,32 +355,42 @@ namespace LMStud{
 					BeginInvoke(new MethodInvoker(() => {
 						SetModelStatus();
 						PopulateSlotsList();
-						butLoad.Enabled = butUnload.Enabled = true;
+						butLoadMain.Enabled = true;
+						UpdateSlotButtons();
 					}));
 				}
 			});
 		}
-		private void UnloadModelInternal(bool genLock){
+		private void UnloadModelInternal(bool genLock, string slotName){
 			try{
 				Generation.StopActiveGeneration();
 				if(genLock) Generation.GenerationLock.Wait(-1);
-				NativeMethods.FreeModel();
+				if(string.IsNullOrWhiteSpace(slotName)) slotName = Common.ActiveModelSlotName ?? "main";
+				NativeMethods.FreeModelSlot(slotName);
+			} finally{
+				if(!string.IsNullOrWhiteSpace(slotName)) Common.LoadedLocalSlots.Remove(slotName);
+				Common.LlModelLoaded = Common.LoadedLocalSlots.Count > 0;
+				Common.LoadedModel = Common.LoadedLocalSlots.TryGetValue(Common.ActiveModelSlotName ?? "", out var activeLoaded) ? activeLoaded : Common.LoadedLocalSlots.Values.FirstOrDefault();
 				try{
 					BeginInvoke(new MethodInvoker(() => {
 						toolTip1.SetToolTip(numCtxSize, _numCtxSizeToolTip);
 						SetModelStatus();
+						PopulateSlotsList();
+						UpdateSlotButtons();
 					}));
 				} catch(ObjectDisposedException){}
-			} finally{
-				Common.LoadedModel = null;
-				Common.LlModelLoaded = false;
-				try{ BeginInvoke(new MethodInvoker(PopulateSlotsList)); } catch(ObjectDisposedException){}
 				if(genLock) Generation.GenerationLock.Release();
 			}
 		}
-		private void UnloadModel(bool genLock){
-			butUnload.Enabled = false;
-			ThreadPool.QueueUserWorkItem(o => UnloadModelInternal(genLock));
+		private void UnloadModel(bool genLock, string slotName){
+			SetModelLoadButtonsEnabled(false);
+			ThreadPool.QueueUserWorkItem(o => UnloadModelInternal(genLock, slotName));
+		}
+		private void SetModelLoadButtonsEnabled(bool enabled){
+			butLoadMain.Enabled = enabled;
+			butUnloadMain.Enabled = enabled && Common.LoadedLocalSlots.ContainsKey("main") && NativeMethods.IsModelSlotLoaded("main");
+			butLoadSlot.Enabled = enabled;
+			butUnloadSlot.Enabled = enabled;
 		}
 		private static string ConvertValueToString(GGUFMetadataManager.GGUFMetaValue metaVal){
 			switch(metaVal.Type){

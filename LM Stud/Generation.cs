@@ -32,11 +32,20 @@ namespace LMStud {
 		}
 		internal static void Generate(MessageRole role, string prompt, bool addToChat){
 			var useRemote = Common.APIClientEnable;
-			if((!useRemote && !Common.LlModelLoaded) || string.IsNullOrWhiteSpace(prompt)) return;
+			var activeSlot = ModelSlotManager.GetActiveChatSlot();
+			if((!useRemote && !ModelSlotManager.CanServeLocalSlot(activeSlot)) || string.IsNullOrWhiteSpace(prompt)) return;
 			if(!GenerationLock.Wait(0)) return;
 			if(Generating || APIServerGenerating){
 				GenerationLock.Release();
 				return;
+			}
+			if(!useRemote){
+				var activationError = NativeMethods.ActivateModelSlot(activeSlot.Name);
+				if(activationError != NativeMethods.StudError.Success){
+					GenerationLock.Release();
+					MainForm.ShowError("Activate slot", activationError);
+					return;
+				}
 			}
 			if(MainForm.checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StopSpeechTranscription();
 			DialecticPaused = false;
@@ -290,7 +299,7 @@ namespace LMStud {
 			}
 			if(err != NativeMethods.StudError.Success) MainForm.ShowError(Resources.API_Server, "SetStateData", true);
 		}
-		internal static bool GenerateForApiServer(byte[] state, IntPtr chatState, string historyJson, MessageRole role, string prompt, string toolsJson, out APIClient.ChatCompletionResult result, out byte[] newState, out IntPtr newChatState, out int tokenCount){
+		internal static bool GenerateForApiServer(string slotName, byte[] state, IntPtr chatState, string historyJson, MessageRole role, string prompt, string toolsJson, out APIClient.ChatCompletionResult result, out byte[] newState, out IntPtr newChatState, out int tokenCount){
 			result = null;
 			newState = null;
 			newChatState = IntPtr.Zero;
@@ -298,7 +307,9 @@ namespace LMStud {
 			if(prompt == null) return false;
 			if(!GenerationLock.Wait(300000)) return false;
 			try{
-				if(!Common.LlModelLoaded || Generating || APIServerGenerating) return false;
+				if(string.IsNullOrWhiteSpace(slotName) || !NativeMethods.IsModelSlotLoaded(slotName) || Generating || APIServerGenerating) return false;
+				var activationError = NativeMethods.ActivateModelSlot(slotName);
+				if(activationError != NativeMethods.StudError.Success) return false;
 				APIServerGenerating = true;
 				_apiTokenCallback = null;
 				var originalState = GetState();

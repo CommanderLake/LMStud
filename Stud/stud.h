@@ -25,6 +25,9 @@ EXPORT StudError CreateSampler(float minP, float topP, int topK, float temp, flo
 EXPORT StudError CreateSession(int nCtx, int nBatch, unsigned int flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
 EXPORT void DestroySession();
 EXPORT StudError ResetChat();
+EXPORT StudError ActivateModelSlot(const char* slotName);
+EXPORT bool IsModelSlotLoaded(const char* slotName);
+EXPORT void FreeModelSlot(const char* slotName);
 EXPORT void FreeModel();
 EXPORT StudError LoadModel(const char* filename, const char* jinjaTemplate, int nGPULayers, bool mMap, bool mLock, ggml_numa_strategy numaStrategy);
 EXPORT bool HasTool(const char* name);

@@ -89,7 +89,7 @@ namespace LMStud{
 			var setStatusLabel = false;
 			var loadedModel = Common.LoadedModel;
 			ModelSettings ms = default;
-			var overrideSettings = Common.LlModelLoaded && _modelSettings.TryGetValue(loadedModel.SubItems[1].Text.Substring(Common.ModelsDir.Length), out ms) && ms.OverrideSettings;
+			var overrideSettings = Common.LlModelLoaded && loadedModel != null && _modelSettings.TryGetValue(loadedModel.SubItems[1].Text.Substring(Common.ModelsDir.Length), out ms) && ms.OverrideSettings;
 			UpdateSetting(ref Common.SystemPrompt, textSystemPrompt.Text, value => {
 				Settings.Default.SystemPrompt = value;
 				if(overrideSettings){
@@ -323,10 +323,10 @@ namespace LMStud{
 			var topP = overrideSettings ? ms.TopP : Common.TopP;
 			var topK = overrideSettings ? ms.TopK : Common.TopK;
 			var temp = overrideSettings ? ms.Temp : Common.Temp;
-			if(Common.LlModelLoaded)
+			if(Common.LlModelLoaded && loadedModel != null)
 				if(reloadModel &&
 					MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) ==
-					DialogResult.Yes){ LoadModel(loadedModel, false); }
+					DialogResult.Yes){ LoadModel(loadedModel, false, Common.ActiveModelSlotName ?? "main"); }
 				else{
 					if(reloadCtx) CreateContext(Common.CntCtxMax, Common.BatchSize, flash, Common.NThreads, Common.NThreadsBatch);
 					if(reloadSmpl) CreateSampler(minP, topP, topK, temp, Common.RepPen);

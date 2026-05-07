@@ -60,6 +60,13 @@ namespace LMStud{
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError CreateSession(int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern StudError ActivateModelSlot([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		[return: MarshalAs(UnmanagedType.I1)]
+		internal static extern bool IsModelSlotLoaded([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void FreeModelSlot([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError LoadModel(string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void FreeModel();

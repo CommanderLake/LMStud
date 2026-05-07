@@ -258,6 +258,42 @@
   <data name="splitContainer2.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
+  <data name="butExtract.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Bottom, Right</value>
+  </data>
+  <data name="butExtract.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="butExtract.Location" type="System.Drawing.Point, System.Drawing">
+    <value>732, 434</value>
+  </data>
+  <data name="butExtract.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>0, 0, 0, 0</value>
+  </data>
+  <data name="butExtract.Size" type="System.Drawing.Size, System.Drawing">
+    <value>100, 23</value>
+  </data>
+  <data name="butExtract.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="butExtract.Text" xml:space="preserve">
+    <value>Extract Template</value>
+  </data>
+  <data name="&gt;&gt;butExtract.Name" xml:space="preserve">
+    <value>butExtract</value>
+  </data>
+  <data name="&gt;&gt;butExtract.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;butExtract.Parent" xml:space="preserve">
+    <value>splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;butExtract.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="listViewModels.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Bottom, Left, Right</value>
+  </data>
   <data name="columnHeader1.Text" xml:space="preserve">
     <value>Name</value>
   </data>
@@ -270,9 +306,6 @@
   <data name="columnHeader2.Width" type="System.Int32, mscorlib">
     <value>746</value>
   </data>
-  <data name="listViewModels.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
-    <value>Fill</value>
-  </data>
   <data name="listViewModels.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
@@ -280,7 +313,7 @@
     <value>0, 0, 0, 0</value>
   </data>
   <data name="listViewModels.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1004, 457</value>
+    <value>1004, 434</value>
   </data>
   <data name="listViewModels.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -295,7 +328,76 @@
     <value>splitContainer2.Panel1</value>
   </data>
   <data name="&gt;&gt;listViewModels.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>1</value>
+  </data>
+  <data name="butUnloadMain.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Bottom, Right</value>
+  </data>
+  <data name="butUnloadMain.Enabled" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="butUnloadMain.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="butUnloadMain.Location" type="System.Drawing.Point, System.Drawing">
+    <value>924, 434</value>
+  </data>
+  <data name="butUnloadMain.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>0, 0, 0, 0</value>
+  </data>
+  <data name="butUnloadMain.Size" type="System.Drawing.Size, System.Drawing">
+    <value>80, 23</value>
+  </data>
+  <data name="butUnloadMain.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="butUnloadMain.Text" xml:space="preserve">
+    <value>Unload Main</value>
+  </data>
+  <data name="&gt;&gt;butUnloadMain.Name" xml:space="preserve">
+    <value>butUnloadMain</value>
+  </data>
+  <data name="&gt;&gt;butUnloadMain.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;butUnloadMain.Parent" xml:space="preserve">
+    <value>splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;butUnloadMain.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="butLoadMain.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Bottom, Right</value>
+  </data>
+  <data name="butLoadMain.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="butLoadMain.Location" type="System.Drawing.Point, System.Drawing">
+    <value>832, 434</value>
+  </data>
+  <data name="butLoadMain.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>0, 0, 0, 0</value>
+  </data>
+  <data name="butLoadMain.Size" type="System.Drawing.Size, System.Drawing">
+    <value>92, 23</value>
+  </data>
+  <data name="butLoadMain.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="butLoadMain.Text" xml:space="preserve">
+    <value>Load Into Main</value>
+  </data>
+  <data name="&gt;&gt;butLoadMain.Name" xml:space="preserve">
+    <value>butLoadMain</value>
+  </data>
+  <data name="&gt;&gt;butLoadMain.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;butLoadMain.Parent" xml:space="preserve">
+    <value>splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;butLoadMain.ZOrder" xml:space="preserve">
+    <value>3</value>
   </data>
   <data name="&gt;&gt;splitContainer2.Panel1.Name" xml:space="preserve">
     <value>splitContainer2.Panel1</value>
@@ -381,9 +483,9 @@
   <data name="textJinjaTmplModel.TabIndex" type="System.Int32, mscorlib">
     <value>37</value>
   </data>
-  <data name="toolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing">
+  <metadata name="toolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>254, 17</value>
-  </data>
+  </metadata>
   <data name="textJinjaTmplModel.ToolTip" xml:space="preserve">
     <value>Specify the path to a text file containing a Jinja template, this file must remain in place.</value>
   </data>
@@ -1119,8 +1221,71 @@
   <data name="&gt;&gt;tabPageMetadata.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
+  <data name="butLoadSlot.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Bottom, Right</value>
+  </data>
+  <data name="butLoadSlot.Location" type="System.Drawing.Point, System.Drawing">
+    <value>843, 408</value>
+  </data>
+  <data name="butLoadSlot.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>0, 0, 0, 0</value>
+  </data>
+  <data name="butLoadSlot.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 23</value>
+  </data>
+  <data name="butLoadSlot.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="butLoadSlot.Text" xml:space="preserve">
+    <value>Load Slot</value>
+  </data>
+  <data name="&gt;&gt;butLoadSlot.Name" xml:space="preserve">
+    <value>butLoadSlot</value>
+  </data>
+  <data name="&gt;&gt;butLoadSlot.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;butLoadSlot.Parent" xml:space="preserve">
+    <value>tabPageSlots</value>
+  </data>
+  <data name="&gt;&gt;butLoadSlot.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="butUnloadSlot.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Bottom, Right</value>
+  </data>
+  <data name="butUnloadSlot.Location" type="System.Drawing.Point, System.Drawing">
+    <value>918, 408</value>
+  </data>
+  <data name="butUnloadSlot.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>0, 0, 0, 0</value>
+  </data>
+  <data name="butUnloadSlot.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 23</value>
+  </data>
+  <data name="butUnloadSlot.TabIndex" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
+  <data name="butUnloadSlot.Text" xml:space="preserve">
+    <value>Unload Slot</value>
+  </data>
+  <data name="&gt;&gt;butUnloadSlot.Name" xml:space="preserve">
+    <value>butUnloadSlot</value>
+  </data>
+  <data name="&gt;&gt;butUnloadSlot.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;butUnloadSlot.Parent" xml:space="preserve">
+    <value>tabPageSlots</value>
+  </data>
+  <data name="&gt;&gt;butUnloadSlot.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
   <data name="groupBoxSlotConfig.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
+  </data>
+  <data name="butSlotsEditUseSelectedModel.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
   </data>
   <data name="butSlotsEditUseSelectedModel.Location" type="System.Drawing.Point, System.Drawing">
     <value>100, 379</value>
@@ -1148,6 +1313,9 @@
   </data>
   <data name="&gt;&gt;butSlotsEditUseSelectedModel.ZOrder" xml:space="preserve">
     <value>0</value>
+  </data>
+  <data name="label50.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
   </data>
   <data name="label50.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 355</value>
@@ -1183,7 +1351,7 @@
     <value>100, 19</value>
   </data>
   <data name="textSlotsEditName.Size" type="System.Drawing.Size, System.Drawing">
-    <value>280, 21</value>
+    <value>280, 20</value>
   </data>
   <data name="textSlotsEditName.TabIndex" type="System.Int32, mscorlib">
     <value>4</value>
@@ -1290,6 +1458,9 @@
   <data name="butSlotsAdd.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
+  <data name="butSlotsAdd.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
   <data name="butSlotsAdd.Location" type="System.Drawing.Point, System.Drawing">
     <value>216, 379</value>
   </data>
@@ -1319,6 +1490,9 @@
   </data>
   <data name="label49.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
+  </data>
+  <data name="label49.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
   </data>
   <data name="label49.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 331</value>
@@ -1374,6 +1548,9 @@
   <data name="label48.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
+  <data name="label48.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
   <data name="label48.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 199</value>
   </data>
@@ -1427,6 +1604,9 @@
   </data>
   <data name="label47.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
+  </data>
+  <data name="label47.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
   </data>
   <data name="label47.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 149</value>
@@ -1488,6 +1668,9 @@
   <data name="label46.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
+  <data name="label46.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
   <data name="label46.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 123</value>
   </data>
@@ -1542,6 +1725,9 @@
   <data name="label45.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
+  <data name="label45.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
   <data name="label45.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 97</value>
   </data>
@@ -1578,6 +1764,9 @@
   <data name="checkSlotsEditStore.CheckAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
+  <data name="checkSlotsEditStore.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
   <data name="checkSlotsEditStore.Location" type="System.Drawing.Point, System.Drawing">
     <value>329, 178</value>
   </data>
@@ -1607,6 +1796,9 @@
   </data>
   <data name="label44.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
+  </data>
+  <data name="label44.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
   </data>
   <data name="label44.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 71</value>
@@ -1661,6 +1853,9 @@
   </data>
   <data name="label43.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
+  </data>
+  <data name="label43.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
   </data>
   <data name="label43.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 44</value>
@@ -1730,6 +1925,9 @@
   </data>
   <data name="label42.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
+  </data>
+  <data name="label42.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
   </data>
   <data name="label42.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 17</value>
@@ -1897,10 +2095,13 @@
     <value>tabPageSlots</value>
   </data>
   <data name="&gt;&gt;groupBoxSlotConfig.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>2</value>
   </data>
   <data name="butSlotsRemove.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Left</value>
+  </data>
+  <data name="butSlotsRemove.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
   </data>
   <data name="butSlotsRemove.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 408</value>
@@ -1927,7 +2128,7 @@
     <value>tabPageSlots</value>
   </data>
   <data name="&gt;&gt;butSlotsRemove.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>3</value>
   </data>
   <data name="listViewSlots.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Bottom, Left, Right</value>
@@ -1975,7 +2176,7 @@
     <value>tabPageSlots</value>
   </data>
   <data name="&gt;&gt;listViewSlots.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>4</value>
   </data>
   <data name="tabPageSlots.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 22</value>
@@ -2062,7 +2263,7 @@
     <value>tabPageModels</value>
   </data>
   <data name="&gt;&gt;splitContainer2.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>0</value>
   </data>
   <data name="splitContainer3.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Bottom, Left, Right</value>
@@ -5964,36 +6165,6 @@
   <data name="&gt;&gt;tabPageSettings.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
-  <data name="butExtract.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Bottom, Right</value>
-  </data>
-  <data name="butExtract.Location" type="System.Drawing.Point, System.Drawing">
-    <value>758, 926</value>
-  </data>
-  <data name="butExtract.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>0, 0, 0, 0</value>
-  </data>
-  <data name="butExtract.Size" type="System.Drawing.Size, System.Drawing">
-    <value>100, 23</value>
-  </data>
-  <data name="butExtract.TabIndex" type="System.Int32, mscorlib">
-    <value>5</value>
-  </data>
-  <data name="butExtract.Text" xml:space="preserve">
-    <value>Extract Template</value>
-  </data>
-  <data name="&gt;&gt;butExtract.Name" xml:space="preserve">
-    <value>butExtract</value>
-  </data>
-  <data name="&gt;&gt;butExtract.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;butExtract.Parent" xml:space="preserve">
-    <value>tabPageModels</value>
-  </data>
-  <data name="&gt;&gt;butExtract.ZOrder" xml:space="preserve">
-    <value>0</value>
-  </data>
   <data name="checkLoadAuto.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Left</value>
   </data>
@@ -6025,76 +6196,7 @@
     <value>tabPageModels</value>
   </data>
   <data name="&gt;&gt;checkLoadAuto.ZOrder" xml:space="preserve">
-    <value>2</value>
-  </data>
-  <data name="butUnload.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Bottom, Right</value>
-  </data>
-  <data name="butUnload.Enabled" type="System.Boolean, mscorlib">
-    <value>False</value>
-  </data>
-  <data name="butUnload.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
-    <value>NoControl</value>
-  </data>
-  <data name="butUnload.Location" type="System.Drawing.Point, System.Drawing">
-    <value>933, 926</value>
-  </data>
-  <data name="butUnload.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>0, 0, 0, 0</value>
-  </data>
-  <data name="butUnload.Size" type="System.Drawing.Size, System.Drawing">
-    <value>75, 23</value>
-  </data>
-  <data name="butUnload.TabIndex" type="System.Int32, mscorlib">
-    <value>2</value>
-  </data>
-  <data name="butUnload.Text" xml:space="preserve">
-    <value>Unload</value>
-  </data>
-  <data name="&gt;&gt;butUnload.Name" xml:space="preserve">
-    <value>butUnload</value>
-  </data>
-  <data name="&gt;&gt;butUnload.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;butUnload.Parent" xml:space="preserve">
-    <value>tabPageModels</value>
-  </data>
-  <data name="&gt;&gt;butUnload.ZOrder" xml:space="preserve">
-    <value>3</value>
-  </data>
-  <data name="butLoad.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Bottom, Right</value>
-  </data>
-  <data name="butLoad.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
-    <value>NoControl</value>
-  </data>
-  <data name="butLoad.Location" type="System.Drawing.Point, System.Drawing">
-    <value>858, 926</value>
-  </data>
-  <data name="butLoad.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>0, 0, 0, 0</value>
-  </data>
-  <data name="butLoad.Size" type="System.Drawing.Size, System.Drawing">
-    <value>75, 23</value>
-  </data>
-  <data name="butLoad.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
-  </data>
-  <data name="butLoad.Text" xml:space="preserve">
-    <value>Load</value>
-  </data>
-  <data name="&gt;&gt;butLoad.Name" xml:space="preserve">
-    <value>butLoad</value>
-  </data>
-  <data name="&gt;&gt;butLoad.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;butLoad.Parent" xml:space="preserve">
-    <value>tabPageModels</value>
-  </data>
-  <data name="&gt;&gt;butLoad.ZOrder" xml:space="preserve">
-    <value>4</value>
   </data>
   <data name="tabPageModels.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 22</value>
@@ -6174,12 +6276,12 @@
   <data name="&gt;&gt;tabControl1.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
-  <data name="folderBrowserDialog1.TrayLocation" type="System.Drawing.Point, System.Drawing">
+  <metadata name="folderBrowserDialog1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
-  </data>
-  <data name="statusStrip1.TrayLocation" type="System.Drawing.Point, System.Drawing">
+  </metadata>
+  <metadata name="statusStrip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>155, 17</value>
-  </data>
+  </metadata>
   <data name="toolStripStatusLabel1.Size" type="System.Drawing.Size, System.Drawing">
     <value>99, 19</value>
   </data>
@@ -6240,21 +6342,21 @@
   <data name="&gt;&gt;statusStrip1.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
-  <data name="openFileDialog1.TrayLocation" type="System.Drawing.Point, System.Drawing">
+  <metadata name="openFileDialog1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>338, 17</value>
-  </data>
+  </metadata>
   <data name="openFileDialog1.Filter" xml:space="preserve">
     <value>Text files (*.txt)|*.txt|All files (*.*)|*.*</value>
   </data>
-  <data name="saveFileDialog1.TrayLocation" type="System.Drawing.Point, System.Drawing">
+  <metadata name="saveFileDialog1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>478, 17</value>
-  </data>
+  </metadata>
   <data name="saveFileDialog1.Filter" xml:space="preserve">
     <value>Text files (*.txt)|*.txt|All files (*.*)|*.*</value>
   </data>
-  <data name="$this.Localizable" type="System.Boolean, mscorlib">
+  <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
-  </data>
+  </metadata>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
     <value>96, 96</value>
   </data>

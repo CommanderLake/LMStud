@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+using System.Collections.Generic;
+using System.Windows.Forms;
 namespace LMStud{
 	internal static class Common{
 		internal static bool APIClientEnable;
@@ -56,6 +57,7 @@ namespace LMStud{
 		internal static int CntCtxMax;
 		internal static int ModelCtxMax;
 		internal static ListViewItem LoadedModel;
+		internal static readonly Dictionary<string, ListViewItem> LoadedLocalSlots = new Dictionary<string, ListViewItem>(System.StringComparer.OrdinalIgnoreCase);
 		internal static readonly string[] ReasoningEffortValues = { null, "none", "low", "medium", "high", "xhigh" };
 		internal static readonly string[] ReasoningSummaryValues = { null, "auto", "concise", "detailed" };
 		internal static string GetReasoningEffort() { return GetReasoningValue(ReasoningEffortValues, Common.APIClientReasoningEffort); }

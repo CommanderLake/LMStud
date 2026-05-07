@@ -39,9 +39,12 @@ namespace LMStud
 			this.panelChat = new LMStud.MyFlowLayoutPanel();
 			this.textInput = new System.Windows.Forms.TextBox();
 			this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+			this.butExtract = new System.Windows.Forms.Button();
 			this.listViewModels = new System.Windows.Forms.ListView();
 			this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.butUnloadMain = new System.Windows.Forms.Button();
+			this.butLoadMain = new System.Windows.Forms.Button();
 			this.tabControlModelStuff = new System.Windows.Forms.TabControl();
 			this.tabPageModelSettings = new System.Windows.Forms.TabPage();
 			this.groupJinjaTmplModel = new System.Windows.Forms.GroupBox();
@@ -73,6 +76,8 @@ namespace LMStud
 			this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.tabPageSlots = new System.Windows.Forms.TabPage();
+			this.butLoadSlot = new System.Windows.Forms.Button();
+			this.butUnloadSlot = new System.Windows.Forms.Button();
 			this.groupBoxSlotConfig = new System.Windows.Forms.GroupBox();
 			this.butSlotsEditUseSelectedModel = new System.Windows.Forms.Button();
 			this.label50 = new System.Windows.Forms.Label();
@@ -237,10 +242,7 @@ namespace LMStud
 			this.label1 = new System.Windows.Forms.Label();
 			this.textSystemPrompt = new System.Windows.Forms.TextBox();
 			this.tabPageModels = new System.Windows.Forms.TabPage();
-			this.butExtract = new System.Windows.Forms.Button();
 			this.checkLoadAuto = new System.Windows.Forms.CheckBox();
-			this.butUnload = new System.Windows.Forms.Button();
-			this.butLoad = new System.Windows.Forms.Button();
 			this.tabPageHuggingFace = new System.Windows.Forms.TabPage();
 			this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
 			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
@@ -359,18 +361,28 @@ namespace LMStud
 			// 
 			// splitContainer2.Panel1
 			// 
+			this.splitContainer2.Panel1.Controls.Add(this.butExtract);
 			this.splitContainer2.Panel1.Controls.Add(this.listViewModels);
+			this.splitContainer2.Panel1.Controls.Add(this.butUnloadMain);
+			this.splitContainer2.Panel1.Controls.Add(this.butLoadMain);
 			// 
 			// splitContainer2.Panel2
 			// 
 			this.splitContainer2.Panel2.Controls.Add(this.tabControlModelStuff);
 			// 
+			// butExtract
+			// 
+			resources.ApplyResources(this.butExtract, "butExtract");
+			this.butExtract.Name = "butExtract";
+			this.butExtract.UseVisualStyleBackColor = true;
+			this.butExtract.Click += new System.EventHandler(this.ButExtract_Click);
+			// 
 			// listViewModels
 			// 
+			resources.ApplyResources(this.listViewModels, "listViewModels");
 			this.listViewModels.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1,
             this.columnHeader2});
-			resources.ApplyResources(this.listViewModels, "listViewModels");
 			this.listViewModels.GridLines = true;
 			this.listViewModels.HideSelection = false;
 			this.listViewModels.MultiSelect = false;
@@ -388,6 +400,20 @@ namespace LMStud
 			// columnHeader2
 			// 
 			resources.ApplyResources(this.columnHeader2, "columnHeader2");
+			// 
+			// butUnloadMain
+			// 
+			resources.ApplyResources(this.butUnloadMain, "butUnloadMain");
+			this.butUnloadMain.Name = "butUnloadMain";
+			this.butUnloadMain.UseVisualStyleBackColor = true;
+			this.butUnloadMain.Click += new System.EventHandler(this.ButUnload_Click);
+			// 
+			// butLoadMain
+			// 
+			resources.ApplyResources(this.butLoadMain, "butLoadMain");
+			this.butLoadMain.Name = "butLoadMain";
+			this.butLoadMain.UseVisualStyleBackColor = true;
+			this.butLoadMain.Click += new System.EventHandler(this.ButLoad_Click);
 			// 
 			// tabControlModelStuff
 			// 
@@ -671,12 +697,28 @@ namespace LMStud
 			// 
 			// tabPageSlots
 			// 
+			this.tabPageSlots.Controls.Add(this.butLoadSlot);
+			this.tabPageSlots.Controls.Add(this.butUnloadSlot);
 			this.tabPageSlots.Controls.Add(this.groupBoxSlotConfig);
 			this.tabPageSlots.Controls.Add(this.butSlotsRemove);
 			this.tabPageSlots.Controls.Add(this.listViewSlots);
 			resources.ApplyResources(this.tabPageSlots, "tabPageSlots");
 			this.tabPageSlots.Name = "tabPageSlots";
 			this.tabPageSlots.UseVisualStyleBackColor = true;
+			// 
+			// butLoadSlot
+			// 
+			resources.ApplyResources(this.butLoadSlot, "butLoadSlot");
+			this.butLoadSlot.Name = "butLoadSlot";
+			this.butLoadSlot.UseVisualStyleBackColor = true;
+			this.butLoadSlot.Click += new System.EventHandler(this.ButLoadSlot_Click);
+			// 
+			// butUnloadSlot
+			// 
+			resources.ApplyResources(this.butUnloadSlot, "butUnloadSlot");
+			this.butUnloadSlot.Name = "butUnloadSlot";
+			this.butUnloadSlot.UseVisualStyleBackColor = true;
+			this.butUnloadSlot.Click += new System.EventHandler(this.ButUnloadSlot_Click);
 			// 
 			// groupBoxSlotConfig
 			// 
@@ -736,6 +778,7 @@ namespace LMStud
 			resources.ApplyResources(this.butSlotsSave, "butSlotsSave");
 			this.butSlotsSave.Name = "butSlotsSave";
 			this.butSlotsSave.UseVisualStyleBackColor = true;
+			this.butSlotsSave.Click += new System.EventHandler(this.ButSlotsSave_Click);
 			// 
 			// comboSlotsEditSource
 			// 
@@ -752,6 +795,7 @@ namespace LMStud
 			resources.ApplyResources(this.butSlotsAdd, "butSlotsAdd");
 			this.butSlotsAdd.Name = "butSlotsAdd";
 			this.butSlotsAdd.UseVisualStyleBackColor = true;
+			this.butSlotsAdd.Click += new System.EventHandler(this.ButSlotsAdd_Click);
 			// 
 			// label49
 			// 
@@ -793,6 +837,7 @@ namespace LMStud
 			resources.ApplyResources(this.comboSlotsEditApiModel, "comboSlotsEditApiModel");
 			this.comboSlotsEditApiModel.FormattingEnabled = true;
 			this.comboSlotsEditApiModel.Name = "comboSlotsEditApiModel";
+			this.comboSlotsEditApiModel.DropDown += new System.EventHandler(this.ComboSlotsEditApiModel_DropDown);
 			// 
 			// label45
 			// 
@@ -854,6 +899,7 @@ namespace LMStud
 			resources.ApplyResources(this.butSlotsRemove, "butSlotsRemove");
 			this.butSlotsRemove.Name = "butSlotsRemove";
 			this.butSlotsRemove.UseVisualStyleBackColor = true;
+			this.butSlotsRemove.Click += new System.EventHandler(this.ButSlotsRemove_Click);
 			// 
 			// listViewSlots
 			// 
@@ -870,6 +916,7 @@ namespace LMStud
 			this.listViewSlots.Name = "listViewSlots";
 			this.listViewSlots.UseCompatibleStateImageBehavior = false;
 			this.listViewSlots.View = System.Windows.Forms.View.Details;
+			this.listViewSlots.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ListViewSlots_KeyDown);
 			// 
 			// columnSlotsName
 			// 
@@ -2083,21 +2130,11 @@ namespace LMStud
 			// 
 			// tabPageModels
 			// 
-			this.tabPageModels.Controls.Add(this.butExtract);
 			this.tabPageModels.Controls.Add(this.splitContainer2);
 			this.tabPageModels.Controls.Add(this.checkLoadAuto);
-			this.tabPageModels.Controls.Add(this.butUnload);
-			this.tabPageModels.Controls.Add(this.butLoad);
 			resources.ApplyResources(this.tabPageModels, "tabPageModels");
 			this.tabPageModels.Name = "tabPageModels";
 			this.tabPageModels.UseVisualStyleBackColor = true;
-			// 
-			// butExtract
-			// 
-			resources.ApplyResources(this.butExtract, "butExtract");
-			this.butExtract.Name = "butExtract";
-			this.butExtract.UseVisualStyleBackColor = true;
-			this.butExtract.Click += new System.EventHandler(this.ButExtract_Click);
 			// 
 			// checkLoadAuto
 			// 
@@ -2105,20 +2142,6 @@ namespace LMStud
 			this.checkLoadAuto.Name = "checkLoadAuto";
 			this.checkLoadAuto.UseVisualStyleBackColor = true;
 			this.checkLoadAuto.CheckedChanged += new System.EventHandler(this.CheckLoadAuto_CheckedChanged);
-			// 
-			// butUnload
-			// 
-			resources.ApplyResources(this.butUnload, "butUnload");
-			this.butUnload.Name = "butUnload";
-			this.butUnload.UseVisualStyleBackColor = true;
-			this.butUnload.Click += new System.EventHandler(this.ButUnload_Click);
-			// 
-			// butLoad
-			// 
-			resources.ApplyResources(this.butLoad, "butLoad");
-			this.butLoad.Name = "butLoad";
-			this.butLoad.UseVisualStyleBackColor = true;
-			this.butLoad.Click += new System.EventHandler(this.ButLoad_Click);
 			// 
 			// tabPageHuggingFace
 			// 
@@ -2317,7 +2340,7 @@ namespace LMStud
 		internal System.Windows.Forms.ListView listViewModels;
 		private System.Windows.Forms.ColumnHeader columnHeader1;
 		private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
-		private System.Windows.Forms.Button butLoad;
+		private System.Windows.Forms.Button butLoadMain;
 		private System.Windows.Forms.ColumnHeader columnHeader2;
 		private System.Windows.Forms.NumericUpDown numNGen;
 		private System.Windows.Forms.Label label4;
@@ -2331,7 +2354,7 @@ namespace LMStud
 		private System.Windows.Forms.NumericUpDown numBatchSize;
 		private System.Windows.Forms.Label label12;
 		private System.Windows.Forms.ComboBox comboNUMAStrat;
-		private System.Windows.Forms.Button butUnload;
+		private System.Windows.Forms.Button butUnloadMain;
 		internal System.Windows.Forms.ToolStripStatusLabel labelTokens;
 		internal System.Windows.Forms.CheckBox checkMarkdown;
 		internal MyFlowLayoutPanel panelChat;
@@ -2507,5 +2530,7 @@ namespace LMStud
 		private System.Windows.Forms.GroupBox groupBoxSlotConfig;
 		private System.Windows.Forms.Label label50;
 		private System.Windows.Forms.Button butSlotsEditUseSelectedModel;
+		private System.Windows.Forms.Button butLoadSlot;
+		private System.Windows.Forms.Button butUnloadSlot;
 	}
 }

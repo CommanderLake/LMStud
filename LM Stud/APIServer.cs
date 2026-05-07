@@ -152,7 +152,7 @@ namespace LMStud{
 				ctx.Response.ContentType = "application/json";
 				var toolsJson = ResolveClientToolsJson(session, request);
 				var historyJson = historyMessages != null && historyMessages.Count > 0 ? BuildChatHistoryJson(historyMessages) : null;
-				if(!Generation.GenerateForApiServer(session.State, session.NativeChatState, historyJson, ToNativeRole(latestInput.Role), latestInput.Content, toolsJson, out var result, out var newState, out newChatState, out var tokens)){
+				if(!Generation.GenerateForApiServer(slot.Name, session.State, session.NativeChatState, historyJson, ToNativeRole(latestInput.Role), latestInput.Content, toolsJson, out var result, out var newState, out newChatState, out var tokens)){
 					WriteError(ctx, 409, "generation_busy", "The local backend is busy or could not generate a response.");
 					return;
 				}

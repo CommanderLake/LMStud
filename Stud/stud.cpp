@@ -8,6 +8,7 @@
 #include <regex>
 #include <unordered_map>
 #include <algorithm>
+#include <cctype>
 #include <cstring>
 #include <mutex>
 #include <thread>
@@ -124,13 +125,13 @@ static StudError RegisterAPIToolSchemas(const char* toolsJson){
 }
 class ScopedAPITools{
 public:
-	ScopedAPITools() : _toolsSnapshot(Stud::state.tools), _handlersSnapshot(Stud::state.toolHandlers), _syntaxSnapshot(Stud::state.session.syntax){}
+	ScopedAPITools() : _toolsSnapshot(Stud::state.tools), _handlersSnapshot(Stud::state.toolHandlers), _syntaxSnapshot(Stud::runtime().session.syntax){}
 	~ScopedAPITools(){ Restore(); }
 	void Restore(){
 		if(_restored) return;
 		Stud::state.tools = std::move(_toolsSnapshot);
 		Stud::state.toolHandlers = std::move(_handlersSnapshot);
-		Stud::state.session.syntax = _syntaxSnapshot;
+		Stud::runtime().session.syntax = _syntaxSnapshot;
 		MarkToolsJsonDirty();
 		_restored = true;
 	}
@@ -140,10 +141,44 @@ private:
 	common_chat_parser_params _syntaxSnapshot{};
 	bool _restored = false;
 };
+static std::string NormalizeModelSlotName(const char* slotName){
+	std::string name = slotName ? slotName : "";
+	name.erase(name.begin(), std::find_if(name.begin(), name.end(), [](unsigned char ch){ return !std::isspace(ch); }));
+	name.erase(std::find_if(name.rbegin(), name.rend(), [](unsigned char ch){ return !std::isspace(ch); }).base(), name.end());
+	if(name.empty()) name = "main";
+	std::transform(name.begin(), name.end(), name.begin(), [](unsigned char ch){ return static_cast<char>(std::tolower(ch)); });
+	return name;
+}
+static Stud::ModelRuntime* FindModelRuntime(const std::string& slotName){
+	if(slotName == "main") return &Stud::state.defaultRuntime;
+	const auto it = Stud::state.runtimes.find(slotName);
+	return it == Stud::state.runtimes.end() ? nullptr : it->second.get();
+}
+static Stud::ModelRuntime& GetOrCreateModelRuntime(const std::string& slotName){
+	if(slotName == "main"){
+		Stud::state.defaultRuntime.slotName = "main";
+		return Stud::state.defaultRuntime;
+	}
+	auto& runtime = Stud::state.runtimes[slotName];
+	if(!runtime){
+		runtime = std::make_unique<Stud::ModelRuntime>();
+		runtime->slotName = slotName;
+	}
+	return *runtime;
+}
+StudError ActivateModelSlot(const char* slotName){
+	const auto normalized = NormalizeModelSlotName(slotName);
+	Stud::state.activeRuntime = &GetOrCreateModelRuntime(normalized);
+	return StudError::Success;
+}
+bool IsModelSlotLoaded(const char* slotName){
+	const auto* runtime = FindModelRuntime(NormalizeModelSlotName(slotName));
+	return runtime && runtime->llModel && runtime->session.ctx;
+}
 StudError CreateContext(const int nCtx, const int batchSize, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch){
-	if(Stud::state.session.ctx){
-		llama_free(Stud::state.session.ctx);
-		Stud::state.session.ctx = nullptr;
+	if(Stud::runtime().session.ctx){
+		llama_free(Stud::runtime().session.ctx);
+		Stud::runtime().session.ctx = nullptr;
 	}
 	auto ctxParams = llama_context_default_params();
 	ctxParams.n_ctx = nCtx;
@@ -156,12 +191,12 @@ StudError CreateContext(const int nCtx, const int batchSize, const unsigned int 
 	ctxParams.n_threads_batch = nThreadsBatch;
 	_gpuOomStud = false;
 	llama_log_set(GPUOomLogCallbackStud, nullptr);
-	Stud::state.session.ctx = llama_init_from_model(Stud::state.llModel, ctxParams);
+	Stud::runtime().session.ctx = llama_init_from_model(Stud::runtime().llModel, ctxParams);
 	llama_log_set(nullptr, nullptr);
-	if(!Stud::state.session.ctx){ return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantCreateContext; }
-	Stud::state.session.memory = llama_get_memory(Stud::state.session.ctx);
+	if(!Stud::runtime().session.ctx){ return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantCreateContext; }
+	Stud::runtime().session.memory = llama_get_memory(Stud::runtime().session.ctx);
 	auto result = StudError::Success;
-	if(Stud::state.session.lanes[0].sampler) result = RetokenizeChat(true);
+	if(Stud::runtime().session.lanes[0].sampler) result = RetokenizeChat(true);
 	return result;
 }
 StudError CreateSamplerInternal(const float minP, const float topP, const int topK, const float temp, const float repeatPenalty, llama_sampler* & smpl){
@@ -180,45 +215,57 @@ StudError CreateSamplerInternal(const float minP, const float topP, const int to
 	return StudError::Success;
 }
 StudError CreateSampler(const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
-	const auto result = CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, Stud::state.session.lanes[0].sampler);
+	const auto result = CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, Stud::runtime().session.lanes[0].sampler);
 	if(result != StudError::Success) return result;
-	return CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, Stud::state.session.lanes[1].sampler);
+	return CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, Stud::runtime().session.lanes[1].sampler);
 }
 StudError CreateSession(const int nCtx, const int batchSize, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
-	if(!Stud::state.llModel) return StudError::ModelNotLoaded;
-	Stud::state.session.syntax.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
+	if(!Stud::runtime().llModel) return StudError::ModelNotLoaded;
+	Stud::runtime().session.syntax.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
 	auto result = CreateContext(nCtx, batchSize, flashAttn, nThreads, nThreadsBatch);
 	if(result != StudError::Success) return result;
-	Stud::state.session.batchSize = batchSize;
+	Stud::runtime().session.batchSize = batchSize;
 	result = CreateSampler(minP, topP, topK, temp, repeatPenalty);
 	if(result != StudError::Success) return result;
 	return StudError::Success;
 }
 void DestroySession(){
-	if(Stud::state.session.lanes[0].sampler){
-		llama_sampler_free(Stud::state.session.lanes[0].sampler);
-		Stud::state.session.lanes[0].sampler = nullptr;
+	if(Stud::runtime().session.lanes[0].sampler){
+		llama_sampler_free(Stud::runtime().session.lanes[0].sampler);
+		Stud::runtime().session.lanes[0].sampler = nullptr;
 	}
-	if(Stud::state.session.lanes[1].sampler){
-		llama_sampler_free(Stud::state.session.lanes[1].sampler);
-		Stud::state.session.lanes[1].sampler = nullptr;
+	if(Stud::runtime().session.lanes[1].sampler){
+		llama_sampler_free(Stud::runtime().session.lanes[1].sampler);
+		Stud::runtime().session.lanes[1].sampler = nullptr;
 	}
-	if(Stud::state.session.ctx){
-		llama_free(Stud::state.session.ctx);
-		Stud::state.session.ctx = nullptr;
+	if(Stud::runtime().session.ctx){
+		llama_free(Stud::runtime().session.ctx);
+		Stud::runtime().session.ctx = nullptr;
 	}
 	DialecticFree();
 }
 void FreeModel(){
 	DestroySession();
-	Stud::state.session.lanes[0].cachedTokens.clear();
-	Stud::state.session.lanes[1].cachedTokens.clear();
-	if(Stud::state.llModel){
-		llama_model_free(Stud::state.llModel);
-		Stud::state.llModel = nullptr;
+	Stud::runtime().session.lanes[0].cachedTokens.clear();
+	Stud::runtime().session.lanes[1].cachedTokens.clear();
+	Stud::runtime().session.vocab = nullptr;
+	Stud::runtime().chatTemplates = nullptr;
+	Stud::runtime().caps = jinja::caps();
+	if(Stud::runtime().llModel){
+		llama_model_free(Stud::runtime().llModel);
+		Stud::runtime().llModel = nullptr;
 	}
 }
+void FreeModelSlot(const char* slotName){
+	auto* runtime = FindModelRuntime(NormalizeModelSlotName(slotName));
+	if(!runtime) return;
+	auto* previous = Stud::state.activeRuntime;
+	Stud::state.activeRuntime = runtime;
+	FreeModel();
+	Stud::state.activeRuntime = previous == runtime ? &Stud::state.defaultRuntime : previous;
+}
 StudError LoadModel(const char* filename, const char* jinjaTemplate, const int nGPULayers, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy){
+	if(Stud::runtime().llModel) FreeModel();
 	auto params = llama_model_default_params();
 	params.n_gpu_layers = nGPULayers;
 	params.use_mlock = mLock;
@@ -226,22 +273,22 @@ StudError LoadModel(const char* filename, const char* jinjaTemplate, const int n
 	llama_numa_init(numaStrategy);
 	_gpuOomStud = false;
 	llama_log_set(GPUOomLogCallbackStud, nullptr);
-	Stud::state.llModel = llama_model_load_from_file(filename, params);
+	Stud::runtime().llModel = llama_model_load_from_file(filename, params);
 	llama_log_set(nullptr, nullptr);
-	if(!Stud::state.llModel){ return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantLoadModel; }
-	Stud::state.session.vocab = llama_model_get_vocab(Stud::state.llModel);
+	if(!Stud::runtime().llModel){ return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantLoadModel; }
+	Stud::runtime().session.vocab = llama_model_get_vocab(Stud::runtime().llModel);
 	std::string tmplSrc;
 	if(jinjaTemplate && jinjaTemplate[0] != '\0'){
-		Stud::state.chatTemplates = common_chat_templates_init(Stud::state.llModel, jinjaTemplate);
+		Stud::runtime().chatTemplates = common_chat_templates_init(Stud::runtime().llModel, jinjaTemplate);
 		tmplSrc = jinjaTemplate;
 	} else{
-		Stud::state.chatTemplates = common_chat_templates_init(Stud::state.llModel, "");
-		tmplSrc = llama_model_chat_template(Stud::state.llModel, nullptr);
+		Stud::runtime().chatTemplates = common_chat_templates_init(Stud::runtime().llModel, "");
+		tmplSrc = llama_model_chat_template(Stud::runtime().llModel, nullptr);
 	}
 	jinja::lexer lex;
 	const jinja::lexer_result lexed = lex.tokenize(tmplSrc);
 	jinja::program prog = jinja::parse_from_tokens(lexed);
-	Stud::state.caps = jinja::caps_get(prog);
+	Stud::runtime().caps = jinja::caps_get(prog);
 	return StudError::Success;
 }
 bool HasTool(const char* name){
@@ -249,19 +296,19 @@ bool HasTool(const char* name){
 	return false;
 }
 void SetTokenCallback(const Stud::TokenCallbackFn cb){ Stud::state.tokenCb = cb; }
-void SetThreadCount(const int n, const int batchSize){ if(Stud::state.session.ctx) llama_set_n_threads(Stud::state.session.ctx, n, batchSize); }
-int LlamaMemSize(){ return static_cast<int>(Stud::state.session.lanes[Stud::state.session.activeLane].cachedTokens.size()); }
+void SetThreadCount(const int n, const int batchSize){ if(Stud::runtime().session.ctx) llama_set_n_threads(Stud::runtime().session.ctx, n, batchSize); }
+int LlamaMemSize(){ return static_cast<int>(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].cachedTokens.size()); }
 int GetStateSize(){
-	if(!Stud::state.session.ctx) return 0;
-	return static_cast<int>(llama_state_get_size(Stud::state.session.ctx));
+	if(!Stud::runtime().session.ctx) return 0;
+	return static_cast<int>(llama_state_get_size(Stud::runtime().session.ctx));
 }
 StudError GetStateData(unsigned char* dst, int size){
-	if(!Stud::state.session.ctx || !dst || size <= 0){
+	if(!Stud::runtime().session.ctx || !dst || size <= 0){
 		_lastErrorMessage = "Invalid Parameter";
 		return StudError::Generic;
 	}
 	const auto expected = static_cast<size_t>(size);
-	const auto copied = llama_state_get_data(Stud::state.session.ctx, dst, expected);
+	const auto copied = llama_state_get_data(Stud::runtime().session.ctx, dst, expected);
 	if(copied != expected){
 		_lastErrorMessage = "llama_state_get_data copied " + std::to_string(copied) + " bytes, expected " + std::to_string(expected);
 		return StudError::Generic;
@@ -269,12 +316,12 @@ StudError GetStateData(unsigned char* dst, int size){
 	return StudError::Success;
 }
 StudError SetStateData(const unsigned char* src, int size){
-	if(!Stud::state.session.ctx || !src || size <= 0){
+	if(!Stud::runtime().session.ctx || !src || size <= 0){
 		_lastErrorMessage = "Invalid Parameter";
 		return StudError::Generic;
 	}
 	const auto expected = static_cast<size_t>(size);
-	const auto read = llama_state_set_data(Stud::state.session.ctx, src, expected);
+	const auto read = llama_state_set_data(Stud::runtime().session.ctx, src, expected);
 	if(read != expected){
 		_lastErrorMessage = "llama_state_set_data read " + std::to_string(read) + " bytes, expected " + std::to_string(expected);
 		return StudError::Generic;
@@ -287,28 +334,28 @@ StudError DialecticInit(){
 		_lastErrorMessage = "llama_state_get_size returned invalid size:" + std::to_string(size);
 		return StudError::Generic;
 	}
-	Stud::state.session.lanes[0].state.assign(size, 0);
-	Stud::state.session.lanes[1].state.assign(size, 0);
-	const auto err = GetStateData(Stud::state.session.lanes[0].state.data(), size);
+	Stud::runtime().session.lanes[0].state.assign(size, 0);
+	Stud::runtime().session.lanes[1].state.assign(size, 0);
+	const auto err = GetStateData(Stud::runtime().session.lanes[0].state.data(), size);
 	if(err != StudError::Success){
 		return err;
 	}
-	memcpy(Stud::state.session.lanes[1].state.data(), Stud::state.session.lanes[0].state.data(), size);
-	Stud::state.session.activeLane = 0;
+	memcpy(Stud::runtime().session.lanes[1].state.data(), Stud::runtime().session.lanes[0].state.data(), size);
+	Stud::runtime().session.activeLane = 0;
 	return StudError::Success;
 }
 StudError DialecticStart(){
-	if(Stud::state.session.lanes[0].state.empty()){
+	if(Stud::runtime().session.lanes[0].state.empty()){
 		_lastErrorMessage = "Dialectic states not initialised";
 		return StudError::Generic;
 	}
-	const int size = static_cast<int>(Stud::state.session.lanes[0].state.size());
-	SetStateData(Stud::state.session.lanes[Stud::state.session.activeLane].state.data(), size);
+	const int size = static_cast<int>(Stud::runtime().session.lanes[0].state.size());
+	SetStateData(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].state.data(), size);
 	return StudError::Success;
 }
 void DialecticFree(){
-	Stud::state.session.lanes[0].state.clear();
-	Stud::state.session.lanes[1].state.clear();
+	Stud::runtime().session.lanes[0].state.clear();
+	Stud::runtime().session.lanes[1].state.clear();
 }
 std::string RoleString(const Stud::MessageRole role){
 	switch(role){
@@ -335,7 +382,7 @@ static StudError LoadChatSyntax(common_chat_parser_params& syntax, const common_
 }
 static bool TokenizePrompt(const std::string& prompt, std::vector<llama_token>& tokens){
 	try{
-		tokens = common_tokenize(Stud::state.session.vocab, prompt, true, true);
+		tokens = common_tokenize(Stud::runtime().session.vocab, prompt, true, true);
 		return true;
 	} catch(std::exception& e){
 		_lastErrorMessage = e.what();
@@ -352,8 +399,8 @@ static StudError BuildChatTemplateParamsForMessages(common_chat_params& chatData
 	}
 	const bool useTools = includeTools && !Stud::state.tools.empty();
 	std::vector<common_chat_msg> msgs;
-	std::string prompt(Stud::state.session.systemPrompt);
-	if(useTools && !Stud::state.session.toolsPrompt.empty()) prompt += Stud::state.session.toolsPrompt;
+	std::string prompt(Stud::runtime().session.systemPrompt);
+	if(useTools && !Stud::runtime().session.toolsPrompt.empty()) prompt += Stud::runtime().session.toolsPrompt;
 	msgs.push_back({"system", prompt});
 	msgs.insert(msgs.end(), chatMsgs.begin(), chatMsgs.end());
 	for(auto& msg : msgs) if(msg.content.empty()) msg.content = " ";
@@ -364,10 +411,10 @@ static StudError BuildChatTemplateParamsForMessages(common_chat_params& chatData
 	if(useTools){
 		in.tools = Stud::state.tools;
 		in.tool_choice = COMMON_CHAT_TOOL_CHOICE_AUTO;
-		in.parallel_tool_calls = Stud::state.caps.supports_parallel_tool_calls;
+		in.parallel_tool_calls = Stud::runtime().caps.supports_parallel_tool_calls;
 	}
 	in.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
-	try{ chatData = common_chat_templates_apply(Stud::state.chatTemplates.get(), in); } catch(std::exception& e){
+	try{ chatData = common_chat_templates_apply(Stud::runtime().chatTemplates.get(), in); } catch(std::exception& e){
 		_lastErrorMessage = e.what();
 		OutputDebugStringA((std::string("EXCEPTION:\r\n") + e.what()).c_str());
 		return StudError::CantApplyTemplate;
@@ -375,113 +422,113 @@ static StudError BuildChatTemplateParamsForMessages(common_chat_params& chatData
 	return StudError::Success;
 }
 StudError RetokenizeChat(bool rebuildMemory = false){
-	if(!Stud::state.session.ctx || !Stud::state.session.lanes[Stud::state.session.activeLane].sampler || !Stud::state.session.vocab) return StudError::ModelNotLoaded;
+	if(!Stud::runtime().session.ctx || !Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler || !Stud::runtime().session.vocab) return StudError::ModelNotLoaded;
 	const bool toolsEnabled = !Stud::state.tools.empty();
-	const auto hasUser = std::any_of(Stud::state.session.lanes[Stud::state.session.activeLane].messages.begin(), Stud::state.session.lanes[Stud::state.session.activeLane].messages.end(), [](const common_chat_msg& msg){
+	const auto hasUser = std::any_of(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.begin(), Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.end(), [](const common_chat_msg& msg){
 		return msg.role == "user";
 	});
 	if(!hasUser){
-		if(Stud::state.session.memory) llama_memory_clear(Stud::state.session.memory, true);
-		Stud::state.session.lanes[Stud::state.session.activeLane].cachedTokens.clear();
-		if(Stud::state.session.lanes[Stud::state.session.activeLane].sampler) llama_sampler_reset(Stud::state.session.lanes[Stud::state.session.activeLane].sampler);
-		return LoadChatSyntax(Stud::state.session.syntax, common_chat_params(), false);
+		if(Stud::runtime().session.memory) llama_memory_clear(Stud::runtime().session.memory, true);
+		Stud::runtime().session.lanes[Stud::runtime().session.activeLane].cachedTokens.clear();
+		if(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler) llama_sampler_reset(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler);
+		return LoadChatSyntax(Stud::runtime().session.syntax, common_chat_params(), false);
 	}
 	common_chat_params chatData;
-	const auto applyErr = BuildChatTemplateParamsForMessages(chatData, Stud::state.session.lanes[Stud::state.session.activeLane].messages, false, toolsEnabled);
+	const auto applyErr = BuildChatTemplateParamsForMessages(chatData, Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages, false, toolsEnabled);
 	if(applyErr != StudError::Success) return applyErr;
-	const auto syntaxErr = LoadChatSyntax(Stud::state.session.syntax, chatData, toolsEnabled);
+	const auto syntaxErr = LoadChatSyntax(Stud::runtime().session.syntax, chatData, toolsEnabled);
 	if(syntaxErr != StudError::Success) return syntaxErr;
 	std::vector<llama_token> promptTokens;
 	if(!TokenizePrompt(chatData.prompt, promptTokens)) return StudError::CantTokenizePrompt;
 	size_t prefix = 0;
-	while(prefix < Stud::state.session.lanes[Stud::state.session.activeLane].cachedTokens.size() && prefix < promptTokens.size() && Stud::state.session.lanes[Stud::state.session.activeLane].cachedTokens[prefix] == promptTokens[prefix]){ ++prefix; }
-	const bool canShift = llama_memory_can_shift(Stud::state.session.memory);
-	const size_t oldSz = Stud::state.session.lanes[Stud::state.session.activeLane].cachedTokens.size();
+	while(prefix < Stud::runtime().session.lanes[Stud::runtime().session.activeLane].cachedTokens.size() && prefix < promptTokens.size() && Stud::runtime().session.lanes[Stud::runtime().session.activeLane].cachedTokens[prefix] == promptTokens[prefix]){ ++prefix; }
+	const bool canShift = llama_memory_can_shift(Stud::runtime().session.memory);
+	const size_t oldSz = Stud::runtime().session.lanes[Stud::runtime().session.activeLane].cachedTokens.size();
 	const size_t newSz = promptTokens.size();
 	size_t suffix = 0;
-	if(canShift && oldSz > 0 && newSz > 0){ while(suffix + prefix < oldSz && suffix + prefix < newSz && suffix < oldSz && suffix < newSz && Stud::state.session.lanes[Stud::state.session.activeLane].cachedTokens[oldSz - 1 - suffix] == promptTokens[newSz - 1 - suffix]){ ++suffix; } }
-	const size_t oldSize = Stud::state.session.lanes[Stud::state.session.activeLane].cachedTokens.size();
+	if(canShift && oldSz > 0 && newSz > 0){ while(suffix + prefix < oldSz && suffix + prefix < newSz && suffix < oldSz && suffix < newSz && Stud::runtime().session.lanes[Stud::runtime().session.activeLane].cachedTokens[oldSz - 1 - suffix] == promptTokens[newSz - 1 - suffix]){ ++suffix; } }
+	const size_t oldSize = Stud::runtime().session.lanes[Stud::runtime().session.activeLane].cachedTokens.size();
 	const size_t newSize = promptTokens.size();
 	if(prefix == oldSize && oldSize == newSize) return StudError::Success;
-	if(newSize > static_cast<size_t>(llama_n_ctx(Stud::state.session.ctx))){ return StudError::ConvTooLong; }
+	if(newSize > static_cast<size_t>(llama_n_ctx(Stud::runtime().session.ctx))){ return StudError::ConvTooLong; }
 	if(rebuildMemory || !canShift){
 		if(prefix == 0 || LlamaMemSize() < static_cast<llama_pos>(prefix - 1)){
 			prefix = 0;
-			llama_memory_clear(Stud::state.session.memory, true);
+			llama_memory_clear(Stud::runtime().session.memory, true);
 		}
 	}
 	if(!canShift && newSize < oldSize){
 		prefix = 0;
-		llama_memory_clear(Stud::state.session.memory, true);
+		llama_memory_clear(Stud::runtime().session.memory, true);
 	}
 	if(canShift && suffix > 0){
-		if(prefix < oldSize - suffix){ llama_memory_seq_rm(Stud::state.session.memory, 0, prefix, oldSize - suffix); }
+		if(prefix < oldSize - suffix){ llama_memory_seq_rm(Stud::runtime().session.memory, 0, prefix, oldSize - suffix); }
 		if(oldSize != newSize){
 			const int delta = static_cast<int>(newSize) - static_cast<int>(oldSize);
-			llama_memory_seq_add(Stud::state.session.memory, 0, oldSize - suffix, -1, delta);
+			llama_memory_seq_add(Stud::runtime().session.memory, 0, oldSize - suffix, -1, delta);
 		}
 	} else{
 		suffix = 0;
-		if(prefix < oldSize){ llama_memory_seq_rm(Stud::state.session.memory, 0, prefix, -1); }
+		if(prefix < oldSize){ llama_memory_seq_rm(Stud::runtime().session.memory, 0, prefix, -1); }
 	}
-	llama_sampler_reset(Stud::state.session.lanes[Stud::state.session.activeLane].sampler);
-	for(size_t i = 0; i < prefix; ++i){ llama_sampler_accept(Stud::state.session.lanes[Stud::state.session.activeLane].sampler, promptTokens[i]); }
+	llama_sampler_reset(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler);
+	for(size_t i = 0; i < prefix; ++i){ llama_sampler_accept(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler, promptTokens[i]); }
 	const size_t decodeEnd = newSize - suffix;
-	const int batchSize = std::min(Stud::state.session.batchSize, static_cast<int>(decodeEnd - prefix));
+	const int batchSize = std::min(Stud::runtime().session.batchSize, static_cast<int>(decodeEnd - prefix));
 	if(batchSize > 0){
-		for(size_t i = prefix; i < decodeEnd; i += Stud::state.session.batchSize){
-			const int nTokens = std::min<int>(Stud::state.session.batchSize, decodeEnd - i);
+		for(size_t i = prefix; i < decodeEnd; i += Stud::runtime().session.batchSize){
+			const int nTokens = std::min<int>(Stud::runtime().session.batchSize, decodeEnd - i);
 			const auto batch = llama_batch_get_one(&promptTokens[i], nTokens);
-			if(llama_decode(Stud::state.session.ctx, batch) != 0){
-				if(Stud::state.session.memory) llama_memory_clear(Stud::state.session.memory, true);
-				Stud::state.session.lanes[Stud::state.session.activeLane].cachedTokens.clear();
-				if(Stud::state.session.lanes[Stud::state.session.activeLane].sampler) llama_sampler_reset(Stud::state.session.lanes[Stud::state.session.activeLane].sampler);
+			if(llama_decode(Stud::runtime().session.ctx, batch) != 0){
+				if(Stud::runtime().session.memory) llama_memory_clear(Stud::runtime().session.memory, true);
+				Stud::runtime().session.lanes[Stud::runtime().session.activeLane].cachedTokens.clear();
+				if(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler) llama_sampler_reset(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler);
 				return StudError::LlamaDecodeError;
 			}
-			for(int j = 0; j < nTokens; ++j){ llama_sampler_accept(Stud::state.session.lanes[Stud::state.session.activeLane].sampler, promptTokens[i + j]); }
+			for(int j = 0; j < nTokens; ++j){ llama_sampler_accept(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler, promptTokens[i + j]); }
 		}
 	}
-	for(size_t i = decodeEnd; i < newSize; ++i){ llama_sampler_accept(Stud::state.session.lanes[Stud::state.session.activeLane].sampler, promptTokens[i]); }
-	Stud::state.session.lanes[Stud::state.session.activeLane].cachedTokens = std::move(promptTokens);
+	for(size_t i = decodeEnd; i < newSize; ++i){ llama_sampler_accept(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler, promptTokens[i]); }
+	Stud::runtime().session.lanes[Stud::runtime().session.activeLane].cachedTokens = std::move(promptTokens);
 	return StudError::Success;
 }
 static StudError DecodePromptText(const std::string& prompt, const int dId, const common_chat_msg* appendMsg = nullptr){
 	std::vector<llama_token> promptTokens;
 	if(!TokenizePrompt(prompt, promptTokens)) return StudError::CantTokenizePrompt;
-	if(appendMsg) Stud::state.session.lanes[dId].messages.push_back(*appendMsg);
+	if(appendMsg) Stud::runtime().session.lanes[dId].messages.push_back(*appendMsg);
 	size_t p = 0;
 	while(p < promptTokens.size() && !Stud::state.stop.load()){
-		const int nEval = std::min<int>(Stud::state.session.batchSize, promptTokens.size() - p);
+		const int nEval = std::min<int>(Stud::runtime().session.batchSize, promptTokens.size() - p);
 		const llama_batch batch = llama_batch_get_one(&promptTokens[p], nEval);
-		const int nCtx = llama_n_ctx(Stud::state.session.ctx);
-		const int nCtxUsed = static_cast<int>(Stud::state.session.lanes[dId].cachedTokens.size());
+		const int nCtx = llama_n_ctx(Stud::runtime().session.ctx);
+		const int nCtxUsed = static_cast<int>(Stud::runtime().session.lanes[dId].cachedTokens.size());
 		if(nCtxUsed + batch.n_tokens > nCtx){
-			if(appendMsg) Stud::state.session.lanes[dId].messages.pop_back();
+			if(appendMsg) Stud::runtime().session.lanes[dId].messages.pop_back();
 			return StudError::ConvTooLong;
 		}
-		const auto result = llama_decode(Stud::state.session.ctx, batch);
+		const auto result = llama_decode(Stud::runtime().session.ctx, batch);
 		if(result != 0){
-			if(appendMsg) Stud::state.session.lanes[dId].messages.pop_back();
+			if(appendMsg) Stud::runtime().session.lanes[dId].messages.pop_back();
 			return result == 1 ? StudError::ConvTooLong : StudError::LlamaDecodeError;
 		}
-		for(int j = 0; j < nEval; ++j) llama_sampler_accept(Stud::state.session.lanes[dId].sampler, promptTokens[p + j]);
-		Stud::state.session.lanes[dId].cachedTokens.insert(Stud::state.session.lanes[dId].cachedTokens.end(), promptTokens.begin() + p, promptTokens.begin() + p + nEval);
+		for(int j = 0; j < nEval; ++j) llama_sampler_accept(Stud::runtime().session.lanes[dId].sampler, promptTokens[p + j]);
+		Stud::runtime().session.lanes[dId].cachedTokens.insert(Stud::runtime().session.lanes[dId].cachedTokens.end(), promptTokens.begin() + p, promptTokens.begin() + p + nEval);
 		p += nEval;
 	}
 	return StudError::Success;
 }
 static StudError DecodeSinglePromptMessage(const common_chat_msg& message, const int dId, const bool addAss, const bool appendToChat = true){
-	if(appendToChat && message.role == "user" && Stud::state.session.lanes[dId].messages.empty() && Stud::state.session.lanes[dId].cachedTokens.empty()){
+	if(appendToChat && message.role == "user" && Stud::runtime().session.lanes[dId].messages.empty() && Stud::runtime().session.lanes[dId].cachedTokens.empty()){
 		const std::vector<common_chat_msg> chatMsgs{message};
 		common_chat_params chatData;
 		const bool toolsEnabled = !Stud::state.tools.empty();
 		auto err = BuildChatTemplateParamsForMessages(chatData, chatMsgs, addAss, toolsEnabled);
 		if(err != StudError::Success) return err;
-		err = LoadChatSyntax(Stud::state.session.syntax, chatData, toolsEnabled);
+		err = LoadChatSyntax(Stud::runtime().session.syntax, chatData, toolsEnabled);
 		return err == StudError::Success ? DecodePromptText(chatData.prompt, dId, &message) : err;
 	}
 	std::string formatted;
-	try{ formatted = common_chat_format_single(Stud::state.chatTemplates.get(), Stud::state.session.lanes[dId].messages, message, addAss, message.role._Equal("assistant")); } catch(std::exception& e){
+	try{ formatted = common_chat_format_single(Stud::runtime().chatTemplates.get(), Stud::runtime().session.lanes[dId].messages, message, addAss, message.role._Equal("assistant")); } catch(std::exception& e){
 		_lastErrorMessage = e.what();
 		OutputDebugStringA((std::string("EXCEPTION:\r\n") + e.what()).c_str());
 		return StudError::CantApplyTemplate;
@@ -489,13 +536,13 @@ static StudError DecodeSinglePromptMessage(const common_chat_msg& message, const
 	return DecodePromptText(formatted, dId, appendToChat ? &message : nullptr);
 }
 static void AlignChatStates(){
-	const auto& a = Stud::state.session.lanes[0].messages;
-	const auto& b = Stud::state.session.lanes[1].messages;
+	const auto& a = Stud::runtime().session.lanes[0].messages;
+	const auto& b = Stud::runtime().session.lanes[1].messages;
 	if(a.size() == b.size()) return;
 	const int longerId = a.size() >= b.size() ? 0 : 1;
 	const int shorterId = 1 - longerId;
-	const auto& longer = Stud::state.session.lanes[longerId].messages;
-	auto& shorter = Stud::state.session.lanes[shorterId].messages;
+	const auto& longer = Stud::runtime().session.lanes[longerId].messages;
+	auto& shorter = Stud::runtime().session.lanes[shorterId].messages;
 	for(size_t i = shorter.size(); i < longer.size(); ++i){
 		auto msg = longer[i];
 		if(msg.role._Equal("assistant")){
@@ -504,33 +551,33 @@ static void AlignChatStates(){
 		} else if(msg.role._Equal("user")){ msg.role = "assistant"; }
 		const bool mirroredRoleIsAssistant = msg.role._Equal("assistant");
 		shorter.push_back(msg);
-		if(Stud::state.session.ctx && Stud::state.session.lanes[shorterId].sampler && Stud::state.session.vocab && !Stud::state.session.lanes[shorterId].state.empty() && Stud::state.session.activeLane == shorterId){
+		if(Stud::runtime().session.ctx && Stud::runtime().session.lanes[shorterId].sampler && Stud::runtime().session.vocab && !Stud::runtime().session.lanes[shorterId].state.empty() && Stud::runtime().session.activeLane == shorterId){
 			const auto err = DecodeSinglePromptMessage(shorter.back(), shorterId, mirroredRoleIsAssistant, false);
-			if(err == StudError::Success) Stud::state.session.assistantNextGeneration = mirroredRoleIsAssistant;
+			if(err == StudError::Success) Stud::runtime().session.assistantNextGeneration = mirroredRoleIsAssistant;
 		}
 	}
 }
 StudError DialecticSwap(){
-	if(Stud::state.session.lanes[0].state.empty()) return StudError::Success;
+	if(Stud::runtime().session.lanes[0].state.empty()) return StudError::Success;
 	AlignChatStates();
-	const int size = static_cast<int>(Stud::state.session.lanes[Stud::state.session.activeLane].state.size());
-	GetStateData(Stud::state.session.lanes[Stud::state.session.activeLane].state.data(), size);
-	Stud::state.session.activeLane = 1 - Stud::state.session.activeLane;
-	SetStateData(Stud::state.session.lanes[Stud::state.session.activeLane].state.data(), size);
+	const int size = static_cast<int>(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].state.size());
+	GetStateData(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].state.data(), size);
+	Stud::runtime().session.activeLane = 1 - Stud::runtime().session.activeLane;
+	SetStateData(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].state.data(), size);
 	return StudError::Success;
 }
 StudError ResetChat(){
-	Stud::state.session.lanes[0].messages.clear();
-	Stud::state.session.lanes[1].messages.clear();
-	Stud::state.session.lanes[0].cachedTokens.clear();
-	Stud::state.session.lanes[1].cachedTokens.clear();
-	Stud::state.session.assistantNextGeneration = false;
-	if(!Stud::state.session.ctx || !Stud::state.session.lanes[Stud::state.session.activeLane].sampler || !Stud::state.session.vocab){
+	Stud::runtime().session.lanes[0].messages.clear();
+	Stud::runtime().session.lanes[1].messages.clear();
+	Stud::runtime().session.lanes[0].cachedTokens.clear();
+	Stud::runtime().session.lanes[1].cachedTokens.clear();
+	Stud::runtime().session.assistantNextGeneration = false;
+	if(!Stud::runtime().session.ctx || !Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler || !Stud::runtime().session.vocab){
 		DialecticFree();
 		return StudError::Success;
 	}
 	auto err = RetokenizeChat(true);
-	if(err != StudError::Success || Stud::state.session.lanes[Stud::state.session.activeLane == 0 ? 1 : 0].state.empty()) return err;
+	if(err != StudError::Success || Stud::runtime().session.lanes[Stud::runtime().session.activeLane == 0 ? 1 : 0].state.empty()) return err;
 	err = DialecticSwap();
 	if(err != StudError::Success) return err;
 	const auto err2 = RetokenizeChat(true);
@@ -538,15 +585,15 @@ StudError ResetChat(){
 	return err2 != StudError::Success ? err2 : err3;
 }
 StudError SetSystemPrompt(const char* prompt, const char* toolsPrompt){
-	Stud::state.session.systemPrompt = std::string(prompt);
-	Stud::state.session.toolsPrompt = std::string(toolsPrompt);
-	if(!Stud::state.session.ctx || !Stud::state.session.lanes[Stud::state.session.activeLane].sampler || !Stud::state.session.vocab){
-		Stud::state.session.lanes[0].cachedTokens.clear();
-		Stud::state.session.lanes[1].cachedTokens.clear();
+	Stud::runtime().session.systemPrompt = std::string(prompt);
+	Stud::runtime().session.toolsPrompt = std::string(toolsPrompt);
+	if(!Stud::runtime().session.ctx || !Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler || !Stud::runtime().session.vocab){
+		Stud::runtime().session.lanes[0].cachedTokens.clear();
+		Stud::runtime().session.lanes[1].cachedTokens.clear();
 		return StudError::Success;
 	}
 	auto err = RetokenizeChat();
-	if(err != StudError::Success || Stud::state.session.lanes[Stud::state.session.activeLane == 0 ? 1 : 0].state.empty()) return err;
+	if(err != StudError::Success || Stud::runtime().session.lanes[Stud::runtime().session.activeLane == 0 ? 1 : 0].state.empty()) return err;
 	err = DialecticSwap();
 	if(err != StudError::Success) return err;
 	const auto err2 = RetokenizeChat();
@@ -555,46 +602,46 @@ StudError SetSystemPrompt(const char* prompt, const char* toolsPrompt){
 }
 StudError SetMessageAt(const int index, const char* think, const char* message){
 	AlignChatStates();
-	if(index < 0 || index >= static_cast<int>(Stud::state.session.lanes[Stud::state.session.activeLane].messages.size())) return StudError::IndexOutOfRange;
+	if(index < 0 || index >= static_cast<int>(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.size())) return StudError::IndexOutOfRange;
 	const auto applyMessageUpdate = [&](std::vector<common_chat_msg>& msgs){
 		msgs[index].reasoning_content = msgs[index].role._Equal("assistant") ? think : std::string();
 		msgs[index].content = std::string(message);
 	};
-	if(!Stud::state.session.ctx || !Stud::state.session.lanes[Stud::state.session.activeLane].sampler || !Stud::state.session.vocab){
-		applyMessageUpdate(Stud::state.session.lanes[0].messages);
-		applyMessageUpdate(Stud::state.session.lanes[1].messages);
-		Stud::state.session.lanes[0].cachedTokens.clear();
-		Stud::state.session.lanes[1].cachedTokens.clear();
+	if(!Stud::runtime().session.ctx || !Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler || !Stud::runtime().session.vocab){
+		applyMessageUpdate(Stud::runtime().session.lanes[0].messages);
+		applyMessageUpdate(Stud::runtime().session.lanes[1].messages);
+		Stud::runtime().session.lanes[0].cachedTokens.clear();
+		Stud::runtime().session.lanes[1].cachedTokens.clear();
 		return StudError::Success;
 	}
-	applyMessageUpdate(Stud::state.session.lanes[Stud::state.session.activeLane].messages);
+	applyMessageUpdate(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages);
 	auto err = RetokenizeChat();
-	const auto dId = Stud::state.session.activeLane == 0 ? 1 : 0;
-	if(err != StudError::Success || Stud::state.session.lanes[dId].state.empty() || Stud::state.session.lanes[dId].messages.size() <= index) return err;
+	const auto dId = Stud::runtime().session.activeLane == 0 ? 1 : 0;
+	if(err != StudError::Success || Stud::runtime().session.lanes[dId].state.empty() || Stud::runtime().session.lanes[dId].messages.size() <= index) return err;
 	err = DialecticSwap();
 	if(err != StudError::Success) return err;
-	applyMessageUpdate(Stud::state.session.lanes[Stud::state.session.activeLane].messages);
+	applyMessageUpdate(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages);
 	const auto err2 = RetokenizeChat();
 	const auto err3 = DialecticSwap();
 	return err2 != StudError::Success ? err2 : err3;
 }
 StudError RemoveMessageAt(const int index){
 	AlignChatStates();
-	if(index < 0 || index >= static_cast<int>(Stud::state.session.lanes[Stud::state.session.activeLane].messages.size())) return StudError::IndexOutOfRange;
-	if(!Stud::state.session.ctx || !Stud::state.session.lanes[Stud::state.session.activeLane].sampler || !Stud::state.session.vocab){
-		Stud::state.session.lanes[0].messages.erase(Stud::state.session.lanes[0].messages.begin() + index);
-		Stud::state.session.lanes[1].messages.erase(Stud::state.session.lanes[1].messages.begin() + index);
-		Stud::state.session.lanes[0].cachedTokens.clear();
-		Stud::state.session.lanes[1].cachedTokens.clear();
+	if(index < 0 || index >= static_cast<int>(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.size())) return StudError::IndexOutOfRange;
+	if(!Stud::runtime().session.ctx || !Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler || !Stud::runtime().session.vocab){
+		Stud::runtime().session.lanes[0].messages.erase(Stud::runtime().session.lanes[0].messages.begin() + index);
+		Stud::runtime().session.lanes[1].messages.erase(Stud::runtime().session.lanes[1].messages.begin() + index);
+		Stud::runtime().session.lanes[0].cachedTokens.clear();
+		Stud::runtime().session.lanes[1].cachedTokens.clear();
 		return StudError::Success;
 	}
-	Stud::state.session.lanes[Stud::state.session.activeLane].messages.erase(Stud::state.session.lanes[Stud::state.session.activeLane].messages.begin() + index);
+	Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.erase(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.begin() + index);
 	auto err = RetokenizeChat();
-	const auto dId = Stud::state.session.activeLane == 0 ? 1 : 0;
-	if(err != StudError::Success || Stud::state.session.lanes[dId].state.empty() || Stud::state.session.lanes[dId].messages.size() <= index) return err;
+	const auto dId = Stud::runtime().session.activeLane == 0 ? 1 : 0;
+	if(err != StudError::Success || Stud::runtime().session.lanes[dId].state.empty() || Stud::runtime().session.lanes[dId].messages.size() <= index) return err;
 	err = DialecticSwap();
 	if(err != StudError::Success) return err;
-	Stud::state.session.lanes[Stud::state.session.activeLane].messages.erase(Stud::state.session.lanes[Stud::state.session.activeLane].messages.begin() + index);
+	Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.erase(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.begin() + index);
 	const auto err2 = RetokenizeChat();
 	const auto err3 = DialecticSwap();
 	return err2 != StudError::Success ? err2 : err3;
@@ -602,21 +649,21 @@ StudError RemoveMessageAt(const int index){
 StudError RemoveMessagesStartingAt(int index){
 	AlignChatStates();
 	if(index < 0) index = 0;
-	if(index > static_cast<int>(Stud::state.session.lanes[Stud::state.session.activeLane].messages.size())) index = static_cast<int>(Stud::state.session.lanes[Stud::state.session.activeLane].messages.size());
-	if(!Stud::state.session.ctx || !Stud::state.session.lanes[Stud::state.session.activeLane].sampler || !Stud::state.session.vocab){
-		Stud::state.session.lanes[0].messages.erase(Stud::state.session.lanes[0].messages.begin() + index, Stud::state.session.lanes[0].messages.end());
-		Stud::state.session.lanes[1].messages.erase(Stud::state.session.lanes[1].messages.begin() + index, Stud::state.session.lanes[1].messages.end());
-		Stud::state.session.lanes[0].cachedTokens.clear();
-		Stud::state.session.lanes[1].cachedTokens.clear();
+	if(index > static_cast<int>(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.size())) index = static_cast<int>(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.size());
+	if(!Stud::runtime().session.ctx || !Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler || !Stud::runtime().session.vocab){
+		Stud::runtime().session.lanes[0].messages.erase(Stud::runtime().session.lanes[0].messages.begin() + index, Stud::runtime().session.lanes[0].messages.end());
+		Stud::runtime().session.lanes[1].messages.erase(Stud::runtime().session.lanes[1].messages.begin() + index, Stud::runtime().session.lanes[1].messages.end());
+		Stud::runtime().session.lanes[0].cachedTokens.clear();
+		Stud::runtime().session.lanes[1].cachedTokens.clear();
 		return StudError::Success;
 	}
-	Stud::state.session.lanes[Stud::state.session.activeLane].messages.erase(Stud::state.session.lanes[Stud::state.session.activeLane].messages.begin() + index, Stud::state.session.lanes[Stud::state.session.activeLane].messages.end());
+	Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.erase(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.begin() + index, Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.end());
 	auto err = RetokenizeChat();
-	const auto dId = Stud::state.session.activeLane == 0 ? 1 : 0;
-	if(err != StudError::Success || Stud::state.session.lanes[dId].state.empty() || Stud::state.session.lanes[dId].messages.size() <= index) return err;
+	const auto dId = Stud::runtime().session.activeLane == 0 ? 1 : 0;
+	if(err != StudError::Success || Stud::runtime().session.lanes[dId].state.empty() || Stud::runtime().session.lanes[dId].messages.size() <= index) return err;
 	err = DialecticSwap();
 	if(err != StudError::Success) return err;
-	Stud::state.session.lanes[Stud::state.session.activeLane].messages.erase(Stud::state.session.lanes[Stud::state.session.activeLane].messages.begin() + index, Stud::state.session.lanes[Stud::state.session.activeLane].messages.end());
+	Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.erase(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.begin() + index, Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.end());
 	const auto err2 = RetokenizeChat();
 	const auto err3 = DialecticSwap();
 	return err2 != StudError::Success ? err2 : err3;
@@ -625,21 +672,21 @@ StudError AddMessage(const Stud::MessageRole role, const char* message){
 	common_chat_msg msg;
 	msg.role = RoleString(role);
 	msg.content = std::string(message);
-	Stud::state.session.lanes[Stud::state.session.activeLane].messages.push_back(msg);
+	Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.push_back(msg);
 	return RetokenizeChat();
 }
 static StudError ReplaceChatMessages(std::vector<common_chat_msg>&& msgs){
 	for(auto& msg : msgs) EnsureToolCallIds(msg);
-	Stud::state.session.lanes[Stud::state.session.activeLane].messages = std::move(msgs);
-	Stud::state.session.lanes[Stud::state.session.activeLane == 0 ? 1 : 0].messages.clear();
-	Stud::state.session.assistantNextGeneration = false;
+	Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages = std::move(msgs);
+	Stud::runtime().session.lanes[Stud::runtime().session.activeLane == 0 ? 1 : 0].messages.clear();
+	Stud::runtime().session.assistantNextGeneration = false;
 	AlignChatStates();
-	Stud::state.session.lanes[0].cachedTokens.clear();
-	Stud::state.session.lanes[1].cachedTokens.clear();
-	if(!Stud::state.session.ctx || !Stud::state.session.lanes[Stud::state.session.activeLane].sampler || !Stud::state.session.vocab) return StudError::Success;
+	Stud::runtime().session.lanes[0].cachedTokens.clear();
+	Stud::runtime().session.lanes[1].cachedTokens.clear();
+	if(!Stud::runtime().session.ctx || !Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler || !Stud::runtime().session.vocab) return StudError::Success;
 	auto err = RetokenizeChat(true);
-	const auto dId = Stud::state.session.activeLane == 0 ? 1 : 0;
-	if(err != StudError::Success || Stud::state.session.lanes[dId].state.empty()) return err;
+	const auto dId = Stud::runtime().session.activeLane == 0 ? 1 : 0;
+	if(err != StudError::Success || Stud::runtime().session.lanes[dId].state.empty()) return err;
 	err = DialecticSwap();
 	if(err != StudError::Success) return err;
 	const auto err2 = RetokenizeChat(true);
@@ -742,7 +789,7 @@ private:
 			const PendingToken pending = _queue[head % kQueueCapacity];
 			_queueHead.store(head + 1, std::memory_order_release);
 			char buf[256];
-			const int n = llama_token_to_piece(Stud::state.session.vocab, pending.token, buf, sizeof buf, 0, false);
+			const int n = llama_token_to_piece(Stud::runtime().session.vocab, pending.token, buf, sizeof buf, 0, false);
 			if(n < 0){
 				_asyncError.store(StudError::CantConvertToken, std::memory_order_release);
 				_queueClosed.store(true, std::memory_order_release);
@@ -780,16 +827,16 @@ private:
 	int _pendingCallbackTokens = 0;
 };
 static StudError RollbackGenerate(const size_t chatStart, const size_t newMessageCount, common_chat_msg& outMsg, const StudError error){
-	Stud::state.session.lanes[Stud::state.session.activeLane].messages.resize(chatStart + newMessageCount);
+	Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.resize(chatStart + newMessageCount);
 	const auto rtErr = RetokenizeChat(true);
 	outMsg = common_chat_msg();
 	return rtErr != StudError::Success ? rtErr : error;
 }
 static StudError DecodePromptMessages(const std::vector<common_chat_msg>& messages, common_chat_msg& outMsg){
 	for(const auto& message : messages){
-		const bool addAss = Stud::state.session.assistantNextGeneration || !message.role._Equal("assistant");
-		Stud::state.session.assistantNextGeneration = false;
-		const auto err = DecodeSinglePromptMessage(message, Stud::state.session.activeLane, addAss);
+		const bool addAss = Stud::runtime().session.assistantNextGeneration || !message.role._Equal("assistant");
+		Stud::runtime().session.assistantNextGeneration = false;
+		const auto err = DecodeSinglePromptMessage(message, Stud::runtime().session.activeLane, addAss);
 		if(err != StudError::Success){
 			const auto rtErr = RetokenizeChat(true);
 			outMsg = common_chat_msg();
@@ -802,14 +849,14 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	const auto prepStart = HrClock::now();
 	Stud::state.stop.store(false);
 	const Stud::TokenCallbackFn cb = Stud::state.tokenCb;
-	const size_t chatStart = Stud::state.session.lanes[Stud::state.session.activeLane].messages.size();
+	const size_t chatStart = Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.size();
 	const auto promptErr = DecodePromptMessages(messages, outMsg);
 	if(promptErr != StudError::Success) return promptErr;
 	const bool toolsEnabled = !Stud::state.tools.empty();
-	common_chat_parser_params streamSyntax = Stud::state.session.syntax;
+	common_chat_parser_params streamSyntax = Stud::runtime().session.syntax;
 	if(callback){
 		common_chat_params streamChatData;
-		auto streamSyntaxErr = BuildChatTemplateParamsForMessages(streamChatData, Stud::state.session.lanes[Stud::state.session.activeLane].messages, true, false);
+		auto streamSyntaxErr = BuildChatTemplateParamsForMessages(streamChatData, Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages, true, false);
 		if(streamSyntaxErr == StudError::Success) streamSyntaxErr = LoadChatSyntax(streamSyntax, streamChatData, false);
 		if(streamSyntaxErr != StudError::Success) return RollbackGenerate(chatStart, messages.size(), outMsg, streamSyntaxErr);
 	} else streamSyntax.parse_tool_calls = false;
@@ -825,13 +872,13 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	while((nPredict < 0 || i < nPredict) && !Stud::state.stop.load()){
 		const StudError pendingError = postProcessor.Error();
 		if(pendingError != StudError::Success) return failWith(pendingError);
-		if(LlamaMemSize() + 1 > llama_n_ctx(Stud::state.session.ctx)) return failWith(StudError::ConvTooLong);
-		auto newTokenId = llama_sampler_sample(Stud::state.session.lanes[Stud::state.session.activeLane].sampler, Stud::state.session.ctx, -1);
-		const auto isEog = llama_vocab_is_eog(Stud::state.session.vocab, newTokenId);
-		const auto decodeErr = llama_decode(Stud::state.session.ctx, llama_batch_get_one(&newTokenId, 1));
+		if(LlamaMemSize() + 1 > llama_n_ctx(Stud::runtime().session.ctx)) return failWith(StudError::ConvTooLong);
+		auto newTokenId = llama_sampler_sample(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler, Stud::runtime().session.ctx, -1);
+		const auto isEog = llama_vocab_is_eog(Stud::runtime().session.vocab, newTokenId);
+		const auto decodeErr = llama_decode(Stud::runtime().session.ctx, llama_batch_get_one(&newTokenId, 1));
 		if(decodeErr != 0) return failWith(decodeErr == 1 ? StudError::ConvTooLong : StudError::LlamaDecodeError);
-		llama_sampler_accept(Stud::state.session.lanes[Stud::state.session.activeLane].sampler, newTokenId);
-		Stud::state.session.lanes[Stud::state.session.activeLane].cachedTokens.push_back(newTokenId);
+		llama_sampler_accept(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].sampler, newTokenId);
+		Stud::runtime().session.lanes[Stud::runtime().session.activeLane].cachedTokens.push_back(newTokenId);
 		if(isEog) break;
 		const auto enqueueErr = postProcessor.Enqueue(newTokenId, LlamaMemSize());
 		if(enqueueErr != StudError::Success) return failWith(enqueueErr);
@@ -840,17 +887,17 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	postProcessor.Close();
 	if(postProcessor.Error() != StudError::Success) return RollbackGenerate(chatStart, messages.size(), outMsg, postProcessor.Error());
 	common_chat_params finalChatData;
-	auto finalSyntaxErr = BuildChatTemplateParamsForMessages(finalChatData, Stud::state.session.lanes[Stud::state.session.activeLane].messages, true, toolsEnabled);
-	if(finalSyntaxErr == StudError::Success) finalSyntaxErr = LoadChatSyntax(Stud::state.session.syntax, finalChatData, toolsEnabled);
+	auto finalSyntaxErr = BuildChatTemplateParamsForMessages(finalChatData, Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages, true, toolsEnabled);
+	if(finalSyntaxErr == StudError::Success) finalSyntaxErr = LoadChatSyntax(Stud::runtime().session.syntax, finalChatData, toolsEnabled);
 	if(finalSyntaxErr != StudError::Success) return RollbackGenerate(chatStart, messages.size(), outMsg, finalSyntaxErr);
 	try{
-		msg = ParseGeneratedMessage(response, Stud::state.session.syntax, false);
+		msg = ParseGeneratedMessage(response, Stud::runtime().session.syntax, false);
 		EnsureToolCallIds(msg);
 	} catch(std::exception& e){
 		_lastErrorMessage = e.what();
 		return RollbackGenerate(chatStart, messages.size(), outMsg, StudError::ChatParseError);
 	}
-	Stud::state.session.lanes[Stud::state.session.activeLane].messages.push_back(msg);
+	Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.push_back(msg);
 	if(emitFinalCallback && cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(), ftTime, 0);
 	outMsg = std::move(msg);
 	//OutputDebugStringA(("\n!!! CONTEXT START !!!\n" + std::string(GetContextAsText()) + "\n!!! CONTEXT END !!!\n").c_str());
@@ -867,7 +914,7 @@ StudError GenerateWithTools(const Stud::MessageRole role, const char* prompt, co
 	do{
 		const auto err = Generate(msgs, nPredict, callback, msg);
 		if(err != StudError::Success) return err;
-		if(!Stud::state.session.lanes[Stud::state.session.activeLane].messages.size()) return StudError::Success;
+		if(!Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.size()) return StudError::Success;
 		msgs.clear();
 		try{
 			toolCalled = false;
@@ -959,10 +1006,10 @@ void StopGeneration(){
 	StopCMDOutput();
 }
 char* GetContextAsText(){
-	if(!Stud::state.session.ctx) return nullptr;
+	if(!Stud::runtime().session.ctx) return nullptr;
 	std::string outStr;
-	outStr.reserve(Stud::state.session.lanes[Stud::state.session.activeLane].cachedTokens.size() * 4);
-	for(const llama_token tok : Stud::state.session.lanes[Stud::state.session.activeLane].cachedTokens){ outStr += common_token_to_piece(Stud::state.session.ctx, tok, true); }
+	outStr.reserve(Stud::runtime().session.lanes[Stud::runtime().session.activeLane].cachedTokens.size() * 4);
+	for(const llama_token tok : Stud::runtime().session.lanes[Stud::runtime().session.activeLane].cachedTokens){ outStr += common_token_to_piece(Stud::runtime().session.ctx, tok, true); }
 	auto* out = static_cast<char*>(std::malloc(outStr.size() + 1));
 	if(out) std::memcpy(out, outStr.c_str(), outStr.size() + 1);
 	return out;
@@ -970,34 +1017,34 @@ char* GetContextAsText(){
 extern "C" EXPORT void* CaptureChatState(){
 	auto* snapshot = new(std::nothrow) Stud::ChatStateSnapshot();
 	if(!snapshot) return nullptr;
-	snapshot->lanes[0].messages = Stud::state.session.lanes[0].messages;
-	snapshot->lanes[0].cachedTokens = Stud::state.session.lanes[0].cachedTokens;
-	snapshot->lanes[0].state = Stud::state.session.lanes[0].state;
-	snapshot->lanes[1].messages = Stud::state.session.lanes[1].messages;
-	snapshot->lanes[1].cachedTokens = Stud::state.session.lanes[1].cachedTokens;
-	snapshot->lanes[1].state = Stud::state.session.lanes[1].state;
-	snapshot->activeLane = Stud::state.session.activeLane;
-	snapshot->systemPrompt = Stud::state.session.systemPrompt;
-	snapshot->toolsPrompt = Stud::state.session.toolsPrompt;
-	snapshot->syntax = Stud::state.session.syntax;
-	snapshot->assistantNextGeneration = Stud::state.session.assistantNextGeneration;
-	snapshot->batchSize = Stud::state.session.batchSize;
+	snapshot->lanes[0].messages = Stud::runtime().session.lanes[0].messages;
+	snapshot->lanes[0].cachedTokens = Stud::runtime().session.lanes[0].cachedTokens;
+	snapshot->lanes[0].state = Stud::runtime().session.lanes[0].state;
+	snapshot->lanes[1].messages = Stud::runtime().session.lanes[1].messages;
+	snapshot->lanes[1].cachedTokens = Stud::runtime().session.lanes[1].cachedTokens;
+	snapshot->lanes[1].state = Stud::runtime().session.lanes[1].state;
+	snapshot->activeLane = Stud::runtime().session.activeLane;
+	snapshot->systemPrompt = Stud::runtime().session.systemPrompt;
+	snapshot->toolsPrompt = Stud::runtime().session.toolsPrompt;
+	snapshot->syntax = Stud::runtime().session.syntax;
+	snapshot->assistantNextGeneration = Stud::runtime().session.assistantNextGeneration;
+	snapshot->batchSize = Stud::runtime().session.batchSize;
 	return snapshot;
 }
 extern "C" EXPORT void RestoreChatState(void* state){
 	if(!state) return;
 	const auto* snapshot = static_cast<Stud::ChatStateSnapshot*>(state);
-	Stud::state.session.lanes[0].messages = snapshot->lanes[0].messages;
-	Stud::state.session.lanes[0].cachedTokens = snapshot->lanes[0].cachedTokens;
-	Stud::state.session.lanes[0].state = snapshot->lanes[0].state;
-	Stud::state.session.lanes[1].messages = snapshot->lanes[1].messages;
-	Stud::state.session.lanes[1].cachedTokens = snapshot->lanes[1].cachedTokens;
-	Stud::state.session.lanes[1].state = snapshot->lanes[1].state;
-	Stud::state.session.activeLane = snapshot->activeLane;
-	Stud::state.session.systemPrompt = snapshot->systemPrompt;
-	Stud::state.session.toolsPrompt = snapshot->toolsPrompt;
-	Stud::state.session.syntax = snapshot->syntax;
-	Stud::state.session.assistantNextGeneration = snapshot->assistantNextGeneration;
-	Stud::state.session.batchSize = snapshot->batchSize;
+	Stud::runtime().session.lanes[0].messages = snapshot->lanes[0].messages;
+	Stud::runtime().session.lanes[0].cachedTokens = snapshot->lanes[0].cachedTokens;
+	Stud::runtime().session.lanes[0].state = snapshot->lanes[0].state;
+	Stud::runtime().session.lanes[1].messages = snapshot->lanes[1].messages;
+	Stud::runtime().session.lanes[1].cachedTokens = snapshot->lanes[1].cachedTokens;
+	Stud::runtime().session.lanes[1].state = snapshot->lanes[1].state;
+	Stud::runtime().session.activeLane = snapshot->activeLane;
+	Stud::runtime().session.systemPrompt = snapshot->systemPrompt;
+	Stud::runtime().session.toolsPrompt = snapshot->toolsPrompt;
+	Stud::runtime().session.syntax = snapshot->syntax;
+	Stud::runtime().session.assistantNextGeneration = snapshot->assistantNextGeneration;
+	Stud::runtime().session.batchSize = snapshot->batchSize;
 }
 extern "C" EXPORT void FreeChatState(void* state){ delete static_cast<Stud::ChatStateSnapshot*>(state); }

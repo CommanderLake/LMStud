@@ -26,7 +26,9 @@ namespace LMStud{
 			internal static bool ButApplyModelSettingsEnabled;
 			internal static bool ButGenEnabled;
 			internal static bool ButLoadEnabled;
+			internal static bool ButLoadSlotEnabled;
 			internal static bool ButUnloadEnabled;
+			internal static bool ButUnloadSlotEnabled;
 			internal static bool ListViewModelsEnabled;
 		}
 		internal Form1(){
@@ -169,11 +171,13 @@ namespace LMStud{
 		}
 		internal void CheckDialectic_CheckedChanged(object sender, EventArgs e){
 			if(checkDialectic.Checked){
-				if(!Common.LlModelLoaded){
+				var activeSlot = ModelSlotManager.GetActiveChatSlot();
+				if(!ModelSlotManager.CanServeLocalSlot(activeSlot)){
 					MessageBox.Show(this, Resources.Load_a_model_first_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 					checkDialectic.Checked = false;
 					return;
 				}
+				NativeMethods.ActivateModelSlot(activeSlot.Name);
 				var err = NativeMethods.DialecticInit();
 				if(err != NativeMethods.StudError.Success){
 					ShowError(Resources.Dialectic_enable, err);
@@ -365,14 +369,18 @@ namespace LMStud{
 				FormControlStates.ButApplyEnabled = butApply.Enabled;
 				FormControlStates.ButApplyModelSettingsEnabled = butApplyModelSettings.Enabled;
 				FormControlStates.ButGenEnabled = butGen.Enabled;
-				FormControlStates.ButLoadEnabled = butLoad.Enabled;
-				FormControlStates.ButUnloadEnabled = butUnload.Enabled;
+				FormControlStates.ButLoadEnabled = butLoadMain.Enabled;
+				FormControlStates.ButLoadSlotEnabled = butLoadSlot.Enabled;
+				FormControlStates.ButUnloadEnabled = butUnloadMain.Enabled;
+				FormControlStates.ButUnloadSlotEnabled = butUnloadSlot.Enabled;
 				FormControlStates.ListViewModelsEnabled = listViewModels.Enabled;
 				butApply.Enabled = false;
 				butApplyModelSettings.Enabled = false;
 				butGen.Enabled = false;
-				butLoad.Enabled = false;
-				butUnload.Enabled = false;
+				butLoadMain.Enabled = false;
+				butLoadSlot.Enabled = false;
+				butUnloadMain.Enabled = false;
+				butUnloadSlot.Enabled = false;
 				listViewModels.Enabled = false;
 				UpdateStatusMessage();
 			});
@@ -383,9 +391,11 @@ namespace LMStud{
 				butApply.Enabled = FormControlStates.ButApplyEnabled;
 				butApplyModelSettings.Enabled = FormControlStates.ButApplyModelSettingsEnabled;
 				butGen.Enabled = FormControlStates.ButGenEnabled;
-				butLoad.Enabled = FormControlStates.ButLoadEnabled;
+				butLoadMain.Enabled = FormControlStates.ButLoadEnabled;
+				butLoadSlot.Enabled = FormControlStates.ButLoadSlotEnabled;
 				butReset.Enabled = true;
-				butUnload.Enabled = FormControlStates.ButUnloadEnabled;
+				butUnloadMain.Enabled = FormControlStates.ButUnloadEnabled;
+				butUnloadSlot.Enabled = FormControlStates.ButUnloadSlotEnabled;
 				listViewModels.Enabled = FormControlStates.ListViewModelsEnabled;
 				UpdateStatusMessage();
 			});

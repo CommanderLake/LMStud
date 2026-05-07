@@ -9,25 +9,20 @@ namespace LMStud{
 		private bool _populatingSlotEditor;
 		private string _slotEditorAutoToolName;
 		private void InitializeSlotUi(){
-			butSlotsAdd.Click += ButSlotsAdd_Click;
-			butSlotsSave.Click += ButSlotsSave_Click;
-			butSlotsRemove.Click += ButSlotsRemove_Click;
 			listViewSlots.SelectedIndexChanged += (sender, args) => {
 				PopulateSlotEditorFromSelection();
 				UpdateSlotButtons();
 			};
-			listViewSlots.DoubleClick += (sender, args) => SaveSelectedSlot();
-			listViewSlots.KeyDown += ListViewSlots_KeyDown;
+			listViewSlots.DoubleClick += (sender, args) => MakeSelectedSlotChat();
 			comboSlotsEditSource.SelectedIndexChanged += (sender, args) => UpdateSlotEditorSourceFields();
 			textSlotsEditName.TextChanged += (sender, args) => UpdateSlotEditorToolNameFromSlotName();
-			comboSlotsEditApiModel.DropDown += ComboSlotsEditApiModel_DropDown;
 			textSlotsEditApiKey.UseSystemPasswordChar = true;
 			SetSlotToolTips();
 			UpdateSlotEditorSourceFields();
 			UpdateSlotButtons();
 		}
 		private void SetSlotToolTips(){
-			toolTip1.SetToolTip(listViewSlots, "Configured model slots. The bold slot is used for normal chat.");
+			toolTip1.SetToolTip(listViewSlots, "Configured model slots. The bold slot is used for normal chat. Double-click a slot to use it for chat.");
 			toolTip1.SetToolTip(groupBoxSlotConfig, "Edit the selected slot or fill these fields and add a new slot.");
 			toolTip1.SetToolTip(textSlotsEditName, "Short unique slot name, for example main, critic, judge, or coder.");
 			toolTip1.SetToolTip(comboSlotsEditSource, "Choose whether this slot points to a local GGUF model or an API model.");
@@ -98,8 +93,11 @@ namespace LMStud{
 		}
 		private void UpdateSlotButtons(){
 			var hasSelection = listViewSlots != null && listViewSlots.SelectedItems.Count == 1;
+			var slot = hasSelection ? (ModelSlot)listViewSlots.SelectedItems[0].Tag : null;
 			butSlotsSave.Enabled = hasSelection;
-			butSlotsRemove.Enabled = hasSelection && !string.Equals(((ModelSlot)listViewSlots.SelectedItems[0].Tag).Name, "main", StringComparison.OrdinalIgnoreCase);
+			butSlotsRemove.Enabled = hasSelection && !string.Equals(slot.Name, "main", StringComparison.OrdinalIgnoreCase);
+			butLoadSlot.Enabled = hasSelection && slot.Source == ModelSlotSource.Local;
+			butUnloadSlot.Enabled = hasSelection && ModelSlotManager.CanServeLocalSlot(slot);
 		}
 		private void UpdateSlotEditorSourceFields(){
 			if(comboSlotsEditSource.SelectedIndex < 0) comboSlotsEditSource.SelectedIndex = 0;
@@ -131,6 +129,14 @@ namespace LMStud{
 			var original = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
 			if(!TryReadSlotEditor(original.Name, false, out var slot)) return;
 			ModelSlotManager.AddOrUpdate(slot, original.Name);
+			ApplyActiveSlotToRuntime(true);
+			PopulateSlotsList();
+			SelectSlot(slot.Name);
+		}
+		private void MakeSelectedSlotChat(){
+			if(listViewSlots.SelectedItems.Count != 1) return;
+			var slot = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
+			if(!ModelSlotManager.SetActiveChatSlot(slot.Name)) return;
 			ApplyActiveSlotToRuntime(true);
 			PopulateSlotsList();
 			SelectSlot(slot.Name);
@@ -236,6 +242,9 @@ namespace LMStud{
 				};
 			} else{
 				Common.APIClientEnable = false;
+				if(!Generation.Generating && !Generation.APIServerGenerating) NativeMethods.ActivateModelSlot(slot.Name);
+				Common.LoadedModel = GetLoadedModelForSlot(slot);
+				Common.LlModelLoaded = Common.LoadedLocalSlots.Count > 0;
 				if(updateControls) updateUi = () => { checkApiClientEnable.Checked = false; };
 			}
 			if(registerTools) Tools.RegisterTools();
@@ -267,6 +276,21 @@ namespace LMStud{
 			}
 			LoadModel(item, false, slot.Name);
 			return true;
+		}
+		private void ButLoadSlot_Click(object sender, EventArgs e){
+			if(!TryLoadSelectedSlot()) ShowError("Load Slot", "Select a local slot first.", false);
+		}
+		private void ButUnloadSlot_Click(object sender, EventArgs e){
+			if(listViewSlots.SelectedItems.Count != 1){
+				ShowError("Unload Slot", "Select a slot first.", false);
+				return;
+			}
+			var slot = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
+			if(slot.Source != ModelSlotSource.Local){
+				ShowError("Unload Slot", "Only local slots can be unloaded.", false);
+				return;
+			}
+			UnloadModel(true, slot.Name);
 		}
 		private void ComboSlotsEditApiModel_DropDown(object sender, EventArgs e){
 			try{
