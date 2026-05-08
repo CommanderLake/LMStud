@@ -103,6 +103,19 @@ namespace LMStud{
 				return SlotsInternal.FirstOrDefault(slot => slot.Source == ModelSlotSource.Local && SamePath(slot.ResolveLocalPath(), loadedPath))?.Clone();
 			}
 		}
+		internal static List<ModelSlot> ResolveDialecticLocalSlots(){
+			ModelSlot active;
+			List<ModelSlot> dialecticSlots;
+			lock(Sync){
+				active = (FindSlotInternal(ActiveChatSlotName) ?? SlotsInternal.FirstOrDefault(slot => slot.HasUse(ModelSlotUse.Chat)) ?? FindSlotInternal(MainSlotName))?.Clone();
+				dialecticSlots = SlotsInternal.Where(slot => slot.Source == ModelSlotSource.Local && slot.HasUse(ModelSlotUse.Dialectic)).Select(slot => slot.Clone()).ToList();
+			}
+			if(!CanServeLocalSlot(active)) return new List<ModelSlot>();
+			var slots = new List<ModelSlot>{ active };
+			var partner = dialecticSlots.FirstOrDefault(slot => !string.Equals(slot.Name, active.Name, StringComparison.OrdinalIgnoreCase) && CanServeLocalSlot(slot));
+			if(partner != null) slots.Add(partner);
+			return slots;
+		}
 		internal static void AddOrUpdate(ModelSlot slot, string oldName = null){
 			if(slot == null) return;
 			lock(Sync){
@@ -155,13 +168,18 @@ namespace LMStud{
 		}
 		internal static void LoadLocalIntoSlot(string slotName, string modelPath, bool makeChat){
 			if(string.IsNullOrWhiteSpace(modelPath)) return;
+			var requestedSlotName = string.IsNullOrWhiteSpace(slotName) ? MainSlotName : slotName.Trim();
+			var activeChatSlot = GetActiveChatSlot();
+			var loadedDifferentChatSlot = activeChatSlot?.Source == ModelSlotSource.Local && !string.Equals(activeChatSlot.Name, requestedSlotName, StringComparison.OrdinalIgnoreCase) && CanServeLocalSlot(activeChatSlot);
 			lock(Sync){
-				var slot = FindSlotInternal(slotName) ?? new ModelSlot{ Name = string.IsNullOrWhiteSpace(slotName) ? MainSlotName : slotName.Trim(), Use = ModelSlotUse.Server };
+				var slot = FindSlotInternal(requestedSlotName) ?? new ModelSlot{ Name = requestedSlotName, Use = ModelSlotUse.Server };
 				if(!SlotsInternal.Contains(slot)) SlotsInternal.Add(slot);
 				slot.Source = ModelSlotSource.Local;
 				slot.LocalPath = ToStoredLocalPath(modelPath);
 				if(string.IsNullOrWhiteSpace(slot.ToolName)) slot.ToolName = BuildToolName(slot.Name);
-				if(makeChat || string.Equals(slot.Name, MainSlotName, StringComparison.OrdinalIgnoreCase)){
+				var promoteToChat = makeChat || string.Equals(slot.Name, MainSlotName, StringComparison.OrdinalIgnoreCase);
+				if(loadedDifferentChatSlot && !string.Equals(slot.Name, MainSlotName, StringComparison.OrdinalIgnoreCase)) promoteToChat = false;
+				if(promoteToChat){
 					slot.Use |= ModelSlotUse.Chat | ModelSlotUse.Server;
 					ActiveChatSlotName = slot.Name;
 				}
@@ -270,10 +288,16 @@ namespace LMStud{
 			result = null;
 			if(toolCall == null || string.IsNullOrWhiteSpace(toolCall.Name)) return false;
 			ModelSlot slot;
-			lock(Sync) slot = SlotsInternal.FirstOrDefault(candidate => string.Equals(GetToolName(candidate), toolCall.Name, StringComparison.OrdinalIgnoreCase))?.Clone();
+			lock(Sync)
+				slot = SlotsInternal.FirstOrDefault(candidate => candidate.HasUse(ModelSlotUse.Tool) &&
+					string.Equals(GetToolName(candidate), toolCall.Name, StringComparison.OrdinalIgnoreCase))?.Clone();
 			if(slot == null) return false;
 			if(slot.Source != ModelSlotSource.Api){
 				result = JsonConvert.SerializeObject(new{ error = "Only API-backed model slots can be called as tools during generation." });
+				return true;
+			}
+			if(!CanServeApiSlot(slot)){
+				result = JsonConvert.SerializeObject(new{ error = "API model tool slot is missing an API URL or model." });
 				return true;
 			}
 			try{

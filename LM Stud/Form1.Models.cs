@@ -22,8 +22,12 @@ namespace LMStud{
 				PopulateMeta((List<GGUFMetadataManager.GGUFMetadataEntry>)listViewModels.SelectedItems[0].Tag);
 				PopulateModelSettings(listViewModels.SelectedItems[0].SubItems[1].Text);
 			} else{
-				listViewMeta.Items.Clear();
-				SetModelSpecificTabsEnabled(false);
+				if(!IsHandleCreated || IsDisposed) return;
+				BeginInvoke(new MethodInvoker(() => {
+					if(IsDisposed || listViewModels.SelectedItems.Count != 0) return;
+					listViewMeta.Items.Clear();
+					SetModelSpecificTabsEnabled(false);
+				}));
 			}
 		}
 		private void SetModelSpecificTabsEnabled(bool enabled){
@@ -211,7 +215,7 @@ namespace LMStud{
 				var loadedModel = Common.LoadedModel;
 				if(loadedModel != null && _modelSettings.TryGetValue(loadedModel.SubItems[1].Text.Substring(Common.ModelsDir.Length), out var overrides) && overrides.OverrideSettings) prompt = overrides.SystemPrompt;
 				else prompt = Common.SystemPrompt;
-				var error = NativeMethods.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, Common.GoogleSearchEnable && Common.WebpageFetchEnable ? FetchPrompt : "");
+				var error = SetSystemPromptForDialecticState(prompt.Length > 0 ? prompt : DefaultPrompt, Common.GoogleSearchEnable && Common.WebpageFetchEnable ? FetchPrompt : "");
 				if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowError(Resources.Error_setting_system_prompt, error);
 			} finally{
 				if(genLock) Generation.GenerationLock.Release();
@@ -234,7 +238,8 @@ namespace LMStud{
 			butGen.Enabled = (Common.APIClientEnable || activeLocalLoaded) && !Generation.Generating;
 			butReset.Enabled = !Generation.Generating;
 			butUnloadMain.Enabled = Common.LoadedLocalSlots.ContainsKey("main") && NativeMethods.IsModelSlotLoaded("main");
-			if(Common.APIClientEnable && activeSlot != null) toolStripStatusLabel1.Text = "Using slot " + activeSlot.Name + ": " + activeSlot.DisplayModel();
+			if(checkDialectic.Checked && Generation.DialecticRelayEnabled) toolStripStatusLabel1.Text = "Dialectic relay: " + Generation.DialecticPrimarySlotName + " <-> " + Generation.DialecticSecondarySlotName;
+			else if(Common.APIClientEnable && activeSlot != null) toolStripStatusLabel1.Text = "Using slot " + activeSlot.Name + ": " + activeSlot.DisplayModel();
 			else if(activeLocalLoaded && activeSlot != null) toolStripStatusLabel1.Text = "Using slot " + activeSlot.Name + ": " + activeLoadedModel.Text;
 			else if(Common.LlModelLoaded && Common.LoadedModel != null) toolStripStatusLabel1.Text = Resources.Using_Model_ + Common.LoadedModel.Text;
 			else toolStripStatusLabel1.Text = Resources.No_model_loaded;
@@ -286,9 +291,12 @@ namespace LMStud{
 			var modelsDir = Common.ModelsDir;
 			var fileName = Path.GetFileName(modelPath);
 			var meta = (List<GGUFMetadataManager.GGUFMetadataEntry>)modelLvi.Tag;
-			var targetSlot = ModelSlotManager.GetSlot(slotName);
-			var makeSlotChat = string.Equals(slotName, "main", StringComparison.OrdinalIgnoreCase) || (targetSlot != null && targetSlot.HasUse(ModelSlotUse.Chat)) ||
-				(ModelSlotManager.GetActiveChatSlot()?.Source == ModelSlotSource.Local && !Common.APIClientEnable);
+			var activeChatSlot = ModelSlotManager.GetActiveChatSlot();
+			var loadingActiveChatSlot = activeChatSlot != null && string.Equals(activeChatSlot.Name, slotName, StringComparison.OrdinalIgnoreCase);
+			var activeChatSlotLoaded = activeChatSlot?.Source == ModelSlotSource.Local && ModelSlotManager.CanServeLocalSlot(activeChatSlot);
+			var makeSlotChat = string.Equals(slotName, "main", StringComparison.OrdinalIgnoreCase) ||
+				(activeChatSlot?.Source == ModelSlotSource.Local && !activeChatSlotLoaded);
+			if(activeChatSlotLoaded && !loadingActiveChatSlot && !string.Equals(slotName, "main", StringComparison.OrdinalIgnoreCase)) makeSlotChat = false;
 			ThreadPool.QueueUserWorkItem(o => {
 				var overrideSettings = _modelSettings.TryGetValue(modelPath.Substring(modelsDir.Length), out var overrides) && overrides.OverrideSettings;
 				var ctxSize = overrideSettings ? overrides.CtxSize : Common.CtxSize;

@@ -61,6 +61,17 @@ namespace LMStud{
 		internal static extern StudError CreateSession(int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError ActivateModelSlot([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "GetActiveModelSlotName")]
+		private static extern IntPtr GetActiveModelSlotNamePtr();
+		internal static string GetActiveModelSlotName(){
+			var ptr = GetActiveModelSlotNamePtr();
+			if(ptr == IntPtr.Zero) return null;
+			var length = 0;
+			while(Marshal.ReadByte(ptr, length) != 0) length++;
+			var buffer = new byte[length];
+			Marshal.Copy(ptr, buffer, 0, length);
+			return Encoding.UTF8.GetString(buffer);
+		}
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		[return: MarshalAs(UnmanagedType.I1)]
 		internal static extern bool IsModelSlotLoaded([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
@@ -87,9 +98,13 @@ namespace LMStud{
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError DialecticInit();
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern bool DialecticStart();
+		internal static extern StudError DialecticRelayInit();
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern StudError DialecticStart();
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError DialecticSwap();
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern StudError DialecticRelaySwap([MarshalAs(UnmanagedType.LPUTF8Str)] string fromSlotName, [MarshalAs(UnmanagedType.LPUTF8Str)] string toSlotName);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void DialecticFree();
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]

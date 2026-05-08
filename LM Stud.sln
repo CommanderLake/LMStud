@@ -14,12 +14,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LM Stud.Tests", "LM Stud.Te
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+
+		Release|x64 = Release|x64
+		ReleaseCUDA12|x64 = ReleaseCUDA12|x64
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
 		Release|Any CPU = Release|Any CPU
-		Release|x64 = Release|x64
 		ReleaseCUDA12|Any CPU = ReleaseCUDA12|Any CPU
-		ReleaseCUDA12|x64 = ReleaseCUDA12|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{2101CFCA-AF13-459C-974D-B4B97E919B42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

@@ -17,30 +17,8 @@ namespace LMStud{
 			comboSlotsEditSource.SelectedIndexChanged += (sender, args) => UpdateSlotEditorSourceFields();
 			textSlotsEditName.TextChanged += (sender, args) => UpdateSlotEditorToolNameFromSlotName();
 			textSlotsEditApiKey.UseSystemPasswordChar = true;
-			SetSlotToolTips();
 			UpdateSlotEditorSourceFields();
 			UpdateSlotButtons();
-		}
-		private void SetSlotToolTips(){
-			toolTip1.SetToolTip(listViewSlots, "Configured model slots. The bold slot is used for normal chat. Double-click a slot to use it for chat.");
-			toolTip1.SetToolTip(groupBoxSlotConfig, "Edit the selected slot or fill these fields and add a new slot.");
-			toolTip1.SetToolTip(textSlotsEditName, "Short unique slot name, for example main, critic, judge, or coder.");
-			toolTip1.SetToolTip(comboSlotsEditSource, "Choose whether this slot points to a local GGUF model or an API model.");
-			toolTip1.SetToolTip(textSlotsEditModel, "Local GGUF model path for this slot. Relative paths are resolved from the Models folder.");
-			toolTip1.SetToolTip(butSlotsEditUseSelectedModel, "Use the selected model from the model list for this slot.");
-			toolTip1.SetToolTip(textSlotsEditApiUrl, "API base URL for API slots, for example http://localhost:1234 or an OpenAI-compatible endpoint.");
-			toolTip1.SetToolTip(textSlotsEditApiKey, "Bearer API key for this slot. Leave blank for local servers that do not require a key.");
-			toolTip1.SetToolTip(comboSlotsEditApiModel, "API model name for this slot. Open the drop-down to fetch /v1/models from the configured API URL.");
-			toolTip1.SetToolTip(checkSlotsEditStore, "Send store=true when this slot is used as the main API chat slot.");
-			toolTip1.SetToolTip(textSlotsEditInstructions, "Optional system instructions used when this slot is called directly or as a tool.");
-			toolTip1.SetToolTip(textSlotsEditToolName, "Function name exposed to models when this API slot is enabled as a tool.");
-			toolTip1.SetToolTip(checkSlotsEditChat, "Use this slot for normal chat. Only one slot can be the chat slot.");
-			toolTip1.SetToolTip(checkSlotsEditDialectic, "Reserve this slot for dialectic mode routing.");
-			toolTip1.SetToolTip(checkSlotsEditTool, "Expose this API slot as a callable model tool, such as ask_critic.");
-			toolTip1.SetToolTip(checkSlotsEditServer, "Expose this slot through the API server as lmstud/<name>.");
-			toolTip1.SetToolTip(butSlotsAdd, "Create a new slot from the fields above.");
-			toolTip1.SetToolTip(butSlotsSave, "Save the fields above to the selected slot.");
-			toolTip1.SetToolTip(butSlotsRemove, "Remove the selected slot. The main slot cannot be removed.");
 		}
 		private void PopulateSlotsList(){
 			if(listViewSlots == null) return;

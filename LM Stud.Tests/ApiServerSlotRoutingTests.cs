@@ -76,6 +76,20 @@ namespace LM_Stud.Tests{
 				ModelSlotManager.Remove(slotName);
 			}
 		}
+		[TestMethod]
+		public void TryExecuteToolCall_IgnoresApiSlotsThatAreNotEnabledAsTools(){
+			var slotName = "test_hidden_tool_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+			try{
+				ModelSlotManager.AddOrUpdate(new ModelSlot{
+					Name = slotName, Source = ModelSlotSource.Api, ApiBaseUrl = "http://127.0.0.1:1", ApiModel = "hidden-model", ToolName = "ask_hidden_model", Use = ModelSlotUse.Server
+				});
+				var handled = ModelSlotManager.TryExecuteToolCall(new APIClient.ToolCall("call_1", "ask_hidden_model", "{\"prompt\":\"hello\"}"), out var result);
+				Assert.IsFalse(handled);
+				Assert.IsNull(result);
+			} finally{
+				ModelSlotManager.Remove(slotName);
+			}
+		}
 		private static async Task<HttpResponseMessage> PostResponses(HttpClient client, int port, string model, string input){
 			var payload = new{ model = model, input = input };
 			return await client.PostAsync($"http://127.0.0.1:{port}/v1/responses", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));

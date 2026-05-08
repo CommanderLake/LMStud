@@ -26,6 +26,7 @@ EXPORT StudError CreateSession(int nCtx, int nBatch, unsigned int flashAttn, int
 EXPORT void DestroySession();
 EXPORT StudError ResetChat();
 EXPORT StudError ActivateModelSlot(const char* slotName);
+EXPORT const char* GetActiveModelSlotName();
 EXPORT bool IsModelSlotLoaded(const char* slotName);
 EXPORT void FreeModelSlot(const char* slotName);
 EXPORT void FreeModel();
@@ -38,8 +39,10 @@ EXPORT int GetStateSize();
 EXPORT StudError GetStateData(unsigned char* dst, int size);
 EXPORT StudError SetStateData(const unsigned char* src, int size);
 EXPORT StudError DialecticInit();
+EXPORT StudError DialecticRelayInit();
 EXPORT StudError DialecticStart();
 EXPORT StudError DialecticSwap();
+EXPORT StudError DialecticRelaySwap(const char* fromSlotName, const char* toSlotName);
 EXPORT void DialecticFree();
 EXPORT StudError RetokenizeChat(bool rebuildMemory);
 EXPORT StudError SetSystemPrompt(const char* prompt, const char* toolsPrompt);

@@ -750,11 +750,13 @@ namespace LMStud
 			this.groupBoxSlotConfig.Controls.Add(this.checkSlotsEditTool);
 			this.groupBoxSlotConfig.Name = "groupBoxSlotConfig";
 			this.groupBoxSlotConfig.TabStop = false;
+			this.toolTip1.SetToolTip(this.groupBoxSlotConfig, resources.GetString("groupBoxSlotConfig.ToolTip"));
 			// 
 			// butSlotsEditUseSelectedModel
 			// 
 			resources.ApplyResources(this.butSlotsEditUseSelectedModel, "butSlotsEditUseSelectedModel");
 			this.butSlotsEditUseSelectedModel.Name = "butSlotsEditUseSelectedModel";
+			this.toolTip1.SetToolTip(this.butSlotsEditUseSelectedModel, resources.GetString("butSlotsEditUseSelectedModel.ToolTip"));
 			this.butSlotsEditUseSelectedModel.UseVisualStyleBackColor = true;
 			this.butSlotsEditUseSelectedModel.Click += new System.EventHandler(this.ButSlotsEditUseSelectedModel_Click);
 			// 
@@ -767,16 +769,19 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.textSlotsEditName, "textSlotsEditName");
 			this.textSlotsEditName.Name = "textSlotsEditName";
+			this.toolTip1.SetToolTip(this.textSlotsEditName, resources.GetString("textSlotsEditName.ToolTip"));
 			// 
 			// textSlotsEditApiKey
 			// 
 			resources.ApplyResources(this.textSlotsEditApiKey, "textSlotsEditApiKey");
 			this.textSlotsEditApiKey.Name = "textSlotsEditApiKey";
+			this.toolTip1.SetToolTip(this.textSlotsEditApiKey, resources.GetString("textSlotsEditApiKey.ToolTip"));
 			// 
 			// butSlotsSave
 			// 
 			resources.ApplyResources(this.butSlotsSave, "butSlotsSave");
 			this.butSlotsSave.Name = "butSlotsSave";
+			this.toolTip1.SetToolTip(this.butSlotsSave, resources.GetString("butSlotsSave.ToolTip"));
 			this.butSlotsSave.UseVisualStyleBackColor = true;
 			this.butSlotsSave.Click += new System.EventHandler(this.ButSlotsSave_Click);
 			// 
@@ -789,11 +794,13 @@ namespace LMStud
             resources.GetString("comboSlotsEditSource.Items"),
             resources.GetString("comboSlotsEditSource.Items1")});
 			this.comboSlotsEditSource.Name = "comboSlotsEditSource";
+			this.toolTip1.SetToolTip(this.comboSlotsEditSource, resources.GetString("comboSlotsEditSource.ToolTip"));
 			// 
 			// butSlotsAdd
 			// 
 			resources.ApplyResources(this.butSlotsAdd, "butSlotsAdd");
 			this.butSlotsAdd.Name = "butSlotsAdd";
+			this.toolTip1.SetToolTip(this.butSlotsAdd, resources.GetString("butSlotsAdd.ToolTip"));
 			this.butSlotsAdd.UseVisualStyleBackColor = true;
 			this.butSlotsAdd.Click += new System.EventHandler(this.ButSlotsAdd_Click);
 			// 
@@ -806,6 +813,7 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.textSlotsEditModel, "textSlotsEditModel");
 			this.textSlotsEditModel.Name = "textSlotsEditModel";
+			this.toolTip1.SetToolTip(this.textSlotsEditModel, resources.GetString("textSlotsEditModel.ToolTip"));
 			// 
 			// label48
 			// 
@@ -816,6 +824,7 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.textSlotsEditApiUrl, "textSlotsEditApiUrl");
 			this.textSlotsEditApiUrl.Name = "textSlotsEditApiUrl";
+			this.toolTip1.SetToolTip(this.textSlotsEditApiUrl, resources.GetString("textSlotsEditApiUrl.ToolTip"));
 			// 
 			// label47
 			// 
@@ -826,6 +835,7 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.textSlotsEditInstructions, "textSlotsEditInstructions");
 			this.textSlotsEditInstructions.Name = "textSlotsEditInstructions";
+			this.toolTip1.SetToolTip(this.textSlotsEditInstructions, resources.GetString("textSlotsEditInstructions.ToolTip"));
 			// 
 			// label46
 			// 
@@ -837,6 +847,7 @@ namespace LMStud
 			resources.ApplyResources(this.comboSlotsEditApiModel, "comboSlotsEditApiModel");
 			this.comboSlotsEditApiModel.FormattingEnabled = true;
 			this.comboSlotsEditApiModel.Name = "comboSlotsEditApiModel";
+			this.toolTip1.SetToolTip(this.comboSlotsEditApiModel, resources.GetString("comboSlotsEditApiModel.ToolTip"));
 			this.comboSlotsEditApiModel.DropDown += new System.EventHandler(this.ComboSlotsEditApiModel_DropDown);
 			// 
 			// label45
@@ -848,6 +859,7 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.checkSlotsEditStore, "checkSlotsEditStore");
 			this.checkSlotsEditStore.Name = "checkSlotsEditStore";
+			this.toolTip1.SetToolTip(this.checkSlotsEditStore, resources.GetString("checkSlotsEditStore.ToolTip"));
 			this.checkSlotsEditStore.UseVisualStyleBackColor = true;
 			// 
 			// label44
@@ -859,6 +871,7 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.textSlotsEditToolName, "textSlotsEditToolName");
 			this.textSlotsEditToolName.Name = "textSlotsEditToolName";
+			this.toolTip1.SetToolTip(this.textSlotsEditToolName, resources.GetString("textSlotsEditToolName.ToolTip"));
 			// 
 			// label43
 			// 
@@ -869,6 +882,7 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.checkSlotsEditChat, "checkSlotsEditChat");
 			this.checkSlotsEditChat.Name = "checkSlotsEditChat";
+			this.toolTip1.SetToolTip(this.checkSlotsEditChat, resources.GetString("checkSlotsEditChat.ToolTip"));
 			this.checkSlotsEditChat.UseVisualStyleBackColor = true;
 			// 
 			// label42
@@ -880,24 +894,28 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.checkSlotsEditDialectic, "checkSlotsEditDialectic");
 			this.checkSlotsEditDialectic.Name = "checkSlotsEditDialectic";
+			this.toolTip1.SetToolTip(this.checkSlotsEditDialectic, resources.GetString("checkSlotsEditDialectic.ToolTip"));
 			this.checkSlotsEditDialectic.UseVisualStyleBackColor = true;
 			// 
 			// checkSlotsEditServer
 			// 
 			resources.ApplyResources(this.checkSlotsEditServer, "checkSlotsEditServer");
 			this.checkSlotsEditServer.Name = "checkSlotsEditServer";
+			this.toolTip1.SetToolTip(this.checkSlotsEditServer, resources.GetString("checkSlotsEditServer.ToolTip"));
 			this.checkSlotsEditServer.UseVisualStyleBackColor = true;
 			// 
 			// checkSlotsEditTool
 			// 
 			resources.ApplyResources(this.checkSlotsEditTool, "checkSlotsEditTool");
 			this.checkSlotsEditTool.Name = "checkSlotsEditTool";
+			this.toolTip1.SetToolTip(this.checkSlotsEditTool, resources.GetString("checkSlotsEditTool.ToolTip"));
 			this.checkSlotsEditTool.UseVisualStyleBackColor = true;
 			// 
 			// butSlotsRemove
 			// 
 			resources.ApplyResources(this.butSlotsRemove, "butSlotsRemove");
 			this.butSlotsRemove.Name = "butSlotsRemove";
+			this.toolTip1.SetToolTip(this.butSlotsRemove, resources.GetString("butSlotsRemove.ToolTip"));
 			this.butSlotsRemove.UseVisualStyleBackColor = true;
 			this.butSlotsRemove.Click += new System.EventHandler(this.ButSlotsRemove_Click);
 			// 
@@ -914,6 +932,7 @@ namespace LMStud
 			this.listViewSlots.HideSelection = false;
 			this.listViewSlots.MultiSelect = false;
 			this.listViewSlots.Name = "listViewSlots";
+			this.toolTip1.SetToolTip(this.listViewSlots, resources.GetString("listViewSlots.ToolTip"));
 			this.listViewSlots.UseCompatibleStateImageBehavior = false;
 			this.listViewSlots.View = System.Windows.Forms.View.Details;
 			this.listViewSlots.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ListViewSlots_KeyDown);

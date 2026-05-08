@@ -28,6 +28,7 @@ namespace Stud{
 		std::string toolsPrompt;
 		common_chat_parser_params syntax;
 		bool assistantNextGeneration = false;
+		bool dialecticRelay = false;
 		int batchSize = 1;
 	};
 	struct ModelRuntime{
@@ -52,10 +53,11 @@ namespace Stud{
 		int activeLane = 0;
 		std::string systemPrompt;
 		std::string toolsPrompt;
-		common_chat_parser_params syntax{};
-		bool assistantNextGeneration = false;
-		int batchSize = 1;
-	};
+	common_chat_parser_params syntax{};
+	bool assistantNextGeneration = false;
+	bool dialecticRelay = false;
+	int batchSize = 1;
+};
 	inline StudState state;
 	inline ModelRuntime& runtime(){ return state.activeRuntime ? *state.activeRuntime : state.defaultRuntime; }
 }

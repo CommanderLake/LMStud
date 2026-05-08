@@ -24,15 +24,41 @@ namespace LMStud {
 		private static int _msgTokenCount;
 		internal static bool DialecticStarted;
 		internal static bool DialecticPaused;
+		internal static string DialecticPrimarySlotName;
+		internal static string DialecticSecondarySlotName;
+		internal static string CurrentDialecticSlotName;
+		internal static bool DialecticRelayEnabled => !string.IsNullOrWhiteSpace(DialecticPrimarySlotName) && !string.IsNullOrWhiteSpace(DialecticSecondarySlotName) &&
+			!string.Equals(DialecticPrimarySlotName, DialecticSecondarySlotName, StringComparison.OrdinalIgnoreCase);
 		internal static bool FirstToken = true;
 		private static int _genTokenTotal;
+		internal static void ConfigureDialecticSlots(IList<ModelSlot> slots){
+			DialecticPrimarySlotName = slots != null && slots.Count > 0 ? slots[0].Name : null;
+			DialecticSecondarySlotName = slots != null && slots.Count > 1 ? slots[1].Name : null;
+			CurrentDialecticSlotName = DialecticPrimarySlotName;
+		}
+		internal static void ClearDialecticSlots(){
+			DialecticPrimarySlotName = null;
+			DialecticSecondarySlotName = null;
+			CurrentDialecticSlotName = null;
+		}
+		internal static string[] GetDialecticSlotNames(){
+			if(string.IsNullOrWhiteSpace(DialecticPrimarySlotName)) return new string[0];
+			if(!DialecticRelayEnabled) return new[]{ DialecticPrimarySlotName };
+			return new[]{ DialecticPrimarySlotName, DialecticSecondarySlotName };
+		}
+		private static string GetNextDialecticSlotName(string currentSlotName){
+			if(!DialecticRelayEnabled) return CurrentDialecticSlotName;
+			return string.Equals(currentSlotName, DialecticSecondarySlotName, StringComparison.OrdinalIgnoreCase) ? DialecticPrimarySlotName : DialecticSecondarySlotName;
+		}
 		internal static void Generate(){
 			var prompt = MainForm.textInput.Text;
 			Generate(MessageRole.User, prompt, true);
 		}
 		internal static void Generate(MessageRole role, string prompt, bool addToChat){
-			var useRemote = Common.APIClientEnable;
-			var activeSlot = ModelSlotManager.GetActiveChatSlot();
+			var useDialecticLocalSlot = MainForm.checkDialectic.Checked && !string.IsNullOrWhiteSpace(CurrentDialecticSlotName);
+			var useRemote = Common.APIClientEnable && !useDialecticLocalSlot;
+			var activeSlot = useDialecticLocalSlot ? ModelSlotManager.GetSlot(CurrentDialecticSlotName) : ModelSlotManager.GetActiveChatSlot();
+			var generationSlotName = activeSlot?.Name;
 			if((!useRemote && !ModelSlotManager.CanServeLocalSlot(activeSlot)) || string.IsNullOrWhiteSpace(prompt)) return;
 			if(!GenerationLock.Wait(0)) return;
 			if(Generating || APIServerGenerating){
@@ -65,7 +91,14 @@ namespace LMStud {
 				if(addToChat) MainForm.textInput.Text = "";
 			}
 			if(!useRemote && MainForm.checkDialectic.Checked && !DialecticStarted && role == MessageRole.User){
-				NativeMethods.DialecticStart();
+				var dialecticStartError = NativeMethods.DialecticStart();
+				if(dialecticStartError != NativeMethods.StudError.Success){
+					GenerationLock.Release();
+					Generating = false;
+					MainForm.FinishedGenerating();
+					MainForm.ShowError("Dialectic start", dialecticStartError);
+					return;
+				}
 				DialecticStarted = true;
 			}
 			if(useRemote){
@@ -107,7 +140,12 @@ namespace LMStud {
 						if(MainForm.checkDialectic.Checked && !DialecticPaused){
 							var last = MainForm.ChatMessages.LastOrDefault();
 							if(last != null){
-								var dialecticError = NativeMethods.DialecticSwap();
+								var dialecticError = NativeMethods.StudError.Success;
+								if(DialecticRelayEnabled){
+									var nextSlotName = GetNextDialecticSlotName(generationSlotName);
+									dialecticError = string.IsNullOrWhiteSpace(generationSlotName) || string.IsNullOrWhiteSpace(nextSlotName) ? NativeMethods.StudError.Generic : NativeMethods.DialecticRelaySwap(generationSlotName, nextSlotName);
+									if(dialecticError == NativeMethods.StudError.Success) CurrentDialecticSlotName = nextSlotName;
+								} else dialecticError = NativeMethods.DialecticSwap();
 								if(dialecticError == NativeMethods.StudError.Success) followupPrompt = last.Message;
 								else{
 									if(dialecticError == NativeMethods.StudError.ContextFull)
@@ -308,6 +346,7 @@ namespace LMStud {
 			if(!GenerationLock.Wait(300000)) return false;
 			try{
 				if(string.IsNullOrWhiteSpace(slotName) || !NativeMethods.IsModelSlotLoaded(slotName) || Generating || APIServerGenerating) return false;
+				var restoreSlotName = NativeMethods.GetActiveModelSlotName();
 				var activationError = NativeMethods.ActivateModelSlot(slotName);
 				if(activationError != NativeMethods.StudError.Success) return false;
 				APIServerGenerating = true;
@@ -345,6 +384,7 @@ namespace LMStud {
 					if(chatSnapshot != IntPtr.Zero) try{ NativeMethods.RestoreChatState(chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
 					_apiTokenCallback = null;
 					APIServerGenerating = false;
+					if(!string.IsNullOrWhiteSpace(restoreSlotName)) NativeMethods.ActivateModelSlot(restoreSlotName);
 					try{ MainForm.Invoke((MethodInvoker)(() => STT.RetryStart())); } catch(ObjectDisposedException){}
 				}
 			} finally{ GenerationLock.Release(); }
