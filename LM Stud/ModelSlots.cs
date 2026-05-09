@@ -88,7 +88,7 @@ namespace LMStud{
 		}
 		internal static ModelSlot GetActiveChatSlot(){
 			lock(Sync){
-				var active = FindSlotInternal(ActiveChatSlotName) ?? SlotsInternal.FirstOrDefault(slot => slot.HasUse(ModelSlotUse.Chat)) ?? FindSlotInternal(MainSlotName);
+				var active = FindActiveChatSlotInternal();
 				return active?.Clone();
 			}
 		}
@@ -208,12 +208,12 @@ namespace LMStud{
 		}
 		internal static ModelSlot ResolveServerSlot(string requestedModel){
 			lock(Sync){
-				if(string.IsNullOrWhiteSpace(requestedModel)) return GetActiveChatSlot();
+				if(string.IsNullOrWhiteSpace(requestedModel)) return FindActiveChatSlotInternal()?.Clone();
 				var normalized = NormalizeServerModelName(requestedModel);
-				var exact = SlotsInternal.FirstOrDefault(slot => string.Equals(slot.Name, normalized, StringComparison.OrdinalIgnoreCase));
+				var exact = SlotsInternal.FirstOrDefault(slot => IsServerRoutableSlot(slot) && string.Equals(slot.Name, normalized, StringComparison.OrdinalIgnoreCase));
 				if(exact != null) return exact.Clone();
-				var modelMatch = SlotsInternal.FirstOrDefault(slot => string.Equals(slot.DisplayModel(), requestedModel, StringComparison.OrdinalIgnoreCase) ||
-					string.Equals(slot.ApiModel, requestedModel, StringComparison.OrdinalIgnoreCase));
+				var modelMatch = SlotsInternal.FirstOrDefault(slot => IsServerRoutableSlot(slot) && (string.Equals(slot.DisplayModel(), requestedModel, StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(slot.ApiModel, requestedModel, StringComparison.OrdinalIgnoreCase)));
 				return modelMatch?.Clone();
 			}
 		}
@@ -221,7 +221,7 @@ namespace LMStud{
 		internal static JArray BuildServerModels(){
 			var array = new JArray();
 			List<ModelSlot> slots;
-			lock(Sync) slots = SlotsInternal.Where(slot => slot.HasUse(ModelSlotUse.Server) || slot.HasUse(ModelSlotUse.Chat)).Select(slot => slot.Clone()).ToList();
+			lock(Sync) slots = SlotsInternal.Where(IsServerRoutableSlot).Select(slot => slot.Clone()).ToList();
 			if(slots.Count == 0){
 				var fallback = GetFallbackRuntimeSlot();
 				if(fallback != null) slots.Add(fallback);
@@ -310,7 +310,7 @@ namespace LMStud{
 				var instructions = args.Value<string>("instructions");
 				var maxTokens = args.Value<int?>("max_tokens") ?? Common.NGen;
 				var history = APIClient.BuildInputItems(new[]{ new APIClient.ChatMessage("user", prompt) });
-				using(var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, false, string.IsNullOrWhiteSpace(instructions) ? slot.Instructions ?? Common.SystemPrompt : instructions)){
+				using(var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, string.IsNullOrWhiteSpace(instructions) ? slot.Instructions ?? Common.SystemPrompt : instructions)){
 					var response = client.CreateChatCompletion(history, Common.Temp, maxTokens, null, null, System.Threading.CancellationToken.None);
 					result = JsonConvert.SerializeObject(new{
 						slot = slot.Name, model = slot.ApiModel, content = response.Content ?? "", reasoning = response.Reasoning ?? "", total_tokens = response.TotalTokens
@@ -348,7 +348,7 @@ namespace LMStud{
 			SlotsInternal.Insert(0, CreateDefaultMainSlot());
 		}
 		private static void EnsureSingleChatSlot(){
-			var active = FindSlotInternal(ActiveChatSlotName) ?? SlotsInternal.FirstOrDefault(slot => slot.HasUse(ModelSlotUse.Chat)) ?? FindSlotInternal(MainSlotName);
+			var active = FindActiveChatSlotInternal();
 			if(active == null) return;
 			ActiveChatSlotName = active.Name;
 			foreach(var slot in SlotsInternal){
@@ -370,6 +370,12 @@ namespace LMStud{
 		private static ModelSlot FindSlotInternal(string name){
 			if(string.IsNullOrWhiteSpace(name)) return null;
 			return SlotsInternal.FirstOrDefault(slot => string.Equals(slot.Name, name.Trim(), StringComparison.OrdinalIgnoreCase));
+		}
+		private static ModelSlot FindActiveChatSlotInternal(){
+			return FindSlotInternal(ActiveChatSlotName) ?? SlotsInternal.FirstOrDefault(slot => slot.HasUse(ModelSlotUse.Chat)) ?? FindSlotInternal(MainSlotName);
+		}
+		private static bool IsServerRoutableSlot(ModelSlot slot){
+			return slot != null && (slot.HasUse(ModelSlotUse.Server) || slot.HasUse(ModelSlotUse.Chat));
 		}
 		private static string NormalizeServerModelName(string requestedModel){
 			var model = requestedModel.Trim();

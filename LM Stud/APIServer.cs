@@ -190,11 +190,11 @@ namespace LMStud{
 					return;
 				}
 				ResetSessionForModeSwitch(session, "remote:" + slot.Name);
-				var persisted = BuildPersistedHistory(session.Messages, session.ToolRecords);
+				var persisted = BuildPersistedHistory(session.Messages);
 				foreach(var item in incomingDelta) persisted.Add(item);
 				var toolsJson = ResolveClientToolsJson(session, request);
 				var instructions = request.Instructions ?? slot.Instructions ?? Common.SystemPrompt;
-				client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, false, instructions);
+				client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, instructions);
 				var result = client.CreateChatCompletion(persisted, Common.Temp, Common.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
 				APIClient.AppendOutputItems(persisted, result);
 				Sessions.Apply(session, s => {
@@ -235,7 +235,6 @@ namespace LMStud{
 				s.Messages.Clear();
 				s.State = null;
 				s.TokenCount = 0;
-				s.ToolRecords.Clear();
 				s.ToolsJson = null;
 				s.ClearNativeChatState();
 				s.LastBackend = backendKey;
@@ -342,7 +341,7 @@ namespace LMStud{
 			if(string.Equals(role, "tool", StringComparison.OrdinalIgnoreCase)) return MessageRole.Tool;
 			return MessageRole.User;
 		}
-		private static JArray BuildPersistedHistory(List<Message> messages, List<ToolRecord> toolRecords){
+		private static JArray BuildPersistedHistory(List<Message> messages){
 			var history = new JArray();
 			if(messages == null) return history;
 			foreach(var message in messages){
@@ -353,12 +352,6 @@ namespace LMStud{
 				if(string.Equals(message.Role, "tool", StringComparison.OrdinalIgnoreCase)){
 					if(!string.IsNullOrWhiteSpace(message.ToolCallId)){
 						history.Add(new JObject{ ["type"] = "function_call_output", ["call_id"] = message.ToolCallId, ["output"] = message.Content ?? "" });
-						continue;
-					}
-					var record = toolRecords?.FirstOrDefault(t => !t.Consumed && string.Equals(t.Output, message.Content, StringComparison.Ordinal));
-					if(record != null && !string.IsNullOrWhiteSpace(record.CallId)){
-						history.Add(new JObject{ ["type"] = "function_call_output", ["call_id"] = record.CallId, ["output"] = message.Content });
-						record.Consumed = true;
 						continue;
 					}
 				}
@@ -575,12 +568,6 @@ namespace LMStud{
 			[JsonProperty("store")] public bool? Store;
 			[JsonProperty("tool_choice")] public JToken ToolChoice;
 			[JsonProperty("tools")] public JArray Tools;
-		}
-		public class ToolRecord{
-			public string CallId;
-			public string Name;
-			public string Output;
-			internal bool Consumed;
 		}
 		public class Message{
 			[JsonProperty("content")] public string Content;

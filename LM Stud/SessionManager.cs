@@ -103,7 +103,6 @@ namespace LMStud{
 			public string LastBackend;
 			public string ToolsJson;
 			public IntPtr NativeChatState;
-			public readonly List<APIServer.ToolRecord> ToolRecords = new List<APIServer.ToolRecord>();
 			public void SetNativeChatState(IntPtr state){
 				if(NativeChatState != IntPtr.Zero && NativeChatState != state) NativeMethods.FreeChatState(NativeChatState);
 				NativeChatState = state;

@@ -123,7 +123,9 @@ namespace LMStud{
 			if(listViewSlots.SelectedItems.Count != 1) return;
 			var slot = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
 			if(MessageBox.Show(this, "Remove the " + slot.Name + " slot?", "LM Stud", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
+			var unloadLocalSlot = slot.Source == ModelSlotSource.Local && (Common.LoadedLocalSlots.ContainsKey(slot.Name) || NativeMethods.IsModelSlotLoaded(slot.Name));
 			if(!ModelSlotManager.Remove(slot.Name)) MessageBox.Show(this, "The main slot cannot be removed. Edit it instead.", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Information);
+			else if(unloadLocalSlot) UnloadModel(true, slot.Name);
 			ApplyActiveSlotToRuntime(true);
 			PopulateSlotsList();
 		}

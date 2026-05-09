@@ -26,7 +26,7 @@ namespace LM_Stud.Tests{
 			var apiServer = new APIServer();
 			try{
 				ModelSlotManager.AddOrUpdate(new ModelSlot{
-					Name = slotName1, Source = ModelSlotSource.Api, ApiBaseUrl = $"http://127.0.0.1:{upstreamPort1}", ApiModel = "upstream-model-a", Use = ModelSlotUse.Server
+					Name = slotName1, Source = ModelSlotSource.Api, ApiBaseUrl = $"http://127.0.0.1:{upstreamPort1}", ApiModel = "upstream-model-a", ApiStore = true, Use = ModelSlotUse.Server
 				});
 				ModelSlotManager.AddOrUpdate(new ModelSlot{
 					Name = slotName2, Source = ModelSlotSource.Api, ApiBaseUrl = $"http://127.0.0.1:{upstreamPort2}", ApiModel = "upstream-model-b", Use = ModelSlotUse.Server
@@ -45,8 +45,12 @@ namespace LM_Stud.Tests{
 				}
 				Assert.IsTrue(upstream1.Wait(5000), "First fake upstream should receive a request.");
 				Assert.IsTrue(upstream2.Wait(5000), "Second fake upstream should receive a request.");
-				Assert.AreEqual("upstream-model-a", (string)JObject.Parse(upstreamBody1.Result)["model"]);
-				Assert.AreEqual("upstream-model-b", (string)JObject.Parse(upstreamBody2.Result)["model"]);
+				var upstreamJson1 = JObject.Parse(upstreamBody1.Result);
+				var upstreamJson2 = JObject.Parse(upstreamBody2.Result);
+				Assert.AreEqual("upstream-model-a", (string)upstreamJson1["model"]);
+				Assert.AreEqual("upstream-model-b", (string)upstreamJson2["model"]);
+				Assert.AreEqual(true, (bool)upstreamJson1["store"]);
+				Assert.AreEqual(false, (bool)upstreamJson2["store"]);
 			} finally{
 				apiServer.Stop();
 				ModelSlotManager.Remove(slotName1);
@@ -70,6 +74,26 @@ namespace LM_Stud.Tests{
 					var json = JObject.Parse(await response.Content.ReadAsStringAsync());
 					var ids = json["data"] as JArray;
 					Assert.IsTrue(ids != null && ids.Any(item => (string)item["id"] == "lmstud/" + slotName), "Configured server slot should be listed by /v1/models.");
+				}
+			} finally{
+				apiServer.Stop();
+				ModelSlotManager.Remove(slotName);
+			}
+		}
+		[TestMethod]
+		public async Task HandleChat_DoesNotRouteToSlotsWithoutServerUse(){
+			var serverPort = GetFreePort();
+			var slotName = "test_hidden_server_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+			var apiServer = new APIServer();
+			try{
+				ModelSlotManager.AddOrUpdate(new ModelSlot{
+					Name = slotName, Source = ModelSlotSource.Api, ApiBaseUrl = "http://127.0.0.1:1", ApiModel = "hidden-model", Use = ModelSlotUse.Tool
+				});
+				Common.APIServerPort = serverPort;
+				apiServer.Start();
+				using(var client = new HttpClient()){
+					var response = await PostResponses(client, serverPort, "lmstud/" + slotName, "hello hidden");
+					Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode, await response.Content.ReadAsStringAsync());
 				}
 			} finally{
 				apiServer.Stop();
