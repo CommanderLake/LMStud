@@ -256,15 +256,15 @@ namespace LMStud{
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_loading_model, result);
 			return result;
 		}
-		private NativeMethods.StudError CreateSession(int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty){
-			var result = NativeMethods.CreateSession(nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty);
+		private NativeMethods.StudError CreateSession(int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty, NativeMethods.QuantType kType, NativeMethods.QuantType vType){
+			var result = NativeMethods.CreateSession(nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty, (int)kType, (int)vType);
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_session, result);
 			return result;
 		}
-		private NativeMethods.StudError CreateContext(int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch){
+		private NativeMethods.StudError CreateContext(int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, NativeMethods.QuantType kType, NativeMethods.QuantType vType){
 			Generation.GenerationLock.Wait(-1);
 			NativeMethods.StudError result;
-			try{ result = NativeMethods.CreateContext(nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch); } finally{ Generation.GenerationLock.Release(); }
+			try{ result = NativeMethods.CreateContext(nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, (int)kType, (int)vType); } finally{ Generation.GenerationLock.Release(); }
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_context, result);
 			return result;
 		}
@@ -330,7 +330,7 @@ namespace LMStud{
 						Common.ModelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(meta);
 						if(Common.ModelCtxMax <= 0) Common.CntCtxMax = ctxSize;
 						else Common.CntCtxMax = ctxSize > Common.ModelCtxMax ? Common.ModelCtxMax : ctxSize;
-						result = CreateSession(Common.CntCtxMax, Common.BatchSize, flashAttn, Common.NThreads, Common.NThreadsBatch, minP, topP, topK, temp, Common.RepPen);
+						result = CreateSession(Common.CntCtxMax, Common.BatchSize, flashAttn, Common.NThreads, Common.NThreadsBatch, minP, topP, topK, temp, Common.RepPen, Common.KType, Common.VType);
 						Common.LlModelLoaded = true;
 						if(result != NativeMethods.StudError.Success){
 							Settings.Default.LoadAuto = false;

@@ -723,9 +723,6 @@
   <data name="checkDialectic.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="checkAutoScroll.Size" type="System.Drawing.Size, System.Drawing">
-    <value>71, 17</value>
-  </data>
   <data name="checkAutoScroll.Text" xml:space="preserve">
     <value>自动滚动</value>
   </data>
@@ -1246,31 +1243,31 @@
     <value />
   </data>
   <data name="toolStripStatusLabel1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>68, 19</value>
+    <value>67, 17</value>
   </data>
   <data name="toolStripStatusLabel1.Text" xml:space="preserve">
     <value>未加载模型</value>
   </data>
   <data name="labelTokens.Size" type="System.Drawing.Size, System.Drawing">
-    <value>51, 19</value>
+    <value>49, 17</value>
   </data>
   <data name="labelTokens.Text" xml:space="preserve">
     <value>0 Token</value>
   </data>
   <data name="labelTPS.Size" type="System.Drawing.Size, System.Drawing">
-    <value>68, 19</value>
+    <value>65, 17</value>
   </data>
   <data name="labelTPS.Text" xml:space="preserve">
     <value>0 Token/秒</value>
   </data>
   <data name="labelPreGen.Size" type="System.Drawing.Size, System.Drawing">
-    <value>80, 19</value>
+    <value>77, 17</value>
   </data>
   <data name="labelPreGen.Text" xml:space="preserve">
     <value>预生成时间：</value>
   </data>
   <data name="labelStatusMsg.Size" type="System.Drawing.Size, System.Drawing">
-    <value>278, 19</value>
+    <value>278, 17</value>
   </data>
   <data name="labelStatusMsg.Text" xml:space="preserve">
     <value>正在编辑转录文本——按 Enter 完成，按 Esc 取消</value>

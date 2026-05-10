@@ -70,11 +70,13 @@ namespace LMStud{
 			var reloadCtx = ctxSizeOld != ctxSizeEff || flashOld != flashEff;
 			var reloadSmpl = tempOld != tempEff || minPOld != minPEff || topPOld != topPEff || topKOld != topKEff;
 			var setSystemPrompt = systemPromptOld != systemPromptEff;
-			if(reloadModel && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes){ LoadModel(listViewModels.SelectedItems[0], false, Common.ActiveModelSlotName ?? "main"); } else{
+			if(reloadModel && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes){
+				LoadModel(listViewModels.SelectedItems[0], false, Common.ActiveModelSlotName ?? "main");
+			} else{
 				if(reloadCtx){
 					if(Common.ModelCtxMax <= 0) Common.CntCtxMax = ctxSizeEff;
 					else Common.CntCtxMax = ctxSizeEff > Common.ModelCtxMax ? Common.ModelCtxMax : ctxSizeEff;
-					CreateContext(Common.CntCtxMax, Common.BatchSize, flashEff, Common.NThreads, Common.NThreadsBatch);
+					CreateContext(Common.CntCtxMax, Common.BatchSize, flashEff, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType);
 				}
 				if(reloadSmpl) CreateSampler(minPEff, topPEff, topKEff, tempEff, Common.RepPen);
 			}

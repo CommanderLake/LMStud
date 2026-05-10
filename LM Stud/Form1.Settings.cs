@@ -22,6 +22,8 @@ namespace LMStud{
 			Common.TopP = (float)(numTopP.Value = Settings.Default.TopP);
 			Common.MinP = (float)(numMinP.Value = Settings.Default.MinP);
 			Common.BatchSize = (int)(numBatchSize.Value = Settings.Default.BatchSize);
+			Common.KType = (NativeMethods.QuantType)(comboKType.SelectedIndex = Settings.Default.KType);
+			Common.VType = (NativeMethods.QuantType)(comboVType.SelectedIndex = Settings.Default.VType);
 			Common.MMap = checkMMap.Checked = Settings.Default.MMap;
 			Common.MLock = checkMLock.Checked = Settings.Default.MLock;
 			Common.NThreads = (int)(numThreads.Value = Settings.Default.Threads);
@@ -166,6 +168,16 @@ namespace LMStud{
 				Settings.Default.BatchSize = value;
 				reloadCtx = true;
 			});
+			var newKType = comboKType.SelectedIndex;
+			UpdateSetting(ref Common.KType, (NativeMethods.QuantType)newKType, value => {
+				Settings.Default.KType = newKType;
+				reloadCtx = true;
+			});
+			var newVType = comboVType.SelectedIndex;
+			UpdateSetting(ref Common.VType, (NativeMethods.QuantType)newVType, value => {
+				Settings.Default.VType = newVType;
+				reloadCtx = true;
+			});
 			UpdateSetting(ref Common.MMap, checkMMap.Checked, value => {
 				Settings.Default.MMap = value;
 				reloadModel = true;
@@ -306,7 +318,7 @@ namespace LMStud{
 					MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) ==
 					DialogResult.Yes){ LoadModel(loadedModel, false, Common.ActiveModelSlotName ?? "main"); }
 				else{
-					if(reloadCtx) CreateContext(Common.CntCtxMax, Common.BatchSize, flash, Common.NThreads, Common.NThreadsBatch);
+					if(reloadCtx) CreateContext(Common.CntCtxMax, Common.BatchSize, flash, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType);
 					if(reloadSmpl) CreateSampler(minP, topP, topK, temp, Common.RepPen);
 				}
 			if(setVAD) NativeMethods.SetVADThresholds(Common.VADThreshold, Common.FreqThreshold);

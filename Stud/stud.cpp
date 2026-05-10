@@ -178,7 +178,7 @@ bool IsModelSlotLoaded(const char* slotName){
 	const auto* runtime = FindModelRuntime(NormalizeModelSlotName(slotName));
 	return runtime && runtime->llModel && runtime->session.ctx;
 }
-StudError CreateContext(const int nCtx, const int batchSize, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch){
+StudError CreateContext(const int nCtx, const int batchSize, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch, const int kType, const int vType){
 	if(Stud::runtime().session.ctx){
 		llama_free(Stud::runtime().session.ctx);
 		Stud::runtime().session.ctx = nullptr;
@@ -192,9 +192,28 @@ StudError CreateContext(const int nCtx, const int batchSize, const unsigned int 
 	else if(flashAttn == 2) ctxParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_AUTO;
 	ctxParams.n_threads = nThreads;
 	ctxParams.n_threads_batch = nThreadsBatch;
+	switch(kType){
+		case 1: ctxParams.type_k = GGML_TYPE_TQ1_0;
+			break;
+		case 2: ctxParams.type_k = GGML_TYPE_TQ2_0;
+			break;
+		default: ;
+	}
+	switch(vType){
+		case 1: ctxParams.type_v = GGML_TYPE_TQ1_0;
+			break;
+		case 2: ctxParams.type_v = GGML_TYPE_TQ2_0;
+			break;
+		default: ;
+	}
 	_gpuOomStud = false;
 	llama_log_set(GPUOomLogCallbackStud, nullptr);
-	Stud::runtime().session.ctx = llama_init_from_model(Stud::runtime().llModel, ctxParams);
+	try{
+		Stud::runtime().session.ctx = llama_init_from_model(Stud::runtime().llModel, ctxParams);
+	} catch(std::exception& e){
+		_lastErrorMessage = e.what();
+		return StudError::CantCreateContext;
+	}
 	llama_log_set(nullptr, nullptr);
 	if(!Stud::runtime().session.ctx){ return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantCreateContext; }
 	Stud::runtime().session.memory = llama_get_memory(Stud::runtime().session.ctx);
@@ -222,10 +241,10 @@ StudError CreateSampler(const float minP, const float topP, const int topK, cons
 	if(result != StudError::Success) return result;
 	return CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, Stud::runtime().session.lanes[1].sampler);
 }
-StudError CreateSession(const int nCtx, const int batchSize, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
+StudError CreateSession(const int nCtx, const int batchSize, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty, const int kType, const int vType){
 	if(!Stud::runtime().llModel) return StudError::ModelNotLoaded;
 	Stud::runtime().session.syntax.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
-	auto result = CreateContext(nCtx, batchSize, flashAttn, nThreads, nThreadsBatch);
+	auto result = CreateContext(nCtx, batchSize, flashAttn, nThreads, nThreadsBatch, kType, vType);
 	if(result != StudError::Success) return result;
 	Stud::runtime().session.batchSize = batchSize;
 	result = CreateSampler(minP, topP, topK, temp, repeatPenalty);
@@ -872,13 +891,14 @@ StudError SyncChatMessagesJson(const char* messagesJson){
 	}
 	return ReplaceChatMessages(std::move(msgs));
 }
-static common_chat_msg ParseGeneratedMessage(const std::string& response, const common_chat_parser_params& syntax, const bool isPartial){
+static common_chat_msg ParseGeneratedMessage(const std::string& response, const common_chat_parser_params& syntax, const bool isPartial, std::string* toolParseError = nullptr){
 	try{ return common_chat_parse(response, isPartial, syntax); } catch(std::exception& e){
-		if(!isPartial && syntax.parse_tool_calls) throw;
+		if(!isPartial && syntax.parse_tool_calls && toolParseError) *toolParseError = e.what();
 		OutputDebugStringA((std::string("CHAT PARSE FALLBACK:\r\n") + e.what()).c_str());
 		common_chat_parser_params fallback;
 		fallback.reasoning_format = syntax.reasoning_format;
 		fallback.reasoning_in_content = syntax.reasoning_in_content;
+		fallback.parse_tool_calls = false;
 		return common_chat_parse(response, isPartial, fallback);
 	}
 }
@@ -998,7 +1018,8 @@ static StudError DecodePromptMessages(const std::vector<common_chat_msg>& messag
 	}
 	return StudError::Success;
 }
-StudError Generate(const std::vector<common_chat_msg>& messages, const int nPredict, const bool callback, common_chat_msg& outMsg, const bool emitFinalCallback = true){
+StudError Generate(const std::vector<common_chat_msg>& messages, const int nPredict, const bool callback, common_chat_msg& outMsg, const bool emitFinalCallback = true, std::string* toolParseError = nullptr){
+	if(toolParseError) toolParseError->clear();
 	const auto prepStart = HrClock::now();
 	Stud::state.stop.store(false);
 	const Stud::TokenCallbackFn cb = Stud::state.tokenCb;
@@ -1044,7 +1065,7 @@ StudError Generate(const std::vector<common_chat_msg>& messages, const int nPred
 	if(finalSyntaxErr == StudError::Success) finalSyntaxErr = LoadChatSyntax(Stud::runtime().session.syntax, finalChatData, toolsEnabled);
 	if(finalSyntaxErr != StudError::Success) return RollbackGenerate(chatStart, messages.size(), outMsg, finalSyntaxErr);
 	try{
-		msg = ParseGeneratedMessage(response, Stud::runtime().session.syntax, false);
+		msg = ParseGeneratedMessage(response, Stud::runtime().session.syntax, false, toolParseError);
 		EnsureToolCallIds(msg);
 	} catch(std::exception& e){
 		_lastErrorMessage = e.what();
@@ -1065,12 +1086,21 @@ StudError GenerateWithTools(const Stud::MessageRole role, const char* prompt, co
 	const Stud::TokenCallbackFn cb = Stud::state.tokenCb;
 	bool toolCalled;
 	do{
-		const auto err = Generate(msgs, nPredict, callback, msg);
+		std::string toolParseError;
+		const auto err = Generate(msgs, nPredict, callback, msg, true, &toolParseError);
 		if(err != StudError::Success) return err;
 		if(!Stud::runtime().session.lanes[Stud::runtime().session.activeLane].messages.size()) return StudError::Success;
 		msgs.clear();
 		try{
 			toolCalled = false;
+			if(!toolParseError.empty()){
+				auto toolMsg = "{\"error\":\"Unable to parse tool call: " + JsonEscape(toolParseError) + "\"}";
+				if(cb) cb(nullptr, 0, toolMsg.c_str(), static_cast<int>(toolMsg.length()), 0, LlamaMemSize(), 0, 1);
+				msgs.push_back(common_chat_msg());
+				msgs.back().role = "tool";
+				msgs.back().content = toolMsg;
+				toolCalled = true;
+			}
 			for(common_chat_tool_call& toolCall : msg.tool_calls){
 				if(Stud::state.stop.load()) return StudError::Success;
 				auto toolCallMsg = "Tool name: " + toolCall.name + "\r\nTool ID: " + toolCall.id + "\r\nTool arguments: " + toolCall.arguments;

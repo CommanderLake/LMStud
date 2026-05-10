@@ -8,16 +8,92 @@ namespace LMStud{
 	public partial class Form1{
 		private bool _populatingSlotEditor;
 		private string _slotEditorAutoToolName;
+		private void ListViewSlots_SelectedIndexChanged(object sender, EventArgs e) {
+			PopulateSlotEditorFromSelection();
+			UpdateSlotButtons();
+		}
+		private void ListViewSlots_DoubleClick(object sender, EventArgs e) {
+			if(listViewSlots.SelectedItems.Count != 1) return;
+			var slot = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
+			if(!ModelSlotManager.SetActiveChatSlot(slot.Name)) return;
+			ApplyActiveSlotToRuntime(true);
+			PopulateSlotsList();
+			SelectSlot(slot.Name);
+		}
+		private void ListViewSlots_KeyDown(object sender, KeyEventArgs e){
+			if(e.KeyCode == Keys.Enter){
+				e.SuppressKeyPress = true;
+				SaveSelectedSlot();
+			} else if(e.KeyCode == Keys.Delete){
+				e.SuppressKeyPress = true;
+				ButSlotsRemove_Click(sender, EventArgs.Empty);
+			} else if(e.KeyCode == Keys.F5) PopulateSlotsList();
+		}
+		private void TextSlotsEditName_TextChanged(object sender, EventArgs e) {
+			if(_populatingSlotEditor) return;
+			var generated = ModelSlotManager.BuildToolName(textSlotsEditName.Text);
+			if(!string.IsNullOrWhiteSpace(textSlotsEditToolName.Text) && !string.Equals(textSlotsEditToolName.Text, _slotEditorAutoToolName, StringComparison.OrdinalIgnoreCase)) return;
+			textSlotsEditToolName.Text = generated;
+			_slotEditorAutoToolName = generated;
+		}
+		private void ComboSlotsEditSource_SelectedIndexChanged(object sender, EventArgs e) {
+			if(comboSlotsEditSource.SelectedIndex < 0) comboSlotsEditSource.SelectedIndex = 0;
+			var api = comboSlotsEditSource.SelectedIndex == 1;
+			textSlotsEditModel.Enabled = label44.Enabled = !api;
+			textSlotsEditApiUrl.Enabled = textSlotsEditApiKey.Enabled = comboSlotsEditApiModel.Enabled = checkSlotsEditStore.Enabled = api;
+			comboSlotEditReasonEffort.Enabled = comboSlotEditReasonSummary.Enabled = label45.Enabled = label46.Enabled = label47.Enabled = label51.Enabled = label52.Enabled = api;
+			checkSlotsEditTool.Enabled = api;
+			textSlotsEditToolName.Enabled = label49.Enabled = api;
+			if(!api) checkSlotsEditTool.Checked = false;
+		}
+		private void ButSlotsAdd_Click(object sender, EventArgs e){
+			if(!TryReadSlotEditor(null, true, out var slot)) return;
+			ModelSlotManager.AddOrUpdate(slot);
+			ApplyActiveSlotToRuntime(true);
+			PopulateSlotsList();
+			SelectSlot(slot.Name);
+		}
+		private void ButSlotsSave_Click(object sender, EventArgs e){SaveSelectedSlot();}
+		private void ButSlotsRemove_Click(object sender, EventArgs e){
+			if(listViewSlots.SelectedItems.Count != 1) return;
+			var slot = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
+			if(MessageBox.Show(this, "Remove the " + slot.Name + " slot?", "LM Stud", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
+			var unloadLocalSlot = slot.Source == ModelSlotSource.Local && (Common.LoadedLocalSlots.ContainsKey(slot.Name) || NativeMethods.IsModelSlotLoaded(slot.Name));
+			if(!ModelSlotManager.Remove(slot.Name)) MessageBox.Show(this, "The main slot cannot be removed. Edit it instead.", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Information);
+			else if(unloadLocalSlot) UnloadModel(true, slot.Name);
+			ApplyActiveSlotToRuntime(true);
+			PopulateSlotsList();
+		}
+		private void ButLoadSlot_Click(object sender, EventArgs e){
+			if(!TryLoadSelectedSlot()) ShowError("Load Slot", "Select a local slot first.", false);
+		}
+		private void ButUnloadSlot_Click(object sender, EventArgs e){
+			if(listViewSlots.SelectedItems.Count != 1){
+				ShowError("Unload Slot", "Select a slot first.", false);
+				return;
+			}
+			var slot = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
+			if(slot.Source != ModelSlotSource.Local){
+				ShowError("Unload Slot", "Only local slots can be unloaded.", false);
+				return;
+			}
+			UnloadModel(true, slot.Name);
+		}
+		private void ComboSlotsEditApiModel_DropDown(object sender, EventArgs e){
+			try{
+				comboSlotsEditApiModel.Items.Clear();
+				using(var client = new APIClient(textSlotsEditApiUrl.Text, textSlotsEditApiKey.Text, "", checkSlotsEditStore.Checked, null)){
+					foreach(var model in client.GetModels(CancellationToken.None)) comboSlotsEditApiModel.Items.Add(model);
+				}
+			} catch(Exception ex){ APIClient.ShowApiClientError("API Client", ex); }
+		}
+		private void ButSlotsEditUseSelectedModel_Click(object sender, EventArgs e) {
+			if(listViewModels.SelectedItems.Count == 0) return;
+			textSlotsEditModel.Text = listViewModels.SelectedItems[0].SubItems[1].Text;
+			comboSlotsEditSource.SelectedIndex = 0;
+		}
 		private void InitializeSlotUi(){
-			listViewSlots.SelectedIndexChanged += (sender, args) => {
-				PopulateSlotEditorFromSelection();
-				UpdateSlotButtons();
-			};
-			listViewSlots.DoubleClick += (sender, args) => MakeSelectedSlotChat();
-			comboSlotsEditSource.SelectedIndexChanged += (sender, args) => UpdateSlotEditorSourceFields();
-			textSlotsEditName.TextChanged += (sender, args) => UpdateSlotEditorToolNameFromSlotName();
-			textSlotsEditApiKey.UseSystemPasswordChar = true;
-			UpdateSlotEditorSourceFields();
+			ComboSlotsEditSource_SelectedIndexChanged(null, null);
 			UpdateSlotButtons();
 		}
 		private void PopulateSlotsList(){
@@ -68,7 +144,7 @@ namespace LMStud{
 			} finally{
 				_populatingSlotEditor = false;
 			}
-			UpdateSlotEditorSourceFields();
+			ComboSlotsEditSource_SelectedIndexChanged(null, null);
 		}
 		private void UpdateSlotButtons(){
 			var hasSelection = listViewSlots != null && listViewSlots.SelectedItems.Count == 1;
@@ -78,32 +154,6 @@ namespace LMStud{
 			butLoadSlot.Enabled = hasSelection && slot.Source == ModelSlotSource.Local;
 			butUnloadSlot.Enabled = hasSelection && ModelSlotManager.CanServeLocalSlot(slot);
 		}
-		private void UpdateSlotEditorSourceFields(){
-			if(comboSlotsEditSource.SelectedIndex < 0) comboSlotsEditSource.SelectedIndex = 0;
-			var api = comboSlotsEditSource.SelectedIndex == 1;
-			textSlotsEditModel.Enabled = !api;
-			textSlotsEditApiUrl.Enabled = textSlotsEditApiKey.Enabled = comboSlotsEditApiModel.Enabled = checkSlotsEditStore.Enabled = api;
-			comboSlotEditReasonEffort.Enabled = comboSlotEditReasonSummary.Enabled = label51.Enabled = label52.Enabled = api;
-			checkSlotsEditTool.Enabled = api;
-			textSlotsEditToolName.Enabled = api;
-			if(!api) checkSlotsEditTool.Checked = false;
-		}
-		private void UpdateSlotEditorToolNameFromSlotName(){
-			if(_populatingSlotEditor) return;
-			var generated = ModelSlotManager.BuildToolName(textSlotsEditName.Text);
-			if(string.IsNullOrWhiteSpace(textSlotsEditToolName.Text) || string.Equals(textSlotsEditToolName.Text, _slotEditorAutoToolName, StringComparison.OrdinalIgnoreCase)){
-				textSlotsEditToolName.Text = generated;
-				_slotEditorAutoToolName = generated;
-			}
-		}
-		private void ButSlotsAdd_Click(object sender, EventArgs e){
-			if(!TryReadSlotEditor(null, true, out var slot)) return;
-			ModelSlotManager.AddOrUpdate(slot);
-			ApplyActiveSlotToRuntime(true);
-			PopulateSlotsList();
-			SelectSlot(slot.Name);
-		}
-		private void ButSlotsSave_Click(object sender, EventArgs e){SaveSelectedSlot();}
 		private void SaveSelectedSlot(){
 			if(listViewSlots.SelectedItems.Count != 1) return;
 			var original = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
@@ -112,24 +162,6 @@ namespace LMStud{
 			ApplyActiveSlotToRuntime(true);
 			PopulateSlotsList();
 			SelectSlot(slot.Name);
-		}
-		private void MakeSelectedSlotChat(){
-			if(listViewSlots.SelectedItems.Count != 1) return;
-			var slot = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
-			if(!ModelSlotManager.SetActiveChatSlot(slot.Name)) return;
-			ApplyActiveSlotToRuntime(true);
-			PopulateSlotsList();
-			SelectSlot(slot.Name);
-		}
-		private void ButSlotsRemove_Click(object sender, EventArgs e){
-			if(listViewSlots.SelectedItems.Count != 1) return;
-			var slot = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
-			if(MessageBox.Show(this, "Remove the " + slot.Name + " slot?", "LM Stud", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
-			var unloadLocalSlot = slot.Source == ModelSlotSource.Local && (Common.LoadedLocalSlots.ContainsKey(slot.Name) || NativeMethods.IsModelSlotLoaded(slot.Name));
-			if(!ModelSlotManager.Remove(slot.Name)) MessageBox.Show(this, "The main slot cannot be removed. Edit it instead.", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Information);
-			else if(unloadLocalSlot) UnloadModel(true, slot.Name);
-			ApplyActiveSlotToRuntime(true);
-			PopulateSlotsList();
 		}
 		private bool TryReadSlotEditor(string originalName, bool adding, out ModelSlot slot){
 			slot = null;
@@ -174,15 +206,6 @@ namespace LMStud{
 				if(item.Selected) item.EnsureVisible();
 			}
 		}
-		private void ListViewSlots_KeyDown(object sender, KeyEventArgs e){
-			if(e.KeyCode == Keys.Enter){
-				e.SuppressKeyPress = true;
-				SaveSelectedSlot();
-			} else if(e.KeyCode == Keys.Delete){
-				e.SuppressKeyPress = true;
-				ButSlotsRemove_Click(sender, EventArgs.Empty);
-			} else if(e.KeyCode == Keys.F5) PopulateSlotsList();
-		}
 		private void ApplyActiveSlotToRuntime(bool updateControls, bool registerTools = true){
 			var slot = ModelSlotManager.GetActiveChatSlot();
 			if(slot == null) return;
@@ -194,9 +217,7 @@ namespace LMStud{
 			}
 			if(registerTools) Tools.RegisterTools();
 			else Tools.InvalidateToolsJsonCache();
-			RunOnUiThread(() => {
-				SetModelStatus();
-			});
+			RunOnUiThread(SetModelStatus);
 		}
 		private bool TryLoadSelectedSlot(){
 			if(tabControlModelStuff.SelectedTab != tabPageSlots || listViewSlots.SelectedItems.Count != 1) return false;
@@ -220,34 +241,6 @@ namespace LMStud{
 			}
 			LoadModel(item, false, slot.Name);
 			return true;
-		}
-		private void ButLoadSlot_Click(object sender, EventArgs e){
-			if(!TryLoadSelectedSlot()) ShowError("Load Slot", "Select a local slot first.", false);
-		}
-		private void ButUnloadSlot_Click(object sender, EventArgs e){
-			if(listViewSlots.SelectedItems.Count != 1){
-				ShowError("Unload Slot", "Select a slot first.", false);
-				return;
-			}
-			var slot = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
-			if(slot.Source != ModelSlotSource.Local){
-				ShowError("Unload Slot", "Only local slots can be unloaded.", false);
-				return;
-			}
-			UnloadModel(true, slot.Name);
-		}
-		private void ComboSlotsEditApiModel_DropDown(object sender, EventArgs e){
-			try{
-				comboSlotsEditApiModel.Items.Clear();
-				using(var client = new APIClient(textSlotsEditApiUrl.Text, textSlotsEditApiKey.Text, "", checkSlotsEditStore.Checked, null)){
-					foreach(var model in client.GetModels(CancellationToken.None)) comboSlotsEditApiModel.Items.Add(model);
-				}
-			} catch(Exception ex){ APIClient.ShowApiClientError("API Client", ex); }
-		}
-		private void ButSlotsEditUseSelectedModel_Click(object sender, EventArgs e) {
-			if(listViewModels.SelectedItems.Count == 0) return;
-			textSlotsEditModel.Text = listViewModels.SelectedItems[0].SubItems[1].Text;
-			comboSlotsEditSource.SelectedIndex = 0;
 		}
 		private static int GetComboSelectedIndex(ComboBox combo){
 			return combo.SelectedIndex > 0 && combo.SelectedIndex < combo.Items.Count ? combo.SelectedIndex : 0;

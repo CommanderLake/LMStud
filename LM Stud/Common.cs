@@ -37,6 +37,8 @@ namespace LMStud{
 		internal static float Temp;
 		internal static int TopK;
 		internal static float TopP;
+		internal static NativeMethods.QuantType KType;
+		internal static NativeMethods.QuantType VType;
 		internal static bool UseWhisperVAD;
 		internal static string VADModel;
 		internal static float VADThreshold;

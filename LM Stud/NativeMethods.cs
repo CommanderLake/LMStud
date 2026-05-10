@@ -20,6 +20,11 @@ namespace LMStud{
 			Mirror = 4,
 			Count
 		}
+		public enum QuantType{
+			Default = 0,
+			TQ1 = 1,
+			TQ2 = 2
+		}
 		public enum StudError{
 			Success = 0,
 			CantLoadModel = -1,
@@ -54,11 +59,11 @@ namespace LMStud{
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void BackendInit();
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern StudError CreateContext(int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch);
+		internal static extern StudError CreateContext(int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch, int kType, int vType);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern StudError CreateSession(int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty);
+		internal static extern StudError CreateSession(int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty, int kType, int vType);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError ActivateModelSlot([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "GetActiveModelSlotName")]
