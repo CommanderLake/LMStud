@@ -39,7 +39,6 @@ namespace LMStud{
 				}
 			} finally{ listViewSlots.EndUpdate(); }
 			if(listViewSlots.SelectedItems.Count == 1) PopulateSlotEditorFromSelection();
-			else PopulateSlotEditor(CreateNewSlotSuggestion());
 			UpdateSlotButtons();
 		}
 		private void PopulateSlotEditorFromSelection(){
@@ -57,6 +56,8 @@ namespace LMStud{
 				textSlotsEditApiKey.Text = slot.ApiKey ?? "";
 				comboSlotsEditApiModel.Text = slot.ApiModel ?? "";
 				checkSlotsEditStore.Checked = slot.ApiStore;
+				SetComboSelectedIndex(comboSlotEditReasonEffort, slot.ApiReasoningEffort);
+				SetComboSelectedIndex(comboSlotEditReasonSummary, slot.ApiReasoningSummary);
 				textSlotsEditInstructions.Text = slot.Instructions ?? "";
 				_slotEditorAutoToolName = string.IsNullOrWhiteSpace(slot.ToolName) ? ModelSlotManager.BuildToolName(slot.Name) : slot.ToolName;
 				textSlotsEditToolName.Text = _slotEditorAutoToolName;
@@ -82,6 +83,7 @@ namespace LMStud{
 			var api = comboSlotsEditSource.SelectedIndex == 1;
 			textSlotsEditModel.Enabled = !api;
 			textSlotsEditApiUrl.Enabled = textSlotsEditApiKey.Enabled = comboSlotsEditApiModel.Enabled = checkSlotsEditStore.Enabled = api;
+			comboSlotEditReasonEffort.Enabled = comboSlotEditReasonSummary.Enabled = label51.Enabled = label52.Enabled = api;
 			checkSlotsEditTool.Enabled = api;
 			textSlotsEditToolName.Enabled = api;
 			if(!api) checkSlotsEditTool.Checked = false;
@@ -156,6 +158,8 @@ namespace LMStud{
 				ApiBaseUrl = textSlotsEditApiUrl.Text.Trim(),
 				ApiKey = textSlotsEditApiKey.Text.Trim(),
 				ApiModel = comboSlotsEditApiModel.Text.Trim(),
+				ApiReasoningEffort = GetComboSelectedIndex(comboSlotEditReasonEffort),
+				ApiReasoningSummary = GetComboSelectedIndex(comboSlotEditReasonSummary),
 				ApiStore = checkSlotsEditStore.Checked,
 				Instructions = textSlotsEditInstructions.Text.Trim(),
 				ToolName = textSlotsEditToolName.Text.Trim(),
@@ -171,11 +175,7 @@ namespace LMStud{
 			}
 		}
 		private void ListViewSlots_KeyDown(object sender, KeyEventArgs e){
-			if(e.KeyCode == Keys.Insert){
-				e.SuppressKeyPress = true;
-				PopulateSlotEditor(CreateNewSlotSuggestion());
-				textSlotsEditName.Focus();
-			} else if(e.KeyCode == Keys.Enter){
+			if(e.KeyCode == Keys.Enter){
 				e.SuppressKeyPress = true;
 				SaveSelectedSlot();
 			} else if(e.KeyCode == Keys.Delete){
@@ -183,54 +183,18 @@ namespace LMStud{
 				ButSlotsRemove_Click(sender, EventArgs.Empty);
 			} else if(e.KeyCode == Keys.F5) PopulateSlotsList();
 		}
-		private ModelSlot CreateNewSlotSuggestion(){
-			var names = ModelSlotManager.Slots.Select(slot => slot.Name).ToList();
-			string name;
-			if(!names.Any(existing => string.Equals(existing, "critic", StringComparison.OrdinalIgnoreCase))) name = "critic";
-			else if(!names.Any(existing => string.Equals(existing, "judge", StringComparison.OrdinalIgnoreCase))) name = "judge";
-			else{
-				var i = 2;
-				do{ name = "slot" + i++; } while(names.Any(existing => string.Equals(existing, name, StringComparison.OrdinalIgnoreCase)));
-			}
-			var selectedLocalPath = listViewModels.SelectedItems.Count == 1 ? listViewModels.SelectedItems[0].SubItems[1].Text : "";
-			if(!string.IsNullOrWhiteSpace(Common.APIClientModel))
-				return new ModelSlot{
-					Name = name, Source = ModelSlotSource.Api, ApiBaseUrl = Common.APIClientUrl, ApiKey = Common.APIClientKey, ApiModel = Common.APIClientModel,
-					ApiStore = Common.APIClientStore, ToolName = ModelSlotManager.BuildToolName(name), Use = ModelSlotUse.Tool | ModelSlotUse.Server
-				};
-			return new ModelSlot{
-				Name = name, Source = ModelSlotSource.Local, LocalPath = selectedLocalPath, ToolName = ModelSlotManager.BuildToolName(name), Use = ModelSlotUse.Server
-			};
-		}
 		private void ApplyActiveSlotToRuntime(bool updateControls, bool registerTools = true){
 			var slot = ModelSlotManager.GetActiveChatSlot();
 			if(slot == null) return;
 			Common.ActiveModelSlotName = slot.Name;
-			Action updateUi = null;
-			if(slot.Source == ModelSlotSource.Api){
-				Common.APIClientEnable = true;
-				Common.APIClientUrl = slot.ApiBaseUrl ?? "";
-				Common.APIClientKey = slot.ApiKey ?? "";
-				Common.APIClientModel = slot.ApiModel ?? "";
-				Common.APIClientStore = slot.ApiStore;
-				if(updateControls) updateUi = () => {
-					checkApiClientEnable.Checked = true;
-					textApiClientUrl.Text = Common.APIClientUrl;
-					textApiClientKey.Text = Common.APIClientKey;
-					comboApiClientModel.Text = Common.APIClientModel;
-					checkApiClientStore.Checked = Common.APIClientStore;
-				};
-			} else{
-				Common.APIClientEnable = false;
+			if(slot.Source == ModelSlotSource.Local){
 				if(!Generation.Generating && !Generation.APIServerGenerating) NativeMethods.ActivateModelSlot(slot.Name);
 				Common.LoadedModel = GetLoadedModelForSlot(slot);
 				Common.LlModelLoaded = Common.LoadedLocalSlots.Count > 0;
-				if(updateControls) updateUi = () => { checkApiClientEnable.Checked = false; };
 			}
 			if(registerTools) Tools.RegisterTools();
 			else Tools.InvalidateToolsJsonCache();
 			RunOnUiThread(() => {
-				updateUi?.Invoke();
 				SetModelStatus();
 			});
 		}
@@ -284,6 +248,12 @@ namespace LMStud{
 			if(listViewModels.SelectedItems.Count == 0) return;
 			textSlotsEditModel.Text = listViewModels.SelectedItems[0].SubItems[1].Text;
 			comboSlotsEditSource.SelectedIndex = 0;
+		}
+		private static int GetComboSelectedIndex(ComboBox combo){
+			return combo.SelectedIndex > 0 && combo.SelectedIndex < combo.Items.Count ? combo.SelectedIndex : 0;
+		}
+		private static void SetComboSelectedIndex(ComboBox combo, int selectedIndex){
+			combo.SelectedIndex = selectedIndex > 0 && selectedIndex < combo.Items.Count ? selectedIndex : 0;
 		}
 	}
 }

@@ -12,7 +12,7 @@ namespace LMStud.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.9.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.10.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -560,90 +560,6 @@ namespace LMStud.Properties {
             }
             set {
                 this["CMDToolTimeoutMs"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool APIClientEnable {
-            get {
-                return ((bool)(this["APIClientEnable"]));
-            }
-            set {
-                this["APIClientEnable"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string APIClientUrl {
-            get {
-                return ((string)(this["APIClientUrl"]));
-            }
-            set {
-                this["APIClientUrl"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string APIClientKey {
-            get {
-                return ((string)(this["APIClientKey"]));
-            }
-            set {
-                this["APIClientKey"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string APIClientModel {
-            get {
-                return ((string)(this["APIClientModel"]));
-            }
-            set {
-                this["APIClientModel"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public int APIClientReasoningEffort {
-            get {
-                return ((int)(this["APIClientReasoningEffort"]));
-            }
-            set {
-                this["APIClientReasoningEffort"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool APIClientStore {
-            get {
-                return ((bool)(this["APIClientStore"]));
-            }
-            set {
-                this["APIClientStore"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public int APIClientReasoningSummary {
-            get {
-                return ((int)(this["APIClientReasoningSummary"]));
-            }
-            set {
-                this["APIClientReasoningSummary"] = value;
             }
         }
     }

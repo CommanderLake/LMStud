@@ -220,6 +220,12 @@
   <data name="checkThink.Text" xml:space="preserve">
     <value>思考</value>
   </data>
+  <data name="labelRole.Text" xml:space="preserve">
+    <value>角色</value>
+  </data>
+  <data name="richTextMsg.Text" xml:space="preserve">
+    <value />
+  </data>
   <data name="panel1.Size" type="System.Drawing.Size, System.Drawing">
     <value>192, 42</value>
   </data>

@@ -53,13 +53,6 @@ namespace LMStud{
 			Common.APIServerEnable = checkApiServerEnable.Checked = Settings.Default.APIServerEnable;
 			Common.APIServerPort = (int)(numApiServerPort.Value = Settings.Default.APIServerPort);
 			Common.GenDelay = (int)(numGenDelay.Value = Settings.Default.GenDelay);
-			Common.APIClientEnable = checkApiClientEnable.Checked = Settings.Default.APIClientEnable;
-			Common.APIClientUrl = textApiClientUrl.Text = Settings.Default.APIClientUrl;
-			Common.APIClientKey = textApiClientKey.Text = Settings.Default.APIClientKey;
-			Common.APIClientModel = comboApiClientModel.Text = Settings.Default.APIClientModel;
-			Common.APIClientReasoningEffort = comboApiClientReasonEffort.SelectedIndex = Settings.Default.APIClientReasoningEffort;
-			Common.APIClientReasoningSummary = comboApiClientReasonSummary.SelectedIndex = Settings.Default.APIClientReasoningSummary;
-			Common.APIClientStore = checkApiClientStore.Checked = Settings.Default.APIClientStore;
 			NativeMethods.SetSilenceTimeout(Common.GenDelay);
 			NativeMethods.SetFileBaseDir(Common.FileBaseDir);
 			NativeMethods.SetWakeCommand(Common.WakeWord);
@@ -86,7 +79,6 @@ namespace LMStud{
 			var registerTools = false;
 			var setSystemPrompt = false;
 			var modelOverrideChanged = false;
-			var setStatusLabel = false;
 			var loadedModel = Common.LoadedModel;
 			ModelSettings ms = default;
 			var overrideSettings = Common.LlModelLoaded && loadedModel != null && _modelSettings.TryGetValue(loadedModel.SubItems[1].Text.Substring(Common.ModelsDir.Length), out ms) && ms.OverrideSettings;
@@ -300,24 +292,10 @@ namespace LMStud{
 				Settings.Default.GenDelay = value;
 				NativeMethods.SetSilenceTimeout(value);
 			});
-			UpdateSetting(ref Common.APIClientEnable, checkApiClientEnable.Checked, value => {
-				Settings.Default.APIClientEnable = value;
-				setStatusLabel = true;
-				registerTools = true;
-			});
-			UpdateSetting(ref Common.APIClientUrl, textApiClientUrl.Text, value => {Settings.Default.APIClientUrl = value;});
-			UpdateSetting(ref Common.APIClientKey, textApiClientKey.Text, value => {Settings.Default.APIClientKey = value;});
-			UpdateSetting(ref Common.APIClientModel, comboApiClientModel.Text, value => {
-				Settings.Default.APIClientModel = value;
-				setStatusLabel = true;
-			});
-			UpdateSetting(ref Common.APIClientStore, checkApiClientStore.Checked, value => {Settings.Default.APIClientStore = value;});
 			if(popModels){
 				PopulateModels();
 				PopulateWhisperModels(true, true);
 			}
-			UpdateSetting(ref Common.APIClientReasoningEffort, comboApiClientReasonEffort.SelectedIndex, value => {Settings.Default.APIClientReasoningEffort = value;});
-			UpdateSetting(ref Common.APIClientReasoningSummary, comboApiClientReasonSummary.SelectedIndex, value => {Settings.Default.APIClientReasoningSummary = value;});
 			var flash = overrideSettings ? ms.FlashAttn : Common.FlashAttn;
 			var minP = overrideSettings ? ms.MinP : Common.MinP;
 			var topP = overrideSettings ? ms.TopP : Common.TopP;
@@ -349,15 +327,11 @@ namespace LMStud{
 			}
 			if(setGoogle) NativeMethods.SetGoogle(Common.GoogleAPIKey, Common.GoogleSearchID, Common.GoogleSearchResultCount);
 			if(registerTools) Tools.RegisterTools();
-			if(setStatusLabel) SetModelStatus();
 			if(registerTools || setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPrompt();});
 			if(overrideSettings && modelOverrideChanged) MessageBox.Show(this, Resources.The_modified_settings_are_overridden_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 			Settings.Default.Save();
-			if(Common.APIClientEnable){
-				ModelSlotManager.SyncMainFromApiSettings();
-				ApplyActiveSlotToRuntime(true);
-				PopulateSlotsList();
-			} else if(Common.LlModelLoaded){
+			var activeSlot = ModelSlotManager.GetActiveChatSlot();
+			if(activeSlot?.Source != ModelSlotSource.Api && Common.LlModelLoaded){
 				ModelSlotManager.SyncMainFromLoadedLocal();
 				ApplyActiveSlotToRuntime(true);
 				PopulateSlotsList();
@@ -417,20 +391,6 @@ Always read a file and verify its contents before making changes.");
 				if(whisper) comboWhisperModel.SelectedIndex = comboWhisperModel.Items.IndexOf(Path.GetFileName(Common.WhisperModel));
 				if(vad) comboVADModel.SelectedIndex = comboVADModel.Items.IndexOf(Path.GetFileName(Common.VADModel));
 			} finally{ UseWaitCursor = false; }
-		}
-		private void ComboApiClientModel_DropDown(object sender, EventArgs e){
-			try{
-				var apiUrl = textApiClientUrl.Text?.Trim();
-				if(!Uri.TryCreate(apiUrl, UriKind.Absolute, out var parsedUri) || (parsedUri.Scheme != Uri.UriSchemeHttp && parsedUri.Scheme != Uri.UriSchemeHttps)){
-					ShowError(Resources.API_Server, Resources.Please_enter_a_valid_API_base_URL, false);
-					return;
-				}
-				List<string> clientModels;
-				using(var client = new APIClient(parsedUri.ToString(), textApiClientKey.Text, "", Common.APIClientStore, Common.SystemPrompt)){
-					clientModels = client.GetModels(CancellationToken.None);
-				}
-				foreach(var model in clientModels) comboApiClientModel.Items.Add(model);
-			} catch(Exception ex){ APIClient.ShowApiClientError(Resources.API_Client, ex); }
 		}
 	}
 }

@@ -20,23 +20,28 @@ namespace LMStud{
 		private readonly string _apiKey;
 		private readonly string _instructions;
 		private readonly string _model;
-		internal APIClient(string apiBaseUrl, string apiKey, string model, bool apiClientStore, string instructions = null){
+		private readonly int _reasoningEffort;
+		private readonly int _reasoningSummary;
+		internal APIClient(string apiBaseUrl, string apiKey, string model, bool apiClientStore, string instructions = null, int reasoningEffort = 0, int reasoningSummary = 0){
 			_apiClientStore = apiClientStore;
 			_apiBaseUrl = apiBaseUrl?.Trim() ?? "";
 			_apiKey = apiKey?.Trim() ?? "";
 			_model = model?.Trim() ?? "";
 			_instructions = instructions?.Trim();
+			_reasoningEffort = reasoningEffort;
+			_reasoningSummary = reasoningSummary;
 		}
 		public void Dispose(){_apiHttpClient?.Dispose();}
-		internal ChatCompletionResult CreateChatCompletion(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice, CancellationToken cancellationToken){
+		internal ChatCompletionResult CreateChatCompletion(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice, CancellationToken cancellationToken, Action<string> streamCallback = null){
 			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException("API base URL is not configured.");
 			if(history == null) throw new InvalidOperationException("History is not configured.");
-			var responsesPayload = BuildResponsesPayload(history, temperature, maxTokens, toolsJson, toolChoice);
-			var responsesError = TrySendChatRequest(BuildResponsesEndpoint(_apiBaseUrl), responsesPayload, cancellationToken, out var responsesResult);
+			var stream = streamCallback != null;
+			var responsesPayload = BuildResponsesPayload(history, temperature, maxTokens, toolsJson, toolChoice, stream);
+			var responsesError = TrySendChatRequest(BuildResponsesEndpoint(_apiBaseUrl), responsesPayload, cancellationToken, streamCallback, out var responsesResult);
 			if(responsesResult != null) return responsesResult;
 			if(!ShouldFallbackToChatCompletions(responsesError)) throw responsesError ?? new InvalidOperationException("API response did not contain any message.");
-			var chatCompletionsPayload = BuildChatCompletionsPayload(history, temperature, maxTokens, toolsJson, toolChoice);
-			var chatCompletionsError = TrySendChatRequest(BuildChatCompletionsEndpoint(_apiBaseUrl), chatCompletionsPayload, cancellationToken, out var chatCompletionsResult);
+			var chatCompletionsPayload = BuildChatCompletionsPayload(history, temperature, maxTokens, toolsJson, toolChoice, stream);
+			var chatCompletionsError = TrySendChatRequest(BuildChatCompletionsEndpoint(_apiBaseUrl), chatCompletionsPayload, cancellationToken, streamCallback, out var chatCompletionsResult);
 			if(chatCompletionsResult != null) return chatCompletionsResult;
 			throw chatCompletionsError ?? responsesError ?? new InvalidOperationException("API response did not contain any message.");
 		}
@@ -50,9 +55,10 @@ namespace LMStud{
 			return message.IndexOf("unknown", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("unsupported", StringComparison.OrdinalIgnoreCase) >= 0 ||
 					message.IndexOf("invalid", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("parallel_tool_calls", StringComparison.OrdinalIgnoreCase) >= 0 ||
 					message.IndexOf("tool_choice", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("max_output_tokens", StringComparison.OrdinalIgnoreCase) >= 0 ||
-					message.IndexOf("input", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("responses", StringComparison.OrdinalIgnoreCase) >= 0;
+					message.IndexOf("input", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("responses", StringComparison.OrdinalIgnoreCase) >= 0 ||
+					message.IndexOf("stream", StringComparison.OrdinalIgnoreCase) >= 0;
 		}
-		private InvalidOperationException TrySendChatRequest(string endpoint, JToken payload, CancellationToken cancellationToken, out ChatCompletionResult result){
+		private InvalidOperationException TrySendChatRequest(string endpoint, JToken payload, CancellationToken cancellationToken, Action<string> streamCallback, out ChatCompletionResult result){
 			result = null;
 			try{
 				using(var request = new HttpRequestMessage(HttpMethod.Post, endpoint)){
@@ -60,7 +66,12 @@ namespace LMStud{
 					var content = payload.ToString(Formatting.Indented);
 					request.Content = new StringContent(content, Encoding.UTF8, "application/json");
 					//File.AppendAllText("E:\\\\response1.txt", content + "\r\n");
-					using(var response = _apiHttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
+					var completionOption = streamCallback == null ? HttpCompletionOption.ResponseContentRead : HttpCompletionOption.ResponseHeadersRead;
+					using(var response = _apiHttpClient.SendAsync(request, completionOption, cancellationToken).GetAwaiter().GetResult()){
+						if(streamCallback != null && response.IsSuccessStatusCode){
+							result = ParseStreamingResponse(response.Content, streamCallback, cancellationToken);
+							return null;
+						}
 						var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 						//File.AppendAllText("E:\\\\response1.txt", body + "\r\n\r\n");
 						if(!response.IsSuccessStatusCode) throw new InvalidOperationException($"API error ({(int)response.StatusCode}): {body}");
@@ -70,13 +81,93 @@ namespace LMStud{
 				}
 			} catch(OperationCanceledException){ throw; } catch(InvalidOperationException ex){ return ex; } catch(Exception ex){ return new InvalidOperationException(ex.Message, ex); }
 		}
-		private JObject BuildResponsesPayload(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice){
+		private ChatCompletionResult ParseStreamingResponse(HttpContent content, Action<string> streamCallback, CancellationToken cancellationToken){
+			var accumulator = new StreamingResponseAccumulator();
+			using(var stream = content.ReadAsStreamAsync().GetAwaiter().GetResult())
+			using(var reader = new StreamReader(stream)){
+				var eventName = "";
+				var data = new StringBuilder();
+				var rawBody = new StringBuilder();
+				var sawSseData = false;
+				while(!reader.EndOfStream){
+					cancellationToken.ThrowIfCancellationRequested();
+					var line = reader.ReadLine();
+					if(line == null) break;
+					if(line.Length == 0){
+						if(ProcessStreamingEvent(eventName, data.ToString(), accumulator, streamCallback)) break;
+						eventName = "";
+						data.Clear();
+						continue;
+					}
+					if(line.StartsWith("event:", StringComparison.OrdinalIgnoreCase)){
+						eventName = line.Substring(6).Trim();
+						continue;
+					}
+					if(line.StartsWith("data:", StringComparison.OrdinalIgnoreCase)){
+						sawSseData = true;
+						if(data.Length > 0) data.Append('\n');
+						data.Append(line.Substring(5).TrimStart());
+						continue;
+					}
+					if(!line.StartsWith(":", StringComparison.Ordinal)) rawBody.AppendLine(line);
+				}
+				if(!sawSseData && rawBody.Length > 0) return APIResponseParser.ParseResponseBody(rawBody.ToString());
+				if(data.Length > 0) ProcessStreamingEvent(eventName, data.ToString(), accumulator, streamCallback);
+			}
+			return accumulator.BuildResult();
+		}
+		private static bool ProcessStreamingEvent(string eventName, string data, StreamingResponseAccumulator accumulator, Action<string> streamCallback){
+			if(string.IsNullOrWhiteSpace(data)) return false;
+			if(string.Equals(data.Trim(), "[DONE]", StringComparison.OrdinalIgnoreCase)) return true;
+			JObject root;
+			try{ root = JObject.Parse(data); } catch(JsonException){ return false; }
+			accumulator.RememberResponseId(root.Value<string>("id"));
+			var type = root.Value<string>("type") ?? eventName;
+			if(string.Equals(type, "response.completed", StringComparison.OrdinalIgnoreCase) || string.Equals(type, "response.done", StringComparison.OrdinalIgnoreCase)){
+				if(root["response"] is JObject responseObj) accumulator.SetFinalResponse(responseObj);
+				return false;
+			}
+			if(string.Equals(type, "response.output_text.delta", StringComparison.OrdinalIgnoreCase)){
+				accumulator.AppendContent(root.Value<string>("delta"), streamCallback);
+				return false;
+			}
+			if(string.Equals(type, "response.reasoning_text.delta", StringComparison.OrdinalIgnoreCase) ||
+				string.Equals(type, "response.reasoning_summary_text.delta", StringComparison.OrdinalIgnoreCase)){
+				accumulator.AppendReasoning(root.Value<string>("delta"));
+				return false;
+			}
+			if(string.Equals(type, "response.function_call_arguments.delta", StringComparison.OrdinalIgnoreCase)){
+				accumulator.AppendToolArguments(GetStreamingToolKey(root), root.Value<string>("delta"));
+				return false;
+			}
+			if(string.Equals(type, "response.output_item.done", StringComparison.OrdinalIgnoreCase) || string.Equals(type, "response.output_item.added", StringComparison.OrdinalIgnoreCase)){
+				if(root["item"] is JObject item) accumulator.MergeToolCall(GetStreamingToolKey(root), item);
+				return false;
+			}
+			if(root["choices"] is JArray choices){
+				foreach(var choice in choices.OfType<JObject>()){
+					if(!(choice["delta"] is JObject delta)) continue;
+					var contentDelta = APIResponseParserCommon.ExtractContentText(delta["content"]);
+					accumulator.AppendContent(contentDelta, streamCallback);
+					accumulator.AppendReasoning(delta.Value<string>("reasoning_content") ?? delta.Value<string>("reasoning"));
+					if(delta["tool_calls"] is JArray toolCalls)
+						foreach(var toolCall in toolCalls.OfType<JObject>())
+							accumulator.MergeChatToolCall(toolCall);
+				}
+			}
+			return false;
+		}
+		private static string GetStreamingToolKey(JObject root){
+			return root?.Value<string>("item_id") ?? root?.Value<string>("output_index") ?? root?.Value<string>("id") ?? "0";
+		}
+		private JObject BuildResponsesPayload(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice, bool stream){
 			var payload = new JObject{ ["model"] = _model, ["input"] = history, ["temperature"] = temperature };
 			if(!string.IsNullOrWhiteSpace(_instructions)) payload["instructions"] = _instructions;
 			payload["store"] = _apiClientStore;
+			if(stream) payload["stream"] = true;
 			if(maxTokens > 0) payload["max_output_tokens"] = maxTokens;
-			var effort = Common.GetReasoningEffort();
-			var summaryType = Common.GetReasoningSummaryType();
+			var effort = Common.GetReasoningEffort(_reasoningEffort);
+			var summaryType = Common.GetReasoningSummaryType(_reasoningSummary);
 			if(effort != null || summaryType != null){
 				var reasoningPayload = new JObject();
 				if(effort != null) reasoningPayload["effort"] = effort;
@@ -91,10 +182,11 @@ namespace LMStud{
 			}
 			return payload;
 		}
-		private JObject BuildChatCompletionsPayload(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice){
+		private JObject BuildChatCompletionsPayload(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice, bool stream){
 			var messages = ConvertHistoryToChatCompletionMessages(history);
 			if(!string.IsNullOrWhiteSpace(_instructions)) messages.Insert(0, new JObject{ ["role"] = "system", ["content"] = _instructions });
 			var payload = new JObject{ ["model"] = _model, ["messages"] = messages, ["temperature"] = temperature };
+			if(stream) payload["stream"] = true;
 			if(maxTokens > 0) payload["max_tokens"] = maxTokens;
 			if(!string.IsNullOrWhiteSpace(toolsJson)){
 				var normalizedTools = NormalizeToolsJsonForChatCompletions(toolsJson);
@@ -320,6 +412,77 @@ namespace LMStud{
 				OutputItems = outputItems;
 				TotalTokens = totalTokens;
 			}
+		}
+		private sealed class StreamingResponseAccumulator{
+			private readonly StringBuilder _content = new StringBuilder();
+			private readonly StringBuilder _reasoning = new StringBuilder();
+			private readonly Dictionary<string, StreamingToolCall> _toolCalls = new Dictionary<string, StreamingToolCall>();
+			private ChatCompletionResult _finalResult;
+			private string _responseId;
+			internal void RememberResponseId(string responseId){
+				if(!string.IsNullOrWhiteSpace(responseId)) _responseId = responseId;
+			}
+			internal void SetFinalResponse(JObject responseObj){
+				if(responseObj == null) return;
+				RememberResponseId(responseObj.Value<string>("id"));
+				try{ _finalResult = APIResponseParser.ParseResponseBody(responseObj.ToString(Formatting.None)); } catch(InvalidOperationException){}
+			}
+			internal void AppendContent(string delta, Action<string> streamCallback){
+				if(string.IsNullOrEmpty(delta)) return;
+				_content.Append(delta);
+				streamCallback?.Invoke(delta);
+			}
+			internal void AppendReasoning(string delta){
+				if(!string.IsNullOrEmpty(delta)) _reasoning.Append(delta);
+			}
+			internal void AppendToolArguments(string key, string delta){
+				if(string.IsNullOrEmpty(delta)) return;
+				GetToolCall(key).Arguments.Append(delta);
+			}
+			internal void MergeToolCall(string key, JObject item){
+				if(item == null) return;
+				var type = item.Value<string>("type");
+				if(!string.Equals(type, "function_call", StringComparison.OrdinalIgnoreCase) && !string.Equals(type, "tool_call", StringComparison.OrdinalIgnoreCase)) return;
+				var toolCall = GetToolCall(key);
+				toolCall.Id = item.Value<string>("call_id") ?? item.Value<string>("id") ?? toolCall.Id;
+				toolCall.Name = item.Value<string>("name") ?? item["function"]?.Value<string>("name") ?? toolCall.Name;
+				var argumentsToken = item["arguments"] ?? item["function"]?["arguments"];
+				if(argumentsToken == null) return;
+				var arguments = argumentsToken.Type == JTokenType.String ? argumentsToken.ToString() : argumentsToken.ToString(Formatting.None);
+				if(toolCall.Arguments.Length == 0 && !string.IsNullOrEmpty(arguments)) toolCall.Arguments.Append(arguments);
+			}
+			internal void MergeChatToolCall(JObject toolCallDelta){
+				if(toolCallDelta == null) return;
+				var key = toolCallDelta.Value<string>("index") ?? toolCallDelta.Value<string>("id") ?? "0";
+				var toolCall = GetToolCall(key);
+				toolCall.Id = toolCallDelta.Value<string>("id") ?? toolCall.Id;
+				toolCall.Name = toolCallDelta["function"]?.Value<string>("name") ?? toolCallDelta.Value<string>("name") ?? toolCall.Name;
+				var arguments = toolCallDelta["function"]?.Value<string>("arguments") ?? toolCallDelta.Value<string>("arguments");
+				if(!string.IsNullOrEmpty(arguments)) toolCall.Arguments.Append(arguments);
+			}
+			internal ChatCompletionResult BuildResult(){
+				if(_finalResult != null) return _finalResult;
+				var toolCalls = _toolCalls.Values
+					.Where(call => !string.IsNullOrWhiteSpace(call.Id) && !string.IsNullOrWhiteSpace(call.Name))
+					.Select(call => new ToolCall(call.Id, call.Name, call.Arguments.ToString()))
+					.ToList();
+				var finalToolCalls = toolCalls.Count > 0 ? toolCalls : null;
+				if(_content.Length == 0 && finalToolCalls == null) throw new InvalidOperationException("API response did not contain any message.");
+				return new ChatCompletionResult(_content.ToString(), _reasoning.Length > 0 ? _reasoning.ToString() : null, finalToolCalls, _responseId, null);
+			}
+			private StreamingToolCall GetToolCall(string key){
+				key = string.IsNullOrWhiteSpace(key) ? "0" : key;
+				if(!_toolCalls.TryGetValue(key, out var toolCall)){
+					toolCall = new StreamingToolCall();
+					_toolCalls[key] = toolCall;
+				}
+				return toolCall;
+			}
+		}
+		private sealed class StreamingToolCall{
+			internal readonly StringBuilder Arguments = new StringBuilder();
+			internal string Id;
+			internal string Name;
 		}
 	}
 }

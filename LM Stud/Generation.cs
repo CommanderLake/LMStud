@@ -12,6 +12,7 @@ namespace LMStud {
 	internal static class Generation{
 		internal static Form1 MainForm;
 		internal static readonly SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
+		internal static readonly SemaphoreSlim MsgRenderLock = new SemaphoreSlim(1, 1);
 		internal static volatile bool Generating;
 		internal static volatile bool APIServerGenerating;
 		private static readonly object APICancelSync = new object();
@@ -56,10 +57,10 @@ namespace LMStud {
 		}
 		internal static void Generate(MessageRole role, string prompt, bool addToChat){
 			var useDialecticLocalSlot = MainForm.checkDialectic.Checked && !string.IsNullOrWhiteSpace(CurrentDialecticSlotName);
-			var useRemote = Common.APIClientEnable && !useDialecticLocalSlot;
 			var activeSlot = useDialecticLocalSlot ? ModelSlotManager.GetSlot(CurrentDialecticSlotName) : ModelSlotManager.GetActiveChatSlot();
+			var useRemote = activeSlot?.Source == ModelSlotSource.Api && !useDialecticLocalSlot;
 			var generationSlotName = activeSlot?.Name;
-			if((!useRemote && !ModelSlotManager.CanServeLocalSlot(activeSlot)) || string.IsNullOrWhiteSpace(prompt)) return;
+			if((useRemote && !ModelSlotManager.CanServeApiSlot(activeSlot)) || (!useRemote && !ModelSlotManager.CanServeLocalSlot(activeSlot)) || string.IsNullOrWhiteSpace(prompt)) return;
 			if(!GenerationLock.Wait(0)) return;
 			if(Generating || APIServerGenerating){
 				GenerationLock.Release();
@@ -229,10 +230,33 @@ namespace LMStud {
 				var messages = BuildApiMessages(role, prompt, addToChat);
 				var history = APIClient.BuildInputItems(messages);
 				var toolsJson = Tools.BuildApiToolsJson();
-				using(var client = new APIClient(Common.APIClientUrl, Common.APIClientKey, Common.APIClientModel, Common.APIClientStore, Common.SystemPrompt)){
+				var slot = ModelSlotManager.GetActiveChatSlot();
+				if(!ModelSlotManager.CanServeApiSlot(slot)) throw new InvalidOperationException("The active API model slot is incomplete.");
+				using(var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, slot.GetInstructionsOrDefault(),
+					slot.ApiReasoningEffort, slot.ApiReasoningSummary)){
 					string lastToolSignature = null;
 					while(true){
-						var result = client.CreateChatCompletion(history, Common.Temp, Common.NGen, toolsJson, null, cancellationToken);
+						var streamOutput = false;
+						MainForm.RunOnUiThread(() => { streamOutput = MainForm.checkStream.Checked; });
+						var streamedContent = new StringBuilder();
+						ChatMessageControl streamedMessage = null;
+						Action<string> streamCallback = null;
+						if(streamOutput)
+							streamCallback = delta => {
+								if(string.IsNullOrEmpty(delta)) return;
+								streamedContent.Append(delta);
+								var snapshot = streamedContent.ToString();
+								try{
+									if(!MsgRenderLock.Wait(0)) return;
+									MainForm.BeginInvoke(new MethodInvoker(() => {
+										try {
+											if(streamedMessage == null) streamedMessage = MainForm.AddMessage(MessageRole.Assistant, "", "");
+											streamedMessage.UpdateText("", snapshot, true);
+										} finally { MsgRenderLock.Release(); }
+									}));
+								} catch(ObjectDisposedException){ MsgRenderLock.Release(); } catch(InvalidOperationException){ MsgRenderLock.Release(); }
+							};
+						var result = client.CreateChatCompletion(history, Common.Temp, Common.NGen, toolsJson, null, cancellationToken, streamCallback);
 						UpdateApiTotalTokensLabel(result.TotalTokens);
 						APIClient.AppendOutputItems(history, result);
 						var content = result.Content;
@@ -243,7 +267,11 @@ namespace LMStud {
 								content = toolCalls.Aggregate(content, (current, toolCall) => current + Resources.__Tool_name_ + toolCall.Name + Resources.__Tool_ID_ + toolCall.Id + Resources.__Tool_arguments_ + toolCall.Arguments);
 							try{
 								MainForm.Invoke(new MethodInvoker(() => {
-									var message = MainForm.AddMessage(MessageRole.Assistant, reasoning ?? "", content ?? "", toolCalls);
+									var message = streamedMessage ?? MainForm.AddMessage(MessageRole.Assistant, reasoning ?? "", content ?? "", toolCalls);
+									if(streamedMessage != null){
+										message.ApiToolCalls = toolCalls;
+										message.UpdateText(reasoning ?? "", content ?? "", true);
+									}
 									if(toolCalls != null && toolCalls.Count > 0) message.SetRoleText(Resources.Tool_Call);
 									if(Common.Speak && !string.IsNullOrWhiteSpace(content)) TTS.QueueSpeech(content);
 								}));

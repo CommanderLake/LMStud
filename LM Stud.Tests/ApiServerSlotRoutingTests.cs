@@ -26,10 +26,12 @@ namespace LM_Stud.Tests{
 			var apiServer = new APIServer();
 			try{
 				ModelSlotManager.AddOrUpdate(new ModelSlot{
-					Name = slotName1, Source = ModelSlotSource.Api, ApiBaseUrl = $"http://127.0.0.1:{upstreamPort1}", ApiModel = "upstream-model-a", ApiStore = true, Use = ModelSlotUse.Server
+					Name = slotName1, Source = ModelSlotSource.Api, ApiBaseUrl = $"http://127.0.0.1:{upstreamPort1}", ApiModel = "upstream-model-a",
+					ApiReasoningEffort = 2, ApiReasoningSummary = 3, ApiStore = true, Use = ModelSlotUse.Server
 				});
 				ModelSlotManager.AddOrUpdate(new ModelSlot{
-					Name = slotName2, Source = ModelSlotSource.Api, ApiBaseUrl = $"http://127.0.0.1:{upstreamPort2}", ApiModel = "upstream-model-b", Use = ModelSlotUse.Server
+					Name = slotName2, Source = ModelSlotSource.Api, ApiBaseUrl = $"http://127.0.0.1:{upstreamPort2}", ApiModel = "upstream-model-b",
+					ApiReasoningEffort = 4, Use = ModelSlotUse.Server
 				});
 				Common.APIServerPort = serverPort;
 				apiServer.Start();
@@ -51,6 +53,10 @@ namespace LM_Stud.Tests{
 				Assert.AreEqual("upstream-model-b", (string)upstreamJson2["model"]);
 				Assert.AreEqual(true, (bool)upstreamJson1["store"]);
 				Assert.AreEqual(false, (bool)upstreamJson2["store"]);
+				Assert.AreEqual("low", (string)upstreamJson1["reasoning"]?["effort"]);
+				Assert.AreEqual("detailed", (string)upstreamJson1["reasoning"]?["summary"]);
+				Assert.AreEqual("high", (string)upstreamJson2["reasoning"]?["effort"]);
+				Assert.IsNull(upstreamJson2["reasoning"]?["summary"]);
 			} finally{
 				apiServer.Stop();
 				ModelSlotManager.Remove(slotName1);

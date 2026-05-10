@@ -234,16 +234,17 @@ namespace LMStud{
 			var loadedSlot = ModelSlotManager.GetLoadedLocalSlot();
 			var activeLoadedModel = GetLoadedModelForSlot(activeSlot);
 			var activeLocalLoaded = activeLoadedModel != null;
+			var activeApiReady = ModelSlotManager.CanServeApiSlot(activeSlot);
 			if(activeLocalLoaded) Common.LoadedModel = activeLoadedModel;
-			butGen.Enabled = (Common.APIClientEnable || activeLocalLoaded) && !Generation.Generating;
+			butGen.Enabled = (activeApiReady || activeLocalLoaded) && !Generation.Generating;
 			butReset.Enabled = !Generation.Generating;
 			butUnloadMain.Enabled = Common.LoadedLocalSlots.ContainsKey("main") && NativeMethods.IsModelSlotLoaded("main");
 			if(checkDialectic.Checked && Generation.DialecticRelayEnabled) toolStripStatusLabel1.Text = "Dialectic relay: " + Generation.DialecticPrimarySlotName + " <-> " + Generation.DialecticSecondarySlotName;
-			else if(Common.APIClientEnable && activeSlot != null) toolStripStatusLabel1.Text = "Using slot " + activeSlot.Name + ": " + activeSlot.DisplayModel();
+			else if(activeApiReady) toolStripStatusLabel1.Text = "Using slot " + activeSlot.Name + ": " + activeSlot.DisplayModel();
 			else if(activeLocalLoaded && activeSlot != null) toolStripStatusLabel1.Text = "Using slot " + activeSlot.Name + ": " + activeLoadedModel.Text;
 			else if(Common.LlModelLoaded && Common.LoadedModel != null) toolStripStatusLabel1.Text = Resources.Using_Model_ + Common.LoadedModel.Text;
 			else toolStripStatusLabel1.Text = Resources.No_model_loaded;
-			if(Common.APIClientEnable && loadedSlot != null) toolStripStatusLabel1.Text += " | Loaded: " + loadedSlot.Name;
+			if(activeApiReady && loadedSlot != null) toolStripStatusLabel1.Text += " | Loaded: " + loadedSlot.Name;
 		}
 		private static ListViewItem GetLoadedModelForSlot(ModelSlot slot){
 			if(slot == null || slot.Source != ModelSlotSource.Local) return null;

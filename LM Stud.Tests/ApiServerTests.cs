@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -35,11 +36,18 @@ retry:			try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; }));
 		[ClassCleanup]
 		public static void ClassCleanup(){
 			lock(FormLock){
-				_form.ApiServer?.Stop();
-				_form.Invoke(new MethodInvoker(() => {
-					Program.MainForm.Close();
-					Program.MainForm.Dispose();
-				}));
+				try{ _form?.ApiServer?.Stop(); } catch(ObjectDisposedException){} catch(InvalidOperationException){}
+				try{
+					if(_form != null && !_form.IsDisposed && _form.IsHandleCreated)
+						_form.Invoke(new MethodInvoker(() => {
+							Program.MainForm?.Close();
+							Program.MainForm?.Dispose();
+							Program.MainForm = null;
+						}));
+				} catch(ObjectDisposedException){} catch(InvalidOperationException){} catch(NullReferenceException){} finally{
+					if(ReferenceEquals(Program.MainForm, _form)) Program.MainForm = null;
+					_form = null;
+				}
 			}
 		}
 		[TestMethod]

@@ -58,7 +58,7 @@ namespace LMStud{
 			PopulateWhisperModels(true, true);
 			NativeMethods.BackendInit();
 			Tools.RegisterTools();
-			if(Common.APIClientEnable) SetModelStatus();
+			SetModelStatus();
 			ApiServer = new APIServer();
 			if(Common.APIServerEnable) ApiServer.Start();
 			if(!Settings.Default.LoadAuto) return;
@@ -362,7 +362,8 @@ namespace LMStud{
 								ChatMessages[i].Dispose();
 								ChatMessages.RemoveAt(i);
 							}
-						if(result != NativeMethods.StudError.Success && !(Common.APIClientEnable && result == NativeMethods.StudError.ModelNotLoaded)) ShowError(Resources.Error_regenerating_message, result);
+						var activeApiSlot = ModelSlotManager.GetActiveChatSlot()?.Source == ModelSlotSource.Api;
+						if(result != NativeMethods.StudError.Success && !(activeApiSlot && result == NativeMethods.StudError.ModelNotLoaded)) ShowError(Resources.Error_regenerating_message, result);
 						else regenerate = true;
 						EndRetokenization();
 					}));

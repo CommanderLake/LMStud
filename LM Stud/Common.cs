@@ -2,13 +2,6 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 namespace LMStud{
 	internal static class Common{
-		internal static bool APIClientEnable;
-		internal static string APIClientKey;
-		internal static string APIClientModel;
-		internal static int APIClientReasoningEffort;
-		internal static int APIClientReasoningSummary;
-		internal static string APIClientUrl;
-		internal static bool APIClientStore;
 		internal static string ActiveModelSlotName;
 		internal static bool APIServerEnable;
 		internal static int APIServerPort;
@@ -60,8 +53,8 @@ namespace LMStud{
 		internal static readonly Dictionary<string, ListViewItem> LoadedLocalSlots = new Dictionary<string, ListViewItem>(System.StringComparer.OrdinalIgnoreCase);
 		internal static readonly string[] ReasoningEffortValues = { null, "none", "low", "medium", "high", "xhigh" };
 		internal static readonly string[] ReasoningSummaryValues = { null, "auto", "concise", "detailed" };
-		internal static string GetReasoningEffort() { return GetReasoningValue(ReasoningEffortValues, Common.APIClientReasoningEffort); }
-		internal static string GetReasoningSummaryType() { return GetReasoningValue(ReasoningSummaryValues, Common.APIClientReasoningSummary); }
+		internal static string GetReasoningEffort(int index) { return GetReasoningValue(ReasoningEffortValues, index); }
+		internal static string GetReasoningSummaryType(int index) { return GetReasoningValue(ReasoningSummaryValues, index); }
 		internal static string GetReasoningValue(string[] values, int index) { return index > 0 && index < values.Length ? values[index] : null; }
 	}
 }

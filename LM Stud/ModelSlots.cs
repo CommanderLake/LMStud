@@ -23,6 +23,8 @@ namespace LMStud{
 		public string ApiBaseUrl { get; set; }
 		public string ApiKey { get; set; }
 		public string ApiModel { get; set; }
+		public int ApiReasoningEffort { get; set; }
+		public int ApiReasoningSummary { get; set; }
 		public bool ApiStore { get; set; }
 		public string Instructions { get; set; }
 		public string LocalPath { get; set; }
@@ -32,11 +34,12 @@ namespace LMStud{
 		public ModelSlotUse Use { get; set; }
 		internal ModelSlot Clone(){
 			return new ModelSlot{
-				ApiBaseUrl = ApiBaseUrl, ApiKey = ApiKey, ApiModel = ApiModel, ApiStore = ApiStore, Instructions = Instructions, LocalPath = LocalPath, Name = Name, Source = Source,
-				ToolName = ToolName, Use = Use
+				ApiBaseUrl = ApiBaseUrl, ApiKey = ApiKey, ApiModel = ApiModel, ApiReasoningEffort = ApiReasoningEffort, ApiReasoningSummary = ApiReasoningSummary,
+				ApiStore = ApiStore, Instructions = Instructions, LocalPath = LocalPath, Name = Name, Source = Source, ToolName = ToolName, Use = Use
 			};
 		}
 		internal bool HasUse(ModelSlotUse use){return (Use & use) == use;}
+		internal string GetInstructionsOrDefault(){return string.IsNullOrWhiteSpace(Instructions) ? Common.SystemPrompt : Instructions;}
 		internal string DisplayModel(){
 			if(Source == ModelSlotSource.Api) return string.IsNullOrWhiteSpace(ApiModel) ? "(API model)" : ApiModel;
 			if(string.IsNullOrWhiteSpace(LocalPath)) return "(local model)";
@@ -126,6 +129,8 @@ namespace LMStud{
 					existing.ApiBaseUrl = slot.ApiBaseUrl;
 					existing.ApiKey = slot.ApiKey;
 					existing.ApiModel = slot.ApiModel;
+					existing.ApiReasoningEffort = slot.ApiReasoningEffort;
+					existing.ApiReasoningSummary = slot.ApiReasoningSummary;
 					existing.ApiStore = slot.ApiStore;
 					existing.Instructions = slot.Instructions;
 					existing.LocalPath = slot.LocalPath;
@@ -183,21 +188,6 @@ namespace LMStud{
 					slot.Use |= ModelSlotUse.Chat | ModelSlotUse.Server;
 					ActiveChatSlotName = slot.Name;
 				}
-				EnsureSingleChatSlot();
-			}
-			Save();
-		}
-		internal static void SyncMainFromApiSettings(){
-			lock(Sync){
-				var main = FindSlotInternal(MainSlotName) ?? CreateDefaultMainSlot();
-				if(!SlotsInternal.Contains(main)) SlotsInternal.Add(main);
-				main.Source = ModelSlotSource.Api;
-				main.ApiBaseUrl = Common.APIClientUrl;
-				main.ApiKey = Common.APIClientKey;
-				main.ApiModel = Common.APIClientModel;
-				main.ApiStore = Common.APIClientStore;
-				main.Use |= ModelSlotUse.Chat | ModelSlotUse.Server;
-				ActiveChatSlotName = main.Name;
 				EnsureSingleChatSlot();
 			}
 			Save();
@@ -310,7 +300,8 @@ namespace LMStud{
 				var instructions = args.Value<string>("instructions");
 				var maxTokens = args.Value<int?>("max_tokens") ?? Common.NGen;
 				var history = APIClient.BuildInputItems(new[]{ new APIClient.ChatMessage("user", prompt) });
-				using(var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, string.IsNullOrWhiteSpace(instructions) ? slot.Instructions ?? Common.SystemPrompt : instructions)){
+				using(var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, string.IsNullOrWhiteSpace(instructions) ? slot.GetInstructionsOrDefault() : instructions,
+					slot.ApiReasoningEffort, slot.ApiReasoningSummary)){
 					var response = client.CreateChatCompletion(history, Common.Temp, maxTokens, null, null, System.Threading.CancellationToken.None);
 					result = JsonConvert.SerializeObject(new{
 						slot = slot.Name, model = slot.ApiModel, content = response.Content ?? "", reasoning = response.Reasoning ?? "", total_tokens = response.TotalTokens
@@ -339,6 +330,8 @@ namespace LMStud{
 			slot.ApiBaseUrl = slot.ApiBaseUrl?.Trim() ?? "";
 			slot.ApiKey = slot.ApiKey?.Trim() ?? "";
 			slot.ApiModel = slot.ApiModel?.Trim() ?? "";
+			slot.ApiReasoningEffort = NormalizeReasoningIndex(slot.ApiReasoningEffort, Common.ReasoningEffortValues.Length);
+			slot.ApiReasoningSummary = NormalizeReasoningIndex(slot.ApiReasoningSummary, Common.ReasoningSummaryValues.Length);
 			slot.LocalPath = slot.LocalPath?.Trim() ?? "";
 			slot.ToolName = string.IsNullOrWhiteSpace(slot.ToolName) ? BuildToolName(slot.Name) : slot.ToolName.Trim();
 			return slot;
@@ -357,11 +350,6 @@ namespace LMStud{
 			}
 		}
 		private static ModelSlot CreateDefaultMainSlot(){
-			if(Common.APIClientEnable && !string.IsNullOrWhiteSpace(Common.APIClientModel))
-				return new ModelSlot{
-					Name = MainSlotName, Source = ModelSlotSource.Api, ApiBaseUrl = Common.APIClientUrl, ApiKey = Common.APIClientKey, ApiModel = Common.APIClientModel,
-					ApiStore = Common.APIClientStore, ToolName = BuildToolName(MainSlotName), Use = ModelSlotUse.Chat | ModelSlotUse.Server
-				};
 			return new ModelSlot{
 				Name = MainSlotName, Source = ModelSlotSource.Local, LocalPath = Settings.Default.LastModel ?? "", ToolName = BuildToolName(MainSlotName),
 				Use = ModelSlotUse.Chat | ModelSlotUse.Server
@@ -388,6 +376,9 @@ namespace LMStud{
 			if(!string.IsNullOrWhiteSpace(modelsDir) && modelPath.StartsWith(modelsDir, StringComparison.OrdinalIgnoreCase)) return modelPath.Substring(modelsDir.Length);
 			return modelPath;
 		}
+		private static int NormalizeReasoningIndex(int index, int valueCount){
+			return index > 0 && index < valueCount ? index : 0;
+		}
 		private static bool SamePath(string a, string b){
 			if(string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b)) return false;
 			try{
@@ -397,8 +388,6 @@ namespace LMStud{
 			return string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 		}
 		private static ModelSlot GetFallbackRuntimeSlot(){
-			if(Common.APIClientEnable && !string.IsNullOrWhiteSpace(Common.APIClientModel))
-				return new ModelSlot{ Name = MainSlotName, Source = ModelSlotSource.Api, ApiBaseUrl = Common.APIClientUrl, ApiKey = Common.APIClientKey, ApiModel = Common.APIClientModel };
 			if(Common.LlModelLoaded && Common.LoadedModel != null)
 				return new ModelSlot{ Name = MainSlotName, Source = ModelSlotSource.Local, LocalPath = Common.LoadedModel.SubItems[1].Text };
 			foreach(var loaded in Common.LoadedLocalSlots)

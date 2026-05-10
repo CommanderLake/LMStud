@@ -193,8 +193,8 @@ namespace LMStud{
 				var persisted = BuildPersistedHistory(session.Messages);
 				foreach(var item in incomingDelta) persisted.Add(item);
 				var toolsJson = ResolveClientToolsJson(session, request);
-				var instructions = request.Instructions ?? slot.Instructions ?? Common.SystemPrompt;
-				client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, instructions);
+				var instructions = request.Instructions ?? slot.GetInstructionsOrDefault();
+				client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, instructions, slot.ApiReasoningEffort, slot.ApiReasoningSummary);
 				var result = client.CreateChatCompletion(persisted, Common.Temp, Common.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
 				APIClient.AppendOutputItems(persisted, result);
 				Sessions.Apply(session, s => {

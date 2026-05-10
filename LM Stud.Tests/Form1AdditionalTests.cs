@@ -18,8 +18,17 @@ namespace LM_Stud.Tests{
 		}
 		[ClassCleanup]
 		public static void ClassCleanup(){
-			Program.MainForm.Close();
-			Program.MainForm.Dispose();
+			var form = Program.MainForm;
+			try{
+				if(form != null && !form.IsDisposed && form.IsHandleCreated)
+					form.Invoke(new MethodInvoker(() => {
+						Program.MainForm?.Close();
+						Program.MainForm?.Dispose();
+						Program.MainForm = null;
+					}));
+			} catch(ObjectDisposedException){} catch(InvalidOperationException){} catch(NullReferenceException){} finally{
+				if(ReferenceEquals(Program.MainForm, form)) Program.MainForm = null;
+			}
 		}
 		[TestInitialize]
 		public void TestInitialize(){

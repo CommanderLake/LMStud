@@ -5,7 +5,6 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using LMStud;
 using LMStud.Parsers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -13,55 +12,6 @@ using Newtonsoft.Json.Linq;
 namespace LM_Stud.Tests{
 	[TestClass]
 	public class ApiClientTests{
-		private static Form1 _form;
-		private static int _originalReasoningEffort;
-		private static int _originalReasoningSummary;
-		private static bool _ownsForm;
-		[ClassInitialize]
-		public static void ClassInitialize(TestContext context){
-			if(Program.MainForm == null || Program.MainForm.IsDisposed){
-				_ownsForm = true;
-				Exception startupError = null;
-				var t = new Thread(() => {
-					try{ Program.Main(); }
-					catch(Exception ex){ startupError = ex; }
-				});
-				t.SetApartmentState(ApartmentState.STA);
-				t.IsBackground = true;
-				t.Start();
-				var deadline = DateTime.UtcNow.AddSeconds(15);
-				while(Program.MainForm == null || Program.MainForm.IsDisposed){
-					if(startupError != null) throw startupError;
-					if(DateTime.UtcNow > deadline) Assert.Fail("Program.Main did not create MainForm in time.");
-					Thread.Sleep(10);
-				}
-			}
-			_form = Program.MainForm;
-			Thread.Sleep(1000);
-			_originalReasoningEffort = Common.APIClientReasoningEffort;
-			_originalReasoningSummary = Common.APIClientReasoningSummary;
-		}
-		[ClassCleanup]
-		public static void ClassCleanup(){
-			Common.APIClientReasoningEffort = _originalReasoningEffort;
-			Common.APIClientReasoningSummary = _originalReasoningSummary;
-			if(!_ownsForm || _form == null) return;
-			try{
-				if(!_form.IsDisposed && _form.IsHandleCreated)
-					_form.Invoke(new MethodInvoker(() => {
-						Program.MainForm?.Close();
-						Program.MainForm?.Dispose();
-						Program.MainForm = null;
-					}));
-			} catch(ObjectDisposedException){} catch(InvalidOperationException){} catch(NullReferenceException){} finally{
-				if(ReferenceEquals(Program.MainForm, _form)) Program.MainForm = null;
-			}
-		}
-		[TestCleanup]
-		public void TestCleanup(){
-			Common.APIClientReasoningEffort = _originalReasoningEffort;
-			Common.APIClientReasoningSummary = _originalReasoningSummary;
-		}
 		[TestMethod]
 		public void BuildInputItems_WithToolCall_AddsFunctionCallItem(){
 			var messages = new List<APIClient.ChatMessage>{
@@ -128,7 +78,6 @@ namespace LM_Stud.Tests{
 			using(var listener = new HttpListener()){
 				var baseUrl = "http://127.0.0.1:39593/";
 				string requestBody = null;
-				Common.APIClientReasoningEffort = 2;
 				listener.Prefixes.Add(baseUrl);
 				listener.Start();
 				var server = Task.Run(() => {
@@ -140,7 +89,7 @@ namespace LM_Stud.Tests{
 						writer.Write("{\"id\":\"resp_test\",\"output\":[{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"ok\"}]}]}");
 					ctx.Response.Close();
 				});
-				var client = new APIClient(baseUrl, "", "test-model", false);
+				var client = new APIClient(baseUrl, "", "test-model", false, reasoningEffort: 2);
 				var history = new JArray{ new JObject{ ["role"] = "user", ["content"] = "hello" } };
 				var result = client.CreateChatCompletion(history, 0.5f, 128, null, null, CancellationToken.None);
 				Assert.AreEqual("ok", result.Content, "Responses result should parse.");

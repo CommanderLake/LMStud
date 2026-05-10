@@ -34,7 +34,8 @@ namespace LMStud {
 				if(MainForm.checkVoiceInput.CheckState != CheckState.Checked) return;
 				var prompt = MainForm.textInput.Text;
 				if(string.IsNullOrWhiteSpace(prompt)) return;
-				if(!Common.APIClientEnable && !Common.LlModelLoaded) return;
+				var activeSlot = ModelSlotManager.GetActiveChatSlot();
+				if(!ModelSlotManager.CanServeApiSlot(activeSlot) && !ModelSlotManager.CanServeLocalSlot(activeSlot)) return;
 				NativeMethods.StopSpeechTranscription();
 				Generation.Generate();
 			}));
