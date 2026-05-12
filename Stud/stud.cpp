@@ -875,8 +875,30 @@ StudError SyncChatMessagesJson(const char* slotName, const char* messagesJson){
 	}
 	return ReplaceChatMessages(slotName, std::move(msgs));
 }
+static std::string NormalizeXmlToolBoolParameters(const std::string& response){
+	std::string normalized = response;
+	const std::string parameterTag = "<parameter=";
+	const std::string closeTag = "</parameter>";
+	size_t searchFrom = 0;
+	while((searchFrom = normalized.find(parameterTag, searchFrom)) != std::string::npos){
+		const size_t valueStart = normalized.find('>', searchFrom + parameterTag.size());
+		if(valueStart == std::string::npos) break;
+		const size_t closeStart = normalized.find(closeTag, valueStart + 1);
+		if(closeStart == std::string::npos) break;
+		size_t trimStart = valueStart + 1;
+		size_t trimEnd = closeStart;
+		while(trimStart < trimEnd && std::isspace(static_cast<unsigned char>(normalized[trimStart]))) ++trimStart;
+		while(trimEnd > trimStart && std::isspace(static_cast<unsigned char>(normalized[trimEnd - 1]))) --trimEnd;
+		const std::string value = normalized.substr(trimStart, trimEnd - trimStart);
+		if(value == "True") normalized.replace(trimStart, value.size(), "true");
+		else if(value == "False") normalized.replace(trimStart, value.size(), "false");
+		searchFrom = closeStart + closeTag.size();
+	}
+	return normalized;
+}
 static common_chat_msg ParseGeneratedMessage(const std::string& response, const common_chat_parser_params& syntax, const bool isPartial, std::string* toolParseError = nullptr){
-	try{ return common_chat_parse(response, isPartial, syntax); } catch(std::exception& e){
+	const std::string normalizedResponse = syntax.parse_tool_calls ? NormalizeXmlToolBoolParameters(response) : response;
+	try{ return common_chat_parse(normalizedResponse, isPartial, syntax); } catch(std::exception& e){
 		if(!isPartial && syntax.parse_tool_calls && toolParseError) *toolParseError = e.what();
 		OutputDebugStringA((std::string("CHAT PARSE FALLBACK:\r\n") + e.what()).c_str());
 		common_chat_parser_params fallback;
