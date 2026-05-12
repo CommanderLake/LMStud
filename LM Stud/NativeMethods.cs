@@ -5,6 +5,7 @@ namespace LMStud{
 	internal static class NativeMethods{
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate int ProgressCallback(long totalBytes, long downloadedBytes);
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate void SpeechEndCallback();
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public unsafe delegate void TokenCallback(byte* thinkPtr, int thinkLen, byte* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool);

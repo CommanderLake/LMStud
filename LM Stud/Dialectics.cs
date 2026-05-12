@@ -29,23 +29,6 @@ namespace LMStud{
 			if(slotNames.Length == 0) NativeMethods.DialecticFree("main");
 			else foreach(var slotName in DistinctSlotNames(slotNames)) NativeMethods.DialecticFree(slotName);
 		}
-		internal static string GetActiveNativeChatSlotName(){
-			if(!string.IsNullOrWhiteSpace(Generation.CurrentDialecticSlotName)) return Generation.CurrentDialecticSlotName;
-			return ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? "main";
-		}
-		internal static IEnumerable<string> GetActiveNativeChatSlotNames(){
-			var slotNames = Generation.GetDialecticSlotNames();
-			return slotNames.Length > 0 ? slotNames : new[]{ GetActiveNativeChatSlotName() };
-		}
-		internal static NativeMethods.StudError ResetChatState(){return RunForActiveSlots(NativeMethods.ResetChat);}
-		internal static NativeMethods.StudError RemoveMessageAt(int index){return RunForActiveSlots(slotName => NativeMethods.RemoveMessageAt(slotName, index));}
-		internal static NativeMethods.StudError RemoveMessagesStartingAt(int index){return RunForActiveSlots(slotName => NativeMethods.RemoveMessagesStartingAt(slotName, index));}
-		internal static NativeMethods.StudError SetMessageAt(int index, string think, string message){
-			return RunForActiveSlots(slotName => NativeMethods.SetMessageAt(slotName, index, think, message));
-		}
-		internal static NativeMethods.StudError SetSystemPrompt(string prompt, string toolsPrompt){
-			return RunForActiveSlots(slotName => NativeMethods.SetSystemPrompt(slotName, prompt, toolsPrompt));
-		}
 		private static NativeMethods.StudError InitializeRelay(ModelSlot primary, ModelSlot secondary){
 			var err = NativeMethods.DialecticRelayInit(primary.Name);
 			if(err != NativeMethods.StudError.Success) return err;
@@ -59,21 +42,6 @@ namespace LMStud{
 		}
 		private static IEnumerable<string> DistinctSlotNames(IEnumerable<string> slotNames){
 			return slotNames.Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase);
-		}
-		private static NativeMethods.StudError RunForActiveSlots(Func<string, NativeMethods.StudError> action){
-			if(!Generation.DialecticRelayEnabled) return action(GetActiveNativeChatSlotName());
-			var result = NativeMethods.StudError.Success;
-			var applied = false;
-			foreach(var slotName in DistinctSlotNames(Generation.GetDialecticSlotNames())){
-				result = action(slotName);
-				if(result == NativeMethods.StudError.Success){
-					applied = true;
-					continue;
-				}
-				if(result == NativeMethods.StudError.IndexOutOfRange) continue;
-				break;
-			}
-			return applied && result == NativeMethods.StudError.IndexOutOfRange ? NativeMethods.StudError.Success : result;
 		}
 	}
 }

@@ -146,6 +146,7 @@
     <Compile Include="MyFlowLayoutPanel.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="NativeChat.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="Parsers\AnthropicResponseParser.cs" />
     <Compile Include="Parsers\APIResponseParser.Common.cs" />

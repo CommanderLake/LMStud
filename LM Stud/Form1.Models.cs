@@ -107,10 +107,7 @@ namespace LMStud{
 		private void PopulateModels(){
 			if(!PopulateLock.Wait(0) || !ModelsFolderExists(true)) return;
 			ThreadPool.QueueUserWorkItem(_ => {
-				var locked = false;
 				try{
-					if(!Generation.GenerationLock.Wait(30000)) return;
-					locked = true;
 					var files = Directory.GetFiles(Common.ModelsDir, "*.gguf", SearchOption.AllDirectories);
 					var items = new List<ListViewItem>();
 					foreach(var file in files){
@@ -134,7 +131,6 @@ namespace LMStud{
 					}));
 				} finally{
 					PopulateLock.Release();
-					if(locked) Generation.GenerationLock.Release();
 				}
 			});
 		}
@@ -208,33 +204,34 @@ namespace LMStud{
 			if(InvokeRequired) Invoke(new MethodInvoker(ShowMessage));
 			else ShowMessage();
 		}
-		private void SetSystemPromptInternal(bool genLock){
-			List<ModelSlotLockLease> slotLocks = null;
-			if(genLock){
-				Generation.GenerationLock.Wait(-1);
-				slotLocks = ModelSlotManager.EnterSlots(Dialectics.GetActiveNativeChatSlotNames());
+		private void SetSystemPromptForSlot(string slotName, bool acquireSlotLock = true){
+			if(string.IsNullOrWhiteSpace(slotName)) slotName = NativeChat.GetActiveSlotName();
+			ModelSlotLockLease slotLock = null;
+			if(acquireSlotLock){
+				slotLock = ModelSlotManager.TryEnterSlot(slotName, 0);
+				if(slotLock == null) return;
 			}
 			try{
-				string prompt;
-				var loadedModel = Common.LoadedModel;
-				if(loadedModel != null && _modelSettings.TryGetValue(loadedModel.SubItems[1].Text.Substring(Common.ModelsDir.Length), out var overrides) && overrides.OverrideSettings) prompt = overrides.SystemPrompt;
-				else prompt = Common.SystemPrompt;
-				var error = Dialectics.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, Common.GoogleSearchEnable && Common.WebpageFetchEnable ? FetchPrompt : "");
+				var prompt = GetSystemPromptForSlot(slotName);
+				var error = NativeChat.SetSystemPrompt(slotName, prompt.Length > 0 ? prompt : DefaultPrompt, Common.GoogleSearchEnable && Common.WebpageFetchEnable ? FetchPrompt : "");
 				if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowError(Resources.Error_setting_system_prompt, error);
-			} finally{
-				if(genLock){
-					ModelSlotManager.ReleaseSlots(slotLocks);
-					Generation.GenerationLock.Release();
-				}
-			}
+			} finally{ slotLock?.Dispose(); }
 		}
-		private void SetSystemPrompt(bool genLock = true){
-			if(!Common.LlModelLoaded){
-				SetSystemPromptInternal(genLock);
-				return;
+		private void SetSystemPromptsForSlots(IEnumerable<string> slotNames){
+			foreach(var slotName in (slotNames ?? Enumerable.Empty<string>()).Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase)) SetSystemPromptForSlot(slotName);
+		}
+		private void SetSystemPromptsForLoadedSlots(){SetSystemPromptsForSlots(ModelSlotManager.GetLoadedLocalSlotNames());}
+		private string GetSystemPromptForSlot(string slotName){
+			if(!string.IsNullOrWhiteSpace(slotName) && Common.LoadedLocalSlots.TryGetValue(slotName, out var loadedModel) && loadedModel?.SubItems.Count > 1){
+				var key = GetModelSettingsKey(loadedModel.SubItems[1].Text);
+				if(key != null && _modelSettings.TryGetValue(key, out var overrides) && overrides.OverrideSettings) return overrides.SystemPrompt ?? "";
 			}
-			BeginRetokenization();
-			try{ SetSystemPromptInternal(genLock); } finally{ EndRetokenization(); }
+			return Common.SystemPrompt ?? "";
+		}
+		private static string GetModelSettingsKey(string modelPath){
+			if(string.IsNullOrWhiteSpace(modelPath)) return null;
+			var modelsDir = Common.ModelsDir ?? "";
+			return !string.IsNullOrWhiteSpace(modelsDir) && modelPath.StartsWith(modelsDir, StringComparison.OrdinalIgnoreCase) ? modelPath.Substring(modelsDir.Length) : modelPath;
 		}
 		private void SetModelStatus(){
 			var activeSlot = ModelSlotManager.GetActiveChatSlot();
@@ -246,7 +243,7 @@ namespace LMStud{
 			butGen.Enabled = (activeApiReady || activeLocalLoaded) && !Generation.Generating;
 			butReset.Enabled = !Generation.Generating;
 			butUnloadMain.Enabled = Common.LoadedLocalSlots.ContainsKey("main") && NativeMethods.IsModelSlotLoaded("main");
-			if(checkDialectic.Checked && Generation.DialecticRelayEnabled) toolStripStatusLabel1.Text = "Dialectic relay: " + Generation.DialecticPrimarySlotName + " <-> " + Generation.DialecticSecondarySlotName;
+			if(checkDialectic.Checked && Generation.DialecticRelayEnabled) toolStripStatusLabel1.Text = "Dialectic relay: " + Generation.DialPriSlotName + " <-> " + Generation.DialSecSlotName;
 			else if(activeApiReady) toolStripStatusLabel1.Text = "Using slot " + activeSlot.Name + ": " + activeSlot.DisplayModel();
 			else if(activeLocalLoaded && activeSlot != null) toolStripStatusLabel1.Text = "Using slot " + activeSlot.Name + ": " + activeLoadedModel.Text;
 			else if(Common.LlModelLoaded && Common.LoadedModel != null) toolStripStatusLabel1.Text = Resources.Using_Model_ + Common.LoadedModel.Text;
@@ -343,12 +340,11 @@ namespace LMStud{
 							Common.LoadedModel = Common.LoadedLocalSlots.TryGetValue(Common.ActiveModelSlotName ?? "", out var activeLoadedAfterSessionFailure) ? activeLoadedAfterSessionFailure : Common.LoadedLocalSlots.Values.FirstOrDefault();
 							return;
 						}
-						_tokenCallback = Generation.TokenCallback;
-						NativeMethods.SetTokenCallback(_tokenCallback);
+						NativeMethods.SetTokenCallback(TokenCallback);
 						Tools.RegisterTools(slotName);
-						SetSystemPrompt(false);
-						ModelSlotManager.LoadLocalIntoSlot(slotName, modelPath, makeSlotChat);
 						Common.LoadedLocalSlots[slotName] = modelLvi;
+						SetSystemPromptForSlot(slotName, false);
+						ModelSlotManager.LoadLocalIntoSlot(slotName, modelPath, makeSlotChat);
 						ApplyActiveSlotToModel(true);
 						try{
 							BeginInvoke(new MethodInvoker(() => {

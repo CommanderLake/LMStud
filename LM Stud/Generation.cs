@@ -11,45 +11,53 @@ using LMStud.Properties;
 namespace LMStud {
 	internal static class Generation{
 		internal static Form1 MainForm;
-		internal static readonly SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
 		private static readonly SemaphoreSlim MsgRenderLock = new SemaphoreSlim(1, 1);
-		internal static volatile bool Generating;
-		private static int _apiServerGenerationCount;
-		internal static bool APIServerGenerating => Volatile.Read(ref _apiServerGenerationCount) > 0;
+		private static int _uiGenerationActive;
+		internal static bool Generating{
+			get => Volatile.Read(ref _uiGenerationActive) > 0;
+			set => Interlocked.Exchange(ref _uiGenerationActive, value ? 1 : 0);
+		}
+		private static int _apiServerGenCount;
+		internal static bool APIServerGenerating{
+			get => Volatile.Read(ref _apiServerGenCount) > 0;
+			set => Interlocked.Exchange(ref _apiServerGenCount, value ? 1 : 0);
+		}
 		private static readonly object APICancelSync = new object();
-		private static CancellationTokenSource _apiGenerationCts;
+		private static CancellationTokenSource _apiGenCts;
 		private static Action<string> _apiTokenCallback;
 		private static readonly Stopwatch SwRate = new Stopwatch();
 		private static readonly Stopwatch SwTot = new Stopwatch();
 		private static ChatMessageControl _cntAssMsg;
 		private static ChatMessageControl _cntToolMsg;
+		private static volatile string _cntGenModelName;
+		private static int _cntGenModelNameVer;
 		private static int _msgTokenCount;
-		internal static bool DialecticStarted;
-		internal static bool DialecticPaused;
-		internal static string DialecticPrimarySlotName;
-		internal static string DialecticSecondarySlotName;
-		internal static string CurrentDialecticSlotName;
-		internal static bool DialecticRelayEnabled => !string.IsNullOrWhiteSpace(DialecticPrimarySlotName) && !string.IsNullOrWhiteSpace(DialecticSecondarySlotName) && !string.Equals(DialecticPrimarySlotName, DialecticSecondarySlotName, StringComparison.OrdinalIgnoreCase);
+		internal static bool DialStarted;
+		internal static bool DialPaused;
+		internal static string DialPriSlotName;
+		internal static string DialSecSlotName;
+		internal static string CntDialSlotName;
+		internal static bool DialecticRelayEnabled => !string.IsNullOrWhiteSpace(DialPriSlotName) && !string.IsNullOrWhiteSpace(DialSecSlotName) && !string.Equals(DialPriSlotName, DialSecSlotName, StringComparison.OrdinalIgnoreCase);
 		internal static bool FirstToken = true;
 		private static int _genTokenTotal;
 		internal static void ConfigureDialecticSlots(IList<ModelSlot> slots){
-			DialecticPrimarySlotName = slots != null && slots.Count > 0 ? slots[0].Name : null;
-			DialecticSecondarySlotName = slots != null && slots.Count > 1 ? slots[1].Name : null;
-			CurrentDialecticSlotName = DialecticPrimarySlotName;
+			DialPriSlotName = slots != null && slots.Count > 0 ? slots[0].Name : null;
+			DialSecSlotName = slots != null && slots.Count > 1 ? slots[1].Name : null;
+			CntDialSlotName = DialPriSlotName;
 		}
 		internal static void ClearDialecticSlots(){
-			DialecticPrimarySlotName = null;
-			DialecticSecondarySlotName = null;
-			CurrentDialecticSlotName = null;
+			DialPriSlotName = null;
+			DialSecSlotName = null;
+			CntDialSlotName = null;
 		}
 		internal static string[] GetDialecticSlotNames(){
-			if(string.IsNullOrWhiteSpace(DialecticPrimarySlotName)) return new string[0];
-			if(!DialecticRelayEnabled) return new[]{ DialecticPrimarySlotName };
-			return new[]{ DialecticPrimarySlotName, DialecticSecondarySlotName };
+			if(string.IsNullOrWhiteSpace(DialPriSlotName)) return new string[0];
+			if(!DialecticRelayEnabled) return new[]{ DialPriSlotName };
+			return new[]{ DialPriSlotName, DialSecSlotName };
 		}
 		private static string GetNextDialecticSlotName(string currentSlotName){
-			if(!DialecticRelayEnabled) return CurrentDialecticSlotName;
-			return string.Equals(currentSlotName, DialecticSecondarySlotName, StringComparison.OrdinalIgnoreCase) ? DialecticPrimarySlotName : DialecticSecondarySlotName;
+			if(!DialecticRelayEnabled) return CntDialSlotName;
+			return string.Equals(currentSlotName, DialSecSlotName, StringComparison.OrdinalIgnoreCase) ? DialPriSlotName : DialSecSlotName;
 		}
 		internal static void Generate(){
 			var prompt = MainForm.textInput.Text;
@@ -59,27 +67,21 @@ namespace LMStud {
 			Generate(role, prompt, addToChat, null);
 		}
 		private static void Generate(MessageRole role, string prompt, bool addToChat, List<ModelSlotLockLease> slotLeases){
-			var useDialecticLocalSlot = MainForm.checkDialectic.Checked && !string.IsNullOrWhiteSpace(CurrentDialecticSlotName);
-			var activeSlot = useDialecticLocalSlot ? ModelSlotManager.GetSlot(CurrentDialecticSlotName) : ModelSlotManager.GetActiveChatSlot();
+			var useDialecticLocalSlot = MainForm.checkDialectic.Checked && !string.IsNullOrWhiteSpace(CntDialSlotName);
+			var activeSlot = useDialecticLocalSlot ? ModelSlotManager.GetSlot(CntDialSlotName) : ModelSlotManager.GetActiveChatSlot();
 			var useRemote = activeSlot?.Source == ModelSlotSource.Api && !useDialecticLocalSlot;
 			var slotName = activeSlot?.Name;
 			if((useRemote && !ModelSlotManager.CanServeApiSlot(activeSlot)) || (!useRemote && !ModelSlotManager.CanServeLocalSlot(activeSlot)) || string.IsNullOrWhiteSpace(prompt)){
 				ModelSlotManager.ReleaseSlots(slotLeases);
 				return;
 			}
-			if(!GenerationLock.Wait(0)){
-				ModelSlotManager.ReleaseSlots(slotLeases);
-				return;
-			}
 			if(slotLeases == null) slotLeases = ModelSlotManager.TryEnterSlots(GetGenerationSlotNames(useDialecticLocalSlot, slotName), 0);
-			if(slotLeases == null || Generating){
+			if(slotLeases == null || !TryBeginUiGeneration()){
 				ModelSlotManager.ReleaseSlots(slotLeases);
-				GenerationLock.Release();
 				return;
 			}
 			if(MainForm.checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StopSpeechTranscription();
-			DialecticPaused = false;
-			Generating = true;
+			DialPaused = false;
 			foreach(var msg in MainForm.ChatMessages.Where(msg => msg.Editing)) MainForm.MsgButEditCancelOnClick(msg);
 			MainForm.butGen.Text = Resources.Stop;
 			MainForm.butReset.Enabled = MainForm.butApply.Enabled = false;
@@ -94,25 +96,24 @@ namespace LMStud {
 				NativeMethods.SetCommittedText("");
 				if(addToChat) MainForm.textInput.Text = "";
 			}
-			if(!useRemote && MainForm.checkDialectic.Checked && !DialecticStarted && role == MessageRole.User){
+			if(!useRemote && MainForm.checkDialectic.Checked && !DialStarted && role == MessageRole.User){
 				var err = NativeMethods.DialecticStart(slotName);
 				if(err != NativeMethods.StudError.Success){
 					ModelSlotManager.ReleaseSlots(slotLeases);
-					GenerationLock.Release();
-					Generating = false;
 					MainForm.FinishedGenerating();
 					MainForm.ShowError("Dialectic start", err);
 					return;
 				}
-				DialecticStarted = true;
+				DialStarted = true;
 			}
 			if(useRemote){
 				SetApiGenerationCancellation(new CancellationTokenSource());
 				ThreadPool.QueueUserWorkItem(o => {GenerateWithApiClient(activeSlot, role, newMsg, addToChat, slotLeases);});
 				return;
 			}
+			_cntGenModelName = GetGeneratedModelName(activeSlot);
+			var generationModelNameVersion = Interlocked.Increment(ref _cntGenModelNameVer);
 			ThreadPool.QueueUserWorkItem(o => {
-				var lockHeld = true;
 				var slotLocksHeld = true;
 				_msgTokenCount = 0;
 				_genTokenTotal = 0;
@@ -142,20 +143,18 @@ namespace LMStud {
 						}
 						MainForm.FinishedGenerating();
 						if(genErr != NativeMethods.StudError.Success) return;
-						if(!MainForm.checkDialectic.Checked || DialecticPaused) return;
+						if(!MainForm.checkDialectic.Checked || DialPaused) return;
 						var last = MainForm.ChatMessages.LastOrDefault();
 						if(last == null) return;
 						NativeMethods.StudError err;
 						if(DialecticRelayEnabled){
 							var nextSlotName = GetNextDialecticSlotName(slotName);
 							err = string.IsNullOrWhiteSpace(slotName) || string.IsNullOrWhiteSpace(nextSlotName) ? NativeMethods.StudError.Generic : NativeMethods.DialecticRelaySwap(slotName, slotName, nextSlotName);
-							if(err == NativeMethods.StudError.Success) CurrentDialecticSlotName = nextSlotName;
+							if(err == NativeMethods.StudError.Success) CntDialSlotName = nextSlotName;
 						} else err = NativeMethods.DialecticSwap(slotName);
 						switch(err){
 							case NativeMethods.StudError.Success:
 								slotLocksHeld = false;
-								GenerationLock.Release();
-								lockHeld = false;
 								Generate(MessageRole.User, last.Message, false, slotLeases);
 								break;
 							case NativeMethods.StudError.ContextFull: MessageBox.Show(MainForm, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
@@ -165,10 +164,21 @@ namespace LMStud {
 						}
 					}));
 				} catch(ObjectDisposedException){} finally{
+					if(Volatile.Read(ref _cntGenModelNameVer) == generationModelNameVersion) _cntGenModelName = null;
 					if(slotLocksHeld) ModelSlotManager.ReleaseSlots(slotLeases);
-					if(lockHeld) GenerationLock.Release();
 				}
 			});
+		}
+		private static bool TryBeginUiGeneration(){return Interlocked.CompareExchange(ref _uiGenerationActive, 1, 0) == 0;}
+		internal static void EndUiGeneration(){Interlocked.Exchange(ref _uiGenerationActive, 0);}
+		private static string GetGeneratedModelName(ModelSlot slot){
+			var modelName = slot?.DisplayModel();
+			return string.IsNullOrWhiteSpace(modelName) ? null : modelName;
+		}
+		private static ChatMessageControl AddGeneratedAssistantMessage(string modelName, string think, string message, List<APIClient.ToolCall> toolCalls = null){
+			var control = MainForm.AddMessage(MessageRole.Assistant, think, message, toolCalls);
+			if(!string.IsNullOrWhiteSpace(modelName)) control.SetRoleText(modelName);
+			return control;
 		}
 		private static IEnumerable<string> GetGenerationSlotNames(bool useDialecticLocalSlot, string slotName){
 			var slotNames = useDialecticLocalSlot ? GetDialecticSlotNames() : null;
@@ -234,6 +244,7 @@ namespace LMStud {
 				var messages = BuildApiMessages(role, prompt, addToChat);
 				var history = APIClient.BuildInputItems(messages);
 				var toolsJson = Tools.BuildApiToolsJson(slot.Name);
+				var generatedModelName = GetGeneratedModelName(slot);
 				if(!ModelSlotManager.CanServeApiSlot(slot)) throw new InvalidOperationException("The active API model slot is incomplete.");
 				using(var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, slot.GetInstructionsOrDefault(),
 					slot.ApiReasoningEffort, slot.ApiReasoningSummary)){
@@ -253,7 +264,7 @@ namespace LMStud {
 									if(!MsgRenderLock.Wait(0)) return;
 									MainForm.BeginInvoke(new MethodInvoker(() => {
 										try {
-											if(streamedMessage == null) streamedMessage = MainForm.AddMessage(MessageRole.Assistant, "", "");
+											if(streamedMessage == null) streamedMessage = AddGeneratedAssistantMessage(generatedModelName, "", "");
 											streamedMessage.UpdateText("", snapshot, true);
 										} finally { MsgRenderLock.Release(); }
 									}));
@@ -270,12 +281,12 @@ namespace LMStud {
 								content = toolCalls.Aggregate(content, (current, toolCall) => current + Resources.__Tool_name_ + toolCall.Name + Resources.__Tool_ID_ + toolCall.Id + Resources.__Tool_arguments_ + toolCall.Arguments);
 							try{
 								MainForm.Invoke(new MethodInvoker(() => {
-									var message = streamedMessage ?? MainForm.AddMessage(MessageRole.Assistant, reasoning ?? "", content ?? "", toolCalls);
+									var message = streamedMessage ?? AddGeneratedAssistantMessage(generatedModelName, reasoning ?? "", content ?? "", toolCalls);
 									if(streamedMessage != null){
 										message.ApiToolCalls = toolCalls;
 										message.UpdateText(reasoning ?? "", content ?? "", true);
 									}
-									if(toolCalls != null && toolCalls.Count > 0) message.SetRoleText(Resources.Tool_Call);
+									if(toolCalls != null && toolCalls.Count > 0 && string.IsNullOrWhiteSpace(generatedModelName)) message.SetRoleText(Resources.Tool_Call);
 									if(Common.Speak && !string.IsNullOrWhiteSpace(content)) TTS.QueueSpeech(content);
 								}));
 							} catch(ObjectDisposedException){}
@@ -311,7 +322,6 @@ namespace LMStud {
 			} catch(ObjectDisposedException){} finally{
 				ClearApiGenerationCancellation();
 				ModelSlotManager.ReleaseSlots(slotLeases);
-				GenerationLock.Release();
 			}
 		}
 		private static string FormatTokenLabel(int tokenCount){
@@ -325,28 +335,28 @@ namespace LMStud {
 		}
 		internal static void StopActiveGeneration(){
 			CancelApiGeneration();
-			var slotName = !string.IsNullOrWhiteSpace(CurrentDialecticSlotName) ? CurrentDialecticSlotName : ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? "main";
+			var slotName = !string.IsNullOrWhiteSpace(CntDialSlotName) ? CntDialSlotName : ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? "main";
 			NativeMethods.StopGeneration(slotName);
 		}
 		private static void SetApiGenerationCancellation(CancellationTokenSource cts){
 			lock(APICancelSync){
-				_apiGenerationCts?.Dispose();
-				_apiGenerationCts = cts;
+				_apiGenCts?.Dispose();
+				_apiGenCts = cts;
 			}
 		}
 		private static CancellationToken GetApiGenerationCancellationToken(){
-			lock(APICancelSync){ return _apiGenerationCts?.Token ?? CancellationToken.None; }
+			lock(APICancelSync){ return _apiGenCts?.Token ?? CancellationToken.None; }
 		}
 		private static void CancelApiGeneration(){
 			lock(APICancelSync){
-				if(_apiGenerationCts == null) return;
-				if(!_apiGenerationCts.IsCancellationRequested) _apiGenerationCts.Cancel();
+				if(_apiGenCts == null) return;
+				if(!_apiGenCts.IsCancellationRequested) _apiGenCts.Cancel();
 			}
 		}
 		private static void ClearApiGenerationCancellation(){
 			lock(APICancelSync){
-				_apiGenerationCts?.Dispose();
-				_apiGenerationCts = null;
+				_apiGenCts?.Dispose();
+				_apiGenCts = null;
 			}
 		}
 		private static byte[] GetState(string slotName){
@@ -377,7 +387,7 @@ namespace LMStud {
 			tokenCount = 0;
 			if(prompt == null) return false;
 			if(string.IsNullOrWhiteSpace(slotName) || !NativeMethods.IsModelSlotLoaded(slotName)) return false;
-			Interlocked.Increment(ref _apiServerGenerationCount);
+			Interlocked.Increment(ref _apiServerGenCount);
 			_apiTokenCallback = null;
 			var originalState = GetState(slotName);
 			var chatSnapshot = NativeMethods.CaptureChatState(slotName);
@@ -411,7 +421,7 @@ namespace LMStud {
 				SetState(slotName, originalState);
 				if(chatSnapshot != IntPtr.Zero) try{ NativeMethods.RestoreChatState(slotName, chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
 				_apiTokenCallback = null;
-				Interlocked.Decrement(ref _apiServerGenerationCount);
+				Interlocked.Decrement(ref _apiServerGenCount);
 				if(MainForm != null) try{ MainForm.Invoke((MethodInvoker)(() => STT.RetryStart())); } catch(ObjectDisposedException){}
 			}
 		}
@@ -477,7 +487,7 @@ namespace LMStud {
 							MainForm.labelTPS.Text = string.Format(Resources._0_F2__Tok_s, callsPerSecond);
 							_msgTokenCount = 0;
 						}
-						if(_cntAssMsg == null) _cntAssMsg = MainForm.AddMessage(MessageRole.Assistant, "", "");
+						if(_cntAssMsg == null) _cntAssMsg = AddGeneratedAssistantMessage(_cntGenModelName, "", "");
 						var lastThink = _cntAssMsg.checkThink.Checked;
 						_cntAssMsg.UpdateText(think, message, renderToken);
 						if(Common.Speak && !_cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(message)){

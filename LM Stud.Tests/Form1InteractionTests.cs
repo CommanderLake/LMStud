@@ -43,14 +43,14 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 		public void TestCleanup(){
 			Generation.Generating = false;
 			Generation.APIServerGenerating = false;
-			Generation.DialecticStarted = false;
-			Generation.DialecticPaused = false;
+			Generation.DialStarted = false;
+			Generation.DialPaused = false;
 		}
 		private static void ResetInteractionState(){
 			Generation.Generating = false;
 			Generation.APIServerGenerating = false;
-			Generation.DialecticStarted = false;
-			Generation.DialecticPaused = false;
+			Generation.DialStarted = false;
+			Generation.DialPaused = false;
 			_form.Invoke(new MethodInvoker(() => {
 				_form.textInput.Text = "";
 				_form.checkMarkdown.Checked = false;
@@ -59,13 +59,14 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 			}));
 			var deadline = DateTime.UtcNow.AddSeconds(30);
 			while(DateTime.UtcNow < deadline){
-				if(Generation.GenerationLock.Wait(50)){
+				var activeSlotName = ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? "main";
+				var slotLock = ModelSlotManager.TryEnterSlot(activeSlotName, 50);
+				if(slotLock != null)
 					try{
 						var count = 0;
 						_form.Invoke(new MethodInvoker(() => { count = _form.ChatMessages.Count; }));
 						if(count == 0) return;
-					} finally{ Generation.GenerationLock.Release(); }
-				}
+					} finally{ slotLock.Dispose(); }
 				Thread.Sleep(10);
 			}
 			Assert.Fail("Timed out waiting for chat reset.");
@@ -80,14 +81,14 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 			Assert.AreEqual(0, _form.ChatMessages.Count, "Whitespace input should not enqueue a chat message.");
 		}
 		[TestMethod]
-		public void Generate_WhenSemaphoreUnavailable_DoesNotProceed(){
-			Generation.GenerationLock.Wait();
-			_form.Invoke(new MethodInvoker(() => {
-				_form.textInput.Text = "Hello";
-				_form.ButGen_Click(null, null);
-			}));
-			Generation.GenerationLock.Release();
-			Assert.AreEqual(0, _form.ChatMessages.Count, "Generation should not start when the semaphore cannot be acquired.");
+		public void Generate_WhenActiveSlotUnavailable_DoesNotProceed(){
+			var activeSlotName = ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? "main";
+			using(ModelSlotManager.EnterSlot(activeSlotName))
+				_form.Invoke(new MethodInvoker(() => {
+					_form.textInput.Text = "Hello";
+					_form.ButGen_Click(null, null);
+				}));
+			Assert.AreEqual(0, _form.ChatMessages.Count, "Generation should not start when the active slot lock cannot be acquired.");
 			Assert.IsFalse(Generation.Generating, "Generating flag must remain false when generation is skipped.");
 		}
 		[TestMethod]
@@ -97,20 +98,20 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 				_form.CheckDialectic_CheckedChanged(_form.checkDialectic, EventArgs.Empty);
 			}));
 			Assert.IsTrue(_form.checkDialectic.Checked, "Checkbox should stay checked when enabling dialectic mode succeeds.");
-			Assert.IsFalse(Generation.DialecticStarted, "Dialectic should reset start flag when enabling.");
-			Assert.IsFalse(Generation.DialecticPaused, "Dialectic should reset pause flag when enabling.");
+			Assert.IsFalse(Generation.DialStarted, "Dialectic should reset start flag when enabling.");
+			Assert.IsFalse(Generation.DialPaused, "Dialectic should reset pause flag when enabling.");
 		}
 		[TestMethod]
 		public void DialecticToggle_DisablesClearingState(){
-			Generation.DialecticStarted = true;
-			Generation.DialecticPaused = true;
+			Generation.DialStarted = true;
+			Generation.DialPaused = true;
 			_form.Invoke(new MethodInvoker(() => {
 				_form.checkDialectic.Checked = false;
 				_form.CheckDialectic_CheckedChanged(_form.checkDialectic, EventArgs.Empty);
 			}));
 			Assert.IsFalse(_form.checkDialectic.Checked, "Checkbox should remain unchecked after disabling.");
-			Assert.IsFalse(Generation.DialecticStarted, "Disabling should clear start flag.");
-			Assert.IsFalse(Generation.DialecticPaused, "Disabling should clear pause flag.");
+			Assert.IsFalse(Generation.DialStarted, "Disabling should clear start flag.");
+			Assert.IsFalse(Generation.DialPaused, "Disabling should clear pause flag.");
 		}
 		[TestMethod]
 		public void MarkdownToggle_AppliesToExistingMessages(){

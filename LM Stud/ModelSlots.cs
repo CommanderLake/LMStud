@@ -240,8 +240,8 @@ namespace LMStud{
 			LoadLocalIntoSlot(MainSlotName, Common.LoadedModel.SubItems[1].Text, true);
 		}
 		internal static ModelSlot ResolveServerSlot(string requestedModel){
+			if(string.IsNullOrWhiteSpace(requestedModel)) return ResolveDefaultServerSlot();
 			lock(Sync){
-				if(string.IsNullOrWhiteSpace(requestedModel)) return FindActiveChatSlotInternal()?.Clone();
 				var normalized = NormalizeServerModelName(requestedModel);
 				var exact = SlotsInternal.FirstOrDefault(slot => IsServerRoutableSlot(slot) && string.Equals(slot.Name, normalized, StringComparison.OrdinalIgnoreCase));
 				if(exact != null) return exact.Clone();
@@ -249,6 +249,19 @@ namespace LMStud{
 					string.Equals(slot.ApiModel, requestedModel, StringComparison.OrdinalIgnoreCase)));
 				return modelMatch?.Clone();
 			}
+		}
+		private static ModelSlot ResolveDefaultServerSlot(){
+			List<ModelSlot> candidates;
+			lock(Sync) candidates = SlotsInternal.Where(IsServerRoutableSlot).Select(slot => slot.Clone()).ToList();
+			if(candidates.Count == 0){
+				var fallback = GetFallbackRuntimeSlot();
+				if(fallback != null) candidates.Add(fallback);
+			}
+			return candidates.OrderByDescending(slot => slot.HasUse(ModelSlotUse.Server))
+				.ThenByDescending(CanServeServerSlot)
+				.ThenByDescending(IsSlotAvailable)
+				.ThenBy(slot => slot.HasUse(ModelSlotUse.Chat))
+				.FirstOrDefault();
 		}
 		internal static string GetServerModelId(ModelSlot slot){return slot == null ? "lmstud/main" : "lmstud/" + slot.Name;}
 		internal static JArray BuildServerModels(){
@@ -283,6 +296,16 @@ namespace LMStud{
 		}
 		internal static bool CanServeApiSlot(ModelSlot slot){
 			return slot != null && slot.Source == ModelSlotSource.Api && !string.IsNullOrWhiteSpace(slot.ApiBaseUrl) && !string.IsNullOrWhiteSpace(slot.ApiModel);
+		}
+		private static bool CanServeServerSlot(ModelSlot slot){
+			return slot != null && (slot.Source == ModelSlotSource.Api ? CanServeApiSlot(slot) : CanServeLocalSlot(slot));
+		}
+		private static bool IsSlotAvailable(ModelSlot slot){
+			if(slot == null || string.IsNullOrWhiteSpace(slot.Name)) return false;
+			var lease = TryEnterSlot(slot.Name, 0);
+			if(lease == null) return false;
+			lease.Dispose();
+			return true;
 		}
 		internal static string GetSlotState(ModelSlot slot){
 			if(slot == null) return "";

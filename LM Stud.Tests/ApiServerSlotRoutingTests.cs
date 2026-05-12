@@ -107,6 +107,47 @@ namespace LM_Stud.Tests{
 			}
 		}
 		[TestMethod]
+		public void ResolveServerSlot_WithNullModel_PrefersServerSlotOverChatSlot(){
+			var chatSlotName = "test_default_chat_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+			var serverSlotName = "test_default_server_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+			try{
+				ModelSlotManager.AddOrUpdate(new ModelSlot{
+					Name = chatSlotName, Source = ModelSlotSource.Api, ApiBaseUrl = "http://127.0.0.1:1", ApiModel = "chat-model", Use = ModelSlotUse.Chat
+				});
+				ModelSlotManager.AddOrUpdate(new ModelSlot{
+					Name = serverSlotName, Source = ModelSlotSource.Api, ApiBaseUrl = "http://127.0.0.1:1", ApiModel = "server-model", Use = ModelSlotUse.Server
+				});
+				var slot = ModelSlotManager.ResolveServerSlot(null);
+				Assert.IsNotNull(slot);
+				Assert.AreNotEqual(chatSlotName, slot.Name);
+				Assert.IsTrue(slot.HasUse(ModelSlotUse.Server), "Default model resolution should prefer a server-enabled slot over the active chat slot.");
+			} finally{
+				ModelSlotManager.Remove(serverSlotName);
+				ModelSlotManager.Remove(chatSlotName);
+			}
+		}
+		[TestMethod]
+		public void ResolveServerSlot_WithNullModel_PrefersAvailableServerSlot(){
+			var busySlotName = "test_default_busy_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+			var availableSlotName = "test_default_available_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+			try{
+				ModelSlotManager.AddOrUpdate(new ModelSlot{
+					Name = busySlotName, Source = ModelSlotSource.Api, ApiBaseUrl = "http://127.0.0.1:1", ApiModel = "busy-model", Use = ModelSlotUse.Server
+				});
+				ModelSlotManager.AddOrUpdate(new ModelSlot{
+					Name = availableSlotName, Source = ModelSlotSource.Api, ApiBaseUrl = "http://127.0.0.1:1", ApiModel = "available-model", Use = ModelSlotUse.Server
+				});
+				using(ModelSlotManager.EnterSlot(busySlotName)){
+					var slot = ModelSlotManager.ResolveServerSlot(null);
+					Assert.IsNotNull(slot);
+					Assert.AreNotEqual(busySlotName, slot.Name);
+				}
+			} finally{
+				ModelSlotManager.Remove(availableSlotName);
+				ModelSlotManager.Remove(busySlotName);
+			}
+		}
+		[TestMethod]
 		public void TryExecuteToolCall_IgnoresApiSlotsThatAreNotEnabledAsTools(){
 			var slotName = "test_hidden_tool_" + Guid.NewGuid().ToString("N").Substring(0, 8);
 			try{

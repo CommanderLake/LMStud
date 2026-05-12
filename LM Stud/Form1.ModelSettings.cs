@@ -83,7 +83,7 @@ namespace LMStud{
 				if(reloadSmpl)
 					foreach(var slotName in loadedSlotNames) CreateSampler(slotName, minPEff, topPEff, topKEff, tempEff, Common.RepPen);
 			}
-			if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPrompt();});
+			if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(loadedSlotNames);});
 		}
 		private void PopulateModelSettings(string modelPath){
 			var relPath = modelPath.Substring(Common.ModelsDir.Length);
