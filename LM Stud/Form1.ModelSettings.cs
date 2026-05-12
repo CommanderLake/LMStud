@@ -29,7 +29,8 @@ namespace LMStud{
 		private void ButApplyModelSettings_Click(object sender, EventArgs e){
 			if(listViewModels.SelectedItems.Count == 0) return;
 			var selectedModel = listViewModels.SelectedItems[0];
-			var modelRelPath = selectedModel.SubItems[1].Text.Substring(Common.ModelsDir.Length);
+			var selectedModelPath = selectedModel.SubItems[1].Text;
+			var modelRelPath = selectedModelPath.Substring(Common.ModelsDir.Length);
 			_modelSettings.TryGetValue(modelRelPath, out var oldSettings);
 			var overrideNew = checkOverrideSettings.Checked;
 			var systemPromptNew = textSystemPromptModel.Text;
@@ -44,7 +45,8 @@ namespace LMStud{
 			var jinjaTmplNew = textJinjaTmplModel.Text;
 			_modelSettings[modelRelPath] = new ModelSettings(overrideNew, systemPromptNew, ctxSizeNew, gpuLayersNew, tempNew, minPNew, topPNew, topKNew, flashNew, jinjaOverrideNew, jinjaTmplNew);
 			SaveModelSettings();
-			if(Common.LoadedModel != selectedModel || !Common.LlModelLoaded) return;
+			var loadedSlotNames = ModelSlotManager.GetLoadedLocalSlotNamesForPath(selectedModelPath);
+			if(loadedSlotNames.Count == 0 || !Common.LlModelLoaded) return;
 			var overrideOld = oldSettings?.OverrideSettings ?? false;
 			var systemPromptOld = overrideOld ? oldSettings.SystemPrompt : Common.SystemPrompt;
 			var ctxSizeOld = overrideOld ? oldSettings.CtxSize : Common.CtxSize;
@@ -71,14 +73,15 @@ namespace LMStud{
 			var reloadSmpl = tempOld != tempEff || minPOld != minPEff || topPOld != topPEff || topKOld != topKEff;
 			var setSystemPrompt = systemPromptOld != systemPromptEff;
 			if(reloadModel && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes){
-				LoadModel(listViewModels.SelectedItems[0], false, Common.ActiveModelSlotName ?? "main");
+				foreach(var slotName in loadedSlotNames) LoadModel(slotName, selectedModel, false);
 			} else{
 				if(reloadCtx){
 					if(Common.ModelCtxMax <= 0) Common.CntCtxMax = ctxSizeEff;
 					else Common.CntCtxMax = ctxSizeEff > Common.ModelCtxMax ? Common.ModelCtxMax : ctxSizeEff;
-					CreateContext(Common.CntCtxMax, Common.BatchSize, flashEff, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType);
+					foreach(var slotName in loadedSlotNames) CreateContext(slotName, Common.CntCtxMax, Common.BatchSize, flashEff, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType);
 				}
-				if(reloadSmpl) CreateSampler(minPEff, topPEff, topKEff, tempEff, Common.RepPen);
+				if(reloadSmpl)
+					foreach(var slotName in loadedSlotNames) CreateSampler(slotName, minPEff, topPEff, topKEff, tempEff, Common.RepPen);
 			}
 			if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPrompt();});
 		}

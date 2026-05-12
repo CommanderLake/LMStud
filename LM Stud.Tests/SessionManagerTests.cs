@@ -69,6 +69,30 @@ namespace LM_Stud.Tests{
 			Assert.AreNotSame(session1, session2, "Should create new session after removal.");
 		}
 		[TestMethod]
+		public void Apply_AfterRemove_DoesNotMutateDetachedSession(){
+			var session = _sessionManager.Get("removed-session");
+			_sessionManager.Remove(session.Id);
+			var applied = _sessionManager.Apply(session, s => s.Messages.Add(new APIServer.Message{ Role = "user", Content = "stale" }));
+			Assert.IsFalse(applied, "Removed sessions should reject late updates.");
+			Assert.AreEqual(0, session.Messages.Count, "Detached session objects should not be mutated after removal.");
+		}
+		[TestMethod]
+		public void Apply_WithResponseIdAfterRemove_DoesNotCreateMapping(){
+			var session = _sessionManager.Get("removed-response-session");
+			_sessionManager.Remove(session.Id);
+			var remembered = _sessionManager.Apply(session, s => s.Messages.Add(new APIServer.Message{ Role = "user", Content = "stale" }), () => "resp_removed");
+			Assert.IsFalse(remembered, "Removed sessions should reject late response mappings.");
+			Assert.IsNull(_sessionManager.GetSessionIdForResponse("resp_removed"), "Removed sessions should not be resolved by previous_response_id.");
+		}
+		[TestMethod]
+		public void Apply_WithResponseId_UpdatesAndMapsResponse(){
+			var session = _sessionManager.Get("active-response-session");
+			var applied = _sessionManager.Apply(session, s => s.Messages.Add(new APIServer.Message{ Role = "user", Content = "stored" }), () => "resp_active");
+			Assert.IsTrue(applied, "Active sessions should accept combined update and response mapping.");
+			Assert.AreEqual("active-response-session", _sessionManager.GetSessionIdForResponse("resp_active"), "Response id should resolve to the updated session.");
+			Assert.AreEqual(1, session.Messages.Count, "Session update should be applied.");
+		}
+		[TestMethod]
 		public void Remove_WithNullId_DoesNothing(){
 			_sessionManager.Remove(null);// Should not throw
 		}

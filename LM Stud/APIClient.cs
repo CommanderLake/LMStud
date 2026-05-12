@@ -48,24 +48,18 @@ namespace LMStud{
 		private static bool ShouldFallbackToChatCompletions(InvalidOperationException error){
 			if(error == null) return true;
 			var message = error.Message ?? "";
-			if(message.IndexOf("404", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("405", StringComparison.OrdinalIgnoreCase) >= 0 ||
-				message.IndexOf("501", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("not found", StringComparison.OrdinalIgnoreCase) >= 0 ||
-				message.IndexOf("not implemented", StringComparison.OrdinalIgnoreCase) >= 0) return true;
-			if(message.IndexOf("400", StringComparison.OrdinalIgnoreCase) < 0) return false;
-			return message.IndexOf("unknown", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("unsupported", StringComparison.OrdinalIgnoreCase) >= 0 ||
-					message.IndexOf("invalid", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("parallel_tool_calls", StringComparison.OrdinalIgnoreCase) >= 0 ||
-					message.IndexOf("tool_choice", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("max_output_tokens", StringComparison.OrdinalIgnoreCase) >= 0 ||
-					message.IndexOf("input", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("responses", StringComparison.OrdinalIgnoreCase) >= 0 ||
-					message.IndexOf("stream", StringComparison.OrdinalIgnoreCase) >= 0;
+			if(ContainsAny(message, "404", "405", "501", "not found", "not implemented")) return true;
+			return ContainsAny(message, "400") && ContainsAny(message, "unknown", "unsupported", "invalid", "parallel_tool_calls", "tool_choice", "max_output_tokens", "input", "responses", "stream");
+		}
+		private static bool ContainsAny(string text, params string[] values){
+			return values.Any(value => text.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0);
 		}
 		private InvalidOperationException TrySendChatRequest(string endpoint, JToken payload, CancellationToken cancellationToken, Action<string> streamCallback, out ChatCompletionResult result){
 			result = null;
 			try{
-				using(var request = new HttpRequestMessage(HttpMethod.Post, endpoint)){
-					if(!string.IsNullOrWhiteSpace(_apiKey)) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+				using(var request = CreateRequest(HttpMethod.Post, endpoint)){
 					var content = payload.ToString(Formatting.Indented);
 					request.Content = new StringContent(content, Encoding.UTF8, "application/json");
-					//File.AppendAllText("E:\\\\response1.txt", content + "\r\n");
 					var completionOption = streamCallback == null ? HttpCompletionOption.ResponseContentRead : HttpCompletionOption.ResponseHeadersRead;
 					using(var response = _apiHttpClient.SendAsync(request, completionOption, cancellationToken).GetAwaiter().GetResult()){
 						if(streamCallback != null && response.IsSuccessStatusCode){
@@ -73,13 +67,17 @@ namespace LMStud{
 							return null;
 						}
 						var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-						//File.AppendAllText("E:\\\\response1.txt", body + "\r\n\r\n");
 						if(!response.IsSuccessStatusCode) throw new InvalidOperationException($"API error ({(int)response.StatusCode}): {body}");
 						result = APIResponseParser.ParseResponseBody(body);
 						return null;
 					}
 				}
 			} catch(OperationCanceledException){ throw; } catch(InvalidOperationException ex){ return ex; } catch(Exception ex){ return new InvalidOperationException(ex.Message, ex); }
+		}
+		private HttpRequestMessage CreateRequest(HttpMethod method, string endpoint){
+			var request = new HttpRequestMessage(method, endpoint);
+			if(!string.IsNullOrWhiteSpace(_apiKey)) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+			return request;
 		}
 		private ChatCompletionResult ParseStreamingResponse(HttpContent content, Action<string> streamCallback, CancellationToken cancellationToken){
 			var accumulator = new StreamingResponseAccumulator();
@@ -174,12 +172,7 @@ namespace LMStud{
 				if(summaryType != null) reasoningPayload["summary"] = summaryType;
 				payload["reasoning"] = reasoningPayload;
 			}
-			if(!string.IsNullOrWhiteSpace(toolsJson)){
-				var normalizedTools = NormalizeToolsJson(toolsJson);
-				payload["tools"] = (JToken)normalizedTools ?? JToken.Parse(toolsJson);
-				payload["tool_choice"] = toolChoice ?? new JValue("auto");
-				payload["parallel_tool_calls"] = true;
-			}
+			AddToolOptions(payload, toolsJson, toolChoice, false);
 			return payload;
 		}
 		private JObject BuildChatCompletionsPayload(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice, bool stream){
@@ -188,13 +181,14 @@ namespace LMStud{
 			var payload = new JObject{ ["model"] = _model, ["messages"] = messages, ["temperature"] = temperature };
 			if(stream) payload["stream"] = true;
 			if(maxTokens > 0) payload["max_tokens"] = maxTokens;
-			if(!string.IsNullOrWhiteSpace(toolsJson)){
-				var normalizedTools = NormalizeToolsJsonForChatCompletions(toolsJson);
-				payload["tools"] = (JToken)normalizedTools ?? JToken.Parse(toolsJson);
-				payload["tool_choice"] = toolChoice ?? new JValue("auto");
-				payload["parallel_tool_calls"] = true;
-			}
+			AddToolOptions(payload, toolsJson, toolChoice, true);
 			return payload;
+		}
+		private static void AddToolOptions(JObject payload, string toolsJson, JToken toolChoice, bool chatCompletions){
+			if(string.IsNullOrWhiteSpace(toolsJson)) return;
+			payload["tools"] = (JToken)NormalizeToolsJson(toolsJson, chatCompletions) ?? JToken.Parse(toolsJson);
+			payload["tool_choice"] = toolChoice ?? new JValue("auto");
+			payload["parallel_tool_calls"] = true;
 		}
 		private static JArray ConvertHistoryToChatCompletionMessages(JArray history){
 			var messages = new JArray();
@@ -269,65 +263,38 @@ namespace LMStud{
 			}
 			return obj.DeepClone();
 		}
-		private static JArray NormalizeToolsJson(string toolsJson){
+		private static JArray NormalizeToolsJson(string toolsJson, bool chatCompletions){
 			try{
 				var parsed = JToken.Parse(toolsJson);
 				if(!(parsed is JArray toolsArray)) return null;
 				var normalized = new JArray();
 				foreach(var tool in toolsArray.OfType<JObject>()){
 					var type = tool.Value<string>("type") ?? "function";
-					if(tool["function"] is JObject functionObj){
-						var name = functionObj.Value<string>("name");
-						if(string.IsNullOrWhiteSpace(name)) continue;
-						var normalizedTool = new JObject{ ["type"] = type, ["name"] = name };
-						var description = functionObj.Value<string>("description");
-						if(!string.IsNullOrWhiteSpace(description)) normalizedTool["description"] = description;
-						if(functionObj["parameters"] != null) normalizedTool["parameters"] = functionObj["parameters"];
-						normalized.Add(normalizedTool);
-						continue;
-					}
-					var toolName = tool.Value<string>("name");
-					if(string.IsNullOrWhiteSpace(toolName)) continue;
-					var fallbackTool = new JObject{ ["type"] = type, ["name"] = toolName };
-					var fallbackDescription = tool.Value<string>("description");
-					if(!string.IsNullOrWhiteSpace(fallbackDescription)) fallbackTool["description"] = fallbackDescription;
-					if(tool["parameters"] != null) fallbackTool["parameters"] = tool["parameters"];
-					normalized.Add(fallbackTool);
+					var function = BuildToolFunction(tool["function"] as JObject ?? tool);
+					if(function == null) continue;
+					normalized.Add(chatCompletions ? new JObject{ ["type"] = "function", ["function"] = function } : BuildResponsesTool(type, function));
 				}
 				return normalized.Count > 0 ? normalized : null;
 			} catch(JsonException){ return null; }
 		}
-		private static JArray NormalizeToolsJsonForChatCompletions(string toolsJson){
-			try{
-				var parsed = JToken.Parse(toolsJson);
-				if(!(parsed is JArray toolsArray)) return null;
-				var normalized = new JArray();
-				foreach(var tool in toolsArray.OfType<JObject>()){
-					if(tool["function"] is JObject functionObj){
-						var name = functionObj.Value<string>("name");
-						if(string.IsNullOrWhiteSpace(name)) continue;
-						var function = new JObject{ ["name"] = name };
-						var description = functionObj.Value<string>("description");
-						if(!string.IsNullOrWhiteSpace(description)) function["description"] = description;
-						if(functionObj["parameters"] != null) function["parameters"] = functionObj["parameters"];
-						normalized.Add(new JObject{ ["type"] = "function", ["function"] = function });
-						continue;
-					}
-					var toolName = tool.Value<string>("name");
-					if(string.IsNullOrWhiteSpace(toolName)) continue;
-					var fallbackFunction = new JObject{ ["name"] = toolName };
-					var fallbackDescription = tool.Value<string>("description");
-					if(!string.IsNullOrWhiteSpace(fallbackDescription)) fallbackFunction["description"] = fallbackDescription;
-					if(tool["parameters"] != null) fallbackFunction["parameters"] = tool["parameters"];
-					normalized.Add(new JObject{ ["type"] = "function", ["function"] = fallbackFunction });
-				}
-				return normalized.Count > 0 ? normalized : null;
-			} catch(JsonException){ return null; }
+		private static JObject BuildResponsesTool(string type, JObject function){
+			var tool = new JObject{ ["type"] = type, ["name"] = function["name"]?.DeepClone() };
+			if(function["description"] != null) tool["description"] = function["description"].DeepClone();
+			if(function["parameters"] != null) tool["parameters"] = function["parameters"].DeepClone();
+			return tool;
+		}
+		private static JObject BuildToolFunction(JObject source){
+			var name = source?.Value<string>("name");
+			if(string.IsNullOrWhiteSpace(name)) return null;
+			var function = new JObject{ ["name"] = name };
+			var description = source.Value<string>("description");
+			if(!string.IsNullOrWhiteSpace(description)) function["description"] = description;
+			if(source["parameters"] != null) function["parameters"] = source["parameters"].DeepClone();
+			return function;
 		}
 		internal List<string> GetModels(CancellationToken cancellationToken){
 			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException("API base URL is not configured.");
-			using(var request = new HttpRequestMessage(HttpMethod.Get, BuildModelsEndpoint(_apiBaseUrl))){
-				if(!string.IsNullOrWhiteSpace(_apiKey)) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+			using(var request = CreateRequest(HttpMethod.Get, BuildModelsEndpoint(_apiBaseUrl))){
 				using(var response = _apiHttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
 					var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 					if(!response.IsSuccessStatusCode) throw new InvalidOperationException($"API error ({(int)response.StatusCode}): {body}");
@@ -381,7 +348,6 @@ namespace LMStud{
 			public string Role;
 			public string ToolCallId;
 			public List<ToolCall> ToolCalls;
-			public string ToolName;
 			public ChatMessage(string role, string content){
 				Role = role;
 				Content = content;

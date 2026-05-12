@@ -13,7 +13,7 @@ static std::string UrlEncode(const char* text){
 	curl_easy_cleanup(curl);
 	return out;
 }
-std::string GoogleSearch(const char* argsJson){
+std::string GoogleSearch(const char* slotName, const char* argsJson){
 	std::string query = GetArgValue(argsJson, "query");
 	if(query.empty()) query = argsJson ? argsJson : "";
 	const auto result = PerformHttpGet(("https://customsearch.googleapis.com/customsearch/v1?key=" + googleAPIKey + "&cx=" + googleSearchID + "&num=" + std::to_string(googleResultCount) + "&fields=items(title,link,snippet)&prettyPrint=true&q=" + UrlEncode(query.c_str())).c_str());
@@ -57,7 +57,7 @@ static std::string TagsToJson(const std::string& url, const CachedPage& page){
 	json += "  ]\n}";
 	return json;
 }
-std::string GetWebpage(const char* argsJson){
+std::string GetWebpage(const char* slotName, const char* argsJson){
 	std::string url = GetArgValue(argsJson, "url");
 	if(url.empty()) url = argsJson ? argsJson : "";
 	const auto res = PerformHttpGet(url.c_str());
@@ -69,7 +69,7 @@ std::string GetWebpage(const char* argsJson){
 	_webCache[url] = page;
 	return TagsToJson(url, page);
 }
-std::string GetWebTag(const char* argsJson){
+std::string GetWebTag(const char* slotName, const char* argsJson){
 	std::string url = GetArgValue(argsJson, "url");
 	const std::string idStr = GetArgValue(argsJson, "id");
 	if(url.empty()) url = argsJson ? argsJson : "";
@@ -82,7 +82,7 @@ std::string GetWebTag(const char* argsJson){
 	if(it == _webCache.end() || id < 0 || id >= static_cast<int>(it->second.tags.size())) return "{\"error\":\"not found\"}";
 	return JsonEscape(it->second.tags[id].text);
 }
-std::string ListWebTags(const char* argsJson){
+std::string ListWebTags(const char* slotName, const char* argsJson){
 	std::string url = GetArgValue(argsJson, "url");
 	if(url.empty()) url = argsJson ? argsJson : "";
 	const auto it = _webCache.find(url);

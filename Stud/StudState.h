@@ -7,57 +7,36 @@
 #include <unordered_map>
 #include <vector>
 namespace Stud{
-	struct ChatLane{
+	struct StudLane{
 		llama_sampler* sampler = nullptr;
 		std::vector<common_chat_msg> messages;
 		std::vector<llama_token> cachedTokens;
 		std::vector<unsigned char> state;
 	};
-	struct ChatLaneSnapshot{
-		std::vector<common_chat_msg> messages;
-		std::vector<llama_token> cachedTokens;
-		std::vector<unsigned char> state;
-	};
-	struct ChatSession{
+	struct StudSession{
 		llama_context* ctx = nullptr;
 		const llama_vocab* vocab = nullptr;
 		llama_memory_t memory = nullptr;
-		ChatLane lanes[2];
+		StudLane lanes[2];
 		int activeLane = 0;
 		std::string systemPrompt;
 		std::string toolsPrompt;
+		std::vector<common_chat_tool> tools;
+		std::unordered_map<std::string, ToolHandlerFn> toolHandlers;
 		common_chat_parser_params syntax;
-		bool assistantNextGeneration = false;
+		std::atomic_bool stop{false};
 		bool dialecticRelay = false;
+		bool assNextGen = false;
 		int batchSize = 1;
 	};
-	struct ModelRuntime{
+	struct StudModel{
 		llama_model* llModel = nullptr;
-		ChatSession session;
+		StudSession session;
 		common_chat_templates_ptr chatTemplates = nullptr;
 		jinja::caps caps;
 		std::string slotName = "main";
 	};
-	struct StudState{
-		HWND hWnd = nullptr;
-		ModelRuntime defaultRuntime;
-		ModelRuntime* activeRuntime = nullptr;
-		std::unordered_map<std::string, std::unique_ptr<ModelRuntime>> runtimes;
-		std::atomic_bool stop{false};
-		TokenCallbackFn tokenCb = nullptr;
-		std::vector<common_chat_tool> tools;
-		std::unordered_map<std::string, ToolHandlerFn> toolHandlers;
-	};
-	struct ChatStateSnapshot{
-		ChatLaneSnapshot lanes[2];
-		int activeLane = 0;
-		std::string systemPrompt;
-		std::string toolsPrompt;
-		common_chat_parser_params syntax{};
-		bool assistantNextGeneration = false;
-		bool dialecticRelay = false;
-		int batchSize = 1;
-	};
-	inline StudState state;
-	inline ModelRuntime& runtime(){ return state.activeRuntime ? *state.activeRuntime : state.defaultRuntime; }
+	inline HWND hWnd = nullptr;
+	inline std::unordered_map<std::string, std::unique_ptr<StudModel>> models;
+	inline TokenCallbackFn tokenCb = nullptr;
 }

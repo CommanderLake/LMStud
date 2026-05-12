@@ -47,7 +47,7 @@ namespace LMStud{
 			_numCtxSizeToolTip = toolTip1.GetToolTip(numCtxSize);
 			LoadConfig();
 			ModelSlotManager.Load();
-			ApplyActiveSlotToRuntime(true, false);
+			ApplyActiveSlotToModel(true, false);
 			LoadModelSettings();
 			PopulateSlotsList();
 		}
@@ -57,7 +57,7 @@ namespace LMStud{
 			PopulateModels();
 			PopulateWhisperModels(true, true);
 			NativeMethods.BackendInit();
-			Tools.RegisterTools();
+			foreach(var slot in ModelSlotManager.Slots) Tools.RegisterTools(slot.Name);
 			SetModelStatus();
 			ApiServer = new APIServer();
 			if(Common.APIServerEnable) ApiServer.Start();
@@ -169,96 +169,6 @@ namespace LMStud{
 			UpdateSetting(ref Common.Speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			Settings.Default.Save();
 		}
-		private bool InitializeDialecticMode(bool confirmRelayReset = true){
-			var slots = ModelSlotManager.ResolveDialecticLocalSlots();
-			if(slots.Count == 0){
-				MessageBox.Show(this, Resources.Load_a_model_first_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-				return false;
-			}
-			if(slots.Count > 1 && confirmRelayReset &&
-				MessageBox.Show(this, "Dialectic relay will clear the current native chat state for slot \"" + slots[1].Name + "\" before using it as the reply partner.", Resources.LM_Stud,
-					MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation) != DialogResult.OK)
-				return false;
-			var err = slots.Count > 1 ? InitializeDialecticRelay(slots[0], slots[1]) : InitializeDialecticSingle(slots[0]);
-			if(err != NativeMethods.StudError.Success){
-				FreeDialecticStateForSlots(slots);
-				ShowError(Resources.Dialectic_enable, err);
-				return false;
-			}
-			Generation.ConfigureDialecticSlots(slots);
-			return true;
-		}
-		private NativeMethods.StudError InitializeDialecticSingle(ModelSlot slot){
-			var err = NativeMethods.ActivateModelSlot(slot.Name);
-			if(err != NativeMethods.StudError.Success) return err;
-			return NativeMethods.DialecticInit();
-		}
-		private NativeMethods.StudError InitializeDialecticRelay(ModelSlot primary, ModelSlot secondary){
-			var err = NativeMethods.ActivateModelSlot(primary.Name);
-			if(err != NativeMethods.StudError.Success) return err;
-			err = NativeMethods.DialecticRelayInit();
-			if(err != NativeMethods.StudError.Success) return err;
-			err = NativeMethods.ActivateModelSlot(secondary.Name);
-			if(err != NativeMethods.StudError.Success) return err;
-			err = NativeMethods.ResetChat();
-			if(err != NativeMethods.StudError.Success) return err;
-			err = NativeMethods.DialecticRelayInit();
-			if(err != NativeMethods.StudError.Success) return err;
-			return NativeMethods.ActivateModelSlot(primary.Name);
-		}
-		private void FreeDialecticStateForSlots(IEnumerable<ModelSlot> slots){
-			if(slots == null) return;
-			foreach(var slot in slots.Where(slot => slot != null && !string.IsNullOrWhiteSpace(slot.Name)).GroupBy(slot => slot.Name, StringComparer.OrdinalIgnoreCase).Select(group => group.First())){
-				if(NativeMethods.ActivateModelSlot(slot.Name) == NativeMethods.StudError.Success) NativeMethods.DialecticFree();
-			}
-			var activeSlot = ModelSlotManager.GetActiveChatSlot();
-			if(ModelSlotManager.CanServeLocalSlot(activeSlot)) NativeMethods.ActivateModelSlot(activeSlot.Name);
-		}
-		private void FreeDialecticState(){
-			var slotNames = Generation.GetDialecticSlotNames();
-			if(slotNames.Length == 0) NativeMethods.DialecticFree();
-			else{
-				foreach(var slotName in slotNames.Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase)){
-					if(NativeMethods.ActivateModelSlot(slotName) == NativeMethods.StudError.Success) NativeMethods.DialecticFree();
-				}
-			}
-			var activeSlot = ModelSlotManager.GetActiveChatSlot();
-			if(ModelSlotManager.CanServeLocalSlot(activeSlot)) NativeMethods.ActivateModelSlot(activeSlot.Name);
-		}
-		private NativeMethods.StudError RunForDialecticRelaySlots(Func<NativeMethods.StudError> action){
-			if(!Generation.DialecticRelayEnabled) return action();
-			var restoreSlotName = Generation.CurrentDialecticSlotName;
-			var result = NativeMethods.StudError.Success;
-			var applied = false;
-			try{
-				foreach(var slotName in Generation.GetDialecticSlotNames().Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase)){
-					var activateResult = NativeMethods.ActivateModelSlot(slotName);
-					if(activateResult != NativeMethods.StudError.Success){
-						result = activateResult;
-						break;
-					}
-					result = action();
-					if(result == NativeMethods.StudError.Success){
-						applied = true;
-						continue;
-					}
-					if(result == NativeMethods.StudError.IndexOutOfRange) continue;
-					if(result != NativeMethods.StudError.Success) break;
-				}
-			} finally{
-				if(!string.IsNullOrWhiteSpace(restoreSlotName)) NativeMethods.ActivateModelSlot(restoreSlotName);
-			}
-			return applied && result == NativeMethods.StudError.IndexOutOfRange ? NativeMethods.StudError.Success : result;
-		}
-		private NativeMethods.StudError ResetChatForDialecticState(){return RunForDialecticRelaySlots(NativeMethods.ResetChat);}
-		private NativeMethods.StudError RemoveMessageAtForDialecticState(int index){return RunForDialecticRelaySlots(() => NativeMethods.RemoveMessageAt(index));}
-		private NativeMethods.StudError RemoveMessagesStartingAtForDialecticState(int index){return RunForDialecticRelaySlots(() => NativeMethods.RemoveMessagesStartingAt(index));}
-		private NativeMethods.StudError SetMessageAtForDialecticState(int index, string think, string message){
-			return RunForDialecticRelaySlots(() => NativeMethods.SetMessageAt(index, think, message));
-		}
-		private NativeMethods.StudError SetSystemPromptForDialecticState(string prompt, string toolsPrompt){
-			return RunForDialecticRelaySlots(() => NativeMethods.SetSystemPrompt(prompt, toolsPrompt));
-		}
 		internal void CheckDialectic_CheckedChanged(object sender, EventArgs e){
 			if(checkDialectic.Checked){
 				if(!InitializeDialecticMode()){
@@ -282,9 +192,8 @@ namespace LMStud{
 		internal void ButReset_Click(object sender, EventArgs e){
 			if(!TryBeginRetokenization()) return;
 			ThreadPool.QueueUserWorkItem(_ => {
-				NativeMethods.StudError result;
 				try{
-					result = ResetChatForDialecticState();
+					var result = ResetChatForDialecticState();
 					NativeMethods.CloseCommandPrompt();
 					NativeMethods.ClearWebCache();
 					Invoke(new MethodInvoker(() => {
@@ -293,7 +202,7 @@ namespace LMStud{
 						panelChat.ResumeLayout();
 						ChatMessages.Clear();
 						if(result != NativeMethods.StudError.Success && result != NativeMethods.StudError.ModelNotLoaded) ShowError("Reset chat", result);
-						labelTokens.Text = NativeMethods.LlamaMemSize() + Resources._Tokens;
+						labelTokens.Text = NativeMethods.LlamaMemSize(GetActiveNativeChatSlotName()) + Resources._Tokens;
 						EndRetokenization();
 					}));
 				} finally{ Generation.GenerationLock.Release(); }
@@ -367,7 +276,7 @@ namespace LMStud{
 						else regenerate = true;
 						EndRetokenization();
 					}));
-					} finally{ Generation.GenerationLock.Release(); }
+				} finally{ Generation.GenerationLock.Release(); }
 				if(regenerate)
 					BeginInvoke(new MethodInvoker(() => {
 						if(IsDisposed) return;
@@ -604,6 +513,72 @@ namespace LMStud{
 					}
 					textInput.AppendText($"[FILE] {fileName}\r\n```{contentType}\r\n{fileContent}\r\n```\r\n\r\n");
 				} catch(Exception ex){ MessageBox.Show(string.Format(Resources.Error_reading_file___0_, ex.Message)); }
+		}
+		private bool InitializeDialecticMode(bool confirmRelayReset = true){
+			var slots = ModelSlotManager.ResolveDialecticLocalSlots();
+			if(slots.Count == 0){
+				MessageBox.Show(this, Resources.Load_a_model_first_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+				return false;
+			}
+			if(slots.Count > 1 && confirmRelayReset &&
+				MessageBox.Show(this, "Dialectic relay will clear the current native chat state for slot \"" + slots[1].Name + "\" before using it as the reply partner.", Resources.LM_Stud,
+					MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation) != DialogResult.OK)
+				return false;
+			var err = slots.Count > 1 ? InitializeDialecticRelay(slots[0], slots[1]) : InitializeDialecticSingle(slots[0]);
+			if(err != NativeMethods.StudError.Success){
+				FreeDialecticStateForSlots(slots);
+				ShowError(Resources.Dialectic_enable, err);
+				return false;
+			}
+			Generation.ConfigureDialecticSlots(slots);
+			return true;
+		}
+		private static NativeMethods.StudError InitializeDialecticSingle(ModelSlot slot){
+			return NativeMethods.DialecticInit(slot.Name);
+		}
+		private static NativeMethods.StudError InitializeDialecticRelay(ModelSlot primary, ModelSlot secondary){
+			var err = NativeMethods.DialecticRelayInit(primary.Name);
+			if(err != NativeMethods.StudError.Success) return err;
+			err = NativeMethods.ResetChat(secondary.Name);
+			if(err != NativeMethods.StudError.Success) return err;
+			return NativeMethods.DialecticRelayInit(secondary.Name);
+		}
+		private static void FreeDialecticStateForSlots(IEnumerable<ModelSlot> slots){
+			if(slots == null) return;
+			foreach(var slot in slots.Where(slot => slot != null && !string.IsNullOrWhiteSpace(slot.Name)).GroupBy(slot => slot.Name, StringComparer.OrdinalIgnoreCase).Select(group => group.First())) NativeMethods.DialecticFree(slot.Name);
+		}
+		private static void FreeDialecticState(){
+			var slotNames = Generation.GetDialecticSlotNames();
+			if(slotNames.Length == 0) NativeMethods.DialecticFree("main");
+			else foreach(var slotName in slotNames.Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase)) NativeMethods.DialecticFree(slotName);
+		}
+		private static string GetActiveNativeChatSlotName(){
+			if(!string.IsNullOrWhiteSpace(Generation.CurrentDialecticSlotName)) return Generation.CurrentDialecticSlotName;
+			return ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? "main";
+		}
+		private static NativeMethods.StudError RunForDialecticRelaySlots(Func<string, NativeMethods.StudError> action){
+			if(!Generation.DialecticRelayEnabled) return action(GetActiveNativeChatSlotName());
+			var result = NativeMethods.StudError.Success;
+			var applied = false;
+			foreach(var slotName in Generation.GetDialecticSlotNames().Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase)){
+				result = action(slotName);
+				if(result == NativeMethods.StudError.Success){
+					applied = true;
+					continue;
+				}
+				if(result == NativeMethods.StudError.IndexOutOfRange) continue;
+				if(result != NativeMethods.StudError.Success) break;
+			}
+			return applied && result == NativeMethods.StudError.IndexOutOfRange ? NativeMethods.StudError.Success : result;
+		}
+		private static NativeMethods.StudError ResetChatForDialecticState(){return RunForDialecticRelaySlots(NativeMethods.ResetChat);}
+		private static NativeMethods.StudError RemoveMessageAtForDialecticState(int index){return RunForDialecticRelaySlots(slotName => NativeMethods.RemoveMessageAt(slotName, index));}
+		private static NativeMethods.StudError RemoveMessagesStartingAtForDialecticState(int index){return RunForDialecticRelaySlots(slotName => NativeMethods.RemoveMessagesStartingAt(slotName, index));}
+		private static NativeMethods.StudError SetMessageAtForDialecticState(int index, string think, string message){
+			return RunForDialecticRelaySlots(slotName => NativeMethods.SetMessageAt(slotName, index, think, message));
+		}
+		private static NativeMethods.StudError SetSystemPromptForDialecticState(string prompt, string toolsPrompt){
+			return RunForDialecticRelaySlots(slotName => NativeMethods.SetSystemPrompt(slotName, prompt, toolsPrompt));
 		}
 	}
 }

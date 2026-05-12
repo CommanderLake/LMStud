@@ -65,6 +65,57 @@ namespace LM_Stud.Tests{
 			Assert.AreEqual(5, result.TotalTokens, "usage.total_tokens should be surfaced.");
 		}
 		[TestMethod]
+		public void ParseResponseBody_WithMultipleResponsesTextItems_AppendsInOrder(){
+			var json = @"{
+				""id"": ""resp_test"",
+				""output"": [
+					{ ""type"": ""output_text"", ""text"": ""hel"" },
+					{ ""type"": ""output_text"", ""text"": ""lo"" }
+				]
+			}";
+			var result = APIResponseParser.ParseResponseBody(json);
+			Assert.AreEqual("hello", result.Content, "Responses text items should accumulate instead of overwriting earlier output.");
+		}
+		[TestMethod]
+		public void ParseResponseBody_WithEmptyResponsesOutput_FallsThroughToChatCompletions(){
+			var json = @"{
+				""id"": ""chatcmpl_test"",
+				""output"": [],
+				""choices"": [
+					{ ""message"": { ""role"": ""assistant"", ""content"": ""fallback ok"" } }
+				]
+			}";
+			var result = APIResponseParser.ParseResponseBody(json);
+			Assert.AreEqual("fallback ok", result.Content, "An empty Responses-looking output should not hide a valid Chat Completions payload.");
+		}
+		[TestMethod]
+		public void ParseResponseBody_WithChatCompletionsReasoningField_ReadsReasoning(){
+			var json = @"{
+				""id"": ""chatcmpl_test"",
+				""choices"": [
+					{ ""message"": { ""role"": ""assistant"", ""content"": ""ok"", ""reasoning_content"": ""thinking"" } }
+				]
+			}";
+			var result = APIResponseParser.ParseResponseBody(json);
+			Assert.AreEqual("ok", result.Content, "Chat Completions content should parse.");
+			Assert.AreEqual("thinking", result.Reasoning, "Chat Completions reasoning_content should parse.");
+		}
+		[TestMethod]
+		public void ParseResponseBody_WithReasoningContentItem_DoesNotMixReasoningIntoContent(){
+			var json = @"{
+				""id"": ""chatcmpl_test"",
+				""choices"": [
+					{ ""message"": { ""role"": ""assistant"", ""content"": [
+						{ ""type"": ""reasoning"", ""text"": ""thinking"" },
+						{ ""type"": ""text"", ""text"": ""answer"" }
+					] } }
+				]
+			}";
+			var result = APIResponseParser.ParseResponseBody(json);
+			Assert.AreEqual("answer", result.Content, "Reasoning content blocks should not be mixed into answer text.");
+			Assert.AreEqual("thinking", result.Reasoning, "Reasoning content blocks should still be captured as reasoning.");
+		}
+		[TestMethod]
 		public void BuildInputMessagePayload_WithToolRole_RequiresCallId(){
 			var toolMessage = new APIClient.ChatMessage("tool", "ok");
 			Assert.ThrowsExactly<InvalidOperationException>(() => APIClient.BuildInputMessagePayload(toolMessage));

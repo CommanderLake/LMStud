@@ -22,32 +22,29 @@ namespace LMStud{
 				return newSession;
 			}
 		}
-		public void Update(Session session, List<APIServer.Message> messages, byte[] state, int tokenCount){
-			if(session == null) return;
-			lock(_sync){
-				session.Messages = CloneMessages(messages);
-				session.State = CloneState(state);
-				session.ClearNativeChatState();
-				session.TokenCount = tokenCount;
-				session.LastUsed = DateTime.UtcNow;
-				Evict();
-			}
+		public bool Update(Session session, List<APIServer.Message> messages, byte[] state, int tokenCount){
+			return Apply(session, s => {
+				s.Messages = CloneMessages(messages);
+				s.State = CloneState(state);
+				s.ClearNativeChatState();
+				s.TokenCount = tokenCount;
+			});
 		}
-		public void Apply(Session session, Action<Session> update){
-			if(session == null || update == null) return;
+		public bool Apply(Session session, Action<Session> update, Func<string> responseId = null){
+			if(session == null || update == null) return false;
 			lock(_sync){
+				if(!IsActiveNoLock(session)) return false;
 				update(session);
+				var id = responseId == null ? null : responseId();
+				if(!string.IsNullOrWhiteSpace(id)) _responseSessions[id] = session.Id;
 				session.LastUsed = DateTime.UtcNow;
 				Evict();
+				return true;
 			}
 		}
 		public string GetSessionIdForResponse(string responseId){
 			if(string.IsNullOrWhiteSpace(responseId)) return null;
 			lock(_sync){ return _responseSessions.TryGetValue(responseId, out var sessionId) ? sessionId : null; }
-		}
-		public void RememberResponse(string responseId, Session session){
-			if(string.IsNullOrWhiteSpace(responseId) || session == null) return;
-			lock(_sync){ _responseSessions[responseId] = session.Id; }
 		}
 		public void Remove(string id){
 			if(string.IsNullOrEmpty(id)) return;
@@ -89,6 +86,10 @@ namespace LMStud{
 				_sessions.Remove(lru.Id);
 				RemoveResponseIdsForSession(lru.Id);
 			}
+		}
+		private bool IsActiveNoLock(Session session){
+			if(session == null || string.IsNullOrEmpty(session.Id)) return false;
+			return _sessions.TryGetValue(session.Id, out var active) && ReferenceEquals(active, session);
 		}
 		private void RemoveResponseIdsForSession(string sessionId){
 			foreach(var responseId in _responseSessions.Where(pair => pair.Value == sessionId).Select(pair => pair.Key).ToList())

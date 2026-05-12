@@ -8,23 +8,23 @@ namespace LMStud {
 	internal static class Tools {
 		private static string _toolsJsonCache;
 		private static volatile bool _toolsJsonCacheDirty = true;
-		internal static void RegisterTools(){
-			NativeMethods.RegisterTools(Common.DateTimeEnable, Common.GoogleSearchEnable, Common.WebpageFetchEnable, Common.FileListEnable, Common.FileCreateEnable, Common.FileReadEnable, Common.FileWriteEnable, Common.CMDEnable);
+		internal static void RegisterTools(string slotName){
+			NativeMethods.RegisterTools(slotName, Common.DateTimeEnable, Common.GoogleSearchEnable, Common.WebpageFetchEnable, Common.FileListEnable, Common.FileCreateEnable, Common.FileReadEnable, Common.FileWriteEnable, Common.CMDEnable);
 			InvalidateToolsJsonCache();
 		}
-		internal static void ClearRegisteredTools(){
-			NativeMethods.ClearTools();
+		internal static void ClearRegisteredTools(string slotName){
+			NativeMethods.ClearTools(slotName);
 			NativeMethods.ClearWebCache();
 			InvalidateToolsJsonCache();
 		}
 		private static bool ToolsEnabled(){
 			return Common.DateTimeEnable || Common.GoogleSearchEnable || Common.WebpageFetchEnable || Common.FileListEnable || Common.FileCreateEnable || Common.FileReadEnable || Common.FileWriteEnable || Common.CMDEnable;
 		}
-		internal static string BuildApiToolsJson(){
+		internal static string BuildApiToolsJson(string slotName){
 			if(!_toolsJsonCacheDirty && !string.IsNullOrWhiteSpace(_toolsJsonCache)) return _toolsJsonCache;
 			var tools = new JArray();
 			if(ToolsEnabled()){
-				var ptr = NativeMethods.GetToolsJson(out var length);
+				var ptr = NativeMethods.GetToolsJson(slotName, out var length);
 				if(ptr != IntPtr.Zero && length > 0){
 					var buffer = new byte[length];
 					Marshal.Copy(ptr, buffer, 0, length);
@@ -44,7 +44,8 @@ namespace LMStud {
 		internal static string ExecuteToolCall(APIClient.ToolCall toolCall){
 			if(toolCall == null || string.IsNullOrWhiteSpace(toolCall.Name)) return "{\"error\":\"missing tool name\"}";
 			if(ModelSlotManager.TryExecuteToolCall(toolCall, out var modelResult)) return modelResult;
-			var ptr = NativeMethods.ExecuteTool(toolCall.Name, toolCall.Arguments ?? "");
+			var slotName = ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? "main";
+			var ptr = NativeMethods.ExecuteTool(slotName, toolCall.Name, toolCall.Arguments ?? "");
 			if(ptr == IntPtr.Zero) return "{\"error\":\"tool execution failed\"}";
 			try{
 				var length = 0;
@@ -59,7 +60,7 @@ namespace LMStud {
 			try{
 				var parsed = JToken.Parse(toolsJson);
 				if(!(parsed is JArray array)) return;
-				foreach(var tool in array) if(tool != null) destination.Add(tool.DeepClone());
+				foreach(var tool in array.Where(tool => tool != null)) destination.Add(tool.DeepClone());
 			} catch(JsonException){}
 		}
 	}

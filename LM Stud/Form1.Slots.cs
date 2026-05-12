@@ -16,7 +16,7 @@ namespace LMStud{
 			if(listViewSlots.SelectedItems.Count != 1) return;
 			var slot = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
 			if(!ModelSlotManager.SetActiveChatSlot(slot.Name)) return;
-			ApplyActiveSlotToRuntime(true);
+			ApplyActiveSlotToModel(true);
 			PopulateSlotsList();
 			SelectSlot(slot.Name);
 		}
@@ -49,7 +49,7 @@ namespace LMStud{
 		private void ButSlotsAdd_Click(object sender, EventArgs e){
 			if(!TryReadSlotEditor(null, true, out var slot)) return;
 			ModelSlotManager.AddOrUpdate(slot);
-			ApplyActiveSlotToRuntime(true);
+			ApplyActiveSlotToModel(true);
 			PopulateSlotsList();
 			SelectSlot(slot.Name);
 		}
@@ -61,7 +61,7 @@ namespace LMStud{
 			var unloadLocalSlot = slot.Source == ModelSlotSource.Local && (Common.LoadedLocalSlots.ContainsKey(slot.Name) || NativeMethods.IsModelSlotLoaded(slot.Name));
 			if(!ModelSlotManager.Remove(slot.Name)) MessageBox.Show(this, "The main slot cannot be removed. Edit it instead.", "LM Stud", MessageBoxButtons.OK, MessageBoxIcon.Information);
 			else if(unloadLocalSlot) UnloadModel(true, slot.Name);
-			ApplyActiveSlotToRuntime(true);
+			ApplyActiveSlotToModel(true);
 			PopulateSlotsList();
 		}
 		private void ButLoadSlot_Click(object sender, EventArgs e){
@@ -159,7 +159,7 @@ namespace LMStud{
 			var original = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
 			if(!TryReadSlotEditor(original.Name, false, out var slot)) return;
 			ModelSlotManager.AddOrUpdate(slot, original.Name);
-			ApplyActiveSlotToRuntime(true);
+			ApplyActiveSlotToModel(true);
 			PopulateSlotsList();
 			SelectSlot(slot.Name);
 		}
@@ -206,16 +206,15 @@ namespace LMStud{
 				if(item.Selected) item.EnsureVisible();
 			}
 		}
-		private void ApplyActiveSlotToRuntime(bool updateControls, bool registerTools = true){
+		private void ApplyActiveSlotToModel(bool updateControls, bool registerTools = true){
 			var slot = ModelSlotManager.GetActiveChatSlot();
 			if(slot == null) return;
 			Common.ActiveModelSlotName = slot.Name;
 			if(slot.Source == ModelSlotSource.Local){
-				if(!Generation.Generating && !Generation.APIServerGenerating) NativeMethods.ActivateModelSlot(slot.Name);
 				Common.LoadedModel = GetLoadedModelForSlot(slot);
 				Common.LlModelLoaded = Common.LoadedLocalSlots.Count > 0;
 			}
-			if(registerTools) Tools.RegisterTools();
+			if(registerTools) Tools.RegisterTools(slot.Name);
 			else Tools.InvalidateToolsJsonCache();
 			RunOnUiThread(SetModelStatus);
 		}
@@ -225,7 +224,7 @@ namespace LMStud{
 			if(slot.Source == ModelSlotSource.Api){
 				slot.Use |= ModelSlotUse.Chat | ModelSlotUse.Server;
 				ModelSlotManager.AddOrUpdate(slot);
-				ApplyActiveSlotToRuntime(true);
+				ApplyActiveSlotToModel(true);
 				PopulateSlotsList();
 				return true;
 			}
@@ -239,7 +238,7 @@ namespace LMStud{
 				ShowError("Load Slot", "The model is not in the current Models list. Refresh the list or check the Models folder.\r\n\r\n" + path, false);
 				return true;
 			}
-			LoadModel(item, false, slot.Name);
+			LoadModel(slot.Name, item, false);
 			return true;
 		}
 		private static int GetComboSelectedIndex(ComboBox combo){

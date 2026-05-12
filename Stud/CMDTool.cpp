@@ -227,11 +227,11 @@ void NormalizeCommandOutput(std::string& text){
 	text.erase(std::remove(text.begin(), text.end(), '\r'), text.end());
 	TrimNewlines(text);
 }
-void StreamToolOutput(const std::string& text){
+void StreamToolOutput(const char* slotName, const std::string& text){
 	if(text.empty()) return;
-	const auto cb = Stud::state.tokenCb;
+	const auto cb = Stud::tokenCb;
 	if(!cb) return;
-	cb(nullptr, 0, text.c_str(), static_cast<int>(text.size()), 0, LlamaMemSize(), 0.0, 2);
+	cb(nullptr, 0, text.c_str(), static_cast<int>(text.size()), 0, LlamaMemSize(slotName), 0.0, 2);
 }
 std::string TrimCopy(std::string text){
 	const auto begin = text.find_first_not_of(" \t\r\n");
@@ -318,7 +318,7 @@ bool StartCommandPromptSession(std::string& startupOutput, std::string& error){
 	NormalizeCommandOutput(startupOutput);
 	return true;
 }
-bool ExecuteCommand(const std::string& command, std::string& output, std::string& error){
+bool ExecuteCommand(const char* slotName, const std::string& command, std::string& output, std::string& error){
 	if(!g_cmdSession.active){
 		error = "Session not active";
 		return false;
@@ -344,7 +344,7 @@ bool ExecuteCommand(const std::string& command, std::string& output, std::string
 		NormalizeCommandOutput(display);
 		if(display == lastStreamed) return;
 		lastStreamed = display;
-		StreamToolOutput(display);
+		StreamToolOutput(slotName, display);
 	};
 	if(!ReadUntilMarker(g_cmdSession, kEndMarker, output, error, g_cmdTimeoutMs.load(), streamCb)){ return false; }
 	stop.store(false);
@@ -354,7 +354,7 @@ bool ExecuteCommand(const std::string& command, std::string& output, std::string
 	NormalizeCommandOutput(output);
 	return true;
 }
-std::string StartCommandPromptTool(const char* argsJson){
+std::string StartCommandPromptTool(const char* slotName, const char* argsJson){
 	std::lock_guard<std::mutex> lock(g_cmdMutex);
 	if(g_cmdSession.active){ InternalCloseCommandPrompt(true); }
 	std::string output;
@@ -363,7 +363,7 @@ std::string StartCommandPromptTool(const char* argsJson){
 	if(output.empty()){ output = "(no output)"; }
 	return "```cmd\n" + output + "\n```";
 }
-std::string CommandPromptExecuteTool(const char* argsJson){
+std::string CommandPromptExecuteTool(const char* slotName, const char* argsJson){
 	const auto commandArg = TrimCopy(GetArgValue(argsJson, "command"));
 	const auto closeArg = TrimCopy(GetArgValue(argsJson, "close"));
 	if(commandArg.empty() && closeArg.empty()){ return "{\"error\":\"command is required\"}"; }
@@ -373,7 +373,7 @@ std::string CommandPromptExecuteTool(const char* argsJson){
 	}
 	std::string output;
 	std::string error;
-	if(!ExecuteCommand(commandArg, output, error)){
+	if(!ExecuteCommand(slotName, commandArg, output, error)){
 		InternalCloseCommandPrompt(true);
 		return "{\"error\":\"" + JsonEscape(error) + "\"}";
 	}

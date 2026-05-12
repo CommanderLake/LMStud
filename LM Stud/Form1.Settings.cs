@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using LMStud.Properties;
@@ -313,14 +314,15 @@ namespace LMStud{
 			var topP = overrideSettings ? ms.TopP : Common.TopP;
 			var topK = overrideSettings ? ms.TopK : Common.TopK;
 			var temp = overrideSettings ? ms.Temp : Common.Temp;
-			if(Common.LlModelLoaded && loadedModel != null)
-				if(reloadModel &&
-					MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) ==
-					DialogResult.Yes){ LoadModel(loadedModel, false, Common.ActiveModelSlotName ?? "main"); }
-				else{
-					if(reloadCtx) CreateContext(Common.CntCtxMax, Common.BatchSize, flash, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType);
-					if(reloadSmpl) CreateSampler(minP, topP, topK, temp, Common.RepPen);
+			if(Common.LlModelLoaded && loadedModel != null){
+				var slots = ModelSlotManager.GetLoadedLocalSlotNames();
+				if(reloadModel && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes){
+					foreach(var slot in slots) LoadModel(slot, loadedModel, false);
+				}else{
+					if(reloadCtx) foreach(var slot in slots) CreateContext(slot, Common.CntCtxMax, Common.BatchSize, flash, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType);
+					if(reloadSmpl) foreach(var slot in slots) CreateSampler(slot, minP, topP, topK, temp, Common.RepPen);
 				}
+			}
 			if(setVAD) NativeMethods.SetVADThresholds(Common.VADThreshold, Common.FreqThreshold);
 			if(setWWS) NativeMethods.SetWakeWordSimilarity(Common.WakeWordSimilarity);
 			if(reloadWhisper && _whisperLoaded){
@@ -338,14 +340,14 @@ namespace LMStud{
 				}
 			}
 			if(setGoogle) NativeMethods.SetGoogle(Common.GoogleAPIKey, Common.GoogleSearchID, Common.GoogleSearchResultCount);
-			if(registerTools) Tools.RegisterTools();
+			if(registerTools) foreach(var slot in ModelSlotManager.Slots) Tools.RegisterTools(slot.Name);
 			if(registerTools || setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPrompt();});
 			if(overrideSettings && modelOverrideChanged) MessageBox.Show(this, Resources.The_modified_settings_are_overridden_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 			Settings.Default.Save();
 			var activeSlot = ModelSlotManager.GetActiveChatSlot();
 			if(activeSlot?.Source != ModelSlotSource.Api && Common.LlModelLoaded){
 				ModelSlotManager.SyncMainFromLoadedLocal();
-				ApplyActiveSlotToRuntime(true);
+				ApplyActiveSlotToModel(true);
 				PopulateSlotsList();
 			}
 		}

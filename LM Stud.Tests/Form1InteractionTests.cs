@@ -118,7 +118,7 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 			Thread.Sleep(100);
 			ChatMessageControl message = null;
 			_form.Invoke(new MethodInvoker(() => {
-				NativeMethods.AddMessage(MessageRole.User, "Original");
+				NativeMethods.AddMessage("main", MessageRole.User, "", "Original");
 				message = _form.AddMessage(MessageRole.User, "", "Original");
 			}));
 			Thread.Sleep(100);
@@ -135,7 +135,7 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 			Thread.Sleep(100);
 			ChatMessageControl message = null;
 			_form.Invoke(new MethodInvoker(() => {
-				NativeMethods.AddMessage(MessageRole.User, "Original");
+				NativeMethods.AddMessage("main", MessageRole.User, "", "Original");
 				message = _form.AddMessage(MessageRole.User, "", "Original");
 			}));
 			Thread.Sleep(100);
@@ -155,7 +155,7 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 			Thread.Sleep(100);
 			ChatMessageControl message = null;
 			_form.Invoke(new MethodInvoker(() => {
-				NativeMethods.AddMessage(MessageRole.User, "Original");
+				NativeMethods.AddMessage("main", MessageRole.User, "", "Original");
 				message = _form.AddMessage(MessageRole.User, "", "Original");
 			}));
 			Thread.Sleep(100);
@@ -174,7 +174,7 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 			Thread.Sleep(100);
 			ChatMessageControl message = null;
 			_form.Invoke(new MethodInvoker(() => {
-				NativeMethods.AddMessage(MessageRole.User, "To Delete");
+				NativeMethods.AddMessage("main", MessageRole.User, "", "To Delete");
 				message = _form.AddMessage(MessageRole.User, "", "To Delete");
 			}));
 			Thread.Sleep(100);
@@ -190,7 +190,7 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 			Thread.Sleep(100);
 			ChatMessageControl message = null;
 			_form.Invoke(new MethodInvoker(() => {
-				NativeMethods.AddMessage(MessageRole.Assistant, "Assistant");
+				NativeMethods.AddMessage("main", MessageRole.Assistant, "", "Assistant");
 				message = _form.AddMessage(MessageRole.Assistant, "", "Assistant");
 			}));
 			Thread.Sleep(100);

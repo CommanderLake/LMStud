@@ -12,7 +12,7 @@ namespace LMStud {
 	internal static class Generation{
 		internal static Form1 MainForm;
 		internal static readonly SemaphoreSlim GenerationLock = new SemaphoreSlim(1, 1);
-		internal static readonly SemaphoreSlim MsgRenderLock = new SemaphoreSlim(1, 1);
+		private static readonly SemaphoreSlim MsgRenderLock = new SemaphoreSlim(1, 1);
 		internal static volatile bool Generating;
 		internal static volatile bool APIServerGenerating;
 		private static readonly object APICancelSync = new object();
@@ -28,8 +28,7 @@ namespace LMStud {
 		internal static string DialecticPrimarySlotName;
 		internal static string DialecticSecondarySlotName;
 		internal static string CurrentDialecticSlotName;
-		internal static bool DialecticRelayEnabled => !string.IsNullOrWhiteSpace(DialecticPrimarySlotName) && !string.IsNullOrWhiteSpace(DialecticSecondarySlotName) &&
-			!string.Equals(DialecticPrimarySlotName, DialecticSecondarySlotName, StringComparison.OrdinalIgnoreCase);
+		internal static bool DialecticRelayEnabled => !string.IsNullOrWhiteSpace(DialecticPrimarySlotName) && !string.IsNullOrWhiteSpace(DialecticSecondarySlotName) && !string.Equals(DialecticPrimarySlotName, DialecticSecondarySlotName, StringComparison.OrdinalIgnoreCase);
 		internal static bool FirstToken = true;
 		private static int _genTokenTotal;
 		internal static void ConfigureDialecticSlots(IList<ModelSlot> slots){
@@ -59,20 +58,12 @@ namespace LMStud {
 			var useDialecticLocalSlot = MainForm.checkDialectic.Checked && !string.IsNullOrWhiteSpace(CurrentDialecticSlotName);
 			var activeSlot = useDialecticLocalSlot ? ModelSlotManager.GetSlot(CurrentDialecticSlotName) : ModelSlotManager.GetActiveChatSlot();
 			var useRemote = activeSlot?.Source == ModelSlotSource.Api && !useDialecticLocalSlot;
-			var generationSlotName = activeSlot?.Name;
+			var slotName = activeSlot?.Name;
 			if((useRemote && !ModelSlotManager.CanServeApiSlot(activeSlot)) || (!useRemote && !ModelSlotManager.CanServeLocalSlot(activeSlot)) || string.IsNullOrWhiteSpace(prompt)) return;
 			if(!GenerationLock.Wait(0)) return;
 			if(Generating || APIServerGenerating){
 				GenerationLock.Release();
 				return;
-			}
-			if(!useRemote){
-				var activationError = NativeMethods.ActivateModelSlot(activeSlot.Name);
-				if(activationError != NativeMethods.StudError.Success){
-					GenerationLock.Release();
-					MainForm.ShowError("Activate slot", activationError);
-					return;
-				}
 			}
 			if(MainForm.checkVoiceInput.CheckState == CheckState.Checked) NativeMethods.StopSpeechTranscription();
 			DialecticPaused = false;
@@ -92,19 +83,19 @@ namespace LMStud {
 				if(addToChat) MainForm.textInput.Text = "";
 			}
 			if(!useRemote && MainForm.checkDialectic.Checked && !DialecticStarted && role == MessageRole.User){
-				var dialecticStartError = NativeMethods.DialecticStart();
-				if(dialecticStartError != NativeMethods.StudError.Success){
+				var err = NativeMethods.DialecticStart(slotName);
+				if(err != NativeMethods.StudError.Success){
 					GenerationLock.Release();
 					Generating = false;
 					MainForm.FinishedGenerating();
-					MainForm.ShowError("Dialectic start", dialecticStartError);
+					MainForm.ShowError("Dialectic start", err);
 					return;
 				}
 				DialecticStarted = true;
 			}
 			if(useRemote){
 				SetApiGenerationCancellation(new CancellationTokenSource());
-				ThreadPool.QueueUserWorkItem(o => {GenerateWithApiClient(role, newMsg, addToChat);});
+				ThreadPool.QueueUserWorkItem(o => {GenerateWithApiClient(activeSlot, role, newMsg, addToChat);});
 				return;
 			}
 			ThreadPool.QueueUserWorkItem(o => {
@@ -113,7 +104,7 @@ namespace LMStud {
 				_genTokenTotal = 0;
 				SwTot.Restart();
 				SwRate.Restart();
-				var generationError = NativeMethods.GenerateWithTools(role, newMsg, Common.NGen, MainForm.checkStream.Checked);
+				var genErr = NativeMethods.GenerateWithTools(slotName, role, newMsg, Common.NGen, MainForm.checkStream.Checked);
 				SwTot.Stop();
 				SwRate.Stop();
 				if(TTS.Pending.Length > 0){
@@ -123,11 +114,10 @@ namespace LMStud {
 				}
 				try{
 					MainForm.Invoke(new MethodInvoker(() => {
-						string followupPrompt = null;
-						if(generationError != NativeMethods.StudError.Success){
-							if(generationError == NativeMethods.StudError.ContextFull)
+						if(genErr != NativeMethods.StudError.Success){
+							if(genErr == NativeMethods.StudError.ContextFull)
 								MessageBox.Show(MainForm, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-							else MainForm.ShowError("Generation", generationError);
+							else MainForm.ShowError("Generation", genErr);
 						}
 						var elapsed = SwTot.Elapsed.TotalSeconds;
 						if(_genTokenTotal > 0 && elapsed > 0.0){
@@ -137,30 +127,27 @@ namespace LMStud {
 							SwRate.Reset();
 						}
 						MainForm.FinishedGenerating();
-						if(generationError != NativeMethods.StudError.Success) return;
-						if(MainForm.checkDialectic.Checked && !DialecticPaused){
-							var last = MainForm.ChatMessages.LastOrDefault();
-							if(last != null){
-								var dialecticError = NativeMethods.StudError.Success;
-								if(DialecticRelayEnabled){
-									var nextSlotName = GetNextDialecticSlotName(generationSlotName);
-									dialecticError = string.IsNullOrWhiteSpace(generationSlotName) || string.IsNullOrWhiteSpace(nextSlotName) ? NativeMethods.StudError.Generic : NativeMethods.DialecticRelaySwap(generationSlotName, nextSlotName);
-									if(dialecticError == NativeMethods.StudError.Success) CurrentDialecticSlotName = nextSlotName;
-								} else dialecticError = NativeMethods.DialecticSwap();
-								if(dialecticError == NativeMethods.StudError.Success) followupPrompt = last.Message;
-								else{
-									if(dialecticError == NativeMethods.StudError.ContextFull)
-										MessageBox.Show(MainForm, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-									else
-										MainForm.ShowError("Generation", dialecticError);
-									return;
-								}
-							}
+						if(genErr != NativeMethods.StudError.Success) return;
+						if(!MainForm.checkDialectic.Checked || DialecticPaused) return;
+						var last = MainForm.ChatMessages.LastOrDefault();
+						if(last == null) return;
+						NativeMethods.StudError err;
+						if(DialecticRelayEnabled){
+							var nextSlotName = GetNextDialecticSlotName(slotName);
+							err = string.IsNullOrWhiteSpace(slotName) || string.IsNullOrWhiteSpace(nextSlotName) ? NativeMethods.StudError.Generic : NativeMethods.DialecticRelaySwap(slotName, slotName, nextSlotName);
+							if(err == NativeMethods.StudError.Success) CurrentDialecticSlotName = nextSlotName;
+						} else err = NativeMethods.DialecticSwap(slotName);
+						switch(err){
+							case NativeMethods.StudError.Success:
+								GenerationLock.Release();
+								lockHeld = false;
+								Generate(MessageRole.User, last.Message, false);
+								break;
+							case NativeMethods.StudError.ContextFull: MessageBox.Show(MainForm, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+								break;
+							default: MainForm.ShowError("Generation", err);
+								break;
 						}
-						if(string.IsNullOrWhiteSpace(followupPrompt)) return;
-						GenerationLock.Release();
-						lockHeld = false;
-						Generate(MessageRole.User, followupPrompt, false);
 					}));
 				} catch(ObjectDisposedException){} finally{ if(lockHeld) GenerationLock.Release(); }
 			});
@@ -194,16 +181,14 @@ namespace LMStud {
 			if(index < 0) return content;
 			return content.Substring(0, index).TrimEnd();
 		}
-		private static NativeMethods.StudError SyncNativeChatMessages(){
+		private static NativeMethods.StudError SyncNativeChatMessages(string slotName){
 			if(MainForm.IsDisposed) return NativeMethods.StudError.Success;
-			var roles = Array.Empty<MessageRole>();
-			var thinks = Array.Empty<string>();
-			var messages = Array.Empty<string>();
+			if(string.IsNullOrWhiteSpace(slotName)) slotName = "main";
+			var count = MainForm.ChatMessages.Count;
+			var roles = new MessageRole[count];
+			var thinks = new string[count];
+			var messages = new string[count];
 			MainForm.RunOnUiThread(() => {
-				var count = MainForm.ChatMessages.Count;
-				roles = new MessageRole[count];
-				thinks = new string[count];
-				messages = new string[count];
 				for(var i = 0; i < count; i++){
 					var msg = MainForm.ChatMessages[i];
 					roles[i] = msg.Role;
@@ -211,26 +196,22 @@ namespace LMStud {
 					messages[i] = msg.Message ?? "";
 				}
 			});
-			var result = NativeMethods.ResetChat();
+			var result = NativeMethods.ResetChat(slotName);
 			if(result != NativeMethods.StudError.Success && result != NativeMethods.StudError.ModelNotLoaded) return result;
-			for(var i = 0; i < roles.Length; i++){
-				result = NativeMethods.AddMessage(roles[i], messages[i]);
-				if(result != NativeMethods.StudError.Success && result != NativeMethods.StudError.ModelNotLoaded) return result;
-				if(roles[i] != MessageRole.Assistant || string.IsNullOrEmpty(thinks[i])) continue;
-				result = NativeMethods.SetMessageAt(i, thinks[i], messages[i]);
+			for(var i = 0; i < count; ++i){
+				result = NativeMethods.AddMessage(slotName, roles[i], thinks[i], messages[i]);
 				if(result != NativeMethods.StudError.Success && result != NativeMethods.StudError.ModelNotLoaded) return result;
 			}
 			return NativeMethods.StudError.Success;
 		}
-		private static void GenerateWithApiClient(MessageRole role, string prompt, bool addToChat){
+		private static void GenerateWithApiClient(ModelSlot slot, MessageRole role, string prompt, bool addToChat){
 			Exception error = null;
 			var syncError = NativeMethods.StudError.Success;
 			var cancellationToken = GetApiGenerationCancellationToken();
 			try{
 				var messages = BuildApiMessages(role, prompt, addToChat);
 				var history = APIClient.BuildInputItems(messages);
-				var toolsJson = Tools.BuildApiToolsJson();
-				var slot = ModelSlotManager.GetActiveChatSlot();
+				var toolsJson = Tools.BuildApiToolsJson(slot.Name);
 				if(!ModelSlotManager.CanServeApiSlot(slot)) throw new InvalidOperationException("The active API model slot is incomplete.");
 				using(var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, slot.GetInstructionsOrDefault(),
 					slot.ApiReasoningEffort, slot.ApiReasoningSummary)){
@@ -283,7 +264,7 @@ namespace LMStud {
 						lastToolSignature = toolSignature;
 						foreach(var toolCall in toolCalls){
 							var toolResult = Tools.ExecuteToolCall(toolCall);
-							var toolMessage = new APIClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id, ToolName = toolCall.Name };
+							var toolMessage = new APIClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id };
 							history.Add(APIClient.BuildInputMessagePayload(toolMessage));
 							if(string.IsNullOrWhiteSpace(toolResult)) continue;
 							try{
@@ -295,7 +276,7 @@ namespace LMStud {
 						}
 					}
 				}
-				syncError = SyncNativeChatMessages();
+				syncError = SyncNativeChatMessages(ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? "main");
 			} catch(OperationCanceledException){
 				error = null;
 			} catch(Exception ex){ error = ex; }
@@ -321,7 +302,8 @@ namespace LMStud {
 		}
 		internal static void StopActiveGeneration(){
 			CancelApiGeneration();
-			NativeMethods.StopGeneration();
+			var slotName = !string.IsNullOrWhiteSpace(CurrentDialecticSlotName) ? CurrentDialecticSlotName : ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? "main";
+			NativeMethods.StopGeneration(slotName);
 		}
 		private static void SetApiGenerationCancellation(CancellationTokenSource cts){
 			lock(APICancelSync){
@@ -344,24 +326,24 @@ namespace LMStud {
 				_apiGenerationCts = null;
 			}
 		}
-		private static byte[] GetState(){
-			var size = NativeMethods.GetStateSize();
+		private static byte[] GetState(string slotName){
+			var size = NativeMethods.GetStateSize(slotName);
 			var data = new byte[size];
 			NativeMethods.StudError err;
 			unsafe{
-				fixed(byte* p = data){ err = NativeMethods.GetStateData((IntPtr)p, size); }
+				fixed(byte* p = data){ err = NativeMethods.GetStateData(slotName, (IntPtr)p, size); }
 			}
 			if(err != NativeMethods.StudError.Success) MainForm.ShowError(Resources.API_Server, "GetStateData", true);
 			return data;
 		}
-		private static void SetState(byte[] state){
+		private static void SetState(string slotName, byte[] state){
 			if(state == null || state.Length == 0){
 				MainForm.ShowError("Api server", "SetState\r\n\r\nstate is null", false);
 				return;
 			}
 			NativeMethods.StudError err;
 			unsafe{
-				fixed(byte* p = state){ err = NativeMethods.SetStateData((IntPtr)p, state.Length); }
+				fixed(byte* p = state){ err = NativeMethods.SetStateData(slotName, (IntPtr)p, state.Length); }
 			}
 			if(err != NativeMethods.StudError.Success) MainForm.ShowError(Resources.API_Server, "SetStateData", true);
 		}
@@ -371,51 +353,44 @@ namespace LMStud {
 			newChatState = IntPtr.Zero;
 			tokenCount = 0;
 			if(prompt == null) return false;
-			if(!GenerationLock.Wait(300000)) return false;
+			if(string.IsNullOrWhiteSpace(slotName) || !NativeMethods.IsModelSlotLoaded(slotName) || Generating || APIServerGenerating) return false;
+			APIServerGenerating = true;
+			_apiTokenCallback = null;
+			var originalState = GetState(slotName);
+			var chatSnapshot = NativeMethods.CaptureChatState(slotName);
 			try{
-				if(string.IsNullOrWhiteSpace(slotName) || !NativeMethods.IsModelSlotLoaded(slotName) || Generating || APIServerGenerating) return false;
-				var restoreSlotName = NativeMethods.GetActiveModelSlotName();
-				var activationError = NativeMethods.ActivateModelSlot(slotName);
-				if(activationError != NativeMethods.StudError.Success) return false;
-				APIServerGenerating = true;
-				_apiTokenCallback = null;
-				var originalState = GetState();
-				var chatSnapshot = NativeMethods.CaptureChatState();
-				try{
-					// llama state does not include Stud's chat messages/cached token metadata; restore both or start fresh.
-					if(!string.IsNullOrWhiteSpace(historyJson)){
-						var resetResult = NativeMethods.ResetChat();
-						if(resetResult != NativeMethods.StudError.Success) return false;
-						var syncResult = NativeMethods.SyncChatMessagesJson(historyJson);
-						if(syncResult != NativeMethods.StudError.Success) return false;
-					}
-					else if(state != null && state.Length > 0 && chatState != IntPtr.Zero){
-						SetState(state);
-						NativeMethods.RestoreChatState(chatState);
-					}
-					else{
-						var resetResult = NativeMethods.ResetChat();
-						if(resetResult != NativeMethods.StudError.Success) return false;
-					}
-					var generationError = NativeMethods.GenerateForAPI(role, prompt, toolsJson, Common.NGen, out var responsePtr);
-					if(generationError != NativeMethods.StudError.Success) return false;
-					if(responsePtr == IntPtr.Zero) return false;
-					try{ result = APIResponseParser.ParseResponseBody(ReadNativeUtf8(responsePtr)); }
-					finally{ NativeMethods.FreeMemory(responsePtr); }
-					newState = GetState();
-					newChatState = NativeMethods.CaptureChatState();
-					if(newChatState == IntPtr.Zero) return false;
-					tokenCount = NativeMethods.LlamaMemSize();
-					return true;
-				} finally{
-					SetState(originalState);
-					if(chatSnapshot != IntPtr.Zero) try{ NativeMethods.RestoreChatState(chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
-					_apiTokenCallback = null;
-					APIServerGenerating = false;
-					if(!string.IsNullOrWhiteSpace(restoreSlotName)) NativeMethods.ActivateModelSlot(restoreSlotName);
-					try{ MainForm.Invoke((MethodInvoker)(() => STT.RetryStart())); } catch(ObjectDisposedException){}
+				// llama state does not include Stud's chat messages/cached token metadata; restore both or start fresh.
+				if(!string.IsNullOrWhiteSpace(historyJson)){
+					var resetResult = NativeMethods.ResetChat(slotName);
+					if(resetResult != NativeMethods.StudError.Success) return false;
+					var syncResult = NativeMethods.SyncChatMessagesJson(slotName, historyJson);
+					if(syncResult != NativeMethods.StudError.Success) return false;
 				}
-			} finally{ GenerationLock.Release(); }
+				else if(state != null && state.Length > 0 && chatState != IntPtr.Zero){
+					SetState(slotName, state);
+					NativeMethods.RestoreChatState(slotName, chatState);
+				}
+				else{
+					var resetResult = NativeMethods.ResetChat(slotName);
+					if(resetResult != NativeMethods.StudError.Success) return false;
+				}
+				var generationError = NativeMethods.GenerateForAPI(slotName, role, prompt, toolsJson, Common.NGen, out var responsePtr);
+				if(generationError != NativeMethods.StudError.Success) return false;
+				if(responsePtr == IntPtr.Zero) return false;
+				try{ result = APIResponseParser.ParseResponseBody(ReadNativeUtf8(responsePtr)); }
+				finally{ NativeMethods.FreeMemory(responsePtr); }
+				newState = GetState(slotName);
+				newChatState = NativeMethods.CaptureChatState(slotName);
+				if(newChatState == IntPtr.Zero) return false;
+				tokenCount = NativeMethods.LlamaMemSize(slotName);
+				return true;
+			} finally{
+				SetState(slotName, originalState);
+				if(chatSnapshot != IntPtr.Zero) try{ NativeMethods.RestoreChatState(slotName, chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
+				_apiTokenCallback = null;
+				APIServerGenerating = false;
+				try{ MainForm.Invoke((MethodInvoker)(() => STT.RetryStart())); } catch(ObjectDisposedException){}
+			}
 		}
 		private static string ReadNativeUtf8(IntPtr ptr){
 			if(ptr == IntPtr.Zero) return null;

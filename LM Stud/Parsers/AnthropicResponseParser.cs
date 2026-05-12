@@ -7,7 +7,7 @@ namespace LMStud.Parsers{
 			var content = APIResponseParserCommon.ExtractContentText(contentArray);
 			var reasoning = APIResponseParserCommon.ExtractReasoningTextFromContent(contentArray);
 			var toolCalls = APIResponseParserCommon.ParseToolCallsFromContent(contentArray);
-			if(string.IsNullOrWhiteSpace(content) && (toolCalls == null || toolCalls.Count == 0)) return false;
+			if(!APIResponseParserCommon.HasResultContent(content, reasoning, toolCalls)) return false;
 			result = new APIClient.ChatCompletionResult(content ?? "", reasoning, toolCalls, responseId, null);
 			return true;
 		}

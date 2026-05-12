@@ -45,7 +45,7 @@ namespace LMStud{
 		}
 		private void ButLoad_Click(object sender, EventArgs e) {
 			if(listViewModels.SelectedItems.Count == 1){
-				LoadModel(listViewModels.SelectedItems[0], false, "main");
+				LoadModel("main", listViewModels.SelectedItems[0], false);
 				return;
 			}
 			ShowError("Load Main", "Select a model first.", false);
@@ -251,27 +251,27 @@ namespace LMStud{
 			if(!Common.LoadedLocalSlots.TryGetValue(slot.Name, out var loadedModel)) return null;
 			return ModelSlotManager.CanServeLocalSlot(slot) ? loadedModel : null;
 		}
-		private NativeMethods.StudError LoadModel(string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){
-			var result = NativeMethods.LoadModel(filename, jinjaTemplate, nGPULayers, mMap, mLock, numaStrategy);
+		private NativeMethods.StudError LoadModel(string slotName, string filename, string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, NativeMethods.GgmlNumaStrategy numaStrategy){
+			var result = NativeMethods.LoadModel(slotName, filename, jinjaTemplate, nGPULayers, mMap, mLock, numaStrategy);
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_loading_model, result);
 			return result;
 		}
-		private NativeMethods.StudError CreateSession(int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty, NativeMethods.QuantType kType, NativeMethods.QuantType vType){
-			var result = NativeMethods.CreateSession(nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty, (int)kType, (int)vType);
+		private NativeMethods.StudError CreateSession(string slotName, int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty, NativeMethods.QuantType kType, NativeMethods.QuantType vType){
+			var result = NativeMethods.CreateSession(slotName, nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty, (int)kType, (int)vType);
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_session, result);
 			return result;
 		}
-		private NativeMethods.StudError CreateContext(int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, NativeMethods.QuantType kType, NativeMethods.QuantType vType){
+		private NativeMethods.StudError CreateContext(string slotName, int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, NativeMethods.QuantType kType, NativeMethods.QuantType vType){
 			Generation.GenerationLock.Wait(-1);
 			NativeMethods.StudError result;
-			try{ result = NativeMethods.CreateContext(nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, (int)kType, (int)vType); } finally{ Generation.GenerationLock.Release(); }
+			try{ result = NativeMethods.CreateContext(slotName, nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, (int)kType, (int)vType); } finally{ Generation.GenerationLock.Release(); }
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_context, result);
 			return result;
 		}
-		private NativeMethods.StudError CreateSampler(float minP, float topP, int topK, float temp, float repeatPenalty){
+		private NativeMethods.StudError CreateSampler(string slotName, float minP, float topP, int topK, float temp, float repeatPenalty){
 			Generation.GenerationLock.Wait(-1);
 			NativeMethods.StudError result;
-			try{ result = NativeMethods.CreateSampler(minP, topP, topK, temp, repeatPenalty); } finally{ Generation.GenerationLock.Release(); }
+			try{ result = NativeMethods.CreateSampler(slotName, minP, topP, topK, temp, repeatPenalty); } finally{ Generation.GenerationLock.Release(); }
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_sampler, result);
 			return result;
 		}
@@ -280,8 +280,8 @@ namespace LMStud{
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_initialising_voice_input, result);
 			return result;
 		}
-		internal void LoadModel(ListViewItem modelLvi, bool autoLoad){LoadModel(modelLvi, autoLoad, "main");}
-		internal void LoadModel(ListViewItem modelLvi, bool autoLoad, string slotName){
+		internal void LoadModel(ListViewItem modelLvi, bool autoLoad){LoadModel("main", modelLvi, autoLoad);}
+		internal void LoadModel(string slotName, ListViewItem modelLvi, bool autoLoad){
 			var modelPath = modelLvi.SubItems[1].Text;
 			if(!File.Exists(modelPath)){
 				ShowError("LoadModel", "Model file not found\r\n\r\n" + modelPath, false);
@@ -312,12 +312,7 @@ namespace LMStud{
 					if(!Generation.GenerationLock.Wait(-1)) return;
 					Invoke(new MethodInvoker(() => {toolStripStatusLabel1.Text = Resources.Loading__ + fileName;}));
 					unsafe{
-						var result = NativeMethods.ActivateModelSlot(slotName);
-						if(result != NativeMethods.StudError.Success){
-							ShowError("Activate slot", result);
-							return;
-						}
-						result = LoadModel(modelPath, jinjaTmpl, gpuLayers, Common.MMap, Common.MLock, Common.NumaStrat);
+						var result = LoadModel(slotName, modelPath, jinjaTmpl, gpuLayers, Common.MMap, Common.MLock, Common.NumaStrat);
 						if(result != NativeMethods.StudError.Success){
 							Settings.Default.LoadAuto = false;
 							Settings.Default.Save();
@@ -330,7 +325,7 @@ namespace LMStud{
 						Common.ModelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(meta);
 						if(Common.ModelCtxMax <= 0) Common.CntCtxMax = ctxSize;
 						else Common.CntCtxMax = ctxSize > Common.ModelCtxMax ? Common.ModelCtxMax : ctxSize;
-						result = CreateSession(Common.CntCtxMax, Common.BatchSize, flashAttn, Common.NThreads, Common.NThreadsBatch, minP, topP, topK, temp, Common.RepPen, Common.KType, Common.VType);
+						result = CreateSession(slotName, Common.CntCtxMax, Common.BatchSize, flashAttn, Common.NThreads, Common.NThreadsBatch, minP, topP, topK, temp, Common.RepPen, Common.KType, Common.VType);
 						Common.LlModelLoaded = true;
 						if(result != NativeMethods.StudError.Success){
 							Settings.Default.LoadAuto = false;
@@ -343,11 +338,11 @@ namespace LMStud{
 						}
 						_tokenCallback = Generation.TokenCallback;
 						NativeMethods.SetTokenCallback(_tokenCallback);
-						Tools.RegisterTools();
+						Tools.RegisterTools(slotName);
 						SetSystemPrompt(false);
 						ModelSlotManager.LoadLocalIntoSlot(slotName, modelPath, makeSlotChat);
 						Common.LoadedLocalSlots[slotName] = modelLvi;
-						ApplyActiveSlotToRuntime(true);
+						ApplyActiveSlotToModel(true);
 						try{
 							BeginInvoke(new MethodInvoker(() => {
 								Settings.Default.LastModel = modelPath.Substring(modelsDir.Length);

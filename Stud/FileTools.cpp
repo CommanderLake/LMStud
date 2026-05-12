@@ -24,7 +24,7 @@ static bool IsPathAllowed(const std::filesystem::path& p){
 	if(absStr.size() == baseStr.size()) return true;
 	return absStr[baseStr.size()] == '\\';
 }
-std::string ListDirectoryTool(const char* argsJson){
+std::string ListDirectoryTool(const char* slotName, const char* argsJson){
 	std::string path = GetArgValue(argsJson, "path");
 	const std::string recStr = GetArgValue(argsJson, "recursive");
 	const bool recursive = recStr == "true" || recStr == "1";
@@ -53,7 +53,7 @@ std::string ListDirectoryTool(const char* argsJson){
 	json += "]}";
 	return json;
 }
-std::string ReadFileTool(const char* argsJson){
+std::string ReadFileTool(const char* slotName, const char* argsJson){
 	std::string path = GetArgValue(argsJson, "path");
 	const std::string startStr = GetArgValue(argsJson, "start");
 	const std::string endStr = GetArgValue(argsJson, "end");
@@ -102,7 +102,7 @@ std::string ReadFileTool(const char* argsJson){
 	std::string out = "[FILE] " + fileName + "\n```" + contentType + "\n" + body + "```\n";
 	return out;
 }
-std::string SearchFileTool(const char* argsJson){
+std::string SearchFileTool(const char* slotName, const char* argsJson){
 	const std::string path = GetArgValue(argsJson, "path");
 	const std::string keyword = GetArgValue(argsJson, "keyword");
 	const std::string maxResultsStr = GetArgValue(argsJson, "max_results");
@@ -216,7 +216,7 @@ std::string SearchFileTool(const char* argsJson){
 	json += "]}";
 	return json;
 }
-std::string CreateFileTool(const char* argsJson){
+std::string CreateFileTool(const char* slotName, const char* argsJson){
 	const std::string path = GetArgValue(argsJson, "path");
 	const std::string text = GetArgValue(argsJson, "text");
 	const std::string overwriteStr = GetArgValue(argsJson, "overwrite");
@@ -230,7 +230,7 @@ std::string CreateFileTool(const char* argsJson){
 	f << text;
 	return "{\"result\":\"success\"}";
 }
-std::string ReplaceLinesTool(const char* argsJson){
+std::string ReplaceLinesTool(const char* slotName, const char* argsJson){
 	std::string path = GetArgValue(argsJson, "path");
 	const std::string startStr = GetArgValue(argsJson, "start");
 	const std::string endStr = GetArgValue(argsJson, "end");
@@ -268,7 +268,7 @@ std::string ReplaceLinesTool(const char* argsJson){
 	}
 	return "{\"result\":\"success\"}";
 }
-std::string ApplyPatchTool(const char* argsJson){
+std::string ApplyPatchTool(const char* slotName, const char* argsJson){
 	const std::string path = GetArgValue(argsJson, "path");
 	const std::string patchStr = GetArgValue(argsJson, "patch");
 	if(path.empty() || patchStr.empty()) return "{\"error\":\"args\"}";

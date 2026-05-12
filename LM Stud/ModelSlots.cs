@@ -229,6 +229,15 @@ namespace LMStud{
 			if(!Common.LoadedLocalSlots.TryGetValue(slot.Name, out var loadedModel) || loadedModel == null) return false;
 			return SamePath(slot.ResolveLocalPath(), loadedModel.SubItems[1].Text) && NativeMethods.IsModelSlotLoaded(slot.Name);
 		}
+		internal static List<string> GetLoadedLocalSlotNames(){
+			return (from loaded in Common.LoadedLocalSlots let loadedModel = loaded.Value where loadedModel != null && loadedModel.SubItems.Count >= 2 select loaded.Key).ToList();
+		}
+		internal static List<string> GetLoadedLocalSlotNamesForPath(string modelPath){
+			var slots = new List<string>();
+			if(string.IsNullOrWhiteSpace(modelPath)) return slots;
+			slots.AddRange(from loaded in Common.LoadedLocalSlots let loadedModel = loaded.Value where loadedModel != null && loadedModel.SubItems.Count >= 2 where SamePath(loadedModel.SubItems[1].Text, modelPath) select loaded.Key);
+			return slots;
+		}
 		internal static bool CanServeApiSlot(ModelSlot slot){
 			return slot != null && slot.Source == ModelSlotSource.Api && !string.IsNullOrWhiteSpace(slot.ApiBaseUrl) && !string.IsNullOrWhiteSpace(slot.ApiModel);
 		}
