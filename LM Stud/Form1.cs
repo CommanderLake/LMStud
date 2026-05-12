@@ -189,16 +189,17 @@ namespace LMStud{
 		}
 		internal void ButReset_Click(object sender, EventArgs e){
 			if(!TryBeginRetokenization()) return;
+			panelChat.SuspendLayout();
+			try{
+				foreach(var message in ChatMessages) message.Dispose();
+				ChatMessages.Clear();
+			} finally{ panelChat.ResumeLayout(); }
 			ThreadPool.QueueUserWorkItem(_ => {
 				try{
 					var result = NativeChat.ResetState();
 					NativeMethods.CloseCommandPrompt();
 					NativeMethods.ClearWebCache();
 					Invoke(new MethodInvoker(() => {
-						panelChat.SuspendLayout();
-						foreach(var message in ChatMessages) message.Dispose();
-						panelChat.ResumeLayout();
-						ChatMessages.Clear();
 						if(result != NativeMethods.StudError.Success && result != NativeMethods.StudError.ModelNotLoaded) ShowError("Reset chat", result);
 						labelTokens.Text = NativeMethods.LlamaMemSize(NativeChat.GetActiveSlotName()) + Resources._Tokens;
 						EndRetokenization();

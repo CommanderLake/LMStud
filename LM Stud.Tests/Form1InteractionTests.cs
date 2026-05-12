@@ -41,16 +41,16 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 		}
 		[TestCleanup]
 		public void TestCleanup(){
+			ResetGenerationFlags();
+		}
+		private static void ResetGenerationFlags(){
 			Generation.Generating = false;
 			Generation.APIServerGenerating = false;
 			Generation.DialStarted = false;
 			Generation.DialPaused = false;
 		}
 		private static void ResetInteractionState(){
-			Generation.Generating = false;
-			Generation.APIServerGenerating = false;
-			Generation.DialStarted = false;
-			Generation.DialPaused = false;
+			ResetGenerationFlags();
 			_form.Invoke(new MethodInvoker(() => {
 				_form.textInput.Text = "";
 				_form.checkMarkdown.Checked = false;
@@ -70,6 +70,19 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 				Thread.Sleep(10);
 			}
 			Assert.Fail("Timed out waiting for chat reset.");
+		}
+		private static void WaitForActiveChatSlotIdle(){
+			var deadline = DateTime.UtcNow.AddSeconds(30);
+			while(DateTime.UtcNow < deadline){
+				var activeSlotName = ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? "main";
+				var slotLock = ModelSlotManager.TryEnterSlot(activeSlotName, 50);
+				if(slotLock != null){
+					slotLock.Dispose();
+					return;
+				}
+				Thread.Sleep(10);
+			}
+			Assert.Fail("Timed out waiting for chat operation to finish.");
 		}
 		[TestMethod]
 		public void Generate_WithWhitespaceInput_DoesNotAddMessage(){
@@ -115,8 +128,7 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 		}
 		[TestMethod]
 		public void MarkdownToggle_AppliesToExistingMessages(){
-			_form.Invoke(new MethodInvoker(() => {_form.ButReset_Click(null, null);}));
-			Thread.Sleep(100);
+			ResetInteractionState();
 			ChatMessageControl message = null;
 			_form.Invoke(new MethodInvoker(() => {
 				NativeMethods.AddMessage("main", MessageRole.User, "", "Original");
@@ -132,8 +144,7 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 		}
 		[TestMethod]
 		public void EditCancel_LeavesMessageUnchanged(){
-			_form.Invoke(new MethodInvoker(() => {_form.ButReset_Click(null, null);}));
-			Thread.Sleep(100);
+			ResetInteractionState();
 			ChatMessageControl message = null;
 			_form.Invoke(new MethodInvoker(() => {
 				NativeMethods.AddMessage("main", MessageRole.User, "", "Original");
@@ -145,15 +156,13 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 				_form.checkMarkdown.Checked = true;
 				_form.MsgButEditCancelOnClick(message);
 			}));
-			Thread.Sleep(100);
 			Assert.IsFalse(message.Editing, "Cancel should exit edit mode.");
 			Assert.IsTrue(message.Markdown, "Message markdown should match checkbox state after cancel.");
 			Assert.AreEqual("Original", message.Message, "Cancel should not modify the message text.");
 		}
 		[TestMethod]
 		public void EditApply_WritesBackEditedText(){
-			_form.Invoke(new MethodInvoker(() => {_form.ButReset_Click(null, null);}));
-			Thread.Sleep(100);
+			ResetInteractionState();
 			ChatMessageControl message = null;
 			_form.Invoke(new MethodInvoker(() => {
 				NativeMethods.AddMessage("main", MessageRole.User, "", "Original");
@@ -165,14 +174,13 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 				message.richTextMsg.Text = "Updated";
 				_form.MsgButEditApplyOnClick(message);
 			}));
-			Thread.Sleep(100);
+			WaitForActiveChatSlotIdle();
 			Assert.IsFalse(message.Editing, "Apply should leave edit mode.");
 			Assert.AreEqual("Updated", message.Message, "Apply should persist edits into the message body.");
 		}
 		[TestMethod]
 		public void DeleteMessage_RemovesFromChat(){
-			_form.Invoke(new MethodInvoker(() => {_form.ButReset_Click(null, null);}));
-			Thread.Sleep(100);
+			ResetInteractionState();
 			ChatMessageControl message = null;
 			_form.Invoke(new MethodInvoker(() => {
 				NativeMethods.AddMessage("main", MessageRole.User, "", "To Delete");
@@ -182,13 +190,12 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 			_form.Invoke(new MethodInvoker(() => {
 				_form.MsgButDeleteOnClick(message);
 			}));
-			Thread.Sleep(100);
+			WaitForActiveChatSlotIdle();
 			Assert.AreEqual(0, _form.ChatMessages.Count, "Message should be removed from collection after delete.");
 		}
 		[TestMethod]
 		public void Regenerate_WhenAlreadyGenerating_DoesNothing(){
-			_form.Invoke(new MethodInvoker(() => {_form.ButReset_Click(null, null);}));
-			Thread.Sleep(100);
+			ResetInteractionState();
 			ChatMessageControl message = null;
 			_form.Invoke(new MethodInvoker(() => {
 				NativeMethods.AddMessage("main", MessageRole.Assistant, "", "Assistant");
