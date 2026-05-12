@@ -606,17 +606,28 @@ StudError RetokenizeChat(const char* slotName, bool rebuildMemory = false){
 	std::vector<llama_token> promptTokens;
 	if(!TokenizePrompt(slotName, chatData.prompt, promptTokens)) return StudError::CantTokenizePrompt;
 	size_t prefix = 0;
-	while(prefix < lane.cachedTokens.size() && prefix < promptTokens.size() && lane.cachedTokens[prefix] == promptTokens[prefix]){ ++prefix; }
+	if(!rebuildMemory) while(prefix < lane.cachedTokens.size() && prefix < promptTokens.size() && lane.cachedTokens[prefix] == promptTokens[prefix]){ ++prefix; }
 	const bool canShift = llama_memory_can_shift(model->session.memory);
 	const size_t oldSz = lane.cachedTokens.size();
 	const size_t newSz = promptTokens.size();
 	size_t suffix = 0;
-	if(canShift && oldSz > 0 && newSz > 0){ while(suffix + prefix < oldSz && suffix + prefix < newSz && suffix < oldSz && suffix < newSz && lane.cachedTokens[oldSz - 1 - suffix] == promptTokens[newSz - 1 - suffix]){ ++suffix; } }
+	if(!rebuildMemory && canShift && oldSz > 0 && newSz > 0){ while(suffix + prefix < oldSz && suffix + prefix < newSz && suffix < oldSz && suffix < newSz && lane.cachedTokens[oldSz - 1 - suffix] == promptTokens[newSz - 1 - suffix]){ ++suffix; } }
 	const size_t oldSize = lane.cachedTokens.size();
 	const size_t newSize = promptTokens.size();
-	if(prefix == oldSize && oldSize == newSize) return StudError::Success;
-	if(newSize > static_cast<size_t>(llama_n_ctx(model->session.ctx))){ return StudError::ConvTooLong; }
-	if(rebuildMemory || !canShift){
+	if(!rebuildMemory && prefix == oldSize && oldSize == newSize) return StudError::Success;
+	if(newSize > static_cast<size_t>(llama_n_ctx(model->session.ctx))){
+		if(rebuildMemory){
+			if(model->session.memory) llama_memory_clear(model->session.memory, true);
+			lane.cachedTokens.clear();
+			if(lane.sampler) llama_sampler_reset(lane.sampler);
+		}
+		return StudError::ConvTooLong;
+	}
+	if(rebuildMemory){
+		prefix = 0;
+		suffix = 0;
+		if(model->session.memory) llama_memory_clear(model->session.memory, true);
+	} else if(!canShift){
 		if(prefix == 0 || LlamaMemSize(slotName) < static_cast<llama_pos>(prefix - 1)){
 			prefix = 0;
 			llama_memory_clear(model->session.memory, true);
@@ -634,7 +645,7 @@ StudError RetokenizeChat(const char* slotName, bool rebuildMemory = false){
 		}
 	} else{
 		suffix = 0;
-		if(prefix < oldSize){ llama_memory_seq_rm(model->session.memory, 0, prefix, -1); }
+		if(!rebuildMemory && prefix < oldSize){ llama_memory_seq_rm(model->session.memory, 0, prefix, -1); }
 	}
 	llama_sampler_reset(lane.sampler);
 	for(size_t i = 0; i < prefix; ++i){ llama_sampler_accept(lane.sampler, promptTokens[i]); }
