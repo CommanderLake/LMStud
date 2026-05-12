@@ -98,7 +98,7 @@ namespace LMStud{
 		private bool ModelsFolderExists(bool showError){
 			if(!Directory.Exists(Common.ModelsDir)){
 				if(showError) MessageBox.Show(this, Resources.Models_folder_not_found_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
-				tabControl1.SelectTab(1);
+				tabControlMain.SelectTab(1);
 				textModelsDir.Focus();
 				return false;
 			}

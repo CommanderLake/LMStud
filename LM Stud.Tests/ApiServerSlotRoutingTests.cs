@@ -148,6 +148,22 @@ namespace LM_Stud.Tests{
 			}
 		}
 		[TestMethod]
+		public void LoadLocalIntoSlot_DoesNotAddServerUseToExistingNonServerSlot(){
+			var slotName = "test_local_nonserver_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+			try{
+				ModelSlotManager.AddOrUpdate(new ModelSlot{
+					Name = slotName, Source = ModelSlotSource.Local, LocalPath = "old.gguf", Use = ModelSlotUse.Dialectic
+				});
+				ModelSlotManager.LoadLocalIntoSlot(slotName, "new.gguf", true);
+				var slot = ModelSlotManager.GetSlot(slotName);
+				Assert.IsNotNull(slot);
+				Assert.IsTrue(slot.HasUse(ModelSlotUse.Chat), "Loading as the active chat slot should add Chat use.");
+				Assert.IsFalse(slot.HasUse(ModelSlotUse.Server), "Loading a non-server slot should preserve the user's Server checkbox state.");
+			} finally{
+				ModelSlotManager.Remove(slotName);
+			}
+		}
+		[TestMethod]
 		public void TryExecuteToolCall_IgnoresApiSlotsThatAreNotEnabledAsTools(){
 			var slotName = "test_hidden_tool_" + Guid.NewGuid().ToString("N").Substring(0, 8);
 			try{

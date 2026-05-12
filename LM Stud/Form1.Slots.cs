@@ -222,7 +222,7 @@ namespace LMStud{
 			if(tabControlModelStuff.SelectedTab != tabPageSlots || listViewSlots.SelectedItems.Count != 1) return false;
 			var slot = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
 			if(slot.Source == ModelSlotSource.Api){
-				slot.Use |= ModelSlotUse.Chat | ModelSlotUse.Server;
+				slot.Use |= ModelSlotUse.Chat;
 				ModelSlotManager.AddOrUpdate(slot);
 				ApplyActiveSlotToModel(true);
 				PopulateSlotsList();

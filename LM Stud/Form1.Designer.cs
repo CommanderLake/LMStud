@@ -139,7 +139,7 @@ namespace LMStud
 			this.label13 = new System.Windows.Forms.Label();
 			this.progressBar1 = new System.Windows.Forms.ProgressBar();
 			this.butDownload = new System.Windows.Forms.Button();
-			this.tabControl1 = new System.Windows.Forms.TabControl();
+			this.tabControlMain = new System.Windows.Forms.TabControl();
 			this.tabPageChat = new System.Windows.Forms.TabPage();
 			this.checkDialectic = new System.Windows.Forms.CheckBox();
 			this.checkAutoScroll = new System.Windows.Forms.CheckBox();
@@ -205,6 +205,10 @@ namespace LMStud
 			this.numThreads = new System.Windows.Forms.NumericUpDown();
 			this.label2 = new System.Windows.Forms.Label();
 			this.groupAdvanced = new System.Windows.Forms.GroupBox();
+			this.comboVType = new System.Windows.Forms.ComboBox();
+			this.label39 = new System.Windows.Forms.Label();
+			this.comboKType = new System.Windows.Forms.ComboBox();
+			this.label38 = new System.Windows.Forms.Label();
 			this.numMinP = new System.Windows.Forms.NumericUpDown();
 			this.comboNUMAStrat = new System.Windows.Forms.ComboBox();
 			this.numRepPen = new System.Windows.Forms.NumericUpDown();
@@ -247,10 +251,6 @@ namespace LMStud
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
 			this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
-			this.comboKType = new System.Windows.Forms.ComboBox();
-			this.label38 = new System.Windows.Forms.Label();
-			this.comboVType = new System.Windows.Forms.ComboBox();
-			this.label39 = new System.Windows.Forms.Label();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -277,7 +277,7 @@ namespace LMStud
 			this.splitContainer3.Panel1.SuspendLayout();
 			this.splitContainer3.Panel2.SuspendLayout();
 			this.splitContainer3.SuspendLayout();
-			this.tabControl1.SuspendLayout();
+			this.tabControlMain.SuspendLayout();
 			this.tabPageChat.SuspendLayout();
 			this.tabPageSettings.SuspendLayout();
 			this.groupBox9.SuspendLayout();
@@ -1166,15 +1166,15 @@ namespace LMStud
 			this.butDownload.UseVisualStyleBackColor = true;
 			this.butDownload.Click += new System.EventHandler(this.ButDownload_Click);
 			// 
-			// tabControl1
+			// tabControlMain
 			// 
-			resources.ApplyResources(this.tabControl1, "tabControl1");
-			this.tabControl1.Controls.Add(this.tabPageChat);
-			this.tabControl1.Controls.Add(this.tabPageSettings);
-			this.tabControl1.Controls.Add(this.tabPageModels);
-			this.tabControl1.Controls.Add(this.tabPageHuggingFace);
-			this.tabControl1.Name = "tabControl1";
-			this.tabControl1.SelectedIndex = 0;
+			resources.ApplyResources(this.tabControlMain, "tabControlMain");
+			this.tabControlMain.Controls.Add(this.tabPageChat);
+			this.tabControlMain.Controls.Add(this.tabPageSettings);
+			this.tabControlMain.Controls.Add(this.tabPageModels);
+			this.tabControlMain.Controls.Add(this.tabPageHuggingFace);
+			this.tabControlMain.Name = "tabControlMain";
+			this.tabControlMain.SelectedIndex = 0;
 			// 
 			// tabPageChat
 			// 
@@ -1800,6 +1800,40 @@ namespace LMStud
 			this.groupAdvanced.Name = "groupAdvanced";
 			this.groupAdvanced.TabStop = false;
 			// 
+			// comboVType
+			// 
+			resources.ApplyResources(this.comboVType, "comboVType");
+			this.comboVType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.comboVType.FormattingEnabled = true;
+			this.comboVType.Items.AddRange(new object[] {
+            resources.GetString("comboVType.Items"),
+            resources.GetString("comboVType.Items1"),
+            resources.GetString("comboVType.Items2")});
+			this.comboVType.Name = "comboVType";
+			this.toolTip1.SetToolTip(this.comboVType, resources.GetString("comboVType.ToolTip"));
+			// 
+			// label39
+			// 
+			resources.ApplyResources(this.label39, "label39");
+			this.label39.Name = "label39";
+			// 
+			// comboKType
+			// 
+			resources.ApplyResources(this.comboKType, "comboKType");
+			this.comboKType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.comboKType.FormattingEnabled = true;
+			this.comboKType.Items.AddRange(new object[] {
+            resources.GetString("comboKType.Items"),
+            resources.GetString("comboKType.Items1"),
+            resources.GetString("comboKType.Items2")});
+			this.comboKType.Name = "comboKType";
+			this.toolTip1.SetToolTip(this.comboKType, resources.GetString("comboKType.ToolTip"));
+			// 
+			// label38
+			// 
+			resources.ApplyResources(this.label38, "label38");
+			this.label38.Name = "label38";
+			// 
 			// numMinP
 			// 
 			resources.ApplyResources(this.numMinP, "numMinP");
@@ -2193,47 +2227,13 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.saveFileDialog1, "saveFileDialog1");
 			// 
-			// comboKType
-			// 
-			resources.ApplyResources(this.comboKType, "comboKType");
-			this.comboKType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-			this.comboKType.FormattingEnabled = true;
-			this.comboKType.Items.AddRange(new object[] {
-            resources.GetString("comboKType.Items"),
-            resources.GetString("comboKType.Items1"),
-            resources.GetString("comboKType.Items2")});
-			this.comboKType.Name = "comboKType";
-			this.toolTip1.SetToolTip(this.comboKType, resources.GetString("comboKType.ToolTip"));
-			// 
-			// label38
-			// 
-			resources.ApplyResources(this.label38, "label38");
-			this.label38.Name = "label38";
-			// 
-			// comboVType
-			// 
-			resources.ApplyResources(this.comboVType, "comboVType");
-			this.comboVType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-			this.comboVType.FormattingEnabled = true;
-			this.comboVType.Items.AddRange(new object[] {
-            resources.GetString("comboVType.Items"),
-            resources.GetString("comboVType.Items1"),
-            resources.GetString("comboVType.Items2")});
-			this.comboVType.Name = "comboVType";
-			this.toolTip1.SetToolTip(this.comboVType, resources.GetString("comboVType.ToolTip"));
-			// 
-			// label39
-			// 
-			resources.ApplyResources(this.label39, "label39");
-			this.label39.Name = "label39";
-			// 
 			// Form1
 			// 
 			resources.ApplyResources(this, "$this");
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
 			this.AutoValidate = System.Windows.Forms.AutoValidate.Disable;
 			this.Controls.Add(this.statusStrip1);
-			this.Controls.Add(this.tabControl1);
+			this.Controls.Add(this.tabControlMain);
 			this.DoubleBuffered = true;
 			this.KeyPreview = true;
 			this.Name = "Form1";
@@ -2272,7 +2272,7 @@ namespace LMStud
 			this.splitContainer3.Panel2.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).EndInit();
 			this.splitContainer3.ResumeLayout(false);
-			this.tabControl1.ResumeLayout(false);
+			this.tabControlMain.ResumeLayout(false);
 			this.tabPageChat.ResumeLayout(false);
 			this.tabPageChat.PerformLayout();
 			this.tabPageSettings.ResumeLayout(false);
@@ -2328,7 +2328,7 @@ namespace LMStud
 		internal System.Windows.Forms.TextBox textInput;
 		private System.Windows.Forms.SplitContainer splitContainer1;
 		internal System.Windows.Forms.Button butGen;
-		private System.Windows.Forms.TabControl tabControl1;
+		private System.Windows.Forms.TabControl tabControlMain;
 		private System.Windows.Forms.TabPage tabPageChat;
 		private System.Windows.Forms.TabPage tabPageSettings;
 		private System.Windows.Forms.NumericUpDown numThreads;

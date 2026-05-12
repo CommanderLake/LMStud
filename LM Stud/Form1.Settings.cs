@@ -366,7 +366,7 @@ namespace LMStud{
 		}
 		private void ButWhispDown_Click(object sender, EventArgs e){
 			HugLoadFiles("ggerganov", "whisper.cpp", ".bin");
-			tabControl1.SelectTab(3);
+			tabControlMain.SelectTab(3);
 		}
 		private void LinkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e){
 			textSystemPrompt.SelectAll();
@@ -377,7 +377,7 @@ Always read a file and verify its contents before making changes.");
 		}
 		private void ButDownloadVADModel_Click(object sender, EventArgs e){
 			HugLoadFiles("ggml-org", "whisper-vad", ".bin");
-			tabControl1.SelectTab(3);
+			tabControlMain.SelectTab(3);
 		}
 		private void ComboVADModel_DropDown(object sender, EventArgs e){
 			if(!Directory.Exists(Common.ModelsDir)) return;

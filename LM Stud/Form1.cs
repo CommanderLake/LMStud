@@ -49,6 +49,7 @@ namespace LMStud{
 			ApplyActiveSlotToModel(true, false);
 			LoadModelSettings();
 			PopulateSlotsList();
+			tabControlModelStuff.SelectedIndex = 2;
 		}
 		private void Form1_Load(object sender, EventArgs e){
 			NativeMethods.SetHWnd(Handle);
@@ -129,7 +130,7 @@ namespace LMStud{
 					if(!File.Exists(whisperModelPath)){
 						checkVoiceInput.Checked = false;
 						MessageBox.Show(this, Resources.Error_Whisper_model_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
-						tabControl1.SelectTab(1);
+						tabControlMain.SelectTab(1);
 						comboWhisperModel.Focus();
 						return;
 					}

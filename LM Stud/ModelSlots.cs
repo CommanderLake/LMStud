@@ -228,7 +228,7 @@ namespace LMStud{
 				var promoteToChat = makeChat || string.Equals(slot.Name, MainSlotName, StringComparison.OrdinalIgnoreCase);
 				if(loadedDifferentChatSlot && !string.Equals(slot.Name, MainSlotName, StringComparison.OrdinalIgnoreCase)) promoteToChat = false;
 				if(promoteToChat){
-					slot.Use |= ModelSlotUse.Chat | ModelSlotUse.Server;
+					slot.Use |= ModelSlotUse.Chat;
 					ActiveChatSlotName = slot.Name;
 				}
 				EnsureSingleChatSlot();
