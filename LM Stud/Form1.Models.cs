@@ -223,8 +223,7 @@ namespace LMStud{
 		private void SetSystemPromptsForLoadedSlots(){SetSystemPromptsForSlots(ModelSlotManager.GetLoadedLocalSlotNames());}
 		private string GetSystemPromptForSlot(string slotName){
 			if(!string.IsNullOrWhiteSpace(slotName) && Common.LoadedLocalSlots.TryGetValue(slotName, out var loadedModel) && loadedModel?.SubItems.Count > 1){
-				var key = GetModelSettingsKey(loadedModel.SubItems[1].Text);
-				if(key != null && _modelSettings.TryGetValue(key, out var overrides) && overrides.OverrideSettings) return overrides.SystemPrompt ?? "";
+				if(TryGetEnabledModelSettings(loadedModel.SubItems[1].Text, out var overrides)) return overrides.SystemPrompt ?? "";
 			}
 			return Common.SystemPrompt ?? "";
 		}
@@ -304,7 +303,8 @@ namespace LMStud{
 			if(activeChatSlotLoaded && !loadingActiveChatSlot && !string.Equals(slotName, "main", StringComparison.OrdinalIgnoreCase)) makeSlotChat = false;
 			ThreadPool.QueueUserWorkItem(o => {
 				var slotLock = ModelSlotManager.EnterSlot(slotName);
-				var overrideSettings = _modelSettings.TryGetValue(modelPath.Substring(modelsDir.Length), out var overrides) && overrides.OverrideSettings;
+				ModelSettings overrides;
+				var overrideSettings = TryGetEnabledModelSettings(modelPath, out overrides);
 				var ctxSize = overrideSettings ? overrides.CtxSize : Common.CtxSize;
 				var gpuLayers = overrideSettings ? overrides.GPULayers : Common.GPULayers;
 				var temp = overrideSettings ? overrides.Temp : Common.Temp;
@@ -312,7 +312,7 @@ namespace LMStud{
 				var topP = overrideSettings ? overrides.TopP : Common.TopP;
 				var topK = overrideSettings ? overrides.TopK : Common.TopK;
 				var flashAttn = overrideSettings ? overrides.FlashAttn : Common.FlashAttn;
-				var jinjaTmpl = overrides != null && overrides.OverrideJinja && File.Exists(overrides.JinjaTemplate) ? File.ReadAllText(overrides.JinjaTemplate) : null;
+				var jinjaTmpl = overrideSettings && overrides != null && overrides.OverrideJinja && File.Exists(overrides.JinjaTemplate) ? File.ReadAllText(overrides.JinjaTemplate) : null;
 				try{
 					Invoke(new MethodInvoker(() => {toolStripStatusLabel1.Text = Resources.Loading__ + fileName;}));
 					unsafe{
@@ -326,10 +326,11 @@ namespace LMStud{
 							return;
 						}
 						Common.LoadedModel = modelLvi;
-						Common.ModelCtxMax = GGUFMetadataManager.GetGGUFCtxMax(meta);
-						if(Common.ModelCtxMax <= 0) Common.CntCtxMax = ctxSize;
-						else Common.CntCtxMax = ctxSize > Common.ModelCtxMax ? Common.ModelCtxMax : ctxSize;
-						result = CreateSession(slotName, Common.CntCtxMax, Common.BatchSize, flashAttn, Common.NThreads, Common.NThreadsBatch, minP, topP, topK, temp, Common.RepPen, Common.KType, Common.VType);
+						var modelCtxMax = GetModelContextMax(modelLvi);
+						var contextSize = ClampContextSize(modelLvi, ctxSize);
+						Common.ModelCtxMax = modelCtxMax;
+						Common.CntCtxMax = contextSize;
+						result = CreateSession(slotName, contextSize, Common.BatchSize, flashAttn, Common.NThreads, Common.NThreadsBatch, minP, topP, topK, temp, Common.RepPen, Common.KType, Common.VType);
 						Common.LlModelLoaded = true;
 						if(result != NativeMethods.StudError.Success){
 							Settings.Default.LoadAuto = false;

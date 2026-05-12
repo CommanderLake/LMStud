@@ -72,9 +72,12 @@ namespace LMStud{
 		}
 		private void ButApply_Click(object sender, EventArgs e){
 			var popModels = false;
-			var reloadModel = false;
-			var reloadCtx = false;
-			var reloadSmpl = false;
+			var reloadModelForAllSlots = false;
+			var reloadModelForDefaultSlots = false;
+			var reloadCtxForAllSlots = false;
+			var reloadCtxForDefaultSlots = false;
+			var reloadSmplForAllSlots = false;
+			var reloadSmplForDefaultSlots = false;
 			var reloadWhisper = false;
 			var setVAD = false;
 			var setWWS = false;
@@ -82,15 +85,8 @@ namespace LMStud{
 			var registerTools = false;
 			var setSystemPrompt = false;
 			var modelOverrideChanged = false;
-			var loadedModel = Common.LoadedModel;
-			ModelSettings ms = default;
-			var overrideSettings = Common.LlModelLoaded && loadedModel != null && _modelSettings.TryGetValue(loadedModel.SubItems[1].Text.Substring(Common.ModelsDir.Length), out ms) && ms.OverrideSettings;
 			UpdateSetting(ref Common.SystemPrompt, textSystemPrompt.Text, value => {
 				Settings.Default.SystemPrompt = value;
-				if(overrideSettings){
-					modelOverrideChanged = true;
-					return;
-				}
 				setSystemPrompt = true;
 			});
 			if(Directory.Exists(textModelsDir.Text)){
@@ -106,86 +102,59 @@ namespace LMStud{
 			}
 			UpdateSetting(ref Common.CtxSize, (int)numCtxSize.Value, value => {
 				Settings.Default.CtxSize = value;
-				if(overrideSettings){
-					modelOverrideChanged = true;
-					return;
-				}
-				if(!Common.LlModelLoaded) return;
-				if(Common.ModelCtxMax <= 0) Common.CntCtxMax = Common.CtxSize;
-				else Common.CntCtxMax = Common.CtxSize > Common.ModelCtxMax ? Common.ModelCtxMax : Common.CtxSize;
-				reloadCtx = true;
+				reloadCtxForDefaultSlots = true;
 			});
 			UpdateSetting(ref Common.GPULayers, (int)numGPULayers.Value, value => {
 				Settings.Default.GPULayers = value;
-				if(overrideSettings){
-					modelOverrideChanged = true;
-					return;
-				}
-				reloadModel = true;
+				reloadModelForDefaultSlots = true;
 			});
 			UpdateSetting(ref Common.Temp, (float)numTemp.Value, value => {
 				Settings.Default.Temp = numTemp.Value;
-				if(overrideSettings){
-					modelOverrideChanged = true;
-					return;
-				}
-				reloadSmpl = true;
+				reloadSmplForDefaultSlots = true;
 			});
 			UpdateSetting(ref Common.NGen, (int)numNGen.Value, value => {Settings.Default.NGen = value;});
 			var newNumaIndex = comboNUMAStrat.SelectedIndex;
 			UpdateSetting(ref Common.NumaStrat, (NativeMethods.GgmlNumaStrategy)newNumaIndex, value => {
 				Settings.Default.NUMAStrat = newNumaIndex;
-				reloadModel = true;
+				reloadModelForAllSlots = true;
 			});
 			UpdateSetting(ref Common.RepPen, (float)numRepPen.Value, value => {
 				Settings.Default.RepPen = numRepPen.Value;
-				reloadSmpl = true;
+				reloadSmplForAllSlots = true;
 			});
 			UpdateSetting(ref Common.TopK, (int)numTopK.Value, value => {
 				Settings.Default.TopK = value;
-				if(overrideSettings){
-					modelOverrideChanged = true;
-					return;
-				}
-				reloadSmpl = true;
+				reloadSmplForDefaultSlots = true;
 			});
 			UpdateSetting(ref Common.TopP, (float)numTopP.Value, value => {
 				Settings.Default.TopP = numTopP.Value;
-				if(overrideSettings){
-					modelOverrideChanged = true;
-					return;
-				}
-				reloadSmpl = true;
+				reloadSmplForDefaultSlots = true;
 			});
 			UpdateSetting(ref Common.MinP, (float)numMinP.Value, value => {
 				Settings.Default.MinP = numMinP.Value;
-				if(overrideSettings){
-					modelOverrideChanged = true;
-					return;
-				}
-				reloadSmpl = true;
+				reloadSmplForDefaultSlots = true;
 			});
 			UpdateSetting(ref Common.BatchSize, (int)numBatchSize.Value, value => {
 				Settings.Default.BatchSize = value;
-				reloadCtx = true;
+				reloadCtxForAllSlots = true;
 			});
 			var newKType = comboKType.SelectedIndex;
 			UpdateSetting(ref Common.KType, (NativeMethods.QuantType)newKType, value => {
 				Settings.Default.KType = newKType;
-				reloadCtx = true;
+				reloadCtxForAllSlots = true;
 			});
 			var newVType = comboVType.SelectedIndex;
 			UpdateSetting(ref Common.VType, (NativeMethods.QuantType)newVType, value => {
 				Settings.Default.VType = newVType;
-				reloadCtx = true;
+				reloadCtxForAllSlots = true;
 			});
 			UpdateSetting(ref Common.MMap, checkMMap.Checked, value => {
 				Settings.Default.MMap = value;
-				reloadModel = true;
+				reloadModelForAllSlots = true;
 			});
 			UpdateSetting(ref Common.MLock, checkMLock.Checked, value => {
 				Settings.Default.MLock = value;
-				reloadModel = true;
+				reloadModelForAllSlots = true;
 			});
 			if(Common.NThreads != (int)numThreads.Value || Common.NThreadsBatch != (int)numThreadsBatch.Value){
 				UpdateSetting(ref Common.NThreads, (int)numThreads.Value, value => {Settings.Default.Threads = value;});
@@ -231,11 +200,7 @@ namespace LMStud{
 			});
 			UpdateSetting(ref Common.FlashAttn, checkFlashAttn.CheckState, value => {
 				Settings.Default.FlashAttn = (uint)value;
-				if(overrideSettings){
-					modelOverrideChanged = true;
-					return;
-				}
-				reloadCtx = true;
+				reloadCtxForDefaultSlots = true;
 			});
 			UpdateSetting(ref Common.GoogleAPIKey, textGoogleApiKey.Text, value => {
 				Settings.Default.GoogleAPIKey = value;
@@ -309,18 +274,34 @@ namespace LMStud{
 				PopulateModels();
 				PopulateWhisperModels(true, true);
 			}
-			var flash = overrideSettings ? ms.FlashAttn : Common.FlashAttn;
-			var minP = overrideSettings ? ms.MinP : Common.MinP;
-			var topP = overrideSettings ? ms.TopP : Common.TopP;
-			var topK = overrideSettings ? ms.TopK : Common.TopK;
-			var temp = overrideSettings ? ms.Temp : Common.Temp;
-			if(Common.LlModelLoaded && loadedModel != null){
-				var slots = ModelSlotManager.GetLoadedLocalSlotNames();
-				if(reloadModel && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes){
-					foreach(var slot in slots) LoadModel(slot, loadedModel, false);
-				}else{
-					if(reloadCtx) foreach(var slot in slots) CreateContext(slot, Common.CntCtxMax, Common.BatchSize, flash, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType);
-					if(reloadSmpl) foreach(var slot in slots) CreateSampler(slot, minP, topP, topK, temp, Common.RepPen);
+			var defaultModelSettingChanged = setSystemPrompt || reloadModelForDefaultSlots || reloadCtxForDefaultSlots || reloadSmplForDefaultSlots;
+			if(Common.LlModelLoaded){
+				var slots = GetLoadedLocalSlotItems();
+				if(defaultModelSettingChanged && slots.Any(slot => slot.HasOverrides)) modelOverrideChanged = true;
+				var anyReloadModel = slots.Any(slot => reloadModelForAllSlots || (reloadModelForDefaultSlots && !slot.HasOverrides));
+				var reloadLoadedModels = anyReloadModel &&
+					MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+				foreach(var slot in slots){
+					var reloadModel = reloadModelForAllSlots || (reloadModelForDefaultSlots && !slot.HasOverrides);
+					var reloadCtx = reloadCtxForAllSlots || (reloadCtxForDefaultSlots && !slot.HasOverrides);
+					var reloadSmpl = reloadSmplForAllSlots || (reloadSmplForDefaultSlots && !slot.HasOverrides);
+					if(reloadModel && reloadLoadedModels){
+						LoadModel(slot.SlotName, slot.LoadedModel, false);
+						continue;
+					}
+					var settings = slot.Overrides;
+					var ctxSize = slot.HasOverrides ? settings.CtxSize : Common.CtxSize;
+					var flash = slot.HasOverrides ? settings.FlashAttn : Common.FlashAttn;
+					var minP = slot.HasOverrides ? settings.MinP : Common.MinP;
+					var topP = slot.HasOverrides ? settings.TopP : Common.TopP;
+					var topK = slot.HasOverrides ? settings.TopK : Common.TopK;
+					var temp = slot.HasOverrides ? settings.Temp : Common.Temp;
+					var contextSize = ClampContextSize(slot.LoadedModel, ctxSize);
+					if(reloadCtx){
+						UpdateCommonContextLimitForSlot(slot.SlotName, slot.LoadedModel, contextSize);
+						CreateContext(slot.SlotName, contextSize, Common.BatchSize, flash, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType);
+					}
+					if(reloadSmpl) CreateSampler(slot.SlotName, minP, topP, topK, temp, Common.RepPen);
 				}
 			}
 			if(setVAD) NativeMethods.SetVADThresholds(Common.VADThreshold, Common.FreqThreshold);
@@ -342,7 +323,7 @@ namespace LMStud{
 			if(setGoogle) NativeMethods.SetGoogle(Common.GoogleAPIKey, Common.GoogleSearchID, Common.GoogleSearchResultCount);
 			if(registerTools) foreach(var slot in ModelSlotManager.Slots) Tools.RegisterTools(slot.Name);
 			if(registerTools || setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForLoadedSlots();});
-			if(overrideSettings && modelOverrideChanged) MessageBox.Show(this, Resources.The_modified_settings_are_overridden_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
+			if(modelOverrideChanged) MessageBox.Show(this, Resources.The_modified_settings_are_overridden_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 			Settings.Default.Save();
 			var activeSlot = ModelSlotManager.GetActiveChatSlot();
 			if(activeSlot?.Source != ModelSlotSource.Api && Common.LlModelLoaded){

@@ -30,8 +30,16 @@ namespace Stud{
 		bool assNextGen = false;
 		int batchSize = 1;
 	};
+	struct StudSharedModel{
+		llama_model* llModel = nullptr;
+		std::string cacheKey;
+		~StudSharedModel(){
+			if(llModel) llama_model_free(llModel);
+		}
+	};
 	struct StudModel{
 		llama_model* llModel = nullptr;
+		std::shared_ptr<StudSharedModel> sharedModel = nullptr;
 		StudSession session;
 		common_chat_templates_ptr chatTemplates = nullptr;
 		jinja::caps caps;
@@ -39,6 +47,9 @@ namespace Stud{
 	};
 	inline HWND hWnd = nullptr;
 	inline std::unordered_map<std::string, std::unique_ptr<StudModel>> models;
+	inline std::unordered_map<std::string, std::weak_ptr<StudSharedModel>> sharedModels;
 	inline std::mutex modelsMutex;
+	inline std::mutex sharedModelsMutex;
+	inline std::mutex llamaLogMutex;
 	inline TokenCallbackFn tokenCb = nullptr;
 }

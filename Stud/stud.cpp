@@ -11,6 +11,7 @@
 #include <cctype>
 #include <cstring>
 #include <mutex>
+#include <system_error>
 #include <thread>
 #include <jinja\parser.h>
 
@@ -165,15 +166,73 @@ private:
 	common_chat_parser_params _syntaxSnapshot{};
 	bool _restored = false;
 };
+static std::string NormalizeModelPathKey(const char* filename){
+	if(!filename || filename[0] == '\0') return std::string();
+	std::filesystem::path path = std::filesystem::u8path(filename);
+	std::error_code ec;
+	auto normalized = std::filesystem::weakly_canonical(path, ec);
+	if(ec){
+		ec.clear();
+		normalized = std::filesystem::absolute(path, ec);
+		if(ec) normalized = path;
+	}
+	normalized = normalized.lexically_normal();
+	auto key = normalized.u8string();
+	std::transform(key.begin(), key.end(), key.begin(), [](unsigned char ch){ return static_cast<char>(std::tolower(ch)); });
+	return key;
+}
+static std::string BuildSharedModelCacheKey(const char* filename, const int nGPULayers, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy){
+	std::string key = NormalizeModelPathKey(filename);
+	key += "|gpu=" + std::to_string(nGPULayers);
+	key += "|mmap=" + std::to_string(mMap ? 1 : 0);
+	key += "|mlock=" + std::to_string(mLock ? 1 : 0);
+	key += "|numa=" + std::to_string(static_cast<int>(numaStrategy));
+	return key;
+}
+static std::shared_ptr<Stud::StudSharedModel> LoadOrReuseSharedModel(const char* filename, const int nGPULayers, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy){
+	if(!filename || filename[0] == '\0'){
+		_lastErrorMessage = "Model filename is empty.";
+		return nullptr;
+	}
+	const auto key = BuildSharedModelCacheKey(filename, nGPULayers, mMap, mLock, numaStrategy);
+	std::lock_guard<std::mutex> cacheLock(Stud::sharedModelsMutex);
+	const auto it = Stud::sharedModels.find(key);
+	if(it != Stud::sharedModels.end()){
+		if(auto shared = it->second.lock()) return shared;
+		Stud::sharedModels.erase(it);
+	}
+	auto params = llama_model_default_params();
+	params.n_gpu_layers = nGPULayers;
+	params.use_mlock = mLock;
+	params.use_mmap = mMap;
+	llama_numa_init(numaStrategy);
+	_gpuOomStud = false;
+	llama_model* llModel = nullptr;
+	{
+		std::lock_guard<std::mutex> logLock(Stud::llamaLogMutex);
+		llama_log_set(GPUOomLogCallbackStud, nullptr);
+		try{
+			llModel = llama_model_load_from_file(filename, params);
+		} catch(const std::exception& e){ _lastErrorMessage = e.what(); } catch(...){ _lastErrorMessage = "llama_model_load_from_file failed."; }
+		llama_log_set(nullptr, nullptr);
+	}
+	if(!llModel) return nullptr;
+	auto shared = std::make_shared<Stud::StudSharedModel>();
+	shared->llModel = llModel;
+	shared->cacheKey = key;
+	Stud::sharedModels[key] = shared;
+	return shared;
+}
 bool IsModelSlotLoaded(const char* slotName){
 	const auto* runtime = FindModel(NormName(slotName));
-	return runtime && runtime->llModel && runtime->session.ctx;
+	return runtime && runtime->sharedModel && runtime->llModel && runtime->session.ctx;
 }
 StudError CreateContext(const char* slotName, const int nCtx, const int batchSize, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch, const int kType, const int vType){
 	const auto model = GetModel(slotName);
 	if(model->session.ctx){
 		llama_free(model->session.ctx);
 		model->session.ctx = nullptr;
+		model->session.memory = nullptr;
 	}
 	auto ctxParams = llama_context_default_params();
 	ctxParams.n_ctx = nCtx;
@@ -198,15 +257,15 @@ StudError CreateContext(const char* slotName, const int nCtx, const int batchSiz
 			break;
 		default: ;
 	}
-	_gpuOomStud = false;
-	llama_log_set(GPUOomLogCallbackStud, nullptr);
-	try{
-		model->session.ctx = llama_init_from_model(model->llModel, ctxParams);
-	} catch(std::exception& e){
-		_lastErrorMessage = e.what();
-		return StudError::CantCreateContext;
+	{
+		std::lock_guard<std::mutex> logLock(Stud::llamaLogMutex);
+		_gpuOomStud = false;
+		llama_log_set(GPUOomLogCallbackStud, nullptr);
+		try{
+			model->session.ctx = llama_init_from_model(model->llModel, ctxParams);
+		} catch(const std::exception& e){ _lastErrorMessage = e.what(); } catch(...){ _lastErrorMessage = "llama_init_from_model failed."; }
+		llama_log_set(nullptr, nullptr);
 	}
-	llama_log_set(nullptr, nullptr);
 	if(!model->session.ctx){ return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantCreateContext; }
 	model->session.memory = llama_get_memory(model->session.ctx);
 	auto result = StudError::Success;
@@ -258,6 +317,7 @@ void DestroySession(const char* slotName){
 	if(model->session.ctx){
 		llama_free(model->session.ctx);
 		model->session.ctx = nullptr;
+		model->session.memory = nullptr;
 	}
 	DialecticFree(slotName);
 }
@@ -269,23 +329,15 @@ void FreeModel(const char* slotName){
 	model->session.vocab = nullptr;
 	model->chatTemplates = nullptr;
 	model->caps = jinja::caps();
-	if(model->llModel){
-		llama_model_free(model->llModel);
-		model->llModel = nullptr;
-	}
+	model->sharedModel.reset();
+	model->llModel = nullptr;
 }
+void FreeModelSlot(const char* slotName){ FreeModel(slotName); }
 StudError LoadModel(const char* slotName, const char* filename, const char* jinjaTemplate, const int nGPULayers, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy){
 	const auto model = GetModel(slotName);
-	if(model->llModel) FreeModel(slotName);
-	auto params = llama_model_default_params();
-	params.n_gpu_layers = nGPULayers;
-	params.use_mlock = mLock;
-	params.use_mmap = mMap;
-	llama_numa_init(numaStrategy);
-	_gpuOomStud = false;
-	llama_log_set(GPUOomLogCallbackStud, nullptr);
-	model->llModel = llama_model_load_from_file(filename, params);
-	llama_log_set(nullptr, nullptr);
+	if(model->llModel || model->sharedModel) FreeModel(slotName);
+	model->sharedModel = LoadOrReuseSharedModel(filename, nGPULayers, mMap, mLock, numaStrategy);
+	model->llModel = model->sharedModel ? model->sharedModel->llModel : nullptr;
 	if(!model->llModel){ return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantLoadModel; }
 	model->session.vocab = llama_model_get_vocab(model->llModel);
 	std::string tmplSrc;

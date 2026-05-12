@@ -28,6 +28,7 @@ EXPORT void DestroySession(const char* slotName);
 EXPORT StudError ResetChat(const char* slotName);
 EXPORT bool IsModelSlotLoaded(const char* slotName);
 EXPORT void FreeModel(const char* slotName);
+EXPORT void FreeModelSlot(const char* slotName);
 EXPORT StudError LoadModel(const char* slotName, const char* filename, const char* jinjaTemplate, int nGPULayers, bool mMap, bool mLock, ggml_numa_strategy numaStrategy);
 EXPORT bool HasTool(const char* slotName, const char* name);
 EXPORT void SetTokenCallback(Stud::TokenCallbackFn cb);

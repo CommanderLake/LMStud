@@ -26,12 +26,45 @@ namespace LMStud{
 				File.WriteAllText(ModelSettingsFile, json);
 			} catch{}
 		}
+		private bool TryGetModelSettings(string modelPath, out ModelSettings settings){
+			settings = null;
+			var key = GetModelSettingsKey(modelPath);
+			return key != null && _modelSettings.TryGetValue(key, out settings);
+		}
+		private bool TryGetEnabledModelSettings(string modelPath, out ModelSettings settings){
+			return TryGetModelSettings(modelPath, out settings) && settings != null && settings.OverrideSettings;
+		}
+		private List<LoadedLocalSlotItem> GetLoadedLocalSlotItems(){
+			var slots = new List<LoadedLocalSlotItem>();
+			foreach(var loaded in new List<KeyValuePair<string, ListViewItem>>(Common.LoadedLocalSlots)){
+				var loadedModel = loaded.Value;
+				if(string.IsNullOrWhiteSpace(loaded.Key) || loadedModel == null || loadedModel.SubItems.Count < 2 || !NativeMethods.IsModelSlotLoaded(loaded.Key)) continue;
+				ModelSettings overrides;
+				var hasOverrides = TryGetEnabledModelSettings(loadedModel.SubItems[1].Text, out overrides);
+				slots.Add(new LoadedLocalSlotItem(loaded.Key, loadedModel, overrides, hasOverrides));
+			}
+			return slots;
+		}
+		private static int GetModelContextMax(ListViewItem modelLvi){
+			var meta = modelLvi?.Tag as List<GGUFMetadataManager.GGUFMetadataEntry>;
+			return meta == null ? 0 : GGUFMetadataManager.GetGGUFCtxMax(meta);
+		}
+		private static int ClampContextSize(ListViewItem modelLvi, int requestedCtxSize){
+			var modelCtxMax = GetModelContextMax(modelLvi);
+			return modelCtxMax <= 0 ? requestedCtxSize : Math.Min(requestedCtxSize, modelCtxMax);
+		}
+		private static void UpdateCommonContextLimitForSlot(string slotName, ListViewItem modelLvi, int contextSize){
+			if(!string.Equals(slotName, Common.ActiveModelSlotName, StringComparison.OrdinalIgnoreCase)) return;
+			Common.ModelCtxMax = GetModelContextMax(modelLvi);
+			Common.CntCtxMax = contextSize;
+		}
 		private void ButApplyModelSettings_Click(object sender, EventArgs e){
 			if(listViewModels.SelectedItems.Count == 0) return;
 			var selectedModel = listViewModels.SelectedItems[0];
 			var selectedModelPath = selectedModel.SubItems[1].Text;
-			var modelRelPath = selectedModelPath.Substring(Common.ModelsDir.Length);
-			_modelSettings.TryGetValue(modelRelPath, out var oldSettings);
+			var modelSettingsKey = GetModelSettingsKey(selectedModelPath);
+			if(modelSettingsKey == null) return;
+			_modelSettings.TryGetValue(modelSettingsKey, out var oldSettings);
 			var overrideNew = checkOverrideSettings.Checked;
 			var systemPromptNew = textSystemPromptModel.Text;
 			var ctxSizeNew = (int)numCtxSizeModel.Value;
@@ -43,7 +76,7 @@ namespace LMStud{
 			var flashNew = checkFlashAttnModel.CheckState;
 			var jinjaOverrideNew = checkOverrideJinjaModel.Checked;
 			var jinjaTmplNew = textJinjaTmplModel.Text;
-			_modelSettings[modelRelPath] = new ModelSettings(overrideNew, systemPromptNew, ctxSizeNew, gpuLayersNew, tempNew, minPNew, topPNew, topKNew, flashNew, jinjaOverrideNew, jinjaTmplNew);
+			_modelSettings[modelSettingsKey] = new ModelSettings(overrideNew, systemPromptNew, ctxSizeNew, gpuLayersNew, tempNew, minPNew, topPNew, topKNew, flashNew, jinjaOverrideNew, jinjaTmplNew);
 			SaveModelSettings();
 			var loadedSlotNames = ModelSlotManager.GetLoadedLocalSlotNamesForPath(selectedModelPath);
 			if(loadedSlotNames.Count == 0 || !Common.LlModelLoaded) return;
@@ -56,8 +89,8 @@ namespace LMStud{
 			var topPOld = overrideOld ? oldSettings.TopP : Common.TopP;
 			var topKOld = overrideOld ? oldSettings.TopK : Common.TopK;
 			var flashOld = overrideOld ? oldSettings.FlashAttn : Common.FlashAttn;
-			var jinjaOverrideOld = oldSettings?.OverrideJinja ?? false;
-			var jinjaTmplOld = oldSettings?.JinjaTemplate ?? string.Empty;
+			var jinjaOverrideOld = overrideOld && (oldSettings?.OverrideJinja ?? false);
+			var jinjaTmplOld = jinjaOverrideOld ? oldSettings.JinjaTemplate ?? string.Empty : string.Empty;
 			var systemPromptEff = overrideNew ? systemPromptNew : Common.SystemPrompt;
 			var ctxSizeEff = overrideNew ? ctxSizeNew : Common.CtxSize;
 			var gpuLayersEff = overrideNew ? gpuLayersNew : Common.GPULayers;
@@ -66,8 +99,8 @@ namespace LMStud{
 			var topPEff = overrideNew ? topPNew : Common.TopP;
 			var topKEff = overrideNew ? topKNew : Common.TopK;
 			var flashEff = overrideNew ? flashNew : Common.FlashAttn;
-			var jinjaOverrideEff = jinjaOverrideNew;
-			var jinjaTmplEff = jinjaOverrideNew ? jinjaTmplNew : string.Empty;
+			var jinjaOverrideEff = overrideNew && jinjaOverrideNew;
+			var jinjaTmplEff = jinjaOverrideEff ? jinjaTmplNew : string.Empty;
 			var reloadModel = gpuLayersOld != gpuLayersEff || jinjaOverrideOld != jinjaOverrideEff || jinjaTmplOld != jinjaTmplEff;
 			var reloadCtx = ctxSizeOld != ctxSizeEff || flashOld != flashEff;
 			var reloadSmpl = tempOld != tempEff || minPOld != minPEff || topPOld != topPEff || topKOld != topKEff;
@@ -76,9 +109,11 @@ namespace LMStud{
 				foreach(var slotName in loadedSlotNames) LoadModel(slotName, selectedModel, false);
 			} else{
 				if(reloadCtx){
-					if(Common.ModelCtxMax <= 0) Common.CntCtxMax = ctxSizeEff;
-					else Common.CntCtxMax = ctxSizeEff > Common.ModelCtxMax ? Common.ModelCtxMax : ctxSizeEff;
-					foreach(var slotName in loadedSlotNames) CreateContext(slotName, Common.CntCtxMax, Common.BatchSize, flashEff, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType);
+					var contextSize = ClampContextSize(selectedModel, ctxSizeEff);
+					foreach(var slotName in loadedSlotNames){
+						UpdateCommonContextLimitForSlot(slotName, selectedModel, contextSize);
+						CreateContext(slotName, contextSize, Common.BatchSize, flashEff, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType);
+					}
 				}
 				if(reloadSmpl)
 					foreach(var slotName in loadedSlotNames) CreateSampler(slotName, minPEff, topPEff, topKEff, tempEff, Common.RepPen);
@@ -86,8 +121,7 @@ namespace LMStud{
 			if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(loadedSlotNames);});
 		}
 		private void PopulateModelSettings(string modelPath){
-			var relPath = modelPath.Substring(Common.ModelsDir.Length);
-			if(_modelSettings.TryGetValue(relPath, out var ms)){
+			if(TryGetModelSettings(modelPath, out var ms)){
 				checkOverrideSettings.Checked = ms.OverrideSettings;
 				textSystemPromptModel.Text = ms.SystemPrompt;
 				numCtxSizeModel.Value = ms.CtxSize;
@@ -115,6 +149,18 @@ namespace LMStud{
 		}
 		private void ButBrowseJinjaTmplModel_Click(object sender, EventArgs e){
 			if(openFileDialog1.ShowDialog(this) == DialogResult.OK) textJinjaTmplModel.Text = openFileDialog1.FileName;
+		}
+		private class LoadedLocalSlotItem{
+			public readonly bool HasOverrides;
+			public readonly ListViewItem LoadedModel;
+			public readonly ModelSettings Overrides;
+			public readonly string SlotName;
+			public LoadedLocalSlotItem(string slotName, ListViewItem loadedModel, ModelSettings overrides, bool hasOverrides){
+				SlotName = slotName;
+				LoadedModel = loadedModel;
+				Overrides = overrides;
+				HasOverrides = hasOverrides;
+			}
 		}
 		private class ModelSettings{
 			public readonly int CtxSize;
