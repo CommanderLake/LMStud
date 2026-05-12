@@ -209,16 +209,23 @@ namespace LMStud{
 			else ShowMessage();
 		}
 		private void SetSystemPromptInternal(bool genLock){
-			if(genLock) Generation.GenerationLock.Wait(-1);
+			List<ModelSlotLockLease> slotLocks = null;
+			if(genLock){
+				Generation.GenerationLock.Wait(-1);
+				slotLocks = ModelSlotManager.EnterSlots(Dialectics.GetActiveNativeChatSlotNames());
+			}
 			try{
 				string prompt;
 				var loadedModel = Common.LoadedModel;
 				if(loadedModel != null && _modelSettings.TryGetValue(loadedModel.SubItems[1].Text.Substring(Common.ModelsDir.Length), out var overrides) && overrides.OverrideSettings) prompt = overrides.SystemPrompt;
 				else prompt = Common.SystemPrompt;
-				var error = SetSystemPromptForDialecticState(prompt.Length > 0 ? prompt : DefaultPrompt, Common.GoogleSearchEnable && Common.WebpageFetchEnable ? FetchPrompt : "");
+				var error = Dialectics.SetSystemPrompt(prompt.Length > 0 ? prompt : DefaultPrompt, Common.GoogleSearchEnable && Common.WebpageFetchEnable ? FetchPrompt : "");
 				if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowError(Resources.Error_setting_system_prompt, error);
 			} finally{
-				if(genLock) Generation.GenerationLock.Release();
+				if(genLock){
+					ModelSlotManager.ReleaseSlots(slotLocks);
+					Generation.GenerationLock.Release();
+				}
 			}
 		}
 		private void SetSystemPrompt(bool genLock = true){
@@ -262,16 +269,16 @@ namespace LMStud{
 			return result;
 		}
 		private NativeMethods.StudError CreateContext(string slotName, int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, NativeMethods.QuantType kType, NativeMethods.QuantType vType){
-			Generation.GenerationLock.Wait(-1);
+			var slotLock = ModelSlotManager.EnterSlot(slotName);
 			NativeMethods.StudError result;
-			try{ result = NativeMethods.CreateContext(slotName, nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, (int)kType, (int)vType); } finally{ Generation.GenerationLock.Release(); }
+			try{ result = NativeMethods.CreateContext(slotName, nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, (int)kType, (int)vType); } finally{ slotLock.Dispose(); }
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_context, result);
 			return result;
 		}
 		private NativeMethods.StudError CreateSampler(string slotName, float minP, float topP, int topK, float temp, float repeatPenalty){
-			Generation.GenerationLock.Wait(-1);
+			var slotLock = ModelSlotManager.EnterSlot(slotName);
 			NativeMethods.StudError result;
-			try{ result = NativeMethods.CreateSampler(slotName, minP, topP, topK, temp, repeatPenalty); } finally{ Generation.GenerationLock.Release(); }
+			try{ result = NativeMethods.CreateSampler(slotName, minP, topP, topK, temp, repeatPenalty); } finally{ slotLock.Dispose(); }
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_sampler, result);
 			return result;
 		}
@@ -299,6 +306,7 @@ namespace LMStud{
 				(activeChatSlot?.Source == ModelSlotSource.Local && !activeChatSlotLoaded);
 			if(activeChatSlotLoaded && !loadingActiveChatSlot && !string.Equals(slotName, "main", StringComparison.OrdinalIgnoreCase)) makeSlotChat = false;
 			ThreadPool.QueueUserWorkItem(o => {
+				var slotLock = ModelSlotManager.EnterSlot(slotName);
 				var overrideSettings = _modelSettings.TryGetValue(modelPath.Substring(modelsDir.Length), out var overrides) && overrides.OverrideSettings;
 				var ctxSize = overrideSettings ? overrides.CtxSize : Common.CtxSize;
 				var gpuLayers = overrideSettings ? overrides.GPULayers : Common.GPULayers;
@@ -309,7 +317,6 @@ namespace LMStud{
 				var flashAttn = overrideSettings ? overrides.FlashAttn : Common.FlashAttn;
 				var jinjaTmpl = overrides != null && overrides.OverrideJinja && File.Exists(overrides.JinjaTemplate) ? File.ReadAllText(overrides.JinjaTemplate) : null;
 				try{
-					if(!Generation.GenerationLock.Wait(-1)) return;
 					Invoke(new MethodInvoker(() => {toolStripStatusLabel1.Text = Resources.Loading__ + fileName;}));
 					unsafe{
 						var result = LoadModel(slotName, modelPath, jinjaTmpl, gpuLayers, Common.MMap, Common.MLock, Common.NumaStrat);
@@ -355,7 +362,7 @@ namespace LMStud{
 						} catch(ObjectDisposedException){}
 					}
 				} finally{
-					Generation.GenerationLock.Release();
+					slotLock.Dispose();
 					BeginInvoke(new MethodInvoker(() => {
 						SetModelStatus();
 						PopulateSlotsList();
@@ -366,10 +373,11 @@ namespace LMStud{
 			});
 		}
 		private void UnloadModelInternal(bool genLock, string slotName){
+			ModelSlotLockLease slotLock = null;
 			try{
 				Generation.StopActiveGeneration();
-				if(genLock) Generation.GenerationLock.Wait(-1);
 				if(string.IsNullOrWhiteSpace(slotName)) slotName = Common.ActiveModelSlotName ?? "main";
+				if(genLock) slotLock = ModelSlotManager.EnterSlot(slotName);
 				NativeMethods.FreeModelSlot(slotName);
 			} finally{
 				if(!string.IsNullOrWhiteSpace(slotName)) Common.LoadedLocalSlots.Remove(slotName);
@@ -383,7 +391,7 @@ namespace LMStud{
 						UpdateSlotButtons();
 					}));
 				} catch(ObjectDisposedException){}
-				if(genLock) Generation.GenerationLock.Release();
+				slotLock?.Dispose();
 			}
 		}
 		private void UnloadModel(bool genLock, string slotName){

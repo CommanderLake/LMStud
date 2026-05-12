@@ -11,6 +11,8 @@ namespace LMStud{
 			_maxSessions = maxSessions;
 		}
 		public Session Get(string id){
+			List<Session> evicted;
+			Session result;
 			lock(_sync){
 				if(!string.IsNullOrEmpty(id) && _sessions.TryGetValue(id, out var sess)){
 					sess.LastUsed = DateTime.UtcNow;
@@ -18,9 +20,11 @@ namespace LMStud{
 				}
 				var newSession = new Session{ Id = string.IsNullOrEmpty(id) ? Guid.NewGuid().ToString() : id, LastUsed = DateTime.UtcNow };
 				_sessions[newSession.Id] = newSession;
-				Evict();
-				return newSession;
+				evicted = EvictNoLock();
+				result = newSession;
 			}
+			ClearNativeChatStates(evicted);
+			return result;
 		}
 		public bool Update(Session session, List<APIServer.Message> messages, byte[] state, int tokenCount){
 			return Apply(session, s => {
@@ -32,15 +36,20 @@ namespace LMStud{
 		}
 		public bool Apply(Session session, Action<Session> update, Func<string> responseId = null){
 			if(session == null || update == null) return false;
+			List<Session> evicted;
 			lock(_sync){
 				if(!IsActiveNoLock(session)) return false;
 				update(session);
 				var id = responseId == null ? null : responseId();
 				if(!string.IsNullOrWhiteSpace(id)) _responseSessions[id] = session.Id;
 				session.LastUsed = DateTime.UtcNow;
-				Evict();
-				return true;
+				evicted = EvictNoLock();
 			}
+			ClearNativeChatStates(evicted);
+			return true;
+		}
+		public bool IsActive(Session session){
+			lock(_sync){ return IsActiveNoLock(session); }
 		}
 		public string GetSessionIdForResponse(string responseId){
 			if(string.IsNullOrWhiteSpace(responseId)) return null;
@@ -48,18 +57,24 @@ namespace LMStud{
 		}
 		public void Remove(string id){
 			if(string.IsNullOrEmpty(id)) return;
+			Session removed = null;
 			lock(_sync){
-				if(_sessions.TryGetValue(id, out var session)) session.ClearNativeChatState();
-				_sessions.Remove(id);
+				if(_sessions.TryGetValue(id, out var session)){
+					removed = session;
+					_sessions.Remove(id);
+				}
 				RemoveResponseIdsForSession(id);
 			}
+			ClearNativeChatStates(new[]{ removed });
 		}
 		public void Clear(){
+			List<Session> sessions;
 			lock(_sync){
-				foreach(var session in _sessions.Values) session.ClearNativeChatState();
+				sessions = _sessions.Values.ToList();
 				_sessions.Clear();
 				_responseSessions.Clear();
 			}
+			ClearNativeChatStates(sessions);
 		}
 		private static List<APIServer.Message> CloneMessages(IEnumerable<APIServer.Message> messages){
 			var clone = new List<APIServer.Message>();
@@ -79,13 +94,20 @@ namespace LMStud{
 			Array.Copy(state, clone, state.Length);
 			return clone;
 		}
-		private void Evict(){
+		private List<Session> EvictNoLock(){
+			var evicted = new List<Session>();
 			while(_sessions.Count > _maxSessions){
 				var lru = _sessions.Values.OrderBy(s => s.LastUsed).First();
-				lru.ClearNativeChatState();
 				_sessions.Remove(lru.Id);
 				RemoveResponseIdsForSession(lru.Id);
+				evicted.Add(lru);
 			}
+			return evicted;
+		}
+		private static void ClearNativeChatStates(IEnumerable<Session> sessions){
+			if(sessions == null) return;
+			foreach(var session in sessions.Where(session => session != null))
+				lock(session.SyncRoot) session.ClearNativeChatState();
 		}
 		private bool IsActiveNoLock(Session session){
 			if(session == null || string.IsNullOrEmpty(session.Id)) return false;
@@ -104,6 +126,7 @@ namespace LMStud{
 			public string LastBackend;
 			public string ToolsJson;
 			public IntPtr NativeChatState;
+			internal readonly object SyncRoot = new object();
 			public void SetNativeChatState(IntPtr state){
 				if(NativeChatState != IntPtr.Zero && NativeChatState != state) NativeMethods.FreeChatState(NativeChatState);
 				NativeChatState = state;

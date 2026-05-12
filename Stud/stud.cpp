@@ -50,10 +50,12 @@ static std::string NormName(const char* slotName){
 	return name;
 }
 static Stud::StudModel* FindModel(const std::string& slotName){
+	std::lock_guard<std::mutex> lock(Stud::modelsMutex);
 	const auto it = Stud::models.find(slotName);
 	return it == Stud::models.end() ? nullptr : it->second.get();
 }
 static Stud::StudModel& GetOrCreateModel(const std::string& slotName){
+	std::lock_guard<std::mutex> lock(Stud::modelsMutex);
 	auto& model = Stud::models[slotName];
 	if(!model){
 		model = std::make_unique<Stud::StudModel>();
@@ -307,6 +309,7 @@ bool HasTool(const char* slotName, const char* name){
 }
 void SetTokenCallback(const Stud::TokenCallbackFn cb){ Stud::tokenCb = cb; }
 void SetThreadCount(const int n, const int batchSize){
+	std::lock_guard<std::mutex> lock(Stud::modelsMutex);
 	for(auto&[slotName, model] : Stud::models){
 		if(model->session.ctx) llama_set_n_threads(model->session.ctx, n, batchSize);
 	}

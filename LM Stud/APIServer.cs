@@ -65,31 +65,25 @@ namespace LMStud{
 			WriteJson(ctx, resp);
 		}
 		private void HandleReset(HttpListenerContext ctx){
-			if(!Generation.GenerationLock.Wait(0)){
-				ctx.Response.StatusCode = 409;
-				return;
-			}
-			try{
-				string body;
-				using(var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)){ body = reader.ReadToEnd(); }
-				ChatRequest request = null;
-				if(!string.IsNullOrEmpty(body))
-					try{ request = JsonConvert.DeserializeObject<ChatRequest>(body); } catch{
-						ctx.Response.StatusCode = 400;
-						return;
-					}
-				var resetScope = request?.ResetScope;
-				var sessionId = ResolveSessionId(ctx, request);
-				var hasSession = !string.IsNullOrWhiteSpace(sessionId);
-				if(string.IsNullOrWhiteSpace(resetScope)) resetScope = hasSession ? "session" : "global";
-				if(string.Equals(resetScope, "session", StringComparison.OrdinalIgnoreCase)){
-					if(hasSession) Sessions.Remove(sessionId);
-				}else{
-					Sessions.Clear();
-					NativeMethods.CloseCommandPrompt();
+			string body;
+			using(var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)){ body = reader.ReadToEnd(); }
+			ChatRequest request = null;
+			if(!string.IsNullOrEmpty(body))
+				try{ request = JsonConvert.DeserializeObject<ChatRequest>(body); } catch{
+					ctx.Response.StatusCode = 400;
+					return;
 				}
-				WriteJson(ctx, new{ status = "reset", scope = resetScope.ToLowerInvariant() });
-			} finally{ Generation.GenerationLock.Release(); }
+			var resetScope = request?.ResetScope;
+			var sessionId = ResolveSessionId(ctx, request);
+			var hasSession = !string.IsNullOrWhiteSpace(sessionId);
+			if(string.IsNullOrWhiteSpace(resetScope)) resetScope = hasSession ? "session" : "global";
+			if(string.Equals(resetScope, "session", StringComparison.OrdinalIgnoreCase)){
+				if(hasSession) Sessions.Remove(sessionId);
+			}else{
+				Sessions.Clear();
+				NativeMethods.CloseCommandPrompt();
+			}
+			WriteJson(ctx, new{ status = "reset", scope = resetScope.ToLowerInvariant() });
 		}
 		private void HandleChat(HttpListenerContext ctx, bool outputChatCompletions){
 			string body;
@@ -130,7 +124,7 @@ namespace LMStud{
 			}
 			var session = Sessions.Get(ResolveSessionId(ctx, request));
 			var newChatState = IntPtr.Zero;
-			var generationLockHeld = false;
+			ModelSlotLockLease slotLock = null;
 			try{
 				ctx.Response.AddHeader("X-Session-Id", session.Id);
 				var historyMessages = ExtractHistoryAndLatestInput(messages, inputItems, out var latestInput);
@@ -139,47 +133,52 @@ namespace LMStud{
 					return;
 				}
 				var historyJson = historyMessages != null && historyMessages.Count > 0 ? BuildChatHistoryJson(historyMessages) : null;
-				if(!Generation.GenerationLock.Wait(300000)){
+				slotLock = ModelSlotManager.TryEnterSlot(slot.Name, 300000);
+				if(slotLock == null){
 					WriteError(ctx, 409, "generation_busy", "The local backend is busy or could not generate a response.");
 					return;
 				}
-				generationLockHeld = true;
 				APIClient.ChatCompletionResult result = null;
 				byte[] newState = null;
 				var tokens = 0;
 				string toolsJson = null;
 				JObject resp = null;
-				var generated = false;
-				var sessionActive = Sessions.Apply(session, s => {
-					ResetSessionForModeSwitchCore(s, "local:" + slot.Name);
-					toolsJson = ResolveClientToolsJson(s, request);
-					generated = Generation.GenerateForApiServer(slot.Name, s.State, s.NativeChatState, historyJson, ToNativeRole(latestInput.Role), latestInput.Content, toolsJson, out result, out newState, out newChatState, out tokens);
-					if(!generated) return;
-					s.LastBackend = "local:" + slot.Name;
-					if(request.Tools != null) s.ToolsJson = toolsJson;
-					if(historyMessages != null && historyMessages.Count > 0) s.Messages = CloneMessages(historyMessages);
-					s.Messages.Add(CloneMessage(latestInput));
-					s.Messages.Add(new Message{ Role = "assistant", Content = result.Content, ToolCalls = result.ToolCalls });
-					s.State = newState;
-					s.SetNativeChatState(newChatState);
-					newChatState = IntPtr.Zero;
-					s.TokenCount = tokens;
+				var backendKey = "local:" + slot.Name;
+				lock(session.SyncRoot){
+					if(!Sessions.IsActive(session)){
+						WriteError(ctx, 409, "session_reset", "The API session was reset before the request could be prepared.");
+						return;
+					}
+					var modeSwitch = !string.IsNullOrEmpty(session.LastBackend) && session.LastBackend != backendKey;
+					toolsJson = ResolveClientToolsJsonForBackend(session, request, modeSwitch);
+					if(!Generation.GenerateForApiServer(slot.Name, modeSwitch ? null : session.State, modeSwitch ? IntPtr.Zero : session.NativeChatState, historyJson, ToNativeRole(latestInput.Role), latestInput.Content, toolsJson, out result, out newState, out newChatState, out tokens)){
+						WriteError(ctx, 409, "generation_busy", "The local backend is busy or could not generate a response.");
+						return;
+					}
 					var model = ModelSlotManager.GetServerModelId(slot);
 					resp = outputChatCompletions ? BuildChatCompletionsPayload(result, model, session.Id) : BuildResponsePayload(result, model, session.Id);
-				}, () => resp?.Value<string>("id"));
-				if(!sessionActive){
-					WriteError(ctx, 409, "session_reset", "The API session was reset before the request could be stored.");
-					return;
-				}
-				if(!generated){
-					WriteError(ctx, 409, "generation_busy", "The local backend is busy or could not generate a response.");
-					return;
+					var sessionActive = Sessions.Apply(session, s => {
+						ResetSessionForModeSwitchCore(s, backendKey);
+						s.LastBackend = backendKey;
+						if(request.Tools != null) s.ToolsJson = toolsJson;
+						if(historyMessages != null && historyMessages.Count > 0) s.Messages = CloneMessages(historyMessages);
+						s.Messages.Add(CloneMessage(latestInput));
+						s.Messages.Add(new Message{ Role = "assistant", Content = result.Content, ToolCalls = result.ToolCalls });
+						s.State = newState;
+						s.SetNativeChatState(newChatState);
+						newChatState = IntPtr.Zero;
+						s.TokenCount = tokens;
+					}, () => resp?.Value<string>("id"));
+					if(!sessionActive){
+						WriteError(ctx, 409, "session_reset", "The API session was reset before the request could be stored.");
+						return;
+					}
 				}
 				WriteJson(ctx, resp);
 			} finally{
 				if(newChatState != IntPtr.Zero) NativeMethods.FreeChatState(newChatState);
 				if(!store) Sessions.Remove(session.Id);
-				if(generationLockHeld) Generation.GenerationLock.Release();
+				slotLock?.Dispose();
 			}
 		}
 		private void HandleRemoteChat(HttpListenerContext ctx, ChatRequest request, List<Message> incomingMessages, JArray inputItems, bool store, bool outputChatCompletions, ModelSlot slot){
@@ -187,43 +186,44 @@ namespace LMStud{
 			ctx.Response.AddHeader("X-Session-Id", session.Id);
 			APIClient client = null;
 			try{
-				var incomingDelta = BuildIncomingDelta(incomingMessages, inputItems);
-				if(incomingDelta == null || incomingDelta.Count == 0){
-					WriteError(ctx, 400, "invalid_request", "Request did not contain a new input message.");
-					return;
-				}
-				JArray persisted = null;
-				string toolsJson = null;
-				if(!Sessions.Apply(session, s => {
-					ResetSessionForModeSwitchCore(s, "remote:" + slot.Name);
-					persisted = BuildPersistedHistory(s.Messages);
-					foreach(var item in incomingDelta) persisted.Add(item);
-					toolsJson = ResolveClientToolsJson(s, request);
-				})){
-					WriteError(ctx, 409, "session_reset", "The API session was reset before the request could be prepared.");
-					return;
-				}
-				var instructions = request.Instructions ?? slot.GetInstructionsOrDefault();
-				client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, instructions, slot.ApiReasoningEffort, slot.ApiReasoningSummary);
-				var result = client.CreateChatCompletion(persisted, Common.Temp, Common.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
-				APIClient.AppendOutputItems(persisted, result);
-				var model = ModelSlotManager.GetServerModelId(slot);
-				var resp = outputChatCompletions ? BuildChatCompletionsPayload(result, model, session.Id) : BuildResponsePayload(result, model, session.Id);
-				if(!Sessions.Apply(session, s => {
-					if(request.Tools != null) s.ToolsJson = toolsJson;
-					foreach(var deltaMessage in incomingDelta){
-						var parsed = ParseInputItemToMessage(deltaMessage);
-						if(parsed != null) s.Messages.Add(parsed);
+				lock(session.SyncRoot){
+					if(!Sessions.IsActive(session)){
+						WriteError(ctx, 409, "session_reset", "The API session was reset before the request could be prepared.");
+						return;
 					}
-					s.Messages.Add(new Message{ Role = "assistant", Content = result.Content, ToolCalls = result.ToolCalls });
-					s.State = null;
-					s.TokenCount = result.TotalTokens ?? 0;
-					s.LastBackend = "remote:" + slot.Name;
-				}, () => resp.Value<string>("id"))){
-					WriteError(ctx, 409, "session_reset", "The API session was reset before the response could be stored.");
-					return;
+					var incomingDelta = BuildIncomingDelta(incomingMessages, inputItems);
+					if(incomingDelta == null || incomingDelta.Count == 0){
+						WriteError(ctx, 400, "invalid_request", "Request did not contain a new input message.");
+						return;
+					}
+					var backendKey = "remote:" + slot.Name;
+					var modeSwitch = !string.IsNullOrEmpty(session.LastBackend) && session.LastBackend != backendKey;
+					var persisted = modeSwitch ? new JArray() : BuildPersistedHistory(session.Messages);
+					foreach(var item in incomingDelta) persisted.Add(item);
+					var toolsJson = ResolveClientToolsJsonForBackend(session, request, modeSwitch);
+					var instructions = request.Instructions ?? slot.GetInstructionsOrDefault();
+					client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, instructions, slot.ApiReasoningEffort, slot.ApiReasoningSummary);
+					var result = client.CreateChatCompletion(persisted, Common.Temp, Common.NGen, toolsJson, request.ToolChoice, CancellationToken.None);
+					APIClient.AppendOutputItems(persisted, result);
+					var model = ModelSlotManager.GetServerModelId(slot);
+					var resp = outputChatCompletions ? BuildChatCompletionsPayload(result, model, session.Id) : BuildResponsePayload(result, model, session.Id);
+					if(!Sessions.Apply(session, s => {
+						ResetSessionForModeSwitchCore(s, backendKey);
+						if(request.Tools != null) s.ToolsJson = toolsJson;
+						foreach(var deltaMessage in incomingDelta){
+							var parsed = ParseInputItemToMessage(deltaMessage);
+							if(parsed != null) s.Messages.Add(parsed);
+						}
+						s.Messages.Add(new Message{ Role = "assistant", Content = result.Content, ToolCalls = result.ToolCalls });
+						s.State = null;
+						s.TokenCount = result.TotalTokens ?? 0;
+						s.LastBackend = backendKey;
+					}, () => resp.Value<string>("id"))){
+						WriteError(ctx, 409, "session_reset", "The API session was reset before the response could be stored.");
+						return;
+					}
+					WriteJson(ctx, resp);
 				}
-				WriteJson(ctx, resp);
 			} catch(Exception ex){
 				WriteError(ctx, 502, "upstream_error", ex.Message);
 			} finally{
@@ -327,9 +327,9 @@ namespace LMStud{
 			}
 			return items.Count > 0 ? items : null;
 		}
-		private static string ResolveClientToolsJson(SessionManager.Session session, ChatRequest request){
+		private static string ResolveClientToolsJsonForBackend(SessionManager.Session session, ChatRequest request, bool modeSwitch){
 			if(request?.Tools != null) return request.Tools.Count > 0 ? request.Tools.ToString(Formatting.None) : null;
-			return session?.ToolsJson;
+			return modeSwitch ? null : session?.ToolsJson;
 		}
 		private static Message CloneMessage(Message message){
 			if(message == null) return null;

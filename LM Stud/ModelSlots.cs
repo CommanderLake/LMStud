@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using LMStud.Properties;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -51,13 +52,25 @@ namespace LMStud{
 			return Path.Combine(Common.ModelsDir ?? "", LocalPath);
 		}
 	}
+	internal sealed class ModelSlotLockLease : IDisposable{
+		private SemaphoreSlim _semaphore;
+		internal ModelSlotLockLease(SemaphoreSlim semaphore){_semaphore = semaphore;}
+		public void Dispose(){
+			var semaphore = _semaphore;
+			if(semaphore == null) return;
+			_semaphore = null;
+			semaphore.Release();
+		}
+	}
 	internal static class ModelSlotManager{
 		private const string MainSlotName = "main";
 		private static readonly Regex InvalidToolChars = new Regex("[^a-zA-Z0-9_]", RegexOptions.Compiled);
 		private static readonly object Sync = new object();
+		private static readonly object SlotLocksSync = new object();
 		private static readonly string SlotsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LM Stud");
 		private static readonly string SlotsFile = Path.Combine(SlotsFolder, "ModelSlots.json");
 		private static readonly List<ModelSlot> SlotsInternal = new List<ModelSlot>();
+		private static readonly Dictionary<string, SemaphoreSlim> SlotLocks = new Dictionary<string, SemaphoreSlim>(StringComparer.OrdinalIgnoreCase);
 		internal static string ActiveChatSlotName { get; private set; } = MainSlotName;
 		internal static IEnumerable<ModelSlot> Slots{
 			get{
@@ -118,6 +131,36 @@ namespace LMStud{
 			var partner = dialecticSlots.FirstOrDefault(slot => !string.Equals(slot.Name, active.Name, StringComparison.OrdinalIgnoreCase) && CanServeLocalSlot(slot));
 			if(partner != null) slots.Add(partner);
 			return slots;
+		}
+		internal static ModelSlotLockLease TryEnterSlot(string slotName, int millisecondsTimeout){
+			var slotLock = GetSlotLock(slotName);
+			return slotLock.Wait(millisecondsTimeout) ? new ModelSlotLockLease(slotLock) : null;
+		}
+		internal static ModelSlotLockLease EnterSlot(string slotName){
+			var slotLock = GetSlotLock(slotName);
+			slotLock.Wait(-1);
+			return new ModelSlotLockLease(slotLock);
+		}
+		internal static List<ModelSlotLockLease> TryEnterSlots(IEnumerable<string> slotNames, int millisecondsTimeout){
+			var leases = new List<ModelSlotLockLease>();
+			foreach(var slotName in NormalizeSlotNames(slotNames)){
+				var lease = TryEnterSlot(slotName, millisecondsTimeout);
+				if(lease == null){
+					ReleaseSlots(leases);
+					return null;
+				}
+				leases.Add(lease);
+			}
+			return leases;
+		}
+		internal static List<ModelSlotLockLease> EnterSlots(IEnumerable<string> slotNames){
+			var leases = new List<ModelSlotLockLease>();
+			foreach(var slotName in NormalizeSlotNames(slotNames)) leases.Add(EnterSlot(slotName));
+			return leases;
+		}
+		internal static void ReleaseSlots(IEnumerable<ModelSlotLockLease> leases){
+			if(leases == null) return;
+			foreach(var lease in leases) lease?.Dispose();
 		}
 		internal static void AddOrUpdate(ModelSlot slot, string oldName = null){
 			if(slot == null) return;
@@ -402,6 +445,22 @@ namespace LMStud{
 			foreach(var loaded in Common.LoadedLocalSlots)
 				if(loaded.Value != null && NativeMethods.IsModelSlotLoaded(loaded.Key)) return new ModelSlot{ Name = loaded.Key, Source = ModelSlotSource.Local, LocalPath = loaded.Value.SubItems[1].Text };
 			return null;
+		}
+		private static SemaphoreSlim GetSlotLock(string slotName){
+			slotName = NormalizeSlotName(slotName);
+			lock(SlotLocksSync){
+				if(!SlotLocks.TryGetValue(slotName, out var slotLock)){
+					slotLock = new SemaphoreSlim(1, 1);
+					SlotLocks[slotName] = slotLock;
+				}
+				return slotLock;
+			}
+		}
+		private static string NormalizeSlotName(string slotName){
+			return string.IsNullOrWhiteSpace(slotName) ? MainSlotName : slotName.Trim();
+		}
+		private static IEnumerable<string> NormalizeSlotNames(IEnumerable<string> slotNames){
+			return (slotNames ?? new[]{ MainSlotName }).Select(NormalizeSlotName).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToList();
 		}
 		private sealed class ModelSlotConfig{
 			public string ActiveChatSlot { get; set; }

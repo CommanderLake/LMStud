@@ -4,6 +4,7 @@
 #include <chat.h>
 #include <jinja\caps.h>
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 namespace Stud{
@@ -38,5 +39,6 @@ namespace Stud{
 	};
 	inline HWND hWnd = nullptr;
 	inline std::unordered_map<std::string, std::unique_ptr<StudModel>> models;
+	inline std::mutex modelsMutex;
 	inline TokenCallbackFn tokenCb = nullptr;
 }
