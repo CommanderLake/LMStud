@@ -69,6 +69,8 @@ namespace LMStud{
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void FreeModelSlot([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void FreeAllModelSlots();
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError LoadModel([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, [MarshalAs(UnmanagedType.LPUTF8Str)] string filename, [MarshalAs(UnmanagedType.LPUTF8Str)] string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void FreeModel([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);

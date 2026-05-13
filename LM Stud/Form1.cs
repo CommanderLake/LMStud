@@ -95,12 +95,16 @@ namespace LMStud{
 		}
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e){
 			if(Generation.Generating) Generation.StopActiveGeneration();
+			ApiServer.Stop();
 			if(_whisperLoaded){
 				NativeMethods.StopSpeechTranscription();
 				NativeMethods.UnloadWhisperModel();
 			}
-			ApiServer.Stop();
 			NativeMethods.CloseCommandPrompt();
+			NativeMethods.FreeAllModelSlots();
+			Common.LoadedLocalSlots.Clear();
+			Common.LlModelLoaded = false;
+			Common.LoadedModel = null;
 			NativeMethods.CurlGlobalCleanup();
 		}
 		private void Form1_KeyDown(object sender, KeyEventArgs e){

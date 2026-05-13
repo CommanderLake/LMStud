@@ -29,6 +29,19 @@ namespace Stud{
 		bool dialecticRelay = false;
 		bool assNextGen = false;
 		int batchSize = 1;
+		~StudSession(){
+			for(auto& lane : lanes){
+				if(lane.sampler){
+					llama_sampler_free(lane.sampler);
+					lane.sampler = nullptr;
+				}
+			}
+			if(ctx){
+				llama_free(ctx);
+				ctx = nullptr;
+				memory = nullptr;
+			}
+		}
 	};
 	struct StudSharedModel{
 		llama_model* llModel = nullptr;

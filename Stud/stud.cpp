@@ -333,6 +333,18 @@ void FreeModel(const char* slotName){
 	model->llModel = nullptr;
 }
 void FreeModelSlot(const char* slotName){ FreeModel(slotName); }
+void FreeAllModelSlots(){
+	std::unordered_map<std::string, std::unique_ptr<Stud::StudModel>> modelsToFree;
+	{
+		std::lock_guard<std::mutex> lock(Stud::modelsMutex);
+		modelsToFree.swap(Stud::models);
+	}
+	{
+		std::lock_guard<std::mutex> lock(Stud::sharedModelsMutex);
+		Stud::sharedModels.clear();
+	}
+	modelsToFree.clear();
+}
 StudError LoadModel(const char* slotName, const char* filename, const char* jinjaTemplate, const int nGPULayers, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy){
 	const auto model = GetModel(slotName);
 	if(model->llModel || model->sharedModel) FreeModel(slotName);
