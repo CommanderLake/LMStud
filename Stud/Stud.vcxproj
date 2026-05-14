@@ -156,6 +156,7 @@ xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\
     <ClInclude Include="common-sdl.h" />
     <ClInclude Include="hug.h" />
     <ClInclude Include="JSONCommon.h" />
+    <ClInclude Include="MCP.h" />
     <ClInclude Include="speech.h" />
     <ClInclude Include="StudState.h" />
     <ClInclude Include="stud.h" />
@@ -169,6 +170,7 @@ xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\
     <ClCompile Include="hug.cpp" />
     <ClCompile Include="JSONCommon.cpp" />
     <ClCompile Include="MarkdownRTFConverter.cpp" />
+    <ClCompile Include="MCP.cpp" />
     <ClCompile Include="speech.cpp" />
     <ClCompile Include="stud.cpp" />
     <ClCompile Include="tools.cpp" />

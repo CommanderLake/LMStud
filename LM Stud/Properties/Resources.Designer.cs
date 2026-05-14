@@ -10,8 +10,8 @@
 
 namespace LMStud.Properties {
     using System;
-
-
+    
+    
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -23,15 +23,15 @@ namespace LMStud.Properties {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-
+        
         private static global::System.Resources.ResourceManager resourceMan;
-
+        
         private static global::System.Globalization.CultureInfo resourceCulture;
-
+        
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-
+        
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -45,7 +45,7 @@ namespace LMStud.Properties {
                 return resourceMan;
             }
         }
-
+        
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -59,9 +59,9 @@ namespace LMStud.Properties {
                 resourceCulture = value;
             }
         }
-
+        
         /// <summary>
-        ///   Looks up a localized string similar to
+        ///   Looks up a localized string similar to 
         ///Tool arguments: .
         /// </summary>
         internal static string @__Tool_arguments_ {
@@ -69,9 +69,9 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("__Tool_arguments_", resourceCulture);
             }
         }
-
+        
         /// <summary>
-        ///   Looks up a localized string similar to
+        ///   Looks up a localized string similar to 
         ///Tool ID: .
         /// </summary>
         internal static string @__Tool_ID_ {
@@ -79,9 +79,9 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("__Tool_ID_", resourceCulture);
             }
         }
-
+        
         /// <summary>
-        ///   Looks up a localized string similar to
+        ///   Looks up a localized string similar to 
         ///Tool name: .
         /// </summary>
         internal static string @__Tool_name_ {
@@ -89,7 +89,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("__Tool_name_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to {0}: {1}.
         /// </summary>
@@ -98,7 +98,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("_0____1_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to {0}:{1}:{2}.
         /// </summary>
@@ -107,7 +107,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("_0___1___2_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to {0}/{1}{2}.
         /// </summary>
@@ -116,7 +116,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("_0___1__2_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to {0:F2} Tok/s.
         /// </summary>
@@ -125,7 +125,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("_0_F2__Tok_s", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to  s.
         /// </summary>
@@ -134,7 +134,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("_s", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to  Tokens.
         /// </summary>
@@ -143,7 +143,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("_Tokens", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to A changed setting requires the model to be reloaded, reload now?.
         /// </summary>
@@ -152,7 +152,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("A_changed_setting_requires_the_model_to_be_reloaded__reload_now_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to An index was out of range.
         /// </summary>
@@ -161,7 +161,16 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("An_index_was_out_of_range_", resourceCulture);
             }
         }
-
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Another slot already uses that name..
+        /// </summary>
+        internal static string Another_slot_already_uses_that_name_ {
+            get {
+                return ResourceManager.GetString("Another_slot_already_uses_that_name_", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to API Client.
         /// </summary>
@@ -170,7 +179,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("API_Client", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to API endpoint not found.
         /// </summary>
@@ -179,7 +188,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("API_endpoint_not_found", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to API Server.
         /// </summary>
@@ -188,7 +197,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("API_Server", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Authentication failed.
         /// </summary>
@@ -197,7 +206,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Authentication_failed", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Cancel.
         /// </summary>
@@ -206,7 +215,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Cancel", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Context full..
         /// </summary>
@@ -215,7 +224,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Context_full", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Dialectic enable.
         /// </summary>
@@ -224,7 +233,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Dialectic_enable", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Download.
         /// </summary>
@@ -233,7 +242,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Download", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Download failed: {0}.
         /// </summary>
@@ -242,7 +251,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Download_failed___0_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Download failed with error code: {0}.
         /// </summary>
@@ -251,7 +260,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Download_failed_with_error_code___0_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Downloaded {0} to:
         ///{1}.
@@ -261,7 +270,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Downloaded__0__to___1_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Editing transcription - Press Enter to finish or Esc to cancel.
         /// </summary>
@@ -270,7 +279,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Editing_transcription_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Error creating context.
         /// </summary>
@@ -279,7 +288,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_creating_context", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Error creating sampler.
         /// </summary>
@@ -288,7 +297,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_creating_sampler", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Error creating session.
         /// </summary>
@@ -297,7 +306,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_creating_session", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Error deleting message.
         /// </summary>
@@ -306,7 +315,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_deleting_message", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Error initialising voice input.
         /// </summary>
@@ -315,7 +324,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_initialising_voice_input", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Error initializing audio capture.
         /// </summary>
@@ -324,7 +333,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_initializing_audio_capture_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Error loading files for .
         /// </summary>
@@ -333,7 +342,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_loading_files_for_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Error loading model.
         /// </summary>
@@ -342,7 +351,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_loading_model", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Error loading VAD model.
         /// </summary>
@@ -351,7 +360,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_loading_VAD_model_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Error loading Whisper model.
         /// </summary>
@@ -360,7 +369,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_loading_Whisper_model_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Error reading file: {0}.
         /// </summary>
@@ -369,7 +378,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_reading_file___0_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Error regenerating message.
         /// </summary>
@@ -378,7 +387,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_regenerating_message", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Error setting system prompt.
         /// </summary>
@@ -387,7 +396,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_setting_system_prompt", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Error starting voice input.
         /// </summary>
@@ -396,7 +405,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_starting_voice_input", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Error Whisper model not found.
         /// </summary>
@@ -405,7 +414,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_Whisper_model_not_found", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Failed to convert a token.
         /// </summary>
@@ -414,7 +423,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Failed_to_convert_a_token_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Failed to create directory: {0}.
         /// </summary>
@@ -423,7 +432,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Failed_to_create_directory___0_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Failed to create the model context.
         /// </summary>
@@ -432,7 +441,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Failed_to_create_the_model_context_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Failed to create the sampler.
         /// </summary>
@@ -441,7 +450,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Failed_to_create_the_sampler_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Failed to tokenize the prompt.
         /// </summary>
@@ -450,7 +459,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Failed_to_tokenize_the_prompt_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to First token time: .
         /// </summary>
@@ -459,7 +468,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("First_token_time__", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Folder not found.
         /// </summary>
@@ -468,7 +477,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Folder_not_found", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Generate.
         /// </summary>
@@ -477,7 +486,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Generate", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to GetStateData.
         /// </summary>
@@ -486,7 +495,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("GetStateData", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to HTTP Error loading files for .
         /// </summary>
@@ -495,7 +504,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("HTTP_Error_loading_files_for_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to JSON Parse Error for .
         /// </summary>
@@ -504,7 +513,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("JSON_Parse_Error_for_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to LM Stud.
         /// </summary>
@@ -513,7 +522,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("LM_Stud", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
@@ -523,7 +532,7 @@ namespace LMStud.Properties {
                 return ((System.Drawing.Icon)(obj));
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Load a model first..
         /// </summary>
@@ -532,7 +541,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Load_a_model_first_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Loading: .
         /// </summary>
@@ -541,7 +550,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Loading__", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Maximum context size of the last loaded model: .
         /// </summary>
@@ -550,7 +559,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Max_context_size_of_last_loaded_model", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Model search error: {0}.
         /// </summary>
@@ -559,7 +568,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Model_search_error___0_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Models folder not found.
         /// </summary>
@@ -568,7 +577,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Models_folder_not_found", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Models folder not found, please specify a valid folder in the Settings tab..
         /// </summary>
@@ -577,7 +586,16 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Models_folder_not_found_", resourceCulture);
             }
         }
-
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No Jinja chat template was found in the selected model..
+        /// </summary>
+        internal static string No_Jinja_chat_template_was_found_in_the_selected_model_ {
+            get {
+                return ResourceManager.GetString("No_Jinja_chat_template_was_found_in_the_selected_model_", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to No model has been loaded..
         /// </summary>
@@ -586,7 +604,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("No_model_has_been_loaded_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to No model loaded.
         /// </summary>
@@ -595,7 +613,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("No_model_loaded", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Please enter a valid API base URL.
         /// </summary>
@@ -604,7 +622,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Please_enter_a_valid_API_base_URL", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Please select an item from both lists..
         /// </summary>
@@ -613,7 +631,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Please_select_an_item_from_both_lists_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Rate limit exceeded.
         /// </summary>
@@ -622,7 +640,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Rate_limit_exceeded", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Received an invalid response from the API server.
         /// </summary>
@@ -631,7 +649,16 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Received_an_invalid_response_from_the_API_server", resourceCulture);
             }
         }
-
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remove the {0} slot?.
+        /// </summary>
+        internal static string Remove_the__0__slot_ {
+            get {
+                return ResourceManager.GetString("Remove_the__0__slot_", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to Repeated tool calls detected.
         /// </summary>
@@ -640,7 +667,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Repeated_tool_calls_detected", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Retokenizing chat....
         /// </summary>
@@ -649,7 +676,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Retokenizing_chat___", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to SetStateData.
         /// </summary>
@@ -658,7 +685,16 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("SetStateData", resourceCulture);
             }
         }
-
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Slot name is required..
+        /// </summary>
+        internal static string Slot_name_is_required_ {
+            get {
+                return ResourceManager.GetString("Slot_name_is_required_", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to Stop.
         /// </summary>
@@ -667,7 +703,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Stop", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to The API request timed out.
         /// </summary>
@@ -676,7 +712,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("The_API_request_timed_out", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to The API request was canceled before completion.
         /// </summary>
@@ -685,7 +721,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("The_API_request_was_canceled_before_completion", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to The API server encountered an error.
         /// </summary>
@@ -694,7 +730,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("The_API_server_encountered_an_error", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to The chat template could not be applied..
         /// </summary>
@@ -703,7 +739,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("The_chat_template_could_not_be_applied_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to The GPU is out of memory..
         /// </summary>
@@ -712,7 +748,25 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("The_GPU_is_out_of_memory_", resourceCulture);
             }
         }
-
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The main slot cannot be removed. Edit it instead..
+        /// </summary>
+        internal static string The_main_slot_cannot_be_removed__Edit_it_instead_ {
+            get {
+                return ResourceManager.GetString("The_main_slot_cannot_be_removed__Edit_it_instead_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The main slot must be a local or API chat slot. Add MCP servers as separate tool slots..
+        /// </summary>
+        internal static string The_main_slot_must_be_a_local_or_API_chat_slot__ {
+            get {
+                return ResourceManager.GetString("The_main_slot_must_be_a_local_or_API_chat_slot__", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to The model backend returned a decode error..
         /// </summary>
@@ -721,7 +775,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("The_model_backend_returned_a_decode_error_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to The model could not be loaded..
         /// </summary>
@@ -730,7 +784,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("The_model_could_not_be_loaded_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to The modified settings are overridden by the Model Settings for this model..
         /// </summary>
@@ -739,7 +793,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("The_modified_settings_are_overridden_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Tool Call.
         /// </summary>
@@ -748,7 +802,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Tool_Call", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Tool Output.
         /// </summary>
@@ -757,7 +811,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Tool_Output", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Unable to connect to the API server.
         /// </summary>
@@ -766,7 +820,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Unable_to_connect_to_the_API_server", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Unable to parse the chat message.
         /// </summary>
@@ -775,7 +829,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Unable_to_parse_the_chat_message_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Unknown API error.
         /// </summary>
@@ -784,7 +838,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Unknown_API_error_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Using API Model: .
         /// </summary>
@@ -793,7 +847,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Using_API_Model_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Using Model: .
         /// </summary>
@@ -802,7 +856,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Using_Model_", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to VAD model not found, use Basic VAD?.
         /// </summary>

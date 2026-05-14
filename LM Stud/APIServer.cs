@@ -185,7 +185,13 @@ namespace LMStud{
 			var session = Sessions.Get(ResolveSessionId(ctx, request));
 			ctx.Response.AddHeader("X-Session-Id", session.Id);
 			APIClient client = null;
+			ModelSlotLockLease slotLock = null;
 			try{
+				slotLock = ModelSlotManager.TryEnterSlot(slot.Name, 300000);
+				if(slotLock == null){
+					WriteError(ctx, 409, "generation_busy", "The API slot is busy or could not generate a response.");
+					return;
+				}
 				lock(session.SyncRoot){
 					if(!Sessions.IsActive(session)){
 						WriteError(ctx, 409, "session_reset", "The API session was reset before the request could be prepared.");
@@ -228,6 +234,7 @@ namespace LMStud{
 				WriteError(ctx, 502, "upstream_error", ex.Message);
 			} finally{
 				if(!store) Sessions.Remove(session.Id);
+				slotLock?.Dispose();
 				client?.Dispose();
 			}
 		}

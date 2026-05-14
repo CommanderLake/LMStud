@@ -84,7 +84,7 @@ namespace LMStud{
 				}
 			}
 			if(string.IsNullOrWhiteSpace(template)){
-				MessageBox.Show(this, "No Jinja chat template was found in the selected model.", Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
+				MessageBox.Show(this, Resources.No_Jinja_chat_template_was_found_in_the_selected_model_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 				return;
 			}
 			saveFileDialog1.Title = action;
@@ -124,6 +124,7 @@ namespace LMStud{
 							listViewModels.Items.Clear();
 							listViewModels.Items.AddRange(items.ToArray());
 						} finally{ listViewModels.EndUpdate(); }
+						PopulateSlotsEditLocalModelItems();
 					}));
 				} catch(Exception ex){
 					Invoke(new MethodInvoker(() => {
@@ -220,12 +221,46 @@ namespace LMStud{
 		private void SetSystemPromptsForSlots(IEnumerable<string> slotNames){
 			foreach(var slotName in (slotNames ?? Enumerable.Empty<string>()).Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase)) SetSystemPromptForSlot(slotName);
 		}
-		private void SetSystemPromptsForLoadedSlots(){SetSystemPromptsForSlots(ModelSlotManager.GetLoadedLocalSlotNames());}
+		private void PopulateSlotsEditLocalModelItems(){
+			var selectedModel = GetSlotsEditLocalModelPath();
+			comboSlotsEditLocalModel.Items.Clear();
+			comboSlotsEditLocalModel.DisplayMember = "Text";
+			foreach(ListViewItem item in listViewModels.Items) comboSlotsEditLocalModel.Items.Add(item);
+			SetSlotsEditLocalModel(selectedModel);
+		}
 		private string GetSystemPromptForSlot(string slotName){
-			if(!string.IsNullOrWhiteSpace(slotName) && Common.LoadedLocalSlots.TryGetValue(slotName, out var loadedModel) && loadedModel?.SubItems.Count > 1){
+			if(!string.IsNullOrWhiteSpace(slotName) && Common.LoadedLocalSlots.TryGetValue(slotName, out var loadedModel) && loadedModel?.SubItems.Count > 1)
 				if(TryGetEnabledModelSettings(loadedModel.SubItems[1].Text, out var overrides)) return overrides.SystemPrompt ?? "";
-			}
 			return Common.SystemPrompt ?? "";
+		}
+		private string GetSystemPromptForModel(string modelPathOrName){
+			return TryGetEnabledModelSettings(ResolveModelPath(modelPathOrName), out var overrides) ? overrides.SystemPrompt ?? "" : Common.SystemPrompt ?? "";
+		}
+		private string ResolveModelPath(string modelPathOrName){
+			if(string.IsNullOrWhiteSpace(modelPathOrName)) return "";
+			var value = modelPathOrName.Trim();
+			var item = FindModelItem(value);
+			if(item?.SubItems.Count > 1) return item.SubItems[1].Text;
+			if(Path.IsPathRooted(value)) return value;
+			var modelsDir = Common.ModelsDir ?? "";
+			return string.IsNullOrWhiteSpace(modelsDir) ? value : Path.Combine(modelsDir, value);
+		}
+		private ListViewItem FindModelItem(string modelPathOrName){
+			if(string.IsNullOrWhiteSpace(modelPathOrName)) return null;
+			var value = modelPathOrName.Trim();
+			return listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item => item.SubItems.Count > 1 &&
+				(SameModelPath(item.SubItems[1].Text, value) ||
+				string.Equals(item.Name, value, StringComparison.OrdinalIgnoreCase) ||
+				string.Equals(item.Text, value, StringComparison.OrdinalIgnoreCase) ||
+				string.Equals(Path.GetFileNameWithoutExtension(item.SubItems[1].Text), value, StringComparison.OrdinalIgnoreCase)));
+		}
+		private static bool SameModelPath(string a, string b){
+			if(string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b)) return false;
+			try{
+				a = Path.GetFullPath(Path.IsPathRooted(a) ? a : Path.Combine(Common.ModelsDir ?? "", a)).TrimEnd('\\', '/');
+				b = Path.GetFullPath(Path.IsPathRooted(b) ? b : Path.Combine(Common.ModelsDir ?? "", b)).TrimEnd('\\', '/');
+			} catch{}
+			return string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 		}
 		private static string GetModelSettingsKey(string modelPath){
 			if(string.IsNullOrWhiteSpace(modelPath)) return null;
@@ -346,7 +381,7 @@ namespace LMStud{
 						Common.LoadedLocalSlots[slotName] = modelLvi;
 						SetSystemPromptForSlot(slotName, false);
 						ModelSlotManager.LoadLocalIntoSlot(slotName, modelPath, makeSlotChat);
-						ApplyActiveSlotToModel(true);
+						ApplyActiveSlotToModel();
 						try{
 							BeginInvoke(new MethodInvoker(() => {
 								Settings.Default.LastModel = modelPath.Substring(modelsDir.Length);

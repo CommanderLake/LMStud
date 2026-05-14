@@ -79,29 +79,38 @@ namespace LMStud
 			this.butLoadSlot = new System.Windows.Forms.Button();
 			this.butUnloadSlot = new System.Windows.Forms.Button();
 			this.groupBoxSlotConfig = new System.Windows.Forms.GroupBox();
+			this.panelSlotsEditApi = new System.Windows.Forms.Panel();
+			this.textSlotsEditApiUrl = new System.Windows.Forms.TextBox();
+			this.label53 = new System.Windows.Forms.Label();
 			this.label52 = new System.Windows.Forms.Label();
+			this.textSlotsEditApiKey = new System.Windows.Forms.TextBox();
 			this.label51 = new System.Windows.Forms.Label();
+			this.comboSlotsEditApiModel = new System.Windows.Forms.ComboBox();
 			this.comboSlotEditReasonSummary = new System.Windows.Forms.ComboBox();
+			this.label46 = new System.Windows.Forms.Label();
+			this.label49 = new System.Windows.Forms.Label();
 			this.comboSlotEditReasonEffort = new System.Windows.Forms.ComboBox();
+			this.label47 = new System.Windows.Forms.Label();
+			this.checkSlotsEditStore = new System.Windows.Forms.CheckBox();
+			this.textSlotsEditApiToolName = new System.Windows.Forms.TextBox();
+			this.panelSlotsEditLocal = new System.Windows.Forms.Panel();
+			this.comboSlotsEditLocalModel = new System.Windows.Forms.ComboBox();
+			this.label44 = new System.Windows.Forms.Label();
+			this.panelSlotsEditMcp = new System.Windows.Forms.Panel();
+			this.textSlotsEditMcpHeader = new System.Windows.Forms.TextBox();
+			this.label45 = new System.Windows.Forms.Label();
+			this.textSlotsEditMcpUrl = new System.Windows.Forms.TextBox();
+			this.label41 = new System.Windows.Forms.Label();
+			this.comboSlotsEditMcpTransport = new System.Windows.Forms.ComboBox();
+			this.label40 = new System.Windows.Forms.Label();
 			this.butSlotsEditUseSelectedModel = new System.Windows.Forms.Button();
 			this.label50 = new System.Windows.Forms.Label();
 			this.textSlotsEditName = new System.Windows.Forms.TextBox();
-			this.textSlotsEditApiKey = new System.Windows.Forms.TextBox();
 			this.butSlotsSave = new System.Windows.Forms.Button();
 			this.comboSlotsEditSource = new System.Windows.Forms.ComboBox();
 			this.butSlotsAdd = new System.Windows.Forms.Button();
-			this.label49 = new System.Windows.Forms.Label();
-			this.textSlotsEditModel = new System.Windows.Forms.TextBox();
 			this.label48 = new System.Windows.Forms.Label();
-			this.textSlotsEditApiUrl = new System.Windows.Forms.TextBox();
-			this.label47 = new System.Windows.Forms.Label();
-			this.textSlotsEditInstructions = new System.Windows.Forms.TextBox();
-			this.label46 = new System.Windows.Forms.Label();
-			this.comboSlotsEditApiModel = new System.Windows.Forms.ComboBox();
-			this.label45 = new System.Windows.Forms.Label();
-			this.checkSlotsEditStore = new System.Windows.Forms.CheckBox();
-			this.label44 = new System.Windows.Forms.Label();
-			this.textSlotsEditToolName = new System.Windows.Forms.TextBox();
+			this.textSlotsEditSystemPrompt = new System.Windows.Forms.TextBox();
 			this.label43 = new System.Windows.Forms.Label();
 			this.checkSlotsEditChat = new System.Windows.Forms.CheckBox();
 			this.label42 = new System.Windows.Forms.Label();
@@ -273,6 +282,9 @@ namespace LMStud
 			this.tabPageMetadata.SuspendLayout();
 			this.tabPageSlots.SuspendLayout();
 			this.groupBoxSlotConfig.SuspendLayout();
+			this.panelSlotsEditApi.SuspendLayout();
+			this.panelSlotsEditLocal.SuspendLayout();
+			this.panelSlotsEditMcp.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).BeginInit();
 			this.splitContainer3.Panel1.SuspendLayout();
 			this.splitContainer3.Panel2.SuspendLayout();
@@ -520,6 +532,11 @@ namespace LMStud
             0,
             0});
 			this.numMinPModel.Name = "numMinPModel";
+			this.numMinPModel.Value = new decimal(new int[] {
+            5,
+            0,
+            0,
+            131072});
 			// 
 			// numTopKModel
 			// 
@@ -720,29 +737,17 @@ namespace LMStud
 			// groupBoxSlotConfig
 			// 
 			resources.ApplyResources(this.groupBoxSlotConfig, "groupBoxSlotConfig");
-			this.groupBoxSlotConfig.Controls.Add(this.label52);
-			this.groupBoxSlotConfig.Controls.Add(this.label51);
-			this.groupBoxSlotConfig.Controls.Add(this.comboSlotEditReasonSummary);
-			this.groupBoxSlotConfig.Controls.Add(this.comboSlotEditReasonEffort);
+			this.groupBoxSlotConfig.Controls.Add(this.panelSlotsEditApi);
+			this.groupBoxSlotConfig.Controls.Add(this.panelSlotsEditLocal);
+			this.groupBoxSlotConfig.Controls.Add(this.panelSlotsEditMcp);
 			this.groupBoxSlotConfig.Controls.Add(this.butSlotsEditUseSelectedModel);
 			this.groupBoxSlotConfig.Controls.Add(this.label50);
 			this.groupBoxSlotConfig.Controls.Add(this.textSlotsEditName);
-			this.groupBoxSlotConfig.Controls.Add(this.textSlotsEditApiKey);
 			this.groupBoxSlotConfig.Controls.Add(this.butSlotsSave);
 			this.groupBoxSlotConfig.Controls.Add(this.comboSlotsEditSource);
 			this.groupBoxSlotConfig.Controls.Add(this.butSlotsAdd);
-			this.groupBoxSlotConfig.Controls.Add(this.label49);
-			this.groupBoxSlotConfig.Controls.Add(this.textSlotsEditModel);
 			this.groupBoxSlotConfig.Controls.Add(this.label48);
-			this.groupBoxSlotConfig.Controls.Add(this.textSlotsEditApiUrl);
-			this.groupBoxSlotConfig.Controls.Add(this.label47);
-			this.groupBoxSlotConfig.Controls.Add(this.textSlotsEditInstructions);
-			this.groupBoxSlotConfig.Controls.Add(this.label46);
-			this.groupBoxSlotConfig.Controls.Add(this.comboSlotsEditApiModel);
-			this.groupBoxSlotConfig.Controls.Add(this.label45);
-			this.groupBoxSlotConfig.Controls.Add(this.checkSlotsEditStore);
-			this.groupBoxSlotConfig.Controls.Add(this.label44);
-			this.groupBoxSlotConfig.Controls.Add(this.textSlotsEditToolName);
+			this.groupBoxSlotConfig.Controls.Add(this.textSlotsEditSystemPrompt);
 			this.groupBoxSlotConfig.Controls.Add(this.label43);
 			this.groupBoxSlotConfig.Controls.Add(this.checkSlotsEditChat);
 			this.groupBoxSlotConfig.Controls.Add(this.label42);
@@ -753,15 +758,59 @@ namespace LMStud
 			this.groupBoxSlotConfig.TabStop = false;
 			this.toolTip1.SetToolTip(this.groupBoxSlotConfig, resources.GetString("groupBoxSlotConfig.ToolTip"));
 			// 
+			// panelSlotsEditApi
+			// 
+			resources.ApplyResources(this.panelSlotsEditApi, "panelSlotsEditApi");
+			this.panelSlotsEditApi.Controls.Add(this.textSlotsEditApiUrl);
+			this.panelSlotsEditApi.Controls.Add(this.label53);
+			this.panelSlotsEditApi.Controls.Add(this.label52);
+			this.panelSlotsEditApi.Controls.Add(this.textSlotsEditApiKey);
+			this.panelSlotsEditApi.Controls.Add(this.label51);
+			this.panelSlotsEditApi.Controls.Add(this.comboSlotsEditApiModel);
+			this.panelSlotsEditApi.Controls.Add(this.comboSlotEditReasonSummary);
+			this.panelSlotsEditApi.Controls.Add(this.label46);
+			this.panelSlotsEditApi.Controls.Add(this.label49);
+			this.panelSlotsEditApi.Controls.Add(this.comboSlotEditReasonEffort);
+			this.panelSlotsEditApi.Controls.Add(this.label47);
+			this.panelSlotsEditApi.Controls.Add(this.checkSlotsEditStore);
+			this.panelSlotsEditApi.Controls.Add(this.textSlotsEditApiToolName);
+			this.panelSlotsEditApi.Name = "panelSlotsEditApi";
+			// 
+			// textSlotsEditApiUrl
+			// 
+			resources.ApplyResources(this.textSlotsEditApiUrl, "textSlotsEditApiUrl");
+			this.textSlotsEditApiUrl.Name = "textSlotsEditApiUrl";
+			this.toolTip1.SetToolTip(this.textSlotsEditApiUrl, resources.GetString("textSlotsEditApiUrl.ToolTip"));
+			// 
+			// label53
+			// 
+			resources.ApplyResources(this.label53, "label53");
+			this.label53.Name = "label53";
+			// 
 			// label52
 			// 
 			resources.ApplyResources(this.label52, "label52");
 			this.label52.Name = "label52";
 			// 
+			// textSlotsEditApiKey
+			// 
+			resources.ApplyResources(this.textSlotsEditApiKey, "textSlotsEditApiKey");
+			this.textSlotsEditApiKey.Name = "textSlotsEditApiKey";
+			this.toolTip1.SetToolTip(this.textSlotsEditApiKey, resources.GetString("textSlotsEditApiKey.ToolTip"));
+			// 
 			// label51
 			// 
 			resources.ApplyResources(this.label51, "label51");
 			this.label51.Name = "label51";
+			// 
+			// comboSlotsEditApiModel
+			// 
+			resources.ApplyResources(this.comboSlotsEditApiModel, "comboSlotsEditApiModel");
+			this.comboSlotsEditApiModel.FormattingEnabled = true;
+			this.comboSlotsEditApiModel.Name = "comboSlotsEditApiModel";
+			this.comboSlotsEditApiModel.Sorted = true;
+			this.toolTip1.SetToolTip(this.comboSlotsEditApiModel, resources.GetString("comboSlotsEditApiModel.ToolTip"));
+			this.comboSlotsEditApiModel.DropDown += new System.EventHandler(this.ComboSlotsEditApiModel_DropDown);
 			// 
 			// comboSlotEditReasonSummary
 			// 
@@ -774,6 +823,16 @@ namespace LMStud
             resources.GetString("comboSlotEditReasonSummary.Items3")});
 			this.comboSlotEditReasonSummary.Name = "comboSlotEditReasonSummary";
 			this.toolTip1.SetToolTip(this.comboSlotEditReasonSummary, resources.GetString("comboSlotEditReasonSummary.ToolTip"));
+			// 
+			// label46
+			// 
+			resources.ApplyResources(this.label46, "label46");
+			this.label46.Name = "label46";
+			// 
+			// label49
+			// 
+			resources.ApplyResources(this.label49, "label49");
+			this.label49.Name = "label49";
 			// 
 			// comboSlotEditReasonEffort
 			// 
@@ -788,6 +847,95 @@ namespace LMStud
             resources.GetString("comboSlotEditReasonEffort.Items5")});
 			this.comboSlotEditReasonEffort.Name = "comboSlotEditReasonEffort";
 			this.toolTip1.SetToolTip(this.comboSlotEditReasonEffort, resources.GetString("comboSlotEditReasonEffort.ToolTip"));
+			// 
+			// label47
+			// 
+			resources.ApplyResources(this.label47, "label47");
+			this.label47.Name = "label47";
+			// 
+			// checkSlotsEditStore
+			// 
+			resources.ApplyResources(this.checkSlotsEditStore, "checkSlotsEditStore");
+			this.checkSlotsEditStore.Name = "checkSlotsEditStore";
+			this.toolTip1.SetToolTip(this.checkSlotsEditStore, resources.GetString("checkSlotsEditStore.ToolTip"));
+			this.checkSlotsEditStore.UseVisualStyleBackColor = true;
+			// 
+			// textSlotsEditApiToolName
+			// 
+			resources.ApplyResources(this.textSlotsEditApiToolName, "textSlotsEditApiToolName");
+			this.textSlotsEditApiToolName.Name = "textSlotsEditApiToolName";
+			this.toolTip1.SetToolTip(this.textSlotsEditApiToolName, resources.GetString("textSlotsEditApiToolName.ToolTip"));
+			// 
+			// panelSlotsEditLocal
+			// 
+			resources.ApplyResources(this.panelSlotsEditLocal, "panelSlotsEditLocal");
+			this.panelSlotsEditLocal.Controls.Add(this.comboSlotsEditLocalModel);
+			this.panelSlotsEditLocal.Controls.Add(this.label44);
+			this.panelSlotsEditLocal.Name = "panelSlotsEditLocal";
+			// 
+			// comboSlotsEditLocalModel
+			// 
+			resources.ApplyResources(this.comboSlotsEditLocalModel, "comboSlotsEditLocalModel");
+			this.comboSlotsEditLocalModel.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.comboSlotsEditLocalModel.FormattingEnabled = true;
+			this.comboSlotsEditLocalModel.Name = "comboSlotsEditLocalModel";
+			this.toolTip1.SetToolTip(this.comboSlotsEditLocalModel, resources.GetString("comboSlotsEditLocalModel.ToolTip"));
+			this.comboSlotsEditLocalModel.SelectedIndexChanged += new System.EventHandler(this.ComboSlotsEditLocalModel_SelectedIndexChanged);
+			// 
+			// label44
+			// 
+			resources.ApplyResources(this.label44, "label44");
+			this.label44.Name = "label44";
+			// 
+			// panelSlotsEditMcp
+			// 
+			resources.ApplyResources(this.panelSlotsEditMcp, "panelSlotsEditMcp");
+			this.panelSlotsEditMcp.Controls.Add(this.textSlotsEditMcpHeader);
+			this.panelSlotsEditMcp.Controls.Add(this.label45);
+			this.panelSlotsEditMcp.Controls.Add(this.textSlotsEditMcpUrl);
+			this.panelSlotsEditMcp.Controls.Add(this.label41);
+			this.panelSlotsEditMcp.Controls.Add(this.comboSlotsEditMcpTransport);
+			this.panelSlotsEditMcp.Controls.Add(this.label40);
+			this.panelSlotsEditMcp.Name = "panelSlotsEditMcp";
+			// 
+			// textSlotsEditMcpHeader
+			// 
+			resources.ApplyResources(this.textSlotsEditMcpHeader, "textSlotsEditMcpHeader");
+			this.textSlotsEditMcpHeader.Name = "textSlotsEditMcpHeader";
+			this.toolTip1.SetToolTip(this.textSlotsEditMcpHeader, resources.GetString("textSlotsEditMcpHeader.ToolTip"));
+			// 
+			// label45
+			// 
+			resources.ApplyResources(this.label45, "label45");
+			this.label45.Name = "label45";
+			// 
+			// textSlotsEditMcpUrl
+			// 
+			resources.ApplyResources(this.textSlotsEditMcpUrl, "textSlotsEditMcpUrl");
+			this.textSlotsEditMcpUrl.Name = "textSlotsEditMcpUrl";
+			this.toolTip1.SetToolTip(this.textSlotsEditMcpUrl, resources.GetString("textSlotsEditMcpUrl.ToolTip"));
+			// 
+			// label41
+			// 
+			resources.ApplyResources(this.label41, "label41");
+			this.label41.Name = "label41";
+			// 
+			// comboSlotsEditMcpTransport
+			// 
+			resources.ApplyResources(this.comboSlotsEditMcpTransport, "comboSlotsEditMcpTransport");
+			this.comboSlotsEditMcpTransport.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.comboSlotsEditMcpTransport.FormattingEnabled = true;
+			this.comboSlotsEditMcpTransport.Items.AddRange(new object[] {
+            resources.GetString("comboSlotsEditMcpTransport.Items"),
+            resources.GetString("comboSlotsEditMcpTransport.Items1")});
+			this.comboSlotsEditMcpTransport.Name = "comboSlotsEditMcpTransport";
+			this.toolTip1.SetToolTip(this.comboSlotsEditMcpTransport, resources.GetString("comboSlotsEditMcpTransport.ToolTip"));
+			this.comboSlotsEditMcpTransport.SelectedIndexChanged += new System.EventHandler(this.ComboSlotsEditMcpTransport_SelectedIndexChanged);
+			// 
+			// label40
+			// 
+			resources.ApplyResources(this.label40, "label40");
+			this.label40.Name = "label40";
 			// 
 			// butSlotsEditUseSelectedModel
 			// 
@@ -809,12 +957,6 @@ namespace LMStud
 			this.toolTip1.SetToolTip(this.textSlotsEditName, resources.GetString("textSlotsEditName.ToolTip"));
 			this.textSlotsEditName.TextChanged += new System.EventHandler(this.TextSlotsEditName_TextChanged);
 			// 
-			// textSlotsEditApiKey
-			// 
-			resources.ApplyResources(this.textSlotsEditApiKey, "textSlotsEditApiKey");
-			this.textSlotsEditApiKey.Name = "textSlotsEditApiKey";
-			this.toolTip1.SetToolTip(this.textSlotsEditApiKey, resources.GetString("textSlotsEditApiKey.ToolTip"));
-			// 
 			// butSlotsSave
 			// 
 			resources.ApplyResources(this.butSlotsSave, "butSlotsSave");
@@ -830,7 +972,8 @@ namespace LMStud
 			this.comboSlotsEditSource.FormattingEnabled = true;
 			this.comboSlotsEditSource.Items.AddRange(new object[] {
             resources.GetString("comboSlotsEditSource.Items"),
-            resources.GetString("comboSlotsEditSource.Items1")});
+            resources.GetString("comboSlotsEditSource.Items1"),
+            resources.GetString("comboSlotsEditSource.Items2")});
 			this.comboSlotsEditSource.Name = "comboSlotsEditSource";
 			this.toolTip1.SetToolTip(this.comboSlotsEditSource, resources.GetString("comboSlotsEditSource.ToolTip"));
 			this.comboSlotsEditSource.SelectedIndexChanged += new System.EventHandler(this.ComboSlotsEditSource_SelectedIndexChanged);
@@ -843,74 +986,16 @@ namespace LMStud
 			this.butSlotsAdd.UseVisualStyleBackColor = true;
 			this.butSlotsAdd.Click += new System.EventHandler(this.ButSlotsAdd_Click);
 			// 
-			// label49
-			// 
-			resources.ApplyResources(this.label49, "label49");
-			this.label49.Name = "label49";
-			// 
-			// textSlotsEditModel
-			// 
-			resources.ApplyResources(this.textSlotsEditModel, "textSlotsEditModel");
-			this.textSlotsEditModel.Name = "textSlotsEditModel";
-			this.toolTip1.SetToolTip(this.textSlotsEditModel, resources.GetString("textSlotsEditModel.ToolTip"));
-			// 
 			// label48
 			// 
 			resources.ApplyResources(this.label48, "label48");
 			this.label48.Name = "label48";
 			// 
-			// textSlotsEditApiUrl
+			// textSlotsEditSystemPrompt
 			// 
-			resources.ApplyResources(this.textSlotsEditApiUrl, "textSlotsEditApiUrl");
-			this.textSlotsEditApiUrl.Name = "textSlotsEditApiUrl";
-			this.toolTip1.SetToolTip(this.textSlotsEditApiUrl, resources.GetString("textSlotsEditApiUrl.ToolTip"));
-			// 
-			// label47
-			// 
-			resources.ApplyResources(this.label47, "label47");
-			this.label47.Name = "label47";
-			// 
-			// textSlotsEditInstructions
-			// 
-			resources.ApplyResources(this.textSlotsEditInstructions, "textSlotsEditInstructions");
-			this.textSlotsEditInstructions.Name = "textSlotsEditInstructions";
-			this.toolTip1.SetToolTip(this.textSlotsEditInstructions, resources.GetString("textSlotsEditInstructions.ToolTip"));
-			// 
-			// label46
-			// 
-			resources.ApplyResources(this.label46, "label46");
-			this.label46.Name = "label46";
-			// 
-			// comboSlotsEditApiModel
-			// 
-			resources.ApplyResources(this.comboSlotsEditApiModel, "comboSlotsEditApiModel");
-			this.comboSlotsEditApiModel.FormattingEnabled = true;
-			this.comboSlotsEditApiModel.Name = "comboSlotsEditApiModel";
-			this.toolTip1.SetToolTip(this.comboSlotsEditApiModel, resources.GetString("comboSlotsEditApiModel.ToolTip"));
-			this.comboSlotsEditApiModel.DropDown += new System.EventHandler(this.ComboSlotsEditApiModel_DropDown);
-			// 
-			// label45
-			// 
-			resources.ApplyResources(this.label45, "label45");
-			this.label45.Name = "label45";
-			// 
-			// checkSlotsEditStore
-			// 
-			resources.ApplyResources(this.checkSlotsEditStore, "checkSlotsEditStore");
-			this.checkSlotsEditStore.Name = "checkSlotsEditStore";
-			this.toolTip1.SetToolTip(this.checkSlotsEditStore, resources.GetString("checkSlotsEditStore.ToolTip"));
-			this.checkSlotsEditStore.UseVisualStyleBackColor = true;
-			// 
-			// label44
-			// 
-			resources.ApplyResources(this.label44, "label44");
-			this.label44.Name = "label44";
-			// 
-			// textSlotsEditToolName
-			// 
-			resources.ApplyResources(this.textSlotsEditToolName, "textSlotsEditToolName");
-			this.textSlotsEditToolName.Name = "textSlotsEditToolName";
-			this.toolTip1.SetToolTip(this.textSlotsEditToolName, resources.GetString("textSlotsEditToolName.ToolTip"));
+			resources.ApplyResources(this.textSlotsEditSystemPrompt, "textSlotsEditSystemPrompt");
+			this.textSlotsEditSystemPrompt.Name = "textSlotsEditSystemPrompt";
+			this.toolTip1.SetToolTip(this.textSlotsEditSystemPrompt, resources.GetString("textSlotsEditSystemPrompt.ToolTip"));
 			// 
 			// label43
 			// 
@@ -975,6 +1060,7 @@ namespace LMStud
 			this.listViewSlots.UseCompatibleStateImageBehavior = false;
 			this.listViewSlots.View = System.Windows.Forms.View.Details;
 			this.listViewSlots.SelectedIndexChanged += new System.EventHandler(this.ListViewSlots_SelectedIndexChanged);
+			this.listViewSlots.Click += new System.EventHandler(this.ListViewSlots_Click);
 			this.listViewSlots.DoubleClick += new System.EventHandler(this.ListViewSlots_DoubleClick);
 			this.listViewSlots.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ListViewSlots_KeyDown);
 			// 
@@ -1850,6 +1936,11 @@ namespace LMStud
             0});
 			this.numMinP.Name = "numMinP";
 			this.toolTip1.SetToolTip(this.numMinP, resources.GetString("numMinP.ToolTip"));
+			this.numMinP.Value = new decimal(new int[] {
+            5,
+            0,
+            0,
+            131072});
 			// 
 			// comboNUMAStrat
 			// 
@@ -2268,6 +2359,11 @@ namespace LMStud
 			this.tabPageSlots.ResumeLayout(false);
 			this.groupBoxSlotConfig.ResumeLayout(false);
 			this.groupBoxSlotConfig.PerformLayout();
+			this.panelSlotsEditApi.ResumeLayout(false);
+			this.panelSlotsEditApi.PerformLayout();
+			this.panelSlotsEditLocal.ResumeLayout(false);
+			this.panelSlotsEditMcp.ResumeLayout(false);
+			this.panelSlotsEditMcp.PerformLayout();
 			this.splitContainer3.Panel1.ResumeLayout(false);
 			this.splitContainer3.Panel2.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).EndInit();
@@ -2472,8 +2568,6 @@ namespace LMStud
 		private System.Windows.Forms.Label label35;
 		private System.Windows.Forms.Button butApplyModelSettings;
 		private System.Windows.Forms.CheckBox checkOverrideSettings;
-		private System.Windows.Forms.Label labelSystemPromptModel;
-		private System.Windows.Forms.TextBox textSystemPromptModel;
 		private System.Windows.Forms.GroupBox groupBox7;
 		private System.Windows.Forms.NumericUpDown numApiServerPort;
 		private System.Windows.Forms.Label label28;
@@ -2510,7 +2604,6 @@ namespace LMStud
 		private System.Windows.Forms.Label label48;
 		private System.Windows.Forms.Label label47;
 		private System.Windows.Forms.Label label46;
-		private System.Windows.Forms.Label label45;
 		private System.Windows.Forms.Label label44;
 		private System.Windows.Forms.Label label43;
 		private System.Windows.Forms.Label label42;
@@ -2518,12 +2611,10 @@ namespace LMStud
 		private System.Windows.Forms.CheckBox checkSlotsEditTool;
 		private System.Windows.Forms.CheckBox checkSlotsEditDialectic;
 		private System.Windows.Forms.CheckBox checkSlotsEditChat;
-		private System.Windows.Forms.TextBox textSlotsEditToolName;
+		private System.Windows.Forms.TextBox textSlotsEditApiToolName;
 		private System.Windows.Forms.CheckBox checkSlotsEditStore;
 		private System.Windows.Forms.ComboBox comboSlotsEditApiModel;
-		private System.Windows.Forms.TextBox textSlotsEditInstructions;
-		private System.Windows.Forms.TextBox textSlotsEditApiUrl;
-		private System.Windows.Forms.TextBox textSlotsEditModel;
+		private System.Windows.Forms.TextBox textSlotsEditSystemPrompt;
 		private System.Windows.Forms.ComboBox comboSlotsEditSource;
 		private System.Windows.Forms.TextBox textSlotsEditName;
 		private System.Windows.Forms.GroupBox groupBoxSlotConfig;
@@ -2541,5 +2632,19 @@ namespace LMStud
 		private System.Windows.Forms.Label label39;
 		private System.Windows.Forms.ComboBox comboKType;
 		private System.Windows.Forms.Label label38;
+		private System.Windows.Forms.Panel panelSlotsEditMcp;
+		private System.Windows.Forms.Panel panelSlotsEditApi;
+		private System.Windows.Forms.Panel panelSlotsEditLocal;
+		private System.Windows.Forms.ComboBox comboSlotsEditLocalModel;
+		private System.Windows.Forms.TextBox textSlotsEditMcpHeader;
+		private System.Windows.Forms.Label label45;
+		private System.Windows.Forms.TextBox textSlotsEditMcpUrl;
+		private System.Windows.Forms.Label label41;
+		private System.Windows.Forms.ComboBox comboSlotsEditMcpTransport;
+		private System.Windows.Forms.Label label40;
+		private System.Windows.Forms.TextBox textSlotsEditApiUrl;
+		private System.Windows.Forms.Label label53;
+		private System.Windows.Forms.Label labelSystemPromptModel;
+		private System.Windows.Forms.TextBox textSystemPromptModel;
 	}
 }

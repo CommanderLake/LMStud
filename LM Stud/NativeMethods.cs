@@ -46,6 +46,15 @@ namespace LMStud{
 		public static string GetLastError(){
 			var ptr = GetLastErrorMessage();
 			if(ptr == IntPtr.Zero) return string.Empty;
+			return ReadUtf8(ptr);
+		}
+		internal static string ReadUtf8AndFree(IntPtr ptr){
+			if(ptr == IntPtr.Zero) return string.Empty;
+			try{ return ReadUtf8(ptr); }
+			finally{ FreeMemory(ptr); }
+		}
+		internal static string ReadUtf8(IntPtr ptr){
+			if(ptr == IntPtr.Zero) return string.Empty;
 			var length = 0;
 			while(Marshal.ReadByte(ptr, length) != 0) length++;
 			var buffer = new byte[length];
@@ -118,6 +127,27 @@ namespace LMStud{
 		internal static extern StudError GenerateWithTools([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError GenerateForAPI([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, [MarshalAs(UnmanagedType.LPUTF8Str)] string toolsJson, int nPredict, out IntPtr responseJson);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern IntPtr MCPConnectStdio([MarshalAs(UnmanagedType.LPUTF8Str)] string serverId, [MarshalAs(UnmanagedType.LPUTF8Str)] string commandLine, [MarshalAs(UnmanagedType.LPUTF8Str)] string workingDirectory, int timeoutMs);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern IntPtr MCPConnectHttp([MarshalAs(UnmanagedType.LPUTF8Str)] string serverId, [MarshalAs(UnmanagedType.LPUTF8Str)] string url, [MarshalAs(UnmanagedType.LPUTF8Str)] string customHeader, int timeoutMs);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern IntPtr MCPDisconnect([MarshalAs(UnmanagedType.LPUTF8Str)] string serverId);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void MCPDisconnectAll();
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern IntPtr MCPRefreshTools([MarshalAs(UnmanagedType.LPUTF8Str)] string serverId);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern IntPtr MCPBuildToolsJson();
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void MCPRegisterToolsForSlot([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		[return: MarshalAs(UnmanagedType.I1)]
+		internal static extern bool MCPHasTool([MarshalAs(UnmanagedType.LPUTF8Str)] string exposedName);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern IntPtr MCPExecuteTool([MarshalAs(UnmanagedType.LPUTF8Str)] string exposedName, [MarshalAs(UnmanagedType.LPUTF8Str)] string argumentsJson);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern IntPtr MCPListServers();
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void StopGeneration([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]

@@ -18,7 +18,12 @@ namespace LMStud{
 	}
 	internal enum ModelSlotSource{
 		Local,
-		Api
+		Api,
+		Mcp
+	}
+	internal enum McpSlotTransport{
+		Stdio,
+		Http
 	}
 	internal sealed class ModelSlot{
 		public string ApiBaseUrl { get; set; }
@@ -29,6 +34,12 @@ namespace LMStud{
 		public bool ApiStore { get; set; }
 		public string Instructions { get; set; }
 		public string LocalPath { get; set; }
+		public string McpAuthHeader { get; set; }
+		public string McpCommandLine { get; set; }
+		public int McpTimeoutMs { get; set; }
+		public McpSlotTransport McpTransport { get; set; }
+		public string McpUrl { get; set; }
+		public string McpWorkingDirectory { get; set; }
 		public string Name { get; set; }
 		public ModelSlotSource Source { get; set; }
 		public string ToolName { get; set; }
@@ -36,12 +47,18 @@ namespace LMStud{
 		internal ModelSlot Clone(){
 			return new ModelSlot{
 				ApiBaseUrl = ApiBaseUrl, ApiKey = ApiKey, ApiModel = ApiModel, ApiReasoningEffort = ApiReasoningEffort, ApiReasoningSummary = ApiReasoningSummary,
-				ApiStore = ApiStore, Instructions = Instructions, LocalPath = LocalPath, Name = Name, Source = Source, ToolName = ToolName, Use = Use
+				ApiStore = ApiStore, Instructions = Instructions, LocalPath = LocalPath, McpAuthHeader = McpAuthHeader, McpCommandLine = McpCommandLine, McpTimeoutMs = McpTimeoutMs,
+				McpTransport = McpTransport, McpUrl = McpUrl, McpWorkingDirectory = McpWorkingDirectory, Name = Name, Source = Source, ToolName = ToolName, Use = Use
 			};
 		}
 		internal bool HasUse(ModelSlotUse use){return (Use & use) == use;}
 		internal string GetInstructionsOrDefault(){return string.IsNullOrWhiteSpace(Instructions) ? Common.SystemPrompt : Instructions;}
+		internal string GetMcpEndpoint(){ return McpTransport == McpSlotTransport.Http ? McpUrl ?? "" : McpCommandLine ?? ""; }
 		internal string DisplayModel(){
+			if(Source == ModelSlotSource.Mcp){
+				var endpoint = GetMcpEndpoint();
+				return string.IsNullOrWhiteSpace(endpoint) ? "(MCP server)" : endpoint;
+			}
 			if(Source == ModelSlotSource.Api) return string.IsNullOrWhiteSpace(ApiModel) ? "(API model)" : ApiModel;
 			if(string.IsNullOrWhiteSpace(LocalPath)) return "(local model)";
 			return Path.GetFileNameWithoutExtension(LocalPath.TrimEnd('\\', '/'));
@@ -177,12 +194,18 @@ namespace LMStud{
 					existing.ApiStore = slot.ApiStore;
 					existing.Instructions = slot.Instructions;
 					existing.LocalPath = slot.LocalPath;
+					existing.McpAuthHeader = slot.McpAuthHeader;
+					existing.McpCommandLine = slot.McpCommandLine;
+					existing.McpTimeoutMs = slot.McpTimeoutMs;
+					existing.McpTransport = slot.McpTransport;
+					existing.McpUrl = slot.McpUrl;
+					existing.McpWorkingDirectory = slot.McpWorkingDirectory;
 					existing.Name = slot.Name;
 					existing.Source = slot.Source;
 					existing.ToolName = slot.ToolName;
 					existing.Use = slot.Use;
 				}
-				if(slot.HasUse(ModelSlotUse.Chat)) ActiveChatSlotName = slot.Name;
+				if(slot.HasUse(ModelSlotUse.Chat) && slot.Source != ModelSlotSource.Mcp) ActiveChatSlotName = slot.Name;
 				EnsureMainSlot();
 				EnsureSingleChatSlot();
 			}
@@ -191,7 +214,7 @@ namespace LMStud{
 		internal static bool SetActiveChatSlot(string name){
 			lock(Sync){
 				var slot = FindSlotInternal(name);
-				if(slot == null) return false;
+				if(slot == null || slot.Source == ModelSlotSource.Mcp) return false;
 				ActiveChatSlotName = slot.Name;
 				slot.Use |= ModelSlotUse.Chat;
 				EnsureSingleChatSlot();
@@ -297,8 +320,11 @@ namespace LMStud{
 		internal static bool CanServeApiSlot(ModelSlot slot){
 			return slot != null && slot.Source == ModelSlotSource.Api && !string.IsNullOrWhiteSpace(slot.ApiBaseUrl) && !string.IsNullOrWhiteSpace(slot.ApiModel);
 		}
+		internal static bool CanServeMcpSlot(ModelSlot slot){
+			return slot != null && slot.Source == ModelSlotSource.Mcp && McpServerManager.IsConnected(slot.Name);
+		}
 		private static bool CanServeServerSlot(ModelSlot slot){
-			return slot != null && (slot.Source == ModelSlotSource.Api ? CanServeApiSlot(slot) : CanServeLocalSlot(slot));
+			return slot != null && (slot.Source == ModelSlotSource.Api ? CanServeApiSlot(slot) : slot.Source == ModelSlotSource.Local && CanServeLocalSlot(slot));
 		}
 		private static bool IsSlotAvailable(ModelSlot slot){
 			if(slot == null || string.IsNullOrWhiteSpace(slot.Name)) return false;
@@ -309,6 +335,10 @@ namespace LMStud{
 		}
 		internal static string GetSlotState(ModelSlot slot){
 			if(slot == null) return "";
+			if(slot.Source == ModelSlotSource.Mcp){
+				if(string.IsNullOrWhiteSpace(slot.GetMcpEndpoint())) return "Incomplete";
+				return CanServeMcpSlot(slot) ? "Connected" : "Disconnected";
+			}
 			if(slot.Source == ModelSlotSource.Api) return CanServeApiSlot(slot) ? "Ready" : "Incomplete";
 			var path = slot.ResolveLocalPath();
 			if(string.IsNullOrWhiteSpace(path)) return "Empty";
@@ -408,8 +438,21 @@ namespace LMStud{
 			slot.ApiReasoningEffort = NormalizeReasoningIndex(slot.ApiReasoningEffort, Common.ReasoningEffortValues.Length);
 			slot.ApiReasoningSummary = NormalizeReasoningIndex(slot.ApiReasoningSummary, Common.ReasoningSummaryValues.Length);
 			slot.LocalPath = slot.LocalPath?.Trim() ?? "";
+			slot.McpAuthHeader = slot.McpAuthHeader?.Trim() ?? "";
+			slot.McpCommandLine = slot.McpCommandLine?.Trim() ?? "";
+			slot.McpUrl = slot.McpUrl?.Trim() ?? "";
+			slot.McpWorkingDirectory = slot.McpWorkingDirectory?.Trim() ?? "";
+			if(slot.Source == ModelSlotSource.Mcp && slot.McpTransport == McpSlotTransport.Http && string.IsNullOrWhiteSpace(slot.McpUrl) && LooksLikeHttpUrl(slot.McpCommandLine)){
+				slot.McpUrl = slot.McpCommandLine;
+				slot.McpCommandLine = "";
+			}
+			if(slot.McpTimeoutMs <= 0) slot.McpTimeoutMs = McpServerManager.DefaultTimeoutMs;
+			if(slot.Source == ModelSlotSource.Mcp) slot.Use &= ModelSlotUse.Tool;
 			slot.ToolName = string.IsNullOrWhiteSpace(slot.ToolName) ? BuildToolName(slot.Name) : slot.ToolName.Trim();
 			return slot;
+		}
+		private static bool LooksLikeHttpUrl(string value){
+			return !string.IsNullOrWhiteSpace(value) && (value.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || value.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
 		}
 		private static void EnsureMainSlot(){
 			if(FindSlotInternal(MainSlotName) != null) return;
@@ -435,10 +478,16 @@ namespace LMStud{
 			return SlotsInternal.FirstOrDefault(slot => string.Equals(slot.Name, name.Trim(), StringComparison.OrdinalIgnoreCase));
 		}
 		private static ModelSlot FindActiveChatSlotInternal(){
-			return FindSlotInternal(ActiveChatSlotName) ?? SlotsInternal.FirstOrDefault(slot => slot.HasUse(ModelSlotUse.Chat)) ?? FindSlotInternal(MainSlotName);
+			var active = FindSlotInternal(ActiveChatSlotName);
+			if(active != null && active.Source != ModelSlotSource.Mcp) return active;
+			var marked = SlotsInternal.FirstOrDefault(slot => slot.Source != ModelSlotSource.Mcp && slot.HasUse(ModelSlotUse.Chat));
+			if(marked != null) return marked;
+			var main = FindSlotInternal(MainSlotName);
+			if(main != null && main.Source != ModelSlotSource.Mcp) return main;
+			return SlotsInternal.FirstOrDefault(slot => slot.Source != ModelSlotSource.Mcp);
 		}
 		private static bool IsServerRoutableSlot(ModelSlot slot){
-			return slot != null && (slot.HasUse(ModelSlotUse.Server) || slot.HasUse(ModelSlotUse.Chat));
+			return slot != null && slot.Source != ModelSlotSource.Mcp && (slot.HasUse(ModelSlotUse.Server) || slot.HasUse(ModelSlotUse.Chat));
 		}
 		private static string NormalizeServerModelName(string requestedModel){
 			var model = requestedModel.Trim();

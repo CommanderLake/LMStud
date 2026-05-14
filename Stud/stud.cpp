@@ -2,6 +2,7 @@
 #include "StudState.h"
 #include "hug.h"
 #include "JSONCommon.h"
+#include "MCP.h"
 #include <nlohmann\json.hpp>
 #include <filesystem>
 #include <chrono>
@@ -9,6 +10,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <cstring>
 #include <mutex>
 #include <system_error>
@@ -100,6 +102,18 @@ static std::string GenerateToolCallId(){
 static void EnsureToolCallIds(common_chat_msg& msg){
 	for(auto& toolCall : msg.tool_calls)
 		if(toolCall.id.empty()) toolCall.id = GenerateToolCallId();
+}
+static bool TryExecuteMCPTool(const common_chat_tool_call& toolCall, std::string& toolResult){
+	if(!MCPHasTool(toolCall.name.c_str())) return false;
+	char* result = MCPExecuteTool(toolCall.name.c_str(), toolCall.arguments.c_str());
+	if(!result){
+		toolResult = "{\"error\":\"MCP tool execution failed\"}";
+		return true;
+	}
+	try{ toolResult = result; }
+	catch(...){ toolResult = "{\"error\":\"MCP tool execution failed\"}"; }
+	std::free(result);
+	return true;
 }
 extern "C" EXPORT char* ExecuteTool(const char* slotName, const char* name, const char* argsJson){
 	if(!name || name[0] == '\0') return CopyCString("{\"error\":\"missing tool name\"}");
@@ -1202,6 +1216,15 @@ StudError GenerateWithTools(const char* slotName, const Stud::MessageRole role, 
 					msgs.back().role = "tool";
 					msgs.back().content = toolMsg;
 					toolCalled = true;
+				} else{
+					std::string toolMsg;
+					if(TryExecuteMCPTool(toolCall, toolMsg)){
+						if(cb) cb(nullptr, 0, toolMsg.c_str(), static_cast<int>(toolMsg.length()), 0, LlamaMemSize(slotName), 0, 1);
+						msgs.push_back(common_chat_msg());
+						msgs.back().role = "tool";
+						msgs.back().content = toolMsg;
+						toolCalled = true;
+					}
 				}
 			}
 		} catch(std::exception& e){

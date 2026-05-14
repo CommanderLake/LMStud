@@ -321,14 +321,14 @@ namespace LMStud{
 				}
 			}
 			if(setGoogle) NativeMethods.SetGoogle(Common.GoogleAPIKey, Common.GoogleSearchID, Common.GoogleSearchResultCount);
-			if(registerTools) foreach(var slot in ModelSlotManager.Slots) Tools.RegisterTools(slot.Name);
-			if(registerTools || setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForLoadedSlots();});
+			if(registerTools) Tools.RegisterToolsForAllSlots();
+			if(registerTools || setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(ModelSlotManager.GetLoadedLocalSlotNames());});
 			if(modelOverrideChanged) MessageBox.Show(this, Resources.The_modified_settings_are_overridden_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 			Settings.Default.Save();
 			var activeSlot = ModelSlotManager.GetActiveChatSlot();
 			if(activeSlot?.Source != ModelSlotSource.Api && Common.LlModelLoaded){
 				ModelSlotManager.SyncMainFromLoadedLocal();
-				ApplyActiveSlotToModel(true);
+				ApplyActiveSlotToModel();
 				PopulateSlotsList();
 			}
 		}

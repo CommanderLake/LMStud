@@ -142,6 +142,7 @@
     <Compile Include="MarkdownRenderControl.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="McpServerManager.cs" />
     <Compile Include="ModelSlots.cs" />
     <Compile Include="MyFlowLayoutPanel.cs">
       <SubType>Component</SubType>

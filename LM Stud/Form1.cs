@@ -46,10 +46,12 @@ namespace LMStud{
 			_numCtxSizeToolTip = toolTip1.GetToolTip(numCtxSize);
 			LoadConfig();
 			ModelSlotManager.Load();
-			ApplyActiveSlotToModel(true, false);
+			ApplyActiveSlotToModel(false);
 			LoadModelSettings();
 			PopulateSlotsList();
 			tabControlModelStuff.SelectedIndex = 2;
+			comboSlotEditReasonEffort.SelectedIndex = 0;
+			comboSlotEditReasonSummary.SelectedIndex = 0;
 		}
 		private void Form1_Load(object sender, EventArgs e){
 			NativeMethods.SetHWnd(Handle);
@@ -57,7 +59,11 @@ namespace LMStud{
 			PopulateModels();
 			PopulateWhisperModels(true, true);
 			NativeMethods.BackendInit();
-			foreach(var slot in ModelSlotManager.Slots) Tools.RegisterTools(slot.Name);
+			ThreadPool.QueueUserWorkItem(_ => {
+				McpServerManager.SyncConfiguredServers(RetokenizeLoadedLocalSlotsForToolChange);
+				try{ BeginInvoke(new MethodInvoker(() => { PopulateSlotsList(); })); } catch(ObjectDisposedException){} catch(InvalidOperationException){}
+			});
+			Tools.RegisterToolsForAllSlots();
 			SetModelStatus();
 			ApiServer = new APIServer();
 			if(Common.APIServerEnable) ApiServer.Start();
@@ -101,6 +107,7 @@ namespace LMStud{
 				NativeMethods.UnloadWhisperModel();
 			}
 			NativeMethods.CloseCommandPrompt();
+			McpServerManager.DisconnectAll();
 			NativeMethods.FreeAllModelSlots();
 			Common.LoadedLocalSlots.Clear();
 			Common.LlModelLoaded = false;

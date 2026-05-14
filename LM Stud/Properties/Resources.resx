@@ -374,4 +374,22 @@ Tool arguments: </value>
 <data name="Models_folder_not_found" xml:space="preserve">
 	<value>Models folder not found</value>
 </data>
+<data name="Remove_the__0__slot_" xml:space="preserve">
+	<value>Remove the {0} slot?</value>
+</data>
+<data name="The_main_slot_cannot_be_removed__Edit_it_instead_" xml:space="preserve">
+	<value>The main slot cannot be removed. Edit it instead.</value>
+</data>
+<data name="Slot_name_is_required_" xml:space="preserve">
+	<value>Slot name is required.</value>
+</data>
+<data name="Another_slot_already_uses_that_name_" xml:space="preserve">
+	<value>Another slot already uses that name.</value>
+</data>
+<data name="The_main_slot_must_be_a_local_or_API_chat_slot__" xml:space="preserve">
+	<value>The main slot must be a local or API chat slot. Add MCP servers as separate tool slots.</value>
+</data>
+<data name="No_Jinja_chat_template_was_found_in_the_selected_model_" xml:space="preserve">
+	<value>No Jinja chat template was found in the selected model.</value>
+</data>
 </root>
