@@ -113,7 +113,6 @@
       <DependentUpon>ChatMessageControl.cs</DependentUpon>
     </Compile>
     <Compile Include="Common.cs" />
-    <Compile Include="Dialectics.cs" />
     <Compile Include="Form1.ModelSettings.cs">
       <SubType>Form</SubType>
     </Compile>

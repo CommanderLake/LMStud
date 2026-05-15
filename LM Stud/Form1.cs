@@ -177,9 +177,23 @@ namespace LMStud{
 			UpdateSetting(ref Common.Speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			Settings.Default.Save();
 		}
+		internal bool InitDialectic() {
+			var slots = ModelSlotManager.ResolveDialecticLocalSlots();
+			if(slots.Count < 2) {
+				MessageBox.Show(this, "Load a local chat slot and a separate loaded local slot marked Dialectic before enabling dialectic mode.", Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+				return false;
+			}
+			var err = NativeMethods.ResetChat(slots[1].Name);
+			if(err != NativeMethods.StudError.Success) {
+				ShowError(Resources.Dialectic_enable, err);
+				return false;
+			}
+			Generation.ConfigureDialecticSlots(slots);
+			return true;
+		}
 		internal void CheckDialectic_CheckedChanged(object sender, EventArgs e){
 			if(checkDialectic.Checked){
-				if(!Dialectics.InitializeMode(this)){
+				if(!InitDialectic()){
 					checkDialectic.Checked = false;
 					return;
 				}
@@ -288,7 +302,7 @@ namespace LMStud{
 					BeginInvoke(new MethodInvoker(() => {
 						if(IsDisposed) return;
 						if(resetDialecticSeed){
-							if(!Dialectics.InitializeMode(this)){
+							if(!InitDialectic()){
 								checkDialectic.Checked = false;
 								return;
 							}
