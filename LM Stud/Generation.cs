@@ -11,6 +11,7 @@ using LMStud.Properties;
 namespace LMStud {
 	internal static class Generation{
 		internal static Form1 MainForm;
+		internal static readonly NativeMethods.TokenCallback TokenCallbackFn = TokenCallback;
 		private static readonly SemaphoreSlim MsgRenderLock = new SemaphoreSlim(1, 1);
 		private static int _uiGenerationActive;
 		internal static bool Generating{
@@ -29,8 +30,6 @@ namespace LMStud {
 		private static readonly Stopwatch SwTot = new Stopwatch();
 		private static ChatMessageControl _cntAssMsg;
 		private static ChatMessageControl _cntToolMsg;
-		private static volatile string _cntGenModelName;
-		private static int _cntGenModelNameVer;
 		private static int _msgTokenCount;
 		internal static bool DialStarted;
 		internal static bool DialPaused;
@@ -111,8 +110,6 @@ namespace LMStud {
 				ThreadPool.QueueUserWorkItem(o => {GenerateWithApiClient(activeSlot, role, newMsg, addToChat, slotLeases);});
 				return;
 			}
-			_cntGenModelName = GetGeneratedModelName(activeSlot);
-			var generationModelNameVersion = Interlocked.Increment(ref _cntGenModelNameVer);
 			ThreadPool.QueueUserWorkItem(o => {
 				var slotLocksHeld = true;
 				_msgTokenCount = 0;
@@ -164,20 +161,15 @@ namespace LMStud {
 						}
 					}));
 				} catch(ObjectDisposedException){} finally{
-					if(Volatile.Read(ref _cntGenModelNameVer) == generationModelNameVersion) _cntGenModelName = null;
 					if(slotLocksHeld) ModelSlotManager.ReleaseSlots(slotLeases);
 				}
 			});
 		}
 		private static bool TryBeginUiGeneration(){return Interlocked.CompareExchange(ref _uiGenerationActive, 1, 0) == 0;}
 		internal static void EndUiGeneration(){Interlocked.Exchange(ref _uiGenerationActive, 0);}
-		private static string GetGeneratedModelName(ModelSlot slot){
-			var modelName = slot?.DisplayModel();
-			return string.IsNullOrWhiteSpace(modelName) ? null : modelName;
-		}
-		private static ChatMessageControl AddGeneratedAssistantMessage(string modelName, string think, string message, List<APIClient.ToolCall> toolCalls = null){
+		private static ChatMessageControl AddGeneratedAssistantMessage(string slotName, string think, string message, List<APIClient.ToolCall> toolCalls = null){
 			var control = MainForm.AddMessage(MessageRole.Assistant, think, message, toolCalls);
-			if(!string.IsNullOrWhiteSpace(modelName)) control.SetRoleText(modelName);
+			if(!string.IsNullOrWhiteSpace(slotName)) control.SetRoleText(slotName);
 			return control;
 		}
 		private static IEnumerable<string> GetGenerationSlotNames(bool useDialecticLocalSlot, string slotName){
@@ -244,7 +236,6 @@ namespace LMStud {
 				var messages = BuildApiMessages(role, prompt, addToChat);
 				var history = APIClient.BuildInputItems(messages);
 				var toolsJson = Tools.BuildApiToolsJson(slot.Name);
-				var generatedModelName = GetGeneratedModelName(slot);
 				if(!ModelSlotManager.CanServeApiSlot(slot)) throw new InvalidOperationException("The active API model slot is incomplete.");
 				using(var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, slot.GetInstructionsOrDefault(),
 					slot.ApiReasoningEffort, slot.ApiReasoningSummary)){
@@ -264,7 +255,7 @@ namespace LMStud {
 									if(!MsgRenderLock.Wait(0)) return;
 									MainForm.BeginInvoke(new MethodInvoker(() => {
 										try {
-											if(streamedMessage == null) streamedMessage = AddGeneratedAssistantMessage(generatedModelName, "", "");
+											if(streamedMessage == null) streamedMessage = AddGeneratedAssistantMessage(slot.Name, "", "");
 											streamedMessage.UpdateText("", snapshot, true);
 										} finally { MsgRenderLock.Release(); }
 									}));
@@ -281,12 +272,12 @@ namespace LMStud {
 								content = toolCalls.Aggregate(content, (current, toolCall) => current + Resources.__Tool_name_ + toolCall.Name + Resources.__Tool_ID_ + toolCall.Id + Resources.__Tool_arguments_ + toolCall.Arguments);
 							try{
 								MainForm.Invoke(new MethodInvoker(() => {
-									var message = streamedMessage ?? AddGeneratedAssistantMessage(generatedModelName, reasoning ?? "", content ?? "", toolCalls);
+									var message = streamedMessage ?? AddGeneratedAssistantMessage(slot.Name, reasoning ?? "", content ?? "", toolCalls);
 									if(streamedMessage != null){
 										message.ApiToolCalls = toolCalls;
 										message.UpdateText(reasoning ?? "", content ?? "", true);
 									}
-									if(toolCalls != null && toolCalls.Count > 0 && string.IsNullOrWhiteSpace(generatedModelName)) message.SetRoleText(Resources.Tool_Call);
+									if(toolCalls != null && toolCalls.Count > 0) message.SetRoleText(Resources.Tool_Call);
 									if(Common.Speak && !string.IsNullOrWhiteSpace(content)) TTS.QueueSpeech(content);
 								}));
 							} catch(ObjectDisposedException){}
@@ -437,19 +428,14 @@ namespace LMStud {
 			for(var i = 0; i < sb.Length - 1; i++) if((sb[i] == '.' || sb[i] == '!' || sb[i] == '?') && char.IsWhiteSpace(sb[i + 1])) return i;
 			return -1;
 		}
-		internal static unsafe void TokenCallback(byte* thinkPtr, int thinkLen, byte* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool){
+		private static void TokenCallback(string slotName, string think, string message, int tokenCount, int tokensTotal, double ftTime, int tool){
 			if(_apiTokenCallback != null){
-				if(messageLen <= 0) return;
-				var msg = Encoding.UTF8.GetString(messagePtr, messageLen);
-				_apiTokenCallback?.Invoke(msg);
+				if(message.Length <= 0) return;
+				_apiTokenCallback?.Invoke(message);
 				return;
 			}
 			var elapsed = SwRate.Elapsed.TotalSeconds;
 			if(elapsed >= 1.0) SwRate.Restart();
-			var think = "";
-			if(thinkLen > 0) think = Encoding.UTF8.GetString(thinkPtr, thinkLen);
-			var message = "";
-			if(messageLen > 0) message = Encoding.UTF8.GetString(messagePtr, messageLen);
 			if(tool > 0){// 1 == tool output, 2 = CMD output stream, 3 = tool call details
 				try{
 					MainForm.BeginInvoke(new MethodInvoker(() => {
@@ -487,7 +473,7 @@ namespace LMStud {
 							MainForm.labelTPS.Text = string.Format(Resources._0_F2__Tok_s, callsPerSecond);
 							_msgTokenCount = 0;
 						}
-						if(_cntAssMsg == null) _cntAssMsg = AddGeneratedAssistantMessage(_cntGenModelName, "", "");
+						if(_cntAssMsg == null) _cntAssMsg = AddGeneratedAssistantMessage(slotName, "", "");
 						var lastThink = _cntAssMsg.checkThink.Checked;
 						_cntAssMsg.UpdateText(think, message, renderToken);
 						if(Common.Speak && !_cntAssMsg.checkThink.Checked && !lastThink && !string.IsNullOrWhiteSpace(message)){

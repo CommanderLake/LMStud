@@ -131,7 +131,7 @@ extern "C" EXPORT char* ExecuteTool(const char* slotName, const char* name, cons
 	try{
 		const std::string response = it->second(slotName, argsJson ? argsJson : "");
 		return CopyCString(response);
-	} catch(const std::exception& ex){ return CopyCString(std::string("{\"error\":\"") + ex.what() + "\"}"); } catch(...){ return CopyCString("{\"error\":\"tool execution failed\"}"); }
+	} catch(const std::exception& ex){ return CopyCString(std::string("{\"error\":\"") + JsonEscape(ex.what()) + "\"}"); } catch(...){ return CopyCString("{\"error\":\"tool execution failed\"}"); }
 }
 static StudError RegisterAPIToolSchemas(const char* slotName, const char* toolsJson){
 	ClearTools(slotName);
@@ -1033,7 +1033,7 @@ struct PendingToken{
 };
 class AsyncTokenPostProcessor{
 public:
-	AsyncTokenPostProcessor(const char* slotName, const Stud::TokenCallbackFn callbackFn, const bool streamCallback, const common_chat_parser_params& chatSyntax, const HrClock::time_point& prepStart, std::string& responseText, common_chat_msg& parsedMsg, double& firstTokenTime) : _model(GetModel(slotName)), _callbackFn(callbackFn), _streamCallback(streamCallback), _chatSyntax(chatSyntax), _prepStart(prepStart), _responseText(responseText), _parsedMsg(parsedMsg), _firstTokenTime(firstTokenTime), _queue(kQueueCapacity){
+	AsyncTokenPostProcessor(const char* slotName, const Stud::TokenCallbackFn callbackFn, const bool streamCallback, const common_chat_parser_params& chatSyntax, const HrClock::time_point& prepStart, std::string& responseText, common_chat_msg& parsedMsg, double& firstTokenTime) : _slotName(slotName), _model(GetModel(slotName)), _callbackFn(callbackFn), _streamCallback(streamCallback), _chatSyntax(chatSyntax), _prepStart(prepStart), _responseText(responseText), _parsedMsg(parsedMsg), _firstTokenTime(firstTokenTime), _queue(kQueueCapacity){
 		_chatSyntax.parse_tool_calls = false;
 		_worker = std::thread([this]{ WorkerLoop(); });
 	}
@@ -1063,7 +1063,7 @@ private:
 	void EmitStreamingCallback(const int memSize){
 		if(!_callbackFn || !_streamCallback || _pendingCallbackTokens <= 0) return;
 		_parsedMsg = ParseGeneratedMessage(_responseText, _chatSyntax, true);
-		_callbackFn(_parsedMsg.reasoning_content.c_str(), static_cast<int>(_parsedMsg.reasoning_content.length()), _parsedMsg.content.c_str(), static_cast<int>(_parsedMsg.content.length()), _pendingCallbackTokens, memSize, _firstTokenTime, 0);
+		_callbackFn(_slotName, _parsedMsg.reasoning_content.c_str(), _parsedMsg.content.c_str(), _pendingCallbackTokens, memSize, _firstTokenTime, 0);
 		_pendingCallbackTokens = 0;
 		_lastCallbackTime = std::chrono::steady_clock::now();
 	}
@@ -1105,6 +1105,7 @@ private:
 			}
 		}
 	}
+	const char* _slotName;
 	static constexpr size_t kQueueCapacity = 128;
 	Stud::StudModel* _model;
 	Stud::TokenCallbackFn _callbackFn;
@@ -1201,7 +1202,7 @@ StudError Generate(const char* slotName, const std::vector<common_chat_msg>& mes
 		return RollbackGenerate(slotName, chatStart, messages.size(), outMsg, StudError::ChatParseError);
 	}
 	model->session.lanes[model->session.activeLane].messages.push_back(msg);
-	if(emitFinalCallback && cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(slotName), ftTime, 0);
+	if(emitFinalCallback && cb && !callback) cb(slotName, msg.reasoning_content.c_str(), msg.content.c_str(), i, LlamaMemSize(slotName), ftTime, 0);
 	outMsg = std::move(msg);
 	//OutputDebugStringA(("\n!!! CONTEXT START !!!\n" + std::string(GetContextAsText(slotName)) + "\n!!! CONTEXT END !!!\n").c_str());
 	return StudError::Success;
@@ -1225,7 +1226,7 @@ StudError GenerateWithTools(const char* slotName, const Stud::MessageRole role, 
 			toolCalled = false;
 			if(!toolParseError.empty()){
 				auto toolMsg = "{\"error\":\"Unable to parse tool call: " + JsonEscape(toolParseError) + "\"}";
-				if(cb) cb(nullptr, 0, toolMsg.c_str(), static_cast<int>(toolMsg.length()), 0, LlamaMemSize(slotName), 0, 1);
+				if(cb) cb(slotName, nullptr, toolMsg.c_str(), 0, LlamaMemSize(slotName), 0, 1);
 				msgs.push_back(common_chat_msg());
 				msgs.back().role = "tool";
 				msgs.back().content = toolMsg;
@@ -1234,11 +1235,14 @@ StudError GenerateWithTools(const char* slotName, const Stud::MessageRole role, 
 			for(common_chat_tool_call& toolCall : msg.tool_calls){
 				if(model->session.stop.load()) return StudError::Success;
 				auto toolCallMsg = "Tool name: " + toolCall.name + "\r\nTool ID: " + toolCall.id + "\r\nTool arguments: " + toolCall.arguments;
-				if(cb) cb(nullptr, 0, toolCallMsg.c_str(), static_cast<int>(toolCallMsg.length()), 0, LlamaMemSize(slotName), 0, 3);
+				if(cb) cb(slotName, nullptr, toolCallMsg.c_str(), 0, LlamaMemSize(slotName), 0, 3);
 				auto it = model->session.toolHandlers.find(toolCall.name);
 				if(it != model->session.toolHandlers.end()){
-					auto toolMsg = it->second(slotName, toolCall.arguments.c_str());
-					if(cb) cb(nullptr, 0, toolMsg.c_str(), static_cast<int>(toolMsg.length()), 0, LlamaMemSize(slotName), 0, 1);
+					std::string toolMsg;
+					try{ toolMsg = it->second(slotName, toolCall.arguments.c_str()); }
+					catch(const std::exception& e){ toolMsg = "{\"error\":\"Tool execution failed: " + JsonEscape(e.what()) + "\"}"; }
+					catch(...){ toolMsg = "{\"error\":\"Tool execution failed\"}"; }
+					if(cb) cb(slotName, nullptr, toolMsg.c_str(), 0, LlamaMemSize(slotName), 0, 1);
 					msgs.push_back(common_chat_msg());
 					msgs.back().role = "tool";
 					msgs.back().content = toolMsg;
@@ -1246,7 +1250,7 @@ StudError GenerateWithTools(const char* slotName, const Stud::MessageRole role, 
 				} else{
 					std::string toolMsg;
 					if(TryExecuteMCPTool(toolCall, toolMsg)){
-						if(cb) cb(nullptr, 0, toolMsg.c_str(), static_cast<int>(toolMsg.length()), 0, LlamaMemSize(slotName), 0, 1);
+						if(cb) cb(slotName, nullptr, toolMsg.c_str(), 0, LlamaMemSize(slotName), 0, 1);
 						msgs.push_back(common_chat_msg());
 						msgs.back().role = "tool";
 						msgs.back().content = toolMsg;

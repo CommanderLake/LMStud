@@ -399,6 +399,7 @@ namespace LMStud
 			this.listViewModels.UseCompatibleStateImageBehavior = false;
 			this.listViewModels.View = System.Windows.Forms.View.Details;
 			this.listViewModels.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.ListViewModels_ItemSelectionChanged);
+			this.listViewModels.Click += new System.EventHandler(this.ListViewModels_ColumnClick);
 			this.listViewModels.DoubleClick += new System.EventHandler(this.ListViewModels_DoubleClick);
 			this.listViewModels.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ListViewModels_KeyDown);
 			// 

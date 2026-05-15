@@ -40,6 +40,9 @@ namespace LMStud{
 			if(e.KeyCode != Keys.F5) return;
 			PopulateModels();
 		}
+		private void ListViewModels_ColumnClick(object sender, EventArgs e){
+			PopulateSlotsEditLocalModelItems();
+		}
 		private void ListViewModels_DoubleClick(object sender, EventArgs e){
 			ButLoad_Click(null, null);
 		}
@@ -123,6 +126,7 @@ namespace LMStud{
 							listViewModels.BeginUpdate();
 							listViewModels.Items.Clear();
 							listViewModels.Items.AddRange(items.ToArray());
+							listViewModels.Sort();
 						} finally{ listViewModels.EndUpdate(); }
 						PopulateSlotsEditLocalModelItems();
 					}));
@@ -225,8 +229,14 @@ namespace LMStud{
 			var selectedModel = GetSlotsEditLocalModelPath();
 			comboSlotsEditLocalModel.Items.Clear();
 			comboSlotsEditLocalModel.DisplayMember = "Text";
-			foreach(ListViewItem item in listViewModels.Items) comboSlotsEditLocalModel.Items.Add(item);
+			foreach(var item in GetListViewModelItemsInDisplaySortOrder()) comboSlotsEditLocalModel.Items.Add(item);
 			SetSlotsEditLocalModel(selectedModel);
+		}
+		private IEnumerable<ListViewItem> GetListViewModelItemsInDisplaySortOrder(){
+			var items = listViewModels.Items.Cast<ListViewItem>().ToList();
+			var sorter = listViewModels.ListViewItemSorter;
+			if(sorter != null) items.Sort((x, y) => sorter.Compare(x, y));
+			return items;
 		}
 		private string GetSystemPromptForSlot(string slotName){
 			if(!string.IsNullOrWhiteSpace(slotName) && Common.LoadedLocalSlots.TryGetValue(slotName, out var loadedModel) && loadedModel?.SubItems.Count > 1)
@@ -391,7 +401,7 @@ namespace LMStud{
 						ClearFailedLocalSlot(slotName);
 						return;
 					}
-					NativeMethods.SetTokenCallback(TokenCallback);
+					NativeMethods.SetTokenCallback(Generation.TokenCallbackFn);
 					Tools.RegisterTools(slotName);
 					Common.LoadedLocalSlots[slotName] = modelLvi;
 					SetSystemPromptForSlot(slotName, false);
@@ -418,7 +428,7 @@ namespace LMStud{
 				}
 			});
 		}
-		private void UnloadModelInternal(bool genLock, string slotName){
+		private void UnloadModelInternal(bool genLock, string slotName, Action completed = null){
 			ModelSlotLockLease slotLock = null;
 			try{
 				Generation.StopActiveGeneration();
@@ -435,14 +445,16 @@ namespace LMStud{
 						SetModelStatus();
 						PopulateSlotsList();
 						UpdateSlotButtons();
+						completed?.Invoke();
 					}));
 				} catch(ObjectDisposedException){}
 				slotLock?.Dispose();
 			}
 		}
-		private void UnloadModel(bool genLock, string slotName){
+		private void UnloadModel(bool genLock, string slotName){UnloadModel(genLock, slotName, null);}
+		private void UnloadModel(bool genLock, string slotName, Action completed){
 			SetModelLoadButtonsEnabled(false);
-			ThreadPool.QueueUserWorkItem(o => UnloadModelInternal(genLock, slotName));
+			ThreadPool.QueueUserWorkItem(o => UnloadModelInternal(genLock, slotName, completed));
 		}
 		private void SetModelLoadButtonsEnabled(bool enabled){
 			butLoadMain.Enabled = enabled;

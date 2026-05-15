@@ -8,9 +8,9 @@ namespace LMStud{
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate void SpeechEndCallback();
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-		public unsafe delegate void TokenCallback(byte* thinkPtr, int thinkLen, byte* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool);
+		public delegate void TokenCallback([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, [MarshalAs(UnmanagedType.LPUTF8Str)] string think, [MarshalAs(UnmanagedType.LPUTF8Str)] string message, int tokenCount, int tokensTotal, double ftTime, int tool);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-		public delegate void WhisperCallback(string transcription);
+		public delegate void WhisperCallback([MarshalAs(UnmanagedType.LPUTF8Str)] string transcription);
 		public enum GgmlNumaStrategy{
 			Disabled = 0,
 			Distribute = 1,

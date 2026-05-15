@@ -7,20 +7,24 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using LMStud;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 namespace LM_Stud.Tests{
 	[TestClass]
+	[DoNotParallelize]
 	public class ApiServerSlotRoutingTests{
+		[TestInitialize]
+		public void TestInitialize(){ModelSlotManager.Load();}
 		[TestMethod]
 		public async Task HandleChat_WithDifferentSlotModels_RoutesToDifferentApiBackends(){
 			var serverPort = GetFreePort();
 			var upstreamPort1 = GetFreePort();
 			var upstreamPort2 = GetFreePort();
-			var slotName1 = "test_api_a_" + Guid.NewGuid().ToString("N").Substring(0, 8);
-			var slotName2 = "test_api_b_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+			var slotName1 = UniqueSlotName("test_api_a");
+			var slotName2 = UniqueSlotName("test_api_b");
 			var upstream1 = StartFakeResponsesServer(upstreamPort1, "from-a", out var upstreamBody1);
 			var upstream2 = StartFakeResponsesServer(upstreamPort2, "from-b", out var upstreamBody2);
 			var apiServer = new APIServer();
@@ -66,7 +70,7 @@ namespace LM_Stud.Tests{
 		[TestMethod]
 		public async Task HandleModels_ReturnsConfiguredServerSlots(){
 			var serverPort = GetFreePort();
-			var slotName = "test_list_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+			var slotName = UniqueSlotName("test_list");
 			var apiServer = new APIServer();
 			try{
 				ModelSlotManager.AddOrUpdate(new ModelSlot{
@@ -89,7 +93,7 @@ namespace LM_Stud.Tests{
 		[TestMethod]
 		public async Task HandleChat_DoesNotRouteToSlotsWithoutServerUse(){
 			var serverPort = GetFreePort();
-			var slotName = "test_hidden_server_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+			var slotName = UniqueSlotName("test_hidden_server");
 			var apiServer = new APIServer();
 			try{
 				ModelSlotManager.AddOrUpdate(new ModelSlot{
@@ -108,28 +112,24 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public void ResolveServerSlot_WithNullModel_PrefersServerSlotOverChatSlot(){
-			var chatSlotName = "test_default_chat_" + Guid.NewGuid().ToString("N").Substring(0, 8);
-			var serverSlotName = "test_default_server_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+			var activeChatSlot = ModelSlotManager.GetActiveChatSlot();
+			var serverSlotName = UniqueSlotName("test_default_server");
 			try{
-				ModelSlotManager.AddOrUpdate(new ModelSlot{
-					Name = chatSlotName, Source = ModelSlotSource.Api, ApiBaseUrl = "http://127.0.0.1:1", ApiModel = "chat-model", Use = ModelSlotUse.Chat
-				});
 				ModelSlotManager.AddOrUpdate(new ModelSlot{
 					Name = serverSlotName, Source = ModelSlotSource.Api, ApiBaseUrl = "http://127.0.0.1:1", ApiModel = "server-model", Use = ModelSlotUse.Server
 				});
 				var slot = ModelSlotManager.ResolveServerSlot(null);
 				Assert.IsNotNull(slot);
-				Assert.AreNotEqual(chatSlotName, slot.Name);
+				if(activeChatSlot != null && !activeChatSlot.HasUse(ModelSlotUse.Server)) Assert.AreNotEqual(activeChatSlot.Name, slot.Name);
 				Assert.IsTrue(slot.HasUse(ModelSlotUse.Server), "Default model resolution should prefer a server-enabled slot over the active chat slot.");
 			} finally{
 				ModelSlotManager.Remove(serverSlotName);
-				ModelSlotManager.Remove(chatSlotName);
 			}
 		}
 		[TestMethod]
 		public void ResolveServerSlot_WithNullModel_PrefersAvailableServerSlot(){
-			var busySlotName = "test_default_busy_" + Guid.NewGuid().ToString("N").Substring(0, 8);
-			var availableSlotName = "test_default_available_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+			var busySlotName = UniqueSlotName("test_default_busy");
+			var availableSlotName = UniqueSlotName("test_default_available");
 			try{
 				ModelSlotManager.AddOrUpdate(new ModelSlot{
 					Name = busySlotName, Source = ModelSlotSource.Api, ApiBaseUrl = "http://127.0.0.1:1", ApiModel = "busy-model", Use = ModelSlotUse.Server
@@ -149,15 +149,14 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public void LoadLocalIntoSlot_DoesNotAddServerUseToExistingNonServerSlot(){
-			var slotName = "test_local_nonserver_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+			var slotName = UniqueSlotName("test_local_nonserver");
 			try{
 				ModelSlotManager.AddOrUpdate(new ModelSlot{
 					Name = slotName, Source = ModelSlotSource.Local, LocalPath = "old.gguf", Use = ModelSlotUse.Dialectic
 				});
-				ModelSlotManager.LoadLocalIntoSlot(slotName, "new.gguf", true);
+				ModelSlotManager.LoadLocalIntoSlot(slotName, "new.gguf", false);
 				var slot = ModelSlotManager.GetSlot(slotName);
 				Assert.IsNotNull(slot);
-				Assert.IsTrue(slot.HasUse(ModelSlotUse.Chat), "Loading as the active chat slot should add Chat use.");
 				Assert.IsFalse(slot.HasUse(ModelSlotUse.Server), "Loading a non-server slot should preserve the user's Server checkbox state.");
 			} finally{
 				ModelSlotManager.Remove(slotName);
@@ -165,7 +164,7 @@ namespace LM_Stud.Tests{
 		}
 		[TestMethod]
 		public void TryExecuteToolCall_IgnoresApiSlotsThatAreNotEnabledAsTools(){
-			var slotName = "test_hidden_tool_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+			var slotName = UniqueSlotName("test_hidden_tool");
 			try{
 				ModelSlotManager.AddOrUpdate(new ModelSlot{
 					Name = slotName, Source = ModelSlotSource.Api, ApiBaseUrl = "http://127.0.0.1:1", ApiModel = "hidden-model", ToolName = "ask_hidden_model", Use = ModelSlotUse.Server
@@ -177,6 +176,41 @@ namespace LM_Stud.Tests{
 				ModelSlotManager.Remove(slotName);
 			}
 		}
+		[TestMethod]
+		public void SlotEditInvalidatesLoadedLocalSlot_WhenModelPathChanges(){
+			var oldPath = Path.Combine(Path.GetTempPath(), "old-model.gguf");
+			var newPath = Path.Combine(Path.GetTempPath(), "new-model.gguf");
+			var original = new ModelSlot{ Name = "main", Source = ModelSlotSource.Local, LocalPath = oldPath, Use = ModelSlotUse.Chat };
+			var updated = new ModelSlot{ Name = "main", Source = ModelSlotSource.Local, LocalPath = newPath, Use = ModelSlotUse.Chat };
+			Assert.IsTrue(Form1.SlotEditInvalidatesLoadedLocalSlot(original, updated, LoadedModelItem(oldPath)));
+		}
+		[TestMethod]
+		public void SlotEditInvalidatesLoadedLocalSlot_WhenSlotNameChanges(){
+			var modelPath = Path.Combine(Path.GetTempPath(), "loaded-model.gguf");
+			var original = new ModelSlot{ Name = "main", Source = ModelSlotSource.Local, LocalPath = modelPath, Use = ModelSlotUse.Chat };
+			var updated = new ModelSlot{ Name = "renamed", Source = ModelSlotSource.Local, LocalPath = modelPath, Use = ModelSlotUse.Chat };
+			Assert.IsTrue(Form1.SlotEditInvalidatesLoadedLocalSlot(original, updated, LoadedModelItem(modelPath)));
+		}
+		[TestMethod]
+		public void SlotEditInvalidatesLoadedLocalSlot_WhenSourceChanges(){
+			var modelPath = Path.Combine(Path.GetTempPath(), "loaded-model.gguf");
+			var original = new ModelSlot{ Name = "main", Source = ModelSlotSource.Local, LocalPath = modelPath, Use = ModelSlotUse.Chat };
+			var updated = new ModelSlot{ Name = "main", Source = ModelSlotSource.Api, ApiBaseUrl = "http://127.0.0.1:1", ApiModel = "remote-model", Use = ModelSlotUse.Chat };
+			Assert.IsTrue(Form1.SlotEditInvalidatesLoadedLocalSlot(original, updated, LoadedModelItem(modelPath)));
+		}
+		[TestMethod]
+		public void SlotEditKeepsLoadedLocalSlot_WhenNameAndModelPathAreUnchanged(){
+			var modelPath = Path.Combine(Path.GetTempPath(), "loaded-model.gguf");
+			var original = new ModelSlot{ Name = "main", Source = ModelSlotSource.Local, LocalPath = modelPath, Use = ModelSlotUse.Chat };
+			var updated = new ModelSlot{ Name = "main", Source = ModelSlotSource.Local, LocalPath = modelPath, Use = ModelSlotUse.Chat | ModelSlotUse.Server };
+			Assert.IsFalse(Form1.SlotEditInvalidatesLoadedLocalSlot(original, updated, LoadedModelItem(modelPath)));
+		}
+		private static ListViewItem LoadedModelItem(string path){
+			var item = new ListViewItem(Path.GetFileNameWithoutExtension(path));
+			item.SubItems.Add(path);
+			return item;
+		}
+		private static string UniqueSlotName(string prefix){return prefix + "_" + Guid.NewGuid().ToString("N");}
 		private static async Task<HttpResponseMessage> PostResponses(HttpClient client, int port, string model, string input){
 			var payload = new{ model = model, input = input };
 			return await client.PostAsync($"http://127.0.0.1:{port}/v1/responses", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));

@@ -231,7 +231,7 @@ void StreamToolOutput(const char* slotName, const std::string& text){
 	if(text.empty()) return;
 	const auto cb = Stud::tokenCb;
 	if(!cb) return;
-	cb(nullptr, 0, text.c_str(), static_cast<int>(text.size()), 0, LlamaMemSize(slotName), 0.0, 2);
+	cb(slotName, nullptr, text.c_str(), 0, LlamaMemSize(slotName), 0.0, 2);
 }
 std::string TrimCopy(std::string text){
 	const auto begin = text.find_first_not_of(" \t\r\n");

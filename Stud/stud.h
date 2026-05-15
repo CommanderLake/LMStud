@@ -12,7 +12,7 @@ namespace Stud{
 		Tool
 	};
 	using ToolHandlerFn = std::string(*)(const char*, const char*);
-	using TokenCallbackFn = void(*)(const char* thinkPtr, int thinkLen, const char* messagePtr, int messageLen, int tokenCount, int tokensTotal, double ftTime, int tool);
+	using TokenCallbackFn = void(*)(const char* slotName, const char* think, const char* message, int tokenCount, int tokensTotal, double ftTime, int tool);
 }
 extern "C" {
 EXPORT void SetHWnd(HWND hWnd);

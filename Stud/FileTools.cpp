@@ -1,11 +1,32 @@
 #include "tools.h"
 #include "JSONCommon.h"
+#include <algorithm>
 #include <charconv>
+#include <cstdint>
 #include <filesystem>
+#include <locale>
 #include <sstream>
 #include <fstream>
 #include <regex>
+#include <system_error>
+#include <windows.h>
+static constexpr std::uintmax_t MaxSearchFileBytes = 16777216;
 static bool _fullFileSystemAccess = true;
+static std::string WideToUtf8(const std::wstring& text){
+	if(text.empty()) return std::string();
+	const int size = WideCharToMultiByte(CP_UTF8, 0, text.data(), static_cast<int>(text.size()), nullptr, 0, nullptr, nullptr);
+	if(size <= 0) return std::string();
+	std::string utf8(size, '\0');
+	WideCharToMultiByte(CP_UTF8, 0, text.data(), static_cast<int>(text.size()), &utf8[0], size, nullptr, nullptr);
+	return utf8;
+}
+static std::string PathToUtf8Generic(const std::filesystem::path& path){
+#ifdef _WIN32
+	return WideToUtf8(path.generic_wstring());
+#else
+	return path.generic_string();
+#endif
+}
 void SetFileBaseDir(const char* dir){
 	if(dir && *dir){
 		std::error_code ec;
@@ -29,10 +50,10 @@ static std::string GetFileToolPathLabel(const std::filesystem::path& path){
 			ec.clear();
 			fullPath = std::filesystem::absolute(path, ec);
 		}
-		return (ec ? path : fullPath).generic_string();
+		return PathToUtf8Generic(ec ? path : fullPath);
 	}
 	const auto relPath = std::filesystem::relative(path, _baseFolder, ec);
-	return (ec ? path : relPath).generic_string();
+	return PathToUtf8Generic(ec ? path : relPath);
 }
 static bool IsPathAllowed(const std::filesystem::path& p){
 	if(_baseFolder.empty()) return _fullFileSystemAccess && p.is_absolute();
@@ -47,10 +68,50 @@ static bool IsPathAllowed(const std::filesystem::path& p){
 	if(absStr.size() == baseStr.size()) return true;
 	return absStr[baseStr.size()] == '\\';
 }
+static bool IsRegularFileForReading(const std::filesystem::path& p, std::uintmax_t* size = nullptr){
+	std::error_code ec;
+	const auto status = std::filesystem::symlink_status(p, ec);
+	if(ec) return false;
+	if(!std::filesystem::is_regular_file(status)) return false;
+	if(std::filesystem::is_symlink(status)) return false;
+	if(size){
+		*size = std::filesystem::file_size(p, ec);
+		if(ec) return false;
+	}
+	return true;
+}
+static std::string EntriesJson(const std::vector<std::string>& entries){
+	std::string json = "{\"entries\":[";
+	for(size_t i = 0; i < entries.size(); ++i){
+		json += "\"" + JsonEscape(entries[i]) + "\"";
+		if(i + 1 < entries.size()) json += ",";
+	}
+	json += "]}";
+	return json;
+}
+static std::string ListAvailableDrives(){
+	const DWORD required = GetLogicalDriveStringsA(0, nullptr);
+	if(required == 0) return "{\"error\":\"failed to list drives\"}";
+	std::vector<char> buffer(required + 1, '\0');
+	const DWORD written = GetLogicalDriveStringsA(static_cast<DWORD>(buffer.size()), buffer.data());
+	if(written == 0 || written >= buffer.size()) return "{\"error\":\"failed to list drives\"}";
+	std::vector<std::string> drives;
+	for(const char* drive = buffer.data(); *drive != '\0';){
+		std::string root = drive;
+		std::replace(root.begin(), root.end(), '\\', '/');
+		drives.push_back(root);
+		drive += root.size() + 1;
+	}
+	return EntriesJson(drives);
+}
+static bool IsCurrentDirectoryRequest(const std::string& path){
+	return path.empty() || path == "." || path == "./" || path == ".\\";
+}
 std::string ListDirectoryTool(const char* slotName, const char* argsJson){
 	std::string path = GetArgValue(argsJson, "path");
 	const std::string recStr = GetArgValue(argsJson, "recursive");
 	const bool recursive = recStr == "true" || recStr == "1";
+	if(_baseFolder.empty() && _fullFileSystemAccess && IsCurrentDirectoryRequest(path)) return ListAvailableDrives();
 	if(path.empty()) path = ".";
 	const std::filesystem::path p = ResolveFileToolPath(path);
 	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
@@ -68,13 +129,7 @@ std::string ListDirectoryTool(const char* slotName, const char* argsJson){
 		}
 	}
 	if(ec) return "{\"error\":\"folder not found, maybe its a file\"}";
-	std::string json = "{\"entries\":[";
-	for(size_t i = 0; i < files.size(); ++i){
-		json += "\"" + JsonEscape(files[i]) + "\"";
-		if(i + 1 < files.size()) json += ",";
-	}
-	json += "]}";
-	return json;
+	return EntriesJson(files);
 }
 std::string ReadFileTool(const char* slotName, const char* argsJson){
 	std::string path = GetArgValue(argsJson, "path");
@@ -100,8 +155,8 @@ std::string ReadFileTool(const char* slotName, const char* argsJson){
 		if(end != -1 && lineNo >= end) break;
 		++lineNo;
 	}
-	const std::string fileName = _baseFolder.empty() ? GetFileToolPathLabel(p) : p.filename().string();
-	const std::string ext = p.extension().string();
+	const std::string fileName = _baseFolder.empty() ? GetFileToolPathLabel(p) : PathToUtf8Generic(p.filename());
+	const std::string ext = PathToUtf8Generic(p.extension());
 	std::string contentType;
 	if(ext == ".h" || ext == ".cpp" || ext == ".cc" || ext == ".cxx" || ext == ".c") contentType = "cpp";
 	else if(ext == ".cs") contentType = "csharp";
@@ -181,6 +236,10 @@ std::string SearchFileTool(const char* slotName, const char* argsJson){
 	}
 	int matches = 0;
 	auto processFile = [&](const std::filesystem::path& filePath, const std::string& fileLabel)-> bool{
+		std::uintmax_t fileSize = 0;
+		if(!IsRegularFileForReading(filePath, &fileSize) || fileSize > MaxSearchFileBytes){
+			return false;
+		}
 		std::ifstream f(filePath);
 		if(!f.is_open()){
 			return false;
@@ -216,23 +275,23 @@ std::string SearchFileTool(const char* slotName, const char* argsJson){
 		if(recursive){
 			for(const auto& entry : std::filesystem::recursive_directory_iterator(p, ec)){
 				if(ec) break;
-				if(!entry.is_regular_file(ec)) continue;
+				if(!IsRegularFileForReading(entry.path())) continue;
 				const std::string fileLabel = GetFileToolPathLabel(entry.path());
 				if(processFile(entry.path(), fileLabel)) break;
 			}
 		} else{
 			for(const auto& entry : std::filesystem::directory_iterator(p, ec)){
 				if(ec) break;
-				if(!entry.is_regular_file(ec)) continue;
+				if(!IsRegularFileForReading(entry.path())) continue;
 				const std::string fileLabel = GetFileToolPathLabel(entry.path());
 				if(processFile(entry.path(), fileLabel)) break;
 			}
 		}
 		if(ec) return "{\"error\":\"failed to iterate directory\"}";
 	} else{
-		std::ifstream f(p);
-		if(!f.is_open()) return "{\"error\":\"failed to read file\"}";
-		f.close();
+		std::uintmax_t fileSize = 0;
+		if(!IsRegularFileForReading(p, &fileSize)) return "{\"error\":\"path is not a regular file\"}";
+		if(fileSize > MaxSearchFileBytes) return "{\"error\":\"file is too large to search\"}";
 		processFile(p, "");
 	}
 	if(json.back() == ',') json.pop_back();

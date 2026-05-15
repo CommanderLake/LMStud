@@ -99,7 +99,7 @@ namespace LMStud{
 			if(listViewSlots.SelectedItems.Count != 1) return;
 			var slot = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
 			if(MessageBox.Show(this, string.Format(Resources.Remove_the__0__slot_, slot.Name), Resources.LM_Stud, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
-			var unloadLocalSlot = slot.Source == ModelSlotSource.Local && (Common.LoadedLocalSlots.ContainsKey(slot.Name) || NativeMethods.IsModelSlotLoaded(slot.Name));
+			var unloadLocalSlot = SlotHasLoadedLocalModel(slot.Name);
 			if(slot.Source == ModelSlotSource.Mcp) McpServerManager.Disconnect(slot.Name, RetokenizeLoadedLocalSlotsForToolChange);
 			if(!ModelSlotManager.Remove(slot.Name)) MessageBox.Show(this, Resources.The_main_slot_cannot_be_removed__Edit_it_instead_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 			else if(unloadLocalSlot) UnloadModel(true, slot.Name);
@@ -217,18 +217,43 @@ namespace LMStud{
 			butLoadSlot.Text = hasSelection && slot.Source == ModelSlotSource.Mcp ? "Connect" : _slotLoadButtonText;
 			butUnloadSlot.Text = hasSelection && slot.Source == ModelSlotSource.Mcp ? "Disconnect" : _slotUnloadButtonText;
 			butLoadSlot.Enabled = hasSelection && (slot.Source == ModelSlotSource.Local || slot.Source == ModelSlotSource.Mcp);
-			butUnloadSlot.Enabled = hasSelection && (ModelSlotManager.CanServeLocalSlot(slot) || ModelSlotManager.CanServeMcpSlot(slot));
+			var localSlotLoaded = hasSelection && slot.Source == ModelSlotSource.Local && (ModelSlotManager.CanServeLocalSlot(slot) || SlotHasLoadedLocalModel(slot.Name));
+			butUnloadSlot.Enabled = hasSelection && (localSlotLoaded || ModelSlotManager.CanServeMcpSlot(slot));
 		}
 		private void SaveSelectedSlot(){
 			if(listViewSlots.SelectedItems.Count != 1) return;
 			var original = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
 			if(!TryReadSlotEditor(original.Name, false, out var slot)) return;
+			Common.LoadedLocalSlots.TryGetValue(original.Name, out var loadedModel);
+			var unloadStaleLocalSlot = SlotEditInvalidatesLoadedLocalSlot(original, slot, loadedModel) && SlotHasLoadedLocalModel(original.Name);
 			ModelSlotManager.AddOrUpdate(slot, original.Name);
 			if(original.Source == ModelSlotSource.Mcp && (slot.Source != ModelSlotSource.Mcp || !string.Equals(original.Name, slot.Name, StringComparison.OrdinalIgnoreCase))) McpServerManager.Disconnect(original.Name, RetokenizeLoadedLocalSlotsForToolChange);
 			ApplyMcpSlotConnectionState(slot);
+			if(unloadStaleLocalSlot){
+				UnloadModel(true, original.Name, () => {
+					ApplyActiveSlotToModel();
+					PopulateSlotsList();
+					SelectSlot(slot.Name);
+				});
+				return;
+			}
 			ApplyActiveSlotToModel();
 			PopulateSlotsList();
 			SelectSlot(slot.Name);
+		}
+		internal static bool SlotEditInvalidatesLoadedLocalSlot(ModelSlot original, ModelSlot updated, ListViewItem loadedModel){
+			if(original == null || updated == null) return false;
+			if(loadedModel != null && loadedModel.SubItems.Count >= 2)
+				return updated.Source != ModelSlotSource.Local ||
+					!string.Equals(original.Name, updated.Name, StringComparison.OrdinalIgnoreCase) ||
+					!SameModelPath(loadedModel.SubItems[1].Text, updated.ResolveLocalPath());
+			if(original.Source != ModelSlotSource.Local) return false;
+			return updated.Source != ModelSlotSource.Local ||
+				!string.Equals(original.Name, updated.Name, StringComparison.OrdinalIgnoreCase) ||
+				!SameModelPath(original.ResolveLocalPath(), updated.ResolveLocalPath());
+		}
+		private static bool SlotHasLoadedLocalModel(string slotName){
+			return !string.IsNullOrWhiteSpace(slotName) && (Common.LoadedLocalSlots.ContainsKey(slotName) || NativeMethods.IsModelSlotLoaded(slotName));
 		}
 		private bool TryReadSlotEditor(string originalName, bool adding, out ModelSlot slot){
 			slot = null;

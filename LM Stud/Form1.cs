@@ -8,7 +8,6 @@ using LMStud.Properties;
 namespace LMStud{
 	public partial class Form1 : Form{
 		internal APIServer ApiServer;
-		private static readonly unsafe NativeMethods.TokenCallback TokenCallback = Generation.TokenCallback;
 		private static readonly NativeMethods.WhisperCallback WhisperCallback = STT.WhisperCallback;
 		private static readonly NativeMethods.SpeechEndCallback SpeechEndCallback = STT.SpeechEndCallback;
 		internal readonly List<ChatMessageControl> ChatMessages = new List<ChatMessageControl>();
@@ -61,7 +60,7 @@ namespace LMStud{
 			NativeMethods.BackendInit();
 			ThreadPool.QueueUserWorkItem(_ => {
 				McpServerManager.SyncConfiguredServers(RetokenizeLoadedLocalSlotsForToolChange);
-				try{ BeginInvoke(new MethodInvoker(() => { PopulateSlotsList(); })); } catch(ObjectDisposedException){} catch(InvalidOperationException){}
+				try{ BeginInvoke(new MethodInvoker(PopulateSlotsList)); } catch(ObjectDisposedException){} catch(InvalidOperationException){}
 			});
 			Tools.RegisterToolsForAllSlots();
 			SetModelStatus();
