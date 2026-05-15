@@ -548,7 +548,7 @@ namespace LMStud
             0});
 			this.numTopKModel.Name = "numTopKModel";
 			this.numTopKModel.Value = new decimal(new int[] {
-            40,
+            32,
             0,
             0,
             0});
@@ -661,7 +661,7 @@ namespace LMStud
             0});
 			this.numTempModel.Name = "numTempModel";
 			this.numTempModel.Value = new decimal(new int[] {
-            6,
+            5,
             0,
             0,
             65536});
@@ -1894,7 +1894,9 @@ namespace LMStud
 			this.comboVType.Items.AddRange(new object[] {
             resources.GetString("comboVType.Items"),
             resources.GetString("comboVType.Items1"),
-            resources.GetString("comboVType.Items2")});
+            resources.GetString("comboVType.Items2"),
+            resources.GetString("comboVType.Items3"),
+            resources.GetString("comboVType.Items4")});
 			this.comboVType.Name = "comboVType";
 			this.toolTip1.SetToolTip(this.comboVType, resources.GetString("comboVType.ToolTip"));
 			// 
@@ -1911,7 +1913,9 @@ namespace LMStud
 			this.comboKType.Items.AddRange(new object[] {
             resources.GetString("comboKType.Items"),
             resources.GetString("comboKType.Items1"),
-            resources.GetString("comboKType.Items2")});
+            resources.GetString("comboKType.Items2"),
+            resources.GetString("comboKType.Items3"),
+            resources.GetString("comboKType.Items4")});
 			this.comboKType.Name = "comboKType";
 			this.toolTip1.SetToolTip(this.comboKType, resources.GetString("comboKType.ToolTip"));
 			// 
@@ -1990,7 +1994,7 @@ namespace LMStud
 			this.numBatchSize.Name = "numBatchSize";
 			this.toolTip1.SetToolTip(this.numBatchSize, resources.GetString("numBatchSize.ToolTip"));
 			this.numBatchSize.Value = new decimal(new int[] {
-            512,
+            2048,
             0,
             0,
             0});
@@ -2006,7 +2010,7 @@ namespace LMStud
 			this.numTopK.Name = "numTopK";
 			this.toolTip1.SetToolTip(this.numTopK, resources.GetString("numTopK.ToolTip"));
 			this.numTopK.Value = new decimal(new int[] {
-            40,
+            32,
             0,
             0,
             0});
@@ -2176,7 +2180,7 @@ namespace LMStud
 			this.numTemp.Name = "numTemp";
 			this.toolTip1.SetToolTip(this.numTemp, resources.GetString("numTemp.ToolTip"));
 			this.numTemp.Value = new decimal(new int[] {
-            6,
+            5,
             0,
             0,
             65536});

@@ -294,10 +294,14 @@ namespace LMStud{
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_loading_model, result);
 			return result;
 		}
-		private NativeMethods.StudError CreateSession(string slotName, int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty, NativeMethods.QuantType kType, NativeMethods.QuantType vType){
-			var result = NativeMethods.CreateSession(slotName, nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, minP, topP, topK, temp, repeatPenalty, (int)kType, (int)vType);
-			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_session, result);
-			return result;
+		private void ClearFailedLocalSlot(string slotName){
+			Common.LoadedLocalSlots.Remove(slotName);
+			Common.LlModelLoaded = Common.LoadedLocalSlots.Count > 0;
+			if(Common.LlModelLoaded && string.Equals(Common.ActiveModelSlotName, slotName, StringComparison.OrdinalIgnoreCase)){
+				var fallback = Common.LoadedLocalSlots.FirstOrDefault(kv => kv.Value != null && kv.Value.SubItems.Count > 1);
+				if(!string.IsNullOrWhiteSpace(fallback.Key)) ModelSlotManager.LoadLocalIntoSlot(fallback.Key, fallback.Value.SubItems[1].Text, true);
+			}
+			Common.LoadedModel = Common.LoadedLocalSlots.TryGetValue(Common.ActiveModelSlotName ?? "", out var activeLoaded) ? activeLoaded : Common.LoadedLocalSlots.Values.FirstOrDefault();
 		}
 		private NativeMethods.StudError CreateContext(string slotName, int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, NativeMethods.QuantType kType, NativeMethods.QuantType vType){
 			var slotLock = ModelSlotManager.EnterSlot(slotName);
@@ -338,61 +342,71 @@ namespace LMStud{
 			if(activeChatSlotLoaded && !loadingActiveChatSlot && !string.Equals(slotName, "main", StringComparison.OrdinalIgnoreCase)) makeSlotChat = false;
 			ThreadPool.QueueUserWorkItem(o => {
 				var slotLock = ModelSlotManager.EnterSlot(slotName);
-				ModelSettings overrides;
-				var overrideSettings = TryGetEnabledModelSettings(modelPath, out overrides);
-				var ctxSize = overrideSettings ? overrides.CtxSize : Common.CtxSize;
-				var gpuLayers = overrideSettings ? overrides.GPULayers : Common.GPULayers;
-				var temp = overrideSettings ? overrides.Temp : Common.Temp;
-				var minP = overrideSettings ? overrides.MinP : Common.MinP;
-				var topP = overrideSettings ? overrides.TopP : Common.TopP;
-				var topK = overrideSettings ? overrides.TopK : Common.TopK;
-				var flashAttn = overrideSettings ? overrides.FlashAttn : Common.FlashAttn;
-				var jinjaTmpl = overrideSettings && overrides != null && overrides.OverrideJinja && File.Exists(overrides.JinjaTemplate) ? File.ReadAllText(overrides.JinjaTemplate) : null;
 				try{
-					Invoke(new MethodInvoker(() => {toolStripStatusLabel1.Text = Resources.Loading__ + fileName;}));
-					unsafe{
-						var result = LoadModel(slotName, modelPath, jinjaTmpl, gpuLayers, Common.MMap, Common.MLock, Common.NumaStrat);
-						if(result != NativeMethods.StudError.Success){
-							Settings.Default.LoadAuto = false;
-							Settings.Default.Save();
-							Common.LoadedLocalSlots.Remove(slotName);
-							Common.LlModelLoaded = Common.LoadedLocalSlots.Count > 0;
-							Common.LoadedModel = Common.LoadedLocalSlots.TryGetValue(Common.ActiveModelSlotName ?? "", out var activeLoadedAfterLoadFailure) ? activeLoadedAfterLoadFailure : Common.LoadedLocalSlots.Values.FirstOrDefault();
+					var overrideSettings = TryGetEnabledModelSettings(modelPath, out var overrides);
+					var ctxSize = overrideSettings ? overrides.CtxSize : Common.CtxSize;
+					var gpuLayers = overrideSettings ? overrides.GPULayers : Common.GPULayers;
+					var temp = overrideSettings ? overrides.Temp : Common.Temp;
+					var minP = overrideSettings ? overrides.MinP : Common.MinP;
+					var topP = overrideSettings ? overrides.TopP : Common.TopP;
+					var topK = overrideSettings ? overrides.TopK : Common.TopK;
+					var flashAttn = overrideSettings ? overrides.FlashAttn : Common.FlashAttn;
+					string jinjaTmpl = null;
+					if(overrideSettings && overrides.OverrideJinja){
+						var templatePath = overrides.JinjaTemplate;
+						if(string.IsNullOrWhiteSpace(templatePath) || !File.Exists(templatePath)){
+							ShowError(Resources.Error_loading_model, "Jinja template file not found\r\n\r\n" + (templatePath ?? ""), false);
 							return;
 						}
-						Common.LoadedModel = modelLvi;
-						var modelCtxMax = GetModelContextMax(modelLvi);
-						var contextSize = ClampContextSize(modelLvi, ctxSize);
-						Common.ModelCtxMax = modelCtxMax;
-						Common.CntCtxMax = contextSize;
-						result = CreateSession(slotName, contextSize, Common.BatchSize, flashAttn, Common.NThreads, Common.NThreadsBatch, minP, topP, topK, temp, Common.RepPen, Common.KType, Common.VType);
-						Common.LlModelLoaded = true;
-						if(result != NativeMethods.StudError.Success){
-							Settings.Default.LoadAuto = false;
-							Settings.Default.Save();
-							NativeMethods.FreeModelSlot(slotName);
-							Common.LoadedLocalSlots.Remove(slotName);
-							Common.LlModelLoaded = Common.LoadedLocalSlots.Count > 0;
-							Common.LoadedModel = Common.LoadedLocalSlots.TryGetValue(Common.ActiveModelSlotName ?? "", out var activeLoadedAfterSessionFailure) ? activeLoadedAfterSessionFailure : Common.LoadedLocalSlots.Values.FirstOrDefault();
+						try{ jinjaTmpl = File.ReadAllText(templatePath); }
+						catch(Exception ex){
+							ShowError(Resources.Error_loading_model, ex.Message, false);
 							return;
 						}
-						NativeMethods.SetTokenCallback(TokenCallback);
-						Tools.RegisterTools(slotName);
-						Common.LoadedLocalSlots[slotName] = modelLvi;
-						SetSystemPromptForSlot(slotName, false);
-						ModelSlotManager.LoadLocalIntoSlot(slotName, modelPath, makeSlotChat);
-						ApplyActiveSlotToModel();
-						try{
-							BeginInvoke(new MethodInvoker(() => {
-								Settings.Default.LastModel = modelPath.Substring(modelsDir.Length);
-								if(checkLoadAuto.Checked && !autoLoad){
-									Settings.Default.LoadAuto = true;
-									Settings.Default.Save();
-								}
-								toolTip1.SetToolTip(numCtxSize, _numCtxSizeToolTip + "\r\n" + Resources.Max_context_size_of_last_loaded_model + Common.ModelCtxMax);
-							}));
-						} catch(ObjectDisposedException){}
 					}
+					Invoke(new MethodInvoker(() => {toolStripStatusLabel1.Text = Resources.Loading__ + fileName;}));
+					var result = LoadModel(slotName, modelPath, jinjaTmpl, gpuLayers, Common.MMap, Common.MLock, Common.NumaStrat);
+					if(result != NativeMethods.StudError.Success){
+						Settings.Default.LoadAuto = false;
+						Settings.Default.Save();
+						ClearFailedLocalSlot(slotName);
+						return;
+					}
+					Common.LlModelLoaded = true;
+					Common.LoadedModel = modelLvi;
+					var modelCtxMax = GetModelContextMax(modelLvi);
+					var contextSize = ClampContextSize(modelLvi, ctxSize);
+					Common.ModelCtxMax = modelCtxMax;
+					Common.CntCtxMax = contextSize;
+					result = NativeMethods.CreateContext(slotName, contextSize, Common.BatchSize, (uint)flashAttn, Common.NThreads, Common.NThreadsBatch, (int)Common.KType, (int)Common.VType);
+					if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_context, result);
+					else{
+						result = NativeMethods.CreateSampler(slotName, minP, topP, topK, temp, Common.RepPen);
+						if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_sampler, result);
+					}
+					if(result != NativeMethods.StudError.Success){
+						Settings.Default.LoadAuto = false;
+						Settings.Default.Save();
+						NativeMethods.FreeModelSlot(slotName);
+						ClearFailedLocalSlot(slotName);
+						return;
+					}
+					NativeMethods.SetTokenCallback(TokenCallback);
+					Tools.RegisterTools(slotName);
+					Common.LoadedLocalSlots[slotName] = modelLvi;
+					SetSystemPromptForSlot(slotName, false);
+					ModelSlotManager.LoadLocalIntoSlot(slotName, modelPath, makeSlotChat);
+					ApplyActiveSlotToModel();
+					try{
+						BeginInvoke(new MethodInvoker(() => {
+							Settings.Default.LastModel = modelPath.Substring(modelsDir.Length);
+							if(checkLoadAuto.Checked && !autoLoad){
+								Settings.Default.LoadAuto = true;
+								Settings.Default.Save();
+							}
+							toolTip1.SetToolTip(numCtxSize, _numCtxSizeToolTip + "\r\n" + Resources.Max_context_size_of_last_loaded_model + Common.ModelCtxMax);
+						}));
+					} catch(ObjectDisposedException){}
 				} finally{
 					slotLock.Dispose();
 					BeginInvoke(new MethodInvoker(() => {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using LMStud.Properties;
@@ -58,6 +59,39 @@ namespace LMStud{
 			Common.ModelCtxMax = GetModelContextMax(modelLvi);
 			Common.CntCtxMax = contextSize;
 		}
+		private sealed class ReloadRequest{
+			internal string SlotName;
+			internal bool ReloadContext;
+			internal int ContextSize;
+			internal CheckState FlashAttn;
+			internal bool ReloadSampler;
+			internal float MinP;
+			internal float TopP;
+			internal int TopK;
+			internal float Temp;
+		}
+		private void QueueReloads(List<ReloadRequest> reloads, Action completed = null){
+			if(reloads == null || reloads.Count == 0){
+				completed?.Invoke();
+				return;
+			}
+			BeginRetokenization();
+			ThreadPool.QueueUserWorkItem(_ => {
+				try{
+					foreach(var reload in reloads){
+						if(reload.ReloadContext) CreateContext(reload.SlotName, reload.ContextSize, Common.BatchSize, reload.FlashAttn, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType);
+						if(reload.ReloadSampler) CreateSampler(reload.SlotName, reload.MinP, reload.TopP, reload.TopK, reload.Temp, Common.RepPen);
+					}
+				} finally{
+					try{
+						BeginInvoke(new MethodInvoker(() => {
+							try{ completed?.Invoke(); }
+							finally{ EndRetokenization(); }
+						}));
+					} catch(ObjectDisposedException){ EndRetokenization(); }
+				}
+			});
+		}
 		private void ButApplyModelSettings_Click(object sender, EventArgs e){
 			if(listViewModels.SelectedItems.Count == 0) return;
 			var selectedModel = listViewModels.SelectedItems[0];
@@ -108,15 +142,36 @@ namespace LMStud{
 			if(reloadModel && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes){
 				foreach(var slotName in loadedSlotNames) LoadModel(slotName, selectedModel, false);
 			} else{
+				var reloads = new List<ReloadRequest>();
 				if(reloadCtx){
 					var contextSize = ClampContextSize(selectedModel, ctxSizeEff);
 					foreach(var slotName in loadedSlotNames){
 						UpdateCommonContextLimitForSlot(slotName, selectedModel, contextSize);
-						CreateContext(slotName, contextSize, Common.BatchSize, flashEff, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType);
+						reloads.Add(new ReloadRequest{
+							SlotName = slotName,
+							ReloadContext = true,
+							ContextSize = contextSize,
+							FlashAttn = flashEff
+						});
 					}
 				}
 				if(reloadSmpl)
-					foreach(var slotName in loadedSlotNames) CreateSampler(slotName, minPEff, topPEff, topKEff, tempEff, Common.RepPen);
+					foreach(var slotName in loadedSlotNames){
+						var reload = reloads.FirstOrDefault(item => string.Equals(item.SlotName, slotName, StringComparison.OrdinalIgnoreCase));
+						if(reload == null){
+							reload = new ReloadRequest{ SlotName = slotName };
+							reloads.Add(reload);
+						}
+						reload.ReloadSampler = true;
+						reload.MinP = minPEff;
+						reload.TopP = topPEff;
+						reload.TopK = topKEff;
+						reload.Temp = tempEff;
+					}
+				QueueReloads(reloads, () => {
+					if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(loadedSlotNames);});
+				});
+				return;
 			}
 			if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(loadedSlotNames);});
 		}

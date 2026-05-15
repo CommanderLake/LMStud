@@ -277,7 +277,7 @@ namespace LMStud{
 			List<ModelSlot> candidates;
 			lock(Sync) candidates = SlotsInternal.Where(IsServerRoutableSlot).Select(slot => slot.Clone()).ToList();
 			if(candidates.Count == 0){
-				var fallback = GetFallbackRuntimeSlot();
+				var fallback = GetFallbackSlot();
 				if(fallback != null) candidates.Add(fallback);
 			}
 			return candidates.OrderByDescending(slot => slot.HasUse(ModelSlotUse.Server))
@@ -292,7 +292,7 @@ namespace LMStud{
 			List<ModelSlot> slots;
 			lock(Sync) slots = SlotsInternal.Where(IsServerRoutableSlot).Select(slot => slot.Clone()).ToList();
 			if(slots.Count == 0){
-				var fallback = GetFallbackRuntimeSlot();
+				var fallback = GetFallbackSlot();
 				if(fallback != null) slots.Add(fallback);
 			}
 			foreach(var slot in slots){
@@ -511,7 +511,7 @@ namespace LMStud{
 			} catch{}
 			return string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 		}
-		private static ModelSlot GetFallbackRuntimeSlot(){
+		private static ModelSlot GetFallbackSlot(){
 			if(Common.LlModelLoaded && Common.LoadedModel != null)
 				return new ModelSlot{ Name = MainSlotName, Source = ModelSlotSource.Local, LocalPath = Common.LoadedModel.SubItems[1].Text };
 			foreach(var loaded in Common.LoadedLocalSlots)

@@ -5,19 +5,42 @@
 #include <sstream>
 #include <fstream>
 #include <regex>
+static bool _fullFileSystemAccess = true;
 void SetFileBaseDir(const char* dir){
 	if(dir && *dir){
 		std::error_code ec;
 		_baseFolder = std::filesystem::weakly_canonical(dir, ec);
 		if(ec) _baseFolder.clear();
-	} else{ _baseFolder.clear(); }
+		_fullFileSystemAccess = false;
+	} else{
+		_baseFolder.clear();
+		_fullFileSystemAccess = true;
+	}
+}
+static std::filesystem::path ResolveFileToolPath(const std::string& path){
+	if(_baseFolder.empty()) return std::filesystem::u8path(path);
+	return _baseFolder / std::filesystem::u8path(path);
+}
+static std::string GetFileToolPathLabel(const std::filesystem::path& path){
+	std::error_code ec;
+	if(_baseFolder.empty()){
+		auto fullPath = std::filesystem::weakly_canonical(path, ec);
+		if(ec){
+			ec.clear();
+			fullPath = std::filesystem::absolute(path, ec);
+		}
+		return (ec ? path : fullPath).generic_string();
+	}
+	const auto relPath = std::filesystem::relative(path, _baseFolder, ec);
+	return (ec ? path : relPath).generic_string();
 }
 static bool IsPathAllowed(const std::filesystem::path& p){
-	if(_baseFolder.empty()) return false;
-	std::error_code ec;
-	const auto abs = weakly_canonical(p, ec);
-	const auto base = weakly_canonical(_baseFolder, ec);
-	if(ec) return false;
+	if(_baseFolder.empty()) return _fullFileSystemAccess && p.is_absolute();
+	std::error_code absEc;
+	std::error_code baseEc;
+	const auto abs = weakly_canonical(p, absEc);
+	const auto base = weakly_canonical(_baseFolder, baseEc);
+	if(absEc || baseEc) return false;
 	const auto absStr = abs.native();
 	const auto baseStr = base.native();
 	if(absStr.rfind(baseStr, 0) != 0) return false;
@@ -29,19 +52,19 @@ std::string ListDirectoryTool(const char* slotName, const char* argsJson){
 	const std::string recStr = GetArgValue(argsJson, "recursive");
 	const bool recursive = recStr == "true" || recStr == "1";
 	if(path.empty()) path = ".";
-	const std::filesystem::path p = _baseFolder / path;
+	const std::filesystem::path p = ResolveFileToolPath(path);
 	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
 	std::vector<std::string> files;
 	std::error_code ec;
 	if(recursive){
 		for(const auto& entry : std::filesystem::recursive_directory_iterator(p, ec)){
 			if(ec) break;
-			files.push_back(relative(entry.path(), _baseFolder, ec).generic_string());
+			files.push_back(GetFileToolPathLabel(entry.path()));
 		}
 	} else{
 		for(const auto& entry : std::filesystem::directory_iterator(p, ec)){
 			if(ec) break;
-			files.push_back(relative(entry.path(), _baseFolder, ec).generic_string());
+			files.push_back(GetFileToolPathLabel(entry.path()));
 		}
 	}
 	if(ec) return "{\"error\":\"folder not found, maybe its a file\"}";
@@ -60,7 +83,7 @@ std::string ReadFileTool(const char* slotName, const char* argsJson){
 	int start = -1, end = -1;
 	if(!startStr.empty()) std::from_chars(startStr.data(), startStr.data() + startStr.size(), start);
 	if(!endStr.empty()) std::from_chars(endStr.data(), endStr.data() + endStr.size(), end);
-	std::filesystem::path p = _baseFolder / path;
+	std::filesystem::path p = ResolveFileToolPath(path);
 	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
 	if(is_directory(p)) return "{\"error\":\"path is a folder\"}";
 	std::ifstream f(p);
@@ -77,7 +100,7 @@ std::string ReadFileTool(const char* slotName, const char* argsJson){
 		if(end != -1 && lineNo >= end) break;
 		++lineNo;
 	}
-	const std::string fileName = p.filename().string();
+	const std::string fileName = _baseFolder.empty() ? GetFileToolPathLabel(p) : p.filename().string();
 	const std::string ext = p.extension().string();
 	std::string contentType;
 	if(ext == ".h" || ext == ".cpp" || ext == ".cc" || ext == ".cxx" || ext == ".c") contentType = "cpp";
@@ -118,7 +141,7 @@ std::string SearchFileTool(const char* slotName, const char* argsJson){
 		if(ec != std::errc() || ptr != maxResultsStr.data() + maxResultsStr.size() || maxResults <= 0){ return "{\"error\":\"max_results must be a valid positive integer\"}"; }
 	}
 	if(keyword.empty()){ return "{\"error\":\"keyword is required\"}"; }
-	const std::filesystem::path p = _baseFolder / path;
+	const std::filesystem::path p = ResolveFileToolPath(path);
 	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
 	const bool isDir = is_directory(p);
 	if(!isDir && !exists(p)){ return "{\"error\":\"file or directory not found\"}"; }
@@ -194,14 +217,14 @@ std::string SearchFileTool(const char* slotName, const char* argsJson){
 			for(const auto& entry : std::filesystem::recursive_directory_iterator(p, ec)){
 				if(ec) break;
 				if(!entry.is_regular_file(ec)) continue;
-				const std::string fileLabel = relative(entry.path(), _baseFolder, ec).generic_string();
+				const std::string fileLabel = GetFileToolPathLabel(entry.path());
 				if(processFile(entry.path(), fileLabel)) break;
 			}
 		} else{
 			for(const auto& entry : std::filesystem::directory_iterator(p, ec)){
 				if(ec) break;
 				if(!entry.is_regular_file(ec)) continue;
-				const std::string fileLabel = relative(entry.path(), _baseFolder, ec).generic_string();
+				const std::string fileLabel = GetFileToolPathLabel(entry.path());
 				if(processFile(entry.path(), fileLabel)) break;
 			}
 		}
@@ -221,7 +244,7 @@ std::string CreateFileTool(const char* slotName, const char* argsJson){
 	const std::string text = GetArgValue(argsJson, "text");
 	const std::string overwriteStr = GetArgValue(argsJson, "overwrite");
 	const bool overwrite = overwriteStr == "true" || overwriteStr == "1";
-	const std::filesystem::path p = _baseFolder / path;
+	const std::filesystem::path p = ResolveFileToolPath(path);
 	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
 	if(exists(p) && !overwrite) return "{\"error\":\"exists\"}";
 	create_directories(p.parent_path());
@@ -240,7 +263,7 @@ std::string ReplaceLinesTool(const char* slotName, const char* argsJson){
 	if(!endStr.empty()) std::from_chars(endStr.data(), endStr.data() + endStr.size(), end);
 	else end = start;
 	if(start < 1 || end < start) return "{\"error\":\"range, check line numbers using file_read_lines\"}";
-	std::filesystem::path p = _baseFolder / path;
+	std::filesystem::path p = ResolveFileToolPath(path);
 	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
 	std::ifstream in(p);
 	if(!in.is_open()) return "{\"error\":\"open failed\"}";
@@ -272,7 +295,7 @@ std::string ApplyPatchTool(const char* slotName, const char* argsJson){
 	const std::string path = GetArgValue(argsJson, "path");
 	const std::string patchStr = GetArgValue(argsJson, "patch");
 	if(path.empty() || patchStr.empty()) return "{\"error\":\"args\"}";
-	std::filesystem::path p = _baseFolder / path;
+	std::filesystem::path p = ResolveFileToolPath(path);
 	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
 	std::ifstream in(p);
 	if(!in.is_open()) return "{\"error\":\"open failed\"}";

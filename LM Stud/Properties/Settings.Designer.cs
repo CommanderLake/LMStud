@@ -73,7 +73,7 @@ namespace LMStud.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.8")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.5")]
         public decimal Temp {
             get {
                 return ((decimal)(this["Temp"]));
@@ -145,7 +145,7 @@ namespace LMStud.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("512")]
+        [global::System.Configuration.DefaultSettingValueAttribute("2048")]
         public decimal BatchSize {
             get {
                 return ((decimal)(this["BatchSize"]));

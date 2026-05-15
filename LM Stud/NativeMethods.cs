@@ -71,8 +71,6 @@ namespace LMStud{
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError CreateSampler([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, float minP, float topP, int topK, float temp, float repeatPenalty);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern StudError CreateSession([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch, float minP, float topP, int topK, float temp, float repeatPenalty, int kType, int vType);
-		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		[return: MarshalAs(UnmanagedType.I1)]
 		internal static extern bool IsModelSlotLoaded([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]

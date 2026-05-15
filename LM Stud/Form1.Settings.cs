@@ -275,6 +275,7 @@ namespace LMStud{
 				PopulateWhisperModels(true, true);
 			}
 			var defaultModelSettingChanged = setSystemPrompt || reloadModelForDefaultSlots || reloadCtxForDefaultSlots || reloadSmplForDefaultSlots;
+			var reloads = new List<ReloadRequest>();
 			if(Common.LlModelLoaded){
 				var slots = GetLoadedLocalSlotItems();
 				if(defaultModelSettingChanged && slots.Any(slot => slot.HasOverrides)) modelOverrideChanged = true;
@@ -299,9 +300,25 @@ namespace LMStud{
 					var contextSize = ClampContextSize(slot.LoadedModel, ctxSize);
 					if(reloadCtx){
 						UpdateCommonContextLimitForSlot(slot.SlotName, slot.LoadedModel, contextSize);
-						CreateContext(slot.SlotName, contextSize, Common.BatchSize, flash, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType);
+						reloads.Add(new ReloadRequest{
+							SlotName = slot.SlotName,
+							ReloadContext = true,
+							ContextSize = contextSize,
+							FlashAttn = flash
+						});
 					}
-					if(reloadSmpl) CreateSampler(slot.SlotName, minP, topP, topK, temp, Common.RepPen);
+					if(reloadSmpl){
+						var reload = reloads.FirstOrDefault(item => string.Equals(item.SlotName, slot.SlotName, StringComparison.OrdinalIgnoreCase));
+						if(reload == null){
+							reload = new ReloadRequest{ SlotName = slot.SlotName };
+							reloads.Add(reload);
+						}
+						reload.ReloadSampler = true;
+						reload.MinP = minP;
+						reload.TopP = topP;
+						reload.TopK = topK;
+						reload.Temp = temp;
+					}
 				}
 			}
 			if(setVAD) NativeMethods.SetVADThresholds(Common.VADThreshold, Common.FreqThreshold);
@@ -322,15 +339,18 @@ namespace LMStud{
 			}
 			if(setGoogle) NativeMethods.SetGoogle(Common.GoogleAPIKey, Common.GoogleSearchID, Common.GoogleSearchResultCount);
 			if(registerTools) Tools.RegisterToolsForAllSlots();
-			if(registerTools || setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(ModelSlotManager.GetLoadedLocalSlotNames());});
 			if(modelOverrideChanged) MessageBox.Show(this, Resources.The_modified_settings_are_overridden_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 			Settings.Default.Save();
-			var activeSlot = ModelSlotManager.GetActiveChatSlot();
-			if(activeSlot?.Source != ModelSlotSource.Api && Common.LlModelLoaded){
-				ModelSlotManager.SyncMainFromLoadedLocal();
-				ApplyActiveSlotToModel();
-				PopulateSlotsList();
+			void AfterReload(){
+				var activeSlot = ModelSlotManager.GetActiveChatSlot();
+				if(activeSlot?.Source != ModelSlotSource.Api && Common.LlModelLoaded){
+					ModelSlotManager.SyncMainFromLoadedLocal();
+					ApplyActiveSlotToModel();
+					PopulateSlotsList();
+				}
+				if(registerTools || setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(ModelSlotManager.GetLoadedLocalSlotNames());});
 			}
+			QueueReloads(reloads, AfterReload);
 		}
 		private void ButBrowse_Click(object sender, EventArgs e){
 			if(folderBrowserDialog1.ShowDialog(this) == DialogResult.OK) textModelsDir.Text = folderBrowserDialog1.SelectedPath;
@@ -351,10 +371,8 @@ namespace LMStud{
 		}
 		private void LinkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e){
 			textSystemPrompt.SelectAll();
-			textSystemPrompt.Paste(@"The list_directory and file tools operate relative to a base directory.
-The file tools use 1-based line numbers.
-If file tools are required, first use list_directory with an empty path.
-Always read a file and verify its contents before making changes.");
+			textSystemPrompt.Paste(@"The file tools use 1-based line numbers.
+If file tools are required, first use list_directory with an empty path.");
 		}
 		private void ButDownloadVADModel_Click(object sender, EventArgs e){
 			HugLoadFiles("ggml-org", "whisper-vad", ".bin");

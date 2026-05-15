@@ -297,17 +297,7 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_creating_sampler", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Error creating session.
-        /// </summary>
-        internal static string Error_creating_session {
-            get {
-                return ResourceManager.GetString("Error_creating_session", resourceCulture);
-            }
-        }
-        
-        /// <summary>
+		/// <summary>
         ///   Looks up a localized string similar to Error deleting message.
         /// </summary>
         internal static string Error_deleting_message {

@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <mutex>
+#include <string_view>
 #include <system_error>
 #include <thread>
 #include <jinja\parser.h>
@@ -30,11 +31,18 @@ static bool _gpuOomStud = false;
 static std::string _lastErrorMessage;
 extern "C" EXPORT const char* GetLastErrorMessage(){ return _lastErrorMessage.c_str(); }
 extern "C" EXPORT void ClearLastErrorMessage(){ _lastErrorMessage.clear(); }
+static void AppendLastErrorLogMessage(std::string_view msg){
+	while(!msg.empty() && (msg.back() == '\r' || msg.back() == '\n')) msg.remove_suffix(1);
+	if(msg.empty()) return;
+	if(!_lastErrorMessage.empty()) _lastErrorMessage += "\r\n";
+	_lastErrorMessage.append(msg.data(), msg.size());
+}
 static void GPUOomLogCallbackStud(const ggml_log_level level, const char* text, void* userData){
 	if(level == GGML_LOG_LEVEL_ERROR || level == GGML_LOG_LEVEL_WARN){
-		const std::string_view msg(text);
+		const std::string_view msg(text ? text : "");
 		if(msg.find("out of memory") != std::string_view::npos) _gpuOomStud = true;
 	}
+	if(level == GGML_LOG_LEVEL_ERROR) AppendLastErrorLogMessage(text ? text : "");
 }
 void SetHWnd(const HWND hWnd){ Stud::hWnd = hWnd; }
 void BackendInit(){
@@ -248,10 +256,13 @@ StudError CreateContext(const char* slotName, const int nCtx, const int batchSiz
 		model->session.ctx = nullptr;
 		model->session.memory = nullptr;
 	}
+	model->session.syntax.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
+	model->session.batchSize = batchSize;
 	auto ctxParams = llama_context_default_params();
 	ctxParams.n_ctx = nCtx;
 	ctxParams.n_batch = batchSize;
-	//ctxParams.flash_attn = flashAttn > 0;
+	ctxParams.offload_kqv = true;
+	ctxParams.op_offload = true;
 	if(flashAttn == 0) ctxParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED;
 	else if(flashAttn == 1) ctxParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_ENABLED;
 	else if(flashAttn == 2) ctxParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_AUTO;
@@ -262,6 +273,10 @@ StudError CreateContext(const char* slotName, const int nCtx, const int batchSiz
 			break;
 		case 2: ctxParams.type_k = GGML_TYPE_TQ2_0;
 			break;
+		case 3: ctxParams.type_k = GGML_TYPE_Q8_0;
+			break;
+		case 4: ctxParams.type_k = GGML_TYPE_F16;
+			break;
 		default: ;
 	}
 	switch(vType){
@@ -269,18 +284,27 @@ StudError CreateContext(const char* slotName, const int nCtx, const int batchSiz
 			break;
 		case 2: ctxParams.type_v = GGML_TYPE_TQ2_0;
 			break;
-		default: ;
+		case 3: ctxParams.type_v = GGML_TYPE_Q8_0;
+			break;
+		case 4: ctxParams.type_v = GGML_TYPE_F16;
+			break;
+		default:;
 	}
+	constexpr auto initFailedMessage = "llama_init_from_model failed.";
 	{
 		std::lock_guard<std::mutex> logLock(Stud::llamaLogMutex);
 		_gpuOomStud = false;
+		_lastErrorMessage.clear();
 		llama_log_set(GPUOomLogCallbackStud, nullptr);
 		try{
 			model->session.ctx = llama_init_from_model(model->llModel, ctxParams);
-		} catch(const std::exception& e){ _lastErrorMessage = e.what(); } catch(...){ _lastErrorMessage = "llama_init_from_model failed."; }
+		} catch(const std::exception& e){ _lastErrorMessage = e.what(); } catch(...){ _lastErrorMessage = initFailedMessage; }
 		llama_log_set(nullptr, nullptr);
 	}
-	if(!model->session.ctx){ return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantCreateContext; }
+	if(!model->session.ctx){
+		if(_lastErrorMessage.empty()) _lastErrorMessage = initFailedMessage;
+		return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantCreateContext;
+	}
 	model->session.memory = llama_get_memory(model->session.ctx);
 	auto result = StudError::Success;
 	if(model->session.lanes[0].sampler) result = RetokenizeChat(slotName, true);
@@ -306,17 +330,6 @@ StudError CreateSampler(const char* slotName, const float minP, const float topP
 	const auto result = CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, model->session.lanes[0].sampler);
 	if(result != StudError::Success) return result;
 	return CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, model->session.lanes[1].sampler);
-}
-StudError CreateSession(const char* slotName, const int nCtx, const int batchSize, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty, const int kType, const int vType){
-	const auto model = GetModel(slotName);
-	if(!model->llModel) return StudError::ModelNotLoaded;
-	model->session.syntax.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
-	auto result = CreateContext(slotName, nCtx, batchSize, flashAttn, nThreads, nThreadsBatch, kType, vType);
-	if(result != StudError::Success) return result;
-	model->session.batchSize = batchSize;
-	result = CreateSampler(slotName, minP, topP, topK, temp, repeatPenalty);
-	if(result != StudError::Success) return result;
-	return StudError::Success;
 }
 void DestroySession(const char* slotName){
 	const auto model = GetModel(slotName);
@@ -366,18 +379,32 @@ StudError LoadModel(const char* slotName, const char* filename, const char* jinj
 	model->llModel = model->sharedModel ? model->sharedModel->llModel : nullptr;
 	if(!model->llModel){ return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantLoadModel; }
 	model->session.vocab = llama_model_get_vocab(model->llModel);
-	std::string tmplSrc;
-	if(jinjaTemplate && jinjaTemplate[0] != '\0'){
-		model->chatTemplates = common_chat_templates_init(model->llModel, jinjaTemplate);
-		tmplSrc = jinjaTemplate;
-	} else{
-		model->chatTemplates = common_chat_templates_init(model->llModel, "");
-		tmplSrc = llama_model_chat_template(model->llModel, nullptr);
+	try{
+		std::string tmplSrc;
+		if(jinjaTemplate && jinjaTemplate[0] != '\0'){
+			model->chatTemplates = common_chat_templates_init(model->llModel, jinjaTemplate);
+			tmplSrc = jinjaTemplate;
+		} else{
+			model->chatTemplates = common_chat_templates_init(model->llModel, "");
+			const char* modelTemplate = llama_model_chat_template(model->llModel, nullptr);
+			if(modelTemplate) tmplSrc = modelTemplate;
+		}
+		model->caps = jinja::caps();
+		if(!tmplSrc.empty()){
+			jinja::lexer lex;
+			const jinja::lexer_result lexed = lex.tokenize(tmplSrc);
+			jinja::program prog = jinja::parse_from_tokens(lexed);
+			model->caps = jinja::caps_get(prog);
+		}
+	} catch(const std::exception& e){
+		_lastErrorMessage = e.what();
+		FreeModel(slotName);
+		return StudError::CantApplyTemplate;
+	} catch(...){
+		_lastErrorMessage = "The chat template could not be parsed.";
+		FreeModel(slotName);
+		return StudError::CantApplyTemplate;
 	}
-	jinja::lexer lex;
-	const jinja::lexer_result lexed = lex.tokenize(tmplSrc);
-	jinja::program prog = jinja::parse_from_tokens(lexed);
-	model->caps = jinja::caps_get(prog);
 	return StudError::Success;
 }
 bool HasTool(const char* slotName, const char* name){
@@ -1176,7 +1203,7 @@ StudError Generate(const char* slotName, const std::vector<common_chat_msg>& mes
 	model->session.lanes[model->session.activeLane].messages.push_back(msg);
 	if(emitFinalCallback && cb && !callback) cb(msg.reasoning_content.c_str(), static_cast<int>(msg.reasoning_content.length()), msg.content.c_str(), static_cast<int>(msg.content.length()), i, LlamaMemSize(slotName), ftTime, 0);
 	outMsg = std::move(msg);
-	//OutputDebugStringA(("\n!!! CONTEXT START !!!\n" + std::string(GetContextAsText()) + "\n!!! CONTEXT END !!!\n").c_str());
+	//OutputDebugStringA(("\n!!! CONTEXT START !!!\n" + std::string(GetContextAsText(slotName)) + "\n!!! CONTEXT END !!!\n").c_str());
 	return StudError::Success;
 }
 StudError GenerateWithTools(const char* slotName, const Stud::MessageRole role, const char* prompt, const int nPredict, const bool callback){

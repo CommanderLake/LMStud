@@ -257,10 +257,7 @@
   <data name="Error_loading_model" xml:space="preserve">
     <value>加载模型时出错</value>
   </data>
-  <data name="Error_creating_session" xml:space="preserve">
-    <value>创建会话时出错</value>
-  </data>
-  <data name="Error_creating_context" xml:space="preserve">
+<data name="Error_creating_context" xml:space="preserve">
     <value>创建上下文时出错</value>
   </data>
   <data name="Error_creating_sampler" xml:space="preserve">
