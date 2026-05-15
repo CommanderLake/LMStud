@@ -31,7 +31,6 @@ namespace LMStud {
 		private static ChatMessageControl _cntAssMsg;
 		private static ChatMessageControl _cntToolMsg;
 		private static int _msgTokenCount;
-		internal static bool DialStarted;
 		internal static bool DialPaused;
 		internal static string DialPriSlotName;
 		internal static string DialSecSlotName;
@@ -50,12 +49,10 @@ namespace LMStud {
 			CntDialSlotName = null;
 		}
 		internal static string[] GetDialecticSlotNames(){
-			if(string.IsNullOrWhiteSpace(DialPriSlotName)) return new string[0];
-			if(!DialecticRelayEnabled) return new[]{ DialPriSlotName };
-			return new[]{ DialPriSlotName, DialSecSlotName };
+			return DialecticRelayEnabled ? new[]{ DialPriSlotName, DialSecSlotName } : new string[0];
 		}
 		private static string GetNextDialecticSlotName(string currentSlotName){
-			if(!DialecticRelayEnabled) return CntDialSlotName;
+			if(!DialecticRelayEnabled) return null;
 			return string.Equals(currentSlotName, DialSecSlotName, StringComparison.OrdinalIgnoreCase) ? DialPriSlotName : DialSecSlotName;
 		}
 		internal static void Generate(){
@@ -66,7 +63,7 @@ namespace LMStud {
 			Generate(role, prompt, addToChat, null);
 		}
 		private static void Generate(MessageRole role, string prompt, bool addToChat, List<ModelSlotLockLease> slotLeases){
-			var useDialecticLocalSlot = MainForm.checkDialectic.Checked && !string.IsNullOrWhiteSpace(CntDialSlotName);
+			var useDialecticLocalSlot = MainForm.checkDialectic.Checked && DialecticRelayEnabled && !string.IsNullOrWhiteSpace(CntDialSlotName);
 			var activeSlot = useDialecticLocalSlot ? ModelSlotManager.GetSlot(CntDialSlotName) : ModelSlotManager.GetActiveChatSlot();
 			var useRemote = activeSlot?.Source == ModelSlotSource.Api && !useDialecticLocalSlot;
 			var slotName = activeSlot?.Name;
@@ -94,16 +91,6 @@ namespace LMStud {
 			if(role == MessageRole.User){
 				NativeMethods.SetCommittedText("");
 				if(addToChat) MainForm.textInput.Text = "";
-			}
-			if(!useRemote && MainForm.checkDialectic.Checked && !DialStarted && role == MessageRole.User){
-				var err = NativeMethods.DialecticStart(slotName);
-				if(err != NativeMethods.StudError.Success){
-					ModelSlotManager.ReleaseSlots(slotLeases);
-					MainForm.FinishedGenerating();
-					MainForm.ShowError("Dialectic start", err);
-					return;
-				}
-				DialStarted = true;
 			}
 			if(useRemote){
 				SetApiGenerationCancellation(new CancellationTokenSource());
@@ -144,11 +131,9 @@ namespace LMStud {
 						var last = MainForm.ChatMessages.LastOrDefault();
 						if(last == null) return;
 						NativeMethods.StudError err;
-						if(DialecticRelayEnabled){
-							var nextSlotName = GetNextDialecticSlotName(slotName);
-							err = string.IsNullOrWhiteSpace(slotName) || string.IsNullOrWhiteSpace(nextSlotName) ? NativeMethods.StudError.Generic : NativeMethods.DialecticRelaySwap(slotName, slotName, nextSlotName);
-							if(err == NativeMethods.StudError.Success) CntDialSlotName = nextSlotName;
-						} else err = NativeMethods.DialecticSwap(slotName);
+						var nextSlotName = GetNextDialecticSlotName(slotName);
+						err = string.IsNullOrWhiteSpace(slotName) || string.IsNullOrWhiteSpace(nextSlotName) ? NativeMethods.StudError.Generic : NativeMethods.DialecticRelaySwap(slotName, slotName, nextSlotName);
+						if(err == NativeMethods.StudError.Success) CntDialSlotName = nextSlotName;
 						switch(err){
 							case NativeMethods.StudError.Success:
 								slotLocksHeld = false;
@@ -383,7 +368,7 @@ namespace LMStud {
 			var originalState = GetState(slotName);
 			var chatSnapshot = NativeMethods.CaptureChatState(slotName);
 			try{
-				// llama state does not include Stud's chat messages/cached token metadata; restore both or start fresh.
+				// API server requests borrow a loaded slot; restore llama state plus Stud chat metadata so other chats keep their place.
 				if(!string.IsNullOrWhiteSpace(historyJson)){
 					var resetResult = NativeMethods.ResetChat(slotName);
 					if(resetResult != NativeMethods.StudError.Success) return false;

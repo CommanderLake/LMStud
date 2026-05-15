@@ -96,17 +96,7 @@ namespace LMStud{
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError SetStateData([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, IntPtr src, int size);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern StudError DialecticInit([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
-		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern StudError DialecticRelayInit([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
-		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern StudError DialecticStart([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
-		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern StudError DialecticSwap([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
-		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError DialecticRelaySwap([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, [MarshalAs(UnmanagedType.LPUTF8Str)] string fromSlotName, [MarshalAs(UnmanagedType.LPUTF8Str)] string toSlotName);
-		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern void DialecticFree([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError SetSystemPrompt([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, [MarshalAs(UnmanagedType.LPUTF8Str)] string toolsPrompt);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]

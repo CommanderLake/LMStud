@@ -18,7 +18,7 @@
 | ✅ | **Built-in Google Search + webpage fetch** (super-visible setup below). |
 | ✅ | Optional speech I/O with `whisper.cpp`—talk smack to your computer. |
 | ✅ | Tiny memory footprint—smaller than RGB keyboard driver. |
-| ✅ | Dialectic mode with dual samplers for side-by-side debates. |
+| ✅ | Dialectic mode with separate local slots for side-by-side debates. |
 | ✅ | API Client and Server using the OpenAI Responses API format |
 
 ---

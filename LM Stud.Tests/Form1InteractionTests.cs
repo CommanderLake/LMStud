@@ -46,7 +46,6 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 		private static void ResetGenerationFlags(){
 			Generation.Generating = false;
 			Generation.APIServerGenerating = false;
-			Generation.DialStarted = false;
 			Generation.DialPaused = false;
 		}
 		private static void ResetInteractionState(){
@@ -105,25 +104,18 @@ retry:		try { _form.Invoke(new MethodInvoker(() => { var h = _form.Handle; })); 
 			Assert.IsFalse(Generation.Generating, "Generating flag must remain false when generation is skipped.");
 		}
 		[TestMethod]
-		public void DialecticToggle_EnablesWhenModelLoaded(){
-			_form.Invoke(new MethodInvoker(() => {
-				_form.checkDialectic.Checked = true;
-				_form.CheckDialectic_CheckedChanged(_form.checkDialectic, EventArgs.Empty);
-			}));
-			Assert.IsTrue(_form.checkDialectic.Checked, "Checkbox should stay checked when enabling dialectic mode succeeds.");
-			Assert.IsFalse(Generation.DialStarted, "Dialectic should reset start flag when enabling.");
-			Assert.IsFalse(Generation.DialPaused, "Dialectic should reset pause flag when enabling.");
+		public void DialecticSlots_RequireSeparateDialecticSlot(){
+			Assert.IsTrue(ModelSlotManager.ResolveDialecticLocalSlots().Count < 2, "Dialectic mode should require a separate loaded local slot marked Dialectic.");
+			Assert.IsFalse(Generation.DialPaused, "Missing dialectic partner should not start dialectic generation.");
 		}
 		[TestMethod]
 		public void DialecticToggle_DisablesClearingState(){
-			Generation.DialStarted = true;
 			Generation.DialPaused = true;
 			_form.Invoke(new MethodInvoker(() => {
 				_form.checkDialectic.Checked = false;
 				_form.CheckDialectic_CheckedChanged(_form.checkDialectic, EventArgs.Empty);
 			}));
 			Assert.IsFalse(_form.checkDialectic.Checked, "Checkbox should remain unchecked after disabling.");
-			Assert.IsFalse(Generation.DialStarted, "Disabling should clear start flag.");
 			Assert.IsFalse(Generation.DialPaused, "Disabling should clear pause flag.");
 		}
 		[TestMethod]

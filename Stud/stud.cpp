@@ -307,7 +307,7 @@ StudError CreateContext(const char* slotName, const int nCtx, const int batchSiz
 	}
 	model->session.memory = llama_get_memory(model->session.ctx);
 	auto result = StudError::Success;
-	if(model->session.lanes[0].sampler) result = RetokenizeChat(slotName, true);
+	if(model->session.lane.sampler) result = RetokenizeChat(slotName, true);
 	return result;
 }
 StudError CreateSamplerInternal(const float minP, const float topP, const int topK, const float temp, const float repeatPenalty, llama_sampler* & smpl){
@@ -327,32 +327,24 @@ StudError CreateSamplerInternal(const float minP, const float topP, const int to
 }
 StudError CreateSampler(const char* slotName, const float minP, const float topP, const int topK, const float temp, const float repeatPenalty){
 	const auto model = GetModel(slotName);
-	const auto result = CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, model->session.lanes[0].sampler);
-	if(result != StudError::Success) return result;
-	return CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, model->session.lanes[1].sampler);
+	return CreateSamplerInternal(minP, topP, topK, temp, repeatPenalty, model->session.lane.sampler);
 }
 void DestroySession(const char* slotName){
 	const auto model = GetModel(slotName);
-	if(model->session.lanes[0].sampler){
-		llama_sampler_free(model->session.lanes[0].sampler);
-		model->session.lanes[0].sampler = nullptr;
-	}
-	if(model->session.lanes[1].sampler){
-		llama_sampler_free(model->session.lanes[1].sampler);
-		model->session.lanes[1].sampler = nullptr;
+	if(model->session.lane.sampler){
+		llama_sampler_free(model->session.lane.sampler);
+		model->session.lane.sampler = nullptr;
 	}
 	if(model->session.ctx){
 		llama_free(model->session.ctx);
 		model->session.ctx = nullptr;
 		model->session.memory = nullptr;
 	}
-	DialecticFree(slotName);
 }
 void FreeModel(const char* slotName){
 	const auto model = GetModel(slotName);
 	DestroySession(slotName);
-	model->session.lanes[0].cachedTokens.clear();
-	model->session.lanes[1].cachedTokens.clear();
+	model->session.lane.cachedTokens.clear();
 	model->session.vocab = nullptr;
 	model->chatTemplates = nullptr;
 	model->caps = jinja::caps();
@@ -421,7 +413,7 @@ void SetThreadCount(const int n, const int batchSize){
 }
 int LlamaMemSize(const char* slotName){
 	const auto model = GetModel(slotName);
-	return static_cast<int>(model->session.lanes[model->session.activeLane].cachedTokens.size());
+	return static_cast<int>(model->session.lane.cachedTokens.size());
 }
 int GetStateSize(const char* slotName){
 	const auto model = GetModel(slotName);
@@ -458,42 +450,12 @@ StudError SetStateData(const char* slotName, const unsigned char* src, int size)
 }
 static Stud::StudLane& ActiveLane(const char* slotName){
 	const auto model = GetModel(slotName);
-	return model->session.lanes[model->session.activeLane];
+	return model->session.lane;
 }
-static Stud::StudLane& OtherLane(const char* slotName){
-	const auto model = GetModel(slotName);
-	return model->session.lanes[model->session.activeLane == 0 ? 1 : 0];
-}
-static StudError SaveDialecticState(const char* slotName){
-	const auto model = GetModel(slotName);
-	if(!model->session.ctx) return StudError::ModelNotLoaded;
-	const int size = GetStateSize(slotName);
-	if(size <= 0){
-		_lastErrorMessage = "llama_state_get_size returned invalid size:" + std::to_string(size);
-		return StudError::Generic;
-	}
-	auto& lane = ActiveLane(slotName);
-	if(static_cast<int>(lane.state.size()) != size) lane.state.assign(size, 0);
-	return GetStateData(slotName, lane.state.data(), size);
-}
-static StudError RestoreDialecticState(const char* slotName){
-	const auto model = GetModel(slotName);
-	if(!model->session.ctx) return StudError::ModelNotLoaded;
-	const int size = GetStateSize(slotName);
-	if(size <= 0){
-		_lastErrorMessage = "llama_state_get_size returned invalid size:" + std::to_string(size);
-		return StudError::Generic;
-	}
-	const auto& lane = ActiveLane(slotName);
-	if(lane.state.empty()){
-		_lastErrorMessage = "Dialectic relay state not initialised";
-		return StudError::Generic;
-	}
-	if(static_cast<int>(lane.state.size()) != size){
-		_lastErrorMessage = "Dialectic relay state size does not match active context";
-		return StudError::Generic;
-	}
-	return SetStateData(slotName, lane.state.data(), size);
+static void RestoreSamplerFromCachedTokens(Stud::StudSession& session){
+	if(!session.lane.sampler) return;
+	llama_sampler_reset(session.lane.sampler);
+	for(const llama_token token : session.lane.cachedTokens) llama_sampler_accept(session.lane.sampler, token);
 }
 static common_chat_msg MirrorDialecticMessage(common_chat_msg msg){
 	if(msg.role._Equal("assistant")){
@@ -503,74 +465,14 @@ static common_chat_msg MirrorDialecticMessage(common_chat_msg msg){
 	return msg;
 }
 static bool AlignDialecticRelayChatStates(const Stud::StudModel& source, Stud::StudModel& target){
-	const auto& sourceMessages = source.session.lanes[source.session.activeLane].messages;
-	auto& targetMessages = target.session.lanes[target.session.activeLane].messages;
+	const auto& sourceMessages = source.session.lane.messages;
+	auto& targetMessages = target.session.lane.messages;
 	auto sourceLimit = sourceMessages.size();
 	if(sourceLimit > 0 && sourceMessages.back().role._Equal("assistant")) --sourceLimit;
 	if(targetMessages.size() > sourceLimit) return false;
 	if(targetMessages.size() == sourceLimit) return false;
 	for(size_t i = targetMessages.size(); i < sourceLimit; ++i) targetMessages.push_back(MirrorDialecticMessage(sourceMessages[i]));
 	return true;
-}
-StudError DialecticInit(const char* slotName){
-	const auto model = GetModel(slotName);
-	const int size = GetStateSize(slotName);
-	if(size <= 0){
-		_lastErrorMessage = "llama_state_get_size returned invalid size:" + std::to_string(size);
-		return StudError::Generic;
-	}
-	model->session.lanes[0].state.assign(size, 0);
-	model->session.lanes[1].state.assign(size, 0);
-	const auto err = GetStateData(slotName, model->session.lanes[0].state.data(), size);
-	if(err != StudError::Success){
-		return err;
-	}
-	memcpy(model->session.lanes[1].state.data(), model->session.lanes[0].state.data(), size);
-	model->session.activeLane = 0;
-	model->session.dialecticRelay = false;
-	return StudError::Success;
-}
-StudError DialecticRelayInit(const char* slotName){
-	const auto model = GetModel(slotName);
-	const int size = GetStateSize(slotName);
-	if(size <= 0){
-		_lastErrorMessage = "llama_state_get_size returned invalid size:" + std::to_string(size);
-		return StudError::Generic;
-	}
-	if(model->session.activeLane != 0){
-		model->session.lanes[0].messages = ActiveLane(slotName).messages;
-		model->session.lanes[0].cachedTokens = ActiveLane(slotName).cachedTokens;
-	}
-	model->session.activeLane = 0;
-	model->session.dialecticRelay = true;
-	model->session.assNextGen = false;
-	model->session.lanes[0].state.assign(size, 0);
-	model->session.lanes[1].messages.clear();
-	model->session.lanes[1].cachedTokens.clear();
-	model->session.lanes[1].state.clear();
-	const auto err = GetStateData(slotName, model->session.lanes[0].state.data(), size);
-	if(err != StudError::Success) return err;
-	return StudError::Success;
-}
-StudError DialecticStart(const char* slotName){
-	const auto& lane = ActiveLane(slotName);
-	if(lane.state.empty()){
-		_lastErrorMessage = "Dialectic states not initialised";
-		return StudError::Generic;
-	}
-	const int size = static_cast<int>(lane.state.size());
-	return SetStateData(slotName, lane.state.data(), size);
-}
-void DialecticFree(const char* slotName){
-	const auto model = GetModel(slotName);
-	model->session.lanes[0].state.clear();
-	model->session.lanes[1].state.clear();
-	model->session.dialecticRelay = false;
-}
-static bool SameModelDialecticActive(const char* slotName){
-	const auto model = GetModel(slotName);
-	if(model->session.dialecticRelay) return false;
-	return !OtherLane(slotName).state.empty();
 }
 std::string RoleString(const Stud::MessageRole role){
 	switch(role){
@@ -721,9 +623,9 @@ StudError RetokenizeChat(const char* slotName, bool rebuildMemory = false){
 	lane.cachedTokens = std::move(promptTokens);
 	return StudError::Success;
 }
-static StudError DecodePromptText(const char* slotName, const std::string& prompt, const int dId, const common_chat_msg* appendMsg = nullptr){
+static StudError DecodePromptText(const char* slotName, const std::string& prompt, const common_chat_msg* appendMsg = nullptr){
 	auto& session = GetModel(slotName)->session;
-	auto& lane = session.lanes[dId];
+	auto& lane = session.lane;
 	std::vector<llama_token> promptTokens;
 	if(!TokenizePrompt(slotName, prompt, promptTokens)) return StudError::CantTokenizePrompt;
 	if(appendMsg) lane.messages.push_back(*appendMsg);
@@ -748,9 +650,9 @@ static StudError DecodePromptText(const char* slotName, const std::string& promp
 	}
 	return StudError::Success;
 }
-static StudError DecodeSinglePromptMessage(const char* slotName, const common_chat_msg& message, const int dId, const bool addAss, const bool appendToChat = true){
+static StudError DecodeSinglePromptMessage(const char* slotName, const common_chat_msg& message, const bool addAss, const bool appendToChat = true){
 	const auto model = GetModel(slotName);
-	const auto& lane = model->session.lanes[dId];
+	const auto& lane = model->session.lane;
 	if(appendToChat && message.role == "user" && lane.messages.empty() && lane.cachedTokens.empty()){
 		const std::vector<common_chat_msg> chatMsgs{message};
 		common_chat_params chatData;
@@ -758,7 +660,7 @@ static StudError DecodeSinglePromptMessage(const char* slotName, const common_ch
 		auto err = BuildChatTemplateParamsForMessages(slotName, chatData, chatMsgs, addAss, toolsEnabled);
 		if(err != StudError::Success) return err;
 		err = LoadChatSyntax(model->session.syntax, chatData, toolsEnabled);
-		return err == StudError::Success ? DecodePromptText(slotName, chatData.prompt, dId, &message) : err;
+		return err == StudError::Success ? DecodePromptText(slotName, chatData.prompt, &message) : err;
 	}
 	std::string formatted;
 	try{ formatted = common_chat_format_single(model->chatTemplates.get(), lane.messages, message, addAss, message.role._Equal("assistant")); } catch(std::exception& e){
@@ -766,79 +668,30 @@ static StudError DecodeSinglePromptMessage(const char* slotName, const common_ch
 		OutputDebugStringA((std::string("EXCEPTION:\r\n") + e.what()).c_str());
 		return StudError::CantApplyTemplate;
 	}
-	return DecodePromptText(slotName, formatted, dId, appendToChat ? &message : nullptr);
-}
-static void AlignChatStates(const char* slotName){
-	auto& session = GetModel(slotName)->session;
-	const auto& a = session.lanes[0].messages;
-	const auto& b = session.lanes[1].messages;
-	if(a.size() == b.size()) return;
-	const int longerId = a.size() >= b.size() ? 0 : 1;
-	const int shorterId = 1 - longerId;
-	const auto& longer = session.lanes[longerId].messages;
-	auto& shorter = session.lanes[shorterId].messages;
-	for(size_t i = shorter.size(); i < longer.size(); ++i){
-		auto msg = longer[i];
-		if(msg.role._Equal("assistant")){
-			msg.role = "user";
-			msg.reasoning_content.clear();
-		} else if(msg.role._Equal("user")){ msg.role = "assistant"; }
-		const bool mirroredRoleIsAssistant = msg.role._Equal("assistant");
-		shorter.push_back(msg);
-		if(session.ctx && session.lanes[shorterId].sampler && session.vocab && !session.lanes[shorterId].state.empty() && session.activeLane == shorterId){
-			const auto err = DecodeSinglePromptMessage(slotName, shorter.back(), shorterId, mirroredRoleIsAssistant, false);
-			if(err == StudError::Success) session.assNextGen = mirroredRoleIsAssistant;
-		}
-	}
-}
-StudError DialecticSwap(const char* slotName){
-	auto& session = GetModel(slotName)->session;
-	if(session.dialecticRelay) return SaveDialecticState(slotName);
-	if(session.lanes[0].state.empty()) return StudError::Success;
-	AlignChatStates(slotName);
-	const int size = static_cast<int>(ActiveLane(slotName).state.size());
-	GetStateData(slotName, ActiveLane(slotName).state.data(), size);
-	session.activeLane = session.activeLane == 0 ? 1 : 0;
-	SetStateData(slotName, ActiveLane(slotName).state.data(), size);
-	return StudError::Success;
+	return DecodePromptText(slotName, formatted, appendToChat ? &message : nullptr);
 }
 StudError DialecticRelaySwap(const char* slotName, const char* fromSlotName, const char* toSlotName){
+	(void)slotName;
 	const auto* fromModel = FindModel(NormName(fromSlotName));
 	auto* toModel = FindModel(NormName(toSlotName));
 	if(!fromModel || !toModel || !fromModel->llModel || !fromModel->session.ctx || !toModel->llModel || !toModel->session.ctx) return StudError::ModelNotLoaded;
-	auto err = SaveDialecticState(slotName);
-	if(err != StudError::Success) return err;
-	err = RestoreDialecticState(slotName);
-	if(err != StudError::Success) return err;
 	if(AlignDialecticRelayChatStates(*fromModel, *toModel)){
-		ActiveLane(slotName).cachedTokens.clear();
-		err = RetokenizeChat(slotName, true);
-		if(err != StudError::Success) return err;
-		err = SaveDialecticState(slotName);
+		ActiveLane(toSlotName).cachedTokens.clear();
+		const auto err = RetokenizeChat(toSlotName, true);
 		if(err != StudError::Success) return err;
 	}
 	return StudError::Success;
 }
 StudError ResetChat(const char* slotName){
 	auto& session = GetModel(slotName)->session;
-	session.lanes[0].messages.clear();
-	session.lanes[1].messages.clear();
-	session.lanes[0].cachedTokens.clear();
-	session.lanes[1].cachedTokens.clear();
-	session.assNextGen = false;
+	session.lane.messages.clear();
+	session.lane.cachedTokens.clear();
 	if(!session.ctx || !ActiveLane(slotName).sampler || !session.vocab){
-		DialecticFree(slotName);
 		return StudError::Success;
 	}
 	auto err = RetokenizeChat(slotName, true);
 	if(err != StudError::Success) return err;
-	if(session.dialecticRelay) return SaveDialecticState(slotName);
-	if(!SameModelDialecticActive(slotName)) return err;
-	err = DialecticSwap(slotName);
-	if(err != StudError::Success) return err;
-	const auto err2 = RetokenizeChat(slotName, true);
-	const auto err3 = DialecticSwap(slotName);
-	return err2 != StudError::Success ? err2 : err3;
+	return err;
 }
 StudError SetSystemPrompt(const char* slotName, const char* prompt, const char* toolsPrompt){
 	auto& session = GetModel(slotName)->session;
@@ -846,23 +699,14 @@ StudError SetSystemPrompt(const char* slotName, const char* prompt, const char* 
 	session.toolsPrompt = std::string(toolsPrompt);
 	if(!session.ctx || !ActiveLane(slotName).sampler || !session.vocab){
 		ActiveLane(slotName).cachedTokens.clear();
-		if(SameModelDialecticActive(slotName)) OtherLane(slotName).cachedTokens.clear();
 		return StudError::Success;
 	}
 	auto err = RetokenizeChat(slotName);
 	if(err != StudError::Success) return err;
-	if(session.dialecticRelay) return SaveDialecticState(slotName);
-	if(!SameModelDialecticActive(slotName)) return err;
-	err = DialecticSwap(slotName);
-	if(err != StudError::Success) return err;
-	const auto err2 = RetokenizeChat(slotName);
-	const auto err3 = DialecticSwap(slotName);
-	return err2 != StudError::Success ? err2 : err3;
+	return err;
 }
 StudError SetMessageAt(const char* slotName, const int index, const char* think, const char* message){
 	const auto& session = GetModel(slotName)->session;
-	const bool mirror = SameModelDialecticActive(slotName);
-	if(mirror) AlignChatStates(slotName);
 	if(index < 0 || index >= static_cast<int>(ActiveLane(slotName).messages.size())) return StudError::IndexOutOfRange;
 	const auto applyMessageUpdate = [&](std::vector<common_chat_msg>& msgs){
 		msgs[index].reasoning_content = msgs[index].role._Equal("assistant") ? think : std::string();
@@ -870,74 +714,40 @@ StudError SetMessageAt(const char* slotName, const int index, const char* think,
 	};
 	if(!session.ctx || !ActiveLane(slotName).sampler || !session.vocab){
 		applyMessageUpdate(ActiveLane(slotName).messages);
-		if(mirror) applyMessageUpdate(OtherLane(slotName).messages);
 		ActiveLane(slotName).cachedTokens.clear();
-		if(mirror) OtherLane(slotName).cachedTokens.clear();
 		return StudError::Success;
 	}
 	applyMessageUpdate(ActiveLane(slotName).messages);
 	auto err = RetokenizeChat(slotName);
-	const auto otherId = session.activeLane == 0 ? 1 : 0;
 	if(err != StudError::Success) return err;
-	if(session.dialecticRelay) return SaveDialecticState(slotName);
-	if(!mirror || session.lanes[otherId].messages.size() <= index) return err;
-	err = DialecticSwap(slotName);
-	if(err != StudError::Success) return err;
-	applyMessageUpdate(ActiveLane(slotName).messages);
-	const auto err2 = RetokenizeChat(slotName);
-	const auto err3 = DialecticSwap(slotName);
-	return err2 != StudError::Success ? err2 : err3;
+	return err;
 }
 StudError RemoveMessageAt(const char* slotName, const int index){
 	const auto& session = GetModel(slotName)->session;
-	const bool mirror = SameModelDialecticActive(slotName);
-	if(mirror) AlignChatStates(slotName);
 	if(index < 0 || index >= static_cast<int>(ActiveLane(slotName).messages.size())) return StudError::IndexOutOfRange;
 	if(!session.ctx || !ActiveLane(slotName).sampler || !session.vocab){
 		ActiveLane(slotName).messages.erase(ActiveLane(slotName).messages.begin() + index);
-		if(mirror) OtherLane(slotName).messages.erase(OtherLane(slotName).messages.begin() + index);
 		ActiveLane(slotName).cachedTokens.clear();
-		if(mirror) OtherLane(slotName).cachedTokens.clear();
 		return StudError::Success;
 	}
 	ActiveLane(slotName).messages.erase(ActiveLane(slotName).messages.begin() + index);
 	auto err = RetokenizeChat(slotName);
-	const auto otherId = session.activeLane == 0 ? 1 : 0;
 	if(err != StudError::Success) return err;
-	if(session.dialecticRelay) return SaveDialecticState(slotName);
-	if(!mirror || session.lanes[otherId].messages.size() <= index) return err;
-	err = DialecticSwap(slotName);
-	if(err != StudError::Success) return err;
-	ActiveLane(slotName).messages.erase(ActiveLane(slotName).messages.begin() + index);
-	const auto err2 = RetokenizeChat(slotName);
-	const auto err3 = DialecticSwap(slotName);
-	return err2 != StudError::Success ? err2 : err3;
+	return err;
 }
 StudError RemoveMessagesStartingAt(const char* slotName, int index){
 	const auto& session = GetModel(slotName)->session;
-	const bool mirror = SameModelDialecticActive(slotName);
-	if(mirror) AlignChatStates(slotName);
 	if(index < 0) index = 0;
 	if(index > static_cast<int>(ActiveLane(slotName).messages.size())) index = static_cast<int>(ActiveLane(slotName).messages.size());
 	if(!session.ctx || !ActiveLane(slotName).sampler || !session.vocab){
 		ActiveLane(slotName).messages.erase(ActiveLane(slotName).messages.begin() + index, ActiveLane(slotName).messages.end());
-		if(mirror) OtherLane(slotName).messages.erase(OtherLane(slotName).messages.begin() + index, OtherLane(slotName).messages.end());
 		ActiveLane(slotName).cachedTokens.clear();
-		if(mirror) OtherLane(slotName).cachedTokens.clear();
 		return StudError::Success;
 	}
 	ActiveLane(slotName).messages.erase(ActiveLane(slotName).messages.begin() + index, ActiveLane(slotName).messages.end());
 	auto err = RetokenizeChat(slotName);
-	const auto otherId = session.activeLane == 0 ? 1 : 0;
 	if(err != StudError::Success) return err;
-	if(session.dialecticRelay) return SaveDialecticState(slotName);
-	if(!mirror || session.lanes[otherId].messages.size() <= index) return err;
-	err = DialecticSwap(slotName);
-	if(err != StudError::Success) return err;
-	ActiveLane(slotName).messages.erase(ActiveLane(slotName).messages.begin() + index, ActiveLane(slotName).messages.end());
-	const auto err2 = RetokenizeChat(slotName);
-	const auto err3 = DialecticSwap(slotName);
-	return err2 != StudError::Success ? err2 : err3;
+	return err;
 }
 StudError AddMessage(const char* slotName, const Stud::MessageRole role, const char* think, const char* message){
 	common_chat_msg msg;
@@ -950,23 +760,12 @@ StudError AddMessage(const char* slotName, const Stud::MessageRole role, const c
 static StudError ReplaceChatMessages(const char* slotName, std::vector<common_chat_msg>&& msgs){
 	for(auto& msg : msgs) EnsureToolCallIds(msg);
 	auto& session = GetModel(slotName)->session;
-	const bool mirror = SameModelDialecticActive(slotName);
 	ActiveLane(slotName).messages = std::move(msgs);
-	if(mirror) OtherLane(slotName).messages.clear();
-	session.assNextGen = false;
-	if(mirror) AlignChatStates(slotName);
 	ActiveLane(slotName).cachedTokens.clear();
-	if(mirror) OtherLane(slotName).cachedTokens.clear();
 	if(!session.ctx || !ActiveLane(slotName).sampler || !session.vocab) return StudError::Success;
 	auto err = RetokenizeChat(slotName, true);
 	if(err != StudError::Success) return err;
-	if(session.dialecticRelay) return SaveDialecticState(slotName);
-	if(!mirror) return err;
-	err = DialecticSwap(slotName);
-	if(err != StudError::Success) return err;
-	const auto err2 = RetokenizeChat(slotName, true);
-	const auto err3 = DialecticSwap(slotName);
-	return err2 != StudError::Success ? err2 : err3;
+	return err;
 }
 StudError SyncChatMessages(const char* slotName, const int* roles, const char** thinks, const char** messages, int count){
 	std::vector<common_chat_msg> msgs;
@@ -1128,7 +927,7 @@ private:
 };
 static StudError RollbackGenerate(const char* slotName, const size_t chatStart, const size_t newMessageCount, common_chat_msg& outMsg, const StudError error){
 	const auto model = GetModel(slotName);
-	model->session.lanes[model->session.activeLane].messages.resize(chatStart + newMessageCount);
+	model->session.lane.messages.resize(chatStart + newMessageCount);
 	const auto rtErr = RetokenizeChat(slotName, true);
 	outMsg = common_chat_msg();
 	return rtErr != StudError::Success ? rtErr : error;
@@ -1136,9 +935,8 @@ static StudError RollbackGenerate(const char* slotName, const size_t chatStart, 
 static StudError DecodePromptMessages(const char* slotName, const std::vector<common_chat_msg>& messages, common_chat_msg& outMsg){
 	const auto model = GetModel(slotName);
 	for(const auto& message : messages){
-		const bool addAss = model->session.assNextGen || !message.role._Equal("assistant");
-		model->session.assNextGen = false;
-		const auto err = DecodeSinglePromptMessage(slotName, message, model->session.activeLane, addAss);
+		const bool addAss = !message.role._Equal("assistant");
+		const auto err = DecodeSinglePromptMessage(slotName, message, addAss);
 		if(err != StudError::Success){
 			const auto rtErr = RetokenizeChat(slotName, true);
 			outMsg = common_chat_msg();
@@ -1153,14 +951,14 @@ StudError Generate(const char* slotName, const std::vector<common_chat_msg>& mes
 	auto model = GetModel(slotName);
 	model->session.stop.store(false);
 	const Stud::TokenCallbackFn cb = Stud::tokenCb;
-	const size_t chatStart = model->session.lanes[model->session.activeLane].messages.size();
+	const size_t chatStart = model->session.lane.messages.size();
 	const auto promptErr = DecodePromptMessages(slotName, messages, outMsg);
 	if(promptErr != StudError::Success) return promptErr;
 	const bool toolsEnabled = !model->session.tools.empty();
 	common_chat_parser_params streamSyntax = model->session.syntax;
 	if(callback){
 		common_chat_params streamChatData;
-		auto streamSyntaxErr = BuildChatTemplateParamsForMessages(slotName, streamChatData, model->session.lanes[model->session.activeLane].messages, true, false);
+		auto streamSyntaxErr = BuildChatTemplateParamsForMessages(slotName, streamChatData, model->session.lane.messages, true, false);
 		if(streamSyntaxErr == StudError::Success) streamSyntaxErr = LoadChatSyntax(streamSyntax, streamChatData, false);
 		if(streamSyntaxErr != StudError::Success) return RollbackGenerate(slotName, chatStart, messages.size(), outMsg, streamSyntaxErr);
 	} else streamSyntax.parse_tool_calls = false;
@@ -1177,12 +975,12 @@ StudError Generate(const char* slotName, const std::vector<common_chat_msg>& mes
 		const StudError pendingError = postProcessor.Error();
 		if(pendingError != StudError::Success) return failWith(pendingError);
 		if(LlamaMemSize(slotName) + 1 > llama_n_ctx(model->session.ctx)) return failWith(StudError::ConvTooLong);
-		auto newTokenId = llama_sampler_sample(model->session.lanes[model->session.activeLane].sampler, model->session.ctx, -1);
+		auto newTokenId = llama_sampler_sample(model->session.lane.sampler, model->session.ctx, -1);
 		const auto isEog = llama_vocab_is_eog(model->session.vocab, newTokenId);
 		const auto decodeErr = llama_decode(model->session.ctx, llama_batch_get_one(&newTokenId, 1));
 		if(decodeErr != 0) return failWith(decodeErr == 1 ? StudError::ConvTooLong : StudError::LlamaDecodeError);
-		llama_sampler_accept(model->session.lanes[model->session.activeLane].sampler, newTokenId);
-		model->session.lanes[model->session.activeLane].cachedTokens.push_back(newTokenId);
+		llama_sampler_accept(model->session.lane.sampler, newTokenId);
+		model->session.lane.cachedTokens.push_back(newTokenId);
 		if(isEog) break;
 		const auto enqueueErr = postProcessor.Enqueue(newTokenId, LlamaMemSize(slotName));
 		if(enqueueErr != StudError::Success) return failWith(enqueueErr);
@@ -1191,7 +989,7 @@ StudError Generate(const char* slotName, const std::vector<common_chat_msg>& mes
 	postProcessor.Close();
 	if(postProcessor.Error() != StudError::Success) return RollbackGenerate(slotName, chatStart, messages.size(), outMsg, postProcessor.Error());
 	common_chat_params finalChatData;
-	auto finalSyntaxErr = BuildChatTemplateParamsForMessages(slotName, finalChatData, model->session.lanes[model->session.activeLane].messages, true, toolsEnabled);
+	auto finalSyntaxErr = BuildChatTemplateParamsForMessages(slotName, finalChatData, model->session.lane.messages, true, toolsEnabled);
 	if(finalSyntaxErr == StudError::Success) finalSyntaxErr = LoadChatSyntax(model->session.syntax, finalChatData, toolsEnabled);
 	if(finalSyntaxErr != StudError::Success) return RollbackGenerate(slotName, chatStart, messages.size(), outMsg, finalSyntaxErr);
 	try{
@@ -1201,7 +999,7 @@ StudError Generate(const char* slotName, const std::vector<common_chat_msg>& mes
 		_lastErrorMessage = e.what();
 		return RollbackGenerate(slotName, chatStart, messages.size(), outMsg, StudError::ChatParseError);
 	}
-	model->session.lanes[model->session.activeLane].messages.push_back(msg);
+	model->session.lane.messages.push_back(msg);
 	if(emitFinalCallback && cb && !callback) cb(slotName, msg.reasoning_content.c_str(), msg.content.c_str(), i, LlamaMemSize(slotName), ftTime, 0);
 	outMsg = std::move(msg);
 	//OutputDebugStringA(("\n!!! CONTEXT START !!!\n" + std::string(GetContextAsText(slotName)) + "\n!!! CONTEXT END !!!\n").c_str());
@@ -1220,7 +1018,7 @@ StudError GenerateWithTools(const char* slotName, const Stud::MessageRole role, 
 		std::string toolParseError;
 		const auto err = Generate(slotName, msgs, nPredict, callback, msg, true, &toolParseError);
 		if(err != StudError::Success) return err;
-		if(!model->session.lanes[model->session.activeLane].messages.size()) return StudError::Success;
+		if(!model->session.lane.messages.size()) return StudError::Success;
 		msgs.clear();
 		try{
 			toolCalled = false;
@@ -1335,8 +1133,8 @@ char* GetContextAsText(const char* slotName){
 	const auto& session = GetModel(slotName)->session;
 	if(!session.ctx) return nullptr;
 	std::string outStr;
-	outStr.reserve(session.lanes[session.activeLane].cachedTokens.size() * 4);
-	for(const llama_token tok : session.lanes[session.activeLane].cachedTokens){ outStr += common_token_to_piece(session.ctx, tok, true); }
+	outStr.reserve(session.lane.cachedTokens.size() * 4);
+	for(const llama_token tok : session.lane.cachedTokens){ outStr += common_token_to_piece(session.ctx, tok, true); }
 	auto* out = static_cast<char*>(std::malloc(outStr.size() + 1));
 	if(out) std::memcpy(out, outStr.c_str(), outStr.size() + 1);
 	return out;
@@ -1345,20 +1143,13 @@ extern "C" EXPORT void* CaptureChatState(const char* slotName){
 	const auto& session = GetModel(slotName)->session;
 	auto* snapshot = new(std::nothrow) Stud::StudSession();
 	if(!snapshot) return nullptr;
-	snapshot->lanes[0].messages = session.lanes[0].messages;
-	snapshot->lanes[0].cachedTokens = session.lanes[0].cachedTokens;
-	snapshot->lanes[0].state = session.lanes[0].state;
-	snapshot->lanes[1].messages = session.lanes[1].messages;
-	snapshot->lanes[1].cachedTokens = session.lanes[1].cachedTokens;
-	snapshot->lanes[1].state = session.lanes[1].state;
-	snapshot->activeLane = session.activeLane;
+	snapshot->lane.messages = session.lane.messages;
+	snapshot->lane.cachedTokens = session.lane.cachedTokens;
 	snapshot->systemPrompt = session.systemPrompt;
 	snapshot->toolsPrompt = session.toolsPrompt;
 	snapshot->tools = session.tools;
 	snapshot->toolHandlers = session.toolHandlers;
 	snapshot->syntax = session.syntax;
-	snapshot->assNextGen = session.assNextGen;
-	snapshot->dialecticRelay = session.dialecticRelay;
 	snapshot->batchSize = session.batchSize;
 	return snapshot;
 }
@@ -1366,20 +1157,15 @@ extern "C" EXPORT void RestoreChatState(const char* slotName, void* state){
 	if(!state) return;
 	auto& session = GetModel(slotName)->session;
 	const auto* snapshot = static_cast<Stud::StudSession*>(state);
-	session.lanes[0].messages = snapshot->lanes[0].messages;
-	session.lanes[0].cachedTokens = snapshot->lanes[0].cachedTokens;
-	session.lanes[0].state = snapshot->lanes[0].state;
-	session.lanes[1].messages = snapshot->lanes[1].messages;
-	session.lanes[1].cachedTokens = snapshot->lanes[1].cachedTokens;
-	session.lanes[1].state = snapshot->lanes[1].state;
-	session.activeLane = snapshot->activeLane;
+	session.lane.messages = snapshot->lane.messages;
+	session.lane.cachedTokens = snapshot->lane.cachedTokens;
+	// llama state restores the context memory; the sampler still needs its token history for penalties.
+	RestoreSamplerFromCachedTokens(session);
 	session.systemPrompt = snapshot->systemPrompt;
 	session.toolsPrompt = snapshot->toolsPrompt;
 	session.tools = snapshot->tools;
 	session.toolHandlers = snapshot->toolHandlers;
 	session.syntax = snapshot->syntax;
-	session.assNextGen = snapshot->assNextGen;
-	session.dialecticRelay = snapshot->dialecticRelay;
 	session.batchSize = snapshot->batchSize;
 }
 extern "C" EXPORT void FreeChatState(void* state){ delete static_cast<Stud::StudSession*>(state); }

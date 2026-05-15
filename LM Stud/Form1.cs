@@ -184,10 +184,8 @@ namespace LMStud{
 					return;
 				}
 			} else{
-				Dialectics.FreeState();
 				Generation.ClearDialecticSlots();
 			}
-			Generation.DialStarted = false;
 			Generation.DialPaused = false;
 			SetModelStatus();
 		}
@@ -290,11 +288,10 @@ namespace LMStud{
 					BeginInvoke(new MethodInvoker(() => {
 						if(IsDisposed) return;
 						if(resetDialecticSeed){
-							if(!Dialectics.InitializeMode(this, false)){
+							if(!Dialectics.InitializeMode(this)){
 								checkDialectic.Checked = false;
 								return;
 							}
-							Generation.DialStarted = false;
 							Generation.DialPaused = false;
 						}
 						Generation.Generate(role, msg, true);

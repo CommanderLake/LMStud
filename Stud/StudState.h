@@ -12,29 +12,23 @@ namespace Stud{
 		llama_sampler* sampler = nullptr;
 		std::vector<common_chat_msg> messages;
 		std::vector<llama_token> cachedTokens;
-		std::vector<unsigned char> state;
 	};
 	struct StudSession{
 		llama_context* ctx = nullptr;
 		const llama_vocab* vocab = nullptr;
 		llama_memory_t memory = nullptr;
-		StudLane lanes[2];
-		int activeLane = 0;
+		StudLane lane;
 		std::string systemPrompt;
 		std::string toolsPrompt;
 		std::vector<common_chat_tool> tools;
 		std::unordered_map<std::string, ToolHandlerFn> toolHandlers;
 		common_chat_parser_params syntax;
 		std::atomic_bool stop{false};
-		bool dialecticRelay = false;
-		bool assNextGen = false;
 		int batchSize = 1;
 		~StudSession(){
-			for(auto& lane : lanes){
-				if(lane.sampler){
-					llama_sampler_free(lane.sampler);
-					lane.sampler = nullptr;
-				}
+			if(lane.sampler){
+				llama_sampler_free(lane.sampler);
+				lane.sampler = nullptr;
 			}
 			if(ctx){
 				llama_free(ctx);
