@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!--
-    Microsoft ResX Schema
-
+  <!-- 
+    Microsoft ResX Schema 
+    
     Version 2.0
-
-    The primary goals of this format is to allow a simple XML format
-    that is mostly human readable. The generation and parsing of the
-    various data types are done through the TypeConverter classes
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
     associated with the data types.
-
+    
     Example:
-
+    
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-
-    There are any number of "resheader" rows that contain simple
+                
+    There are any number of "resheader" rows that contain simple 
     name/value pairs.
-
-    Each data row contains a name, and value. The row also contains a
-    type or mimetype. Type corresponds to a .NET class that support
-    text/value conversion through the TypeConverter architecture.
-    Classes that don't support this are serialized and stored with the
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
     mimetype set.
-
-    The mimetype is used for serialized objects, and tells the
-    ResXResourceReader how to depersist the object. This is currently not
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
     extensible. For a given mimetype the value must be set accordingly:
-
-    Note - application/x-microsoft.net.object.binary.base64 is the format
-    that the ResXResourceWriter will generate, however the reader can
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
     read any of the formats listed below.
-
+    
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with
+    value   : The object must be serialized with 
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-
+    
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with
+    value   : The object must be serialized with 
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array
+    value   : The object must be serialized into a byte array 
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -124,23 +124,23 @@
   <data name="LM_Stud" xml:space="preserve">
     <value>LM Stud</value>
   </data>
-<data name="Error_Whisper_model_not_found" xml:space="preserve">
-	<value>Error Whisper model not found</value>
-</data>
+  <data name="Error_Whisper_model_not_found" xml:space="preserve">
+    <value>Error Whisper model not found</value>
+  </data>
   <data name="VAD_model_not_found__use_Basic_VAD_" xml:space="preserve">
     <value>VAD model not found, use Basic VAD?</value>
   </data>
   <data name="Error_initialising_voice_input" xml:space="preserve">
     <value>Error initialising voice input</value>
   </data>
-<data name="Error_starting_voice_input" xml:space="preserve">
-	<value>Error starting voice input</value>
-</data>
-<data name="Generate" xml:space="preserve">
+  <data name="Error_starting_voice_input" xml:space="preserve">
+    <value>Error starting voice input</value>
+  </data>
+  <data name="Generate" xml:space="preserve">
     <value>Generate</value>
   </data>
   <data name="_0_F2__Tok_s" xml:space="preserve">
-    <value>{0:F2} Tok/s</value>
+    <value>{0:F2} Token/s</value>
     <comment>Tokens per second</comment>
   </data>
   <data name="First_token_time__" xml:space="preserve">
@@ -206,10 +206,10 @@
   <data name="Loading__" xml:space="preserve">
     <value>Loading: </value>
   </data>
-<data name="Using_Model_" xml:space="preserve">
-	<value>Using Model: </value>
-</data>
-<data name="A_changed_setting_requires_the_model_to_be_reloaded__reload_now_" xml:space="preserve">
+  <data name="Using_Model_" xml:space="preserve">
+    <value>Using Model: </value>
+  </data>
+  <data name="A_changed_setting_requires_the_model_to_be_reloaded__reload_now_" xml:space="preserve">
     <value>A changed setting requires the model to be reloaded, reload now?</value>
   </data>
   <data name="Folder_not_found" xml:space="preserve">
@@ -224,40 +224,40 @@
   <data name="No_model_has_been_loaded_" xml:space="preserve">
     <value>No model has been loaded.</value>
   </data>
-<data name="Failed_to_create_the_model_context_" xml:space="preserve">
-	<value>Failed to create the model context</value>
-</data>
-<data name="Failed_to_create_the_sampler_" xml:space="preserve">
-	<value>Failed to create the sampler</value>
-</data>
+  <data name="Failed_to_create_the_model_context_" xml:space="preserve">
+    <value>Failed to create the model context</value>
+  </data>
+  <data name="Failed_to_create_the_sampler_" xml:space="preserve">
+    <value>Failed to create the sampler</value>
+  </data>
   <data name="The_chat_template_could_not_be_applied_" xml:space="preserve">
     <value>The chat template could not be applied.</value>
   </data>
-<data name="Context_full" xml:space="preserve">
-	<value>Context full.</value>
-</data>
+  <data name="Context_full" xml:space="preserve">
+    <value>Context full.</value>
+  </data>
   <data name="The_model_backend_returned_a_decode_error_" xml:space="preserve">
     <value>The model backend returned a decode error.</value>
   </data>
-<data name="An_index_was_out_of_range_" xml:space="preserve">
-	<value>An index was out of range</value>
-</data>
-<data name="Failed_to_tokenize_the_prompt_" xml:space="preserve">
-	<value>Failed to tokenize the prompt</value>
-</data>
-<data name="Failed_to_convert_a_token_" xml:space="preserve">
-	<value>Failed to convert a token</value>
-</data>
+  <data name="An_index_was_out_of_range_" xml:space="preserve">
+    <value>An index was out of range</value>
+  </data>
+  <data name="Failed_to_tokenize_the_prompt_" xml:space="preserve">
+    <value>Failed to tokenize the prompt</value>
+  </data>
+  <data name="Failed_to_convert_a_token_" xml:space="preserve">
+    <value>Failed to convert a token</value>
+  </data>
   <data name="The_GPU_is_out_of_memory_" xml:space="preserve">
     <value>The GPU is out of memory.</value>
   </data>
-<data name="Unable_to_parse_the_chat_message_" xml:space="preserve">
-	<value>Unable to parse the chat message</value>
-</data>
+  <data name="Unable_to_parse_the_chat_message_" xml:space="preserve">
+    <value>Unable to parse the chat message</value>
+  </data>
   <data name="Error_loading_model" xml:space="preserve">
     <value>Error loading model</value>
   </data>
-<data name="Error_creating_context" xml:space="preserve">
+  <data name="Error_creating_context" xml:space="preserve">
     <value>Error creating context</value>
   </data>
   <data name="Error_creating_sampler" xml:space="preserve">
@@ -272,15 +272,15 @@
   <data name="No_model_loaded" xml:space="preserve">
     <value>No model loaded</value>
   </data>
-<data name="Error_loading_Whisper_model_" xml:space="preserve">
-	<value>Error loading Whisper model</value>
-</data>
-<data name="Error_loading_VAD_model_" xml:space="preserve">
-	<value>Error loading VAD model</value>
-</data>
-<data name="Error_initializing_audio_capture_" xml:space="preserve">
-	<value>Error initializing audio capture</value>
-</data>
+  <data name="Error_loading_Whisper_model_" xml:space="preserve">
+    <value>Error loading Whisper model</value>
+  </data>
+  <data name="Error_loading_VAD_model_" xml:space="preserve">
+    <value>Error loading VAD model</value>
+  </data>
+  <data name="Error_initializing_audio_capture_" xml:space="preserve">
+    <value>Error initializing audio capture</value>
+  </data>
   <data name="Load_a_model_first_" xml:space="preserve">
     <value>Load a model first.</value>
   </data>
@@ -290,103 +290,282 @@
   <data name="Editing_transcription_" xml:space="preserve">
     <value>Editing transcription - Press Enter to finish or Esc to cancel</value>
   </data>
-<data name="Using_API_Model_" xml:space="preserve">
-	<value>Using API Model: </value>
-</data>
-<data name="Tool_Output" xml:space="preserve">
-	<value>Tool Output</value>
-</data>
-<data name="Tool_Call" xml:space="preserve">
-	<value>Tool Call</value>
-</data>
-<data name="__Tool_name_" xml:space="preserve">
-	<value>
+  <data name="Using_API_Model_" xml:space="preserve">
+    <value>Using API Model: </value>
+  </data>
+  <data name="Tool_Output" xml:space="preserve">
+    <value>Tool Output</value>
+  </data>
+  <data name="Tool_Call" xml:space="preserve">
+    <value>Tool Call</value>
+  </data>
+  <data name="__Tool_name_" xml:space="preserve">
+    <value>
 Tool name: </value>
-</data>
-<data name="__Tool_ID_" xml:space="preserve">
-	<value>
+  </data>
+  <data name="__Tool_ID_" xml:space="preserve">
+    <value>
 Tool ID: </value>
-</data>
-<data name="__Tool_arguments_" xml:space="preserve">
-	<value>
+  </data>
+  <data name="__Tool_arguments_" xml:space="preserve">
+    <value>
 Tool arguments: </value>
+  </data>
+  <data name="Error_deleting_message" xml:space="preserve">
+    <value>Error deleting message</value>
+  </data>
+  <data name="Error_regenerating_message" xml:space="preserve">
+    <value>Error regenerating message</value>
+  </data>
+  <data name="API_Server" xml:space="preserve">
+    <value>API Server</value>
+  </data>
+  <data name="GetStateData" xml:space="preserve">
+    <value>GetStateData</value>
+  </data>
+  <data name="SetStateData" xml:space="preserve">
+    <value>SetStateData</value>
+  </data>
+  <data name="Dialectic_enable" xml:space="preserve">
+    <value>Dialectic enable</value>
+  </data>
+  <data name="Unknown_API_error_" xml:space="preserve">
+    <value>Unknown API error</value>
+  </data>
+  <data name="Unable_to_connect_to_the_API_server" xml:space="preserve">
+    <value>Unable to connect to the API server</value>
+  </data>
+  <data name="The_API_request_timed_out" xml:space="preserve">
+    <value>The API request timed out</value>
+  </data>
+  <data name="The_API_request_was_canceled_before_completion" xml:space="preserve">
+    <value>The API request was canceled before completion</value>
+  </data>
+  <data name="Received_an_invalid_response_from_the_API_server" xml:space="preserve">
+    <value>Received an invalid response from the API server</value>
+  </data>
+  <data name="Authentication_failed" xml:space="preserve">
+    <value>Authentication failed</value>
+  </data>
+  <data name="API_endpoint_not_found" xml:space="preserve">
+    <value>API endpoint not found</value>
+  </data>
+  <data name="Rate_limit_exceeded" xml:space="preserve">
+    <value>Rate limit exceeded</value>
+  </data>
+  <data name="The_API_server_encountered_an_error" xml:space="preserve">
+    <value>The API server encountered an error</value>
+  </data>
+  <data name="API_Client" xml:space="preserve">
+    <value>API Client</value>
+  </data>
+  <data name="Please_enter_a_valid_API_base_URL" xml:space="preserve">
+    <value>Please enter a valid API base URL</value>
+  </data>
+  <data name="Repeated_tool_calls_detected" xml:space="preserve">
+    <value>Repeated tool calls detected</value>
+  </data>
+  <data name="_0___1___2_" xml:space="preserve">
+    <value>{0}:{1}:{2}</value>
+  </data>
+  <data name="Models_folder_not_found" xml:space="preserve">
+    <value>Models folder not found</value>
+  </data>
+  <data name="Remove_the__0__slot_" xml:space="preserve">
+    <value>Remove the {0} slot?</value>
+  </data>
+  <data name="The_main_slot_cannot_be_removed__Edit_it_instead_" xml:space="preserve">
+    <value>The main slot cannot be removed. Edit it instead.</value>
+  </data>
+  <data name="Slot_name_is_required_" xml:space="preserve">
+    <value>Slot name is required.</value>
+  </data>
+  <data name="Another_slot_already_uses_that_name_" xml:space="preserve">
+    <value>Another slot already uses that name.</value>
+  </data>
+  <data name="The_main_slot_must_be_a_local_or_API_chat_slot__" xml:space="preserve">
+    <value>The main slot must be a local or API chat slot. Add MCP servers as separate tool slots.</value>
+  </data>
+  <data name="No_Jinja_chat_template_was_found_in_the_selected_model_" xml:space="preserve">
+    <value>No Jinja chat template was found in the selected model.</value>
+  </data>
+  <data name="Load_Slot" xml:space="preserve">
+    <value>Load Slot</value>
+  </data>
+  <data name="Unload_Slot" xml:space="preserve">
+    <value>Unload Slot</value>
+  </data>
+  <data name="Select_a_local_or_MCP_slot_first_" xml:space="preserve">
+    <value>Select a local or MCP slot first.</value>
+  </data>
+  <data name="Select_a_slot_first_" xml:space="preserve">
+    <value>Select a slot first.</value>
+  </data>
+  <data name="MCP_Disconnect" xml:space="preserve">
+    <value>MCP Disconnect</value>
+  </data>
+  <data name="Only_local_slots_can_be_unloaded_" xml:space="preserve">
+    <value>Only local slots can be unloaded.</value>
+  </data>
+  <data name="Model_File_Not_Found" xml:space="preserve">
+    <value>Model file not found
+
+</value>
+  </data>
+  <data name="The_model_is_not_in_the_current_models_list__" xml:space="preserve">
+    <value>The model is not in the current Models list. Refresh the list or check the Models folder.
+
+</value>
+  </data>
+  <data name="MCP_Connect" xml:space="preserve">
+    <value>MCP Connect</value>
+  </data>
+  <data name="URL_" xml:space="preserve">
+    <value>URL:</value>
+  </data>
+  <data name="Command_" xml:space="preserve">
+    <value>Command:</value>
+  </data>
+  <data name="API" xml:space="preserve">
+    <value>API</value>
+  </data>
+  <data name="MCP" xml:space="preserve">
+    <value>MCP</value>
+  </data>
+  <data name="Local" xml:space="preserve">
+    <value>Local</value>
+  </data>
+  <data name="MCP_URL_is_required_when_the_MCP_slot_is_enabled_as_a_tool_" xml:space="preserve">
+    <value>MCP URL is required when the MCP slot is enabled as a tool.</value>
+  </data>
+  <data name="MCP_command_is_required_when_the_MCP_slot_is_enabled_as_a_tool_" xml:space="preserve">
+    <value>MCP command is required when the MCP slot is enabled as a tool.</value>
+  </data>
+  <data name="main" xml:space="preserve">
+    <value>main</value>
+  </data>
+  <data name="Connect" xml:space="preserve">
+    <value>Connect</value>
+  </data>
+  <data name="Disconnect" xml:space="preserve">
+    <value>Disconnect</value>
+  </data>
+  <data name="Dialectic_relay__" xml:space="preserve">
+    <value>Dialectic relay: </value>
+  </data>
+  <data name="colon" xml:space="preserve">
+    <value>: </value>
+  </data>
+  <data name="Using_slot_" xml:space="preserve">
+    <value>Using slot </value>
+  </data>
+  <data name="___Loaded__" xml:space="preserve">
+    <value> | Loaded: </value>
+  </data>
+  <data name="Load_main" xml:space="preserve">
+    <value>Load main</value>
+  </data>
+  <data name="Select_a_model_first_" xml:space="preserve">
+    <value>Select a model first.</value>
+  </data>
+  <data name="Load_Model" xml:space="preserve">
+    <value>Load Model</value>
+  </data>
+  <data name="Jinja_template_file_not_found__" xml:space="preserve">
+    <value>Jinja template file not found
+
+</value>
+  </data>
+  <data name="_MCP_server_" xml:space="preserve">
+    <value>(MCP server)</value>
+  </data>
+  <data name="_API_model_" xml:space="preserve">
+    <value>(API model)</value>
+  </data>
+  <data name="_local_model_" xml:space="preserve">
+    <value>(local model)</value>
+  </data>
+  <data name="Incomplete" xml:space="preserve">
+    <value>Incomplete</value>
+  </data>
+  <data name="Connected" xml:space="preserve">
+    <value>Connected</value>
+  </data>
+  <data name="Disconnected" xml:space="preserve">
+    <value>Disconnected</value>
+  </data>
+  <data name="Ready" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="Empty" xml:space="preserve">
+    <value>Empty</value>
+  </data>
+  <data name="Missing" xml:space="preserve">
+    <value>Missing</value>
+  </data>
+  <data name="Loaded" xml:space="preserve">
+    <value>Loaded</value>
+  </data>
+  <data name="Cold" xml:space="preserve">
+    <value>Cold</value>
+  </data>
+  <data name="Chat" xml:space="preserve">
+    <value>Chat</value>
+  </data>
+  <data name="Dialectic" xml:space="preserve">
+    <value>Dialectic</value>
+  </data>
+  <data name="Tool" xml:space="preserve">
+    <value>Tool</value>
+  </data>
+  <data name="Server" xml:space="preserve">
+    <value>Server</value>
+  </data>
+  <data name="API_model_tool_slot_is_missing_an_API_URL_or_model_" xml:space="preserve">
+    <value>API model tool slot is missing an API URL or model.</value>
+  </data>
+  <data name="prompt_is_required" xml:space="preserve">
+    <value>prompt is required</value>
+  </data>
+  <data name="The_active_API_model_slot_is_incomplete_" xml:space="preserve">
+    <value>The active API model slot is incomplete.</value>
+  </data>
+  <data name="_Tool_name_" xml:space="preserve">
+    <value>
+Tool name:</value>
+  </data>
+<data name="Generation" xml:space="preserve">
+	<value>Generation</value>
 </data>
-<data name="Error_deleting_message" xml:space="preserve">
-	<value>Error deleting message</value>
+<data name="SetState__State_is_null" xml:space="preserve">
+	<value>SetState
+
+state is null</value>
 </data>
-<data name="Error_regenerating_message" xml:space="preserve">
-	<value>Error regenerating message</value>
+<data name="API_server_could_not_start_on_port__" xml:space="preserve">
+	<value>API server could not start on port {0} because the port is already in use.
+
+{1}</value>
 </data>
-<data name="API_Server" xml:space="preserve">
-	<value>API Server</value>
+<data name="API_base_URL_is_not_configured_" xml:space="preserve">
+	<value>API base URL is not configured.</value>
 </data>
-<data name="GetStateData" xml:space="preserve">
-	<value>GetStateData</value>
+<data name="History_is_not_configured_" xml:space="preserve">
+	<value>History is not configured.</value>
 </data>
-<data name="SetStateData" xml:space="preserve">
-	<value>SetStateData</value>
+<data name="API_response_did_not_contain_any_message_" xml:space="preserve">
+	<value>API response did not contain any message.</value>
 </data>
-<data name="Dialectic_enable" xml:space="preserve">
-	<value>Dialectic enable</value>
+<data name="API_error___0_____1_" xml:space="preserve">
+	<value>API error ({0}): {1}</value>
 </data>
-<data name="Unknown_API_error_" xml:space="preserve">
-	<value>Unknown API error</value>
+<data name="Tool_call_output_requires_a_call_id_" xml:space="preserve">
+	<value>Tool call output requires a call_id.</value>
 </data>
-<data name="Unable_to_connect_to_the_API_server" xml:space="preserve">
-	<value>Unable to connect to the API server</value>
+<data name="Load_a_local_chat_slot_and_a_" xml:space="preserve">
+	<value>Load a local chat slot and a separate loaded local slot marked Dialectic before enabling dialectic mode.</value>
 </data>
-<data name="The_API_request_timed_out" xml:space="preserve">
-	<value>The API request timed out</value>
-</data>
-<data name="The_API_request_was_canceled_before_completion" xml:space="preserve">
-	<value>The API request was canceled before completion</value>
-</data>
-<data name="Received_an_invalid_response_from_the_API_server" xml:space="preserve">
-	<value>Received an invalid response from the API server</value>
-</data>
-<data name="Authentication_failed" xml:space="preserve">
-	<value>Authentication failed</value>
-</data>
-<data name="API_endpoint_not_found" xml:space="preserve">
-	<value>API endpoint not found</value>
-</data>
-<data name="Rate_limit_exceeded" xml:space="preserve">
-	<value>Rate limit exceeded</value>
-</data>
-<data name="The_API_server_encountered_an_error" xml:space="preserve">
-	<value>The API server encountered an error</value>
-</data>
-<data name="API_Client" xml:space="preserve">
-	<value>API Client</value>
-</data>
-<data name="Please_enter_a_valid_API_base_URL" xml:space="preserve">
-	<value>Please enter a valid API base URL</value>
-</data>
-<data name="Repeated_tool_calls_detected" xml:space="preserve">
-	<value>Repeated tool calls detected</value>
-</data>
-<data name="_0___1___2_" xml:space="preserve">
-	<value>{0}:{1}:{2}</value>
-</data>
-<data name="Models_folder_not_found" xml:space="preserve">
-	<value>Models folder not found</value>
-</data>
-<data name="Remove_the__0__slot_" xml:space="preserve">
-	<value>Remove the {0} slot?</value>
-</data>
-<data name="The_main_slot_cannot_be_removed__Edit_it_instead_" xml:space="preserve">
-	<value>The main slot cannot be removed. Edit it instead.</value>
-</data>
-<data name="Slot_name_is_required_" xml:space="preserve">
-	<value>Slot name is required.</value>
-</data>
-<data name="Another_slot_already_uses_that_name_" xml:space="preserve">
-	<value>Another slot already uses that name.</value>
-</data>
-<data name="The_main_slot_must_be_a_local_or_API_chat_slot__" xml:space="preserve">
-	<value>The main slot must be a local or API chat slot. Add MCP servers as separate tool slots.</value>
-</data>
-<data name="No_Jinja_chat_template_was_found_in_the_selected_model_" xml:space="preserve">
-	<value>No Jinja chat template was found in the selected model.</value>
+<data name="Reset_chat" xml:space="preserve">
+	<value>Reset chat</value>
 </data>
 </root>

@@ -61,6 +61,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to  | Loaded: .
+        /// </summary>
+        internal static string ___Loaded__ {
+            get {
+                return ResourceManager.GetString("___Loaded__", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 
         ///Tool arguments: .
         /// </summary>
@@ -118,11 +127,38 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0:F2} Tok/s.
+        ///   Looks up a localized string similar to {0:F2} Token/s.
         /// </summary>
         internal static string _0_F2__Tok_s {
             get {
                 return ResourceManager.GetString("_0_F2__Tok_s", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (API model).
+        /// </summary>
+        internal static string _API_model_ {
+            get {
+                return ResourceManager.GetString("_API_model_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (local model).
+        /// </summary>
+        internal static string _local_model_ {
+            get {
+                return ResourceManager.GetString("_local_model_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (MCP server).
+        /// </summary>
+        internal static string _MCP_server_ {
+            get {
+                return ResourceManager.GetString("_MCP_server_", resourceCulture);
             }
         }
         
@@ -141,6 +177,16 @@ namespace LMStud.Properties {
         internal static string _Tokens {
             get {
                 return ResourceManager.GetString("_Tokens", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 
+        ///Tool name:.
+        /// </summary>
+        internal static string _Tool_name_ {
+            get {
+                return ResourceManager.GetString("_Tool_name_", resourceCulture);
             }
         }
         
@@ -172,6 +218,24 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to API.
+        /// </summary>
+        internal static string API {
+            get {
+                return ResourceManager.GetString("API", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to API base URL is not configured..
+        /// </summary>
+        internal static string API_base_URL_is_not_configured_ {
+            get {
+                return ResourceManager.GetString("API_base_URL_is_not_configured_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to API Client.
         /// </summary>
         internal static string API_Client {
@@ -190,11 +254,49 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to API error ({0}): {1}.
+        /// </summary>
+        internal static string API_error___0_____1_ {
+            get {
+                return ResourceManager.GetString("API_error___0_____1_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to API model tool slot is missing an API URL or model..
+        /// </summary>
+        internal static string API_model_tool_slot_is_missing_an_API_URL_or_model_ {
+            get {
+                return ResourceManager.GetString("API_model_tool_slot_is_missing_an_API_URL_or_model_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to API response did not contain any message..
+        /// </summary>
+        internal static string API_response_did_not_contain_any_message_ {
+            get {
+                return ResourceManager.GetString("API_response_did_not_contain_any_message_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to API Server.
         /// </summary>
         internal static string API_Server {
             get {
                 return ResourceManager.GetString("API_Server", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to API server could not start on port {0} because the port is already in use.
+        ///
+        ///{1}.
+        /// </summary>
+        internal static string API_server_could_not_start_on_port__ {
+            get {
+                return ResourceManager.GetString("API_server_could_not_start_on_port__", resourceCulture);
             }
         }
         
@@ -217,6 +319,60 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Chat.
+        /// </summary>
+        internal static string Chat {
+            get {
+                return ResourceManager.GetString("Chat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cold.
+        /// </summary>
+        internal static string Cold {
+            get {
+                return ResourceManager.GetString("Cold", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to : .
+        /// </summary>
+        internal static string colon {
+            get {
+                return ResourceManager.GetString("colon", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Command:.
+        /// </summary>
+        internal static string Command_ {
+            get {
+                return ResourceManager.GetString("Command_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Connect.
+        /// </summary>
+        internal static string Connect {
+            get {
+                return ResourceManager.GetString("Connect", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Connected.
+        /// </summary>
+        internal static string Connected {
+            get {
+                return ResourceManager.GetString("Connected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Context full..
         /// </summary>
         internal static string Context_full {
@@ -226,11 +382,47 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Dialectic.
+        /// </summary>
+        internal static string Dialectic {
+            get {
+                return ResourceManager.GetString("Dialectic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Dialectic enable.
         /// </summary>
         internal static string Dialectic_enable {
             get {
                 return ResourceManager.GetString("Dialectic_enable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Dialectic relay: .
+        /// </summary>
+        internal static string Dialectic_relay__ {
+            get {
+                return ResourceManager.GetString("Dialectic_relay__", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Disconnect.
+        /// </summary>
+        internal static string Disconnect {
+            get {
+                return ResourceManager.GetString("Disconnect", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Disconnected.
+        /// </summary>
+        internal static string Disconnected {
+            get {
+                return ResourceManager.GetString("Disconnected", resourceCulture);
             }
         }
         
@@ -281,6 +473,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Empty.
+        /// </summary>
+        internal static string Empty {
+            get {
+                return ResourceManager.GetString("Empty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Error creating context.
         /// </summary>
         internal static string Error_creating_context {
@@ -297,7 +498,8 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Error_creating_sampler", resourceCulture);
             }
         }
-		/// <summary>
+        
+        /// <summary>
         ///   Looks up a localized string similar to Error deleting message.
         /// </summary>
         internal static string Error_deleting_message {
@@ -478,6 +680,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Generation.
+        /// </summary>
+        internal static string Generation {
+            get {
+                return ResourceManager.GetString("Generation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to GetStateData.
         /// </summary>
         internal static string GetStateData {
@@ -487,11 +698,40 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to History is not configured..
+        /// </summary>
+        internal static string History_is_not_configured_ {
+            get {
+                return ResourceManager.GetString("History_is_not_configured_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to HTTP Error loading files for .
         /// </summary>
         internal static string HTTP_Error_loading_files_for_ {
             get {
                 return ResourceManager.GetString("HTTP_Error_loading_files_for_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Incomplete.
+        /// </summary>
+        internal static string Incomplete {
+            get {
+                return ResourceManager.GetString("Incomplete", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Jinja template file not found
+        ///
+        ///.
+        /// </summary>
+        internal static string Jinja_template_file_not_found__ {
+            get {
+                return ResourceManager.GetString("Jinja_template_file_not_found__", resourceCulture);
             }
         }
         
@@ -524,11 +764,56 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Load a local chat slot and a separate loaded local slot marked Dialectic before enabling dialectic mode..
+        /// </summary>
+        internal static string Load_a_local_chat_slot_and_a_ {
+            get {
+                return ResourceManager.GetString("Load_a_local_chat_slot_and_a_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Load a model first..
         /// </summary>
         internal static string Load_a_model_first_ {
             get {
                 return ResourceManager.GetString("Load_a_model_first_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Load main.
+        /// </summary>
+        internal static string Load_main {
+            get {
+                return ResourceManager.GetString("Load_main", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Load Model.
+        /// </summary>
+        internal static string Load_Model {
+            get {
+                return ResourceManager.GetString("Load_Model", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Load Slot.
+        /// </summary>
+        internal static string Load_Slot {
+            get {
+                return ResourceManager.GetString("Load_Slot", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Loaded.
+        /// </summary>
+        internal static string Loaded {
+            get {
+                return ResourceManager.GetString("Loaded", resourceCulture);
             }
         }
         
@@ -542,11 +827,94 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Local.
+        /// </summary>
+        internal static string Local {
+            get {
+                return ResourceManager.GetString("Local", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to main.
+        /// </summary>
+        internal static string main {
+            get {
+                return ResourceManager.GetString("main", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Maximum context size of the last loaded model: .
         /// </summary>
         internal static string Max_context_size_of_last_loaded_model {
             get {
                 return ResourceManager.GetString("Max_context_size_of_last_loaded_model", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to MCP.
+        /// </summary>
+        internal static string MCP {
+            get {
+                return ResourceManager.GetString("MCP", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to MCP command is required when the MCP slot is enabled as a tool..
+        /// </summary>
+        internal static string MCP_command_is_required_when_the_MCP_slot_is_enabled_as_a_tool_ {
+            get {
+                return ResourceManager.GetString("MCP_command_is_required_when_the_MCP_slot_is_enabled_as_a_tool_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to MCP Connect.
+        /// </summary>
+        internal static string MCP_Connect {
+            get {
+                return ResourceManager.GetString("MCP_Connect", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to MCP Disconnect.
+        /// </summary>
+        internal static string MCP_Disconnect {
+            get {
+                return ResourceManager.GetString("MCP_Disconnect", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to MCP URL is required when the MCP slot is enabled as a tool..
+        /// </summary>
+        internal static string MCP_URL_is_required_when_the_MCP_slot_is_enabled_as_a_tool_ {
+            get {
+                return ResourceManager.GetString("MCP_URL_is_required_when_the_MCP_slot_is_enabled_as_a_tool_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Missing.
+        /// </summary>
+        internal static string Missing {
+            get {
+                return ResourceManager.GetString("Missing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Model file not found
+        ///
+        ///.
+        /// </summary>
+        internal static string Model_File_Not_Found {
+            get {
+                return ResourceManager.GetString("Model_File_Not_Found", resourceCulture);
             }
         }
         
@@ -605,6 +973,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Only local slots can be unloaded..
+        /// </summary>
+        internal static string Only_local_slots_can_be_unloaded_ {
+            get {
+                return ResourceManager.GetString("Only_local_slots_can_be_unloaded_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Please enter a valid API base URL.
         /// </summary>
         internal static string Please_enter_a_valid_API_base_URL {
@@ -623,11 +1000,29 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to prompt is required.
+        /// </summary>
+        internal static string prompt_is_required {
+            get {
+                return ResourceManager.GetString("prompt_is_required", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Rate limit exceeded.
         /// </summary>
         internal static string Rate_limit_exceeded {
             get {
                 return ResourceManager.GetString("Rate_limit_exceeded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ready.
+        /// </summary>
+        internal static string Ready {
+            get {
+                return ResourceManager.GetString("Ready", resourceCulture);
             }
         }
         
@@ -659,11 +1054,67 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Reset chat.
+        /// </summary>
+        internal static string Reset_chat {
+            get {
+                return ResourceManager.GetString("Reset_chat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Retokenizing chat....
         /// </summary>
         internal static string Retokenizing_chat___ {
             get {
                 return ResourceManager.GetString("Retokenizing_chat___", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select a local or MCP slot first..
+        /// </summary>
+        internal static string Select_a_local_or_MCP_slot_first_ {
+            get {
+                return ResourceManager.GetString("Select_a_local_or_MCP_slot_first_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select a model first..
+        /// </summary>
+        internal static string Select_a_model_first_ {
+            get {
+                return ResourceManager.GetString("Select_a_model_first_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select a slot first..
+        /// </summary>
+        internal static string Select_a_slot_first_ {
+            get {
+                return ResourceManager.GetString("Select_a_slot_first_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Server.
+        /// </summary>
+        internal static string Server {
+            get {
+                return ResourceManager.GetString("Server", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SetState
+        ///
+        ///state is null.
+        /// </summary>
+        internal static string SetState__State_is_null {
+            get {
+                return ResourceManager.GetString("SetState__State_is_null", resourceCulture);
             }
         }
         
@@ -691,6 +1142,15 @@ namespace LMStud.Properties {
         internal static string Stop {
             get {
                 return ResourceManager.GetString("Stop", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The active API model slot is incomplete..
+        /// </summary>
+        internal static string The_active_API_model_slot_is_incomplete_ {
+            get {
+                return ResourceManager.GetString("The_active_API_model_slot_is_incomplete_", resourceCulture);
             }
         }
         
@@ -776,6 +1236,17 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The model is not in the current Models list. Refresh the list or check the Models folder.
+        ///
+        ///.
+        /// </summary>
+        internal static string The_model_is_not_in_the_current_models_list__ {
+            get {
+                return ResourceManager.GetString("The_model_is_not_in_the_current_models_list__", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The modified settings are overridden by the Model Settings for this model..
         /// </summary>
         internal static string The_modified_settings_are_overridden_ {
@@ -785,11 +1256,29 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Tool.
+        /// </summary>
+        internal static string Tool {
+            get {
+                return ResourceManager.GetString("Tool", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Tool Call.
         /// </summary>
         internal static string Tool_Call {
             get {
                 return ResourceManager.GetString("Tool_Call", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tool call output requires a call_id..
+        /// </summary>
+        internal static string Tool_call_output_requires_a_call_id_ {
+            get {
+                return ResourceManager.GetString("Tool_call_output_requires_a_call_id_", resourceCulture);
             }
         }
         
@@ -830,6 +1319,24 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unload Slot.
+        /// </summary>
+        internal static string Unload_Slot {
+            get {
+                return ResourceManager.GetString("Unload_Slot", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to URL:.
+        /// </summary>
+        internal static string URL_ {
+            get {
+                return ResourceManager.GetString("URL_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Using API Model: .
         /// </summary>
         internal static string Using_API_Model_ {
@@ -844,6 +1351,15 @@ namespace LMStud.Properties {
         internal static string Using_Model_ {
             get {
                 return ResourceManager.GetString("Using_Model_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Using slot .
+        /// </summary>
+        internal static string Using_slot_ {
+            get {
+                return ResourceManager.GetString("Using_slot_", resourceCulture);
             }
         }
         

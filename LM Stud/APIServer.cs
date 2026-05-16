@@ -29,7 +29,7 @@ namespace LMStud{
 				_listener = null;
 				_cts?.Dispose();
 				_cts = null;
-				MessageBox.Show($"API server could not start on port {Common.APIServerPort} because the port is already in use.\r\n\r\n{ex.Message}", Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+				MessageBox.Show(string.Format(Resources.API_server_could_not_start_on_port__, Common.APIServerPort, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 		}
 		internal void Stop(){
@@ -457,11 +457,18 @@ namespace LMStud{
 		}
 		private static string StripToolCallDisplayText(string role, string content){
 			if(!string.Equals(role, "assistant", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(content)) return content;
-			var index = content.IndexOf(Resources.__Tool_name_, StringComparison.Ordinal);
-			if(index < 0) index = content.IndexOf("\nTool name:", StringComparison.OrdinalIgnoreCase);
-			if(index < 0) index = content.IndexOf("\n工具名称", StringComparison.Ordinal);
+			var index = IndexOfToolCallDisplayText(content);
 			if(index < 0) return content;
 			return content.Substring(0, index).TrimEnd();
+		}
+		private static int IndexOfToolCallDisplayText(string content){
+			var markers = new[]{ Resources.__Tool_name_, Resources._Tool_name_, "\nTool name: ", "\nTool name:", "\n工具名称：", "\n工具名称" };
+			foreach(var marker in markers){
+				if(string.IsNullOrEmpty(marker)) continue;
+				var index = content.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+				if(index >= 0) return index;
+			}
+			return -1;
 		}
 		private static JArray NormalizeInputItems(JToken input){
 			if(input == null || input.Type == JTokenType.Null) return null;

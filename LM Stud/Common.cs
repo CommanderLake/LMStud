@@ -57,6 +57,6 @@ namespace LMStud{
 		internal static readonly string[] ReasoningSummaryValues = { null, "auto", "concise", "detailed" };
 		internal static string GetReasoningEffort(int index) { return GetReasoningValue(ReasoningEffortValues, index); }
 		internal static string GetReasoningSummaryType(int index) { return GetReasoningValue(ReasoningSummaryValues, index); }
-		internal static string GetReasoningValue(string[] values, int index) { return index > 0 && index < values.Length ? values[index] : null; }
+		private static string GetReasoningValue(string[] values, int index) { return index > 0 && index < values.Length ? values[index] : null; }
 	}
 }

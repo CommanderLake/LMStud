@@ -5,7 +5,7 @@ namespace LMStud{
 	internal static class NativeChat{
 		internal static string GetActiveSlotName(){
 			if(!string.IsNullOrWhiteSpace(Generation.CntDialSlotName)) return Generation.CntDialSlotName;
-			return ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? "main";
+			return ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? ModelSlotManager.MainSlotName;
 		}
 		internal static IEnumerable<string> GetActiveSlotNames(){
 			var slotNames = Generation.GetDialecticSlotNames();

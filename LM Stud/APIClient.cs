@@ -33,17 +33,17 @@ namespace LMStud{
 		}
 		public void Dispose(){_apiHttpClient?.Dispose();}
 		internal ChatCompletionResult CreateChatCompletion(JArray history, float temperature, int maxTokens, string toolsJson, JToken toolChoice, CancellationToken cancellationToken, Action<string> streamCallback = null){
-			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException("API base URL is not configured.");
-			if(history == null) throw new InvalidOperationException("History is not configured.");
+			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException(Resources.API_base_URL_is_not_configured_);
+			if(history == null) throw new InvalidOperationException(Resources.History_is_not_configured_);
 			var stream = streamCallback != null;
 			var responsesPayload = BuildResponsesPayload(history, temperature, maxTokens, toolsJson, toolChoice, stream);
 			var responsesError = TrySendChatRequest(BuildResponsesEndpoint(_apiBaseUrl), responsesPayload, cancellationToken, streamCallback, out var responsesResult);
 			if(responsesResult != null) return responsesResult;
-			if(!ShouldFallbackToChatCompletions(responsesError)) throw responsesError ?? new InvalidOperationException("API response did not contain any message.");
+			if(!ShouldFallbackToChatCompletions(responsesError)) throw responsesError ?? new InvalidOperationException(Resources.API_response_did_not_contain_any_message_);
 			var chatCompletionsPayload = BuildChatCompletionsPayload(history, temperature, maxTokens, toolsJson, toolChoice, stream);
 			var chatCompletionsError = TrySendChatRequest(BuildChatCompletionsEndpoint(_apiBaseUrl), chatCompletionsPayload, cancellationToken, streamCallback, out var chatCompletionsResult);
 			if(chatCompletionsResult != null) return chatCompletionsResult;
-			throw chatCompletionsError ?? responsesError ?? new InvalidOperationException("API response did not contain any message.");
+			throw chatCompletionsError ?? responsesError ?? new InvalidOperationException(Resources.API_response_did_not_contain_any_message_);
 		}
 		private static bool ShouldFallbackToChatCompletions(InvalidOperationException error){
 			if(error == null) return true;
@@ -67,7 +67,7 @@ namespace LMStud{
 							return null;
 						}
 						var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-						if(!response.IsSuccessStatusCode) throw new InvalidOperationException($"API error ({(int)response.StatusCode}): {body}");
+						if(!response.IsSuccessStatusCode) throw new InvalidOperationException(string.Format(Resources.API_error___0_____1_, (int)response.StatusCode, body));
 						result = APIResponseParser.ParseResponseBody(body);
 						return null;
 					}
@@ -216,7 +216,7 @@ namespace LMStud{
 		internal static JToken BuildInputMessagePayload(ChatMessage message){
 			var isToolRole = string.Equals(message.Role, "tool", StringComparison.OrdinalIgnoreCase);
 			if(isToolRole){
-				if(string.IsNullOrWhiteSpace(message.ToolCallId)) throw new InvalidOperationException("Tool call output requires a call_id.");
+				if(string.IsNullOrWhiteSpace(message.ToolCallId)) throw new InvalidOperationException(Resources.Tool_call_output_requires_a_call_id_);
 				return new JObject{ ["type"] = "function_call_output", ["call_id"] = message.ToolCallId, ["output"] = message.Content ?? "" };
 			}
 			return new JObject{ ["role"] = message.Role, ["content"] = message.Content ?? "" };
@@ -293,11 +293,11 @@ namespace LMStud{
 			return function;
 		}
 		internal List<string> GetModels(CancellationToken cancellationToken){
-			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException("API base URL is not configured.");
+			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException(Resources.API_base_URL_is_not_configured_);
 			using(var request = CreateRequest(HttpMethod.Get, BuildModelsEndpoint(_apiBaseUrl))){
 				using(var response = _apiHttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
 					var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-					if(!response.IsSuccessStatusCode) throw new InvalidOperationException($"API error ({(int)response.StatusCode}): {body}");
+					if(!response.IsSuccessStatusCode) throw new InvalidOperationException(string.Format(Resources.API_error___0_____1_, (int)response.StatusCode, body));
 					var json = JObject.Parse(body);
 					var models = new List<string>();
 					if(!(json["data"] is JArray data)) return models;
@@ -433,7 +433,7 @@ namespace LMStud{
 					.Select(call => new ToolCall(call.Id, call.Name, call.Arguments.ToString()))
 					.ToList();
 				var finalToolCalls = toolCalls.Count > 0 ? toolCalls : null;
-				if(_content.Length == 0 && finalToolCalls == null) throw new InvalidOperationException("API response did not contain any message.");
+				if(_content.Length == 0 && finalToolCalls == null) throw new InvalidOperationException(Resources.API_response_did_not_contain_any_message_);
 				return new ChatCompletionResult(_content.ToString(), _reasoning.Length > 0 ? _reasoning.ToString() : null, finalToolCalls, _responseId, null);
 			}
 			private StreamingToolCall GetToolCall(string key){

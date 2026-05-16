@@ -62,7 +62,7 @@ namespace LMStud {
 			if(toolCall == null || string.IsNullOrWhiteSpace(toolCall.Name)) return "{\"error\":\"missing tool name\"}";
 			if(ModelSlotManager.TryExecuteToolCall(toolCall, out var modelResult)) return modelResult;
 			if(McpServerManager.TryExecuteToolCall(toolCall, out var mcpResult)) return mcpResult;
-			var slotName = ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? "main";
+			var slotName = ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? ModelSlotManager.MainSlotName;
 			var ptr = NativeMethods.ExecuteTool(slotName, toolCall.Name, toolCall.Arguments ?? "");
 			if(ptr == IntPtr.Zero) return "{\"error\":\"tool execution failed\"}";
 			try{

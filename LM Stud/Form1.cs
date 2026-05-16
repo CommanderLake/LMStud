@@ -177,10 +177,10 @@ namespace LMStud{
 			UpdateSetting(ref Common.Speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			Settings.Default.Save();
 		}
-		internal bool InitDialectic() {
+		private bool InitDialectic() {
 			var slots = ModelSlotManager.ResolveDialecticLocalSlots();
 			if(slots.Count < 2) {
-				MessageBox.Show(this, "Load a local chat slot and a separate loaded local slot marked Dialectic before enabling dialectic mode.", Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+				MessageBox.Show(this, Resources.Load_a_local_chat_slot_and_a_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 				return false;
 			}
 			var err = NativeMethods.ResetChat(slots[1].Name);
@@ -222,7 +222,7 @@ namespace LMStud{
 					NativeMethods.CloseCommandPrompt();
 					NativeMethods.ClearWebCache();
 					Invoke(new MethodInvoker(() => {
-						if(result != NativeMethods.StudError.Success && result != NativeMethods.StudError.ModelNotLoaded) ShowError("Reset chat", result);
+						if(result != NativeMethods.StudError.Success && result != NativeMethods.StudError.ModelNotLoaded) ShowError(Resources.Reset_chat, result);
 						labelTokens.Text = NativeMethods.LlamaMemSize(NativeChat.GetActiveSlotName()) + Resources._Tokens;
 						EndRetokenization();
 					}));

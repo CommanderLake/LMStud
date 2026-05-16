@@ -57,10 +57,10 @@ namespace LMStud{
 		internal string DisplayModel(){
 			if(Source == ModelSlotSource.Mcp){
 				var endpoint = GetMcpEndpoint();
-				return string.IsNullOrWhiteSpace(endpoint) ? "(MCP server)" : endpoint;
+				return string.IsNullOrWhiteSpace(endpoint) ? Resources._MCP_server_ : endpoint;
 			}
-			if(Source == ModelSlotSource.Api) return string.IsNullOrWhiteSpace(ApiModel) ? "(API model)" : ApiModel;
-			if(string.IsNullOrWhiteSpace(LocalPath)) return "(local model)";
+			if(Source == ModelSlotSource.Api) return string.IsNullOrWhiteSpace(ApiModel) ? Resources._API_model_ : ApiModel;
+			if(string.IsNullOrWhiteSpace(LocalPath)) return Resources._local_model_;
 			return Path.GetFileNameWithoutExtension(LocalPath.TrimEnd('\\', '/'));
 		}
 		internal string ResolveLocalPath(){
@@ -80,7 +80,7 @@ namespace LMStud{
 		}
 	}
 	internal static class ModelSlotManager{
-		private const string MainSlotName = "main";
+		internal const string MainSlotName = "main";
 		private static readonly Regex InvalidToolChars = new Regex("[^a-zA-Z0-9_]", RegexOptions.Compiled);
 		private static readonly object Sync = new object();
 		private static readonly object SlotLocksSync = new object();
@@ -88,7 +88,7 @@ namespace LMStud{
 		private static readonly string SlotsFile = Path.Combine(SlotsFolder, "ModelSlots.json");
 		private static readonly List<ModelSlot> SlotsInternal = new List<ModelSlot>();
 		private static readonly Dictionary<string, SemaphoreSlim> SlotLocks = new Dictionary<string, SemaphoreSlim>(StringComparer.OrdinalIgnoreCase);
-		internal static string ActiveChatSlotName { get; private set; } = MainSlotName;
+		private static string ActiveChatSlotName { get; set; } = MainSlotName;
 		internal static IEnumerable<ModelSlot> Slots{
 			get{
 				lock(Sync) return SlotsInternal.Select(slot => slot.Clone()).ToList();
@@ -105,7 +105,7 @@ namespace LMStud{
 			}
 			Common.ActiveModelSlotName = ActiveChatSlotName;
 		}
-		internal static void Save(){
+		private static void Save(){
 			lock(Sync){
 				EnsureMainSlot();
 				EnsureSingleChatSlot();
@@ -145,7 +145,7 @@ namespace LMStud{
 			}
 			if(!CanServeLocalSlot(active)) return new List<ModelSlot>();
 			var slots = new List<ModelSlot>{ active };
-			var partner = dialecticSlots.FirstOrDefault(slot => !string.Equals(slot.Name, active.Name, StringComparison.OrdinalIgnoreCase) && CanServeLocalSlot(slot));
+			var partner = dialecticSlots.FirstOrDefault(slot => !string.Equals(slot.Name, active?.Name, StringComparison.OrdinalIgnoreCase) && CanServeLocalSlot(slot));
 			if(partner != null) slots.Add(partner);
 			return slots;
 		}
@@ -160,8 +160,7 @@ namespace LMStud{
 		}
 		internal static List<ModelSlotLockLease> TryEnterSlots(IEnumerable<string> slotNames, int millisecondsTimeout){
 			var leases = new List<ModelSlotLockLease>();
-			foreach(var slotName in NormalizeSlotNames(slotNames)){
-				var lease = TryEnterSlot(slotName, millisecondsTimeout);
+			foreach(var lease in NormalizeSlotNames(slotNames).Select(slotName => TryEnterSlot(slotName, millisecondsTimeout))){
 				if(lease == null){
 					ReleaseSlots(leases);
 					return null;
@@ -336,23 +335,23 @@ namespace LMStud{
 		internal static string GetSlotState(ModelSlot slot){
 			if(slot == null) return "";
 			if(slot.Source == ModelSlotSource.Mcp){
-				if(string.IsNullOrWhiteSpace(slot.GetMcpEndpoint())) return "Incomplete";
-				return CanServeMcpSlot(slot) ? "Connected" : "Disconnected";
+				if(string.IsNullOrWhiteSpace(slot.GetMcpEndpoint())) return Resources.Incomplete;
+				return CanServeMcpSlot(slot) ? Resources.Connected : Resources.Disconnected;
 			}
-			if(slot.Source == ModelSlotSource.Api) return CanServeApiSlot(slot) ? "Ready" : "Incomplete";
+			if(slot.Source == ModelSlotSource.Api) return CanServeApiSlot(slot) ? Resources.Ready : Resources.Incomplete;
 			var path = slot.ResolveLocalPath();
-			if(string.IsNullOrWhiteSpace(path)) return "Empty";
-			if(!File.Exists(path)) return "Missing";
-			if(CanServeLocalSlot(slot)) return "Loaded";
-			return "Cold";
+			if(string.IsNullOrWhiteSpace(path)) return Resources.Empty;
+			if(!File.Exists(path)) return Resources.Missing;
+			if(CanServeLocalSlot(slot)) return Resources.Loaded;
+			return Resources.Cold;
 		}
 		internal static string FormatUse(ModelSlot slot){
 			if(slot == null || slot.Use == ModelSlotUse.None) return "";
 			var parts = new List<string>();
-			if(slot.HasUse(ModelSlotUse.Chat)) parts.Add("Chat");
-			if(slot.HasUse(ModelSlotUse.Dialectic)) parts.Add("Dialectic");
-			if(slot.HasUse(ModelSlotUse.Tool)) parts.Add("Tool");
-			if(slot.HasUse(ModelSlotUse.Server)) parts.Add("Server");
+			if(slot.HasUse(ModelSlotUse.Chat)) parts.Add(Resources.Chat);
+			if(slot.HasUse(ModelSlotUse.Dialectic)) parts.Add(Resources.Dialectic);
+			if(slot.HasUse(ModelSlotUse.Tool)) parts.Add(Resources.Tool);
+			if(slot.HasUse(ModelSlotUse.Server)) parts.Add(Resources.Server);
 			return string.Join(", ", parts);
 		}
 		internal static JArray BuildModelCallTools(){
@@ -392,14 +391,14 @@ namespace LMStud{
 				return true;
 			}
 			if(!CanServeApiSlot(slot)){
-				result = JsonConvert.SerializeObject(new{ error = "API model tool slot is missing an API URL or model." });
+				result = JsonConvert.SerializeObject(new{ error = Resources.API_model_tool_slot_is_missing_an_API_URL_or_model_ });
 				return true;
 			}
 			try{
 				var args = string.IsNullOrWhiteSpace(toolCall.Arguments) ? new JObject() : JObject.Parse(toolCall.Arguments);
 				var prompt = args.Value<string>("prompt");
 				if(string.IsNullOrWhiteSpace(prompt)){
-					result = JsonConvert.SerializeObject(new{ error = "prompt is required" });
+					result = JsonConvert.SerializeObject(new{ error = Resources.prompt_is_required });
 					return true;
 				}
 				var instructions = args.Value<string>("instructions");
@@ -407,7 +406,7 @@ namespace LMStud{
 				var history = APIClient.BuildInputItems(new[]{ new APIClient.ChatMessage("user", prompt) });
 				using(var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, string.IsNullOrWhiteSpace(instructions) ? slot.GetInstructionsOrDefault() : instructions,
 					slot.ApiReasoningEffort, slot.ApiReasoningSummary)){
-					var response = client.CreateChatCompletion(history, Common.Temp, maxTokens, null, null, System.Threading.CancellationToken.None);
+					var response = client.CreateChatCompletion(history, Common.Temp, maxTokens, null, null, CancellationToken.None);
 					result = JsonConvert.SerializeObject(new{
 						slot = slot.Name, model = slot.ApiModel, content = response.Content ?? "", reasoning = response.Reasoning ?? "", total_tokens = response.TotalTokens
 					}, Formatting.Indented);

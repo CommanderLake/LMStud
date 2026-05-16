@@ -116,7 +116,7 @@ namespace LMStud {
 						if(genErr != NativeMethods.StudError.Success){
 							if(genErr == NativeMethods.StudError.ContextFull)
 								MessageBox.Show(MainForm, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-							else MainForm.ShowError("Generation", genErr);
+							else MainForm.ShowError(Resources.Generation, genErr);
 						}
 						var elapsed = SwTot.Elapsed.TotalSeconds;
 						if(_genTokenTotal > 0 && elapsed > 0.0){
@@ -130,9 +130,8 @@ namespace LMStud {
 						if(!MainForm.checkDialectic.Checked || DialPaused) return;
 						var last = MainForm.ChatMessages.LastOrDefault();
 						if(last == null) return;
-						NativeMethods.StudError err;
 						var nextSlotName = GetNextDialecticSlotName(slotName);
-						err = string.IsNullOrWhiteSpace(slotName) || string.IsNullOrWhiteSpace(nextSlotName) ? NativeMethods.StudError.Generic : NativeMethods.DialecticRelaySwap(slotName, slotName, nextSlotName);
+						var err = string.IsNullOrWhiteSpace(slotName) || string.IsNullOrWhiteSpace(nextSlotName) ? NativeMethods.StudError.Generic : NativeMethods.DialecticRelaySwap(slotName, slotName, nextSlotName);
 						if(err == NativeMethods.StudError.Success) CntDialSlotName = nextSlotName;
 						switch(err){
 							case NativeMethods.StudError.Success:
@@ -141,7 +140,7 @@ namespace LMStud {
 								break;
 							case NativeMethods.StudError.ContextFull: MessageBox.Show(MainForm, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 								break;
-							default: MainForm.ShowError("Generation", err);
+							default: MainForm.ShowError(Resources.Generation, err);
 								break;
 						}
 					}));
@@ -184,15 +183,18 @@ namespace LMStud {
 		}
 		private static string StripToolCallDisplayText(string content){
 			if(string.IsNullOrEmpty(content)) return content;
-			var index = content.IndexOf(Resources.__Tool_name_, StringComparison.Ordinal);
-			if(index < 0) index = content.IndexOf("\nTool name:", StringComparison.OrdinalIgnoreCase);
-			if(index < 0) index = content.IndexOf("\n工具名称", StringComparison.Ordinal);
+			var index = IndexOfToolCallDisplayText(content);
 			if(index < 0) return content;
 			return content.Substring(0, index).TrimEnd();
 		}
+		private static int IndexOfToolCallDisplayText(string content){
+			var markers = new[]{ Resources.__Tool_name_, Resources._Tool_name_, "\nTool name: ", "\nTool name:", "\n工具名称：", "\n工具名称" };
+			foreach(var index in from marker in markers where !string.IsNullOrEmpty(marker) select content.IndexOf(marker, StringComparison.OrdinalIgnoreCase) into index where index >= 0 select index) return index;
+			return -1;
+		}
 		private static NativeMethods.StudError SyncNativeChatMessages(string slotName){
 			if(MainForm.IsDisposed) return NativeMethods.StudError.Success;
-			if(string.IsNullOrWhiteSpace(slotName)) slotName = "main";
+			if(string.IsNullOrWhiteSpace(slotName)) slotName = ModelSlotManager.MainSlotName;
 			var count = MainForm.ChatMessages.Count;
 			var roles = new MessageRole[count];
 			var thinks = new string[count];
@@ -221,7 +223,7 @@ namespace LMStud {
 				var messages = BuildApiMessages(role, prompt, addToChat);
 				var history = APIClient.BuildInputItems(messages);
 				var toolsJson = Tools.BuildApiToolsJson(slot.Name);
-				if(!ModelSlotManager.CanServeApiSlot(slot)) throw new InvalidOperationException("The active API model slot is incomplete.");
+				if(!ModelSlotManager.CanServeApiSlot(slot)) throw new InvalidOperationException(Resources.The_active_API_model_slot_is_incomplete_);
 				using(var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, slot.GetInstructionsOrDefault(),
 					slot.ApiReasoningEffort, slot.ApiReasoningSummary)){
 					string lastToolSignature = null;
@@ -268,7 +270,7 @@ namespace LMStud {
 							} catch(ObjectDisposedException){}
 						}
 						if(toolCalls == null || toolCalls.Count == 0) break;
-						var toolSignature = string.Join("|", toolCalls.Select(call => string.Format(Resources._0___1___2_, call.Id, call.Name, call.Arguments)));
+						var toolSignature = string.Join("|", toolCalls.Select(call => string.Format("{0}:{1}:{2}", call.Id, call.Name, call.Arguments)));
 						if(toolSignature == lastToolSignature) throw new InvalidOperationException(Resources.Repeated_tool_calls_detected);
 						lastToolSignature = toolSignature;
 						foreach(var toolCall in toolCalls){
@@ -311,7 +313,7 @@ namespace LMStud {
 		}
 		internal static void StopActiveGeneration(){
 			CancelApiGeneration();
-			var slotName = !string.IsNullOrWhiteSpace(CntDialSlotName) ? CntDialSlotName : ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? "main";
+			var slotName = !string.IsNullOrWhiteSpace(CntDialSlotName) ? CntDialSlotName : ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? ModelSlotManager.MainSlotName;
 			NativeMethods.StopGeneration(slotName);
 		}
 		private static void SetApiGenerationCancellation(CancellationTokenSource cts){
@@ -342,19 +344,19 @@ namespace LMStud {
 			unsafe{
 				fixed(byte* p = data){ err = NativeMethods.GetStateData(slotName, (IntPtr)p, size); }
 			}
-			if(err != NativeMethods.StudError.Success) MainForm.ShowError(Resources.API_Server, "GetStateData", true);
+			if(err != NativeMethods.StudError.Success) MainForm.ShowError(Resources.API_Server, Resources.GetStateData, true);
 			return data;
 		}
 		private static void SetState(string slotName, byte[] state){
 			if(state == null || state.Length == 0){
-				MainForm.ShowError("Api server", "SetState\r\n\r\nstate is null", false);
+				MainForm.ShowError(Resources.API_Server, Resources.SetState__State_is_null, false);
 				return;
 			}
 			NativeMethods.StudError err;
 			unsafe{
 				fixed(byte* p = state){ err = NativeMethods.SetStateData(slotName, (IntPtr)p, state.Length); }
 			}
-			if(err != NativeMethods.StudError.Success) MainForm.ShowError(Resources.API_Server, "SetStateData", true);
+			if(err != NativeMethods.StudError.Success) MainForm.ShowError(Resources.API_Server, Resources.SetStateData, true);
 		}
 		internal static bool GenerateForApiServer(string slotName, byte[] state, IntPtr chatState, string historyJson, MessageRole role, string prompt, string toolsJson, out APIClient.ChatCompletionResult result, out byte[] newState, out IntPtr newChatState, out int tokenCount){
 			result = null;

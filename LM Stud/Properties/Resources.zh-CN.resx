@@ -365,4 +365,211 @@
 <data name="Unknown_API_error_" xml:space="preserve">
 	<value>未知的 API 错误</value>
 </data>
+<data name="_Tool_name_" xml:space="preserve">
+	<value>
+工具名称：</value>
+</data>
+<data name="___Loaded__" xml:space="preserve">
+	<value> | 已加载：</value>
+</data>
+<data name="_0___1__2_" xml:space="preserve">
+	<value>{0}/{1}{2}</value>
+</data>
+<data name="_API_model_" xml:space="preserve">
+	<value>(API 模型)</value>
+</data>
+<data name="_local_model_" xml:space="preserve">
+	<value>(本地模型)</value>
+</data>
+<data name="_MCP_server_" xml:space="preserve">
+	<value>(MCP 服务器)</value>
+</data>
+<data name="Another_slot_already_uses_that_name_" xml:space="preserve">
+	<value>已有其他槽位使用该名称。</value>
+</data>
+<data name="API" xml:space="preserve">
+	<value>API</value>
+</data>
+<data name="API_base_URL_is_not_configured_" xml:space="preserve">
+	<value>未配置 API 基本 URL。</value>
+</data>
+<data name="API_error___0_____1_" xml:space="preserve">
+	<value>API 错误 ({0})：{1}</value>
+</data>
+<data name="API_model_tool_slot_is_missing_an_API_URL_or_model_" xml:space="preserve">
+	<value>API 模型工具槽位缺少 API URL 或模型。</value>
+</data>
+<data name="API_response_did_not_contain_any_message_" xml:space="preserve">
+	<value>API 响应未包含任何消息。</value>
+</data>
+<data name="API_server_could_not_start_on_port__" xml:space="preserve">
+	<value>API 服务器无法在端口 {0} 上启动，因为该端口已被占用。
+
+{1}</value>
+</data>
+<data name="Chat" xml:space="preserve">
+	<value>聊天</value>
+</data>
+<data name="Cold" xml:space="preserve">
+	<value>未加载</value>
+</data>
+<data name="colon" xml:space="preserve">
+	<value>：</value>
+</data>
+<data name="Command_" xml:space="preserve">
+	<value>命令：</value>
+</data>
+<data name="Connect" xml:space="preserve">
+	<value>连接</value>
+</data>
+<data name="Connected" xml:space="preserve">
+	<value>已连接</value>
+</data>
+<data name="Dialectic" xml:space="preserve">
+	<value>辩证</value>
+</data>
+<data name="Dialectic_relay__" xml:space="preserve">
+	<value>辩证中继：</value>
+</data>
+<data name="Disconnect" xml:space="preserve">
+	<value>断开连接</value>
+</data>
+<data name="Disconnected" xml:space="preserve">
+	<value>已断开</value>
+</data>
+<data name="Empty" xml:space="preserve">
+	<value>空</value>
+</data>
+<data name="Generation" xml:space="preserve">
+	<value>生成</value>
+</data>
+<data name="GetStateData" xml:space="preserve">
+	<value>GetStateData</value>
+</data>
+<data name="History_is_not_configured_" xml:space="preserve">
+	<value>未配置历史记录。</value>
+</data>
+<data name="Incomplete" xml:space="preserve">
+	<value>不完整</value>
+</data>
+<data name="Jinja_template_file_not_found__" xml:space="preserve">
+	<value>未找到 Jinja 模板文件
+
+</value>
+</data>
+<data name="Load_a_local_chat_slot_and_a_" xml:space="preserve">
+	<value>请先加载一个本地聊天槽位，并加载另一个标记为“辩证”的本地槽位，然后再启用辩证模式。</value>
+</data>
+<data name="Load_main" xml:space="preserve">
+	<value>加载 main</value>
+</data>
+<data name="Load_Model" xml:space="preserve">
+	<value>加载模型</value>
+</data>
+<data name="Load_Slot" xml:space="preserve">
+	<value>加载槽位</value>
+</data>
+<data name="Loaded" xml:space="preserve">
+	<value>已加载</value>
+</data>
+<data name="Local" xml:space="preserve">
+	<value>本地</value>
+</data>
+<data name="main" xml:space="preserve">
+	<value>main</value>
+	<comment>固定槽位标识符，请勿翻译。</comment>
+</data>
+<data name="MCP" xml:space="preserve">
+	<value>MCP</value>
+</data>
+<data name="MCP_command_is_required_when_the_MCP_slot_is_enabled_as_a_tool_" xml:space="preserve">
+	<value>将 MCP 槽位启用为工具时，必须填写 MCP 命令。</value>
+</data>
+<data name="MCP_Connect" xml:space="preserve">
+	<value>MCP 连接</value>
+</data>
+<data name="MCP_Disconnect" xml:space="preserve">
+	<value>MCP 断开连接</value>
+</data>
+<data name="MCP_URL_is_required_when_the_MCP_slot_is_enabled_as_a_tool_" xml:space="preserve">
+	<value>将 MCP 槽位启用为工具时，必须填写 MCP URL。</value>
+</data>
+<data name="Missing" xml:space="preserve">
+	<value>缺失</value>
+</data>
+<data name="Model_File_Not_Found" xml:space="preserve">
+	<value>未找到模型文件
+
+</value>
+</data>
+<data name="No_Jinja_chat_template_was_found_in_the_selected_model_" xml:space="preserve">
+	<value>所选模型中未找到 Jinja 聊天模板。</value>
+</data>
+<data name="Only_local_slots_can_be_unloaded_" xml:space="preserve">
+	<value>只能卸载本地槽位。</value>
+</data>
+<data name="prompt_is_required" xml:space="preserve">
+	<value>prompt 为必填项</value>
+</data>
+<data name="Ready" xml:space="preserve">
+	<value>就绪</value>
+</data>
+<data name="Remove_the__0__slot_" xml:space="preserve">
+	<value>移除 {0} 槽位？</value>
+</data>
+<data name="Select_a_local_or_MCP_slot_first_" xml:space="preserve">
+	<value>请先选择一个本地或 MCP 槽位。</value>
+</data>
+<data name="Select_a_model_first_" xml:space="preserve">
+	<value>请先选择一个模型。</value>
+</data>
+<data name="Select_a_slot_first_" xml:space="preserve">
+	<value>请先选择一个槽位。</value>
+</data>
+<data name="Server" xml:space="preserve">
+	<value>服务器</value>
+</data>
+<data name="SetState__State_is_null" xml:space="preserve">
+	<value>SetState
+
+state 为 null</value>
+</data>
+<data name="SetStateData" xml:space="preserve">
+	<value>SetStateData</value>
+</data>
+<data name="Slot_name_is_required_" xml:space="preserve">
+	<value>必须填写槽位名称。</value>
+</data>
+<data name="The_active_API_model_slot_is_incomplete_" xml:space="preserve">
+	<value>当前活动的 API 模型槽位不完整。</value>
+</data>
+<data name="The_main_slot_cannot_be_removed__Edit_it_instead_" xml:space="preserve">
+	<value>无法移除 main 槽位。请改为编辑它。</value>
+</data>
+<data name="The_main_slot_must_be_a_local_or_API_chat_slot__" xml:space="preserve">
+	<value>main 槽位必须是本地或 API 聊天槽位。请将 MCP 服务器添加为单独的工具槽位。</value>
+</data>
+<data name="The_model_is_not_in_the_current_models_list__" xml:space="preserve">
+	<value>该模型不在当前模型列表中。请刷新列表或检查模型文件夹。
+
+</value>
+</data>
+<data name="Tool" xml:space="preserve">
+	<value>工具</value>
+</data>
+<data name="Tool_call_output_requires_a_call_id_" xml:space="preserve">
+	<value>工具调用输出需要 call_id。</value>
+</data>
+<data name="Unload_Slot" xml:space="preserve">
+	<value>卸载槽位</value>
+</data>
+<data name="URL_" xml:space="preserve">
+	<value>URL：</value>
+</data>
+<data name="Using_slot_" xml:space="preserve">
+	<value>使用槽位 </value>
+</data>
+<data name="Reset_chat" xml:space="preserve">
+	<value>重置聊天</value>
+</data>
 </root>

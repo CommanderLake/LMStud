@@ -107,23 +107,23 @@ namespace LMStud{
 			PopulateSlotsList();
 		}
 		private void ButLoadSlot_Click(object sender, EventArgs e){
-			if(!TryLoadSelectedSlot()) ShowError("Load Slot", "Select a local or MCP slot first.", false);
+			if(!TryLoadSelectedSlot()) ShowError(Resources.Load_Slot, Resources.Select_a_local_or_MCP_slot_first_, false);
 		}
 		private void ButUnloadSlot_Click(object sender, EventArgs e){
 			if(listViewSlots.SelectedItems.Count != 1){
-				ShowError("Unload Slot", "Select a slot first.", false);
+				ShowError(Resources.Unload_Slot, Resources.Select_a_slot_first_, false);
 				return;
 			}
 			var slot = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
 			if(slot.Source == ModelSlotSource.Mcp){
 				var response = McpServerManager.Disconnect(slot.Name, RetokenizeLoadedLocalSlotsForToolChange);
-				if(!McpServerManager.IsOk(response)) ShowError("MCP Disconnect", response, false);
+				if(!McpServerManager.IsOk(response)) ShowError(Resources.MCP_Disconnect, response, false);
 				PopulateSlotsList();
 				UpdateSlotButtons();
 				return;
 			}
 			if(slot.Source != ModelSlotSource.Local){
-				ShowError("Unload Slot", "Only local slots can be unloaded.", false);
+				ShowError(Resources.Unload_Slot, Resources.Only_local_slots_can_be_unloaded_, false);
 				return;
 			}
 			UnloadModel(true, slot.Name);
@@ -135,7 +135,7 @@ namespace LMStud{
 				using(var client = new APIClient(textSlotsEditApiUrl.Text.Trim(), textSlotsEditApiKey.Text, "", checkSlotsEditStore.Checked)){
 					foreach(var model in client.GetModels(CancellationToken.None)) comboSlotsEditApiModel.Items.Add(model);
 				}
-			} catch(Exception ex){ APIClient.ShowApiClientError("API Client", ex); }
+			} catch(Exception ex){ APIClient.ShowApiClientError(Resources.API_Client, ex); }
 		}
 		private void ComboSlotsEditMcpTransport_SelectedIndexChanged(object sender, EventArgs e){
 			if(_populatingSlotEditor || GetSlotEditorSource() != ModelSlotSource.Mcp) return;
@@ -213,9 +213,9 @@ namespace LMStud{
 			var hasSelection = listViewSlots != null && listViewSlots.SelectedItems.Count == 1;
 			var slot = hasSelection ? (ModelSlot)listViewSlots.SelectedItems[0].Tag : null;
 			butSlotsSave.Enabled = hasSelection;
-			butSlotsRemove.Enabled = hasSelection && !string.Equals(slot.Name, "main", StringComparison.OrdinalIgnoreCase);
-			butLoadSlot.Text = hasSelection && slot.Source == ModelSlotSource.Mcp ? "Connect" : _slotLoadButtonText;
-			butUnloadSlot.Text = hasSelection && slot.Source == ModelSlotSource.Mcp ? "Disconnect" : _slotUnloadButtonText;
+			butSlotsRemove.Enabled = hasSelection && !string.Equals(slot.Name, ModelSlotManager.MainSlotName, StringComparison.OrdinalIgnoreCase);
+			butLoadSlot.Text = hasSelection && slot.Source == ModelSlotSource.Mcp ? Resources.Connect : _slotLoadButtonText;
+			butUnloadSlot.Text = hasSelection && slot.Source == ModelSlotSource.Mcp ? Resources.Disconnect : _slotUnloadButtonText;
 			butLoadSlot.Enabled = hasSelection && (slot.Source == ModelSlotSource.Local || slot.Source == ModelSlotSource.Mcp);
 			var localSlotLoaded = hasSelection && slot.Source == ModelSlotSource.Local && (ModelSlotManager.CanServeLocalSlot(slot) || SlotHasLoadedLocalModel(slot.Name));
 			butUnloadSlot.Enabled = hasSelection && (localSlotLoaded || ModelSlotManager.CanServeMcpSlot(slot));
@@ -272,7 +272,7 @@ namespace LMStud{
 			}
 			var use = ModelSlotUse.None;
 			var source = GetSlotEditorSource();
-			if(string.Equals(name, "main", StringComparison.OrdinalIgnoreCase) && source == ModelSlotSource.Mcp){
+			if(string.Equals(name, ModelSlotManager.MainSlotName, StringComparison.OrdinalIgnoreCase) && source == ModelSlotSource.Mcp){
 				MessageBox.Show(this, Resources.The_main_slot_must_be_a_local_or_API_chat_slot__, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 				comboSlotsEditSource.Focus();
 				return false;
@@ -286,7 +286,7 @@ namespace LMStud{
 			var apiBaseUrl = textSlotsEditApiUrl.Text.Trim();
 			var mcpEndpoint = textSlotsEditMcpUrl.Text.Trim();
 			if(source == ModelSlotSource.Mcp && checkSlotsEditTool.Checked && string.IsNullOrWhiteSpace(mcpEndpoint)){
-				MessageBox.Show(this, mcpTransport == McpSlotTransport.Http ? "MCP URL is required when the MCP slot is enabled as a tool." : "MCP command is required when the MCP slot is enabled as a tool.", Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+				MessageBox.Show(this, mcpTransport == McpSlotTransport.Http ? Resources.MCP_URL_is_required_when_the_MCP_slot_is_enabled_as_a_tool_ : Resources.MCP_command_is_required_when_the_MCP_slot_is_enabled_as_a_tool_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 				textSlotsEditMcpUrl.Focus();
 				return false;
 			}
@@ -339,7 +339,7 @@ namespace LMStud{
 			var slot = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
 			if(slot.Source == ModelSlotSource.Mcp){
 				var response = McpServerManager.Connect(slot, RetokenizeLoadedLocalSlotsForToolChange);
-				if(!McpServerManager.IsOk(response)) ShowError("MCP Connect", response, false);
+				if(!McpServerManager.IsOk(response)) ShowError(Resources.MCP_Connect, response, false);
 				PopulateSlotsList();
 				UpdateSlotButtons();
 				return true;
@@ -353,12 +353,12 @@ namespace LMStud{
 			}
 			var path = slot.ResolveLocalPath();
 			if(string.IsNullOrWhiteSpace(path) || !File.Exists(path)){
-				ShowError("Load Slot", "Model file not found\r\n\r\n" + path, false);
+				ShowError(Resources.Load_Slot, Resources.Model_File_Not_Found + path, false);
 				return true;
 			}
 			var item = listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(lvi => string.Equals(lvi.SubItems[1].Text, path, StringComparison.OrdinalIgnoreCase));
 			if(item == null){
-				ShowError("Load Slot", "The model is not in the current Models list. Refresh the list or check the Models folder.\r\n\r\n" + path, false);
+				ShowError(Resources.Load_Slot, Resources.The_model_is_not_in_the_current_models_list__ + path, false);
 				return true;
 			}
 			LoadModel(slot.Name, item, false);
@@ -393,7 +393,7 @@ namespace LMStud{
 		private void ApplyMcpSlotConnectionState(ModelSlot slot){
 			if(slot?.Source != ModelSlotSource.Mcp) return;
 			var response = slot.HasUse(ModelSlotUse.Tool) ? McpServerManager.Connect(slot, RetokenizeLoadedLocalSlotsForToolChange) : McpServerManager.Disconnect(slot.Name, RetokenizeLoadedLocalSlotsForToolChange);
-			if(slot.HasUse(ModelSlotUse.Tool) && !McpServerManager.IsOk(response)) ShowError("MCP Connect", response, false);
+			if(slot.HasUse(ModelSlotUse.Tool) && !McpServerManager.IsOk(response)) ShowError(Resources.MCP_Connect, response, false);
 		}
 		private void RetokenizeLoadedLocalSlotsForToolChange(IEnumerable<string> slotNames){
 			var loadedSlots = ModelSlotManager.GetLoadedLocalSlotNames();
@@ -408,7 +408,7 @@ namespace LMStud{
 		}
 		private void UpdateMcpTransportUi(){
 			var http = GetMcpEditorTransport() == McpSlotTransport.Http;
-			label41.Text = http ? "URL:" : "Command:";
+			label41.Text = http ? Resources.URL_ : Resources.Command_;
 			label45.Visible = textSlotsEditMcpHeader.Visible = http;
 			label45.Enabled = textSlotsEditMcpHeader.Enabled = http;
 			if(!http && !_populatingSlotEditor) textSlotsEditMcpHeader.Text = "";
@@ -429,9 +429,9 @@ namespace LMStud{
 		}
 		private static string FormatSlotSource(ModelSlotSource source){
 			switch(source){
-				case ModelSlotSource.Api: return "API";
-				case ModelSlotSource.Mcp: return "MCP";
-				default: return "Local";
+				case ModelSlotSource.Api: return Resources.API;
+				case ModelSlotSource.Mcp: return Resources.MCP;
+				default: return Resources.Local;
 			}
 		}
 	}

@@ -48,19 +48,19 @@ namespace LMStud{
 		}
 		private void ButLoad_Click(object sender, EventArgs e) {
 			if(listViewModels.SelectedItems.Count == 1){
-				LoadModel("main", listViewModels.SelectedItems[0], false);
+				LoadModel(ModelSlotManager.MainSlotName, listViewModels.SelectedItems[0], false);
 				return;
 			}
-			ShowError("Load Main", "Select a model first.", false);
+			ShowError(Resources.Load_main, Resources.Select_a_model_first_, false);
 		}
 		private void ButUnload_Click(object sender, EventArgs e){
 			butUnloadMain.Enabled = false;
-			UnloadModel(true, "main");
+			UnloadModel(true, ModelSlotManager.MainSlotName);
 		}
 		private void ButExtract_Click(object sender, EventArgs e){
 			const string action = "Extract Template";
 			if(listViewModels.SelectedItems.Count == 0){
-				ShowError(action, "Select a model first.", false);
+				ShowError(action, Resources.Select_a_model_first_, false);
 				return;
 			}
 			var selected = listViewModels.SelectedItems[0];
@@ -68,7 +68,7 @@ namespace LMStud{
 			var meta = selected.Tag as List<GGUFMetadataManager.GGUFMetadataEntry>;
 			if(meta == null){
 				if(!File.Exists(modelPath)){
-					ShowError(action, "Model file not found\r\n\r\n" + modelPath, false);
+					ShowError(action, Resources.Model_File_Not_Found + modelPath, false);
 					return;
 				}
 				meta = GGUFMetadataManager.LoadGGUFMetadata(modelPath);
@@ -286,13 +286,13 @@ namespace LMStud{
 			if(activeLocalLoaded) Common.LoadedModel = activeLoadedModel;
 			butGen.Enabled = (activeApiReady || activeLocalLoaded) && !Generation.Generating;
 			butReset.Enabled = !Generation.Generating;
-			butUnloadMain.Enabled = Common.LoadedLocalSlots.ContainsKey("main") && NativeMethods.IsModelSlotLoaded("main");
-			if(checkDialectic.Checked && Generation.DialecticRelayEnabled) toolStripStatusLabel1.Text = "Dialectic relay: " + Generation.DialPriSlotName + " <-> " + Generation.DialSecSlotName;
-			else if(activeApiReady) toolStripStatusLabel1.Text = "Using slot " + activeSlot.Name + ": " + activeSlot.DisplayModel();
-			else if(activeLocalLoaded && activeSlot != null) toolStripStatusLabel1.Text = "Using slot " + activeSlot.Name + ": " + activeLoadedModel.Text;
+			butUnloadMain.Enabled = Common.LoadedLocalSlots.ContainsKey(ModelSlotManager.MainSlotName) && NativeMethods.IsModelSlotLoaded(ModelSlotManager.MainSlotName);
+			if(checkDialectic.Checked && Generation.DialecticRelayEnabled) toolStripStatusLabel1.Text = Resources.Dialectic_relay__ + Generation.DialPriSlotName + " <-> " + Generation.DialSecSlotName;
+			else if(activeApiReady) toolStripStatusLabel1.Text = Resources.Using_slot_ + activeSlot.Name + Resources.colon + activeSlot.DisplayModel();
+			else if(activeLocalLoaded && activeSlot != null) toolStripStatusLabel1.Text = Resources.Using_slot_ + activeSlot.Name + Resources.colon + activeLoadedModel.Text;
 			else if(Common.LlModelLoaded && Common.LoadedModel != null) toolStripStatusLabel1.Text = Resources.Using_Model_ + Common.LoadedModel.Text;
 			else toolStripStatusLabel1.Text = Resources.No_model_loaded;
-			if(activeApiReady && loadedSlot != null) toolStripStatusLabel1.Text += " | Loaded: " + loadedSlot.Name;
+			if(activeApiReady && loadedSlot != null) toolStripStatusLabel1.Text += Resources.___Loaded__ + loadedSlot.Name;
 		}
 		private static ListViewItem GetLoadedModelForSlot(ModelSlot slot){
 			if(slot == null || slot.Source != ModelSlotSource.Local) return null;
@@ -332,11 +332,11 @@ namespace LMStud{
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_initialising_voice_input, result);
 			return result;
 		}
-		internal void LoadModel(ListViewItem modelLvi, bool autoLoad){LoadModel("main", modelLvi, autoLoad);}
-		internal void LoadModel(string slotName, ListViewItem modelLvi, bool autoLoad){
+		internal void LoadModel(ListViewItem modelLvi, bool autoLoad){LoadModel(ModelSlotManager.MainSlotName, modelLvi, autoLoad);}
+		private void LoadModel(string slotName, ListViewItem modelLvi, bool autoLoad){
 			var modelPath = modelLvi.SubItems[1].Text;
 			if(!File.Exists(modelPath)){
-				ShowError("LoadModel", "Model file not found\r\n\r\n" + modelPath, false);
+				ShowError(Resources.Load_Model, Resources.Model_File_Not_Found + modelPath, false);
 				checkLoadAuto.Checked = false;
 				return;
 			}
@@ -347,9 +347,9 @@ namespace LMStud{
 			var activeChatSlot = ModelSlotManager.GetActiveChatSlot();
 			var loadingActiveChatSlot = activeChatSlot != null && string.Equals(activeChatSlot.Name, slotName, StringComparison.OrdinalIgnoreCase);
 			var activeChatSlotLoaded = activeChatSlot?.Source == ModelSlotSource.Local && ModelSlotManager.CanServeLocalSlot(activeChatSlot);
-			var makeSlotChat = string.Equals(slotName, "main", StringComparison.OrdinalIgnoreCase) ||
+			var makeSlotChat = string.Equals(slotName, ModelSlotManager.MainSlotName, StringComparison.OrdinalIgnoreCase) ||
 				(activeChatSlot?.Source == ModelSlotSource.Local && !activeChatSlotLoaded);
-			if(activeChatSlotLoaded && !loadingActiveChatSlot && !string.Equals(slotName, "main", StringComparison.OrdinalIgnoreCase)) makeSlotChat = false;
+			if(activeChatSlotLoaded && !loadingActiveChatSlot && !string.Equals(slotName, ModelSlotManager.MainSlotName, StringComparison.OrdinalIgnoreCase)) makeSlotChat = false;
 			ThreadPool.QueueUserWorkItem(o => {
 				var slotLock = ModelSlotManager.EnterSlot(slotName);
 				try{
@@ -365,7 +365,7 @@ namespace LMStud{
 					if(overrideSettings && overrides.OverrideJinja){
 						var templatePath = overrides.JinjaTemplate;
 						if(string.IsNullOrWhiteSpace(templatePath) || !File.Exists(templatePath)){
-							ShowError(Resources.Error_loading_model, "Jinja template file not found\r\n\r\n" + (templatePath ?? ""), false);
+							ShowError(Resources.Error_loading_model, Resources.Jinja_template_file_not_found__ + (templatePath ?? ""), false);
 							return;
 						}
 						try{ jinjaTmpl = File.ReadAllText(templatePath); }
@@ -432,7 +432,7 @@ namespace LMStud{
 			ModelSlotLockLease slotLock = null;
 			try{
 				Generation.StopActiveGeneration();
-				if(string.IsNullOrWhiteSpace(slotName)) slotName = Common.ActiveModelSlotName ?? "main";
+				if(string.IsNullOrWhiteSpace(slotName)) slotName = Common.ActiveModelSlotName ?? ModelSlotManager.MainSlotName;
 				if(genLock) slotLock = ModelSlotManager.EnterSlot(slotName);
 				NativeMethods.FreeModelSlot(slotName);
 			} finally{
@@ -451,14 +451,13 @@ namespace LMStud{
 				slotLock?.Dispose();
 			}
 		}
-		private void UnloadModel(bool genLock, string slotName){UnloadModel(genLock, slotName, null);}
-		private void UnloadModel(bool genLock, string slotName, Action completed){
+		private void UnloadModel(bool genLock, string slotName, Action completed = null){
 			SetModelLoadButtonsEnabled(false);
 			ThreadPool.QueueUserWorkItem(o => UnloadModelInternal(genLock, slotName, completed));
 		}
 		private void SetModelLoadButtonsEnabled(bool enabled){
 			butLoadMain.Enabled = enabled;
-			butUnloadMain.Enabled = enabled && Common.LoadedLocalSlots.ContainsKey("main") && NativeMethods.IsModelSlotLoaded("main");
+			butUnloadMain.Enabled = enabled && Common.LoadedLocalSlots.ContainsKey(ModelSlotManager.MainSlotName) && NativeMethods.IsModelSlotLoaded(ModelSlotManager.MainSlotName);
 			butLoadSlot.Enabled = enabled;
 			butUnloadSlot.Enabled = enabled;
 		}
