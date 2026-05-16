@@ -342,17 +342,32 @@
   <data name="butUnloadSlot.ToolTip" xml:space="preserve">
     <value />
   </data>
+  <data name="textSlotsEditApiUrl.ToolTip" xml:space="preserve">
+    <value>API 基本 URL，例如 http://localhost:1234 或 OpenAI 兼容端点。</value>
+  </data>
+  <data name="label53.Text" xml:space="preserve">
+    <value>API URL：</value>
+  </data>
+  <data name="label53.ToolTip" xml:space="preserve">
+    <value />
+  </data>
   <data name="label52.Text" xml:space="preserve">
     <value>推理摘要：</value>
   </data>
   <data name="label52.ToolTip" xml:space="preserve">
     <value />
   </data>
+  <data name="textSlotsEditApiKey.ToolTip" xml:space="preserve">
+    <value>此槽的 Bearer API 密钥。如果本地服务器不需要密钥，可留空。</value>
+  </data>
   <data name="label51.Text" xml:space="preserve">
     <value>推理强度：</value>
   </data>
   <data name="label51.ToolTip" xml:space="preserve">
     <value />
+  </data>
+  <data name="comboSlotsEditApiModel.ToolTip" xml:space="preserve">
+    <value>此槽的 API 模型名称。打开下拉列表可从配置的 API URL 获取 /v1/models。</value>
   </data>
   <data name="comboSlotEditReasonSummary.Items" xml:space="preserve">
     <value>未指定</value>
@@ -368,6 +383,18 @@
   </data>
   <data name="comboSlotEditReasonSummary.ToolTip" xml:space="preserve">
     <value>为兼容的模型和 API 指定推理摘要类型。</value>
+  </data>
+  <data name="label46.Text" xml:space="preserve">
+    <value>API 密钥：</value>
+  </data>
+  <data name="label46.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="label49.Text" xml:space="preserve">
+    <value>工具名称：</value>
+  </data>
+  <data name="label49.ToolTip" xml:space="preserve">
+    <value />
   </data>
   <data name="comboSlotEditReasonEffort.Items" xml:space="preserve">
     <value>未指定</value>
@@ -390,6 +417,72 @@
   <data name="comboSlotEditReasonEffort.ToolTip" xml:space="preserve">
     <value>为兼容的模型和 API 指定推理强度。</value>
   </data>
+  <data name="label47.Text" xml:space="preserve">
+    <value>API 模型：</value>
+  </data>
+  <data name="label47.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="checkSlotsEditStore.Location" type="System.Drawing.Point, System.Drawing">
+    <value>330, 232</value>
+  </data>
+  <data name="checkSlotsEditStore.Size" type="System.Drawing.Size, System.Drawing">
+    <value>50, 17</value>
+  </data>
+  <data name="checkSlotsEditStore.Text" xml:space="preserve">
+    <value>存储</value>
+  </data>
+  <data name="checkSlotsEditStore.ToolTip" xml:space="preserve">
+    <value>使用此槽作为主 API 聊天槽时发送 store=true。</value>
+  </data>
+  <data name="textSlotsEditApiToolName.ToolTip" xml:space="preserve">
+    <value>启用此 API 槽作为工具时，向模型公开的函数名称。</value>
+  </data>
+  <data name="panelSlotsEditApi.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="comboSlotsEditLocalModel.ToolTip" xml:space="preserve">
+    <value>此槽使用的本地模型。</value>
+  </data>
+  <data name="label44.Text" xml:space="preserve">
+    <value>本地模型：</value>
+  </data>
+  <data name="label44.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="panelSlotsEditLocal.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="textSlotsEditMcpHeader.ToolTip" xml:space="preserve">
+    <value>MCP 服务器的请求标头。</value>
+  </data>
+  <data name="label45.Text" xml:space="preserve">
+    <value>API URL：</value>
+  </data>
+  <data name="label45.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="textSlotsEditMcpUrl.ToolTip" xml:space="preserve">
+    <value>MCP 服务器的 URL。</value>
+  </data>
+  <data name="label41.Text" xml:space="preserve">
+    <value>URL：</value>
+  </data>
+  <data name="label41.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="comboSlotsEditMcpTransport.ToolTip" xml:space="preserve">
+    <value>MCP 传输方式。</value>
+  </data>
+  <data name="label40.Text" xml:space="preserve">
+    <value>传输：</value>
+  </data>
+  <data name="label40.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="panelSlotsEditMcp.ToolTip" xml:space="preserve">
+    <value />
+  </data>
   <data name="butSlotsEditUseSelectedModel.Text" xml:space="preserve">
     <value>使用所选模型</value>
   </data>
@@ -404,9 +497,6 @@
   </data>
   <data name="textSlotsEditName.ToolTip" xml:space="preserve">
     <value>简短且唯一的槽名称。</value>
-  </data>
-  <data name="textSlotsEditApiKey.ToolTip" xml:space="preserve">
-    <value>此槽的 Bearer API 密钥。如果本地服务器不需要密钥，可留空。</value>
   </data>
   <data name="butSlotsSave.Text" xml:space="preserve">
     <value>保存所选</value>
@@ -426,68 +516,14 @@
   <data name="butSlotsAdd.ToolTip" xml:space="preserve">
     <value>根据上方字段创建新槽。</value>
   </data>
-  <data name="label49.Text" xml:space="preserve">
-    <value>工具名称：</value>
-  </data>
-  <data name="label49.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="textSlotsEditModel.ToolTip" xml:space="preserve">
-    <value>此槽的本地 GGUF 模型路径。相对路径会基于模型文件夹解析。</value>
-  </data>
   <data name="label48.Text" xml:space="preserve">
     <value>系统提示词：</value>
   </data>
   <data name="label48.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="textSlotsEditApiUrl.ToolTip" xml:space="preserve">
-    <value>API 基本 URL，例如 http://localhost:1234 或 OpenAI 兼容端点。</value>
-  </data>
-  <data name="label47.Text" xml:space="preserve">
-    <value>API 模型：</value>
-  </data>
-  <data name="label47.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="textSlotsEditInstructions.ToolTip" xml:space="preserve">
+  <data name="textSlotsEditSystemPrompt.ToolTip" xml:space="preserve">
     <value>此槽被直接调用或作为工具调用时使用的可选系统指令。</value>
-  </data>
-  <data name="label46.Text" xml:space="preserve">
-    <value>API 密钥：</value>
-  </data>
-  <data name="label46.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="comboSlotsEditApiModel.ToolTip" xml:space="preserve">
-    <value>此槽的 API 模型名称。打开下拉列表可从配置的 API URL 获取 /v1/models。</value>
-  </data>
-  <data name="label45.Text" xml:space="preserve">
-    <value>API URL：</value>
-  </data>
-  <data name="label45.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="checkSlotsEditStore.Location" type="System.Drawing.Point, System.Drawing">
-    <value>330, 232</value>
-  </data>
-  <data name="checkSlotsEditStore.Size" type="System.Drawing.Size, System.Drawing">
-    <value>50, 17</value>
-  </data>
-  <data name="checkSlotsEditStore.Text" xml:space="preserve">
-    <value>存储</value>
-  </data>
-  <data name="checkSlotsEditStore.ToolTip" xml:space="preserve">
-    <value>使用此槽作为主 API 聊天槽时发送 store=true。</value>
-  </data>
-  <data name="label44.Text" xml:space="preserve">
-    <value>本地模型：</value>
-  </data>
-  <data name="label44.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="textSlotsEditToolName.ToolTip" xml:space="preserve">
-    <value>启用此 API 槽作为工具时，向模型公开的函数名称。</value>
   </data>
   <data name="label43.Text" xml:space="preserve">
     <value>来源：</value>
@@ -1053,6 +1089,30 @@
   <data name="groupCPUParams.ToolTip" xml:space="preserve">
     <value>控制在 CPU 上生成文本的参数。</value>
   </data>
+  <data name="comboVType.Items" xml:space="preserve">
+    <value>默认</value>
+  </data>
+  <data name="comboVType.ToolTip" xml:space="preserve">
+    <value>V cache 类型。通常保持默认即可。</value>
+  </data>
+  <data name="label39.Text" xml:space="preserve">
+    <value>V 类型：</value>
+  </data>
+  <data name="label39.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="comboKType.Items" xml:space="preserve">
+    <value>默认</value>
+  </data>
+  <data name="comboKType.ToolTip" xml:space="preserve">
+    <value>K cache 类型。通常保持默认即可。</value>
+  </data>
+  <data name="label38.Text" xml:space="preserve">
+    <value>K 类型：</value>
+  </data>
+  <data name="label38.ToolTip" xml:space="preserve">
+    <value />
+  </data>
   <data name="numMinP.ToolTip" xml:space="preserve">
     <value>Min-P 采样：仅保留那些概率至少为最高概率 Token 一定比例的候选项，用于削减不太可能的选项并降低噪声。</value>
   </data>
@@ -1239,7 +1299,7 @@
   <data name="tabPageHuggingFace.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="tabControl1.ToolTip" xml:space="preserve">
+  <data name="tabControlMain.ToolTip" xml:space="preserve">
     <value />
   </data>
   <data name="toolStripStatusLabel1.Size" type="System.Drawing.Size, System.Drawing">
@@ -1277,6 +1337,12 @@
   </data>
   <data name="statusStrip1.ToolTip" xml:space="preserve">
     <value />
+  </data>
+  <data name="openFileDialog1.Filter" xml:space="preserve">
+    <value>文本文件 (*.txt)|*.txt|所有文件 (*.*)|*.*</value>
+  </data>
+  <data name="saveFileDialog1.Filter" xml:space="preserve">
+    <value>文本文件 (*.txt)|*.txt|所有文件 (*.*)|*.*</value>
   </data>
   <data name="$this.ToolTip" xml:space="preserve">
     <value />
