@@ -200,6 +200,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to A model slot cannot call itself as a tool..
+        /// </summary>
+        internal static string A_model_slot_cannot_call_itself_as_a_tool_ {
+            get {
+                return ResourceManager.GetString("A_model_slot_cannot_call_itself_as_a_tool_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to An index was out of range.
         /// </summary>
         internal static string An_index_was_out_of_range_ {
@@ -836,11 +845,20 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to main.
+        ///   Looks up a localized string similar to Local model tool slot could not generate a response: .
         /// </summary>
-        internal static string main {
+        internal static string Local_model_tool_slot_could_not_generate_a_response__ {
             get {
-                return ResourceManager.GetString("main", resourceCulture);
+                return ResourceManager.GetString("Local_model_tool_slot_could_not_generate_a_response__", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Local model tool slot is not loaded: .
+        /// </summary>
+        internal static string Local_model_tool_slot_is_not_loaded__ {
+            get {
+                return ResourceManager.GetString("Local_model_tool_slot_is_not_loaded__", resourceCulture);
             }
         }
         
@@ -924,6 +942,15 @@ namespace LMStud.Properties {
         internal static string Model_search_error___0_ {
             get {
                 return ResourceManager.GetString("Model_search_error___0_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Model tool slot is busy: .
+        /// </summary>
+        internal static string Model_tool_slot_is_busy__ {
+            get {
+                return ResourceManager.GetString("Model_tool_slot_is_busy__", resourceCulture);
             }
         }
         
@@ -1265,6 +1292,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Tool arguments:.
+        /// </summary>
+        internal static string Tool_arguments_ {
+            get {
+                return ResourceManager.GetString("Tool_arguments_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Tool Call.
         /// </summary>
         internal static string Tool_Call {
@@ -1274,11 +1310,38 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Tool call .
+        /// </summary>
+        internal static string Tool_call_ {
+            get {
+                return ResourceManager.GetString("Tool_call_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Tool call output requires a call_id..
         /// </summary>
         internal static string Tool_call_output_requires_a_call_id_ {
             get {
                 return ResourceManager.GetString("Tool_call_output_requires_a_call_id_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tool ID: .
+        /// </summary>
+        internal static string Tool_ID__ {
+            get {
+                return ResourceManager.GetString("Tool_ID__", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tool name: .
+        /// </summary>
+        internal static string Tool_name__ {
+            get {
+                return ResourceManager.GetString("Tool_name__", resourceCulture);
             }
         }
         

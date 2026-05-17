@@ -86,6 +86,13 @@ void AddTool(const char* slotName, const char* name, const char* description, co
 	if(handler) model->session.toolHandlers[name] = handler;
 	MarkToolsJsonDirty();
 }
+extern "C" EXPORT void SetManagedToolCallback(const Stud::ManagedToolCallbackFn cb){ Stud::managedToolCb = cb; }
+extern "C" EXPORT void StreamManagedToolOutput(const char* slotName, const char* text){
+	if(!text || !*text) return;
+	const auto cb = Stud::tokenCb;
+	if(!cb) return;
+	cb(slotName, nullptr, text, 0, LlamaMemSize(slotName), 0.0, 2);
+}
 void ClearTools(const char* slotName){
 	const auto model = GetModel(slotName);
 	CloseCommandPrompt();
@@ -121,6 +128,16 @@ static bool TryExecuteMCPTool(const common_chat_tool_call& toolCall, std::string
 	try{ toolResult = result; }
 	catch(...){ toolResult = "{\"error\":\"MCP tool execution failed\"}"; }
 	std::free(result);
+	return true;
+}
+static bool TryExecuteManagedTool(const char* callerSlotName, const common_chat_tool_call& toolCall, std::string& toolResult){
+	const auto cb = Stud::managedToolCb;
+	if(!cb) return false;
+	char* result = cb(callerSlotName, toolCall.name.c_str(), toolCall.arguments.c_str());
+	if(!result) return false;
+	try{ toolResult = result; }
+	catch(...){ toolResult = "{\"error\":\"managed tool execution failed\"}"; }
+	LocalFree(result);
 	return true;
 }
 extern "C" EXPORT char* ExecuteTool(const char* slotName, const char* name, const char* argsJson){
@@ -1014,6 +1031,13 @@ StudError GenerateWithTools(const char* slotName, const Stud::MessageRole role, 
 	if(model->session.tools.empty()){ return Generate(slotName, msgs, nPredict, callback, msg); }
 	const Stud::TokenCallbackFn cb = Stud::tokenCb;
 	bool toolCalled;
+	const auto addToolResult = [&](const std::string& toolMsg){
+		if(cb) cb(slotName, nullptr, toolMsg.c_str(), 0, LlamaMemSize(slotName), 0, 1);
+		msgs.push_back(common_chat_msg());
+		msgs.back().role = "tool";
+		msgs.back().content = toolMsg;
+		toolCalled = true;
+	};
 	do{
 		std::string toolParseError;
 		const auto err = Generate(slotName, msgs, nPredict, callback, msg, true, &toolParseError);
@@ -1024,11 +1048,7 @@ StudError GenerateWithTools(const char* slotName, const Stud::MessageRole role, 
 			toolCalled = false;
 			if(!toolParseError.empty()){
 				auto toolMsg = "{\"error\":\"Unable to parse tool call: " + JsonEscape(toolParseError) + "\"}";
-				if(cb) cb(slotName, nullptr, toolMsg.c_str(), 0, LlamaMemSize(slotName), 0, 1);
-				msgs.push_back(common_chat_msg());
-				msgs.back().role = "tool";
-				msgs.back().content = toolMsg;
-				toolCalled = true;
+				addToolResult(toolMsg);
 			}
 			for(common_chat_tool_call& toolCall : msg.tool_calls){
 				if(model->session.stop.load()) return StudError::Success;
@@ -1040,19 +1060,13 @@ StudError GenerateWithTools(const char* slotName, const Stud::MessageRole role, 
 					try{ toolMsg = it->second(slotName, toolCall.arguments.c_str()); }
 					catch(const std::exception& e){ toolMsg = "{\"error\":\"Tool execution failed: " + JsonEscape(e.what()) + "\"}"; }
 					catch(...){ toolMsg = "{\"error\":\"Tool execution failed\"}"; }
-					if(cb) cb(slotName, nullptr, toolMsg.c_str(), 0, LlamaMemSize(slotName), 0, 1);
-					msgs.push_back(common_chat_msg());
-					msgs.back().role = "tool";
-					msgs.back().content = toolMsg;
-					toolCalled = true;
+					addToolResult(toolMsg);
 				} else{
 					std::string toolMsg;
 					if(TryExecuteMCPTool(toolCall, toolMsg)){
-						if(cb) cb(slotName, nullptr, toolMsg.c_str(), 0, LlamaMemSize(slotName), 0, 1);
-						msgs.push_back(common_chat_msg());
-						msgs.back().role = "tool";
-						msgs.back().content = toolMsg;
-						toolCalled = true;
+						addToolResult(toolMsg);
+					} else if(TryExecuteManagedTool(slotName, toolCall, toolMsg)){
+						addToolResult(toolMsg);
 					}
 				}
 			}
@@ -1100,7 +1114,7 @@ static std::string BuildAPIResponseJson(const common_chat_msg& msg){
 	json += "]}";
 	return json;
 }
-StudError GenerateForAPI(const char* slotName, const Stud::MessageRole role, const char* prompt, const char* toolsJson, const int nPredict, char** responseJson){
+StudError GenerateForAPI(const char* slotName, const Stud::MessageRole role, const char* prompt, const char* toolsJson, const int nPredict, const bool callback, char** responseJson){
 	if(responseJson) *responseJson = nullptr;
 	if(!responseJson){
 		_lastErrorMessage = "responseJson is null.";
@@ -1116,7 +1130,7 @@ StudError GenerateForAPI(const char* slotName, const Stud::MessageRole role, con
 	inputMsg.content = prompt ? std::string(prompt) : std::string();
 	std::vector<common_chat_msg> messages{inputMsg};
 	common_chat_msg outputMsg;
-	const auto generateErr = Generate(slotName, messages, nPredict, false, outputMsg, false);
+	const auto generateErr = Generate(slotName, messages, nPredict, callback, outputMsg, false);
 	if(generateErr != StudError::Success) return generateErr;
 	*responseJson = CopyCString(BuildAPIResponseJson(outputMsg));
 	if(!*responseJson){

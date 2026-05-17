@@ -232,10 +232,10 @@
     <value />
   </data>
   <data name="checkOverrideSettings.Size" type="System.Drawing.Size, System.Drawing">
-    <value>122, 17</value>
+    <value>98, 17</value>
   </data>
   <data name="checkOverrideSettings.Text" xml:space="preserve">
-    <value>为此模型覆盖设置</value>
+    <value>覆盖全局设置</value>
   </data>
   <data name="checkOverrideSettings.ToolTip" xml:space="preserve">
     <value />
@@ -342,6 +342,36 @@
   <data name="butUnloadSlot.ToolTip" xml:space="preserve">
     <value />
   </data>
+  <data name="checkSlotsEditLocalOverride.Location" type="System.Drawing.Point, System.Drawing">
+    <value>273, 157</value>
+  </data>
+  <data name="checkSlotsEditLocalOverride.Size" type="System.Drawing.Size, System.Drawing">
+    <value>98, 17</value>
+  </data>
+  <data name="checkSlotsEditLocalOverride.Text" xml:space="preserve">
+    <value>覆盖模型设置</value>
+  </data>
+  <data name="checkSlotsEditLocalOverride.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="label54.Text" xml:space="preserve">
+    <value>工具名称：</value>
+  </data>
+  <data name="label54.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="comboSlotsEditLocalModel.ToolTip" xml:space="preserve">
+    <value>此槽使用的本地模型。</value>
+  </data>
+  <data name="label44.Text" xml:space="preserve">
+    <value>本地模型：</value>
+  </data>
+  <data name="label44.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="panelSlotsEditLocal.ToolTip" xml:space="preserve">
+    <value />
+  </data>
   <data name="textSlotsEditApiUrl.ToolTip" xml:space="preserve">
     <value>API 基本 URL，例如 http://localhost:1234 或 OpenAI 兼容端点。</value>
   </data>
@@ -439,18 +469,6 @@
     <value>启用此 API 槽作为工具时，向模型公开的函数名称。</value>
   </data>
   <data name="panelSlotsEditApi.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="comboSlotsEditLocalModel.ToolTip" xml:space="preserve">
-    <value>此槽使用的本地模型。</value>
-  </data>
-  <data name="label44.Text" xml:space="preserve">
-    <value>本地模型：</value>
-  </data>
-  <data name="label44.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="panelSlotsEditLocal.ToolTip" xml:space="preserve">
     <value />
   </data>
   <data name="textSlotsEditMcpHeader.ToolTip" xml:space="preserve">
@@ -896,18 +914,6 @@
   </data>
   <data name="textFileBasePath.ToolTip" xml:space="preserve">
     <value>文件访问均基于此相对路径，并严格限制在此路径下的文件和文件夹。</value>
-  </data>
-  <data name="linkFileInstruction.Location" type="System.Drawing.Point, System.Drawing">
-    <value>36, 88</value>
-  </data>
-  <data name="linkFileInstruction.Size" type="System.Drawing.Size, System.Drawing">
-    <value>127, 13</value>
-  </data>
-  <data name="linkFileInstruction.Text" xml:space="preserve">
-    <value>使用推荐的系统提示词</value>
-  </data>
-  <data name="linkFileInstruction.ToolTip" xml:space="preserve">
-    <value>设置一条指令，用于优化助手使用文件工具的方式。</value>
   </data>
   <data name="label22.Text" xml:space="preserve">
     <value>基础路径：</value>

@@ -2,20 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Newtonsoft.Json.Linq;
 namespace LMStud.Parsers{
 	internal sealed class ResponsesApiResponseParser : IAPIResponseFormatParser{
-		public bool TryParse(JObject root, string responseId, out APIClient.ChatCompletionResult result){
+		public bool TryParse(JsonNode root, string responseId, out APIClient.ChatCompletionResult result){
 			result = null;
-			if(!(root["output"] is JArray output)) return false;
+			var output = root["output"];
+			if(!output.IsArray) return false;
 			var sanitizedOutput = APIResponseParserCommon.SanitizeOutputItems(output);
 			var content = new StringBuilder();
 			var reasoning = new StringBuilder();
 			var toolCalls = new List<APIClient.ToolCall>();
-			foreach(var item in output.OfType<JObject>()){
-				var type = item.Value<string>("type");
+			foreach(var item in output.Where(item => item.IsObject)){
+				var type = item.GetString("type");
 				if(string.Equals(type, "message", StringComparison.OrdinalIgnoreCase)){
-					var role = item.Value<string>("role");
+					var role = item.GetString("role");
 					if(!string.Equals(role, "assistant", StringComparison.OrdinalIgnoreCase)) continue;
 					var messageContent = APIResponseParserCommon.ExtractContentText(item["content"]);
 					APIResponseParserCommon.AppendIfNotBlank(content, messageContent);
@@ -28,7 +28,7 @@ namespace LMStud.Parsers{
 					continue;
 				}
 				if(string.Equals(type, "output_text", StringComparison.OrdinalIgnoreCase)){
-					var messageContent = item.Value<string>("text") ?? item.Value<string>("content");
+					var messageContent = item.GetString("text") ?? item.GetString("content");
 					APIResponseParserCommon.AppendIfNotBlank(content, messageContent);
 					continue;
 				}
@@ -50,7 +50,7 @@ namespace LMStud.Parsers{
 				if(!string.IsNullOrWhiteSpace(outputText)) finalContent = outputText;
 			}
 			if(string.IsNullOrWhiteSpace(finalReasoning)){
-				var outputReasoning = APIResponseParserCommon.ExtractReasoningText(root["reasoning"] as JObject) ?? APIResponseParserCommon.ExtractContentText(root["reasoning"]);
+				var outputReasoning = APIResponseParserCommon.ExtractReasoningText(root["reasoning"]) ?? APIResponseParserCommon.ExtractContentText(root["reasoning"]);
 				if(!string.IsNullOrWhiteSpace(outputReasoning)) finalReasoning = outputReasoning;
 			}
 			if(!APIResponseParserCommon.HasResultContent(finalContent, finalReasoning, finalToolCalls)) return false;

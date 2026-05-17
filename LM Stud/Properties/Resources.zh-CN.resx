@@ -475,10 +475,6 @@
 <data name="Local" xml:space="preserve">
 	<value>本地</value>
 </data>
-<data name="main" xml:space="preserve">
-	<value>main</value>
-	<comment>固定槽位标识符，请勿翻译。</comment>
-</data>
 <data name="MCP" xml:space="preserve">
 	<value>MCP</value>
 </data>
@@ -571,5 +567,29 @@ state 为 null</value>
 </data>
 <data name="Reset_chat" xml:space="preserve">
 	<value>重置聊天</value>
+</data>
+<data name="A_model_slot_cannot_call_itself_as_a_tool_" xml:space="preserve">
+	<value>模型槽位不能将自身作为工具调用。</value>
+</data>
+<data name="Local_model_tool_slot_is_not_loaded__" xml:space="preserve">
+	<value>本地模型工具槽位未加载：</value>
+</data>
+<data name="Model_tool_slot_is_busy__" xml:space="preserve">
+	<value>模型工具槽位正忙：</value>
+</data>
+<data name="Local_model_tool_slot_could_not_generate_a_response__" xml:space="preserve">
+	<value>本地模型工具槽位无法生成响应：</value>
+</data>
+<data name="Tool_call_" xml:space="preserve">
+	<value>工具调用 </value>
+</data>
+<data name="Tool_arguments_" xml:space="preserve">
+	<value>工具参数：</value>
+</data>
+<data name="Tool_ID__" xml:space="preserve">
+	<value>工具编号：</value>
+</data>
+<data name="Tool_name__" xml:space="preserve">
+	<value>工具名称：</value>
 </data>
 </root>

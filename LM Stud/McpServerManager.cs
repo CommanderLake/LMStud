@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 namespace LMStud{
 	internal static class McpServerManager{
 		internal const int DefaultTimeoutMs = 30000;
@@ -23,8 +21,8 @@ namespace LMStud{
 		}
 		internal static string Connect(ModelSlot slot, Action<IEnumerable<string>> afterRegisteredToolsChanged = null){return Connect(slot, true, afterRegisteredToolsChanged);}
 		private static string Connect(ModelSlot slot, bool refreshRegisteredTools, Action<IEnumerable<string>> afterRegisteredToolsChanged = null){
-			if(slot == null || slot.Source != ModelSlotSource.Mcp) return JsonConvert.SerializeObject(new{ error = "Slot is not an MCP server." });
-			if(string.IsNullOrWhiteSpace(slot.Name)) return JsonConvert.SerializeObject(new{ error = "MCP slot name is required." });
+			if(slot == null || slot.Source != ModelSlotSource.Mcp) return ErrorJson("Slot is not an MCP server.");
+			if(string.IsNullOrWhiteSpace(slot.Name)) return ErrorJson("MCP slot name is required.");
 			var slotNames = GetNativeToolSlotNames();
 			var leases = refreshRegisteredTools ? ModelSlotManager.EnterSlots(slotNames) : null;
 			var endpoint = slot.GetMcpEndpoint();
@@ -32,7 +30,7 @@ namespace LMStud{
 				if(string.IsNullOrWhiteSpace(endpoint)){
 					lock(Sync) DisconnectNativeLocked(slot.Name);
 					RefreshRegisteredTools(slotNames, refreshRegisteredTools, afterRegisteredToolsChanged);
-					return JsonConvert.SerializeObject(new{ error = slot.McpTransport == McpSlotTransport.Http ? "MCP URL is required." : "MCP command line is required." });
+					return ErrorJson(slot.McpTransport == McpSlotTransport.Http ? "MCP URL is required." : "MCP command line is required.");
 				}
 				lock(Sync){
 					try{
@@ -46,20 +44,20 @@ namespace LMStud{
 					} catch(Exception ex){
 						ConnectedServerIds.Remove(slot.Name);
 						RefreshRegisteredTools(slotNames, refreshRegisteredTools, afterRegisteredToolsChanged);
-						return JsonConvert.SerializeObject(new{ error = ex.Message });
+						return ErrorJson(ex.Message);
 					}
 				}
 			} finally{ ModelSlotManager.ReleaseSlots(leases); }
 		}
 		internal static string Disconnect(string serverId, Action<IEnumerable<string>> afterRegisteredToolsChanged = null){return Disconnect(serverId, true, afterRegisteredToolsChanged);}
 		private static string Disconnect(string serverId, bool refreshRegisteredTools, Action<IEnumerable<string>> afterRegisteredToolsChanged = null){
-			if(string.IsNullOrWhiteSpace(serverId)) return JsonConvert.SerializeObject(new{ error = "MCP server id is required." });
+			if(string.IsNullOrWhiteSpace(serverId)) return ErrorJson("MCP server id is required.");
 			var slotNames = GetNativeToolSlotNames();
 			var leases = refreshRegisteredTools ? ModelSlotManager.EnterSlots(slotNames) : null;
 			try{
 				lock(Sync){
 					var response = "";
-					try{ response = DisconnectNativeLocked(serverId); } catch(Exception ex){ response = JsonConvert.SerializeObject(new{ error = ex.Message }); }
+					try{ response = DisconnectNativeLocked(serverId); } catch(Exception ex){ response = ErrorJson(ex.Message); }
 					RefreshRegisteredTools(slotNames, refreshRegisteredTools, afterRegisteredToolsChanged);
 					return response;
 				}
@@ -67,7 +65,7 @@ namespace LMStud{
 		}
 		private static string DisconnectNativeLocked(string serverId){
 			var response = "";
-			try{ response = NativeMethods.ReadUtf8AndFree(NativeMethods.MCPDisconnect(serverId)); } catch(Exception ex){ response = JsonConvert.SerializeObject(new{ error = ex.Message }); }
+			try{ response = NativeMethods.ReadUtf8AndFree(NativeMethods.MCPDisconnect(serverId)); } catch(Exception ex){ response = ErrorJson(ex.Message); }
 			ConnectedServerIds.Remove(serverId);
 			return response;
 		}
@@ -90,7 +88,7 @@ namespace LMStud{
 				bool hasTool;
 				try{ hasTool = NativeMethods.MCPHasTool(toolCall.Name); } catch{ return false; }
 				if(!hasTool) return false;
-				try{ result = NativeMethods.ReadUtf8AndFree(NativeMethods.MCPExecuteTool(toolCall.Name, toolCall.Arguments ?? "{}")); } catch(Exception ex){ result = JsonConvert.SerializeObject(new{ error = ex.Message }); }
+				try{ result = NativeMethods.ReadUtf8AndFree(NativeMethods.MCPExecuteTool(toolCall.Name, toolCall.Arguments ?? "{}")); } catch(Exception ex){ result = ErrorJson(ex.Message); }
 				return true;
 			}
 		}
@@ -105,9 +103,9 @@ namespace LMStud{
 		internal static bool IsOk(string response){
 			if(string.IsNullOrWhiteSpace(response)) return false;
 			try{
-				var obj = JObject.Parse(response);
-				return obj.Value<bool?>("ok") == true && obj["error"] == null;
-			} catch(JsonException){ return false; }
+				var obj = Json.Parse(response);
+				return obj.GetBool("ok") == true && !obj["error"].Exists;
+			} catch{ return false; }
 		}
 		private static List<string> GetNativeToolSlotNames(){
 			return ModelSlotManager.Slots.Where(slot => slot.Source != ModelSlotSource.Mcp).Select(slot => slot.Name).ToList();
@@ -120,13 +118,15 @@ namespace LMStud{
 		private static void RefreshConnectedServerIds(){
 			try{
 				var json = NativeMethods.ReadUtf8AndFree(NativeMethods.MCPListServers());
-				var array = JArray.Parse(json);
+				var array = Json.Parse(json);
 				ConnectedServerIds.Clear();
-				foreach(var item in array.OfType<JObject>()){
-					var id = item.Value<string>("id");
-					if(!string.IsNullOrWhiteSpace(id) && item.Value<bool?>("initialized") == true) ConnectedServerIds.Add(id);
+				if(!array.IsArray) return;
+				foreach(var item in array.Where(item => item.IsObject)){
+					var id = item.GetString("id");
+					if(!string.IsNullOrWhiteSpace(id) && item.GetBool("initialized") == true) ConnectedServerIds.Add(id);
 				}
 			} catch(Exception){}
 		}
+		private static string ErrorJson(string message){ return Json.Object(Json.P("error", message)).ToJson(); }
 	}
 }

@@ -11,3 +11,7 @@ bool IsJsonNull(const std::string& rawValue);
 std::string JsonEscape(const std::string& in);
 std::string JsonString(const std::string& in);
 std::string GetArgValue(const char* args, const char* key);
+std::string FormatJsonForDisplayText(const char* json);
+std::string FormatToolOutputForDisplayText(const char* result);
+std::string FormatToolCallForDisplayText(const char* message);
+std::string NormalizeJsonText(const char* json, bool indented);

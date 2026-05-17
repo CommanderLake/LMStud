@@ -22,7 +22,7 @@ std::string GetLongDateTime(const char* slotName, const char* argsJson){
 void RegisterTools(const char* slotName, const bool dateTime, const bool googleSearch, const bool webpageFetch, const bool fileList, const bool fileCreate, const bool fileRead, const bool fileWrite, const bool commandPrompt){
 	ClearTools(slotName);
 	if(dateTime) AddTool(slotName, "get_datetime", "Return local date and time", "{\"type\":\"object\",\"properties\":{},\"required\":[]}", GetLongDateTime);
-	if(googleSearch){ AddTool(slotName, "web_search", "Google search, JSON results, call get_webpage next.", "{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]}", GoogleSearch); }
+	if(googleSearch){ AddTool(slotName, "web_search", "Google search, JSON results, call get_webpage next", "{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]}", GoogleSearch); }
 	if(webpageFetch){
 		AddTool(slotName, "get_webpage", "Fetch page and preview <p>, <article> and <section> text, call get_webpage_text next", "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},\"required\":[\"url\"]}", GetWebpage);
 		AddTool(slotName, "get_webpage_text", "Get full text for a get_webpage preview", "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"},\"id\":{\"type\":\"string\"}},\"required\":[\"url\",\"id\"]}", GetWebTag);
@@ -39,8 +39,8 @@ void RegisterTools(const char* slotName, const bool dateTime, const bool googleS
 		AddTool(slotName, "file_apply_diff_patch", "Apply unified diff patch to a file", "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"},\"patch\":{\"type\":\"string\"}},\"required\":[\"path\",\"patch\"]}", ApplyPatchTool);
 	}
 	if(commandPrompt){
-		AddTool(slotName, "command_prompt_start", "Start or restart a Windows command prompt session and return the initial output.", "{\"type\":\"object\",\"properties\":{},\"required\":[]}", StartCommandPromptTool);
-		AddTool(slotName, "command_prompt_execute", "Execute a command in the active Windows command prompt session.", "{\"type\":\"object\",\"properties\":{\"command\":{\"type\":\"string\"},\"close\":{\"type\":\"boolean\"}},\"required\":[\"command\"]}", CommandPromptExecuteTool);
+		AddTool(slotName, "command_prompt_start", "Start or restart a Windows command prompt session", "{\"type\":\"object\",\"properties\":{},\"required\":[]}", StartCommandPromptTool);
+		AddTool(slotName, "command_prompt_execute", "Execute a command in the active Windows command prompt session", "{\"type\":\"object\",\"properties\":{\"command\":{\"type\":\"string\"},\"close\":{\"type\":\"boolean\"}},\"required\":[\"command\"]}", CommandPromptExecuteTool);
 	} else CloseCommandPrompt();
 }
 extern "C" void MarkToolsJsonDirty(){ _toolsJsonDirty = true; }

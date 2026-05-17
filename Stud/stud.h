@@ -13,6 +13,7 @@ namespace Stud{
 	};
 	using ToolHandlerFn = std::string(*)(const char*, const char*);
 	using TokenCallbackFn = void(*)(const char* slotName, const char* think, const char* message, int tokenCount, int tokensTotal, double ftTime, int tool);
+	using ManagedToolCallbackFn = char*(*)(const char* slotName, const char* name, const char* argsJson);
 }
 extern "C" {
 EXPORT void SetHWnd(HWND hWnd);
@@ -32,6 +33,11 @@ EXPORT void FreeAllModelSlots();
 EXPORT StudError LoadModel(const char* slotName, const char* filename, const char* jinjaTemplate, int nGPULayers, bool mMap, bool mLock, ggml_numa_strategy numaStrategy);
 EXPORT bool HasTool(const char* slotName, const char* name);
 EXPORT void SetTokenCallback(Stud::TokenCallbackFn cb);
+EXPORT void SetManagedToolCallback(Stud::ManagedToolCallbackFn cb);
+EXPORT void StreamManagedToolOutput(const char* slotName, const char* text);
+EXPORT char* FormatJsonForDisplay(const char* json);
+EXPORT char* FormatToolOutputForDisplay(const char* result);
+EXPORT char* FormatToolCallForDisplay(const char* message);
 EXPORT void SetThreadCount(int n, int batchSize);
 EXPORT int LlamaMemSize(const char* slotName);
 EXPORT int GetStateSize(const char* slotName);
@@ -47,7 +53,7 @@ EXPORT StudError AddMessage(const char* slotName, Stud::MessageRole role, const 
 EXPORT StudError SyncChatMessages(const char* slotName, const int* roles, const char** thinks, const char** messages, int count);
 EXPORT StudError SyncChatMessagesJson(const char* slotName, const char* messagesJson);
 EXPORT StudError GenerateWithTools(const char* slotName, Stud::MessageRole role, const char* prompt, int nPredict, bool callback);
-EXPORT StudError GenerateForAPI(const char* slotName, Stud::MessageRole role, const char* prompt, const char* toolsJson, int nPredict, char** responseJson);
+EXPORT StudError GenerateForAPI(const char* slotName, Stud::MessageRole role, const char* prompt, const char* toolsJson, int nPredict, bool callback, char** responseJson);
 EXPORT void StopGeneration(const char* slotName);
 EXPORT const char* GetLastErrorMessage();
 EXPORT void ClearLastErrorMessage();

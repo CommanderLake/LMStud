@@ -130,7 +130,10 @@ namespace LMStud{
 			panelChat.AutoScrollEnable = checkAutoScroll.Checked;
 		}
 		internal void CheckMarkdown_CheckedChanged(object sender, EventArgs e){
-			foreach(var message in ChatMessages) message.Markdown = checkMarkdown.Checked;
+			foreach(var message in ChatMessages) message.Markdown = ShouldUseMarkdown(message);
+		}
+		private bool ShouldUseMarkdown(ChatMessageControl message){
+			return checkMarkdown.Checked && message.Role != MessageRole.Tool && (message.ApiToolCalls == null || message.ApiToolCalls.Count == 0);
 		}
 		private void CheckVoiceInput_CheckedChanged(object sender, EventArgs e){
 			try{
@@ -322,7 +325,7 @@ namespace LMStud{
 		internal void MsgButEditCancelOnClick(ChatMessageControl cm){
 			if(Generation.Generating || !cm.Editing) return;
 			cm.Editing = false;
-			cm.Markdown = checkMarkdown.Checked;
+			cm.Markdown = ShouldUseMarkdown(cm);
 			if(ChatMessages.All(msg => !msg.Editing)) panelChat.AutoScrollEnable = checkAutoScroll.Checked;
 		}
 		internal void MsgButEditApplyOnClick(ChatMessageControl cm){
@@ -342,8 +345,9 @@ namespace LMStud{
 						if(result == NativeMethods.StudError.Success){
 							cm.Think = newThink;
 							cm.Message = newMessage;
+							cm.ApiContent = null;
 							cm.Editing = false;
-							cm.Markdown = checkMarkdown.Checked;
+							cm.Markdown = ShouldUseMarkdown(cm);
 							if(ChatMessages.All(msg => !msg.Editing)) panelChat.AutoScrollEnable = checkAutoScroll.Checked;
 						}
 						else MessageBox.Show(this, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
@@ -354,7 +358,8 @@ namespace LMStud{
 		}
 		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)(((e.Delta/8) << 16) & 0xffff0000), IntPtr.Zero);}
 		internal ChatMessageControl AddMessage(MessageRole role, string think, string message, List<APIClient.ToolCall> toolCalls = null, string toolCallId = null){
-			var cm = new ChatMessageControl(role, think, message ?? "", checkMarkdown.Checked){ ApiToolCalls = toolCalls, ApiToolCallId = toolCallId };
+			var useMarkdown = checkMarkdown.Checked && role != MessageRole.Tool && (toolCalls == null || toolCalls.Count == 0);
+			var cm = new ChatMessageControl(role, think, message ?? "", useMarkdown){ ApiToolCalls = toolCalls, ApiToolCallId = toolCallId };
 			cm.Parent = panelChat;
 			cm.Width = panelChat.ClientSize.Width;
 			cm.butDelete.Click += (o, args) => MsgButDeleteOnClick(cm);

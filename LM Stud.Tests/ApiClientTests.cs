@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using LMStud;
 using LMStud.Parsers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json.Linq;
 namespace LM_Stud.Tests{
 	[TestClass]
 	public class ApiClientTests{
@@ -21,32 +20,30 @@ namespace LM_Stud.Tests{
 			};
 			var items = APIClient.BuildInputItems(messages);
 			Assert.AreEqual(1, items.Count, "Assistant tool calls without text should emit just the Responses function call item.");
-			Assert.AreEqual("function_call", (string)items[0]["type"], "Tool call should use the Responses function call item shape.");
-			Assert.AreEqual("call_1", (string)items[0]["call_id"], "Tool call id should be preserved.");
+			Assert.AreEqual("function_call", items[0].GetString("type"), "Tool call should use the Responses function call item shape.");
+			Assert.AreEqual("call_1", items[0].GetString("call_id"), "Tool call id should be preserved.");
 		}
 		[TestMethod]
 		public void AppendOutputItems_WithAssistantMessage_NormalizesForResponsesInput(){
-			var history = new JArray();
-			var output = new JArray(new JObject{
-				["type"] = "message", ["status"] = "completed", ["role"] = "assistant",
-				["content"] = new JArray(new JObject{ ["type"] = "output_text", ["text"] = "hello" })
-			});
+			var history = Json.ArrayBuilder();
+			var output = Json.Array(Json.Object(Json.P("type", "message"), Json.P("status", "completed"), Json.P("role", "assistant"),
+				Json.P("content", Json.Array(Json.Object(Json.P("type", "output_text"), Json.P("text", "hello"))))));
 			var result = new APIClient.ChatCompletionResult("hello", null, null, "resp_1", output);
 			APIClient.AppendOutputItems(history, result);
 			Assert.AreEqual(1, history.Count, "Assistant output message should become one input message.");
-			Assert.AreEqual("assistant", (string)history[0]["role"], "Assistant role should be preserved.");
-			Assert.AreEqual("hello", (string)history[0]["content"], "Output text should be replayed as input content.");
+			Assert.AreEqual("assistant", history[0].GetString("role"), "Assistant role should be preserved.");
+			Assert.AreEqual("hello", history[0].GetString("content"), "Output text should be replayed as input content.");
 		}
 		[TestMethod]
 		public void AppendOutputItems_WithToolCallsWithoutOutputItems_ReplaysToolCall(){
-			var history = new JArray();
+			var history = Json.ArrayBuilder();
 			var toolCalls = new List<APIClient.ToolCall>{ new APIClient.ToolCall("call_1", "lookup", "{\"term\":\"weather\"}") };
-			var result = new APIClient.ChatCompletionResult("", null, toolCalls, "chatcmpl_1", null);
+			var result = new APIClient.ChatCompletionResult("", null, toolCalls, "chatcmpl_1", JsonNode.Missing);
 			APIClient.AppendOutputItems(history, result);
 			Assert.AreEqual(1, history.Count, "Fallback parsers should still replay assistant tool calls.");
-			Assert.AreEqual("function_call", (string)history[0]["type"], "Tool call should be replayed in Responses input shape.");
-			Assert.AreEqual("call_1", (string)history[0]["call_id"], "Tool call id should be preserved for the following tool output.");
-			Assert.AreEqual("lookup", (string)history[0]["name"], "Tool name should be preserved.");
+			Assert.AreEqual("function_call", history[0].GetString("type"), "Tool call should be replayed in Responses input shape.");
+			Assert.AreEqual("call_1", history[0].GetString("call_id"), "Tool call id should be preserved for the following tool output.");
+			Assert.AreEqual("lookup", history[0].GetString("name"), "Tool name should be preserved.");
 		}
 		[TestMethod]
 		public void ParseResponseBody_WithResponsesUsage_ReadsTotalTokens(){
@@ -120,9 +117,9 @@ namespace LM_Stud.Tests{
 			var toolMessage = new APIClient.ChatMessage("tool", "ok");
 			Assert.ThrowsExactly<InvalidOperationException>(() => APIClient.BuildInputMessagePayload(toolMessage));
 			toolMessage.ToolCallId = "call_123";
-			var payload = (JObject)APIClient.BuildInputMessagePayload(toolMessage);
-			Assert.AreEqual("function_call_output", (string)payload["type"], "Tool message should map to function call output.");
-			Assert.AreEqual("call_123", (string)payload["call_id"], "Call id should be included for tool messages.");
+			var payload = APIClient.BuildInputMessagePayload(toolMessage);
+			Assert.AreEqual("function_call_output", payload.GetString("type"), "Tool message should map to function call output.");
+			Assert.AreEqual("call_123", payload.GetString("call_id"), "Call id should be included for tool messages.");
 		}
 		[TestMethod]
 		public void CreateChatCompletion_WithReasoning_AddsReasoningToResponsesPayload(){
@@ -141,12 +138,13 @@ namespace LM_Stud.Tests{
 					ctx.Response.Close();
 				});
 				var client = new APIClient(baseUrl, "", "test-model", false, reasoningEffort: 2);
-				var history = new JArray{ new JObject{ ["role"] = "user", ["content"] = "hello" } };
+				var history = Json.ArrayBuilder();
+				history.Add(Json.Object(Json.P("role", "user"), Json.P("content", "hello")));
 				var result = client.CreateChatCompletion(history, 0.5f, 128, null, null, CancellationToken.None);
 				Assert.AreEqual("ok", result.Content, "Responses result should parse.");
 				Assert.IsTrue(server.Wait(1000), "Test server should finish handling the request.");
-				var payload = JObject.Parse(requestBody);
-				Assert.AreEqual("low", (string)payload["reasoning"]?["effort"], "Reasoning effort should be forwarded to the Responses payload.");
+				var payload = Json.Parse(requestBody);
+				Assert.AreEqual("low", payload["reasoning"].GetString("effort"), "Reasoning effort should be forwarded to the Responses payload.");
 			}
 		}
 		[TestMethod]
@@ -170,7 +168,8 @@ namespace LM_Stud.Tests{
 					chatCtx.Response.Close();
 				});
 				var client = new APIClient(baseUrl, "", "test-model", false);
-				var history = new JArray{ new JObject{ ["role"] = "user", ["content"] = "hello" } };
+				var history = Json.ArrayBuilder();
+				history.Add(Json.Object(Json.P("role", "user"), Json.P("content", "hello")));
 				var result = client.CreateChatCompletion(history, 0.5f, 128, "[]", null, CancellationToken.None);
 				Assert.AreEqual("fallback ok", result.Content, "Client should use chat completions as a fallback.");
 				Assert.IsTrue(server.Wait(1000), "Test server should finish handling both requests.");

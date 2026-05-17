@@ -217,8 +217,9 @@ namespace LMStud{
 				if(slotLock == null) return;
 			}
 			try{
-				var prompt = GetSystemPromptForSlot(slotName);
-				var error = NativeChat.SetSystemPrompt(slotName, prompt.Length > 0 ? prompt : DefaultPrompt, Common.GoogleSearchEnable && Common.WebpageFetchEnable ? FetchPrompt : "");
+				var prompt = GetSystemPromptResolutionForSlot(slotName);
+				var systemPrompt = prompt.Text.Length > 0 || prompt.IsOverride ? prompt.Text : DefaultPrompt;
+				var error = NativeChat.SetSystemPrompt(slotName, systemPrompt, Common.GoogleSearchEnable && Common.WebpageFetchEnable ? FetchPrompt : "");
 				if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowError(Resources.Error_setting_system_prompt, error);
 			} finally{ slotLock?.Dispose(); }
 		}
@@ -238,13 +239,26 @@ namespace LMStud{
 			if(sorter != null) items.Sort((x, y) => sorter.Compare(x, y));
 			return items;
 		}
-		private string GetSystemPromptForSlot(string slotName){
+		private SystemPromptResolution GetSystemPromptResolutionForSlot(string slotName){
+			var slot = ModelSlotManager.GetSlot(slotName);
+			if(slot?.OverrideSystemPrompt == true) return new SystemPromptResolution(slot.Instructions ?? "", true);
 			if(!string.IsNullOrWhiteSpace(slotName) && Common.LoadedLocalSlots.TryGetValue(slotName, out var loadedModel) && loadedModel?.SubItems.Count > 1)
-				if(TryGetEnabledModelSettings(loadedModel.SubItems[1].Text, out var overrides)) return overrides.SystemPrompt ?? "";
-			return Common.SystemPrompt ?? "";
+				if(TryGetEnabledModelSettings(loadedModel.SubItems[1].Text, out var overrides)) return new SystemPromptResolution(overrides.SystemPrompt ?? "", true);
+			return new SystemPromptResolution(Common.SystemPrompt ?? "", false);
+		}
+		private bool SlotUsesInheritedSystemPrompt(string slotName){
+			return !(ModelSlotManager.GetSlot(slotName)?.OverrideSystemPrompt ?? false);
 		}
 		private string GetSystemPromptForModel(string modelPathOrName){
 			return TryGetEnabledModelSettings(ResolveModelPath(modelPathOrName), out var overrides) ? overrides.SystemPrompt ?? "" : Common.SystemPrompt ?? "";
+		}
+		private sealed class SystemPromptResolution{
+			internal readonly bool IsOverride;
+			internal readonly string Text;
+			internal SystemPromptResolution(string text, bool isOverride){
+				Text = text ?? "";
+				IsOverride = isOverride;
+			}
 		}
 		private string ResolveModelPath(string modelPathOrName){
 			if(string.IsNullOrWhiteSpace(modelPathOrName)) return "";

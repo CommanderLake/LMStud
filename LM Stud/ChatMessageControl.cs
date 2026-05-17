@@ -17,6 +17,8 @@ namespace LMStud{
 		internal readonly MessageRole Role;
 		internal List<APIClient.ToolCall> ApiToolCalls;
 		internal string ApiToolCallId;
+		internal string ApiContent;
+		internal string ApiMessageContent => ApiContent ?? Message ?? "";
 		private bool _markdown;
 		private bool _markdownLast;
 		private string _message;

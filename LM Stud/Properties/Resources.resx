@@ -264,7 +264,7 @@
     <value>Error creating sampler</value>
   </data>
   <data name="The_modified_settings_are_overridden_" xml:space="preserve">
-    <value>The modified settings are overridden by the Model Settings for this model.</value>
+    <value>The modified settings are overridden by model or slot settings for at least one loaded slot.</value>
   </data>
   <data name="Max_context_size_of_last_loaded_model" xml:space="preserve">
     <value>Maximum context size of the last loaded model: </value>
@@ -441,10 +441,7 @@ Tool arguments: </value>
   <data name="MCP_command_is_required_when_the_MCP_slot_is_enabled_as_a_tool_" xml:space="preserve">
     <value>MCP command is required when the MCP slot is enabled as a tool.</value>
   </data>
-  <data name="main" xml:space="preserve">
-    <value>main</value>
-  </data>
-  <data name="Connect" xml:space="preserve">
+<data name="Connect" xml:space="preserve">
     <value>Connect</value>
   </data>
   <data name="Disconnect" xml:space="preserve">
@@ -567,5 +564,29 @@ state is null</value>
 </data>
 <data name="Reset_chat" xml:space="preserve">
 	<value>Reset chat</value>
+</data>
+<data name="A_model_slot_cannot_call_itself_as_a_tool_" xml:space="preserve">
+	<value>A model slot cannot call itself as a tool.</value>
+</data>
+<data name="Local_model_tool_slot_is_not_loaded__" xml:space="preserve">
+	<value>Local model tool slot is not loaded: </value>
+</data>
+<data name="Model_tool_slot_is_busy__" xml:space="preserve">
+	<value>Model tool slot is busy: </value>
+</data>
+<data name="Local_model_tool_slot_could_not_generate_a_response__" xml:space="preserve">
+	<value>Local model tool slot could not generate a response: </value>
+</data>
+<data name="Tool_name__" xml:space="preserve">
+	<value>Tool name: </value>
+</data>
+<data name="Tool_ID__" xml:space="preserve">
+	<value>Tool ID: </value>
+</data>
+<data name="Tool_arguments_" xml:space="preserve">
+	<value>Tool arguments:</value>
+</data>
+<data name="Tool_call_" xml:space="preserve">
+	<value>Tool call </value>
 </data>
 </root>

@@ -6,8 +6,6 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 using LMStud.Properties;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 namespace LMStud{
 	public partial class Form1{
 		private const string ApiUrl = "https://huggingface.co/api/models";
@@ -43,7 +41,7 @@ namespace LMStud{
 					NativeMethods.FreeMemory(resPtr);
 					if(json == null) throw new ArgumentNullException();
 					if(json.StartsWith("Error:") || json.StartsWith("{\"error\":")) throw new Exception(json);
-					var models = JArray.Parse(json);
+					var models = Json.Parse(json);
 					Invoke(new MethodInvoker(() => {
 						listViewHugSearch.BeginUpdate();
 						listViewHugSearch.Items.Clear();
@@ -51,13 +49,14 @@ namespace LMStud{
 					}));
 					var items = new List<ListViewItem>();
 					foreach(var modelToken in models){
-						var model = (JObject)modelToken;
-						var hfModel = model.ToObject<HugModel>();
-						if(hfModel?.ID == null) continue;
-						var parts = hfModel.ID.Split('/');
+						if(!modelToken.IsObject) continue;
+						var id = modelToken.GetString("id");
+						if(id == null) continue;
+						var parts = id.Split('/');
 						var uploader = parts.Length > 1 ? parts[0] : "";
-						var modelName = parts.Length > 1 ? parts[1] : hfModel.ID;
-						items.Add(new ListViewItem(new[]{ modelName, uploader, hfModel.Likes, hfModel.Downloads, hfModel.TrendingScore, hfModel.CreatedAt, hfModel.LastModified }));
+						var modelName = parts.Length > 1 ? parts[1] : id;
+						items.Add(new ListViewItem(new[]{ modelName, uploader, modelToken.GetString("likes"), modelToken.GetString("downloads"), modelToken.GetString("trendingScore"),
+							modelToken.GetString("createdAt"), modelToken.GetString("lastModified") }));
 					}
 					if(items.Count > 0) Invoke(new MethodInvoker(() => {listViewHugSearch.Items.AddRange(items.ToArray());}));
 				} catch(Exception ex){
@@ -90,13 +89,14 @@ namespace LMStud{
 					NativeMethods.FreeMemory(resPtr);
 					if(infoJson == null) throw new ArgumentNullException();
 					if(infoJson.StartsWith("Error:")) throw new Exception(infoJson);
-					var info = JObject.Parse(infoJson);
-					if(!info.TryGetValue("siblings", out var siblings) || !(siblings is JArray siblingsArray)) return;
+					var info = Json.Parse(infoJson);
+					var siblingsArray = info["siblings"];
+					if(!siblingsArray.IsArray) return;
 					var items = new List<ListViewItem>();
 					foreach(var file in siblingsArray){
-						if(!(file is JObject fileObject)) continue;
-						var fileName = fileObject.Value<string>("rfilename") ?? fileObject.Value<string>("filename");
-						var fileSize = fileObject.Value<long?>("size");
+						if(!file.IsObject) continue;
+						var fileName = file.GetString("rfilename") ?? file.GetString("filename");
+						var fileSize = file.GetLong("size");
 						if(string.IsNullOrEmpty(fileName)) continue;
 						if(!fileName.EndsWith(fileExt, StringComparison.OrdinalIgnoreCase)) continue;
 						var sizeDisplay = fileSize.HasValue ? $"{fileSize.Value/1048576:F2} MB" : "";
@@ -108,7 +108,7 @@ namespace LMStud{
 					Invoke(new MethodInvoker(() => {
 						MessageBox.Show(this, string.Format(Resources.HTTP_Error_loading_files_for_ + Resources._0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 					}));
-				} catch(JsonException ex){
+				} catch(InvalidOperationException ex){
 					Invoke(new MethodInvoker(() => {
 						MessageBox.Show(this, string.Format(Resources.JSON_Parse_Error_for_ + Resources._0____1_, repoId, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 					}));
@@ -167,14 +167,6 @@ namespace LMStud{
 					}));
 				}
 			});
-		}
-		public class HugModel{
-			public string CreatedAt = null;
-			public string Downloads = null;
-			public string ID = null;
-			public string LastModified = null;
-			public string Likes = null;
-			public string TrendingScore = null;
 		}
 	}
 }

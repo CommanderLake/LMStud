@@ -25,7 +25,8 @@ namespace LMStud {
 		}
 		private static readonly object APICancelSync = new object();
 		private static CancellationTokenSource _apiGenCts;
-		private static Action<string> _apiTokenCallback;
+		private static readonly object ApiTokenCallbacksSync = new object();
+		private static readonly Dictionary<string, ApiTokenStream> ApiTokenStreams = new Dictionary<string, ApiTokenStream>(StringComparer.OrdinalIgnoreCase);
 		private static readonly Stopwatch SwRate = new Stopwatch();
 		private static readonly Stopwatch SwTot = new Stopwatch();
 		private static ChatMessageControl _cntAssMsg;
@@ -153,6 +154,7 @@ namespace LMStud {
 		internal static void EndUiGeneration(){Interlocked.Exchange(ref _uiGenerationActive, 0);}
 		private static ChatMessageControl AddGeneratedAssistantMessage(string slotName, string think, string message, List<APIClient.ToolCall> toolCalls = null){
 			var control = MainForm.AddMessage(MessageRole.Assistant, think, message, toolCalls);
+			if(toolCalls != null && toolCalls.Count > 0) control.Markdown = false;
 			if(!string.IsNullOrWhiteSpace(slotName)) control.SetRoleText(slotName);
 			return control;
 		}
@@ -172,25 +174,15 @@ namespace LMStud {
 			foreach(var msg in MainForm.ChatMessages){
 				var hasToolCalls = msg.ApiToolCalls != null && msg.ApiToolCalls.Count > 0;
 				if(msg.Role == MessageRole.Tool && string.IsNullOrWhiteSpace(msg.ApiToolCallId)) continue;
-				if(string.IsNullOrWhiteSpace(msg.Message) && !hasToolCalls) continue;
-				var apiMessage = new APIClient.ChatMessage(RoleToApiRole(msg.Role), hasToolCalls ? StripToolCallDisplayText(msg.Message) : msg.Message);
+				var content = msg.ApiMessageContent;
+				if(string.IsNullOrWhiteSpace(content) && !hasToolCalls) continue;
+				var apiMessage = new APIClient.ChatMessage(RoleToApiRole(msg.Role), content);
 				if(hasToolCalls) apiMessage.ToolCalls = msg.ApiToolCalls;
 				if(!string.IsNullOrWhiteSpace(msg.ApiToolCallId)) apiMessage.ToolCallId = msg.ApiToolCallId;
 				messages.Add(apiMessage);
 			}
 			if(!addToChat && !string.IsNullOrWhiteSpace(prompt)) messages.Add(new APIClient.ChatMessage(RoleToApiRole(role), prompt));
 			return messages;
-		}
-		private static string StripToolCallDisplayText(string content){
-			if(string.IsNullOrEmpty(content)) return content;
-			var index = IndexOfToolCallDisplayText(content);
-			if(index < 0) return content;
-			return content.Substring(0, index).TrimEnd();
-		}
-		private static int IndexOfToolCallDisplayText(string content){
-			var markers = new[]{ Resources.__Tool_name_, Resources._Tool_name_, "\nTool name: ", "\nTool name:", "\n工具名称：", "\n工具名称" };
-			foreach(var index in from marker in markers where !string.IsNullOrEmpty(marker) select content.IndexOf(marker, StringComparison.OrdinalIgnoreCase) into index where index >= 0 select index) return index;
-			return -1;
 		}
 		private static NativeMethods.StudError SyncNativeChatMessages(string slotName){
 			if(MainForm.IsDisposed) return NativeMethods.StudError.Success;
@@ -204,7 +196,7 @@ namespace LMStud {
 					var msg = MainForm.ChatMessages[i];
 					roles[i] = msg.Role;
 					thinks[i] = msg.Think ?? "";
-					messages[i] = msg.Message ?? "";
+					messages[i] = msg.ApiMessageContent;
 				}
 			});
 			var result = NativeMethods.ResetChat(slotName);
@@ -255,16 +247,19 @@ namespace LMStud {
 						var reasoning = result.Reasoning;
 						var toolCalls = result.ToolCalls;
 						if(!string.IsNullOrWhiteSpace(content) || (toolCalls != null && toolCalls.Count > 0) || !string.IsNullOrWhiteSpace(reasoning)){
-							if(toolCalls != null && toolCalls.Count > 0)
-								content = toolCalls.Aggregate(content, (current, toolCall) => current + Resources.__Tool_name_ + toolCall.Name + Resources.__Tool_ID_ + toolCall.Id + Resources.__Tool_arguments_ + toolCall.Arguments);
+							var displayContent = toolCalls != null && toolCalls.Count > 0 ? Tools.FormatToolCallDisplayText(content, toolCalls) : content;
 							try{
 								MainForm.Invoke(new MethodInvoker(() => {
-									var message = streamedMessage ?? AddGeneratedAssistantMessage(slot.Name, reasoning ?? "", content ?? "", toolCalls);
+									var message = streamedMessage ?? AddGeneratedAssistantMessage(slot.Name, reasoning ?? "", displayContent ?? "", toolCalls);
 									if(streamedMessage != null){
 										message.ApiToolCalls = toolCalls;
-										message.UpdateText(reasoning ?? "", content ?? "", true);
+										message.UpdateText(reasoning ?? "", displayContent ?? "", true);
 									}
-									if(toolCalls != null && toolCalls.Count > 0) message.SetRoleText(Resources.Tool_Call);
+									if(toolCalls != null && toolCalls.Count > 0){
+										message.ApiContent = content ?? "";
+										message.Markdown = false;
+										message.SetRoleText(Resources.Tool_Call);
+									}
 									if(Common.Speak && !string.IsNullOrWhiteSpace(content)) TTS.QueueSpeech(content);
 								}));
 							} catch(ObjectDisposedException){}
@@ -274,16 +269,15 @@ namespace LMStud {
 						if(toolSignature == lastToolSignature) throw new InvalidOperationException(Resources.Repeated_tool_calls_detected);
 						lastToolSignature = toolSignature;
 						foreach(var toolCall in toolCalls){
-							var toolResult = Tools.ExecuteToolCall(toolCall);
+							var toolStream = streamOutput ? new ToolStreamRenderer(toolCall.Id) : null;
+							var toolResult = Tools.ExecuteToolCall(toolCall, slot.Name, toolStream == null ? (Action<string>)null : toolStream.Append);
 							var toolMessage = new APIClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id };
 							history.Add(APIClient.BuildInputMessagePayload(toolMessage));
-							if(string.IsNullOrWhiteSpace(toolResult)) continue;
-							try{
-								MainForm.Invoke(new MethodInvoker(() => {
-									var toolMessageControl = MainForm.AddMessage(MessageRole.Tool, "", toolResult, null, toolCall.Id);
-									toolMessageControl.SetRoleText(Resources.Tool_Output);
-								}));
-							} catch(ObjectDisposedException){}
+							if(toolStream != null){
+								if(!string.IsNullOrWhiteSpace(toolResult) || toolStream.HasContent) toolStream.Complete(toolResult);
+								continue;
+							}
+							if(!string.IsNullOrWhiteSpace(toolResult)) Tools.AddToolOutputMessage(toolCall.Id, toolResult);
 						}
 					}
 				}
@@ -358,7 +352,7 @@ namespace LMStud {
 			}
 			if(err != NativeMethods.StudError.Success) MainForm.ShowError(Resources.API_Server, Resources.SetStateData, true);
 		}
-		internal static bool GenerateForApiServer(string slotName, byte[] state, IntPtr chatState, string historyJson, MessageRole role, string prompt, string toolsJson, out APIClient.ChatCompletionResult result, out byte[] newState, out IntPtr newChatState, out int tokenCount){
+		internal static bool GenerateForApiServer(string slotName, byte[] state, IntPtr chatState, string historyJson, MessageRole role, string prompt, string toolsJson, out APIClient.ChatCompletionResult result, out byte[] newState, out IntPtr newChatState, out int tokenCount, int? maxTokens = null, string instructions = null, Action<string> streamCallback = null){
 			result = null;
 			newState = null;
 			newChatState = IntPtr.Zero;
@@ -366,10 +360,16 @@ namespace LMStud {
 			if(prompt == null) return false;
 			if(string.IsNullOrWhiteSpace(slotName) || !NativeMethods.IsModelSlotLoaded(slotName)) return false;
 			Interlocked.Increment(ref _apiServerGenCount);
-			_apiTokenCallback = null;
-			var originalState = GetState(slotName);
-			var chatSnapshot = NativeMethods.CaptureChatState(slotName);
+			byte[] originalState = null;
+			var chatSnapshot = IntPtr.Zero;
 			try{
+				SetApiTokenCallback(slotName, streamCallback);
+				originalState = GetState(slotName);
+				chatSnapshot = NativeMethods.CaptureChatState(slotName);
+				if(!string.IsNullOrWhiteSpace(instructions)){
+					var promptResult = NativeMethods.SetSystemPrompt(slotName, instructions, "");
+					if(promptResult != NativeMethods.StudError.Success) return false;
+				}
 				// API server requests borrow a loaded slot; restore llama state plus Stud chat metadata so other chats keep their place.
 				if(!string.IsNullOrWhiteSpace(historyJson)){
 					var resetResult = NativeMethods.ResetChat(slotName);
@@ -385,7 +385,7 @@ namespace LMStud {
 					var resetResult = NativeMethods.ResetChat(slotName);
 					if(resetResult != NativeMethods.StudError.Success) return false;
 				}
-				var generationError = NativeMethods.GenerateForAPI(slotName, role, prompt, toolsJson, Common.NGen, out var responsePtr);
+				var generationError = NativeMethods.GenerateForAPI(slotName, role, prompt, toolsJson, maxTokens ?? Common.NGen, streamCallback != null, out var responsePtr);
 				if(generationError != NativeMethods.StudError.Success) return false;
 				if(responsePtr == IntPtr.Zero) return false;
 				try{ result = APIResponseParser.ParseResponseBody(ReadNativeUtf8(responsePtr)); }
@@ -396,11 +396,40 @@ namespace LMStud {
 				tokenCount = NativeMethods.LlamaMemSize(slotName);
 				return true;
 			} finally{
-				SetState(slotName, originalState);
+				if(originalState != null) SetState(slotName, originalState);
 				if(chatSnapshot != IntPtr.Zero) try{ NativeMethods.RestoreChatState(slotName, chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
-				_apiTokenCallback = null;
+				SetApiTokenCallback(slotName, null);
 				Interlocked.Decrement(ref _apiServerGenCount);
 				if(MainForm != null) try{ MainForm.Invoke((MethodInvoker)(() => STT.RetryStart())); } catch(ObjectDisposedException){}
+			}
+		}
+		private static void SetApiTokenCallback(string slotName, Action<string> callback){
+			if(string.IsNullOrWhiteSpace(slotName)) return;
+			lock(ApiTokenCallbacksSync){
+				if(callback == null) ApiTokenStreams.Remove(slotName.Trim());
+				else ApiTokenStreams[slotName.Trim()] = new ApiTokenStream(callback);
+			}
+		}
+		private static ApiTokenStream GetApiTokenStream(string slotName){
+			if(string.IsNullOrWhiteSpace(slotName)) return null;
+			lock(ApiTokenCallbacksSync){
+				ApiTokenStreams.TryGetValue(slotName.Trim(), out var stream);
+				return stream;
+			}
+		}
+		private sealed class ApiTokenStream{
+			private readonly object _sync = new object();
+			private readonly Action<string> _callback;
+			private string _lastMessage = "";
+			internal ApiTokenStream(Action<string> callback){ _callback = callback; }
+			internal void Emit(string message){
+				if(string.IsNullOrEmpty(message)) return;
+				string delta;
+				lock(_sync){
+					delta = message.StartsWith(_lastMessage, StringComparison.Ordinal) ? message.Substring(_lastMessage.Length) : message;
+					_lastMessage = message;
+				}
+				if(!string.IsNullOrEmpty(delta)) _callback(delta);
 			}
 		}
 		private static string ReadNativeUtf8(IntPtr ptr){
@@ -416,9 +445,9 @@ namespace LMStud {
 			return -1;
 		}
 		private static void TokenCallback(string slotName, string think, string message, int tokenCount, int tokensTotal, double ftTime, int tool){
-			if(_apiTokenCallback != null){
-				if(message.Length <= 0) return;
-				_apiTokenCallback?.Invoke(message);
+			var apiTokenStream = tool == 0 ? GetApiTokenStream(slotName) : null;
+			if(apiTokenStream != null){
+				try{ apiTokenStream.Emit(message); } catch{}
 				return;
 			}
 			var elapsed = SwRate.Elapsed.TotalSeconds;
@@ -426,8 +455,9 @@ namespace LMStud {
 			if(tool > 0){// 1 == tool output, 2 = CMD output stream, 3 = tool call details
 				try{
 					MainForm.BeginInvoke(new MethodInvoker(() => {
+						var displayMessage = Tools.FormatToolMessageForDisplay(tool, message);
 						if(_cntToolMsg == null){
-							_cntToolMsg = MainForm.AddMessage(MessageRole.Tool, "", message);
+							_cntToolMsg = MainForm.AddMessage(MessageRole.Tool, "", displayMessage);
 							switch(tool){
 								case 1:
 								case 2: _cntToolMsg.SetRoleText(Resources.Tool_Output);
@@ -436,7 +466,8 @@ namespace LMStud {
 									break;
 							}
 						}
-						else{ _cntToolMsg.UpdateText("", message, true); }
+						else{ _cntToolMsg.UpdateText("", displayMessage, true); }
+						if(tool == 1) _cntToolMsg.ApiContent = message ?? "";
 						_cntAssMsg = null;
 						MainForm.labelTokens.Text = FormatTokenLabel(tokensTotal);
 						if(tool == 1 || tool == 3) _cntToolMsg = null;

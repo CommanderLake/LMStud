@@ -49,10 +49,7 @@ namespace LMStud{
 		}
 		private void TextSlotsEditName_TextChanged(object sender, EventArgs e) {
 			if(_populatingSlotEditor) return;
-			var generated = ModelSlotManager.BuildToolName(textSlotsEditName.Text);
-			if(!string.IsNullOrWhiteSpace(textSlotsEditApiToolName.Text) && !string.Equals(textSlotsEditApiToolName.Text, _slotEditorAutoToolName, StringComparison.OrdinalIgnoreCase)) return;
-			textSlotsEditApiToolName.Text = generated;
-			_slotEditorAutoToolName = generated;
+			UpdateAutoToolNamesForNameChange();
 		}
 		private void ComboSlotsEditSource_SelectedIndexChanged(object sender, EventArgs e) {
 			if(comboSlotsEditSource.SelectedIndex < 0) comboSlotsEditSource.SelectedIndex = 0;
@@ -73,18 +70,24 @@ namespace LMStud{
 			checkSlotsEditChat.Enabled = !mcp;
 			checkSlotsEditDialectic.Enabled = local;
 			checkSlotsEditServer.Enabled = !mcp;
-			checkSlotsEditTool.Enabled = api || mcp;
+			checkSlotsEditTool.Enabled = true;
+			UpdateAutoToolNameForCurrentSource();
 			if(!_populatingSlotEditor && mcp){
 				checkSlotsEditChat.Checked = false;
 				checkSlotsEditDialectic.Checked = false;
 				checkSlotsEditServer.Checked = false;
 				checkSlotsEditTool.Checked = true;
 			}
-			if(!_populatingSlotEditor && !api && !mcp) checkSlotsEditTool.Checked = false;
 			if(!_populatingSlotEditor && !local) checkSlotsEditDialectic.Checked = false;
+			if(!_populatingSlotEditor && !local) checkSlotsEditLocalOverride.Checked = false;
+			UpdateSlotSystemPromptUi();
 		}
 		private void ComboSlotsEditLocalModel_SelectedIndexChanged(object sender, EventArgs e){
-			textSlotsEditSystemPrompt.Text = GetSystemPromptForModel(GetSlotsEditLocalModelPath());
+			if(!_populatingSlotEditor && GetSlotEditorSource() == ModelSlotSource.Local && !checkSlotsEditLocalOverride.Checked)
+				textSlotsEditSystemPrompt.Text = GetSystemPromptForModel(GetSlotsEditLocalModelPath());
+		}
+		private void CheckSlotsEditLocalOverride_CheckedChanged(object sender, EventArgs e){
+			UpdateSlotSystemPromptUi();
 		}
 		private void ButSlotsAdd_Click(object sender, EventArgs e){
 			if(!TryReadSlotEditor(null, true, out var slot)) return;
@@ -197,17 +200,21 @@ namespace LMStud{
 				checkSlotsEditStore.Checked = slot.ApiStore;
 				SetComboSelectedIndex(comboSlotEditReasonEffort, slot.ApiReasoningEffort);
 				SetComboSelectedIndex(comboSlotEditReasonSummary, slot.ApiReasoningSummary);
-				textSlotsEditSystemPrompt.Text = slot.Source == ModelSlotSource.Mcp ? "" : slot.Instructions ?? "";
+				checkSlotsEditLocalOverride.Checked = slot.Source == ModelSlotSource.Local && slot.OverrideSystemPrompt;
+				if(slot.Source == ModelSlotSource.Mcp) textSlotsEditSystemPrompt.Text = "";
+				else if(slot.Source == ModelSlotSource.Local && !slot.OverrideSystemPrompt) textSlotsEditSystemPrompt.Text = GetSystemPromptForModel(slot.ResolveLocalPath());
+				else textSlotsEditSystemPrompt.Text = slot.Instructions ?? "";
 				_slotEditorAutoToolName = string.IsNullOrWhiteSpace(slot.ToolName) ? ModelSlotManager.BuildToolName(slot.Name) : slot.ToolName;
-				textSlotsEditApiToolName.Text = slot.Source == ModelSlotSource.Mcp ? "" : _slotEditorAutoToolName;
+				textSlotsEditLocalToolName.Text = slot.Source == ModelSlotSource.Local ? _slotEditorAutoToolName : "";
+				textSlotsEditApiToolName.Text = slot.Source == ModelSlotSource.Api ? _slotEditorAutoToolName : "";
 				checkSlotsEditChat.Checked = slot.Source != ModelSlotSource.Mcp && slot.HasUse(ModelSlotUse.Chat);
 				checkSlotsEditDialectic.Checked = slot.Source == ModelSlotSource.Local && slot.HasUse(ModelSlotUse.Dialectic);
 				checkSlotsEditTool.Checked = slot.HasUse(ModelSlotUse.Tool);
 				checkSlotsEditServer.Checked = slot.Source != ModelSlotSource.Mcp && slot.HasUse(ModelSlotUse.Server);
+				ComboSlotsEditSource_SelectedIndexChanged(null, null);
 			} finally{
 				_populatingSlotEditor = false;
 			}
-			ComboSlotsEditSource_SelectedIndexChanged(null, null);
 		}
 		private void UpdateSlotButtons(){
 			var hasSelection = listViewSlots != null && listViewSlots.SelectedItems.Count == 1;
@@ -237,6 +244,8 @@ namespace LMStud{
 				});
 				return;
 			}
+			if(slot.Source == ModelSlotSource.Local && SlotHasLoadedLocalModel(slot.Name) && SlotSystemPromptChanged(original, slot))
+				ThreadPool.QueueUserWorkItem(o => SetSystemPromptForSlot(slot.Name));
 			ApplyActiveSlotToModel();
 			PopulateSlotsList();
 			SelectSlot(slot.Name);
@@ -254,6 +263,11 @@ namespace LMStud{
 		}
 		private static bool SlotHasLoadedLocalModel(string slotName){
 			return !string.IsNullOrWhiteSpace(slotName) && (Common.LoadedLocalSlots.ContainsKey(slotName) || NativeMethods.IsModelSlotLoaded(slotName));
+		}
+		private static bool SlotSystemPromptChanged(ModelSlot original, ModelSlot updated){
+			if(original == null || updated == null) return false;
+			return original.OverrideSystemPrompt != updated.OverrideSystemPrompt ||
+				!string.Equals(original.Instructions ?? "", updated.Instructions ?? "", StringComparison.Ordinal);
 		}
 		private bool TryReadSlotEditor(string originalName, bool adding, out ModelSlot slot){
 			slot = null;
@@ -279,7 +293,7 @@ namespace LMStud{
 			}
 			if(source != ModelSlotSource.Mcp && checkSlotsEditChat.Checked) use |= ModelSlotUse.Chat;
 			if(source == ModelSlotSource.Local && checkSlotsEditDialectic.Checked) use |= ModelSlotUse.Dialectic;
-			if((source == ModelSlotSource.Api || source == ModelSlotSource.Mcp) && checkSlotsEditTool.Checked) use |= ModelSlotUse.Tool;
+			if(checkSlotsEditTool.Checked) use |= ModelSlotUse.Tool;
 			if(source != ModelSlotSource.Mcp && checkSlotsEditServer.Checked) use |= ModelSlotUse.Server;
 			var mcpTransport = GetMcpEditorTransport();
 			var localModel = GetSlotsEditLocalModelPath();
@@ -293,6 +307,8 @@ namespace LMStud{
 			var existingSlot = string.IsNullOrWhiteSpace(originalName) ? null : ModelSlotManager.GetSlot(originalName);
 			var existingMcpTimeoutMs = existingSlot != null && existingSlot.McpTimeoutMs > 0 ? existingSlot.McpTimeoutMs : McpServerManager.DefaultTimeoutMs;
 			var existingMcpWorkingDirectory = existingSlot?.McpWorkingDirectory ?? "";
+			var localSystemPromptOverride = source == ModelSlotSource.Local && checkSlotsEditLocalOverride.Checked;
+			var apiSystemPromptOverride = source == ModelSlotSource.Api && !string.IsNullOrWhiteSpace(textSlotsEditSystemPrompt.Text);
 			slot = new ModelSlot{
 				Name = name,
 				Source = source,
@@ -303,17 +319,56 @@ namespace LMStud{
 				ApiReasoningEffort = GetComboSelectedIndex(comboSlotEditReasonEffort),
 				ApiReasoningSummary = GetComboSelectedIndex(comboSlotEditReasonSummary),
 				ApiStore = checkSlotsEditStore.Checked,
-				Instructions = source == ModelSlotSource.Mcp ? "" : textSlotsEditSystemPrompt.Text.Trim(),
+				Instructions = source == ModelSlotSource.Mcp ? "" : (localSystemPromptOverride || apiSystemPromptOverride ? textSlotsEditSystemPrompt.Text.Trim() : ""),
 				McpAuthHeader = source == ModelSlotSource.Mcp && mcpTransport == McpSlotTransport.Http ? textSlotsEditMcpHeader.Text.Trim() : "",
 				McpCommandLine = source == ModelSlotSource.Mcp && mcpTransport == McpSlotTransport.Stdio ? mcpEndpoint : "",
 				McpTimeoutMs = source == ModelSlotSource.Mcp ? existingMcpTimeoutMs : McpServerManager.DefaultTimeoutMs,
 				McpTransport = mcpTransport,
 				McpUrl = source == ModelSlotSource.Mcp && mcpTransport == McpSlotTransport.Http ? mcpEndpoint : "",
 				McpWorkingDirectory = source == ModelSlotSource.Mcp && mcpTransport == McpSlotTransport.Stdio ? existingMcpWorkingDirectory : "",
-				ToolName = source == ModelSlotSource.Api ? textSlotsEditApiToolName.Text.Trim() : "",
+				OverrideSystemPrompt = localSystemPromptOverride || apiSystemPromptOverride,
+				ToolName = source == ModelSlotSource.Local ? textSlotsEditLocalToolName.Text.Trim() : source == ModelSlotSource.Api ? textSlotsEditApiToolName.Text.Trim() : "",
 				Use = use
 			};
 			return true;
+		}
+		private void UpdateSlotSystemPromptUi(){
+			var source = GetSlotEditorSource();
+			var local = source == ModelSlotSource.Local;
+			var mcp = source == ModelSlotSource.Mcp;
+			checkSlotsEditLocalOverride.Enabled = local;
+			label48.Enabled = !mcp;
+			textSlotsEditSystemPrompt.Enabled = !mcp && (!local || checkSlotsEditLocalOverride.Checked);
+			if(_populatingSlotEditor) return;
+			if(mcp) textSlotsEditSystemPrompt.Text = "";
+			else if(local && !checkSlotsEditLocalOverride.Checked) textSlotsEditSystemPrompt.Text = GetSystemPromptForModel(GetSlotsEditLocalModelPath());
+		}
+		private TextBox GetToolNameTextBox(ModelSlotSource source){
+			switch(source){
+				case ModelSlotSource.Local: return textSlotsEditLocalToolName;
+				case ModelSlotSource.Api: return textSlotsEditApiToolName;
+				default: return null;
+			}
+		}
+		private void UpdateAutoToolNameForCurrentSource(){
+			if(_populatingSlotEditor) return;
+			var box = GetToolNameTextBox(GetSlotEditorSource());
+			if(box == null) return;
+			var generated = ModelSlotManager.BuildToolName(textSlotsEditName.Text);
+			UpdateAutoToolNameBox(box, _slotEditorAutoToolName, generated);
+			_slotEditorAutoToolName = generated;
+		}
+		private void UpdateAutoToolNamesForNameChange(){
+			var previous = _slotEditorAutoToolName;
+			var generated = ModelSlotManager.BuildToolName(textSlotsEditName.Text);
+			UpdateAutoToolNameBox(textSlotsEditLocalToolName, previous, generated);
+			UpdateAutoToolNameBox(textSlotsEditApiToolName, previous, generated);
+			_slotEditorAutoToolName = generated;
+		}
+		private static void UpdateAutoToolNameBox(TextBox box, string previousAutoToolName, string generatedToolName){
+			if(box == null) return;
+			if(!string.IsNullOrWhiteSpace(box.Text) && !string.Equals(box.Text, previousAutoToolName, StringComparison.OrdinalIgnoreCase)) return;
+			box.Text = generatedToolName;
 		}
 		private void SelectSlot(string slotName){
 			foreach(ListViewItem item in listViewSlots.Items){

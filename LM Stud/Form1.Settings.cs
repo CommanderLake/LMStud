@@ -279,6 +279,7 @@ namespace LMStud{
 			if(Common.LlModelLoaded){
 				var slots = GetLoadedLocalSlotItems();
 				if(defaultModelSettingChanged && slots.Any(slot => slot.HasOverrides)) modelOverrideChanged = true;
+				if(setSystemPrompt && slots.Any(slot => !SlotUsesInheritedSystemPrompt(slot.SlotName))) modelOverrideChanged = true;
 				var anyReloadModel = slots.Any(slot => reloadModelForAllSlots || (reloadModelForDefaultSlots && !slot.HasOverrides));
 				var reloadLoadedModels = anyReloadModel &&
 					MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
@@ -348,7 +349,11 @@ namespace LMStud{
 					ApplyActiveSlotToModel();
 					PopulateSlotsList();
 				}
-				if(registerTools || setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(ModelSlotManager.GetLoadedLocalSlotNames());});
+				if(registerTools || setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {
+					var promptSlots = ModelSlotManager.GetLoadedLocalSlotNames();
+					if(setSystemPrompt && !registerTools) promptSlots = promptSlots.Where(SlotUsesInheritedSystemPrompt).ToList();
+					SetSystemPromptsForSlots(promptSlots);
+				});
 			}
 			QueueReloads(reloads, AfterReload);
 		}
@@ -368,11 +373,6 @@ namespace LMStud{
 		private void ButWhispDown_Click(object sender, EventArgs e){
 			HugLoadFiles("ggerganov", "whisper.cpp", ".bin");
 			tabControlMain.SelectTab(3);
-		}
-		private void LinkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e){
-			textSystemPrompt.SelectAll();
-			textSystemPrompt.Paste(@"The file tools use 1-based line numbers.
-If file tools are required, first use list_directory with an empty path.");
 		}
 		private void ButDownloadVADModel_Click(object sender, EventArgs e){
 			HugLoadFiles("ggml-org", "whisper-vad", ".bin");

@@ -2,24 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 namespace LMStud.Parsers{
 	internal static class APIResponseParserCommon{
-		internal static JArray SanitizeOutputItems(JArray output){
-			if(output == null) return null;
-			var sanitized = new JArray();
+		internal static JsonNode SanitizeOutputItems(JsonNode output){
+			if(!output.IsArray) return JsonNode.Missing;
+			var sanitized = Json.ArrayBuilder();
 			foreach(var item in output){
-				var clone = item?.DeepClone();
-				RemoveIdFields(clone);
-				sanitized.Add(clone);
+				sanitized.Add(RemoveIdFields(item));
 			}
-			return sanitized;
+			return sanitized.ToNode();
 		}
-		internal static int? ExtractTotalTokens(JObject root){
-			var totalTokens = root?["usage"]?["total_tokens"];
-			if(totalTokens == null || totalTokens.Type == JTokenType.Null) return null;
-			return totalTokens.Value<int>();
+		internal static int? ExtractTotalTokens(JsonNode root){
+			return root["usage"]["total_tokens"].AsInt();
 		}
 		internal static void AppendIfNotBlank(StringBuilder sb, string text){
 			if(!string.IsNullOrWhiteSpace(text)) sb.Append(text);
@@ -30,70 +24,76 @@ namespace LMStud.Parsers{
 		internal static bool HasResultContent(string content, string reasoning, List<APIClient.ToolCall> toolCalls){
 			return !string.IsNullOrWhiteSpace(content) || !string.IsNullOrWhiteSpace(reasoning) || (toolCalls != null && toolCalls.Count > 0);
 		}
-		internal static string ExtractContentText(JToken contentToken){
-			if(contentToken == null || contentToken.Type == JTokenType.Null) return null;
-			if(contentToken.Type == JTokenType.String) return contentToken.ToString();
-			if(contentToken.Type == JTokenType.Array){
+		internal static string ExtractContentText(JsonNode contentToken){
+			if(contentToken.IsNull) return null;
+			if(contentToken.IsString) return contentToken.AsString();
+			if(contentToken.IsArray){
 				var sb = new StringBuilder();
 				foreach(var item in contentToken){
-					if(item == null || item.Type == JTokenType.Null) continue;
+					if(item.IsNull) continue;
 					string text = null;
-					if(item.Type == JTokenType.String){ text = item.ToString(); }
-					else if(item is JObject obj){
+					if(item.IsString){ text = item.AsString(); }
+					else if(item.IsObject){
+						var obj = item;
 						if(IsNonTextContentItem(obj)) continue;
-						text = obj.Value<string>("text") ?? obj.Value<string>("content");
-						if(string.IsNullOrWhiteSpace(text) && obj["parts"] is JArray parts) text = ExtractContentText(parts);
+						text = obj.GetString("text") ?? obj.GetString("content");
+						if(string.IsNullOrWhiteSpace(text) && obj["parts"].IsArray) text = ExtractContentText(obj["parts"]);
 					}
 					if(string.IsNullOrWhiteSpace(text)) continue;
 					sb.Append(text);
 				}
 				return sb.Length > 0 ? sb.ToString() : null;
 			}
-			if(contentToken is JObject contentObj){
+			if(contentToken.IsObject){
+				var contentObj = contentToken;
 				if(IsNonTextContentItem(contentObj)) return null;
-				var text = contentObj.Value<string>("text") ?? contentObj.Value<string>("content");
-				if(string.IsNullOrWhiteSpace(text) && contentObj["parts"] is JArray parts) text = ExtractContentText(parts);
+				var text = contentObj.GetString("text") ?? contentObj.GetString("content");
+				if(string.IsNullOrWhiteSpace(text) && contentObj["parts"].IsArray) text = ExtractContentText(contentObj["parts"]);
 				return !string.IsNullOrWhiteSpace(text) ? text : null;
 			}
 			return null;
 		}
-		internal static string ExtractReasoningText(JToken reasoningItem){
-			if(reasoningItem == null || reasoningItem.Type == JTokenType.Null) return null;
-			if(reasoningItem is JObject reasoningObj){
+		internal static string ExtractReasoningText(JsonNode reasoningItem){
+			if(reasoningItem.IsNull) return null;
+			if(reasoningItem.IsObject){
+				var reasoningObj = reasoningItem;
 				var summaryText = ExtractContentText(reasoningObj["summary"]);
 				if(!string.IsNullOrWhiteSpace(summaryText)) return summaryText;
 				var textTok = reasoningObj["text"];
-				if(textTok != null && textTok.Type == JTokenType.String) return (string)textTok;
+				if(textTok.IsString) return textTok.AsString();
 				return ExtractContentText(reasoningObj["content"]);
 			}
 			return ExtractContentText(reasoningItem);
 		}
-		internal static string ExtractReasoningTextFromContent(JToken contentToken){
-			if(!(contentToken is JArray contentArray)) return null;
+		internal static string ExtractReasoningTextFromContent(JsonNode contentToken){
+			if(!contentToken.IsArray) return null;
 			var sb = new StringBuilder();
-			foreach(var item in contentArray.OfType<JObject>()){
-				var type = item.Value<string>("type");
+			foreach(var item in contentToken.Where(item => item.IsObject)){
+				var type = item.GetString("type");
 				if(!string.Equals(type, "reasoning", StringComparison.OrdinalIgnoreCase) && !string.Equals(type, "thinking", StringComparison.OrdinalIgnoreCase) &&
 					!string.Equals(type, "redacted_thinking", StringComparison.OrdinalIgnoreCase)) continue;
-				var reasoningText = item.Value<string>("text") ?? item.Value<string>("content") ?? item.Value<string>("summary");
+				var reasoningText = item.GetString("text") ?? item.GetString("content") ?? item.GetString("summary");
 				if(!string.IsNullOrWhiteSpace(reasoningText)) sb.Append(reasoningText);
 			}
 			return sb.Length > 0 ? sb.ToString() : null;
 		}
-		internal static APIClient.ToolCall ParseToolCallItem(JObject toolCallObj){
-			var name = toolCallObj.Value<string>("name") ?? toolCallObj["function"]?.Value<string>("name");
+		internal static APIClient.ToolCall ParseToolCallItem(JsonNode toolCallObj){
+			if(!toolCallObj.IsObject) return null;
+			var name = toolCallObj.GetString("name") ?? toolCallObj["function"].GetString("name");
 			if(string.IsNullOrWhiteSpace(name)) return null;
-			var callId = toolCallObj.Value<string>("call_id") ?? toolCallObj.Value<string>("id");
+			var callId = toolCallObj.GetString("call_id") ?? toolCallObj.GetString("id");
 			if(string.IsNullOrWhiteSpace(callId)) return null;
-			var argumentsToken = toolCallObj["arguments"] ?? toolCallObj["function"]?["arguments"] ?? toolCallObj["input"];
-			var arguments = argumentsToken == null ? "" : argumentsToken.Type == JTokenType.String ? argumentsToken.ToString() : argumentsToken.ToString(Formatting.None);
+			var argumentsToken = toolCallObj["arguments"];
+			if(!argumentsToken.Exists) argumentsToken = toolCallObj["function"]["arguments"];
+			if(!argumentsToken.Exists) argumentsToken = toolCallObj["input"];
+			var arguments = argumentsToken.IsNull ? "" : argumentsToken.IsString ? argumentsToken.AsString() : argumentsToken.ToJson();
 			return new APIClient.ToolCall(callId, name, arguments);
 		}
-		internal static List<APIClient.ToolCall> ParseToolCallsFromContent(JToken contentToken){
-			if(!(contentToken is JArray contentArray)) return null;
+		internal static List<APIClient.ToolCall> ParseToolCallsFromContent(JsonNode contentToken){
+			if(!contentToken.IsArray) return null;
 			var toolCalls = new List<APIClient.ToolCall>();
-			foreach(var item in contentArray.OfType<JObject>()){
-				var type = item.Value<string>("type");
+			foreach(var item in contentToken.Where(item => item.IsObject)){
+				var type = item.GetString("type");
 				if(!string.Equals(type, "tool_call", StringComparison.OrdinalIgnoreCase) && !string.Equals(type, "function_call", StringComparison.OrdinalIgnoreCase) &&
 					!string.Equals(type, "tool_use", StringComparison.OrdinalIgnoreCase)) continue;
 				var toolCall = ParseToolCallItem(item);
@@ -101,29 +101,36 @@ namespace LMStud.Parsers{
 			}
 			return toolCalls.Count > 0 ? toolCalls : null;
 		}
-		internal static List<APIClient.ToolCall> ParseToolCalls(JToken toolCallsToken){
-			if(!(toolCallsToken is JArray toolCallsArray)) return null;
+		internal static List<APIClient.ToolCall> ParseToolCalls(JsonNode toolCallsToken){
+			if(!toolCallsToken.IsArray) return null;
 			var toolCalls = new List<APIClient.ToolCall>();
-			foreach(var toolCallToken in toolCallsArray){
-				if(!(toolCallToken is JObject toolCallObj)) continue;
-				var toolCall = ParseToolCallItem(toolCallObj);
+			foreach(var toolCallToken in toolCallsToken){
+				if(!toolCallToken.IsObject) continue;
+				var toolCall = ParseToolCallItem(toolCallToken);
 				if(toolCall != null) toolCalls.Add(toolCall);
 			}
 			return toolCalls.Count > 0 ? toolCalls : null;
 		}
-		private static void RemoveIdFields(JToken token){
-			if(token == null || token.Type == JTokenType.Null) return;
-			if(token is JObject obj){
-				obj.Remove("id");
-				foreach(var property in obj.Properties().ToList()) RemoveIdFields(property.Value);
-				return;
+		private static JsonNode RemoveIdFields(JsonNode token){
+			if(token.IsNull) return JsonNode.Null;
+			if(token.IsObject){
+				var obj = Json.ObjectBuilder();
+				foreach(var property in token.Properties()){
+					if(string.Equals(property.Name, "id", StringComparison.OrdinalIgnoreCase)) continue;
+					obj.Set(property.Name, RemoveIdFields(property.Value));
+				}
+				return obj.ToNode();
 			}
-			if(token is JArray array)
-				foreach(var item in array)
-					RemoveIdFields(item);
+			if(token.IsArray){
+				var array = Json.ArrayBuilder();
+				foreach(var item in token) array.Add(RemoveIdFields(item));
+				return array.ToNode();
+			}
+			if(token.IsString) return Json.String(token.AsString());
+			return token;
 		}
-		private static bool IsNonTextContentItem(JObject obj){
-			var type = obj.Value<string>("type");
+		private static bool IsNonTextContentItem(JsonNode obj){
+			var type = obj.GetString("type");
 			return string.Equals(type, "reasoning", StringComparison.OrdinalIgnoreCase) ||
 				string.Equals(type, "thinking", StringComparison.OrdinalIgnoreCase) ||
 				string.Equals(type, "redacted_thinking", StringComparison.OrdinalIgnoreCase) ||

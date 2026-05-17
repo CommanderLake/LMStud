@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using LMStud;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json.Linq;
 namespace LM_Stud.Tests{
 	[TestClass]
 	public class ApiClientStreamingTests{
@@ -37,13 +36,14 @@ namespace LM_Stud.Tests{
 				});
 				var streamed = new StringBuilder();
 				var client = new APIClient(baseUrl, "", "test-model", false);
-				var history = new JArray{ new JObject{ ["role"] = "user", ["content"] = "hello" } };
+				var history = Json.ArrayBuilder();
+				history.Add(Json.Object(Json.P("role", "user"), Json.P("content", "hello")));
 				var result = client.CreateChatCompletion(history, 0.5f, 128, null, null, CancellationToken.None, delta => streamed.Append(delta));
 				Assert.AreEqual("hello", result.Content, "Streaming deltas should be assembled into the final result.");
 				Assert.AreEqual("hello", streamed.ToString(), "Streaming callback should receive each text delta.");
 				Assert.IsTrue(server.Wait(1000), "Test server should finish handling the streaming request.");
-				var payload = JObject.Parse(requestBody);
-				Assert.AreEqual(true, (bool)payload["stream"], "Streaming requests should include stream=true.");
+				var payload = Json.Parse(requestBody);
+				Assert.AreEqual(true, payload.GetBool("stream"), "Streaming requests should include stream=true.");
 			}
 		}
 	}

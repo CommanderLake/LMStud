@@ -10,8 +10,6 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using LMStud;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 namespace LM_Stud.Tests{
 	[TestClass]
 	[DoNotParallelize]
@@ -44,23 +42,23 @@ namespace LM_Stud.Tests{
 					var response2 = await PostResponses(client, serverPort, "lmstud/" + slotName2, "hello b");
 					Assert.AreEqual(HttpStatusCode.OK, response1.StatusCode, await response1.Content.ReadAsStringAsync());
 					Assert.AreEqual(HttpStatusCode.OK, response2.StatusCode, await response2.Content.ReadAsStringAsync());
-					var json1 = JObject.Parse(await response1.Content.ReadAsStringAsync());
-					var json2 = JObject.Parse(await response2.Content.ReadAsStringAsync());
-					Assert.AreEqual("lmstud/" + slotName1, (string)json1["model"]);
-					Assert.AreEqual("lmstud/" + slotName2, (string)json2["model"]);
+					var json1 = Json.Parse(await response1.Content.ReadAsStringAsync());
+					var json2 = Json.Parse(await response2.Content.ReadAsStringAsync());
+					Assert.AreEqual("lmstud/" + slotName1, json1.GetString("model"));
+					Assert.AreEqual("lmstud/" + slotName2, json2.GetString("model"));
 				}
 				Assert.IsTrue(upstream1.Wait(5000), "First fake upstream should receive a request.");
 				Assert.IsTrue(upstream2.Wait(5000), "Second fake upstream should receive a request.");
-				var upstreamJson1 = JObject.Parse(upstreamBody1.Result);
-				var upstreamJson2 = JObject.Parse(upstreamBody2.Result);
-				Assert.AreEqual("upstream-model-a", (string)upstreamJson1["model"]);
-				Assert.AreEqual("upstream-model-b", (string)upstreamJson2["model"]);
-				Assert.AreEqual(true, (bool)upstreamJson1["store"]);
-				Assert.AreEqual(false, (bool)upstreamJson2["store"]);
-				Assert.AreEqual("low", (string)upstreamJson1["reasoning"]?["effort"]);
-				Assert.AreEqual("detailed", (string)upstreamJson1["reasoning"]?["summary"]);
-				Assert.AreEqual("high", (string)upstreamJson2["reasoning"]?["effort"]);
-				Assert.IsNull(upstreamJson2["reasoning"]?["summary"]);
+				var upstreamJson1 = Json.Parse(upstreamBody1.Result);
+				var upstreamJson2 = Json.Parse(upstreamBody2.Result);
+				Assert.AreEqual("upstream-model-a", upstreamJson1.GetString("model"));
+				Assert.AreEqual("upstream-model-b", upstreamJson2.GetString("model"));
+				Assert.AreEqual(true, upstreamJson1.GetBool("store"));
+				Assert.AreEqual(false, upstreamJson2.GetBool("store"));
+				Assert.AreEqual("low", upstreamJson1["reasoning"].GetString("effort"));
+				Assert.AreEqual("detailed", upstreamJson1["reasoning"].GetString("summary"));
+				Assert.AreEqual("high", upstreamJson2["reasoning"].GetString("effort"));
+				Assert.IsFalse(upstreamJson2["reasoning"]["summary"].Exists);
 			} finally{
 				apiServer.Stop();
 				ModelSlotManager.Remove(slotName1);
@@ -81,9 +79,9 @@ namespace LM_Stud.Tests{
 				using(var client = new HttpClient()){
 					var response = await client.GetAsync($"http://127.0.0.1:{serverPort}/v1/models");
 					Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-					var json = JObject.Parse(await response.Content.ReadAsStringAsync());
-					var ids = json["data"] as JArray;
-					Assert.IsTrue(ids != null && ids.Any(item => (string)item["id"] == "lmstud/" + slotName), "Configured server slot should be listed by /v1/models.");
+					var json = Json.Parse(await response.Content.ReadAsStringAsync());
+					var ids = json["data"];
+					Assert.IsTrue(ids.IsArray && ids.Any(item => item.GetString("id") == "lmstud/" + slotName), "Configured server slot should be listed by /v1/models.");
 				}
 			} finally{
 				apiServer.Stop();
@@ -163,6 +161,39 @@ namespace LM_Stud.Tests{
 			}
 		}
 		[TestMethod]
+		public void ModelSlotInstructions_InheritGlobalUnlessSystemPromptOverrideIsEnabled(){
+			var oldPrompt = Common.SystemPrompt;
+			try{
+				Common.SystemPrompt = "global prompt";
+				var slot = new ModelSlot{ Instructions = "slot prompt" };
+				Assert.AreEqual("global prompt", slot.GetInstructionsOrDefault());
+				slot.OverrideSystemPrompt = true;
+				Assert.AreEqual("slot prompt", slot.GetInstructionsOrDefault());
+				slot.Instructions = "";
+				Assert.AreEqual("", slot.GetInstructionsOrDefault(), "An enabled override may intentionally provide an empty prompt.");
+			} finally{
+				Common.SystemPrompt = oldPrompt;
+			}
+		}
+		[TestMethod]
+		public void AddOrUpdate_MigratesLegacyNonEmptySlotPromptToOverride(){
+			var oldPrompt = Common.SystemPrompt;
+			var slotName = UniqueSlotName("test_legacy_prompt");
+			try{
+				Common.SystemPrompt = "global prompt";
+				ModelSlotManager.AddOrUpdate(new ModelSlot{
+					Name = slotName, Source = ModelSlotSource.Api, ApiBaseUrl = "http://127.0.0.1:1", ApiModel = "legacy-model",
+					Instructions = "legacy prompt", Use = ModelSlotUse.Server
+				});
+				var slot = ModelSlotManager.GetSlot(slotName);
+				Assert.IsTrue(slot.OverrideSystemPrompt);
+				Assert.AreEqual("legacy prompt", slot.GetInstructionsOrDefault());
+			} finally{
+				ModelSlotManager.Remove(slotName);
+				Common.SystemPrompt = oldPrompt;
+			}
+		}
+		[TestMethod]
 		public void TryExecuteToolCall_IgnoresApiSlotsThatAreNotEnabledAsTools(){
 			var slotName = UniqueSlotName("test_hidden_tool");
 			try{
@@ -172,6 +203,47 @@ namespace LM_Stud.Tests{
 				var handled = ModelSlotManager.TryExecuteToolCall(new APIClient.ToolCall("call_1", "ask_hidden_model", "{\"prompt\":\"hello\"}"), out var result);
 				Assert.IsFalse(handled);
 				Assert.IsNull(result);
+			} finally{
+				ModelSlotManager.Remove(slotName);
+			}
+		}
+		[TestMethod]
+		public void BuildModelCallTools_ExcludesCallerSlot(){
+			var slotName = UniqueSlotName("test_caller_tool");
+			try{
+				ModelSlotManager.AddOrUpdate(new ModelSlot{
+					Name = slotName, Source = ModelSlotSource.Api, ApiBaseUrl = "http://127.0.0.1:1", ApiModel = "caller-model", ToolName = "ask_caller_model", Use = ModelSlotUse.Tool
+				});
+				var tools = ModelSlotManager.BuildModelCallTools(slotName);
+				Assert.IsFalse(tools.Where(tool => tool.IsObject).Any(tool => tool["function"].GetString("name") == "ask_caller_model"), "A slot should not expose itself as a model-call tool.");
+			} finally{
+				ModelSlotManager.Remove(slotName);
+			}
+		}
+		[TestMethod]
+		public void TryExecuteToolCall_ReturnsErrorForSelfCall(){
+			var slotName = UniqueSlotName("test_self_tool");
+			try{
+				ModelSlotManager.AddOrUpdate(new ModelSlot{
+					Name = slotName, Source = ModelSlotSource.Api, ApiBaseUrl = "http://127.0.0.1:1", ApiModel = "self-model", ToolName = "ask_self_model", Use = ModelSlotUse.Tool
+				});
+				var handled = ModelSlotManager.TryExecuteToolCall(new APIClient.ToolCall("call_1", "ask_self_model", "{\"prompt\":\"hello\"}"), slotName, out var result);
+				Assert.IsTrue(handled);
+				StringAssert.Contains(result, "cannot call itself");
+			} finally{
+				ModelSlotManager.Remove(slotName);
+			}
+		}
+		[TestMethod]
+		public void TryExecuteToolCall_ReturnsErrorForColdLocalToolSlot(){
+			var slotName = UniqueSlotName("test_cold_local_tool");
+			try{
+				ModelSlotManager.AddOrUpdate(new ModelSlot{
+					Name = slotName, Source = ModelSlotSource.Local, LocalPath = "cold.gguf", ToolName = "ask_cold_local", Use = ModelSlotUse.Tool
+				});
+				var handled = ModelSlotManager.TryExecuteToolCall(new APIClient.ToolCall("call_1", "ask_cold_local", "{\"prompt\":\"hello\"}"), "caller", out var result);
+				Assert.IsTrue(handled);
+				StringAssert.Contains(result, "not loaded");
 			} finally{
 				ModelSlotManager.Remove(slotName);
 			}
@@ -212,8 +284,8 @@ namespace LM_Stud.Tests{
 		}
 		private static string UniqueSlotName(string prefix){return prefix + "_" + Guid.NewGuid().ToString("N");}
 		private static async Task<HttpResponseMessage> PostResponses(HttpClient client, int port, string model, string input){
-			var payload = new{ model = model, input = input };
-			return await client.PostAsync($"http://127.0.0.1:{port}/v1/responses", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
+			var payload = Json.Object(Json.P("model", model), Json.P("input", input));
+			return await client.PostAsync($"http://127.0.0.1:{port}/v1/responses", new StringContent(payload.ToJson(), Encoding.UTF8, "application/json"));
 		}
 		private static Task StartFakeResponsesServer(int port, string text, out Task<string> bodyTask){
 			var bodySource = new TaskCompletionSource<string>();

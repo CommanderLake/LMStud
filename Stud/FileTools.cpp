@@ -42,9 +42,33 @@ static std::filesystem::path ResolveFileToolPath(const std::string& path){
 	if(_baseFolder.empty()) return std::filesystem::u8path(path);
 	return _baseFolder / std::filesystem::u8path(path);
 }
-static std::string GetFileToolPathLabel(const std::filesystem::path& path){
+static bool IsGitPathComponent(const std::filesystem::path& part){
+	auto name = PathToUtf8Generic(part);
+	std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c){ return c >= 'A' && c <= 'Z' ? static_cast<char>(c + ('a' - 'A')) : static_cast<char>(c); });
+	return name == ".git";
+}
+static bool HasGitPathComponent(const std::filesystem::path& path){
+	for(const auto& part : path){
+		if(IsGitPathComponent(part)) return true;
+	}
+	return false;
+}
+static bool IsGitDirectoryEntry(const std::filesystem::directory_entry& entry){
+	std::error_code ec;
+	if(!entry.is_directory(ec) || ec) return false;
+	return IsGitPathComponent(entry.path().filename());
+}
+static std::string GetFileToolPathLabel(const std::filesystem::path& path, const std::filesystem::path* displayRoot = nullptr){
 	std::error_code ec;
 	if(_baseFolder.empty()){
+		if(displayRoot && !displayRoot->empty()){
+			const auto relPath = std::filesystem::relative(path, *displayRoot, ec);
+			const auto rel = PathToUtf8Generic(relPath);
+			if(!ec && !rel.empty() && rel != ".." && rel.rfind("../", 0) != 0) return rel;
+			ec.clear();
+		}
+		const auto filename = path.filename();
+		if(!filename.empty()) return PathToUtf8Generic(filename);
 		auto fullPath = std::filesystem::weakly_canonical(path, ec);
 		if(ec){
 			ec.clear();
@@ -56,6 +80,7 @@ static std::string GetFileToolPathLabel(const std::filesystem::path& path){
 	return PathToUtf8Generic(ec ? path : relPath);
 }
 static bool IsPathAllowed(const std::filesystem::path& p){
+	if(HasGitPathComponent(p)) return false;
 	if(_baseFolder.empty()) return _fullFileSystemAccess && p.is_absolute();
 	std::error_code absEc;
 	std::error_code baseEc;
@@ -118,14 +143,20 @@ std::string ListDirectoryTool(const char* slotName, const char* argsJson){
 	std::vector<std::string> files;
 	std::error_code ec;
 	if(recursive){
-		for(const auto& entry : std::filesystem::recursive_directory_iterator(p, ec)){
+		for(auto it = std::filesystem::recursive_directory_iterator(p, ec), end = std::filesystem::recursive_directory_iterator(); it != end; it.increment(ec)){
 			if(ec) break;
-			files.push_back(GetFileToolPathLabel(entry.path()));
+			const auto& entry = *it;
+			if(IsGitDirectoryEntry(entry)){
+				it.disable_recursion_pending();
+				continue;
+			}
+			files.push_back(GetFileToolPathLabel(entry.path(), &p));
 		}
 	} else{
 		for(const auto& entry : std::filesystem::directory_iterator(p, ec)){
 			if(ec) break;
-			files.push_back(GetFileToolPathLabel(entry.path()));
+			if(IsGitDirectoryEntry(entry)) continue;
+			files.push_back(GetFileToolPathLabel(entry.path(), &p));
 		}
 	}
 	if(ec) return "{\"error\":\"folder not found, maybe its a file\"}";
@@ -155,7 +186,7 @@ std::string ReadFileTool(const char* slotName, const char* argsJson){
 		if(end != -1 && lineNo >= end) break;
 		++lineNo;
 	}
-	const std::string fileName = _baseFolder.empty() ? GetFileToolPathLabel(p) : PathToUtf8Generic(p.filename());
+	const std::string fileName = PathToUtf8Generic(p.filename());
 	const std::string ext = PathToUtf8Generic(p.extension());
 	std::string contentType;
 	if(ext == ".h" || ext == ".cpp" || ext == ".cc" || ext == ".cxx" || ext == ".c") contentType = "cpp";
@@ -177,7 +208,7 @@ std::string ReadFileTool(const char* slotName, const char* argsJson){
 	else if(ext == ".sql") contentType = "sql";
 	else if(ext == ".sh") contentType = "bash";
 	else contentType = "";
-	std::string out = "[FILE] " + fileName + "\n```" + contentType + "\n" + body + "```\n";
+	std::string out = "File: " + fileName + "\n```" + contentType + "\n" + body + "```\n";
 	return out;
 }
 std::string SearchFileTool(const char* slotName, const char* argsJson){
@@ -273,17 +304,23 @@ std::string SearchFileTool(const char* slotName, const char* argsJson){
 	if(isDir){
 		std::error_code ec;
 		if(recursive){
-			for(const auto& entry : std::filesystem::recursive_directory_iterator(p, ec)){
+			for(auto it = std::filesystem::recursive_directory_iterator(p, ec), end = std::filesystem::recursive_directory_iterator(); it != end; it.increment(ec)){
 				if(ec) break;
+				const auto& entry = *it;
+				if(IsGitDirectoryEntry(entry)){
+					it.disable_recursion_pending();
+					continue;
+				}
 				if(!IsRegularFileForReading(entry.path())) continue;
-				const std::string fileLabel = GetFileToolPathLabel(entry.path());
+				const std::string fileLabel = GetFileToolPathLabel(entry.path(), &p);
 				if(processFile(entry.path(), fileLabel)) break;
 			}
 		} else{
 			for(const auto& entry : std::filesystem::directory_iterator(p, ec)){
 				if(ec) break;
+				if(IsGitDirectoryEntry(entry)) continue;
 				if(!IsRegularFileForReading(entry.path())) continue;
-				const std::string fileLabel = GetFileToolPathLabel(entry.path());
+				const std::string fileLabel = GetFileToolPathLabel(entry.path(), &p);
 				if(processFile(entry.path(), fileLabel)) break;
 			}
 		}

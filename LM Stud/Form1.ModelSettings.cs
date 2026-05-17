@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using LMStud.Properties;
-using Newtonsoft.Json;
 namespace LMStud{
 	public partial class Form1{
 		private static readonly string ModelSettingsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LM Stud");
@@ -15,14 +14,14 @@ namespace LMStud{
 			if(!File.Exists(ModelSettingsFile)) return;
 			try{
 				var json = File.ReadAllText(ModelSettingsFile);
-				var dict = JsonConvert.DeserializeObject<Dictionary<string, ModelSettings>>(json);
+				var dict = ParseModelSettings(json);
 				if(dict == null) return;
 				foreach(var kv in dict) _modelSettings[kv.Key] = kv.Value;
 			} catch{}
 		}
 		private void SaveModelSettings(){
 			try{
-				var json = JsonConvert.SerializeObject(_modelSettings, Formatting.Indented);
+				var json = SerializeModelSettings(_modelSettings);
 				if(!Directory.Exists(ModelSettingsFolder)) Directory.CreateDirectory(ModelSettingsFolder);
 				File.WriteAllText(ModelSettingsFile, json);
 			} catch{}
@@ -34,6 +33,42 @@ namespace LMStud{
 		}
 		private bool TryGetEnabledModelSettings(string modelPath, out ModelSettings settings){
 			return TryGetModelSettings(modelPath, out settings) && settings != null && settings.OverrideSettings;
+		}
+		private static Dictionary<string, ModelSettings> ParseModelSettings(string json){
+			var root = Json.Parse(json);
+			if(!root.IsObject) return null;
+			var dict = new Dictionary<string, ModelSettings>();
+			foreach(var property in root.Properties()){
+				var settings = ParseModelSettingsValue(property.Value);
+				if(settings != null) dict[property.Name] = settings;
+			}
+			return dict;
+		}
+		private static ModelSettings ParseModelSettingsValue(JsonNode node){
+			if(!node.IsObject) return null;
+			return new ModelSettings(
+				node.GetBool("OverrideSettings") ?? false,
+				node.GetString("SystemPrompt"),
+				node.GetInt("CtxSize") ?? 0,
+				node.GetInt("GPULayers") ?? 0,
+				(float)(node.GetDouble("Temp") ?? 0),
+				(float)(node.GetDouble("MinP") ?? 0),
+				(float)(node.GetDouble("TopP") ?? 0),
+				node.GetInt("TopK") ?? 0,
+				(CheckState)(node.GetInt("FlashAttn") ?? 0),
+				node.GetBool("OverrideJinja") ?? false,
+				node.GetString("JinjaTemplate")
+			);
+		}
+		private static string SerializeModelSettings(Dictionary<string, ModelSettings> settings){
+			var root = Json.ObjectBuilder();
+			foreach(var kv in settings) root.Set(kv.Key, SerializeModelSettingsValue(kv.Value));
+			return root.ToJson(JsonFormat.Indented);
+		}
+		private static JsonNode SerializeModelSettingsValue(ModelSettings settings){
+			return Json.Object(Json.P("OverrideSettings", settings.OverrideSettings), Json.P("SystemPrompt", settings.SystemPrompt), Json.P("CtxSize", settings.CtxSize),
+				Json.P("GPULayers", settings.GPULayers), Json.P("Temp", settings.Temp), Json.P("MinP", settings.MinP), Json.P("TopP", settings.TopP),
+				Json.P("TopK", settings.TopK), Json.P("FlashAttn", (int)settings.FlashAttn), Json.P("OverrideJinja", settings.OverrideJinja), Json.P("JinjaTemplate", settings.JinjaTemplate));
 		}
 		private List<LoadedLocalSlotItem> GetLoadedLocalSlotItems(){
 			var slots = new List<LoadedLocalSlotItem>();
@@ -114,6 +149,7 @@ namespace LMStud{
 			SaveModelSettings();
 			var loadedSlotNames = ModelSlotManager.GetLoadedLocalSlotNamesForPath(selectedModelPath);
 			if(loadedSlotNames.Count == 0 || !Common.LlModelLoaded) return;
+			var inheritedSystemPromptSlotNames = loadedSlotNames.Where(SlotUsesInheritedSystemPrompt).ToList();
 			var overrideOld = oldSettings?.OverrideSettings ?? false;
 			var systemPromptOld = overrideOld ? oldSettings.SystemPrompt : Common.SystemPrompt;
 			var ctxSizeOld = overrideOld ? oldSettings.CtxSize : Common.CtxSize;
@@ -139,6 +175,8 @@ namespace LMStud{
 			var reloadCtx = ctxSizeOld != ctxSizeEff || flashOld != flashEff;
 			var reloadSmpl = tempOld != tempEff || minPOld != minPEff || topPOld != topPEff || topKOld != topKEff;
 			var setSystemPrompt = systemPromptOld != systemPromptEff;
+			if(setSystemPrompt && inheritedSystemPromptSlotNames.Count < loadedSlotNames.Count)
+				MessageBox.Show(this, Resources.The_modified_settings_are_overridden_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 			if(reloadModel && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes){
 				foreach(var slotName in loadedSlotNames) LoadModel(slotName, selectedModel, false);
 			} else{
@@ -167,13 +205,13 @@ namespace LMStud{
 						reload.TopP = topPEff;
 						reload.TopK = topKEff;
 						reload.Temp = tempEff;
-					}
+				}
 				QueueReloads(reloads, () => {
-					if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(loadedSlotNames);});
+					if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(inheritedSystemPromptSlotNames);});
 				});
 				return;
 			}
-			if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(loadedSlotNames);});
+			if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(inheritedSystemPromptSlotNames);});
 		}
 		private void PopulateModelSettings(string modelPath){
 			if(TryGetModelSettings(modelPath, out var ms)){
