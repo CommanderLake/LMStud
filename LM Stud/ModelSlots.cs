@@ -247,7 +247,7 @@ namespace LMStud{
 				var slot = FindSlotInternal(requestedSlotName) ?? new ModelSlot{ Name = requestedSlotName, Use = ModelSlotUse.Server };
 				if(!SlotsInternal.Contains(slot)) SlotsInternal.Add(slot);
 				slot.Source = ModelSlotSource.Local;
-				slot.LocalPath = ToStoredLocalPath(modelPath);
+				slot.LocalPath = Common.GetPathRelativeToModelsDir(modelPath);
 				if(string.IsNullOrWhiteSpace(slot.ToolName)) slot.ToolName = BuildToolName(slot.Name);
 				var promoteToChat = makeChat || string.Equals(slot.Name, MainSlotName, StringComparison.OrdinalIgnoreCase);
 				if(loadedDifferentChatSlot && !string.Equals(slot.Name, MainSlotName, StringComparison.OrdinalIgnoreCase)) promoteToChat = false;
@@ -639,12 +639,6 @@ namespace LMStud{
 			var model = requestedModel.Trim();
 			if(model.StartsWith("lmstud/", StringComparison.OrdinalIgnoreCase)) model = model.Substring("lmstud/".Length);
 			return model;
-		}
-		private static string ToStoredLocalPath(string modelPath){
-			if(string.IsNullOrWhiteSpace(modelPath)) return "";
-			var modelsDir = Common.ModelsDir ?? "";
-			if(!string.IsNullOrWhiteSpace(modelsDir) && modelPath.StartsWith(modelsDir, StringComparison.OrdinalIgnoreCase)) return modelPath.Substring(modelsDir.Length);
-			return modelPath;
 		}
 		private static int NormalizeReasoningIndex(int index, int valueCount){
 			return index > 0 && index < valueCount ? index : 0;

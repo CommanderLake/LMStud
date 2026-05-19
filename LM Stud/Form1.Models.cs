@@ -286,11 +286,6 @@ namespace LMStud{
 			} catch{}
 			return string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 		}
-		private static string GetModelSettingsKey(string modelPath){
-			if(string.IsNullOrWhiteSpace(modelPath)) return null;
-			var modelsDir = Common.ModelsDir ?? "";
-			return !string.IsNullOrWhiteSpace(modelsDir) && modelPath.StartsWith(modelsDir, StringComparison.OrdinalIgnoreCase) ? modelPath.Substring(modelsDir.Length) : modelPath;
-		}
 		private void SetModelStatus(){
 			var activeSlot = ModelSlotManager.GetActiveChatSlot();
 			var loadedSlot = ModelSlotManager.GetLoadedLocalSlot();
@@ -355,7 +350,6 @@ namespace LMStud{
 				return;
 			}
 			SetModelLoadButtonsEnabled(false);
-			var modelsDir = Common.ModelsDir;
 			var fileName = Path.GetFileName(modelPath);
 			var meta = (List<GGUFMetadataManager.GGUFMetadataEntry>)modelLvi.Tag;
 			var activeChatSlot = ModelSlotManager.GetActiveChatSlot();
@@ -423,7 +417,7 @@ namespace LMStud{
 					ApplyActiveSlotToModel();
 					try{
 						BeginInvoke(new MethodInvoker(() => {
-							Settings.Default.LastModel = modelPath.Substring(modelsDir.Length);
+							Settings.Default.LastModel = Common.GetPathRelativeToModelsDir(modelPath);
 							if(checkLoadAuto.Checked && !autoLoad){
 								Settings.Default.LoadAuto = true;
 								Settings.Default.Save();

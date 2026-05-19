@@ -30,6 +30,7 @@ std::string GetWebTag(const char* slotName, const char* argsJson);
 std::string ListWebTags(const char* slotName, const char* argsJson);
 std::string GetLongDateTime(const char* slotName, const char* argsJson);
 std::string ListDirectoryTool(const char* slotName, const char* argsJson);
+std::string SearchFilesTool(const char* slotName, const char* argsJson);
 std::string ReadFileTool(const char* slotName, const char* argsJson);
 std::string SearchFileTool(const char* slotName, const char* argsJson);
 std::string CreateFileTool(const char* slotName, const char* argsJson);

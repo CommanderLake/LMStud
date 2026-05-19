@@ -161,7 +161,7 @@ namespace LMStud{
 				UpdateSetting(ref Common.NThreadsBatch, (int)numThreadsBatch.Value, value => {Settings.Default.ThreadsBatch = value;});
 				NativeMethods.SetThreadCount((int)numThreads.Value, (int)numThreadsBatch.Value);
 			}
-			string GetModelString(int index){return index < 0 ? "" : _whisperModels[index].Substring(Common.ModelsDir.Length);}
+			string GetModelString(int index){return index < 0 ? "" : Common.GetPathRelativeToModelsDir(_whisperModels[index]);}
 			UpdateSetting(ref Common.WhisperModel, GetModelString(comboWhisperModel.SelectedIndex), value => {
 				Settings.Default.WhisperModel = value;
 				reloadWhisper = true;

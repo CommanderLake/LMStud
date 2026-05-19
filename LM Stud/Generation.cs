@@ -155,7 +155,10 @@ namespace LMStud {
 		private static ChatMessageControl AddGeneratedAssistantMessage(string slotName, string think, string message, List<APIClient.ToolCall> toolCalls = null){
 			var control = MainForm.AddMessage(MessageRole.Assistant, think, message, toolCalls);
 			if(toolCalls != null && toolCalls.Count > 0) control.Markdown = false;
-			if(!string.IsNullOrWhiteSpace(slotName)) control.SetRoleText(slotName);
+			if(!string.IsNullOrWhiteSpace(slotName)){
+				var modelName = ModelSlotManager.GetSlot(slotName)?.DisplayModel();
+				control.SetRoleText(string.IsNullOrWhiteSpace(modelName) ? slotName : slotName + " (" + modelName + ")");
+			}
 			return control;
 		}
 		private static IEnumerable<string> GetGenerationSlotNames(bool useDialecticLocalSlot, string slotName){
@@ -265,7 +268,7 @@ namespace LMStud {
 							} catch(ObjectDisposedException){}
 						}
 						if(toolCalls == null || toolCalls.Count == 0) break;
-						var toolSignature = string.Join("|", toolCalls.Select(call => string.Format("{0}:{1}:{2}", call.Id, call.Name, call.Arguments)));
+						var toolSignature = string.Join("|", toolCalls.Select(call => string.Format(Resources._0___1___2_, call.Id, call.Name, call.Arguments)));
 						if(toolSignature == lastToolSignature) throw new InvalidOperationException(Resources.Repeated_tool_calls_detected);
 						lastToolSignature = toolSignature;
 						foreach(var toolCall in toolCalls){
@@ -370,7 +373,6 @@ namespace LMStud {
 					var promptResult = NativeMethods.SetSystemPrompt(slotName, instructions, "");
 					if(promptResult != NativeMethods.StudError.Success) return false;
 				}
-				// API server requests borrow a loaded slot; restore llama state plus Stud chat metadata so other chats keep their place.
 				if(!string.IsNullOrWhiteSpace(historyJson)){
 					var resetResult = NativeMethods.ResetChat(slotName);
 					if(resetResult != NativeMethods.StudError.Success) return false;

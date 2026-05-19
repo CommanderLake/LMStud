@@ -46,5 +46,34 @@ namespace LM_Stud.Tests{
 				Assert.AreEqual(true, payload.GetBool("stream"), "Streaming requests should include stream=true.");
 			}
 		}
+		[TestMethod]
+		public void CreateChatCompletion_WithReasoningOnlyStream_ReturnsReasoning(){
+			using(var listener = new HttpListener()){
+				var baseUrl = "http://127.0.0.1:39595/";
+				listener.Prefixes.Add(baseUrl);
+				listener.Start();
+				var server = Task.Run(() => {
+					var ctx = listener.GetContext();
+					ctx.Response.StatusCode = 200;
+					ctx.Response.ContentType = "text/event-stream";
+					using(var writer = new StreamWriter(ctx.Response.OutputStream, new UTF8Encoding(false), 1024, true)){
+						writer.WriteLine("event: response.reasoning_text.delta");
+						writer.WriteLine("data: {\"type\":\"response.reasoning_text.delta\",\"delta\":\"thinking\"}");
+						writer.WriteLine();
+						writer.Flush();
+						writer.WriteLine("data: [DONE]");
+						writer.WriteLine();
+					}
+					ctx.Response.Close();
+				});
+				var client = new APIClient(baseUrl, "", "test-model", false);
+				var history = Json.ArrayBuilder();
+				history.Add(Json.Object(Json.P("role", "user"), Json.P("content", "hello")));
+				var result = client.CreateChatCompletion(history, 0.5f, 128, null, null, CancellationToken.None, delta => {});
+				Assert.AreEqual("", result.Content, "Reasoning-only streams should not manufacture answer text.");
+				Assert.AreEqual("thinking", result.Reasoning, "Reasoning deltas should be preserved even without output text.");
+				Assert.IsTrue(server.Wait(1000), "Test server should finish handling the reasoning stream.");
+			}
+		}
 	}
 }

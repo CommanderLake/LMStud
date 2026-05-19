@@ -436,7 +436,7 @@ namespace LMStud{
 					.Select(call => new ToolCall(call.Id, call.Name, call.Arguments.ToString()))
 					.ToList();
 				var finalToolCalls = toolCalls.Count > 0 ? toolCalls : null;
-				if(_content.Length == 0 && finalToolCalls == null) throw new InvalidOperationException(Resources.API_response_did_not_contain_any_message_);
+				if(_content.Length == 0 && _reasoning.Length == 0 && finalToolCalls == null) throw new InvalidOperationException(Resources.API_response_did_not_contain_any_message_);
 				return new ChatCompletionResult(_content.ToString(), _reasoning.Length > 0 ? _reasoning.ToString() : null, finalToolCalls, _responseId, JsonNode.Missing);
 			}
 			private StreamingToolCall GetToolCall(string key){

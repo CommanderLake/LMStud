@@ -28,7 +28,7 @@ namespace LMStud{
 		}
 		private bool TryGetModelSettings(string modelPath, out ModelSettings settings){
 			settings = null;
-			var key = GetModelSettingsKey(modelPath);
+			var key = Common.GetPathRelativeToModelsDir(modelPath);
 			return key != null && _modelSettings.TryGetValue(key, out settings);
 		}
 		private bool TryGetEnabledModelSettings(string modelPath, out ModelSettings settings){
@@ -131,7 +131,7 @@ namespace LMStud{
 			if(listViewModels.SelectedItems.Count == 0) return;
 			var selectedModel = listViewModels.SelectedItems[0];
 			var selectedModelPath = selectedModel.SubItems[1].Text;
-			var modelSettingsKey = GetModelSettingsKey(selectedModelPath);
+			var modelSettingsKey = Common.GetPathRelativeToModelsDir(selectedModelPath);
 			if(modelSettingsKey == null) return;
 			_modelSettings.TryGetValue(modelSettingsKey, out var oldSettings);
 			var overrideNew = checkOverrideSettings.Checked;

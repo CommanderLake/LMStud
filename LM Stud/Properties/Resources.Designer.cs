@@ -734,6 +734,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Invalid JSON..
+        /// </summary>
+        internal static string Invalid_JSON_ {
+            get {
+                return ResourceManager.GetString("Invalid_JSON_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Jinja template file not found
         ///
         ///.
@@ -890,6 +899,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to MCP command line is required..
+        /// </summary>
+        internal static string MCP_command_line_is_required_ {
+            get {
+                return ResourceManager.GetString("MCP_command_line_is_required_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to MCP Connect.
         /// </summary>
         internal static string MCP_Connect {
@@ -904,6 +922,24 @@ namespace LMStud.Properties {
         internal static string MCP_Disconnect {
             get {
                 return ResourceManager.GetString("MCP_Disconnect", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to MCP slot name is required..
+        /// </summary>
+        internal static string MCP_slot_name_is_required_ {
+            get {
+                return ResourceManager.GetString("MCP_slot_name_is_required_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to MCP URL is required..
+        /// </summary>
+        internal static string MCP_URL_is_required_ {
+            get {
+                return ResourceManager.GetString("MCP_URL_is_required_", resourceCulture);
             }
         }
         
@@ -1155,6 +1191,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Slot is not an MCP server..
+        /// </summary>
+        internal static string Slot_is_not_an_MCP_server_ {
+            get {
+                return ResourceManager.GetString("Slot_is_not_an_MCP_server_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Slot name is required..
         /// </summary>
         internal static string Slot_name_is_required_ {
@@ -1274,7 +1319,7 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The modified settings are overridden by the Model Settings for this model..
+        ///   Looks up a localized string similar to The modified settings are overridden by model or slot settings for at least one loaded slot..
         /// </summary>
         internal static string The_modified_settings_are_overridden_ {
             get {
@@ -1387,6 +1432,24 @@ namespace LMStud.Properties {
         internal static string Unload_Slot {
             get {
                 return ResourceManager.GetString("Unload_Slot", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unsupported JSON number: .
+        /// </summary>
+        internal static string Unsupported_JSON_number__ {
+            get {
+                return ResourceManager.GetString("Unsupported_JSON_number__", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unsupported JSON value type: .
+        /// </summary>
+        internal static string Unsupported_JSON_value_type__ {
+            get {
+                return ResourceManager.GetString("Unsupported_JSON_value_type__", resourceCulture);
             }
         }
         

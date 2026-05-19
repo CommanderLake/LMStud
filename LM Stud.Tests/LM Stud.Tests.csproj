@@ -153,6 +153,7 @@
     <Compile Include="ApiServerSlotRoutingTests.cs" />
     <Compile Include="ApiServerTests.cs" />
     <Compile Include="ChatMessageTests.cs" />
+    <Compile Include="CommonPathTests.cs" />
     <Compile Include="Form1AdditionalTests.cs" />
     <Compile Include="Form1InteractionTests.cs" />
     <Compile Include="GGUFMetadataManagerTests.cs" />

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using LMStud.Properties;
 namespace LMStud{
 	internal static class McpServerManager{
 		internal const int DefaultTimeoutMs = 30000;
@@ -21,8 +22,8 @@ namespace LMStud{
 		}
 		internal static string Connect(ModelSlot slot, Action<IEnumerable<string>> afterRegisteredToolsChanged = null){return Connect(slot, true, afterRegisteredToolsChanged);}
 		private static string Connect(ModelSlot slot, bool refreshRegisteredTools, Action<IEnumerable<string>> afterRegisteredToolsChanged = null){
-			if(slot == null || slot.Source != ModelSlotSource.Mcp) return ErrorJson("Slot is not an MCP server.");
-			if(string.IsNullOrWhiteSpace(slot.Name)) return ErrorJson("MCP slot name is required.");
+			if(slot == null || slot.Source != ModelSlotSource.Mcp) return ErrorJson(Resources.Slot_is_not_an_MCP_server_);
+			if(string.IsNullOrWhiteSpace(slot.Name)) return ErrorJson(Resources.MCP_slot_name_is_required_);
 			var slotNames = GetNativeToolSlotNames();
 			var leases = refreshRegisteredTools ? ModelSlotManager.EnterSlots(slotNames) : null;
 			var endpoint = slot.GetMcpEndpoint();
@@ -30,7 +31,7 @@ namespace LMStud{
 				if(string.IsNullOrWhiteSpace(endpoint)){
 					lock(Sync) DisconnectNativeLocked(slot.Name);
 					RefreshRegisteredTools(slotNames, refreshRegisteredTools, afterRegisteredToolsChanged);
-					return ErrorJson(slot.McpTransport == McpSlotTransport.Http ? "MCP URL is required." : "MCP command line is required.");
+					return ErrorJson(slot.McpTransport == McpSlotTransport.Http ? Resources.MCP_URL_is_required_ : Resources.MCP_command_line_is_required_);
 				}
 				lock(Sync){
 					try{
@@ -74,7 +75,7 @@ namespace LMStud{
 				try{ NativeMethods.MCPDisconnectAll(); } catch{}
 				ConnectedServerIds.Clear();
 			}
-			Tools.RegisterToolsForAllSlots();
+			Tools.InvalidateToolsJsonCache();
 		}
 		internal static string BuildToolsJson(){
 			lock(Sync){

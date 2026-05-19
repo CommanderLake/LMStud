@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Windows.Forms;
 namespace LMStud{
 	internal static class Common{
@@ -58,5 +60,25 @@ namespace LMStud{
 		internal static string GetReasoningEffort(int index) { return GetReasoningValue(ReasoningEffortValues, index); }
 		internal static string GetReasoningSummaryType(int index) { return GetReasoningValue(ReasoningSummaryValues, index); }
 		private static string GetReasoningValue(string[] values, int index) { return index > 0 && index < values.Length ? values[index] : null; }
+		internal static string GetPathRelativeToModelsDir(string path){
+			if(string.IsNullOrWhiteSpace(path)) return "";
+			if(string.IsNullOrWhiteSpace(ModelsDir)) return path;
+			try{
+				var fullPath = Path.GetFullPath(path).TrimEnd('\\', '/');
+				var fullModelsDir = Path.GetFullPath(ModelsDir).TrimEnd('\\', '/');
+				var isInsideModelsDir = string.Equals(fullPath, fullModelsDir, StringComparison.OrdinalIgnoreCase) ||
+					(fullPath.StartsWith(fullModelsDir, StringComparison.OrdinalIgnoreCase) && fullPath.Length > fullModelsDir.Length &&
+					(fullPath[fullModelsDir.Length] == '\\' || fullPath[fullModelsDir.Length] == '/'));
+				if(!isInsideModelsDir) return path;
+				if(fullPath.Length == fullModelsDir.Length) return "";
+				return fullPath.Substring(fullModelsDir.Length).TrimStart('\\', '/');
+			} catch{
+				var modelsDir = ModelsDir.TrimEnd('\\', '/');
+				var isInsideModelsDir = string.Equals(path, modelsDir, StringComparison.OrdinalIgnoreCase) ||
+					(path.StartsWith(modelsDir, StringComparison.OrdinalIgnoreCase) && path.Length > modelsDir.Length &&
+					(path[modelsDir.Length] == '\\' || path[modelsDir.Length] == '/'));
+				return isInsideModelsDir ? path.Substring(modelsDir.Length).TrimStart('\\', '/') : path;
+			}
+		}
 	}
 }

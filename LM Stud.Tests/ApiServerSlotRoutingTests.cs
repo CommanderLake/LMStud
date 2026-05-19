@@ -17,7 +17,7 @@ namespace LM_Stud.Tests{
 		[TestInitialize]
 		public void TestInitialize(){ModelSlotManager.Load();}
 		[TestMethod]
-		public async Task HandleChat_WithDifferentSlotModels_RoutesToDifferentApiBackends(){
+		public void HandleChat_WithDifferentSlotModels_RoutesToDifferentApiBackends(){
 			var serverPort = GetFreePort();
 			var upstreamPort1 = GetFreePort();
 			var upstreamPort2 = GetFreePort();
@@ -38,12 +38,14 @@ namespace LM_Stud.Tests{
 				Common.APIServerPort = serverPort;
 				apiServer.Start();
 				using(var client = new HttpClient()){
-					var response1 = await PostResponses(client, serverPort, "lmstud/" + slotName1, "hello a");
-					var response2 = await PostResponses(client, serverPort, "lmstud/" + slotName2, "hello b");
-					Assert.AreEqual(HttpStatusCode.OK, response1.StatusCode, await response1.Content.ReadAsStringAsync());
-					Assert.AreEqual(HttpStatusCode.OK, response2.StatusCode, await response2.Content.ReadAsStringAsync());
-					var json1 = Json.Parse(await response1.Content.ReadAsStringAsync());
-					var json2 = Json.Parse(await response2.Content.ReadAsStringAsync());
+					var response1 = PostResponses(client, serverPort, "lmstud/" + slotName1, "hello a");
+					var response2 = PostResponses(client, serverPort, "lmstud/" + slotName2, "hello b");
+					var body1 = response1.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+					var body2 = response2.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+					Assert.AreEqual(HttpStatusCode.OK, response1.StatusCode, body1);
+					Assert.AreEqual(HttpStatusCode.OK, response2.StatusCode, body2);
+					var json1 = Json.Parse(body1);
+					var json2 = Json.Parse(body2);
 					Assert.AreEqual("lmstud/" + slotName1, json1.GetString("model"));
 					Assert.AreEqual("lmstud/" + slotName2, json2.GetString("model"));
 				}
@@ -66,7 +68,7 @@ namespace LM_Stud.Tests{
 			}
 		}
 		[TestMethod]
-		public async Task HandleModels_ReturnsConfiguredServerSlots(){
+		public void HandleModels_ReturnsConfiguredServerSlots(){
 			var serverPort = GetFreePort();
 			var slotName = UniqueSlotName("test_list");
 			var apiServer = new APIServer();
@@ -77,9 +79,9 @@ namespace LM_Stud.Tests{
 				Common.APIServerPort = serverPort;
 				apiServer.Start();
 				using(var client = new HttpClient()){
-					var response = await client.GetAsync($"http://127.0.0.1:{serverPort}/v1/models");
+					var response = client.GetAsync($"http://127.0.0.1:{serverPort}/v1/models").GetAwaiter().GetResult();
 					Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-					var json = Json.Parse(await response.Content.ReadAsStringAsync());
+					var json = Json.Parse(response.Content.ReadAsStringAsync().GetAwaiter().GetResult());
 					var ids = json["data"];
 					Assert.IsTrue(ids.IsArray && ids.Any(item => item.GetString("id") == "lmstud/" + slotName), "Configured server slot should be listed by /v1/models.");
 				}
@@ -89,7 +91,7 @@ namespace LM_Stud.Tests{
 			}
 		}
 		[TestMethod]
-		public async Task HandleChat_DoesNotRouteToSlotsWithoutServerUse(){
+		public void HandleChat_DoesNotRouteToSlotsWithoutServerUse(){
 			var serverPort = GetFreePort();
 			var slotName = UniqueSlotName("test_hidden_server");
 			var apiServer = new APIServer();
@@ -100,8 +102,8 @@ namespace LM_Stud.Tests{
 				Common.APIServerPort = serverPort;
 				apiServer.Start();
 				using(var client = new HttpClient()){
-					var response = await PostResponses(client, serverPort, "lmstud/" + slotName, "hello hidden");
-					Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode, await response.Content.ReadAsStringAsync());
+					var response = PostResponses(client, serverPort, "lmstud/" + slotName, "hello hidden");
+					Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode, response.Content.ReadAsStringAsync().GetAwaiter().GetResult());
 				}
 			} finally{
 				apiServer.Stop();
@@ -283,9 +285,9 @@ namespace LM_Stud.Tests{
 			return item;
 		}
 		private static string UniqueSlotName(string prefix){return prefix + "_" + Guid.NewGuid().ToString("N");}
-		private static async Task<HttpResponseMessage> PostResponses(HttpClient client, int port, string model, string input){
+		private static HttpResponseMessage PostResponses(HttpClient client, int port, string model, string input){
 			var payload = Json.Object(Json.P("model", model), Json.P("input", input));
-			return await client.PostAsync($"http://127.0.0.1:{port}/v1/responses", new StringContent(payload.ToJson(), Encoding.UTF8, "application/json"));
+			return client.PostAsync($"http://127.0.0.1:{port}/v1/responses", new StringContent(payload.ToJson(), Encoding.UTF8, "application/json")).GetAwaiter().GetResult();
 		}
 		private static Task StartFakeResponsesServer(int port, string text, out Task<string> bodyTask){
 			var bodySource = new TaskCompletionSource<string>();

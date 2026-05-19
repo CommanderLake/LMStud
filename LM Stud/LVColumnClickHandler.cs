@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Windows.Forms;
 namespace LMStud{
-	public class LVColumnClickHandler{
+	internal class LVColumnClickHandler{
 		private readonly Dictionary<ListView, ListViewSortInfo> _listViewSorters;
-		public LVColumnClickHandler(){_listViewSorters = new Dictionary<ListView, ListViewSortInfo>();}
-		public void RegisterListView(ListView listView, SortDataType[] columnDataTypes = null, int initialSortColumn = -1, SortOrder initialSortOrder = SortOrder.Ascending){
+		internal LVColumnClickHandler(){_listViewSorters = new Dictionary<ListView, ListViewSortInfo>();}
+		internal void RegisterListView(ListView listView, SortDataType[] columnDataTypes = null, int initialSortColumn = -1, SortOrder initialSortOrder = SortOrder.Ascending){
 			if(listView == null) throw new ArgumentNullException(nameof(listView));
 			UnregisterListView(listView);
 			var sortInfo = new ListViewSortInfo(columnDataTypes);

@@ -589,4 +589,25 @@ state is null</value>
 <data name="Tool_call_" xml:space="preserve">
 	<value>Tool call </value>
 </data>
+<data name="Unsupported_JSON_number__" xml:space="preserve">
+	<value>Unsupported JSON number: </value>
+</data>
+<data name="Unsupported_JSON_value_type__" xml:space="preserve">
+	<value>Unsupported JSON value type: </value>
+</data>
+<data name="Invalid_JSON_" xml:space="preserve">
+	<value>Invalid JSON.</value>
+</data>
+<data name="MCP_URL_is_required_" xml:space="preserve">
+	<value>MCP URL is required.</value>
+</data>
+<data name="MCP_command_line_is_required_" xml:space="preserve">
+	<value>MCP command line is required.</value>
+</data>
+<data name="MCP_slot_name_is_required_" xml:space="preserve">
+	<value>MCP slot name is required.</value>
+</data>
+<data name="Slot_is_not_an_MCP_server_" xml:space="preserve">
+	<value>Slot is not an MCP server.</value>
+</data>
 </root>

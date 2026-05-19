@@ -2,8 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
-
+using LMStud.Properties;
 namespace LMStud{
 	internal enum JsonKind{
 		Missing = -1,
@@ -49,8 +50,7 @@ namespace LMStud{
 				if(!IsObject || key == null) return Missing;
 				var raw = NativeMethods.ReadUtf8AndFreeOptional(NativeMethods.JsonGetProperty(Raw, key));
 				if(raw != null) return new JsonNode(raw);
-				foreach(var property in Properties())
-					if(string.Equals(property.Name, key, StringComparison.OrdinalIgnoreCase)) return property.Value;
+				foreach(var property in Properties().Where(property => string.Equals(property.Name, key, StringComparison.OrdinalIgnoreCase))) return property.Value;
 				return Missing;
 			}
 		}
@@ -76,29 +76,23 @@ namespace LMStud{
 			if(!value.HasValue) return null;
 			return value.Value < int.MinValue || value.Value > int.MaxValue ? (int?)null : (int)value.Value;
 		}
-		internal double? AsDouble(){
+		private double? AsDouble(){
 			if(IsNull) return null;
-			double value;
-			return double.TryParse(AsString(), NumberStyles.Float, CultureInfo.InvariantCulture, out value) ? (double?)value : null;
+			return double.TryParse(AsString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? (double?)value : null;
 		}
-		internal long? AsLong(){
+		private long? AsLong(){
 			if(IsNull) return null;
-			long value;
-			return long.TryParse(AsString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out value) ? (long?)value : null;
+			return long.TryParse(AsString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var value) ? (long?)value : null;
 		}
-		internal bool? AsBool(){
+		private bool? AsBool(){
 			if(IsNull) return null;
-			bool value;
-			return bool.TryParse(AsString(), out value) ? (bool?)value : null;
+			return bool.TryParse(AsString(), out var value) ? (bool?)value : null;
 		}
 		internal IEnumerable<JsonProperty> Properties(){
 			if(!IsObject) yield break;
 			var keysRaw = NativeMethods.ReadUtf8AndFreeOptional(NativeMethods.JsonObjectKeys(Raw));
 			if(string.IsNullOrWhiteSpace(keysRaw)) yield break;
-			foreach(var keyNode in new JsonNode(keysRaw)){
-				var key = keyNode.AsString();
-				if(key != null) yield return new JsonProperty(key, this[key]);
-			}
+			foreach(var key in new JsonNode(keysRaw).Select(keyNode => keyNode.AsString()).Where(key => key != null)) yield return new JsonProperty(key, this[key]);
 		}
 		internal string ToJson(JsonFormat format = JsonFormat.Compact){
 			if(_missing) return "null";
@@ -109,7 +103,7 @@ namespace LMStud{
 			catch{}
 			return Raw;
 		}
-		public override string ToString(){ return ToJson(JsonFormat.Compact); }
+		public override string ToString(){ return ToJson(); }
 		public IEnumerator<JsonNode> GetEnumerator(){
 			for(var i = 0; i < Count; ++i) yield return this[i];
 		}
@@ -131,8 +125,8 @@ namespace LMStud{
 		private readonly List<string> _order = new List<string>();
 		private readonly Dictionary<string, JsonNode> _values = new Dictionary<string, JsonNode>();
 		internal JsonNode this[string key]{
-			get{ return _values.TryGetValue(key, out var value) ? value : JsonNode.Missing; }
-			set{ Set(key, value); }
+			get => _values.TryGetValue(key, out var value) ? value : JsonNode.Missing;
+			set => Set(key, value);
 		}
 		internal void Set(string key, object value){
 			if(key == null) throw new ArgumentNullException(nameof(key));
@@ -159,9 +153,9 @@ namespace LMStud{
 		private static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
 		internal static JsonMember P(string name, object value){ return new JsonMember(name, value); }
 		internal static JsonNode Parse(string raw){
-			if(string.IsNullOrWhiteSpace(raw)) throw new InvalidOperationException("Invalid JSON.");
+			if(string.IsNullOrWhiteSpace(raw)) throw new InvalidOperationException(Resources.Invalid_JSON_);
 			var node = new JsonNode(raw);
-			if(node.Kind == JsonKind.Invalid) throw new InvalidOperationException("Invalid JSON.");
+			if(node.Kind == JsonKind.Invalid) throw new InvalidOperationException(Resources.Invalid_JSON_);
 			return node;
 		}
 		internal static JsonNode String(string value){ return new JsonNode(NativeMethods.ReadUtf8AndFree(NativeMethods.JsonMakeString(value ?? ""))); }
@@ -190,17 +184,17 @@ namespace LMStud{
 			if(value is bool flag) return new JsonNode(flag ? "true" : "false");
 			if(value is Enum) return new JsonNode(Convert.ToInt64(value, Invariant).ToString(Invariant));
 			if(value is float single){
-				if(float.IsNaN(single) || float.IsInfinity(single)) throw new InvalidOperationException("Unsupported JSON number: " + single.ToString(Invariant));
+				if(float.IsNaN(single) || float.IsInfinity(single)) throw new InvalidOperationException(Resources.Unsupported_JSON_number__ + single.ToString(Invariant));
 				return new JsonNode(single.ToString(Invariant));
 			}
 			if(value is double dbl){
-				if(double.IsNaN(dbl) || double.IsInfinity(dbl)) throw new InvalidOperationException("Unsupported JSON number: " + dbl.ToString(Invariant));
+				if(double.IsNaN(dbl) || double.IsInfinity(dbl)) throw new InvalidOperationException(Resources.Unsupported_JSON_number__ + dbl.ToString(Invariant));
 				return new JsonNode(dbl.ToString(Invariant));
 			}
 			if(value is byte || value is sbyte || value is short || value is ushort || value is int || value is uint || value is long || value is ulong || value is decimal)
 				return new JsonNode(Convert.ToString(value, Invariant));
 			if(value is IEnumerable<JsonNode> nodes) return new JsonNode(BuildArrayRaw(nodes));
-			throw new InvalidOperationException("Unsupported JSON value type: " + value.GetType().Name);
+			throw new InvalidOperationException(Resources.Unsupported_JSON_value_type__ + value.GetType().Name);
 		}
 		internal static string BuildArrayRaw(IEnumerable<JsonNode> nodes){
 			var json = new StringBuilder();

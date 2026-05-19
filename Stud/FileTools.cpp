@@ -162,6 +162,95 @@ std::string ListDirectoryTool(const char* slotName, const char* argsJson){
 	if(ec) return "{\"error\":\"folder not found, maybe its a file\"}";
 	return EntriesJson(files);
 }
+std::string SearchFilesTool(const char* slotName, const char* argsJson){
+	std::string path = GetArgValue(argsJson, "path");
+	const std::string query = GetArgValue(argsJson, "query");
+	const std::string maxResultsStr = GetArgValue(argsJson, "max_results");
+	const std::string caseSensitiveStr = GetArgValue(argsJson, "case_sensitive");
+	const std::string recursiveStr = GetArgValue(argsJson, "recursive");
+	const std::string useRegexStr = GetArgValue(argsJson, "use_regex");
+	const bool caseSensitive = caseSensitiveStr == "true" || caseSensitiveStr == "1";
+	const bool recursive = recursiveStr == "true" || recursiveStr == "1";
+	const bool useRegex = useRegexStr == "true" || useRegexStr == "1";
+	int maxResults = 100;
+	if(!maxResultsStr.empty()){
+		auto[ptr, ec] = std::from_chars(maxResultsStr.data(), maxResultsStr.data() + maxResultsStr.size(), maxResults);
+		if(ec != std::errc() || ptr != maxResultsStr.data() + maxResultsStr.size() || maxResults <= 0) return "{\"error\":\"max_results must be a valid positive integer\"}";
+	}
+	auto trim = [](const std::string& s){
+		const auto start = s.find_first_not_of(" \t\r\n");
+		if(start == std::string::npos) return std::string();
+		const auto end = s.find_last_not_of(" \t\r\n");
+		return s.substr(start, end - start + 1);
+	};
+	auto toLower = [](std::string s){
+		std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return c >= 'A' && c <= 'Z' ? static_cast<char>(c + ('a' - 'A')) : static_cast<char>(c); });
+		return s;
+	};
+	std::vector<std::string> terms;
+	if(!useRegex){
+		size_t start = 0;
+		while(start <= query.size()){
+			const size_t sep = query.find('|', start);
+			const size_t len = sep == std::string::npos ? query.size() - start : sep - start;
+			const std::string token = trim(query.substr(start, len));
+			if(!token.empty()) terms.push_back(caseSensitive ? token : toLower(token));
+			if(sep == std::string::npos) break;
+			start = sep + 1;
+		}
+		if(terms.empty()) return "{\"error\":\"query is required\"}";
+	} else if(query.empty()) return "{\"error\":\"query is required\"}";
+	std::regex queryRegex;
+	if(useRegex){
+		try{
+			auto flags = std::regex_constants::ECMAScript;
+			if(!caseSensitive) flags |= std::regex_constants::icase;
+			queryRegex = std::regex(query, flags);
+		} catch(const std::regex_error&){
+			return "{\"error\":\"invalid regex query\"}";
+		}
+	}
+	if(path.empty()) path = ".";
+	const std::filesystem::path p = ResolveFileToolPath(path);
+	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
+	if(!is_directory(p)) return "{\"error\":\"path is not a folder\"}";
+	std::vector<std::string> files;
+	auto isMatch = [&](const std::string& label){
+		if(useRegex) return std::regex_search(label, queryRegex);
+		const std::string searchLabel = caseSensitive ? label : toLower(label);
+		for(const auto& term : terms){
+			if(searchLabel.find(term) != std::string::npos) return true;
+		}
+		return false;
+	};
+	auto addIfMatch = [&](const std::filesystem::directory_entry& entry)-> bool{
+		if(!IsRegularFileForReading(entry.path())) return false;
+		const std::string label = GetFileToolPathLabel(entry.path(), &p);
+		if(!isMatch(label)) return false;
+		files.push_back(label);
+		return static_cast<int>(files.size()) >= maxResults;
+	};
+	std::error_code ec;
+	if(recursive){
+		for(auto it = std::filesystem::recursive_directory_iterator(p, ec), end = std::filesystem::recursive_directory_iterator(); it != end; it.increment(ec)){
+			if(ec) break;
+			const auto& entry = *it;
+			if(IsGitDirectoryEntry(entry)){
+				it.disable_recursion_pending();
+				continue;
+			}
+			if(addIfMatch(entry)) break;
+		}
+	} else{
+		for(const auto& entry : std::filesystem::directory_iterator(p, ec)){
+			if(ec) break;
+			if(IsGitDirectoryEntry(entry)) continue;
+			if(addIfMatch(entry)) break;
+		}
+	}
+	if(ec) return "{\"error\":\"failed to iterate directory\"}";
+	return EntriesJson(files);
+}
 std::string ReadFileTool(const char* slotName, const char* argsJson){
 	std::string path = GetArgValue(argsJson, "path");
 	const std::string startStr = GetArgValue(argsJson, "start");
