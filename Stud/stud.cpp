@@ -640,16 +640,20 @@ StudError RetokenizeChat(const char* slotName, bool rebuildMemory = false){
 	lane.cachedTokens = std::move(promptTokens);
 	return StudError::Success;
 }
-static StudError DecodePromptText(const char* slotName, const std::string& prompt, const common_chat_msg* appendMsg = nullptr){
+static size_t CommonTokenPrefix(const std::vector<llama_token>& a, const std::vector<llama_token>& b){
+	size_t prefix = 0;
+	while(prefix < a.size() && prefix < b.size() && a[prefix] == b[prefix]) ++prefix;
+	return prefix;
+}
+static StudError DecodePromptTokenSuffix(const char* slotName, const std::vector<llama_token>& promptTokens, const size_t prefix, const common_chat_msg* appendMsg = nullptr){
 	auto& session = GetModel(slotName)->session;
 	auto& lane = session.lane;
-	std::vector<llama_token> promptTokens;
-	if(!TokenizePrompt(slotName, prompt, promptTokens)) return StudError::CantTokenizePrompt;
+	if(prefix > lane.cachedTokens.size() || prefix > promptTokens.size()) return StudError::Generic;
 	if(appendMsg) lane.messages.push_back(*appendMsg);
-	size_t p = 0;
+	size_t p = prefix;
 	while(p < promptTokens.size() && !session.stop.load()){
-		const int nEval = std::min<int>(session.batchSize, promptTokens.size() - p);
-		const llama_batch batch = llama_batch_get_one(&promptTokens[p], nEval);
+		const int nEval = std::min<int>(session.batchSize, static_cast<int>(promptTokens.size() - p));
+		const llama_batch batch = llama_batch_get_one(const_cast<llama_token*>(&promptTokens[p]), nEval);
 		const int nCtx = llama_n_ctx(session.ctx);
 		const int nCtxUsed = static_cast<int>(lane.cachedTokens.size());
 		if(nCtxUsed + batch.n_tokens > nCtx){
@@ -669,23 +673,30 @@ static StudError DecodePromptText(const char* slotName, const std::string& promp
 }
 static StudError DecodeSinglePromptMessage(const char* slotName, const common_chat_msg& message, const bool addAss, const bool appendToChat = true){
 	const auto model = GetModel(slotName);
-	const auto& lane = model->session.lane;
-	if(appendToChat && message.role == "user" && lane.messages.empty() && lane.cachedTokens.empty()){
-		const std::vector<common_chat_msg> chatMsgs{message};
-		common_chat_params chatData;
-		const bool toolsEnabled = !model->session.tools.empty();
-		auto err = BuildChatTemplateParamsForMessages(slotName, chatData, chatMsgs, addAss, toolsEnabled);
+	auto& lane = model->session.lane;
+	const bool toolsEnabled = !model->session.tools.empty();
+	std::vector<common_chat_msg> chatMsgs = lane.messages;
+	chatMsgs.push_back(message);
+	common_chat_params chatData;
+	auto err = BuildChatTemplateParamsForMessages(slotName, chatData, chatMsgs, addAss, toolsEnabled);
+	if(err != StudError::Success) return err;
+	err = LoadChatSyntax(model->session.syntax, chatData, toolsEnabled);
+	if(err != StudError::Success) return err;
+	std::vector<llama_token> promptTokens;
+	if(!TokenizePrompt(slotName, chatData.prompt, promptTokens)) return StudError::CantTokenizePrompt;
+	size_t prefix = CommonTokenPrefix(lane.cachedTokens, promptTokens);
+	if(prefix < lane.cachedTokens.size()){
+		err = RetokenizeChat(slotName, true);
 		if(err != StudError::Success) return err;
-		err = LoadChatSyntax(model->session.syntax, chatData, toolsEnabled);
-		return err == StudError::Success ? DecodePromptText(slotName, chatData.prompt, &message) : err;
+		prefix = CommonTokenPrefix(lane.cachedTokens, promptTokens);
+		if(prefix < lane.cachedTokens.size()){
+			if(model->session.memory) llama_memory_clear(model->session.memory, true);
+			lane.cachedTokens.clear();
+			if(lane.sampler) llama_sampler_reset(lane.sampler);
+			prefix = 0;
+		}
 	}
-	std::string formatted;
-	try{ formatted = common_chat_format_single(model->chatTemplates.get(), lane.messages, message, addAss, message.role._Equal("assistant")); } catch(std::exception& e){
-		_lastErrorMessage = e.what();
-		OutputDebugStringA((std::string("EXCEPTION:\r\n") + e.what()).c_str());
-		return StudError::CantApplyTemplate;
-	}
-	return DecodePromptText(slotName, formatted, appendToChat ? &message : nullptr);
+	return DecodePromptTokenSuffix(slotName, promptTokens, prefix, appendToChat ? &message : nullptr);
 }
 StudError DialecticRelaySwap(const char* slotName, const char* fromSlotName, const char* toSlotName){
 	(void)slotName;
@@ -1173,7 +1184,6 @@ extern "C" EXPORT void RestoreChatState(const char* slotName, void* state){
 	const auto* snapshot = static_cast<Stud::StudSession*>(state);
 	session.lane.messages = snapshot->lane.messages;
 	session.lane.cachedTokens = snapshot->lane.cachedTokens;
-	// llama state restores the context memory; the sampler still needs its token history for penalties.
 	RestoreSamplerFromCachedTokens(session);
 	session.systemPrompt = snapshot->systemPrompt;
 	session.toolsPrompt = snapshot->toolsPrompt;

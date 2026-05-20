@@ -1,105 +1,233 @@
-﻿# 🦙 LM Stud – Local LLMs Minus the Lard
+# LM Stud
 
-> **TL;DR**  
-> A WinForms chat client for `llama.cpp`, `whisper.cpp` and your questionable life choices.  
-> **Zero Electron. Zero telemetry. Zero regrets.**
+> Local LLMs minus the lard.
+>
+> A fast, slightly unhinged WinForms client for `llama.cpp`, `whisper.cpp`, tools, API models, and now entire little committees of models arguing with each other.
+>
+> **Zero Electron. Zero telemetry. Zero cloud dependency unless you deliberately point it at one.**
+
+LM Stud is a Windows desktop app for running and orchestrating local language models without wrapping the whole thing in a browser pretending to be an operating system. It can chat with local GGUF models, call APIs, expose its own API server, run tools, search and fetch web pages, use speech input/output, and route work through multiple model slots.
+
+R48 is the big slot-system release. If older LM Stud was a local chat client with tools, this version is much closer to a tiny model switchboard.
 
 ---
 
-## Features
+## R48 Headliners
 
-| ☑️ | What It Does |
+| What changed | Why it matters |
 | --- | --- |
-| ✅ | Launches in milliseconds—your GPU blinks and it’s already chatting. |
-| ✅ | Edit / regenerate / yeet messages. |
-| ✅ | Shows the model’s “thinking” stream (fun for prompt nerds). |
-| ✅ | Drag-drop files → instant code blocks. |
-| ✅ | One-click Hugging Face search & download. |
-| ✅ | **Built-in Google Search + webpage fetch** (super-visible setup below). |
-| ✅ | Optional speech I/O with `whisper.cpp`—talk smack to your computer. |
-| ✅ | Tiny memory footprint—smaller than RGB keyboard driver. |
-| ✅ | Dialectic mode with separate local slots for side-by-side debates. |
-| ✅ | API Client and Server using the OpenAI Responses API format |
+| **Slot system** | Create Local, API and MCP slots, then mark them for Chat, Dialectic, Tool or API Server use. |
+| **Multiple loaded models** | Different models can be loaded at the same time and generate in parallel. |
+| **Shared local weights** | Multiple slots using the same local model share weights, so memory use does not multiply just because you gave the same model more jobs. |
+| **llama.cpp b9222** | Includes recent upstream work, including MTP / Multi Token Prediction support. |
+| **KV cache type selection** | Pick cache types including TurboQuant and Q8_0. |
+| **Multiple API formats** | Parses OpenAI Responses, Chat Completions, Anthropic, Ollama and Gemini-style responses. |
+| **Streaming tool output** | Some tools can stream their output into the chat/API flow instead of waiting in silence. |
+| **Dialectic relay** | Let two local slots talk to each other, optionally with different models and system prompts. Civilised debate optional. |
 
 ---
 
-## Google Search – **READ ME FIRST** ⚠️
-<details>
+## What It Does
 
-```text
-1)  Grab an API key
-    https://console.cloud.google.com/apis/dashboard
-    → new project → enable “Custom Search API” → copy the key.
+| Area | Features |
+| --- | --- |
+| **Local chat** | Load GGUF models through `llama.cpp`, chat, edit messages, regenerate from earlier turns and view thinking output when the model provides it. |
+| **Model slots** | Configure slots for local models, API models, tool models and API-server routing. The active chat slot is separate from slots used as tools or dialectic partners. |
+| **Tools** | Date/time, Google search, webpage fetch, file listing/search/read/write/patch tools and command prompt tools. |
+| **API client** | Talk to external model APIs and handle tool calls client-side. |
+| **API server** | Expose LM Stud through API endpoints and route requests to eligible slots. |
+| **Templates** | Export Jinja chat templates from models that contain them. |
+| **Hugging Face** | Search and download models from inside the app. |
+| **Speech** | Optional `whisper.cpp` speech input and text-to-speech workflow. |
+| **UI sanity** | No Electron. No telemetry. No startup ceremony. Just a WinForms app that gets on with it. |
 
-2)  Create a Search Engine ID
-    https://programmablesearchengine.google.com/controlpanel/overview
-    → “Add” → “Search the entire web” → grab the cx ID.
+---
 
-3)  Paste both values in  Settings → Google Search Tool.
-    Congrats—~100 free queries per day. Abuse responsibly.
-```
-</details>
+## The Slot System, In Human Terms
+
+Slots are named endpoints inside LM Stud. A slot can be a local model, a remote/API model, or an MCP tool server. Each slot can then be given one or more jobs:
+
+| Slot use | Meaning |
+| --- | --- |
+| **Chat** | The slot used for your normal conversation. |
+| **Dialectic** | A local slot that can participate in relay-style model-to-model conversation. |
+| **Tool** | A model slot exposed as a callable tool, so one model can ask another model for help. |
+| **API Server** | A slot that LM Stud can route incoming API server requests to. |
+
+The fun bit: slots can generate in parallel, and if two local slots point at the same model file, LM Stud shares the model weights. You can give one model multiple roles without paying the full memory cost repeatedly.
+
+Device selection per slot is planned for a later update.
 
 ---
 
 ## Screenshots
 
-|             Chat Tab            |               Settings Tab              |              Models Tab             |                Hugging Face Tab               |
-| :-----------------------------: | :-------------------------------------: | :---------------------------------: | :-------------------------------------------: |
+| Chat | Settings | Models | Hugging Face |
+| :---: | :---: | :---: | :---: |
 | ![Chat](./screenshots/Chat.PNG) | ![Settings](./screenshots/Settings.PNG) | ![Models](./screenshots/Models.PNG) | ![Huggingface](./screenshots/Huggingface.PNG) |
 
 ---
 
-## Quick-Start Build
+## Tools
+
+LM Stud can give models a practical little toolbox:
+
+| Tool family | Notes |
+| --- | --- |
+| **Web** | Google search, webpage preview and webpage text extraction. |
+| **Files** | List directories, search file names, read file lines, search file contents, create files, replace lines and apply patches. |
+| **Command prompt** | Start a Windows command prompt session and execute commands through it. |
+| **Model tools** | Local or API model slots can be called as tools by another model. |
+
+File tools are scoped by a base path. If the base path is empty, the file tools can access the full filesystem. That is powerful, useful and exactly the sort of thing you should only enable for models you trust.
+
+Tool call and output JSON is prettified in the chat UI, because raw one-line JSON walls are bad for the soul.
+
+---
+
+## Google Search Setup
+
+<details>
+<summary>Click for Google Search tool setup</summary>
+
+```text
+1. Grab an API key
+   https://console.cloud.google.com/apis/dashboard
+   -> new project
+   -> enable "Custom Search API"
+   -> copy the key
+
+2. Create a Search Engine ID
+   https://programmablesearchengine.google.com/controlpanel/overview
+   -> Add
+   -> Search the entire web
+   -> copy the cx ID
+
+3. Paste both values in Settings -> Google Search Tool.
+
+Google usually gives around 100 free queries per day. Spend them wisely,
+or at least entertainingly.
+```
+
+</details>
+
+---
+
+## API Notes
+
+LM Stud includes both an API client and an API server.
+
+The client-side parser supports several common response shapes:
+
+```text
+- OpenAI Responses
+- OpenAI-compatible Chat Completions
+- Anthropic-style responses
+- Ollama-style responses
+- Gemini-style responses
+```
+
+The server can route requests through configured API Server slots. Tool streaming and model-tool routing make it possible to build workflows where one model delegates work to another without leaving LM Stud.
+
+See [API example.bat](./API%20example.bat) for a small local server example.
+
+---
+
+## Build From Source
 
 ### Prerequisites
+
 ```text
 - Windows 7 or later
-- Visual Studio 2017 or later (Desktop development with C++ + .NET desktop development)
+- Visual Studio 2017 or later
+  - Desktop development with C++
+  - .NET desktop development
 - .NET Framework 4.8 developer targeting pack or later
 - Windows SDK 10.0.17763.0 or later
-- CMake (for llama.cpp / whisper.cpp builds)
-- Optional NVIDIA CUDA toolkit + compatible driver (if using CUDA builds)
+- CMake, for llama.cpp / whisper.cpp builds
+- Optional NVIDIA CUDA toolkit + compatible driver, if using CUDA builds
 ```
 
 ### Build llama.cpp
+
 ```text
-1. Install Visual Studio with C# and C++ development tools
-2. Clone https://github.com/ggml-org/llama.cpp or download the source code of the latest release
-3. Open "x64 Native Tools Command Prompt for VS <version>", cd to the llama.cpp folder and run "mkdir build && cd build"
-4. `cmake .. -DGGML_NATIVE=OFF -DGGML_BACKEND_DL=ON -DGGML_AVX2=ON -DGGML_BMI2=ON -DGGML_CUDA=ON -DGGML_CUDA_F16=ON -DLLAMA_CURL=OFF -DLLAMA_ALL_WARNINGS=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_TOOLS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_SERVER=OFF`
-5. Open build\llama.cpp.sln with visual studio and build the Release version
+1. Install Visual Studio with C# and C++ development tools.
+2. Clone https://github.com/ggml-org/llama.cpp or download the source code.
+3. Open "x64 Native Tools Command Prompt for VS <version>".
+4. cd to the llama.cpp folder.
+5. Run:
+
+   mkdir build && cd build
+
+6. Configure:
+
+   cmake .. -DGGML_NATIVE=OFF -DGGML_BACKEND_DL=ON -DGGML_AVX2=ON -DGGML_BMI2=ON -DGGML_CUDA=ON -DGGML_CUDA_F16=ON -DLLAMA_CURL=OFF -DLLAMA_ALL_WARNINGS=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_TOOLS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_SERVER=OFF
+
+7. Open build\llama.cpp.sln in Visual Studio and build Release.
 ```
-### Copy files
+
+### Copy Native Files
+
 ```text
 1. Clone https://github.com/CommanderLake/LMStud
-2. Adjust "VC++ Directories" in the Stud project so the paths reflect where you cloned llama.cpp and whisper.cpp to
-3. From build\bin\Release copy all .dll files to <LMStud solution folder>\LM Stud\bin\x64\Release
-4. If you wish to use the Debug version follow the last 2 steps but replace "Release" with "Debug", i use Release for CUDA 10.2 and ReleaseCUDA12 for the CUDA 12.8 build
-5. If you want whisper.cpp for voice input the build steps are similar to llama.cpp, clone https://github.com/ggml-org/whisper.cpp copy only whisper.dll to the "LM Stud\bin\x64\Release" folder or whatever your build configuration is
+2. Adjust "VC++ Directories" in the Stud project so the paths match your
+   local llama.cpp and whisper.cpp folders.
+3. From llama.cpp build\bin\Release, copy all .dll files to:
+
+   <LMStud solution folder>\LM Stud\bin\x64\Release
+
+4. For Debug builds, repeat the copy step with Debug paths.
+5. For whisper.cpp voice input, build whisper.cpp similarly and copy only
+   whisper.dll to the same LM Stud output folder.
 ```
-### Set up curl for tools and model downloading
+
+The project currently uses Release for CUDA 10.2 and ReleaseCUDA12 for the CUDA 12.8 build.
+
+### Set Up vcpkg Dependencies
+
 ```text
-1. Set up vcpkg, step "1 - Set up vcpkg": https://learn.microsoft.com/en-us/vcpkg/get_started/get-started
-2. From a new visual studio command prompt...
-3. vcpkg install SDL2:x64-windows-static
-4. vcpkg install curl[openssl]:x64-windows-static
-5. Open LM Stud.sln in Visual Studio
-6. Adjust "Include Directories" in "VC++ Directories" in the Stud project to your llama.cpp, whisper.cpp and vcpkg locations
-7. Build LM Stud
+1. Set up vcpkg:
+   https://learn.microsoft.com/en-us/vcpkg/get_started/get-started
+
+2. From a fresh Visual Studio command prompt:
+
+   vcpkg install SDL2:x64-windows-static
+   vcpkg install curl[openssl]:x64-windows-static
+
+3. Open LM Stud.sln in Visual Studio.
+4. Adjust "Include Directories" in the Stud project's "VC++ Directories"
+   to your llama.cpp, whisper.cpp and vcpkg locations.
+5. Build LM Stud.
 ```
 
 ---
 
-## Settings Cheat-Sheet
+## Settings Cheat Sheet
 
-| Section                | Knobs & Dials                                                  |
-| ---------------------- | -------------------------------------------------------------- |
-| **CPU Params / Batch** | Generation threads, batch threads.                             |
-| **Common**             | Context size, GPU layers, temperature, tokens to generate.     |
-| **Advanced**           | NUMA strategy, repeat penalty, top-k/p, batch size.            |
-| **Voice**              | Model picker, wake word, VAD, frequency threshold, GPU toggle. |
-| **Tools**              | Enable Google Search (API key + cx), enable webpage fetch.     |
+| Section | Useful knobs |
+| --- | --- |
+| **CPU Params / Batch** | Generation threads and batch threads. |
+| **Common** | Context size, GPU layers, temperature and tokens to generate. |
+| **Advanced** | NUMA strategy, repeat penalty, top-k/top-p, min-p, batch size and KV cache types. |
+| **Slots** | Local/API/MCP slot setup, slot usage flags, per-slot system prompts and active chat selection. |
+| **Tools** | Web tools, file tools, command prompt tools and model-tool routing. |
+| **Voice** | Whisper model, wake word, VAD, frequency threshold and GPU toggle. |
+
+---
+
+## Philosophy
+
+LM Stud is for people who want local models to feel like local software:
+
+```text
+fast to open
+plain to inspect
+cheap to idle
+happy to run without accounts
+dangerous only when you explicitly hand it dangerous tools
+```
+
+It is not trying to be a cloud platform in a trench coat. It is a desktop app with sharp edges, useful knobs and a suspiciously high tolerance for experimental model behaviour.
 
 ---
 
@@ -116,5 +244,5 @@ Public redistribution is not permitted. This includes, without limitation, posti
 
 ### Disclaimer
 
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,  
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT, TO THE MAXIMUM EXTENT PERMITTED BY LAW.
