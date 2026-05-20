@@ -8,6 +8,8 @@
 
 LM Stud is a Windows desktop app for running and orchestrating local language models without wrapping the whole thing in a browser pretending to be an operating system. It can chat with local GGUF models, call APIs, expose its own API server, run tools, search and fetch web pages, use speech input/output, and route work through multiple model slots.
 
+It runs on Windows 7 and later, because perfectly good old machines deserve to hallucinate too.
+
 R48 is the big slot-system release. If older LM Stud was a local chat client with tools, this version is much closer to a tiny model switchboard.
 
 ---
