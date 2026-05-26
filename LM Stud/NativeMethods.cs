@@ -78,7 +78,7 @@ namespace LMStud{
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void BackendInit();
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern StudError CreateContext([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch, int kType, int vType);
+		internal static extern StudError CreateContext([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, int nCtx, int nBatch, uint flashAttn, int nThreads, int nThreadsBatch, int kType, int vType, int mtpDraftTokens);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError CreateSampler([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, float minP, float topP, int topK, float temp, float repeatPenalty);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]

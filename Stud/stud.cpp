@@ -29,6 +29,8 @@ extern "C" void StopCMDOutput();
 extern "C" void MarkToolsJsonDirty();
 static bool _gpuOomStud = false;
 static std::string _lastErrorMessage;
+static constexpr int MtpDraftTokensMax = 62;
+static constexpr int MtpPrefillBatchMax = 32;
 extern "C" EXPORT const char* GetLastErrorMessage(){ return _lastErrorMessage.c_str(); }
 extern "C" EXPORT void ClearLastErrorMessage(){ _lastErrorMessage.clear(); }
 static void AppendLastErrorLogMessage(std::string_view msg){
@@ -225,7 +227,7 @@ static std::string BuildSharedModelCacheKey(const char* filename, const int nGPU
 	key += "|gpu=" + std::to_string(nGPULayers);
 	key += "|mmap=" + std::to_string(mMap ? 1 : 0);
 	key += "|mlock=" + std::to_string(mLock ? 1 : 0);
-	key += "|numa=" + std::to_string(static_cast<int>(numaStrategy));
+	key += "|numa=" + std::to_string(numaStrategy);
 	return key;
 }
 static std::shared_ptr<Stud::StudSharedModel> LoadOrReuseSharedModel(const char* filename, const int nGPULayers, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy){
@@ -266,8 +268,150 @@ bool IsModelSlotLoaded(const char* slotName){
 	const auto* runtime = FindModel(NormName(slotName));
 	return runtime && runtime->sharedModel && runtime->llModel && runtime->session.ctx;
 }
-StudError CreateContext(const char* slotName, const int nCtx, const int batchSize, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch, const int kType, const int vType){
+static void FreeSpeculativeContext(Stud::StudSession& session){
+	if(session.speculative){
+		common_speculative_free(session.speculative);
+		session.speculative = nullptr;
+	}
+	if(session.mtpCtx){
+		llama_free(session.mtpCtx);
+		session.mtpCtx = nullptr;
+	}
+	if(session.mtpTargetBatchCapacity > 0){
+		llama_batch_free(session.mtpTargetBatch);
+		session.mtpTargetBatch = {};
+		session.mtpTargetBatchCapacity = 0;
+	}
+}
+static void ClearSessionMemory(Stud::StudSession& session){
+	if(session.memory) llama_memory_clear(session.memory, true);
+	if(session.mtpCtx){
+		if(const auto mtpMemory = llama_get_memory(session.mtpCtx)) llama_memory_clear(mtpMemory, true);
+	}
+}
+static bool RemoveSessionMemoryAfter(Stud::StudSession& session, const llama_pos pos){
+	bool ok = true;
+	if(session.memory) ok = llama_memory_seq_rm(session.memory, 0, pos, -1) && ok;
+	if(session.mtpCtx){
+		if(const auto mtpMemory = llama_get_memory(session.mtpCtx)) ok = llama_memory_seq_rm(mtpMemory, 0, pos, -1) && ok;
+	}
+	return ok;
+}
+static bool RemoveMtpMemoryAfter(Stud::StudSession& session, const llama_pos pos){
+	if(!session.mtpCtx) return true;
+	const auto mtpMemory = llama_get_memory(session.mtpCtx);
+	return !mtpMemory || llama_memory_seq_rm(mtpMemory, 0, pos, -1);
+}
+static int EffectiveMtpDraftTokens(const int mtpDraftTokens, const llama_context_params& ctxParams){
+	const int ctxRoom = ctxParams.n_ctx == 0 ? mtpDraftTokens : std::max(0, static_cast<int>(ctxParams.n_ctx) - 1);
+	const int batchRoom = std::max(0, static_cast<int>(ctxParams.n_batch) - 1);
+	return std::min({mtpDraftTokens, ctxRoom, batchRoom});
+}
+static int EvalBatchSize(const Stud::StudSession& session){
+	return session.speculative ? std::max(1, std::min(session.batchSize, MtpPrefillBatchMax)) : session.batchSize;
+}
+static llama_batch* EnsureMtpTargetBatch(Stud::StudSession& session, const int nTokens){
+	if(session.mtpTargetBatchCapacity >= nTokens) return &session.mtpTargetBatch;
+	if(session.mtpTargetBatchCapacity > 0){
+		llama_batch_free(session.mtpTargetBatch);
+		session.mtpTargetBatch = {};
+		session.mtpTargetBatchCapacity = 0;
+	}
+	session.mtpTargetBatch = llama_batch_init(nTokens, 0, 1);
+	if(!session.mtpTargetBatch.token || !session.mtpTargetBatch.pos || !session.mtpTargetBatch.n_seq_id || !session.mtpTargetBatch.seq_id || !session.mtpTargetBatch.logits){
+		llama_batch_free(session.mtpTargetBatch);
+		session.mtpTargetBatch = {};
+		return nullptr;
+	}
+	session.mtpTargetBatchCapacity = nTokens;
+	return &session.mtpTargetBatch;
+}
+static void AddSingleSeqToken(llama_batch& batch, const llama_token token, const llama_pos pos, const bool logits){
+	const int i = batch.n_tokens++;
+	batch.token[i] = token;
+	batch.pos[i] = pos;
+	batch.n_seq_id[i] = 1;
+	batch.seq_id[i][0] = 0;
+	batch.logits[i] = logits;
+}
+static StudError DecodeTokenBatch(Stud::StudSession& session, llama_token* tokens, const int nTokens, const llama_pos posStart, const bool outputAll){
+	if(nTokens <= 0) return StudError::Success;
+	if(!session.speculative){
+		const auto batch = llama_batch_get_one(tokens, nTokens);
+		const auto result = llama_decode(session.ctx, batch);
+		return result == 0 ? StudError::Success : result == 1 ? StudError::ConvTooLong : StudError::LlamaDecodeError;
+	}
+	auto* batchPtr = EnsureMtpTargetBatch(session, nTokens);
+	if(!batchPtr) return StudError::LlamaDecodeError;
+	auto& batch = *batchPtr;
+	common_batch_clear(batch);
+	for(int i = 0; i < nTokens; ++i) AddSingleSeqToken(batch, tokens[i], posStart + i, outputAll || i == nTokens - 1);
+	const auto result = llama_decode(session.ctx, batch);
+	if(result == 0 && !common_speculative_process(session.speculative, batch)) return StudError::LlamaDecodeError;
+	return result == 0 ? StudError::Success : result == 1 ? StudError::ConvTooLong : StudError::LlamaDecodeError;
+}
+static void TryCreateMtpContext(Stud::StudModel* model, llama_context_params ctxParams, const int mtpDraftTokens){
+	if(mtpDraftTokens <= 0 || !model->session.ctx) return;
+	const auto seqRmType = common_context_can_seq_rm(model->session.ctx);
+	if(seqRmType == COMMON_CONTEXT_SEQ_RM_TYPE_FULL || seqRmType == COMMON_CONTEXT_SEQ_RM_TYPE_NO){
+		AppendLastErrorLogMessage("MTP disabled: this model context cannot roll back partially accepted draft tokens.");
+		return;
+	}
+	ctxParams.ctx_type = LLAMA_CONTEXT_TYPE_MTP;
+	ctxParams.n_rs_seq = static_cast<uint32_t>(mtpDraftTokens + 1);
+	llama_context* mtpCtx = nullptr;
+	try{ mtpCtx = llama_init_from_model(model->llModel, ctxParams); }
+	catch(const std::exception& e){ AppendLastErrorLogMessage(e.what()); }
+	catch(...){ AppendLastErrorLogMessage("llama_init_from_model failed for the MTP context."); }
+	if(!mtpCtx){
+		AppendLastErrorLogMessage("MTP disabled: the loaded model does not expose a compatible MTP head.");
+		return;
+	}
+	const auto mtpSeqRmType = common_context_can_seq_rm(mtpCtx);
+	if(mtpSeqRmType == COMMON_CONTEXT_SEQ_RM_TYPE_FULL || mtpSeqRmType == COMMON_CONTEXT_SEQ_RM_TYPE_NO){
+		llama_free(mtpCtx);
+		AppendLastErrorLogMessage("MTP disabled: the MTP draft context cannot roll back draft state.");
+		return;
+	}
+	common_params_speculative specParams;
+	specParams.types = {COMMON_SPECULATIVE_TYPE_DRAFT_MTP};
+	specParams.draft.cache_type_k = ctxParams.type_k;
+	specParams.draft.cache_type_v = ctxParams.type_v;
+	specParams.draft.ctx_tgt = model->session.ctx;
+	specParams.draft.ctx_dft = mtpCtx;
+	specParams.draft.n_max = mtpDraftTokens;
+	specParams.draft.n_min = 0;
+	try{
+		model->session.speculative = common_speculative_init(specParams, 1);
+	} catch(const std::exception& e){
+		AppendLastErrorLogMessage(e.what());
+	} catch(...){
+		AppendLastErrorLogMessage("common_speculative_init failed for MTP.");
+	}
+	if(!model->session.speculative){
+		llama_free(mtpCtx);
+		AppendLastErrorLogMessage("MTP disabled: llama.cpp did not create a speculative decoder.");
+		return;
+	}
+	model->session.mtpCtx = mtpCtx;
+	model->session.mtpDraftTokens = mtpDraftTokens;
+}
+static void RecreateSpecCtx(Stud::StudModel* model){
+	auto& session = model->session;
+	const int mtpDraftTokens = session.mtpDraftTokens;
+	if(mtpDraftTokens <= 0 || !session.ctx || !model->llModel || !session.hasCtxParams) return;
+	const auto ctxParams = session.ctxParams;
+	FreeSpeculativeContext(session);
+	TryCreateMtpContext(model, ctxParams, mtpDraftTokens);
+}
+static void ClearSessMemAndSpecState(Stud::StudModel* model){
+	ClearSessionMemory(model->session);
+	RecreateSpecCtx(model);
+}
+StudError CreateContext(const char* slotName, const int nCtx, const int batchSize, const unsigned int flashAttn, const int nThreads, const int nThreadsBatch, const int kType, const int vType, const int mtpDraftTokens){
 	const auto model = GetModel(slotName);
+	FreeSpeculativeContext(model->session);
+	model->session.mtpDraftTokens = 0;
 	if(model->session.ctx){
 		llama_free(model->session.ctx);
 		model->session.ctx = nullptr;
@@ -278,6 +422,9 @@ StudError CreateContext(const char* slotName, const int nCtx, const int batchSiz
 	auto ctxParams = llama_context_default_params();
 	ctxParams.n_ctx = nCtx;
 	ctxParams.n_batch = batchSize;
+	const int mtpDraftTokensEffective = EffectiveMtpDraftTokens(std::max(0, std::min(mtpDraftTokens, MtpDraftTokensMax)), ctxParams);
+	model->session.mtpDraftTokens = mtpDraftTokensEffective;
+	ctxParams.n_rs_seq = mtpDraftTokensEffective > 0 ? static_cast<uint32_t>(mtpDraftTokensEffective) : 0;
 	ctxParams.offload_kqv = true;
 	ctxParams.op_offload = true;
 	if(flashAttn == 0) ctxParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED;
@@ -286,9 +433,9 @@ StudError CreateContext(const char* slotName, const int nCtx, const int batchSiz
 	ctxParams.n_threads = nThreads;
 	ctxParams.n_threads_batch = nThreadsBatch;
 	switch(kType){
-		case 1: ctxParams.type_k = GGML_TYPE_TQ1_0;
+		case 1: ctxParams.type_k = GGML_TYPE_Q4_0;
 			break;
-		case 2: ctxParams.type_k = GGML_TYPE_TQ2_0;
+		case 2: ctxParams.type_k = GGML_TYPE_Q5_0;
 			break;
 		case 3: ctxParams.type_k = GGML_TYPE_Q8_0;
 			break;
@@ -297,9 +444,9 @@ StudError CreateContext(const char* slotName, const int nCtx, const int batchSiz
 		default: ;
 	}
 	switch(vType){
-		case 1: ctxParams.type_v = GGML_TYPE_TQ1_0;
+		case 1: ctxParams.type_v = GGML_TYPE_Q4_0;
 			break;
-		case 2: ctxParams.type_v = GGML_TYPE_TQ2_0;
+		case 2: ctxParams.type_v = GGML_TYPE_Q5_0;
 			break;
 		case 3: ctxParams.type_v = GGML_TYPE_Q8_0;
 			break;
@@ -323,6 +470,10 @@ StudError CreateContext(const char* slotName, const int nCtx, const int batchSiz
 		return _gpuOomStud ? StudError::GpuOutOfMemory : StudError::CantCreateContext;
 	}
 	model->session.memory = llama_get_memory(model->session.ctx);
+	model->session.ctxParams = ctxParams;
+	model->session.hasCtxParams = true;
+	TryCreateMtpContext(model, ctxParams, mtpDraftTokensEffective);
+	_lastErrorMessage.clear();
 	auto result = StudError::Success;
 	if(model->session.lane.sampler) result = RetokenizeChat(slotName, true);
 	return result;
@@ -348,6 +499,7 @@ StudError CreateSampler(const char* slotName, const float minP, const float topP
 }
 void DestroySession(const char* slotName){
 	const auto model = GetModel(slotName);
+	FreeSpeculativeContext(model->session);
 	if(model->session.lane.sampler){
 		llama_sampler_free(model->session.lane.sampler);
 		model->session.lane.sampler = nullptr;
@@ -357,6 +509,8 @@ void DestroySession(const char* slotName){
 		model->session.ctx = nullptr;
 		model->session.memory = nullptr;
 	}
+	model->session.mtpDraftTokens = 0;
+	model->session.hasCtxParams = false;
 }
 void FreeModel(const char* slotName){
 	const auto model = GetModel(slotName);
@@ -425,7 +579,10 @@ void SetTokenCallback(const Stud::TokenCallbackFn cb){ Stud::tokenCb = cb; }
 void SetThreadCount(const int n, const int batchSize){
 	std::lock_guard<std::mutex> lock(Stud::modelsMutex);
 	for(auto&[slotName, model] : Stud::models){
+		model->session.ctxParams.n_threads = n;
+		model->session.ctxParams.n_threads_batch = batchSize;
 		if(model->session.ctx) llama_set_n_threads(model->session.ctx, n, batchSize);
+		if(model->session.mtpCtx) llama_set_n_threads(model->session.mtpCtx, n, batchSize);
 	}
 }
 int LlamaMemSize(const char* slotName){
@@ -463,6 +620,7 @@ StudError SetStateData(const char* slotName, const unsigned char* src, int size)
 		_lastErrorMessage = "llama_state_set_data read " + std::to_string(read) + " bytes, expected " + std::to_string(expected);
 		return StudError::Generic;
 	}
+	FreeSpeculativeContext(model->session);
 	return StudError::Success;
 }
 static Stud::StudLane& ActiveLane(const char* slotName){
@@ -565,7 +723,7 @@ StudError RetokenizeChat(const char* slotName, bool rebuildMemory = false){
 		return msg.role == "user";
 	});
 	if(!hasUser){
-		if(model->session.memory) llama_memory_clear(model->session.memory, true);
+		ClearSessMemAndSpecState(model);
 		lane.cachedTokens.clear();
 		if(lane.sampler) llama_sampler_reset(lane.sampler);
 		return LoadChatSyntax(model->session.syntax, common_chat_params(), false);
@@ -579,7 +737,9 @@ StudError RetokenizeChat(const char* slotName, bool rebuildMemory = false){
 	if(!TokenizePrompt(slotName, chatData.prompt, promptTokens)) return StudError::CantTokenizePrompt;
 	size_t prefix = 0;
 	if(!rebuildMemory) while(prefix < lane.cachedTokens.size() && prefix < promptTokens.size() && lane.cachedTokens[prefix] == promptTokens[prefix]){ ++prefix; }
-	const bool canShift = llama_memory_can_shift(model->session.memory);
+	const size_t matchedPrefix = prefix;
+	if(model->session.speculative && !rebuildMemory && prefix > 0 && !(prefix == lane.cachedTokens.size() && prefix == promptTokens.size())) --prefix;
+	const bool canShift = !model->session.speculative && llama_memory_can_shift(model->session.memory);
 	const size_t oldSz = lane.cachedTokens.size();
 	const size_t newSz = promptTokens.size();
 	size_t suffix = 0;
@@ -589,7 +749,7 @@ StudError RetokenizeChat(const char* slotName, bool rebuildMemory = false){
 	if(!rebuildMemory && prefix == oldSize && oldSize == newSize) return StudError::Success;
 	if(newSize > static_cast<size_t>(llama_n_ctx(model->session.ctx))){
 		if(rebuildMemory){
-			if(model->session.memory) llama_memory_clear(model->session.memory, true);
+			ClearSessMemAndSpecState(model);
 			lane.cachedTokens.clear();
 			if(lane.sampler) llama_sampler_reset(lane.sampler);
 		}
@@ -598,16 +758,16 @@ StudError RetokenizeChat(const char* slotName, bool rebuildMemory = false){
 	if(rebuildMemory){
 		prefix = 0;
 		suffix = 0;
-		if(model->session.memory) llama_memory_clear(model->session.memory, true);
+		ClearSessMemAndSpecState(model);
 	} else if(!canShift){
-		if(prefix == 0 || LlamaMemSize(slotName) < static_cast<llama_pos>(prefix - 1)){
+		if(prefix == 0){
 			prefix = 0;
-			llama_memory_clear(model->session.memory, true);
+			ClearSessMemAndSpecState(model);
 		}
 	}
-	if(!canShift && newSize < oldSize){
+	if(!canShift && newSize < oldSize && matchedPrefix < newSize){
 		prefix = 0;
-		llama_memory_clear(model->session.memory, true);
+		ClearSessMemAndSpecState(model);
 	}
 	if(canShift && suffix > 0){
 		if(prefix < oldSize - suffix){ llama_memory_seq_rm(model->session.memory, 0, prefix, oldSize - suffix); }
@@ -617,21 +777,28 @@ StudError RetokenizeChat(const char* slotName, bool rebuildMemory = false){
 		}
 	} else{
 		suffix = 0;
-		if(!rebuildMemory && prefix < oldSize){ llama_memory_seq_rm(model->session.memory, 0, prefix, -1); }
+		if(!rebuildMemory && prefix < oldSize && !RemoveSessionMemoryAfter(model->session, static_cast<llama_pos>(prefix))){
+			ClearSessMemAndSpecState(model);
+			lane.cachedTokens.clear();
+			if(lane.sampler) llama_sampler_reset(lane.sampler);
+			return StudError::LlamaDecodeError;
+		}
+		if(model->session.speculative && prefix > 0 && prefix < oldSize) FreeSpeculativeContext(model->session);
 	}
 	llama_sampler_reset(lane.sampler);
 	for(size_t i = 0; i < prefix; ++i){ llama_sampler_accept(lane.sampler, promptTokens[i]); }
 	const size_t decodeEnd = newSize - suffix;
-	const int batchSize = std::min(model->session.batchSize, static_cast<int>(decodeEnd - prefix));
+	const int evalBatchSize = EvalBatchSize(model->session);
+	const int batchSize = std::min(evalBatchSize, static_cast<int>(decodeEnd - prefix));
 	if(batchSize > 0){
-		for(size_t i = prefix; i < decodeEnd; i += model->session.batchSize){
-			const int nTokens = std::min<int>(model->session.batchSize, decodeEnd - i);
-			const auto batch = llama_batch_get_one(&promptTokens[i], nTokens);
-			if(llama_decode(model->session.ctx, batch) != 0){
-				if(model->session.memory) llama_memory_clear(model->session.memory, true);
+		for(size_t i = prefix; i < decodeEnd; i += evalBatchSize){
+			const int nTokens = std::min<int>(evalBatchSize, decodeEnd - i);
+			const auto decodeErr = DecodeTokenBatch(model->session, &promptTokens[i], nTokens, static_cast<llama_pos>(i), true);
+			if(decodeErr != StudError::Success){
+				ClearSessMemAndSpecState(model);
 				lane.cachedTokens.clear();
 				if(lane.sampler) llama_sampler_reset(lane.sampler);
-				return StudError::LlamaDecodeError;
+				return decodeErr;
 			}
 			for(int j = 0; j < nTokens; ++j){ llama_sampler_accept(lane.sampler, promptTokens[i + j]); }
 		}
@@ -645,25 +812,66 @@ static size_t CommonTokenPrefix(const std::vector<llama_token>& a, const std::ve
 	while(prefix < a.size() && prefix < b.size() && a[prefix] == b[prefix]) ++prefix;
 	return prefix;
 }
+static bool RestorePromptPrefix(Stud::StudModel* model, const std::vector<llama_token>& promptTokens, const size_t prefix){
+	auto& session = model->session;
+	auto& lane = session.lane;
+	if(prefix > promptTokens.size()) return false;
+	if(!RemoveSessionMemoryAfter(session, static_cast<llama_pos>(prefix))){
+		ClearSessMemAndSpecState(model);
+		lane.cachedTokens.clear();
+		if(lane.sampler) llama_sampler_reset(lane.sampler);
+		return false;
+	}
+	if(prefix == 0) RecreateSpecCtx(model);
+	else FreeSpeculativeContext(session);
+	lane.cachedTokens.assign(promptTokens.begin(), promptTokens.begin() + prefix);
+	if(lane.sampler){
+		llama_sampler_reset(lane.sampler);
+		for(size_t i = 0; i < prefix; ++i) llama_sampler_accept(lane.sampler, promptTokens[i]);
+	}
+	return true;
+}
+static bool RestoreCachedTokenPrefix(Stud::StudModel* model, const size_t prefix){
+	auto& session = model->session;
+	auto& lane = session.lane;
+	if(prefix > lane.cachedTokens.size()) return false;
+	if(!RemoveSessionMemoryAfter(session, static_cast<llama_pos>(prefix))){
+		ClearSessMemAndSpecState(model);
+		lane.cachedTokens.clear();
+		if(lane.sampler) llama_sampler_reset(lane.sampler);
+		return false;
+	}
+	if(prefix == 0) RecreateSpecCtx(model);
+	else FreeSpeculativeContext(session);
+	if(lane.sampler){
+		llama_sampler_reset(lane.sampler);
+		for(size_t i = 0; i < prefix; ++i) llama_sampler_accept(lane.sampler, lane.cachedTokens[i]);
+	}
+	lane.cachedTokens.resize(prefix);
+	return true;
+}
 static StudError DecodePromptTokenSuffix(const char* slotName, const std::vector<llama_token>& promptTokens, const size_t prefix, const common_chat_msg* appendMsg = nullptr){
-	auto& session = GetModel(slotName)->session;
+	const auto model = GetModel(slotName);
+	auto& session = model->session;
 	auto& lane = session.lane;
 	if(prefix > lane.cachedTokens.size() || prefix > promptTokens.size()) return StudError::Generic;
 	if(appendMsg) lane.messages.push_back(*appendMsg);
+	if(promptTokens.size() > lane.cachedTokens.size()) lane.cachedTokens.reserve(promptTokens.size());
 	size_t p = prefix;
 	while(p < promptTokens.size() && !session.stop.load()){
-		const int nEval = std::min<int>(session.batchSize, static_cast<int>(promptTokens.size() - p));
-		const llama_batch batch = llama_batch_get_one(const_cast<llama_token*>(&promptTokens[p]), nEval);
+		const int nEval = std::min<int>(EvalBatchSize(session), static_cast<int>(promptTokens.size() - p));
 		const int nCtx = llama_n_ctx(session.ctx);
 		const int nCtxUsed = static_cast<int>(lane.cachedTokens.size());
-		if(nCtxUsed + batch.n_tokens > nCtx){
+		if(nCtxUsed + nEval > nCtx){
 			if(appendMsg) lane.messages.pop_back();
+			RestorePromptPrefix(model, promptTokens, prefix);
 			return StudError::ConvTooLong;
 		}
-		const auto result = llama_decode(session.ctx, batch);
-		if(result != 0){
+		const auto result = DecodeTokenBatch(session, const_cast<llama_token*>(&promptTokens[p]), nEval, static_cast<llama_pos>(p), true);
+		if(result != StudError::Success){
 			if(appendMsg) lane.messages.pop_back();
-			return result == 1 ? StudError::ConvTooLong : StudError::LlamaDecodeError;
+			RestorePromptPrefix(model, promptTokens, prefix);
+			return result;
 		}
 		for(int j = 0; j < nEval; ++j) llama_sampler_accept(lane.sampler, promptTokens[p + j]);
 		lane.cachedTokens.insert(lane.cachedTokens.end(), promptTokens.begin() + p, promptTokens.begin() + p + nEval);
@@ -686,15 +894,8 @@ static StudError DecodeSinglePromptMessage(const char* slotName, const common_ch
 	if(!TokenizePrompt(slotName, chatData.prompt, promptTokens)) return StudError::CantTokenizePrompt;
 	size_t prefix = CommonTokenPrefix(lane.cachedTokens, promptTokens);
 	if(prefix < lane.cachedTokens.size()){
-		err = RetokenizeChat(slotName, true);
-		if(err != StudError::Success) return err;
-		prefix = CommonTokenPrefix(lane.cachedTokens, promptTokens);
-		if(prefix < lane.cachedTokens.size()){
-			if(model->session.memory) llama_memory_clear(model->session.memory, true);
-			lane.cachedTokens.clear();
-			if(lane.sampler) llama_sampler_reset(lane.sampler);
-			prefix = 0;
-		}
+		if(model->session.speculative && prefix > 0) --prefix;
+		if(!RestorePromptPrefix(model, promptTokens, prefix)) prefix = 0;
 	}
 	return DecodePromptTokenSuffix(slotName, promptTokens, prefix, appendToChat ? &message : nullptr);
 }
@@ -711,15 +912,17 @@ StudError DialecticRelaySwap(const char* slotName, const char* fromSlotName, con
 	return StudError::Success;
 }
 StudError ResetChat(const char* slotName){
-	auto& session = GetModel(slotName)->session;
-	session.lane.messages.clear();
-	session.lane.cachedTokens.clear();
-	if(!session.ctx || !ActiveLane(slotName).sampler || !session.vocab){
+	const auto model = GetModel(slotName);
+	auto& session = model->session;
+	auto& lane = session.lane;
+	lane.messages.clear();
+	lane.cachedTokens.clear();
+	if(!session.ctx || !lane.sampler || !session.vocab){
 		return StudError::Success;
 	}
-	auto err = RetokenizeChat(slotName, true);
-	if(err != StudError::Success) return err;
-	return err;
+	ClearSessMemAndSpecState(model);
+	llama_sampler_reset(lane.sampler);
+	return LoadChatSyntax(session.syntax, common_chat_params(), false);
 }
 StudError SetSystemPrompt(const char* slotName, const char* prompt, const char* toolsPrompt){
 	auto& session = GetModel(slotName)->session;
@@ -788,10 +991,13 @@ StudError AddMessage(const char* slotName, const Stud::MessageRole role, const c
 static StudError ReplaceChatMessages(const char* slotName, std::vector<common_chat_msg>&& msgs){
 	for(auto& msg : msgs) EnsureToolCallIds(msg);
 	auto& session = GetModel(slotName)->session;
-	ActiveLane(slotName).messages = std::move(msgs);
-	ActiveLane(slotName).cachedTokens.clear();
-	if(!session.ctx || !ActiveLane(slotName).sampler || !session.vocab) return StudError::Success;
-	auto err = RetokenizeChat(slotName, true);
+	auto& lane = ActiveLane(slotName);
+	lane.messages = std::move(msgs);
+	if(!session.ctx || !lane.sampler || !session.vocab){
+		lane.cachedTokens.clear();
+		return StudError::Success;
+	}
+	auto err = RetokenizeChat(slotName);
 	if(err != StudError::Success) return err;
 	return err;
 }
@@ -953,22 +1159,24 @@ private:
 	std::chrono::steady_clock::time_point _lastCallbackTime = std::chrono::steady_clock::now();
 	int _pendingCallbackTokens = 0;
 };
-static StudError RollbackGenerate(const char* slotName, const size_t chatStart, const size_t newMessageCount, common_chat_msg& outMsg, const StudError error){
+static StudError RollbackGenerate(const char* slotName, const size_t chatStart, const size_t newMessageCount, const size_t cacheStart, common_chat_msg& outMsg, const StudError error){
 	const auto model = GetModel(slotName);
 	model->session.lane.messages.resize(chatStart + newMessageCount);
+	if(RestoreCachedTokenPrefix(model, cacheStart)){
+		outMsg = common_chat_msg();
+		return error;
+	}
 	const auto rtErr = RetokenizeChat(slotName, true);
 	outMsg = common_chat_msg();
 	return rtErr != StudError::Success ? rtErr : error;
 }
 static StudError DecodePromptMessages(const char* slotName, const std::vector<common_chat_msg>& messages, common_chat_msg& outMsg){
-	const auto model = GetModel(slotName);
 	for(const auto& message : messages){
 		const bool addAss = !message.role._Equal("assistant");
 		const auto err = DecodeSinglePromptMessage(slotName, message, addAss);
 		if(err != StudError::Success){
-			const auto rtErr = RetokenizeChat(slotName, true);
 			outMsg = common_chat_msg();
-			return rtErr != StudError::Success ? rtErr : err;
+			return err;
 		}
 	}
 	return StudError::Success;
@@ -977,58 +1185,125 @@ StudError Generate(const char* slotName, const std::vector<common_chat_msg>& mes
 	if(toolParseError) toolParseError->clear();
 	const auto prepStart = HrClock::now();
 	auto model = GetModel(slotName);
-	model->session.stop.store(false);
+	auto& session = model->session;
+	auto& lane = session.lane;
+	session.stop.store(false);
 	const Stud::TokenCallbackFn cb = Stud::tokenCb;
-	const size_t chatStart = model->session.lane.messages.size();
+	const size_t chatStart = lane.messages.size();
 	const auto promptErr = DecodePromptMessages(slotName, messages, outMsg);
 	if(promptErr != StudError::Success) return promptErr;
-	const bool toolsEnabled = !model->session.tools.empty();
-	common_chat_parser_params streamSyntax = model->session.syntax;
+	const size_t cacheStart = lane.cachedTokens.size();
+	const bool toolsEnabled = !session.tools.empty();
+	common_chat_parser_params streamSyntax = session.syntax;
 	if(callback){
 		common_chat_params streamChatData;
-		auto streamSyntaxErr = BuildChatTemplateParamsForMessages(slotName, streamChatData, model->session.lane.messages, true, false);
+		auto streamSyntaxErr = BuildChatTemplateParamsForMessages(slotName, streamChatData, lane.messages, true, false);
 		if(streamSyntaxErr == StudError::Success) streamSyntaxErr = LoadChatSyntax(streamSyntax, streamChatData, false);
-		if(streamSyntaxErr != StudError::Success) return RollbackGenerate(slotName, chatStart, messages.size(), outMsg, streamSyntaxErr);
+		if(streamSyntaxErr != StudError::Success) return RollbackGenerate(slotName, chatStart, messages.size(), cacheStart, outMsg, streamSyntaxErr);
 	} else streamSyntax.parse_tool_calls = false;
 	std::string response;
 	common_chat_msg msg;
 	double ftTime = 0.0;
 	AsyncTokenPostProcessor postProcessor(slotName, cb, callback, streamSyntax, prepStart, response, msg, ftTime);
-	auto failWith = [&](StudError error){
+	auto failWith = [&](const StudError error){
 		postProcessor.Close();
-		return RollbackGenerate(slotName, chatStart, messages.size(), outMsg, error);
+		return RollbackGenerate(slotName, chatStart, messages.size(), cacheStart, outMsg, error);
 	};
+	if(session.speculative) common_speculative_begin(session.speculative, 0, lane.cachedTokens);
+	std::vector<llama_token> draft;
+	std::vector<llama_token> decodeTokens;
+	if(session.speculative){
+		draft.reserve(session.mtpDraftTokens);
+		decodeTokens.reserve(static_cast<size_t>(session.mtpDraftTokens) + 1);
+	}
 	int i = 0;
-	while((nPredict < 0 || i < nPredict) && !model->session.stop.load()){
+	int sampleIdx = -1;
+	while((nPredict < 0 || i < nPredict) && !session.stop.load()){
 		const StudError pendingError = postProcessor.Error();
 		if(pendingError != StudError::Success) return failWith(pendingError);
-		if(LlamaMemSize(slotName) + 1 > llama_n_ctx(model->session.ctx)) return failWith(StudError::ConvTooLong);
-		auto newTokenId = llama_sampler_sample(model->session.lane.sampler, model->session.ctx, -1);
-		const auto isEog = llama_vocab_is_eog(model->session.vocab, newTokenId);
-		const auto decodeErr = llama_decode(model->session.ctx, llama_batch_get_one(&newTokenId, 1));
-		if(decodeErr != 0) return failWith(decodeErr == 1 ? StudError::ConvTooLong : StudError::LlamaDecodeError);
-		llama_sampler_accept(model->session.lane.sampler, newTokenId);
-		model->session.lane.cachedTokens.push_back(newTokenId);
-		if(isEog) break;
-		const auto enqueueErr = postProcessor.Enqueue(newTokenId, LlamaMemSize(slotName));
-		if(enqueueErr != StudError::Success) return failWith(enqueueErr);
-		++i;
+		const int posStart = static_cast<int>(lane.cachedTokens.size());
+		if(posStart + 1 > static_cast<int>(llama_n_ctx(session.ctx))) return failWith(StudError::ConvTooLong);
+		const llama_token sampledToken = llama_sampler_sample(lane.sampler, session.ctx, sampleIdx);
+		if(sampledToken == LLAMA_TOKEN_NULL) return failWith(StudError::LlamaDecodeError);
+		const bool sampledEog = llama_vocab_is_eog(session.vocab, sampledToken);
+		draft.clear();
+		decodeTokens.clear();
+		decodeTokens.push_back(sampledToken);
+		int acceptedDrafts = 0;
+		bool hasRejectedToken = false;
+		llama_token rejectedToken = LLAMA_TOKEN_NULL;
+		if(session.speculative && !sampledEog){
+			const int ctxRoom = static_cast<int>(llama_n_ctx(session.ctx)) - posStart - 1;
+			const int batchRoom = std::max(0, static_cast<int>(llama_n_batch(session.ctx)) - 1);
+			const int predictRoom = nPredict < 0 ? session.mtpDraftTokens : std::max(0, nPredict - i - 1);
+			const int draftMax = std::min({session.mtpDraftTokens, ctxRoom, batchRoom, predictRoom});
+			if(draftMax == session.mtpDraftTokens && draftMax > 0){
+				auto& draftParams = common_speculative_get_draft_params(session.speculative, 0);
+				draftParams.drafting = true;
+				draftParams.n_max = draftMax;
+				draftParams.n_past = static_cast<llama_pos>(posStart);
+				draftParams.id_last = sampledToken;
+				draftParams.prompt = &lane.cachedTokens;
+				draftParams.result = &draft;
+				common_speculative_draft(session.speculative);
+				if(!RemoveMtpMemoryAfter(session, posStart)) return failWith(StudError::LlamaDecodeError);
+				const auto eogDraft = std::find_if(draft.begin(), draft.end(), [&](const llama_token token){ return llama_vocab_is_eog(session.vocab, token); });
+				if(eogDraft != draft.end()) draft.erase(eogDraft + 1, draft.end());
+				if(!draft.empty()){
+					decodeTokens.insert(decodeTokens.end(), draft.begin(), draft.end());
+				}
+			}
+		}
+		const auto decodeErr = DecodeTokenBatch(session, decodeTokens.data(), static_cast<int>(decodeTokens.size()), posStart, true);
+		if(decodeErr != StudError::Success) return failWith(decodeErr);
+		if(!draft.empty()){
+			for(size_t draftIdx = 0; draftIdx < draft.size(); ++draftIdx){
+				const auto targetToken = llama_sampler_sample(lane.sampler, session.ctx, static_cast<int32_t>(draftIdx));
+				if(targetToken == LLAMA_TOKEN_NULL) return failWith(StudError::LlamaDecodeError);
+				if(targetToken != draft[draftIdx]){
+					rejectedToken = targetToken;
+					hasRejectedToken = true;
+					break;
+				}
+				++acceptedDrafts;
+				if(llama_vocab_is_eog(session.vocab, targetToken)) break;
+			}
+			common_speculative_accept(session.speculative, 0, static_cast<uint16_t>(acceptedDrafts));
+			if(acceptedDrafts < static_cast<int>(draft.size()) && !RemoveSessionMemoryAfter(session, posStart + 1 + acceptedDrafts)) return failWith(StudError::LlamaDecodeError);
+			if(hasRejectedToken){
+				const auto rejectedDecodeErr = DecodeTokenBatch(session, &rejectedToken, 1, posStart + 1 + acceptedDrafts, true);
+				if(rejectedDecodeErr != StudError::Success) return failWith(rejectedDecodeErr);
+				sampleIdx = -1;
+			} else sampleIdx = acceptedDrafts;
+		} else sampleIdx = -1;
+		const int acceptedCount = 1 + acceptedDrafts + (hasRejectedToken ? 1 : 0);
+		for(int acceptedIdx = 0; acceptedIdx < acceptedCount && (nPredict < 0 || i < nPredict); ++acceptedIdx){
+			const llama_token token = acceptedIdx == 0 ? sampledToken : acceptedIdx <= acceptedDrafts ? draft[acceptedIdx - 1] : rejectedToken;
+			lane.cachedTokens.push_back(token);
+			if(llama_vocab_is_eog(session.vocab, token)){
+				session.stop.store(true);
+				break;
+			}
+			const auto enqueueErr = postProcessor.Enqueue(token, static_cast<int>(lane.cachedTokens.size()));
+			if(enqueueErr != StudError::Success) return failWith(enqueueErr);
+			++i;
+		}
 	}
 	postProcessor.Close();
-	if(postProcessor.Error() != StudError::Success) return RollbackGenerate(slotName, chatStart, messages.size(), outMsg, postProcessor.Error());
+	if(postProcessor.Error() != StudError::Success) return RollbackGenerate(slotName, chatStart, messages.size(), cacheStart, outMsg, postProcessor.Error());
 	common_chat_params finalChatData;
-	auto finalSyntaxErr = BuildChatTemplateParamsForMessages(slotName, finalChatData, model->session.lane.messages, true, toolsEnabled);
-	if(finalSyntaxErr == StudError::Success) finalSyntaxErr = LoadChatSyntax(model->session.syntax, finalChatData, toolsEnabled);
-	if(finalSyntaxErr != StudError::Success) return RollbackGenerate(slotName, chatStart, messages.size(), outMsg, finalSyntaxErr);
+	auto finalSyntaxErr = BuildChatTemplateParamsForMessages(slotName, finalChatData, lane.messages, true, toolsEnabled);
+	if(finalSyntaxErr == StudError::Success) finalSyntaxErr = LoadChatSyntax(session.syntax, finalChatData, toolsEnabled);
+	if(finalSyntaxErr != StudError::Success) return RollbackGenerate(slotName, chatStart, messages.size(), cacheStart, outMsg, finalSyntaxErr);
 	try{
-		msg = ParseGeneratedMessage(response, model->session.syntax, false, toolParseError);
+		msg = ParseGeneratedMessage(response, session.syntax, false, toolParseError);
 		EnsureToolCallIds(msg);
 	} catch(std::exception& e){
 		_lastErrorMessage = e.what();
-		return RollbackGenerate(slotName, chatStart, messages.size(), outMsg, StudError::ChatParseError);
+		return RollbackGenerate(slotName, chatStart, messages.size(), cacheStart, outMsg, StudError::ChatParseError);
 	}
-	model->session.lane.messages.push_back(msg);
-	if(emitFinalCallback && cb && !callback) cb(slotName, msg.reasoning_content.c_str(), msg.content.c_str(), i, LlamaMemSize(slotName), ftTime, 0);
+	lane.messages.push_back(msg);
+	if(emitFinalCallback && cb && !callback) cb(slotName, msg.reasoning_content.c_str(), msg.content.c_str(), i, static_cast<int>(lane.cachedTokens.size()), ftTime, 0);
 	outMsg = std::move(msg);
 	//OutputDebugStringA(("\n!!! CONTEXT START !!!\n" + std::string(GetContextAsText(slotName)) + "\n!!! CONTEXT END !!!\n").c_str());
 	return StudError::Success;
@@ -1185,6 +1460,7 @@ extern "C" EXPORT void RestoreChatState(const char* slotName, void* state){
 	session.lane.messages = snapshot->lane.messages;
 	session.lane.cachedTokens = snapshot->lane.cachedTokens;
 	RestoreSamplerFromCachedTokens(session);
+	FreeSpeculativeContext(session);
 	session.systemPrompt = snapshot->systemPrompt;
 	session.toolsPrompt = snapshot->toolsPrompt;
 	session.tools = snapshot->tools;

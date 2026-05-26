@@ -322,10 +322,10 @@ namespace LMStud{
 			}
 			Common.LoadedModel = Common.LoadedLocalSlots.TryGetValue(Common.ActiveModelSlotName ?? "", out var activeLoaded) ? activeLoaded : Common.LoadedLocalSlots.Values.FirstOrDefault();
 		}
-		private NativeMethods.StudError CreateContext(string slotName, int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, NativeMethods.QuantType kType, NativeMethods.QuantType vType){
+		private NativeMethods.StudError CreateContext(string slotName, int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, NativeMethods.QuantType kType, NativeMethods.QuantType vType, int mtpDraftTokens){
 			var slotLock = ModelSlotManager.EnterSlot(slotName);
 			NativeMethods.StudError result;
-			try{ result = NativeMethods.CreateContext(slotName, nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, (int)kType, (int)vType); } finally{ slotLock.Dispose(); }
+			try{ result = NativeMethods.CreateContext(slotName, nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, (int)kType, (int)vType, mtpDraftTokens); } finally{ slotLock.Dispose(); }
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_context, result);
 			return result;
 		}
@@ -396,7 +396,7 @@ namespace LMStud{
 					var contextSize = ClampContextSize(modelLvi, ctxSize);
 					Common.ModelCtxMax = modelCtxMax;
 					Common.CntCtxMax = contextSize;
-					result = NativeMethods.CreateContext(slotName, contextSize, Common.BatchSize, (uint)flashAttn, Common.NThreads, Common.NThreadsBatch, (int)Common.KType, (int)Common.VType);
+					result = NativeMethods.CreateContext(slotName, contextSize, Common.BatchSize, (uint)flashAttn, Common.NThreads, Common.NThreadsBatch, (int)Common.KType, (int)Common.VType, Common.MtpDraftTokens);
 					if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_context, result);
 					else{
 						result = NativeMethods.CreateSampler(slotName, minP, topP, topK, temp, Common.RepPen);

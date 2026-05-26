@@ -3,6 +3,7 @@
 #include <atomic>
 #include <chat.h>
 #include <jinja\caps.h>
+#include <speculative.h>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -15,6 +16,10 @@ namespace Stud{
 	};
 	struct StudSession{
 		llama_context* ctx = nullptr;
+		llama_context* mtpCtx = nullptr;
+		common_speculative* speculative = nullptr;
+		llama_batch mtpTargetBatch{};
+		int mtpTargetBatchCapacity = 0;
 		const llama_vocab* vocab = nullptr;
 		llama_memory_t memory = nullptr;
 		StudLane lane;
@@ -25,10 +30,26 @@ namespace Stud{
 		common_chat_parser_params syntax;
 		std::atomic_bool stop{false};
 		int batchSize = 1;
+		int mtpDraftTokens = 0;
+		llama_context_params ctxParams{};
+		bool hasCtxParams = false;
 		~StudSession(){
+			if(speculative){
+				common_speculative_free(speculative);
+				speculative = nullptr;
+			}
 			if(lane.sampler){
 				llama_sampler_free(lane.sampler);
 				lane.sampler = nullptr;
+			}
+			if(mtpCtx){
+				llama_free(mtpCtx);
+				mtpCtx = nullptr;
+			}
+			if(mtpTargetBatchCapacity > 0){
+				llama_batch_free(mtpTargetBatch);
+				mtpTargetBatch = {};
+				mtpTargetBatchCapacity = 0;
 			}
 			if(ctx){
 				llama_free(ctx);

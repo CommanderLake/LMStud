@@ -27,6 +27,7 @@ namespace LMStud{
 			Common.VType = (NativeMethods.QuantType)(comboVType.SelectedIndex = Settings.Default.VType);
 			Common.MMap = checkMMap.Checked = Settings.Default.MMap;
 			Common.MLock = checkMLock.Checked = Settings.Default.MLock;
+			Common.MtpDraftTokens = (int)(numMtpDraftTokens.Value = Math.Min(numMtpDraftTokens.Maximum, Math.Max(numMtpDraftTokens.Minimum, Settings.Default.MtpDraftTokens)));
 			Common.NThreads = (int)(numThreads.Value = Settings.Default.Threads);
 			Common.NThreadsBatch = (int)(numThreadsBatch.Value = Settings.Default.ThreadsBatch);
 			Common.WhisperModel = Settings.Default.WhisperModel;
@@ -136,6 +137,10 @@ namespace LMStud{
 			});
 			UpdateSetting(ref Common.BatchSize, (int)numBatchSize.Value, value => {
 				Settings.Default.BatchSize = value;
+				reloadCtxForAllSlots = true;
+			});
+			UpdateSetting(ref Common.MtpDraftTokens, (int)Math.Min(numMtpDraftTokens.Maximum, Math.Max(numMtpDraftTokens.Minimum, numMtpDraftTokens.Value)), value => {
+				Settings.Default.MtpDraftTokens = value;
 				reloadCtxForAllSlots = true;
 			});
 			var newKType = comboKType.SelectedIndex;

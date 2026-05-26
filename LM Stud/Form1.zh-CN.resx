@@ -1095,11 +1095,20 @@
   <data name="groupCPUParams.ToolTip" xml:space="preserve">
     <value>控制在 CPU 上生成文本的参数。</value>
   </data>
+  <data name="numMtpDraftTokens.ToolTip" xml:space="preserve">
+    <value>最大多代币预测草稿代币，0 = 禁用，数值越高，内存使用量越大。</value>
+  </data>
+  <data name="label55.Text" xml:space="preserve">
+    <value>MTP 最大令牌数：</value>
+  </data>
+  <data name="label55.ToolTip" xml:space="preserve">
+    <value />
+  </data>
   <data name="comboVType.Items" xml:space="preserve">
     <value>默认</value>
   </data>
   <data name="comboVType.ToolTip" xml:space="preserve">
-    <value>V cache 类型。通常保持默认即可。</value>
+    <value>KV缓存中V组件的数据类型</value>
   </data>
   <data name="label39.Text" xml:space="preserve">
     <value>V 类型：</value>
@@ -1111,7 +1120,7 @@
     <value>默认</value>
   </data>
   <data name="comboKType.ToolTip" xml:space="preserve">
-    <value>K cache 类型。通常保持默认即可。</value>
+    <value>KV缓存中K组件的数据类型</value>
   </data>
   <data name="label38.Text" xml:space="preserve">
     <value>K 类型：</value>

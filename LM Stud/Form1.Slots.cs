@@ -149,7 +149,7 @@ namespace LMStud{
 			SetSlotsEditLocalModel(listViewModels.SelectedItems[0].SubItems[1].Text);
 			comboSlotsEditSource.SelectedIndex = 0;
 		}
-		private void InitializeSlotUi(){
+		private void InitSlotUi(){
 			_slotLoadButtonText = butLoadSlot.Text;
 			_slotUnloadButtonText = butUnloadSlot.Text;
 			if(comboSlotsEditMcpTransport.SelectedIndex < 0) SetMcpTransportCombo(McpSlotTransport.Stdio);

@@ -114,7 +114,7 @@ namespace LMStud{
 			ThreadPool.QueueUserWorkItem(_ => {
 				try{
 					foreach(var reload in reloads){
-						if(reload.ReloadContext) CreateContext(reload.SlotName, reload.ContextSize, Common.BatchSize, reload.FlashAttn, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType);
+						if(reload.ReloadContext) CreateContext(reload.SlotName, reload.ContextSize, Common.BatchSize, reload.FlashAttn, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType, Common.MtpDraftTokens);
 						if(reload.ReloadSampler) CreateSampler(reload.SlotName, reload.MinP, reload.TopP, reload.TopK, reload.Temp, Common.RepPen);
 					}
 				} finally{

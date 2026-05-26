@@ -1015,7 +1015,7 @@
     <value>25</value>
   </data>
   <data name="label33.Text" xml:space="preserve">
-    <value>Context size:</value>
+    <value>Context Size:</value>
   </data>
   <data name="label33.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -1087,7 +1087,7 @@
     <value>27</value>
   </data>
   <data name="label35.Text" xml:space="preserve">
-    <value>GPU layers:</value>
+    <value>GPU Layers:</value>
   </data>
   <data name="label35.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -1317,11 +1317,11 @@
   <data name="checkSlotsEditLocalOverride.Text" xml:space="preserve">
     <value>Override system prompt</value>
   </data>
-  <data name="checkSlotsEditLocalOverride.ToolTip" xml:space="preserve">
-    <value>Use a system prompt just for this slot. When unchecked, the slot inherits the model prompt, then the global prompt.</value>
-  </data>
   <data name="checkSlotsEditLocalOverride.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
+  </data>
+  <data name="checkSlotsEditLocalOverride.ToolTip" xml:space="preserve">
+    <value>Use a system prompt just for this slot. When unchecked, the slot inherits the model prompt, then the global prompt.</value>
   </data>
   <data name="&gt;&gt;checkSlotsEditLocalOverride.Name" xml:space="preserve">
     <value>checkSlotsEditLocalOverride</value>
@@ -3880,7 +3880,7 @@
     <value>21</value>
   </data>
   <data name="label29.Text" xml:space="preserve">
-    <value>Wait to generate (ms):</value>
+    <value>Wait to Generate (ms):</value>
   </data>
   <data name="label29.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -4613,7 +4613,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>6</value>
   </data>
   <data name="label21.Text" xml:space="preserve">
-    <value>Number of results:</value>
+    <value>Number of Results:</value>
   </data>
   <data name="label21.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -4685,7 +4685,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>3</value>
   </data>
   <data name="label20.Text" xml:space="preserve">
-    <value>Search engine ID:</value>
+    <value>Search Engine ID:</value>
   </data>
   <data name="label20.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -5030,7 +5030,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>4</value>
   </data>
   <data name="label16.Text" xml:space="preserve">
-    <value>Wake word:</value>
+    <value>Wake Word:</value>
   </data>
   <data name="label16.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -5341,6 +5341,69 @@ An empty path enables full filesystem access with absolute paths.</value>
   <data name="&gt;&gt;groupCPUParams.ZOrder" xml:space="preserve">
     <value>11</value>
   </data>
+  <data name="numMtpDraftTokens.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="numMtpDraftTokens.Location" type="System.Drawing.Point, System.Drawing">
+    <value>119, 230</value>
+  </data>
+  <data name="numMtpDraftTokens.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 20</value>
+  </data>
+  <data name="numMtpDraftTokens.TabIndex" type="System.Int32, mscorlib">
+    <value>43</value>
+  </data>
+  <data name="numMtpDraftTokens.ToolTip" xml:space="preserve">
+    <value>Max Multi Token Prediction draft tokens, 0 = disabled, a higher number will increase memory usage.</value>
+  </data>
+  <data name="&gt;&gt;numMtpDraftTokens.Name" xml:space="preserve">
+    <value>numMtpDraftTokens</value>
+  </data>
+  <data name="&gt;&gt;numMtpDraftTokens.Type" xml:space="preserve">
+    <value>System.Windows.Forms.NumericUpDown, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;numMtpDraftTokens.Parent" xml:space="preserve">
+    <value>groupAdvanced</value>
+  </data>
+  <data name="&gt;&gt;numMtpDraftTokens.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="label55.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="label55.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="label55.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 232</value>
+  </data>
+  <data name="label55.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 0, 0, 0</value>
+  </data>
+  <data name="label55.Size" type="System.Drawing.Size, System.Drawing">
+    <value>111, 13</value>
+  </data>
+  <data name="label55.TabIndex" type="System.Int32, mscorlib">
+    <value>42</value>
+  </data>
+  <data name="label55.Text" xml:space="preserve">
+    <value>MTP Tokens Max:</value>
+  </data>
+  <data name="label55.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleRight</value>
+  </data>
+  <data name="&gt;&gt;label55.Name" xml:space="preserve">
+    <value>label55</value>
+  </data>
+  <data name="&gt;&gt;label55.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;label55.Parent" xml:space="preserve">
+    <value>groupAdvanced</value>
+  </data>
+  <data name="&gt;&gt;label55.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
   <data name="comboVType.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
@@ -5348,10 +5411,10 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>Default</value>
   </data>
   <data name="comboVType.Items1" xml:space="preserve">
-    <value>TQ1</value>
+    <value>Q4_0</value>
   </data>
   <data name="comboVType.Items2" xml:space="preserve">
-    <value>TQ2</value>
+    <value>Q5_0</value>
   </data>
   <data name="comboVType.Items3" xml:space="preserve">
     <value>Q8_0</value>
@@ -5369,7 +5432,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>40</value>
   </data>
   <data name="comboVType.ToolTip" xml:space="preserve">
-    <value>NUMA (Non-Uniform Memory Access) strategy. Adjust if using multi-socket CPUs or specific memory configurations.</value>
+    <value>The data type for the V component of the KV cache</value>
   </data>
   <data name="&gt;&gt;comboVType.Name" xml:space="preserve">
     <value>comboVType</value>
@@ -5381,7 +5444,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;comboVType.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>2</value>
   </data>
   <data name="label39.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5417,7 +5480,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;label39.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>3</value>
   </data>
   <data name="comboKType.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5426,10 +5489,10 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>Default</value>
   </data>
   <data name="comboKType.Items1" xml:space="preserve">
-    <value>TQ1</value>
+    <value>Q4_0</value>
   </data>
   <data name="comboKType.Items2" xml:space="preserve">
-    <value>TQ2</value>
+    <value>Q5_0</value>
   </data>
   <data name="comboKType.Items3" xml:space="preserve">
     <value>Q8_0</value>
@@ -5447,7 +5510,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>38</value>
   </data>
   <data name="comboKType.ToolTip" xml:space="preserve">
-    <value>NUMA (Non-Uniform Memory Access) strategy. Adjust if using multi-socket CPUs or specific memory configurations.</value>
+    <value>The data type for the K component of the KV cache</value>
   </data>
   <data name="&gt;&gt;comboKType.Name" xml:space="preserve">
     <value>comboKType</value>
@@ -5459,7 +5522,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;comboKType.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>4</value>
   </data>
   <data name="label38.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5495,7 +5558,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;label38.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>5</value>
   </data>
   <data name="numMinP.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5522,7 +5585,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;numMinP.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>6</value>
   </data>
   <data name="comboNUMAStrat.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5567,7 +5630,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;comboNUMAStrat.ZOrder" xml:space="preserve">
-    <value>5</value>
+    <value>7</value>
   </data>
   <data name="numRepPen.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5594,7 +5657,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;numRepPen.ZOrder" xml:space="preserve">
-    <value>6</value>
+    <value>8</value>
   </data>
   <data name="numBatchSize.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5621,7 +5684,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;numBatchSize.ZOrder" xml:space="preserve">
-    <value>7</value>
+    <value>9</value>
   </data>
   <data name="numTopK.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5648,7 +5711,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;numTopK.ZOrder" xml:space="preserve">
-    <value>8</value>
+    <value>10</value>
   </data>
   <data name="numTopP.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5675,7 +5738,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;numTopP.ZOrder" xml:space="preserve">
-    <value>9</value>
+    <value>11</value>
   </data>
   <data name="label23.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5711,7 +5774,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;label23.ZOrder" xml:space="preserve">
-    <value>10</value>
+    <value>12</value>
   </data>
   <data name="checkFlashAttn.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5723,7 +5786,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>NoControl</value>
   </data>
   <data name="checkFlashAttn.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 276</value>
+    <value>6, 302</value>
   </data>
   <data name="checkFlashAttn.Size" type="System.Drawing.Size, System.Drawing">
     <value>188, 17</value>
@@ -5750,7 +5813,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;checkFlashAttn.ZOrder" xml:space="preserve">
-    <value>11</value>
+    <value>13</value>
   </data>
   <data name="checkMLock.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5762,7 +5825,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>NoControl</value>
   </data>
   <data name="checkMLock.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 253</value>
+    <value>6, 279</value>
   </data>
   <data name="checkMLock.Size" type="System.Drawing.Size, System.Drawing">
     <value>188, 17</value>
@@ -5789,7 +5852,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;checkMLock.ZOrder" xml:space="preserve">
-    <value>12</value>
+    <value>14</value>
   </data>
   <data name="checkMMap.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5801,7 +5864,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>NoControl</value>
   </data>
   <data name="checkMMap.Location" type="System.Drawing.Point, System.Drawing">
-    <value>6, 230</value>
+    <value>6, 256</value>
   </data>
   <data name="checkMMap.Size" type="System.Drawing.Size, System.Drawing">
     <value>188, 17</value>
@@ -5828,7 +5891,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;checkMMap.ZOrder" xml:space="preserve">
-    <value>13</value>
+    <value>15</value>
   </data>
   <data name="label6.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5849,7 +5912,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>13</value>
   </data>
   <data name="label6.Text" xml:space="preserve">
-    <value>Repeat penalty:</value>
+    <value>Repeat Penalty:</value>
   </data>
   <data name="label6.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -5864,7 +5927,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;label6.ZOrder" xml:space="preserve">
-    <value>14</value>
+    <value>16</value>
   </data>
   <data name="label12.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5900,7 +5963,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;label12.ZOrder" xml:space="preserve">
-    <value>15</value>
+    <value>17</value>
   </data>
   <data name="label11.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5921,7 +5984,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>30</value>
   </data>
   <data name="label11.Text" xml:space="preserve">
-    <value>Batch size:</value>
+    <value>Batch Size:</value>
   </data>
   <data name="label11.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -5936,7 +5999,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;label11.ZOrder" xml:space="preserve">
-    <value>16</value>
+    <value>18</value>
   </data>
   <data name="label8.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -5972,7 +6035,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;label8.ZOrder" xml:space="preserve">
-    <value>17</value>
+    <value>19</value>
   </data>
   <data name="label9.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -6008,13 +6071,13 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>groupAdvanced</value>
   </data>
   <data name="&gt;&gt;label9.ZOrder" xml:space="preserve">
-    <value>18</value>
+    <value>20</value>
   </data>
   <data name="groupAdvanced.Location" type="System.Drawing.Point, System.Drawing">
     <value>3, 390</value>
   </data>
   <data name="groupAdvanced.Size" type="System.Drawing.Size, System.Drawing">
-    <value>200, 298</value>
+    <value>200, 324</value>
   </data>
   <data name="groupAdvanced.TabIndex" type="System.Int32, mscorlib">
     <value>34</value>
@@ -6161,7 +6224,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>25</value>
   </data>
   <data name="label5.Text" xml:space="preserve">
-    <value>Context size:</value>
+    <value>Context Size:</value>
   </data>
   <data name="label5.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -6233,7 +6296,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>27</value>
   </data>
   <data name="label10.Text" xml:space="preserve">
-    <value>GPU layers:</value>
+    <value>GPU Layers:</value>
   </data>
   <data name="label10.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -6269,7 +6332,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>22</value>
   </data>
   <data name="label4.Text" xml:space="preserve">
-    <value>Tokens to generate:</value>
+    <value>Tokens to Generate:</value>
   </data>
   <data name="label4.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
@@ -6377,7 +6440,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>NoControl</value>
   </data>
   <data name="butApply.Location" type="System.Drawing.Point, System.Drawing">
-    <value>3, 694</value>
+    <value>3, 715</value>
   </data>
   <data name="butApply.Size" type="System.Drawing.Size, System.Drawing">
     <value>75, 23</value>

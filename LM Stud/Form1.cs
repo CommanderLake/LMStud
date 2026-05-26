@@ -40,7 +40,7 @@ namespace LMStud{
 			STT.MainForm = this;
 			TTS.MainForm = this;
 			TTS.SetHandlers();
-			InitializeSlotUi();
+			InitSlotUi();
 			InitializeListViews();
 			_numCtxSizeToolTip = toolTip1.GetToolTip(numCtxSize);
 			LoadConfig();

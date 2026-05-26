@@ -462,8 +462,7 @@ namespace LMStud{
 			}
 			if(input.IsArray){
 				var items = Json.ArrayBuilder();
-				foreach(var item in input){
-					if(item.IsNull) continue;
+				foreach(var item in input.Where(item => !item.IsNull)){
 					if(item.IsString){
 						items.Add(Json.Object(Json.P("role", "user"), Json.P("content", item.AsString())));
 						continue;

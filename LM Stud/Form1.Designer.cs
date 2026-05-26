@@ -216,6 +216,8 @@ namespace LMStud
 			this.numThreads = new System.Windows.Forms.NumericUpDown();
 			this.label2 = new System.Windows.Forms.Label();
 			this.groupAdvanced = new System.Windows.Forms.GroupBox();
+			this.numMtpDraftTokens = new System.Windows.Forms.NumericUpDown();
+			this.label55 = new System.Windows.Forms.Label();
 			this.comboVType = new System.Windows.Forms.ComboBox();
 			this.label39 = new System.Windows.Forms.Label();
 			this.comboKType = new System.Windows.Forms.ComboBox();
@@ -316,6 +318,7 @@ namespace LMStud
 			this.groupCPUParams.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numThreads)).BeginInit();
 			this.groupAdvanced.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numMtpDraftTokens)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numMinP)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numRepPen)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numBatchSize)).BeginInit();
@@ -760,9 +763,9 @@ namespace LMStud
 			this.groupBoxSlotConfig.Name = "groupBoxSlotConfig";
 			this.groupBoxSlotConfig.TabStop = false;
 			this.toolTip1.SetToolTip(this.groupBoxSlotConfig, resources.GetString("groupBoxSlotConfig.ToolTip"));
-			//
+			// 
 			// panelSlotsEditLocal
-			//
+			// 
 			resources.ApplyResources(this.panelSlotsEditLocal, "panelSlotsEditLocal");
 			this.panelSlotsEditLocal.Controls.Add(this.checkSlotsEditLocalOverride);
 			this.panelSlotsEditLocal.Controls.Add(this.label54);
@@ -770,42 +773,42 @@ namespace LMStud
 			this.panelSlotsEditLocal.Controls.Add(this.comboSlotsEditLocalModel);
 			this.panelSlotsEditLocal.Controls.Add(this.label44);
 			this.panelSlotsEditLocal.Name = "panelSlotsEditLocal";
-			//
+			// 
 			// checkSlotsEditLocalOverride
-			//
+			// 
 			resources.ApplyResources(this.checkSlotsEditLocalOverride, "checkSlotsEditLocalOverride");
 			this.checkSlotsEditLocalOverride.Name = "checkSlotsEditLocalOverride";
 			this.toolTip1.SetToolTip(this.checkSlotsEditLocalOverride, resources.GetString("checkSlotsEditLocalOverride.ToolTip"));
 			this.checkSlotsEditLocalOverride.UseVisualStyleBackColor = true;
 			this.checkSlotsEditLocalOverride.CheckedChanged += new System.EventHandler(this.CheckSlotsEditLocalOverride_CheckedChanged);
-			//
+			// 
 			// label54
-			//
+			// 
 			resources.ApplyResources(this.label54, "label54");
 			this.label54.Name = "label54";
-			//
+			// 
 			// textSlotsEditLocalToolName
-			//
+			// 
 			resources.ApplyResources(this.textSlotsEditLocalToolName, "textSlotsEditLocalToolName");
 			this.textSlotsEditLocalToolName.Name = "textSlotsEditLocalToolName";
 			this.toolTip1.SetToolTip(this.textSlotsEditLocalToolName, resources.GetString("textSlotsEditLocalToolName.ToolTip"));
-			//
+			// 
 			// comboSlotsEditLocalModel
-			//
+			// 
 			resources.ApplyResources(this.comboSlotsEditLocalModel, "comboSlotsEditLocalModel");
 			this.comboSlotsEditLocalModel.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 			this.comboSlotsEditLocalModel.FormattingEnabled = true;
 			this.comboSlotsEditLocalModel.Name = "comboSlotsEditLocalModel";
 			this.toolTip1.SetToolTip(this.comboSlotsEditLocalModel, resources.GetString("comboSlotsEditLocalModel.ToolTip"));
 			this.comboSlotsEditLocalModel.SelectedIndexChanged += new System.EventHandler(this.ComboSlotsEditLocalModel_SelectedIndexChanged);
-			//
+			// 
 			// label44
-			//
+			// 
 			resources.ApplyResources(this.label44, "label44");
 			this.label44.Name = "label44";
-			//
+			// 
 			// panelSlotsEditApi
-			//
+			// 
 			resources.ApplyResources(this.panelSlotsEditApi, "panelSlotsEditApi");
 			this.panelSlotsEditApi.Controls.Add(this.textSlotsEditApiUrl);
 			this.panelSlotsEditApi.Controls.Add(this.label53);
@@ -1878,6 +1881,8 @@ namespace LMStud
 			// 
 			// groupAdvanced
 			// 
+			this.groupAdvanced.Controls.Add(this.numMtpDraftTokens);
+			this.groupAdvanced.Controls.Add(this.label55);
 			this.groupAdvanced.Controls.Add(this.comboVType);
 			this.groupAdvanced.Controls.Add(this.label39);
 			this.groupAdvanced.Controls.Add(this.comboKType);
@@ -1900,6 +1905,22 @@ namespace LMStud
 			resources.ApplyResources(this.groupAdvanced, "groupAdvanced");
 			this.groupAdvanced.Name = "groupAdvanced";
 			this.groupAdvanced.TabStop = false;
+			// 
+			// numMtpDraftTokens
+			// 
+			resources.ApplyResources(this.numMtpDraftTokens, "numMtpDraftTokens");
+			this.numMtpDraftTokens.Maximum = new decimal(new int[] {
+            62,
+            0,
+            0,
+            0});
+			this.numMtpDraftTokens.Name = "numMtpDraftTokens";
+			this.toolTip1.SetToolTip(this.numMtpDraftTokens, resources.GetString("numMtpDraftTokens.ToolTip"));
+			// 
+			// label55
+			// 
+			resources.ApplyResources(this.label55, "label55");
+			this.label55.Name = "label55";
 			// 
 			// comboVType
 			// 
@@ -2419,6 +2440,7 @@ namespace LMStud
 			this.groupCPUParams.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.numThreads)).EndInit();
 			this.groupAdvanced.ResumeLayout(false);
+			((System.ComponentModel.ISupportInitialize)(this.numMtpDraftTokens)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numMinP)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numRepPen)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numBatchSize)).EndInit();
@@ -2668,5 +2690,7 @@ namespace LMStud
 		private System.Windows.Forms.Label label54;
 		private System.Windows.Forms.TextBox textSlotsEditLocalToolName;
 		private System.Windows.Forms.CheckBox checkSlotsEditLocalOverride;
+		private System.Windows.Forms.NumericUpDown numMtpDraftTokens;
+		private System.Windows.Forms.Label label55;
 	}
 }

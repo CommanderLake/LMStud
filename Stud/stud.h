@@ -22,7 +22,7 @@ EXPORT void AddTool(const char* slotName, const char* name, const char* descript
 EXPORT void ClearTools(const char* slotName);
 EXPORT char* ExecuteTool(const char* slotName, const char* name, const char* argsJson);
 EXPORT const char* GetToolsJson(const char* slotName, int* length);
-EXPORT StudError CreateContext(const char* slotName, int nCtx, int nBatch, unsigned int flashAttn, int nThreads, int nThreadsBatch, int kType, int vType);
+EXPORT StudError CreateContext(const char* slotName, int nCtx, int nBatch, unsigned int flashAttn, int nThreads, int nThreadsBatch, int kType, int vType, int mtpDraftTokens);
 EXPORT StudError CreateSampler(const char* slotName, float minP, float topP, int topK, float temp, float repeatPenalty);
 EXPORT void DestroySession(const char* slotName);
 EXPORT StudError ResetChat(const char* slotName);

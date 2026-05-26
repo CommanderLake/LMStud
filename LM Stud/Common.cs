@@ -29,6 +29,7 @@ namespace LMStud{
 		internal static bool MLock;
 		internal static bool MMap;
 		internal static string ModelsDir;
+		internal static int MtpDraftTokens;
 		internal static int NGen;
 		internal static int NThreads;
 		internal static int NThreadsBatch;
