@@ -109,6 +109,12 @@
     <Compile Include="ChatMessageControl.Designer.cs">
       <DependentUpon>ChatMessageControl.cs</DependentUpon>
     </Compile>
+    <Compile Include="ChatMessageContinuationControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ChatMessageContinuationControl.Designer.cs">
+      <DependentUpon>ChatMessageContinuationControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Common.cs" />
     <Compile Include="Form1.ModelSettings.cs">
       <SubType>Form</SubType>
@@ -136,9 +142,8 @@
     </Compile>
     <Compile Include="GGUFMetadataManager.cs" />
     <Compile Include="LVISorter.cs" />
-    <Compile Include="MarkdownRenderControl.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="MarkdownImages.cs" />
+    <Compile Include="MarkdownRenderControl.cs" />
     <Compile Include="McpServerManager.cs" />
     <Compile Include="ModelSlots.cs" />
     <Compile Include="MyFlowLayoutPanel.cs">

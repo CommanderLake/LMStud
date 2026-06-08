@@ -115,6 +115,7 @@
     <Reference Include="System.Diagnostics.DiagnosticSource, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Diagnostics.DiagnosticSource.6.0.0\lib\net461\System.Diagnostics.DiagnosticSource.dll</HintPath>
     </Reference>
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Memory, Version=4.0.1.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Memory.4.5.4\lib\net461\System.Memory.dll</HintPath>
     </Reference>
@@ -158,6 +159,7 @@
     <Compile Include="Form1InteractionTests.cs" />
     <Compile Include="GGUFMetadataManagerTests.cs" />
     <Compile Include="LVISorterTests.cs" />
+    <Compile Include="MarkdownRenderTests.cs" />
     <Compile Include="SessionManagerTests.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -190,7 +190,7 @@ namespace LMStud{
 			payload["tool_choice"] = toolChoice.HasValue && toolChoice.Value.Exists ? toolChoice.Value : Json.String("auto");
 			payload["parallel_tool_calls"] = Json.Value(true);
 		}
-		private static JsonArrayBuilder ConvertHistoryToChatCompletionMessages(JsonArrayBuilder history){
+		internal static JsonArrayBuilder ConvertHistoryToChatCompletionMessages(JsonArrayBuilder history){
 			var messages = Json.ArrayBuilder();
 			if(history == null) return messages;
 			foreach(var item in history.Where(item => item.IsObject)){
@@ -209,7 +209,8 @@ namespace LMStud{
 				}
 				var role = item.GetString("role");
 				if(string.IsNullOrWhiteSpace(role)) continue;
-				messages.Add(Json.Object(Json.P("role", role), Json.P("content", item["content"].Exists ? item["content"] : Json.String(""))));
+				var content = item["content"].Exists ? item["content"] : Json.String("");
+				messages.Add(Json.Object(Json.P("role", role), Json.P("content", MarkdownImages.ConvertResponsesContentToChat(content))));
 			}
 			return messages;
 		}
@@ -218,6 +219,10 @@ namespace LMStud{
 			if(isToolRole){
 				if(string.IsNullOrWhiteSpace(message.ToolCallId)) throw new InvalidOperationException(Resources.Tool_call_output_requires_a_call_id_);
 				return Json.Object(Json.P("type", "function_call_output"), Json.P("call_id", message.ToolCallId), Json.P("output", message.Content ?? ""));
+			}
+			if(string.Equals(message.Role, "user", StringComparison.OrdinalIgnoreCase)){
+				var visionContent = MarkdownImages.BuildResponsesContent(message.Content ?? "", out var hasImages);
+				if(hasImages) return Json.Object(Json.P("role", message.Role), Json.P("content", visionContent));
 			}
 			return Json.Object(Json.P("role", message.Role), Json.P("content", message.Content ?? ""));
 		}

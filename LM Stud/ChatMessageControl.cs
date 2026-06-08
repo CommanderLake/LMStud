@@ -1,10 +1,6 @@
-﻿//#define newMarkdown
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
-using System.Text;
-using System.Threading;
 using System.Windows.Forms;
 namespace LMStud{
 	internal enum MessageRole{
@@ -13,7 +9,6 @@ namespace LMStud{
 		Tool
 	}
 	internal partial class ChatMessageControl : UserControl{
-		private readonly Font _font;
 		internal readonly MessageRole Role;
 		internal List<APIClient.ToolCall> ApiToolCalls;
 		internal string ApiToolCallId;
@@ -26,62 +21,44 @@ namespace LMStud{
 		private bool _generating;
 		private bool _editing;
 		private bool _autoScroll = true;
+		private readonly List<ChatMessageContinuationControl> _continuations = new List<ChatMessageContinuationControl>();
 		private const int HeightOffset = 32;
-#if newMarkdown
-		private readonly MarkdownRenderControl _markdownView;
-#endif
 		internal int TTSPosition = 0;
 		internal ChatMessageControl(MessageRole role, string message, bool markdown):this(role, "", message, markdown){}
 		internal ChatMessageControl(MessageRole role, string think, string message, bool markdown){
 			InitializeComponent();
-			_font = richTextMsg.Font;
-#if newMarkdown
-			_markdownView = new MarkdownRenderControl {
-				Visible = false,
-				Location = richTextMsg.Location,
-				Size = richTextMsg.Size,
-				Anchor = richTextMsg.Anchor,
-				BackColor = richTextMsg.BackColor,
-				ForeColor = richTextMsg.ForeColor,
-				Font = new System.Drawing.Font("Segoe UI Symbol", richTextMsg.Font.Size, richTextMsg.Font.Style)
-			};
-			_markdownView.ContentHeightChanged += MarkdownViewOnContentHeightChanged;
-			panel1.Controls.Add(_markdownView);
-			_markdownView.BringToFront();
-#endif
 			Role = role;
 			_think = think;
 			_message = message;
 			_markdown = markdown;
 			labelRole.Text = role.ToString();
 		}
+		internal MarkdownRenderControl MarkdownView => markdownView;
+		private void ChatMessageControl_Disposed(object sender, EventArgs e){ ClearContinuations(); }
 		private void ChatMessage_Load(object sender, EventArgs e) {
-			if(_message.Length > 0) UpdateText(_think, _message, true);
+			if(_message.Length > 0) RenderText();
 		}
 		internal void SetRoleText(string role){labelRole.Text = role;}
 		private void RichTextMsgOnContentsResized(object sender, ContentsResizedEventArgs e){
-#if newMarkdown
-			if(_markdownView.Visible) return;
-#endif
-			var newHeight = e.NewRectangle.Height + HeightOffset;
+			if(markdownView.Visible) return;
+			var contentHeight = e.NewRectangle.Height;
+			var maximumContentHeight = Math.Max(18, (Parent?.ClientSize.Height ?? int.MaxValue) - 24);
+			var capped = _editing && contentHeight > maximumContentHeight;
+			richTextMsg.ScrollBars = capped ? RichTextBoxScrollBars.Vertical : RichTextBoxScrollBars.None;
+			var newHeight = Math.Min(contentHeight, maximumContentHeight) + HeightOffset;
 			if(newHeight != Height) ApplyHeight(newHeight);
 		}
-#if newMarkdown
 		private void MarkdownViewOnContentHeightChanged(object sender, EventArgs e){
-			if(!_markdownView.Visible) return;
-			ApplyHeight(_markdownView.AutoScrollMinSize.Height + 24);
+			if(!markdownView.Visible) return;
+			ApplyHeight(GetMarkdownControlHeight());
 		}
-#endif
+		private int GetMarkdownControlHeight(){
+			return markdownView.ContentHeight + panelMessage.Top + panelMessage.Height - panelMessage.ClientSize.Height;
+		}
 		private void ApplyHeight(int newHeight){
-			ThreadPool.QueueUserWorkItem(o => {//Layout issue workaround
-				try{
-					Invoke(new MethodInvoker(() => {
-						if(Height == newHeight) return;
-						Height = newHeight;
-						if((bool)o) ((MyFlowLayoutPanel)Parent).ScrollToEnd();
-					}));
-				} catch(ObjectDisposedException){} catch(InvalidOperationException){}
-			}, _autoScroll);
+			if(Height == newHeight) return;
+			Height = newHeight;
+			if(_autoScroll) (Parent as MyFlowLayoutPanel)?.ScrollToEnd();
 		}
 		internal bool Markdown{
 			get => _markdown;
@@ -92,10 +69,6 @@ namespace LMStud{
 					_autoScroll = false;
 					try{
 						RenderText();
-						if(_markdown) return;
-						richTextMsg.SelectAll();
-						richTextMsg.SelectionFont = _font;
-						richTextMsg.Select(0, 0);
 					} finally{ _autoScroll = true; }
 				}
 			}
@@ -117,6 +90,10 @@ namespace LMStud{
 		internal bool Editing{
 			get => _editing;
 			set{
+				if(_editing == value) return;
+				if(value) _markdownLast = _markdown;
+				_editing = value;
+				if(!value) _markdown = _markdownLast;
 				richTextMsg.ReadOnly = !value;
 				butDelete.Enabled = !value;
 				butEdit.Enabled = !value;
@@ -128,11 +105,6 @@ namespace LMStud{
 				butApplyEdit.Visible = value;
 				butApplyEdit.Enabled = value;
 				checkThink.Enabled = !value;
-				if(value){
-					_markdownLast = _markdown;
-					Markdown = false;
-				} else _markdown = _markdownLast;
-				_editing = value;
 				_autoScroll = false;
 				RenderText();
 				_autoScroll = true;
@@ -148,13 +120,14 @@ namespace LMStud{
 				butEdit.Enabled = !value;
 				butRegen.Enabled = !value;
 				checkThink.Enabled = !value;
+				if(!value && renderTimer.Enabled) RenderText();
 			}
 		}
 		internal void UpdateText(string think, string message, bool render){
 			_think = think;
 			_message = message;
 			if(Role == MessageRole.User){
-				if(render) RenderText();
+				if(render) RequestRender();
 			} else{
 				if(!string.IsNullOrEmpty(_think) && checkThink.Visible == false) checkThink.Visible = true;
 				if(!string.IsNullOrEmpty(_think) && string.IsNullOrEmpty(_message) && !checkThink.Checked){
@@ -162,36 +135,86 @@ namespace LMStud{
 				}else if(!string.IsNullOrEmpty(_message) && checkThink.Checked){
 					checkThink.Checked = false;
 				}else{
-					if(render) RenderText();
+					if(render) RequestRender();
 				}
 			}
 		}
-		private void CheckThink_CheckedChanged(object sender, EventArgs e){RenderText();}
-		private unsafe string MarkdownToRtf(string markdown){
-			var rtfOut = (byte*)0;
-			var rtfLen = 0;
-			NativeMethods.ConvertMarkdownToRtf(markdown, ref rtfOut, ref rtfLen);
-			return Encoding.ASCII.GetString(rtfOut, rtfLen);
-		}
-		private void RenderText(){
-#if newMarkdown
-			var text = checkThink.Checked ? _think : _message;
-			var useMarkdownView = _markdown && !_editing;
-			_markdownView.Visible = useMarkdownView;
-			richTextMsg.Visible = !useMarkdownView;
-			if(useMarkdownView){
-				_markdownView.MarkdownText = text;
-				ApplyHeight(_markdownView.AutoScrollMinSize.Height + 32);
+		private void RequestRender(){
+			if(IsDisposed || Disposing) return;
+			if(!IsHandleCreated){
+				RenderText();
 				return;
 			}
-#endif
-			if(checkThink.Checked){
-				if(_markdown) richTextMsg.Rtf = MarkdownToRtf(_think);
-				else richTextMsg.Text = _think;
-			} else{
-				if(_markdown) richTextMsg.Rtf = MarkdownToRtf(_message);
-				else richTextMsg.Text = _message;
+			if(!renderTimer.Enabled) renderTimer.Start();
+		}
+		private void RenderTimer_Tick(object sender, EventArgs e){
+			renderTimer.Stop();
+			RenderText();
+		}
+		private void CheckThink_CheckedChanged(object sender, EventArgs e){RenderText();}
+		private void RenderText(){
+			renderTimer.Stop();
+			var text = checkThink.Checked ? _think : _message;
+			markdownView.Visible = !_editing;
+			richTextMsg.Visible = _editing;
+			if(_editing){
+				if(richTextMsg.Text != text) richTextMsg.Text = text;
+				ClearContinuations();
+				return;
 			}
+			var layoutWidth = Math.Max(10, markdownView.ClientSize.Width - 8);
+			markdownView.SetContent(text, _markdown, false);
+			List<string> chunks;
+			if(MarkdownMessageChunker.RequiresSplit(text, markdownView.ContentHeight, _markdown)){
+				chunks = MarkdownMessageChunker.SplitOversized(text, markdownView.Font, layoutWidth,
+					markdownView.ForeColor, markdownView.BackColor, _markdown);
+				markdownView.SetContent(chunks[0], _markdown, false);
+			}else chunks = new List<string>{text};
+			UpdateContinuations(chunks);
+			ApplyHeight(GetMarkdownControlHeight());
+		}
+		private void UpdateContinuations(List<string> chunks){
+			var required = Math.Max(0, chunks.Count - 1);
+			while(_continuations.Count > required){
+				var last = _continuations[_continuations.Count - 1];
+				_continuations.RemoveAt(_continuations.Count - 1);
+				last.Dispose();
+			}
+			while(_continuations.Count < required){
+				var continuation = new ChatMessageContinuationControl(markdownView.Font, markdownView.BackColor, markdownView.ForeColor);
+				continuation.ContentHeightApplied += ContinuationOnContentHeightApplied;
+				_continuations.Add(continuation);
+			}
+			for(var i = 0; i < required; i++) _continuations[i].SetContent(chunks[i + 1], _markdown);
+			AttachContinuations();
+		}
+		private void ContinuationOnContentHeightApplied(object sender, EventArgs e){
+			if(_autoScroll) (Parent as MyFlowLayoutPanel)?.ScrollToEnd();
+		}
+		private void AttachContinuations(){
+			if(Parent == null || _continuations.Count == 0) return;
+			var ownerIndex = Parent.Controls.GetChildIndex(this);
+			for(var i = 0; i < _continuations.Count; i++){
+				var continuation = _continuations[i];
+				if(continuation.Parent != Parent) continuation.Parent = Parent;
+				continuation.Width = Width;
+				Parent.Controls.SetChildIndex(continuation, Math.Min(ownerIndex + i + 1, Parent.Controls.Count - 1));
+			}
+			if(_autoScroll) (Parent as MyFlowLayoutPanel)?.ScrollToEnd();
+		}
+		private void ClearContinuations(){
+			foreach(var continuation in _continuations) continuation.Dispose();
+			_continuations.Clear();
+		}
+		protected override void OnParentChanged(EventArgs e){
+			base.OnParentChanged(e);
+			AttachContinuations();
+		}
+		protected override void OnSizeChanged(EventArgs e){
+			base.OnSizeChanged(e);
+			foreach(var continuation in _continuations)
+				if(continuation.Width != Width)
+					continuation.Width = Width;
 		}
 		private void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){
 			try{

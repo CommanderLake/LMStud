@@ -72,8 +72,13 @@ namespace LMStud{
 				try{
 					PopulateLock.Wait(-1);
 					var modelPath = Common.ModelsDir + Settings.Default.LastModel;
-					var modelLvi = listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item => item.SubItems[1].Text == modelPath);
-					if(modelLvi != null) LoadModel(modelLvi, true);
+					try{
+						Invoke(new MethodInvoker(() => {
+							if(IsDisposed) return;
+							var modelLvi = listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item => item.SubItems[1].Text == modelPath);
+							if(modelLvi != null) LoadModel(modelLvi, true);
+						}));
+					} catch(ObjectDisposedException){} catch(InvalidOperationException){}
 				} finally{ PopulateLock.Release(); }
 			});
 		}
@@ -233,6 +238,16 @@ namespace LMStud{
 			});
 		}
 		private void TextInput_KeyDown(object sender, KeyEventArgs e){
+			if(e.Control && e.KeyCode == Keys.V && Clipboard.ContainsImage()){
+				e.SuppressKeyPress = true;
+				try{
+					using(var image = Clipboard.GetImage()){
+						var path = MarkdownImages.SaveClipboardImage(image);
+						MarkdownImages.AddFileReference(textInput, path, "Clipboard image");
+					}
+				} catch(Exception ex){ MessageBox.Show(string.Format(Resources.Error_reading_file___0_, ex.Message)); }
+				return;
+			}
 			if(IsEditing){
 				if(e.KeyCode == Keys.Enter && !e.Control && !e.Shift){
 					e.SuppressKeyPress = true;
@@ -467,13 +482,26 @@ namespace LMStud{
 			if(checkVoiceInput.CheckState == CheckState.Checked) STT.RequestStart(false);
 		}
 		private void TextInput_DragEnter(object sender, DragEventArgs e){
-			if(e.Data.GetDataPresent(DataFormats.FileDrop)) e.Effect = DragDropEffects.Copy;
+			if(e.Data.GetDataPresent(DataFormats.FileDrop) || e.Data.GetDataPresent(DataFormats.Bitmap)) e.Effect = DragDropEffects.Copy;
 		}
 		private void TextInput_DragDrop(object sender, DragEventArgs e){
+			if(e.Data.GetDataPresent(DataFormats.Bitmap)){
+				try{
+					using(var image = (System.Drawing.Image)e.Data.GetData(DataFormats.Bitmap)){
+						var path = MarkdownImages.SaveClipboardImage(image);
+						MarkdownImages.AddFileReference(textInput, path, "Dropped image");
+					}
+				} catch(Exception ex){ MessageBox.Show(string.Format(Resources.Error_reading_file___0_, ex.Message)); }
+				return;
+			}
 			var files = (string[])e.Data.GetData(DataFormats.FileDrop);
 			foreach(var filePath in files)
 				try{
 					var fileName = Path.GetFileName(filePath);
+					if(MarkdownImages.IsImageFile(filePath)){
+						MarkdownImages.AddFileReference(textInput, filePath, fileName);
+						continue;
+					}
 					var fileContent = File.ReadAllText(filePath);
 					string contentType;
 					switch(Path.GetExtension(filePath)){

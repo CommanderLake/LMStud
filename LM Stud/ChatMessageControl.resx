@@ -118,15 +118,15 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="richTextMsg.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
-    <value>Top, Bottom, Left, Right</value>
+  <data name="richTextMsg.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
   </data>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="richTextMsg.Font" type="System.Drawing.Font, System.Drawing">
     <value>Segoe UI Symbol, 9.75pt</value>
   </data>
   <data name="richTextMsg.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 24</value>
+    <value>0, 0</value>
   </data>
   <data name="richTextMsg.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -135,7 +135,7 @@
     <value>None</value>
   </data>
   <data name="richTextMsg.Size" type="System.Drawing.Size, System.Drawing">
-    <value>192, 18</value>
+    <value>191, 20</value>
   </data>
   <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="richTextMsg.TabIndex" type="System.Int32, mscorlib">
@@ -151,10 +151,10 @@
     <value>System.Windows.Forms.RichTextBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;richTextMsg.Parent" xml:space="preserve">
-    <value>panel1</value>
+    <value>panelMessage</value>
   </data>
   <data name="&gt;&gt;richTextMsg.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>1</value>
   </data>
   <data name="butDelete.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -184,7 +184,7 @@
 </value>
   </data>
   <data name="butDelete.Location" type="System.Drawing.Point, System.Drawing">
-    <value>168, 0</value>
+    <value>171, 0</value>
   </data>
   <data name="butDelete.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -223,7 +223,7 @@
 </value>
   </data>
   <data name="butEdit.Location" type="System.Drawing.Point, System.Drawing">
-    <value>144, 0</value>
+    <value>147, 0</value>
   </data>
   <data name="butEdit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -269,7 +269,7 @@
 </value>
   </data>
   <data name="butRegen.Location" type="System.Drawing.Point, System.Drawing">
-    <value>120, 0</value>
+    <value>123, 0</value>
   </data>
   <data name="butRegen.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -322,6 +322,60 @@
   <data name="&gt;&gt;labelRole.ZOrder" xml:space="preserve">
     <value>5</value>
   </data>
+  <data name="panelMessage.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Bottom, Left, Right</value>
+  </data>
+  <data name="markdownView.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="markdownView.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI Symbol, 9.75pt</value>
+  </data>
+  <data name="markdownView.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="markdownView.Size" type="System.Drawing.Size, System.Drawing">
+    <value>191, 20</value>
+  </data>
+  <data name="markdownView.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="&gt;&gt;markdownView.Name" xml:space="preserve">
+    <value>markdownView</value>
+  </data>
+  <data name="&gt;&gt;markdownView.Type" xml:space="preserve">
+    <value>LMStud.MarkdownRenderControl, LM Stud, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</value>
+  </data>
+  <data name="&gt;&gt;markdownView.Parent" xml:space="preserve">
+    <value>panelMessage</value>
+  </data>
+  <data name="&gt;&gt;markdownView.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="panelMessage.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 24</value>
+  </data>
+  <data name="panelMessage.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>0, 0, 0, 0</value>
+  </data>
+  <data name="panelMessage.Size" type="System.Drawing.Size, System.Drawing">
+    <value>195, 24</value>
+  </data>
+  <data name="panelMessage.TabIndex" type="System.Int32, mscorlib">
+    <value>8</value>
+  </data>
+  <data name="&gt;&gt;panelMessage.Name" xml:space="preserve">
+    <value>panelMessage</value>
+  </data>
+  <data name="&gt;&gt;panelMessage.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;panelMessage.Parent" xml:space="preserve">
+    <value>panel1</value>
+  </data>
+  <data name="&gt;&gt;panelMessage.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
   <data name="butApplyEdit.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
@@ -343,7 +397,7 @@
 </value>
   </data>
   <data name="butApplyEdit.Location" type="System.Drawing.Point, System.Drawing">
-    <value>120, 0</value>
+    <value>123, 0</value>
   </data>
   <data name="butApplyEdit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -367,7 +421,7 @@
     <value>panel1</value>
   </data>
   <data name="&gt;&gt;butApplyEdit.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>1</value>
   </data>
   <data name="butCancelEdit.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -387,7 +441,7 @@
 </value>
   </data>
   <data name="butCancelEdit.Location" type="System.Drawing.Point, System.Drawing">
-    <value>144, 0</value>
+    <value>147, 0</value>
   </data>
   <data name="butCancelEdit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -411,7 +465,7 @@
     <value>panel1</value>
   </data>
   <data name="&gt;&gt;butCancelEdit.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>2</value>
   </data>
   <data name="checkThink.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -423,7 +477,7 @@
     <value>False</value>
   </data>
   <data name="checkThink.Location" type="System.Drawing.Point, System.Drawing">
-    <value>63, 5</value>
+    <value>66, 5</value>
   </data>
   <data name="checkThink.Size" type="System.Drawing.Size, System.Drawing">
     <value>54, 17</value>
@@ -447,7 +501,7 @@
     <value>panel1</value>
   </data>
   <data name="&gt;&gt;checkThink.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>3</value>
   </data>
   <data name="panel1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
@@ -456,7 +510,7 @@
     <value>0, 0</value>
   </data>
   <data name="panel1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>192, 42</value>
+    <value>195, 48</value>
   </data>
   <data name="panel1.TabIndex" type="System.Int32, mscorlib">
     <value>5</value>
@@ -473,6 +527,9 @@
   <data name="&gt;&gt;panel1.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
+  <metadata name="renderTimer.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
@@ -486,7 +543,13 @@
     <value>0, 0, 0, 0</value>
   </data>
   <data name="$this.Size" type="System.Drawing.Size, System.Drawing">
-    <value>192, 42</value>
+    <value>195, 48</value>
+  </data>
+  <data name="&gt;&gt;renderTimer.Name" xml:space="preserve">
+    <value>renderTimer</value>
+  </data>
+  <data name="&gt;&gt;renderTimer.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Timer, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;$this.Name" xml:space="preserve">
     <value>ChatMessageControl</value>

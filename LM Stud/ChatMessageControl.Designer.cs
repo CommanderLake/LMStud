@@ -23,6 +23,7 @@
 		/// the contents of this method with the code editor.
 		/// </summary>
 		private void InitializeComponent() {
+			this.components = new System.ComponentModel.Container();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChatMessageControl));
 			this.richTextMsg = new System.Windows.Forms.RichTextBox();
 			this.butDelete = new System.Windows.Forms.Button();
@@ -30,20 +31,25 @@
 			this.butRegen = new System.Windows.Forms.Button();
 			this.labelRole = new System.Windows.Forms.Label();
 			this.panel1 = new System.Windows.Forms.Panel();
+			this.panelMessage = new System.Windows.Forms.Panel();
+			this.markdownView = new LMStud.MarkdownRenderControl();
 			this.butApplyEdit = new System.Windows.Forms.Button();
 			this.butCancelEdit = new System.Windows.Forms.Button();
 			this.checkThink = new System.Windows.Forms.CheckBox();
+			this.renderTimer = new System.Windows.Forms.Timer(this.components);
 			this.panel1.SuspendLayout();
+			this.panelMessage.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// richTextMsg
 			// 
-			resources.ApplyResources(this.richTextMsg, "richTextMsg");
+			this.richTextMsg.BorderStyle = System.Windows.Forms.BorderStyle.None;
 			this.richTextMsg.CausesValidation = false;
+			resources.ApplyResources(this.richTextMsg, "richTextMsg");
 			this.richTextMsg.Name = "richTextMsg";
 			this.richTextMsg.ReadOnly = true;
 			this.richTextMsg.ContentsResized += new System.Windows.Forms.ContentsResizedEventHandler(this.RichTextMsgOnContentsResized);
-			this.richTextMsg.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(RichTextMsgOnLinkClicked);
+			this.richTextMsg.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this.RichTextMsgOnLinkClicked);
 			// 
 			// butDelete
 			// 
@@ -71,16 +77,24 @@
 			// panel1
 			// 
 			this.panel1.CausesValidation = false;
+			this.panel1.Controls.Add(this.panelMessage);
 			this.panel1.Controls.Add(this.butApplyEdit);
 			this.panel1.Controls.Add(this.butCancelEdit);
 			this.panel1.Controls.Add(this.checkThink);
-			this.panel1.Controls.Add(this.richTextMsg);
 			this.panel1.Controls.Add(this.butRegen);
 			this.panel1.Controls.Add(this.labelRole);
 			this.panel1.Controls.Add(this.butEdit);
 			this.panel1.Controls.Add(this.butDelete);
 			resources.ApplyResources(this.panel1, "panel1");
 			this.panel1.Name = "panel1";
+			// 
+			// panelMessage
+			// 
+			resources.ApplyResources(this.panelMessage, "panelMessage");
+			this.panelMessage.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+			this.panelMessage.Controls.Add(this.markdownView);
+			this.panelMessage.Controls.Add(this.richTextMsg);
+			this.panelMessage.Name = "panelMessage";
 			// 
 			// butApplyEdit
 			// 
@@ -101,6 +115,19 @@
 			this.checkThink.UseVisualStyleBackColor = true;
 			this.checkThink.CheckedChanged += new System.EventHandler(this.CheckThink_CheckedChanged);
 			// 
+			// renderTimer
+			// 
+			this.renderTimer.Interval = 33;
+			this.renderTimer.Tick += new System.EventHandler(this.RenderTimer_Tick);
+			// 
+			// markdownView
+			// 
+			this.markdownView.BackColor = System.Drawing.SystemColors.Window;
+			resources.ApplyResources(this.markdownView, "markdownView");
+			this.markdownView.ForeColor = System.Drawing.SystemColors.WindowText;
+			this.markdownView.Name = "markdownView";
+			this.markdownView.ContentHeightChanged += new System.EventHandler(this.MarkdownViewOnContentHeightChanged);
+			// 
 			// ChatMessageControl
 			// 
 			resources.ApplyResources(this, "$this");
@@ -112,8 +139,10 @@
 			this.DoubleBuffered = true;
 			this.Name = "ChatMessageControl";
 			this.Load += new System.EventHandler(this.ChatMessage_Load);
+			this.Disposed += new System.EventHandler(this.ChatMessageControl_Disposed);
 			this.panel1.ResumeLayout(false);
 			this.panel1.PerformLayout();
+			this.panelMessage.ResumeLayout(false);
 			this.ResumeLayout(false);
 
 		}
@@ -128,5 +157,8 @@
 		internal System.Windows.Forms.CheckBox checkThink;
 		internal System.Windows.Forms.Button butApplyEdit;
 		internal System.Windows.Forms.Button butCancelEdit;
+		internal System.Windows.Forms.Panel panelMessage;
+		private System.Windows.Forms.Timer renderTimer;
+		private MarkdownRenderControl markdownView;
 	}
 }
