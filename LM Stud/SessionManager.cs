@@ -82,7 +82,7 @@ namespace LMStud{
 			foreach(var message in messages){
 				if(message == null) continue;
 				clone.Add(new APIServer.Message{
-					Role = message.Role, Content = message.Content, ToolCallId = message.ToolCallId,
+					Role = message.Role, Content = message.Content, ContentJson = message.ContentJson, ToolCallId = message.ToolCallId,
 					ToolCalls = message.ToolCalls == null ? null : new List<APIClient.ToolCall>(message.ToolCalls)
 				});
 			}

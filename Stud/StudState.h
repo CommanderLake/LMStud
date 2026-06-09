@@ -1,8 +1,10 @@
 #pragma once
+#include "ChatMessageParser.h"
 #include "stud.h"
 #include <atomic>
 #include <chat.h>
 #include <jinja\caps.h>
+#include <mtmd.h>
 #include <speculative.h>
 #include <memory>
 #include <mutex>
@@ -12,10 +14,12 @@ namespace Stud{
 	struct StudLane{
 		llama_sampler* sampler = nullptr;
 		std::vector<common_chat_msg> messages;
+		std::vector<MessageMedia> messageMedia;
 		std::vector<llama_token> cachedTokens;
 	};
 	struct StudSession{
 		llama_context* ctx = nullptr;
+		mtmd_context* visionCtx = nullptr;
 		llama_context* mtpCtx = nullptr;
 		common_speculative* speculative = nullptr;
 		llama_batch mtpTargetBatch{};
@@ -50,6 +54,10 @@ namespace Stud{
 				llama_batch_free(mtpTargetBatch);
 				mtpTargetBatch = {};
 				mtpTargetBatchCapacity = 0;
+			}
+			if(visionCtx){
+				mtmd_free(visionCtx);
+				visionCtx = nullptr;
 			}
 			if(ctx){
 				llama_free(ctx);

@@ -33,7 +33,7 @@ R48 is the big slot-system release. If older LM Stud was a local chat client wit
 
 | Area | Features |
 | --- | --- |
-| **Local chat** | Load GGUF models through `llama.cpp`, chat, edit messages, regenerate from earlier turns and view thinking output when the model provides it. |
+| **Local chat** | Load GGUF models through `llama.cpp`, including vision models, chat, edit messages, regenerate from earlier turns and view thinking output when the model provides it. |
 | **Model slots** | Configure slots for local models, API models, tool models and API-server routing. The active chat slot is separate from slots used as tools or dialectic partners. |
 | **Tools** | Date/time, Google search, webpage fetch, file listing/search/read/write/patch tools and command prompt tools. |
 | **API client** | Talk to external model APIs and handle tool calls client-side. |
@@ -163,7 +163,7 @@ See [API example.bat](./API%20example.bat) for a small local server example.
 
 6. Configure:
 
-   cmake .. -DGGML_NATIVE=OFF -DGGML_BACKEND_DL=ON -DGGML_AVX2=ON -DGGML_BMI2=ON -DGGML_CUDA=ON -DGGML_CUDA_F16=ON -DLLAMA_CURL=OFF -DLLAMA_ALL_WARNINGS=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_TOOLS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_SERVER=OFF
+   cmake .. -DGGML_NATIVE=OFF -DGGML_BACKEND_DL=ON -DGGML_AVX2=ON -DGGML_BMI2=ON -DGGML_CUDA=ON -DGGML_CUDA_F16=ON -DLLAMA_CURL=OFF -DLLAMA_ALL_WARNINGS=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_TOOLS=ON -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_SERVER=OFF
 
 7. Open build\llama.cpp.sln in Visual Studio and build Release.
 ```
@@ -184,6 +184,16 @@ See [API example.bat](./API%20example.bat) for a small local server example.
 ```
 
 The project currently uses Release for CUDA 10.2 and ReleaseCUDA12 for the CUDA 12.8 build.
+
+### Vision Models
+
+Local vision uses llama.cpp's `mtmd` library. Put the text-model GGUF and its matching
+`mmproj*.gguf` projector in the same directory. When exactly one projector is present,
+LM Stud loads it with the model and shows `[vision]` in the status bar.
+
+Images attached from local files or data URLs are sent to the native model. HTTP image
+links remain Markdown text for local models; remote API models may receive those URLs
+directly when their API supports vision.
 
 ### Set Up vcpkg Dependencies
 

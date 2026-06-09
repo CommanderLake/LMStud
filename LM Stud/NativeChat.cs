@@ -14,8 +14,10 @@ namespace LMStud{
 		internal static NativeMethods.StudError ResetState(){return RunForActiveSlots(NativeMethods.ResetChat);}
 		internal static NativeMethods.StudError RemoveMessageAt(int index){return RunForActiveSlots(slotName => NativeMethods.RemoveMessageAt(slotName, index));}
 		internal static NativeMethods.StudError RemoveMessagesStartingAt(int index){return RunForActiveSlots(slotName => NativeMethods.RemoveMessagesStartingAt(slotName, index));}
-		internal static NativeMethods.StudError SetMessageAt(int index, string think, string message){
-			return RunForActiveSlots(slotName => NativeMethods.SetMessageAt(slotName, index, think, message));
+		internal static NativeMethods.StudError SetMessageAt(int index, MessageRole role, string think, string message){
+			var hasImages = false;
+			var contentJson = role == MessageRole.User ? MarkdownImages.BuildNativeContentJson(message, out hasImages) : null;
+			return RunForActiveSlots(slotName => hasImages ? NativeMethods.SetMessageAtJson(slotName, index, think, contentJson) : NativeMethods.SetMessageAt(slotName, index, think, message));
 		}
 		internal static NativeMethods.StudError SetSystemPrompt(string slotName, string prompt, string toolsPrompt){
 			return NativeMethods.SetSystemPrompt(string.IsNullOrWhiteSpace(slotName) ? GetActiveSlotName() : slotName, prompt, toolsPrompt);

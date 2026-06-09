@@ -104,7 +104,11 @@ namespace LMStud {
 				_genTokenTotal = 0;
 				SwTot.Restart();
 				SwRate.Restart();
-				var genErr = NativeMethods.GenerateWithTools(slotName, role, newMsg, Common.NGen, MainForm.checkStream.Checked);
+				var hasImages = false;
+				var contentJson = role == MessageRole.User ? MarkdownImages.BuildNativeContentJson(newMsg, out hasImages) : null;
+				var genErr = hasImages
+					? NativeMethods.GenerateWithToolsJson(slotName, role, contentJson, Common.NGen, MainForm.checkStream.Checked)
+					: NativeMethods.GenerateWithTools(slotName, role, newMsg, Common.NGen, MainForm.checkStream.Checked);
 				SwTot.Stop();
 				SwRate.Stop();
 				if(TTS.Pending.Length > 0){
@@ -205,7 +209,11 @@ namespace LMStud {
 			var result = NativeMethods.ResetChat(slotName);
 			if(result != NativeMethods.StudError.Success && result != NativeMethods.StudError.ModelNotLoaded) return result;
 			for(var i = 0; i < count; ++i){
-				result = NativeMethods.AddMessage(slotName, roles[i], thinks[i], messages[i]);
+				var hasImages = false;
+				var contentJson = roles[i] == MessageRole.User ? MarkdownImages.BuildNativeContentJson(messages[i], out hasImages) : null;
+				result = hasImages
+					? NativeMethods.AddMessageJson(slotName, roles[i], thinks[i], contentJson)
+					: NativeMethods.AddMessage(slotName, roles[i], thinks[i], messages[i]);
 				if(result != NativeMethods.StudError.Success && result != NativeMethods.StudError.ModelNotLoaded) return result;
 			}
 			return NativeMethods.StudError.Success;
@@ -355,7 +363,7 @@ namespace LMStud {
 			}
 			if(err != NativeMethods.StudError.Success) MainForm.ShowError(Resources.API_Server, Resources.SetStateData, true);
 		}
-		internal static bool GenerateForApiServer(string slotName, byte[] state, IntPtr chatState, string historyJson, MessageRole role, string prompt, string toolsJson, out APIClient.ChatCompletionResult result, out byte[] newState, out IntPtr newChatState, out int tokenCount, int? maxTokens = null, string instructions = null, Action<string> streamCallback = null){
+		internal static bool GenerateForApiServer(string slotName, byte[] state, IntPtr chatState, string historyJson, MessageRole role, string prompt, string toolsJson, out APIClient.ChatCompletionResult result, out byte[] newState, out IntPtr newChatState, out int tokenCount, int? maxTokens = null, string instructions = null, Action<string> streamCallback = null, string promptContentJson = null){
 			result = null;
 			newState = null;
 			newChatState = IntPtr.Zero;
@@ -387,7 +395,10 @@ namespace LMStud {
 					var resetResult = NativeMethods.ResetChat(slotName);
 					if(resetResult != NativeMethods.StudError.Success) return false;
 				}
-				var generationError = NativeMethods.GenerateForAPI(slotName, role, prompt, toolsJson, maxTokens ?? Common.NGen, streamCallback != null, out var responsePtr);
+				IntPtr responsePtr;
+				var generationError = promptContentJson == null
+					? NativeMethods.GenerateForAPI(slotName, role, prompt, toolsJson, maxTokens ?? Common.NGen, streamCallback != null, out responsePtr)
+					: NativeMethods.GenerateForAPIJson(slotName, role, promptContentJson, toolsJson, maxTokens ?? Common.NGen, streamCallback != null, out responsePtr);
 				if(generationError != NativeMethods.StudError.Success) return false;
 				if(responsePtr == IntPtr.Zero) return false;
 				try{ result = APIResponseParser.ParseResponseBody(ReadNativeUtf8(responsePtr)); }

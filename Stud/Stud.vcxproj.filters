@@ -15,6 +15,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ChatMessageParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="stud.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -44,6 +47,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ChatMessageParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="stud.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

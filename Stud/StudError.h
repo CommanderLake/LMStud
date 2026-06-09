@@ -16,5 +16,8 @@ enum class StudError{
 	CantLoadWhisperModel = -13,
 	CantLoadVADModel = -14,
 	CantInitAudioCapture = -15,
-	Generic = -16
+	Generic = -16,
+	CantLoadVisionProjector = -17,
+	VisionProjectorNotLoaded = -18,
+	CantDecodeImage = -19
 };

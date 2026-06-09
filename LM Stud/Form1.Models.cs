@@ -111,7 +111,7 @@ namespace LMStud{
 			if(!PopulateLock.Wait(0) || !ModelsFolderExists(true)) return;
 			ThreadPool.QueueUserWorkItem(_ => {
 				try{
-					var files = Directory.GetFiles(Common.ModelsDir, "*.gguf", SearchOption.AllDirectories);
+					var files = Directory.GetFiles(Common.ModelsDir, "*.gguf", SearchOption.AllDirectories).Where(file => !IsVisionProjectorFile(file));
 					var items = new List<ListViewItem>();
 					foreach(var file in files){
 						var meta = GGUFMetadataManager.LoadGGUFMetadata(file);
@@ -190,20 +190,38 @@ namespace LMStud{
 				case NativeMethods.StudError.Generic:
 					detail = "";
 					break;
+				case NativeMethods.StudError.CantLoadVisionProjector:
+					detail = "The multimodal projector could not be loaded.";
+					break;
+				case NativeMethods.StudError.VisionProjectorNotLoaded:
+					detail = "This local model slot has no multimodal projector loaded. Download the matching mmproj GGUF into the model's folder, then reload the model.";
+					break;
+				case NativeMethods.StudError.CantDecodeImage:
+					detail = "The image could not be decoded for local vision input.";
+					break;
 				default:
 					detail = error.ToString();
 					break;
 			}
 			var extra = NativeMethods.GetLastError();
 			NativeMethods.ClearLastErrorMessage();
-			if(!string.IsNullOrEmpty(extra)) detail += "\r\n\r\n" + extra;
+			detail = CombineErrorDetails(detail, extra);
 			ShowError(action, detail, false);
+		}
+		internal static string CombineErrorDetails(string detail, string extra){
+			detail = (detail ?? "").Trim();
+			extra = (extra ?? "").Trim();
+			if(detail.Length == 0) return extra;
+			if(extra.Length == 0) return detail;
+			if(detail.IndexOf(extra, StringComparison.OrdinalIgnoreCase) >= 0) return detail;
+			if(extra.IndexOf(detail, StringComparison.OrdinalIgnoreCase) >= 0) return extra;
+			return detail + "\r\n\r\n" + extra;
 		}
 		internal void ShowError(string action, string error, bool addNativeMsg){
 			if(addNativeMsg){
 				var extra = NativeMethods.GetLastError();
 				NativeMethods.ClearLastErrorMessage();
-				if(!string.IsNullOrWhiteSpace(extra)) error += "\r\n\r\n" + extra;
+				error = CombineErrorDetails(error, extra);
 			}
 			void ShowMessage(){MessageBox.Show(this, string.Format(Resources._0____1_, action, error), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}
 			if(InvokeRequired) Invoke(new MethodInvoker(ShowMessage));
@@ -298,7 +316,8 @@ namespace LMStud{
 			butUnloadMain.Enabled = Common.LoadedLocalSlots.ContainsKey(ModelSlotManager.MainSlotName) && NativeMethods.IsModelSlotLoaded(ModelSlotManager.MainSlotName);
 			if(checkDialectic.Checked && Generation.DialecticRelayEnabled) toolStripStatusLabel1.Text = Resources.Dialectic_relay__ + Generation.DialPriSlotName + " <-> " + Generation.DialSecSlotName;
 			else if(activeApiReady) toolStripStatusLabel1.Text = Resources.Using_slot_ + activeSlot.Name + Resources.colon + activeSlot.DisplayModel();
-			else if(activeLocalLoaded && activeSlot != null) toolStripStatusLabel1.Text = Resources.Using_slot_ + activeSlot.Name + Resources.colon + activeLoadedModel.Text;
+			else if(activeLocalLoaded && activeSlot != null) toolStripStatusLabel1.Text = Resources.Using_slot_ + activeSlot.Name + Resources.colon + activeLoadedModel.Text +
+				(NativeMethods.HasVisionProjector(activeSlot.Name) ? " [vision]" : "");
 			else if(Common.LlModelLoaded && Common.LoadedModel != null) toolStripStatusLabel1.Text = Resources.Using_Model_ + Common.LoadedModel.Text;
 			else toolStripStatusLabel1.Text = Resources.No_model_loaded;
 			if(activeApiReady && loadedSlot != null) toolStripStatusLabel1.Text += Resources.___Loaded__ + loadedSlot.Name;
@@ -312,6 +331,18 @@ namespace LMStud{
 			var result = NativeMethods.LoadModel(slotName, filename, jinjaTemplate, nGPULayers, mMap, mLock, numaStrategy);
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_loading_model, result);
 			return result;
+		}
+		private static bool IsVisionProjectorFile(string path){
+			return !string.IsNullOrWhiteSpace(path) && Path.GetFileNameWithoutExtension(path).IndexOf("mmproj", StringComparison.OrdinalIgnoreCase) >= 0;
+		}
+		private static string FindVisionProjector(string modelPath){
+			var directory = Path.GetDirectoryName(modelPath);
+			if(string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory)) return null;
+			var candidates = Directory.GetFiles(directory, "*.gguf", SearchOption.TopDirectoryOnly)
+				.Where(IsVisionProjectorFile)
+				.OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+				.ToList();
+			return candidates.Count == 1 ? candidates[0] : null;
 		}
 		private void ClearFailedLocalSlot(string slotName){
 			Common.LoadedLocalSlots.Remove(slotName);
@@ -389,6 +420,18 @@ namespace LMStud{
 						Settings.Default.Save();
 						ClearFailedLocalSlot(slotName);
 						return;
+					}
+					var visionProjector = FindVisionProjector(modelPath);
+					if(!string.IsNullOrWhiteSpace(visionProjector)){
+						result = NativeMethods.LoadVisionProjector(slotName, visionProjector, gpuLayers != 0, Common.NThreads, (uint)flashAttn);
+						if(result != NativeMethods.StudError.Success){
+							ShowError(Resources.Error_loading_model, result);
+							Settings.Default.LoadAuto = false;
+							Settings.Default.Save();
+							NativeMethods.FreeModelSlot(slotName);
+							ClearFailedLocalSlot(slotName);
+							return;
+						}
 					}
 					Common.LlModelLoaded = true;
 					Common.LoadedModel = modelLvi;

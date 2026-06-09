@@ -126,7 +126,7 @@ namespace LMStud{
 			try{
 				ctx.Response.AddHeader("X-Session-Id", session.Id);
 				var historyMessages = ExtractHistoryAndLatestInput(messages, inputItems, out var latestInput);
-				if(latestInput?.Content == null){
+				if(latestInput == null || (latestInput.Content == null && latestInput.ContentJson == null)){
 					WriteError(ctx, 400, "invalid_request", "Request did not contain a user input message.");
 					return;
 				}
@@ -149,7 +149,7 @@ namespace LMStud{
 					}
 					var modeSwitch = !string.IsNullOrEmpty(session.LastBackend) && session.LastBackend != backendKey;
 					toolsJson = ResolveClientToolsJsonForBackend(session, request, modeSwitch);
-					if(!Generation.GenerateForApiServer(slot.Name, modeSwitch ? null : session.State, modeSwitch ? IntPtr.Zero : session.NativeChatState, historyJson, ToNativeRole(latestInput.Role), latestInput.Content, toolsJson, out result, out newState, out newChatState, out tokens)){
+					if(!Generation.GenerateForApiServer(slot.Name, modeSwitch ? null : session.State, modeSwitch ? IntPtr.Zero : session.NativeChatState, historyJson, ToNativeRole(latestInput.Role), latestInput.Content ?? "", toolsJson, out result, out newState, out newChatState, out tokens, promptContentJson: latestInput.ContentJson)){
 						WriteError(ctx, 409, "generation_busy", "The local backend is busy or could not generate a response.");
 						return;
 					}
@@ -310,6 +310,10 @@ namespace LMStud{
 			foreach(var message in request.Messages){
 				if(message == null) continue;
 				if(string.IsNullOrWhiteSpace(message.Role)) continue;
+				if(message.ContentJson != null){
+					items.Add(Json.Object(Json.P("role", message.Role), Json.P("content", Json.Parse(message.ContentJson))));
+					continue;
+				}
 				var apiMessage = new APIClient.ChatMessage(message.Role, message.Content ?? ""){ ToolCallId = message.ToolCallId, ToolCalls = GetToolCalls(message) };
 				var hasToolCalls = apiMessage.ToolCalls != null && apiMessage.ToolCalls.Count > 0;
 				var hasContent = !string.IsNullOrWhiteSpace(apiMessage.Content);
@@ -330,7 +334,7 @@ namespace LMStud{
 			if(message == null) return null;
 			var toolCalls = GetToolCalls(message);
 			return new Message{
-				Role = message.Role, Content = message.Content, ToolCallId = message.ToolCallId,
+				Role = message.Role, Content = message.Content, ContentJson = message.ContentJson, ToolCallId = message.ToolCallId,
 				ToolCalls = toolCalls == null ? null : new List<APIClient.ToolCall>(toolCalls)
 			};
 		}
@@ -354,15 +358,15 @@ namespace LMStud{
 				if(string.IsNullOrWhiteSpace(message?.Role)) continue;
 				var toolCalls = GetToolCalls(message);
 				var hasToolCalls = toolCalls != null && toolCalls.Count > 0;
-				if(string.IsNullOrWhiteSpace(message.Content) && !hasToolCalls) continue;
+				if(string.IsNullOrWhiteSpace(message.Content) && message.ContentJson == null && !hasToolCalls) continue;
 				if(string.Equals(message.Role, "tool", StringComparison.OrdinalIgnoreCase)){
 					if(!string.IsNullOrWhiteSpace(message.ToolCallId)){
 						history.Add(Json.Object(Json.P("type", "function_call_output"), Json.P("call_id", message.ToolCallId), Json.P("output", message.Content ?? "")));
 						continue;
 					}
 				}
-				if(!hasToolCalls || !string.IsNullOrWhiteSpace(message.Content))
-					history.Add(Json.Object(Json.P("role", message.Role), Json.P("content", message.Content ?? "")));
+				if(!hasToolCalls || !string.IsNullOrWhiteSpace(message.Content) || message.ContentJson != null)
+					history.Add(Json.Object(Json.P("role", message.Role), Json.P("content", message.ContentJson == null ? Json.String(message.Content ?? "") : Json.Parse(message.ContentJson))));
 				if(hasToolCalls)
 					foreach(var toolCall in toolCalls.Where(call => call != null && !string.IsNullOrWhiteSpace(call.Id) && !string.IsNullOrWhiteSpace(call.Name)))
 						history.Add(Json.Object(Json.P("type", "function_call"), Json.P("call_id", toolCall.Id), Json.P("name", toolCall.Name), Json.P("arguments", toolCall.Arguments ?? "")));
@@ -371,8 +375,13 @@ namespace LMStud{
 		}
 		private static JsonArrayBuilder BuildIncomingDelta(List<Message> incomingMessages, JsonArrayBuilder inputItems){
 			if(incomingMessages != null && incomingMessages.Count > 0){
-				var last = incomingMessages.LastOrDefault(m => !string.IsNullOrWhiteSpace(m?.Role) && (m.Content != null || (GetToolCalls(m) != null && GetToolCalls(m).Count > 0)));
+				var last = incomingMessages.LastOrDefault(m => !string.IsNullOrWhiteSpace(m?.Role) && (m.Content != null || m.ContentJson != null || (GetToolCalls(m) != null && GetToolCalls(m).Count > 0)));
 				if(last == null) return null;
+				if(last.ContentJson != null){
+					var single = Json.ArrayBuilder();
+					single.Add(Json.Object(Json.P("role", last.Role), Json.P("content", Json.Parse(last.ContentJson))));
+					return single;
+				}
 				var apiMessage = new APIClient.ChatMessage(last.Role, last.Content ?? ""){ ToolCallId = last.ToolCallId, ToolCalls = GetToolCalls(last) };
 				if(string.Equals(apiMessage.Role, "tool", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(apiMessage.ToolCallId))
 				{
@@ -392,7 +401,7 @@ namespace LMStud{
 			if(messages != null && messages.Count > 0){
 				for(var i = messages.Count - 1; i >= 0; i--){
 					var candidate = messages[i];
-					if(string.IsNullOrWhiteSpace(candidate?.Role) || candidate.Content == null) continue;
+					if(string.IsNullOrWhiteSpace(candidate?.Role) || (candidate.Content == null && candidate.ContentJson == null)) continue;
 					latest = CloneMessage(candidate);
 					return CloneMessages(messages.Take(i).Where(HasMessagePayload));
 				}
@@ -403,7 +412,7 @@ namespace LMStud{
 		private static bool HasMessagePayload(Message message){
 			if(string.IsNullOrWhiteSpace(message?.Role)) return false;
 			var toolCalls = GetToolCalls(message);
-			return message.Content != null || !string.IsNullOrWhiteSpace(message.ToolCallId) || (toolCalls != null && toolCalls.Count > 0);
+			return message.Content != null || message.ContentJson != null || !string.IsNullOrWhiteSpace(message.ToolCallId) || (toolCalls != null && toolCalls.Count > 0);
 		}
 		private static string BuildChatHistoryJson(IEnumerable<Message> messages){
 			var array = Json.ArrayBuilder();
@@ -411,7 +420,8 @@ namespace LMStud{
 				if(!HasMessagePayload(message)) continue;
 				var toolCalls = GetToolCalls(message);
 				var obj = Json.ObjectBuilder(Json.P("role", message.Role));
-				if(message.Content != null || toolCalls == null || toolCalls.Count == 0) obj["content"] = Json.String(message.Content ?? "");
+				if(message.Content != null || message.ContentJson != null || toolCalls == null || toolCalls.Count == 0)
+					obj["content"] = message.ContentJson == null ? Json.String(message.Content ?? "") : Json.Parse(message.ContentJson);
 				if(!string.IsNullOrWhiteSpace(message.ToolCallId)) obj["tool_call_id"] = Json.String(message.ToolCallId);
 				var toolCallsJson = BuildChatCompletionToolCalls(toolCalls);
 				if(toolCallsJson.Exists) obj["tool_calls"] = toolCallsJson;
@@ -423,7 +433,7 @@ namespace LMStud{
 			if(inputItems == null || inputItems.Count == 0) return null;
 			for(var i = inputItems.Count - 1; i >= 0; i--){
 				var parsed = ParseInputItemToMessage(inputItems[i]);
-				if(parsed == null || parsed.Content == null) continue;
+				if(parsed == null || (parsed.Content == null && parsed.ContentJson == null)) continue;
 				return parsed;
 			}
 			return null;
@@ -443,10 +453,12 @@ namespace LMStud{
 				return new Message{ Role = "assistant", Content = "", ToolCalls = new List<APIClient.ToolCall>{ toolCall } };
 			}
 			var role = obj.GetString("role") ?? "user";
-			var content = ExtractContentText(obj["content"]) ?? obj.GetString("text") ?? obj.GetString("content");
+			var contentToken = obj["content"];
+			var contentJson = contentToken.IsArray ? contentToken.ToJson() : null;
+			var content = ExtractContentText(contentToken) ?? obj.GetString("text") ?? obj.GetString("content");
 			var toolCalls = APIResponseParserCommon.ParseToolCalls(obj["tool_calls"]);
-			if(string.IsNullOrWhiteSpace(content) && (toolCalls == null || toolCalls.Count == 0)) return null;
-			return new Message{ Role = role, Content = content ?? "", ToolCalls = toolCalls };
+			if(string.IsNullOrWhiteSpace(content) && contentJson == null && (toolCalls == null || toolCalls.Count == 0)) return null;
+			return new Message{ Role = role, Content = content ?? "", ContentJson = contentJson, ToolCalls = toolCalls };
 		}
 		private static JsonArrayBuilder NormalizeInputItems(JsonNode input){
 			if(input.IsNull) return null;
@@ -539,9 +551,11 @@ namespace LMStud{
 				if(!messageToken.IsObject) continue;
 				var role = messageToken.GetString("role");
 				if(string.IsNullOrWhiteSpace(role)) continue;
+				var contentToken = messageToken["content"];
 				messages.Add(new Message{
 					Role = role,
 					Content = ExtractContentText(messageToken["content"]),
+					ContentJson = contentToken.IsArray ? contentToken.ToJson() : null,
 					ToolCallId = messageToken.GetString("tool_call_id"),
 					ToolCallsJson = messageToken["tool_calls"]
 				});
@@ -562,6 +576,7 @@ namespace LMStud{
 		}
 		public class Message{
 			public string Content;
+			public string ContentJson;
 			public string Role;
 			public string ToolCallId;
 			internal List<APIClient.ToolCall> ToolCalls;

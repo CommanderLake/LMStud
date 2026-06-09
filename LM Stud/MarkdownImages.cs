@@ -155,7 +155,8 @@ namespace LMStud{
 			return path;
 		}
 		private static string EscapeAlt(string value){return (value ?? "").Replace("\\", "\\\\").Replace("]", "\\]");}
-		internal static bool TryGetVisionUrl(string source, out string visionUrl){
+		internal static bool TryGetVisionUrl(string source, out string visionUrl){return TryGetVisionUrl(source, true, out visionUrl);}
+		private static bool TryGetVisionUrl(string source, bool allowRemote, out string visionUrl){
 			visionUrl = null;
 			if(string.IsNullOrWhiteSpace(source)) return false;
 			source = source.Trim();
@@ -166,6 +167,7 @@ namespace LMStud{
 			}
 			if(Uri.TryCreate(source, UriKind.Absolute, out var uri)){
 				if(uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps){
+					if(!allowRemote) return false;
 					visionUrl = uri.ToString();
 					return true;
 				}
@@ -202,13 +204,13 @@ namespace LMStud{
 				return true;
 			} catch{ return false; }
 		}
-		internal static JsonArrayBuilder BuildResponsesContent(string markdown, out bool hasImages){
+		private static JsonArrayBuilder BuildVisionContent(string markdown, bool allowRemote, out bool hasImages){
 			var parts = Json.ArrayBuilder();
 			var images = Find(markdown);
 			hasImages = false;
 			var position = 0;
 			foreach(var image in images){
-				if(!TryGetVisionUrl(image.Source, out var imageUrl)) continue;
+				if(!TryGetVisionUrl(image.Source, allowRemote, out var imageUrl)) continue;
 				AppendTextPart(parts, markdown.Substring(position, image.Start - position));
 				parts.Add(Json.Object(Json.P("type", "input_image"), Json.P("image_url", imageUrl)));
 				position = image.Start + image.Length;
@@ -217,6 +219,14 @@ namespace LMStud{
 			if(!hasImages) return parts;
 			AppendTextPart(parts, markdown.Substring(position));
 			return parts;
+		}
+		internal static JsonArrayBuilder BuildResponsesContent(string markdown, out bool hasImages){
+			return BuildVisionContent(markdown, true, out hasImages);
+		}
+		internal static string BuildNativeContentJson(string markdown, out bool hasImages){
+			var content = BuildVisionContent(markdown ?? "", false, out hasImages);
+			if(!hasImages) return Json.String(markdown ?? "").ToJson();
+			return ConvertResponsesContentToChat(content.ToNode()).ToJson();
 		}
 		private static void AppendTextPart(JsonArrayBuilder parts, string text){
 			text = (text ?? "").Trim();

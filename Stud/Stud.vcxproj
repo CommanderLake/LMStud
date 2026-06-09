@@ -60,20 +60,20 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\llama.cpp\vendor;I:\whisper.cpp\include;I:\whisper.cpp\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
-    <LibraryPath>I:\vcpkg-2025.04.09\installed\x64-windows-static\debug\lib;I:\llama.cpp\build\common\Debug;I:\llama.cpp\build\ggml\src\Debug;I:\llama.cpp\build\src\Debug;I:\whisper.cpp-1.7.6\build\src\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\llama.cpp\tools\mtmd;I:\llama.cpp\vendor;I:\whisper.cpp\include;I:\whisper.cpp\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(UniversalCRTSdkDir)Include\$(WindowsTargetPlatformVersion)\ucrt;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>I:\vcpkg-2025.04.09\installed\x64-windows-static\debug\lib;I:\llama.cpp\build\common\Debug;I:\llama.cpp\build\ggml\src\Debug;I:\llama.cpp\build\src\Debug;I:\llama.cpp\build\tools\mtmd\Debug;I:\whisper.cpp-1.7.6\build\src\Debug;$(UniversalCRTSdkDir)Lib\$(WindowsTargetPlatformVersion)\ucrt\x64;$(WindowsSdkDir)Lib\$(WindowsTargetPlatformVersion)\um\x64;$(VC_LibraryPath_x64);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\llama.cpp\vendor;I:\whisper.cpp\include;I:\whisper.cpp\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
-    <LibraryPath>I:\vcpkg-2025.04.09\installed\x64-windows-static\lib;I:\llama.cpp\build\common\RelWithDebInfo;I:\llama.cpp\build\ggml\src\RelWithDebInfo;I:\llama.cpp\build\src\RelWithDebInfo;I:\whisper.cpp-1.7.6\build\src\RelWithDebInfo;$(LibraryPath)</LibraryPath>
+    <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\llama.cpp\tools\mtmd;I:\llama.cpp\vendor;I:\whisper.cpp\include;I:\whisper.cpp\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(UniversalCRTSdkDir)Include\$(WindowsTargetPlatformVersion)\ucrt;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>I:\vcpkg-2025.04.09\installed\x64-windows-static\lib;I:\llama.cpp\build\common\RelWithDebInfo;I:\llama.cpp\build\ggml\src\RelWithDebInfo;I:\llama.cpp\build\src\RelWithDebInfo;I:\llama.cpp\build\tools\mtmd\RelWithDebInfo;I:\whisper.cpp-1.7.6\build\src\RelWithDebInfo;$(UniversalCRTSdkDir)Lib\$(WindowsTargetPlatformVersion)\ucrt\x64;$(WindowsSdkDir)Lib\$(WindowsTargetPlatformVersion)\um\x64;$(VC_LibraryPath_x64);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCUDA12|x64'">
     <TargetName>Stud</TargetName>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\llama.cpp\vendor;I:\whisper.cpp\include;I:\whisper.cpp\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(IncludePath)</IncludePath>
-    <LibraryPath>I:\vcpkg-2025.04.09\installed\x64-windows-static\lib;I:\llama.cpp\build\common\RelWithDebInfo;I:\llama.cpp\build\ggml\src\RelWithDebInfo;I:\llama.cpp\build\src\RelWithDebInfo;I:\whisper.cpp-1.7.6\build\src\RelWithDebInfo;$(LibraryPath)</LibraryPath>
+    <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\llama.cpp\tools\mtmd;I:\llama.cpp\vendor;I:\whisper.cpp\include;I:\whisper.cpp\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(UniversalCRTSdkDir)Include\$(WindowsTargetPlatformVersion)\ucrt;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>I:\vcpkg-2025.04.09\installed\x64-windows-static\lib;I:\llama.cpp\build\common\RelWithDebInfo;I:\llama.cpp\build\ggml\src\RelWithDebInfo;I:\llama.cpp\build\src\RelWithDebInfo;I:\llama.cpp\build\tools\mtmd\RelWithDebInfo;I:\whisper.cpp-1.7.6\build\src\RelWithDebInfo;$(UniversalCRTSdkDir)Lib\$(WindowsTargetPlatformVersion)\ucrt\x64;$(WindowsSdkDir)Lib\$(WindowsTargetPlatformVersion)\um\x64;$(VC_LibraryPath_x64);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -97,7 +97,8 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"
-xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"</Command>
+xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"
+xcopy /Y "I:\llama.cpp\build\bin\Debug\mtmd.dll" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -122,7 +123,8 @@ xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"</Command>
+      <Command>xcopy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"
+xcopy /Y "I:\llama.cpp\build\bin\RelWithDebInfo\mtmd.dll" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCUDA12|x64'">
@@ -149,10 +151,12 @@ xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"</Command>
+      <Command>xcopy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"
+xcopy /Y "I:\llama.cpp\build\bin\RelWithDebInfo\mtmd.dll" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ChatMessageParser.h" />
     <ClInclude Include="common-sdl.h" />
     <ClInclude Include="hug.h" />
     <ClInclude Include="JSONCommon.h" />
@@ -164,6 +168,7 @@ xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\
     <ClInclude Include="tools.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ChatMessageParser.cpp" />
     <ClCompile Include="CMDTool.cpp" />
     <ClCompile Include="common-sdl.cpp" />
     <ClCompile Include="FileTools.cpp" />

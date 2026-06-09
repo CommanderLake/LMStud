@@ -319,9 +319,27 @@ namespace LM_Stud.Tests{
 				StringAssert.StartsWith(chatContent[1]["image_url"].GetString("url"), "data:image/png;base64,");
 				var assistantPayload = APIClient.BuildInputMessagePayload(new APIClient.ChatMessage("assistant", markdown));
 				Assert.IsTrue(assistantPayload["content"].IsString, "Only explicit user attachments should become image inputs.");
+				var nativeContent = Json.Parse(MarkdownImages.BuildNativeContentJson(markdown, out var nativeHasImages));
+				Assert.IsTrue(nativeHasImages);
+				Assert.IsTrue(nativeContent.IsArray);
+				Assert.AreEqual("text", nativeContent[0].GetString("type"));
+				Assert.AreEqual("image_url", nativeContent[1].GetString("type"));
+				StringAssert.StartsWith(nativeContent[1]["image_url"].GetString("url"), "data:image/png;base64,");
+				const string remoteMarkdown = "Inspect ![remote](https://example.com/image.png)";
+				var remoteNativeContent = Json.Parse(MarkdownImages.BuildNativeContentJson(remoteMarkdown, out var remoteNativeHasImages));
+				Assert.IsFalse(remoteNativeHasImages, "The native backend must not receive remote URLs that mtmd cannot decode.");
+				Assert.AreEqual(remoteMarkdown, remoteNativeContent.AsString());
 			} finally{
 				if(File.Exists(path)) File.Delete(path);
 			}
+		}
+		[TestMethod]
+		public void CombineErrorDetails_DoesNotDuplicateNativeMessage(){
+			const string native = "This local model slot has no multimodal projector loaded.";
+			Assert.AreEqual(native, Form1.CombineErrorDetails(native, native));
+			var actionable = native + " Download the matching mmproj GGUF into the model's folder, then reload the model.";
+			Assert.AreEqual(actionable, Form1.CombineErrorDetails(actionable, native));
+			Assert.AreEqual("Primary\r\n\r\nSecondary", Form1.CombineErrorDetails("Primary", "Secondary"));
 		}
 		[TestMethod]
 		public void Chunker_BoundsImageHeavyChunksBelowNativeControlHeightLimit(){

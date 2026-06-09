@@ -355,7 +355,7 @@ namespace LMStud{
 			ThreadPool.QueueUserWorkItem(_ => {
 				NativeMethods.StudError result;
 				try{
-					result = NativeChat.SetMessageAt(idx, newThink, newMessage);
+					result = NativeChat.SetMessageAt(idx, cm.Role, newThink, newMessage);
 					Invoke(new MethodInvoker(() => {
 						if(result == NativeMethods.StudError.Success){
 							cm.Think = newThink;
