@@ -345,10 +345,10 @@ bool HttpPostJson(McpServerSession& session, const std::string& message, const b
 	curl_slist* headers = nullptr;
 	headers = curl_slist_append(headers, "Content-Type: application/json");
 	headers = curl_slist_append(headers, "Accept: application/json, text/event-stream");
-	std::string protocolHeader = std::string("MCP-Protocol-Version: ") + kProtocolVersion;
+	const std::string protocolHeader = std::string("MCP-Protocol-Version: ") + kProtocolVersion;
 	headers = curl_slist_append(headers, protocolHeader.c_str());
 	if(!session.httpSessionId.empty()){
-		std::string sessionHeader = "MCP-Session-Id: " + session.httpSessionId;
+		const std::string sessionHeader = "MCP-Session-Id: " + session.httpSessionId;
 		headers = curl_slist_append(headers, sessionHeader.c_str());
 	}
 	AppendCustomHttpHeaders(headers, session.httpCustomHeader);
@@ -453,7 +453,7 @@ bool RefreshToolsLocked(McpServerSession& session, std::string& responseJson, st
 		std::string inputSchema;
 		if(!GetJsonPropertyRaw(toolObject, "inputSchema", inputSchema) || IsJsonNull(inputSchema)) inputSchema = "{\"type\":\"object\"}";
 		std::string exposed = "mcp_" + NormalizeToolNamePart(session.id) + "_" + NormalizeToolNamePart(name);
-		auto count = ++exposedCounts[exposed];
+		const auto count = ++exposedCounts[exposed];
 		if(count > 1) exposed += "_" + std::to_string(count);
 		tools.push_back({exposed, name, description, inputSchema});
 	}

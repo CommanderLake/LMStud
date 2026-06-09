@@ -450,7 +450,7 @@ namespace LMStud{
 			}
 		}
 		private static string ExecuteLocalModelTool(ModelSlot slot, string prompt, string instructions, int maxTokens, Action<string> streamCallback){
-			IntPtr chatState = IntPtr.Zero;
+			var chatState = IntPtr.Zero;
 			try{
 				byte[] ignoredState;
 				int tokenCount;

@@ -122,10 +122,7 @@ namespace LMStud{
 				var array = Json.Parse(json);
 				ConnectedServerIds.Clear();
 				if(!array.IsArray) return;
-				foreach(var item in array.Where(item => item.IsObject)){
-					var id = item.GetString("id");
-					if(!string.IsNullOrWhiteSpace(id) && item.GetBool("initialized") == true) ConnectedServerIds.Add(id);
-				}
+				foreach(var id in from item in array.Where(item => item.IsObject) let id = item.GetString("id") where !string.IsNullOrWhiteSpace(id) && item.GetBool("initialized") == true select id){ ConnectedServerIds.Add(id); }
 			} catch(Exception){}
 		}
 		private static string ErrorJson(string message){ return Json.Object(Json.P("error", message)).ToJson(); }

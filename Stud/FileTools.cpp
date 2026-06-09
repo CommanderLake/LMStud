@@ -62,21 +62,21 @@ static std::string GetFileToolPathLabel(const std::filesystem::path& path, const
 	std::error_code ec;
 	if(_baseFolder.empty()){
 		if(displayRoot && !displayRoot->empty()){
-			const auto relPath = std::filesystem::relative(path, *displayRoot, ec);
+			const auto relPath = relative(path, *displayRoot, ec);
 			const auto rel = PathToUtf8Generic(relPath);
 			if(!ec && !rel.empty() && rel != ".." && rel.rfind("../", 0) != 0) return rel;
 			ec.clear();
 		}
 		const auto filename = path.filename();
 		if(!filename.empty()) return PathToUtf8Generic(filename);
-		auto fullPath = std::filesystem::weakly_canonical(path, ec);
+		auto fullPath = weakly_canonical(path, ec);
 		if(ec){
 			ec.clear();
-			fullPath = std::filesystem::absolute(path, ec);
+			fullPath = absolute(path, ec);
 		}
 		return PathToUtf8Generic(ec ? path : fullPath);
 	}
-	const auto relPath = std::filesystem::relative(path, _baseFolder, ec);
+	const auto relPath = relative(path, _baseFolder, ec);
 	return PathToUtf8Generic(ec ? path : relPath);
 }
 static bool IsPathAllowed(const std::filesystem::path& p){
@@ -95,12 +95,12 @@ static bool IsPathAllowed(const std::filesystem::path& p){
 }
 static bool IsRegularFileForReading(const std::filesystem::path& p, std::uintmax_t* size = nullptr){
 	std::error_code ec;
-	const auto status = std::filesystem::symlink_status(p, ec);
+	const auto status = symlink_status(p, ec);
 	if(ec) return false;
-	if(!std::filesystem::is_regular_file(status)) return false;
-	if(std::filesystem::is_symlink(status)) return false;
+	if(!is_regular_file(status)) return false;
+	if(is_symlink(status)) return false;
 	if(size){
-		*size = std::filesystem::file_size(p, ec);
+		*size = file_size(p, ec);
 		if(ec) return false;
 	}
 	return true;

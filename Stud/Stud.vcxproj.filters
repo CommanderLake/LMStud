@@ -39,6 +39,9 @@
     <ClInclude Include="StudState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="StudInternal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="JSONCommon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -51,6 +54,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stud.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StudModel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StudChat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StudGeneration.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MarkdownRTFConverter.cpp">

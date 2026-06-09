@@ -590,7 +590,7 @@ extern "C" EXPORT int JsonGetKind(const char* json){
 	const char* end = SkipJsonValue(p);
 	if(!end || end == p) return 0;
 	if(kind == 3){
-		std::string raw(p, static_cast<size_t>(end - p));
+		const std::string raw(p, static_cast<size_t>(end - p));
 		if(!IsJsonPrimitiveRawValid(raw)) return 0;
 	}
 	end = SkipJsonWhitespace(end);

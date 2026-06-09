@@ -150,17 +150,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApiClientStreamingTests.cs" />
-    <Compile Include="ApiClientTests.cs" />
-    <Compile Include="ApiServerSlotRoutingTests.cs" />
-    <Compile Include="ApiServerTests.cs" />
-    <Compile Include="ChatMessageTests.cs" />
-    <Compile Include="CommonPathTests.cs" />
-    <Compile Include="Form1AdditionalTests.cs" />
-    <Compile Include="Form1InteractionTests.cs" />
-    <Compile Include="GGUFMetadataManagerTests.cs" />
-    <Compile Include="LVISorterTests.cs" />
-    <Compile Include="MarkdownRenderTests.cs" />
-    <Compile Include="SessionManagerTests.cs" />
+    <Compile Include="ApiCompatibilityTests.cs" />
+    <Compile Include="ApiServerRoutingTests.cs" />
+    <Compile Include="ApplicationWorkflowTests.cs" />
+    <Compile Include="MarkdownExperienceTests.cs" />
+    <Compile Include="ModelFileTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

@@ -140,7 +140,7 @@ namespace LMStud{
 				byte[] newState = null;
 				var tokens = 0;
 				string toolsJson = null;
-				JsonNode resp = JsonNode.Missing;
+				var resp = JsonNode.Missing;
 				var backendKey = "local:" + slot.Name;
 				lock(session.SyncRoot){
 					if(!Sessions.IsActive(session)){

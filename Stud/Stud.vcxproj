@@ -162,6 +162,7 @@ xcopy /Y "I:\llama.cpp\build\bin\RelWithDebInfo\mtmd.dll" "$(SolutionDir)LM Stud
     <ClInclude Include="JSONCommon.h" />
     <ClInclude Include="MCP.h" />
     <ClInclude Include="speech.h" />
+    <ClInclude Include="StudInternal.h" />
     <ClInclude Include="StudState.h" />
     <ClInclude Include="stud.h" />
     <ClInclude Include="StudError.h" />
@@ -177,6 +178,9 @@ xcopy /Y "I:\llama.cpp\build\bin\RelWithDebInfo\mtmd.dll" "$(SolutionDir)LM Stud
     <ClCompile Include="MarkdownRTFConverter.cpp" />
     <ClCompile Include="MCP.cpp" />
     <ClCompile Include="speech.cpp" />
+    <ClCompile Include="StudChat.cpp" />
+    <ClCompile Include="StudGeneration.cpp" />
+    <ClCompile Include="StudModel.cpp" />
     <ClCompile Include="stud.cpp" />
     <ClCompile Include="tools.cpp" />
     <ClCompile Include="WebTools.cpp" />

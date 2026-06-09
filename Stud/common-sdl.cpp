@@ -14,7 +14,7 @@ bool audio_async::init(int capture_id, int sample_rate){
 	}
 	SDL_SetHintWithPriority(SDL_HINT_AUDIO_RESAMPLING_MODE, "medium", SDL_HINT_OVERRIDE);
 	{
-		int nDevices = SDL_GetNumAudioDevices(SDL_TRUE);
+		const int nDevices = SDL_GetNumAudioDevices(SDL_TRUE);
 		fprintf(stderr, "%s: found %d capture devices:\n", __func__, nDevices);
 		for(int i = 0; i < nDevices; i++){ fprintf(stderr, "%s:    - Capture device #%d: '%s'\n", __func__, i, SDL_GetAudioDeviceName(i, SDL_TRUE)); }
 	}
@@ -27,7 +27,7 @@ bool audio_async::init(int capture_id, int sample_rate){
 	capture_spec_requested.channels = 1;
 	capture_spec_requested.samples = 1024;
 	capture_spec_requested.callback = [](void* userdata, uint8_t* stream, int len){
-		auto audio = static_cast<audio_async*>(userdata);
+		const auto audio = static_cast<audio_async*>(userdata);
 		audio->callback(stream, len);
 	};
 	capture_spec_requested.userdata = this;

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -44,21 +45,21 @@ namespace LMStud{
 		}
 		[Browsable(false)]
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-		public string MarkdownText{
+		internal string MarkdownText{
 			get => _markdownText;
-			set{ SetContent(value, _renderMarkdown); }
+			set => SetContent(value, _renderMarkdown);
 		}
 		internal string PlainText => _renderer.PlainText;
 		[Category("Behavior")]
 		[DefaultValue(true)]
-		public bool RenderMarkdown{
+		internal bool RenderMarkdown{
 			get => _renderMarkdown;
-			set{ SetContent(_markdownText, value); }
+			set => SetContent(_markdownText, value);
 		}
 		[Browsable(false)]
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-		public int ContentHeight{get; private set;}
-		internal int SelectionStart => Math.Min(_selectionAnchor, CaretPosition);
+		internal int ContentHeight{get; private set;}
+		private int SelectionStart => Math.Min(_selectionAnchor, CaretPosition);
 		internal int SelectionLength => Math.Abs(CaretPosition - _selectionAnchor);
 		internal int CaretPosition{get; private set;}
 		internal int LayoutCount{get; private set;}
@@ -234,8 +235,7 @@ namespace LMStud{
 						break;
 					case Keys.Up:
 					case Keys.Down:
-						if(control) position = MoveParagraph(position, key == Keys.Up ? -1 : 1);
-						else position = MoveVertical(position, key == Keys.Up ? -1 : 1, false);
+						position = control ? MoveParagraph(position, key == Keys.Up ? -1 : 1) : MoveVertical(position, key == Keys.Up ? -1 : 1, false);
 						break;
 					case Keys.PageUp:
 					case Keys.PageDown:
@@ -368,8 +368,7 @@ namespace LMStud{
 		private void Load(string source){
 			Image image = null;
 			try{
-				byte[] bytes;
-				if(!MarkdownImages.TryReadLocalOrDataBytes(source, out bytes)){
+				if(!MarkdownImages.TryReadLocalOrDataBytes(source, out var bytes)){
 					if(!Uri.TryCreate(source, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)) return;
 					bytes = HttpClient.GetByteArrayAsync(uri).GetAwaiter().GetResult();
 					if(bytes.Length > MaximumDownloadBytes) return;
@@ -412,7 +411,6 @@ namespace LMStud{
 		private const int ExactTextRendererMeasurementLimit = 256;
 		private const int MaximumMeasurementCacheEntries = 4096;
 		private const TextFormatFlags TextRendererFlags = TextFormatFlags.NoPadding | TextFormatFlags.NoClipping | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine;
-		private Color _backColor;
 		private Font _baseFont;
 		private Color _codeBackColor;
 		private Color _codeBorderColor;
@@ -452,7 +450,6 @@ namespace LMStud{
 			}
 			_baseFont = baseFont ?? Control.DefaultFont;
 			_textColor = textColor;
-			_backColor = backColor;
 			_imageResolver = imageResolver;
 			_layoutWidth = Math.Max(10, width);
 			_codeBackColor = Blend(textColor, backColor, 0.08f);
@@ -626,7 +623,7 @@ namespace LMStud{
 			if(compact.Length < 3) return false;
 			return compact.Trim('-').Length == 0 || compact.Trim('*').Length == 0 || compact.Trim('_').Length == 0;
 		}
-		private bool IsTableHeader(string[] lines, int index){return index + 1 < lines.Length && lines[index].Contains("|") && TableDelimiterRegex.IsMatch(lines[index + 1].Trim());}
+		private static bool IsTableHeader(string[] lines, int index){return index + 1 < lines.Length && lines[index].Contains("|") && TableDelimiterRegex.IsMatch(lines[index + 1].Trim());}
 		private float AddTable(string[] lines, ref int index, float y, int width){
 			var rows = new List<string[]>{ SplitCells(lines[index]) };
 			index += 2;
@@ -748,17 +745,13 @@ namespace LMStud{
 			var mono = GetFont(FontStyle.Regular, _baseFont.Size*0.95f, "Consolas");
 			var lineHeight = Math.Max(mono.GetHeight() + 2, 16f);
 			var wrappedLines = new List<string>();
-			foreach(var line in codeLines){
-				var wrapped = WrapText(line, mono, Math.Max(8, width - 16));
-				wrappedLines.AddRange(wrapped);
-			}
+			foreach(var wrapped in codeLines.Select(line => WrapText(line, mono, Math.Max(8, width - 16)))){ wrappedLines.AddRange(wrapped); }
 			if(wrappedLines.Count == 0) wrappedLines.Add(string.Empty);
 			var blockHeight = wrappedLines.Count*lineHeight + 8;
 			_ops.Add(DrawOp.FilledRect(0, y, width, blockHeight, _codeBackColor));
 			_ops.Add(DrawOp.StrokeRect(new RectangleF(0, y, width, blockHeight), _codeBorderColor));
 			var visualLine = 0;
-			foreach(var sourceLine in codeLines){
-				var wrapped = WrapText(sourceLine, mono, Math.Max(8, width - 16));
+			foreach(var wrapped in codeLines.Select(sourceLine => WrapText(sourceLine, mono, Math.Max(8, width - 16)))){
 				foreach(var line in wrapped){
 					AppendVisibleText(line, 8, y + 4 + visualLine*lineHeight, mono, _textColor, false, false, null, width - 16);
 					visualLine++;
@@ -789,7 +782,7 @@ namespace LMStud{
 					continue;
 				}
 				var font = ResolveRunFont(paragraphFont, run);
-				var color = run.IsLink ? _linkColor : run.Kind == InlineKind.Code ? _textColor : _textColor;
+				var color = run.IsLink ? _linkColor : _textColor;
 				foreach(var token in EnumerateDrawTokens(run.Text)) AddWrappedToken(token, font, color, run.Strike, run.Kind == InlineKind.Code, run.IsLink ? run.LinkUrl : null, ref x, ref currentY, lineHeight, indent, width + indent);
 			}
 			AppendLineBreak();
@@ -926,8 +919,7 @@ namespace LMStud{
 			var style = paragraphFont.Style;
 			if(run.Bold) style |= FontStyle.Bold;
 			if(run.Italic) style |= FontStyle.Italic;
-			if(run.Kind == InlineKind.Code) return GetFont(FontStyle.Regular, paragraphFont.Size*0.95f, "Consolas");
-			return GetFont(style, paragraphFont.Size, paragraphFont.FontFamily.Name);
+			return run.Kind == InlineKind.Code ? GetFont(FontStyle.Regular, paragraphFont.Size*0.95f, "Consolas") : GetFont(style, paragraphFont.Size, paragraphFont.FontFamily.Name);
 		}
 		private List<InlineRun> ParseInline(string text){
 			var runs = new List<InlineRun>();
@@ -1035,8 +1027,7 @@ namespace LMStud{
 		internal int HitTestText(Point point){
 			DrawOp closest = null;
 			var closestDistance = float.MaxValue;
-			foreach(var op in _ops){
-				if(!op.IsText) continue;
+			foreach(var op in _ops.Where(op => op.IsText)){
 				if(op.Rect.Contains(point)) return op.HitTestCharacter(point.X);
 				var dx = point.X < op.Rect.Left ? op.Rect.Left - point.X : point.X > op.Rect.Right ? point.X - op.Rect.Right : 0;
 				var dy = point.Y < op.Rect.Top ? op.Rect.Top - point.Y : point.Y > op.Rect.Bottom ? point.Y - op.Rect.Bottom : 0;
@@ -1072,10 +1063,9 @@ namespace LMStud{
 			var distance = float.MaxValue;
 			for(var i = 0; i < lines.Count; i++){
 				var candidate = Math.Abs(lines[i].Top - targetY);
-				if(candidate < distance){
-					distance = candidate;
-					target = i;
-				}
+				if(!(candidate < distance)) continue;
+				distance = candidate;
+				target = i;
 			}
 			return HitTestLine(lines[target], preferredX);
 		}
@@ -1083,12 +1073,7 @@ namespace LMStud{
 			var lines = new List<VisualLine>();
 			foreach(var op in _ops){
 				if(!op.IsText) continue;
-				VisualLine line = null;
-				foreach(var existing in lines)
-					if(Math.Abs(existing.Top - op.Rect.Top) < 0.5f){
-						line = existing;
-						break;
-					}
+				var line = lines.FirstOrDefault(existing => Math.Abs(existing.Top - op.Rect.Top) < 0.5f);
 				if(line == null){
 					line = new VisualLine(op.Rect.Top, op.Rect.Bottom);
 					lines.Add(line);
@@ -1113,10 +1098,9 @@ namespace LMStud{
 			var distance = int.MaxValue;
 			for(var i = 0; i < lines.Count; i++){
 				var candidate = characterIndex < lines[i].Start ? lines[i].Start - characterIndex : characterIndex - lines[i].End;
-				if(candidate < distance){
-					distance = candidate;
-					closest = i;
-				}
+				if(candidate >= distance) continue;
+				distance = candidate;
+				closest = i;
 			}
 			return closest;
 		}
@@ -1126,17 +1110,15 @@ namespace LMStud{
 			foreach(var op in line.Ops){
 				if(x >= op.Rect.Left && x <= op.Rect.Right) return op.HitTestCharacter(x);
 				var candidate = x < op.Rect.Left ? op.Rect.Left - x : x - op.Rect.Right;
-				if(candidate < distance){
-					distance = candidate;
-					closest = op;
-				}
+				if(!(candidate < distance)) continue;
+				distance = candidate;
+				closest = op;
 			}
-			return closest == null ? line.Start : closest.HitTestCharacter(x);
+			return closest?.HitTestCharacter(x) ?? line.Start;
 		}
 		internal RectangleF GetCaretRectangle(int characterIndex){
 			DrawOp closest = null;
-			foreach(var op in _ops){
-				if(!op.IsText) continue;
+			foreach(var op in _ops.Where(op => op.IsText)){
 				closest = op;
 				if(characterIndex >= op.TextStart && characterIndex <= op.TextStart + op.TextLength) return op.GetCaretRectangle(characterIndex);
 			}
