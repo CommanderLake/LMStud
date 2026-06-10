@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Windows.Forms;
@@ -19,6 +20,8 @@ namespace LMStud{
 	}
 	internal static class MarkdownImages{
 		private const int MaximumImageBytes = 20*1024*1024;
+		private const long MaximumResizeSourceBytes = 256L*1024*1024;
+		private const int MaximumVisionDimension = 4096;
 		private static readonly HashSet<string> ImageExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase){
 			".bmp", ".gif", ".jpeg", ".jpg",
 			".png", ".tif", ".tiff", ".webp"
@@ -178,9 +181,15 @@ namespace LMStud{
 				var path = Path.GetFullPath(source);
 				if(!File.Exists(path)) return false;
 				var file = new FileInfo(path);
-				if(file.Length <= 0 || file.Length > MaximumImageBytes) return false;
-				var bytes = File.ReadAllBytes(path);
-				visionUrl = "data:" + GetMimeType(path) + ";base64," + Convert.ToBase64String(bytes);
+				if(file.Length <= 0) return false;
+				byte[] bytes;
+				var mimeType = GetMimeType(path);
+				if(file.Length <= MaximumImageBytes) bytes = File.ReadAllBytes(path);
+				else{
+					if(!TryDownscaleImage(path, file.Length, out bytes)) return false;
+					mimeType = "image/jpeg";
+				}
+				visionUrl = "data:" + mimeType + ";base64," + Convert.ToBase64String(bytes);
 				return true;
 			} catch{ return false; }
 		}
@@ -199,10 +208,62 @@ namespace LMStud{
 					source = uri.LocalPath;
 				}
 				var path = Path.GetFullPath(source);
-				if(!File.Exists(path) || new FileInfo(path).Length > MaximumImageBytes) return false;
-				bytes = File.ReadAllBytes(path);
+				if(!File.Exists(path)) return false;
+				var file = new FileInfo(path);
+				if(file.Length <= 0) return false;
+				if(file.Length <= MaximumImageBytes) bytes = File.ReadAllBytes(path);
+				else if(!TryDownscaleImage(path, file.Length, out bytes)) return false;
 				return true;
 			} catch{ return false; }
+		}
+		private static bool TryDownscaleImage(string path, long sourceLength, out byte[] bytes){
+			bytes = null;
+			if(sourceLength <= MaximumImageBytes || sourceLength > MaximumResizeSourceBytes) return false;
+			try{
+				using(var source = Image.FromFile(path)){
+					var largestDimension = Math.Max(source.Width, source.Height);
+					if(largestDimension <= 0) return false;
+					var dimensionScale = Math.Min(1.0, MaximumVisionDimension/(double)largestDimension);
+					var byteScale = Math.Sqrt((MaximumImageBytes*0.75)/sourceLength);
+					var scale = Math.Min(0.95, Math.Min(dimensionScale, byteScale));
+					var quality = 90L;
+					for(var attempt = 0; attempt < 6; attempt++){
+						var width = Math.Max(1, (int)Math.Round(source.Width*scale));
+						var height = Math.Max(1, (int)Math.Round(source.Height*scale));
+						using(var resized = new Bitmap(width, height, PixelFormat.Format24bppRgb)){
+							using(var graphics = Graphics.FromImage(resized)){
+								graphics.Clear(Color.White);
+								graphics.CompositingQuality = CompositingQuality.HighQuality;
+								graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+								graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+								graphics.SmoothingMode = SmoothingMode.HighQuality;
+								graphics.DrawImage(source, new Rectangle(0, 0, width, height));
+							}
+							using(var output = new MemoryStream()){
+								SaveJpeg(resized, output, quality);
+								if(output.Length <= MaximumImageBytes){
+									bytes = output.ToArray();
+									return true;
+								}
+							}
+						}
+						scale *= 0.75;
+						quality = Math.Max(60L, quality - 10L);
+					}
+				}
+			} catch{}
+			return false;
+		}
+		private static void SaveJpeg(Image image, Stream output, long quality){
+			var encoder = Array.Find(ImageCodecInfo.GetImageEncoders(), item => item.FormatID == ImageFormat.Jpeg.Guid);
+			if(encoder == null){
+				image.Save(output, ImageFormat.Jpeg);
+				return;
+			}
+			using(var parameters = new EncoderParameters(1)){
+				parameters.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, quality);
+				image.Save(output, encoder, parameters);
+			}
 		}
 		private static JsonArrayBuilder BuildVisionContent(string markdown, bool allowRemote, out bool hasImages){
 			var parts = Json.ArrayBuilder();
