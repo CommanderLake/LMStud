@@ -678,6 +678,11 @@ namespace LMStud{
 					while(tokenStart < token.Length){
 						var available = Math.Max(1f, width - x);
 						var remaining = token.Length - tokenStart;
+						if(x > 0 && ShouldWrapWholeToken(token, tokenStart, remaining, font, available, width)){
+							x = 0;
+							line++;
+							available = Math.Max(1f, width);
+						}
 						var fit = FittedCharacterCount(token, tokenStart, remaining, font, available);
 						if(fit == 0 && x > 0){
 							x = 0;
@@ -794,6 +799,12 @@ namespace LMStud{
 			while(tokenStart < token.Length){
 				var available = Math.Max(1f, rightEdge - x);
 				var remaining = token.Length - tokenStart;
+				var lineWidth = Math.Max(1f, rightEdge - indent);
+				if(x > indent && ShouldWrapWholeToken(token, tokenStart, remaining, font, available, lineWidth)){
+					x = indent;
+					y += lineHeight;
+					available = lineWidth;
+				}
 				var fit = FittedCharacterCount(token, tokenStart, remaining, font, available);
 				if(fit == 0 && x > indent){
 					x = indent;
@@ -821,6 +832,12 @@ namespace LMStud{
 					y += lineHeight;
 				}
 			}
+		}
+		private bool ShouldWrapWholeToken(string token, int start, int count, Font font, float available, float lineWidth){
+			if(count <= 0 || char.IsWhiteSpace(token[start])) return false;
+			var text = start == 0 && count == token.Length ? token : token.Substring(start, count);
+			var tokenWidth = MeasureTextWidth(text, font);
+			return tokenWidth > available && tokenWidth <= lineWidth;
 		}
 		private void AppendVisibleText(string text, float x, float y, Font font, Color color, bool strike, bool code, string linkUrl, float maximumWidth){
 			if(string.IsNullOrEmpty(text)) return;
@@ -931,11 +948,6 @@ namespace LMStud{
 			while(index < text.Length){
 				if(text[index] == '\\' && index + 1 < text.Length){
 					runs.Add(new InlineRun(text.Substring(index + 1, 1), bold, italic, strike, isLink, InlineKind.Text, linkUrl));
-					index += 2;
-					continue;
-				}
-				if(index + 1 < text.Length && text[index] == ' ' && text[index + 1] == ' '){
-					runs.Add(InlineRun.Break());
 					index += 2;
 					continue;
 				}

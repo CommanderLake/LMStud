@@ -21,6 +21,9 @@ namespace LMStud{
 		private bool _generating;
 		private bool _editing;
 		private bool _autoScroll = true;
+		private bool _heightUpdatePending;
+		private bool _pendingHeightAutoScroll;
+		private int _pendingHeight;
 		private readonly List<ChatMessageContinuationControl> _continuations = new List<ChatMessageContinuationControl>();
 		private const int HeightOffset = 32;
 		internal int TTSPosition = 0;
@@ -56,9 +59,28 @@ namespace LMStud{
 			return markdownView.ContentHeight + panelMessage.Top + panelMessage.Height - panelMessage.ClientSize.Height;
 		}
 		private void ApplyHeight(int newHeight){
+			if(IsDisposed || Disposing) return;
+			_pendingHeight = newHeight;
+			_pendingHeightAutoScroll = _autoScroll;
+			if(_heightUpdatePending) return;
+			if(!IsHandleCreated){
+				ApplyPendingHeight();
+				return;
+			}
+			_heightUpdatePending = true;
+			try{
+				BeginInvoke(new MethodInvoker(ApplyPendingHeight));
+			} catch(ObjectDisposedException){ _heightUpdatePending = false; }
+			catch(InvalidOperationException){ _heightUpdatePending = false; }
+		}
+		private void ApplyPendingHeight(){
+			_heightUpdatePending = false;
+			if(IsDisposed || Disposing) return;
+			var newHeight = _pendingHeight;
+			var autoScroll = _pendingHeightAutoScroll;
 			if(Height == newHeight) return;
 			Height = newHeight;
-			if(_autoScroll) (Parent as MyFlowLayoutPanel)?.ScrollToEnd();
+			if(autoScroll) (Parent as MyFlowLayoutPanel)?.ScrollToEnd();
 		}
 		internal bool Markdown{
 			get => _markdown;
