@@ -9,9 +9,9 @@
 #include <new>
 using PromptMessage = Stud::PromptMessage;
 static bool LaneHasMedia(const Stud::StudLane& lane){ return std::any_of(lane.messageMedia.begin(), lane.messageMedia.end(), [](const Stud::MessageMedia& media){ return !media.empty(); }); }
-static bool TokenizePrompt(const char* slotName, const std::string& prompt, std::vector<llama_token>& tokens){
+static bool TokenizePrompt(const char* slotName, const std::string& prompt, std::vector<llama_token>& tokens, const bool addSpecial = true){
 	try{
-		tokens = common_tokenize(GetModel(slotName)->session.vocab, prompt, true, true);
+		tokens = common_tokenize(GetModel(slotName)->session.vocab, prompt, addSpecial, true);
 		return true;
 	} catch(const std::exception& e){
 		Stud::Internal::LastErrorMessage() = e.what();
@@ -127,6 +127,26 @@ static size_t CommonTokenPrefix(const std::vector<llama_token>& left, const std:
 	size_t prefix = 0;
 	while(prefix < left.size() && prefix < right.size() && left[prefix] == right[prefix]) ++prefix;
 	return prefix;
+}
+static bool TryBuildAppendOnlyPrompt(const char* slotName, const std::string& renderedPrompt, const bool addAssistantPrompt, std::vector<llama_token>& promptTokens, size_t& prefix){
+	const auto model = GetModel(slotName);
+	const auto& lane = model->session.lane;
+	if(!lane.endsWithEOG || lane.messages.empty() || lane.cachedTokens.empty()) return false;
+	common_chat_params previousChatData;
+	const bool toolsEnabled = !model->session.tools.empty();
+	if(Stud::Internal::BuildChatTemplateParams(slotName, previousChatData, lane.messages, false, toolsEnabled) != StudError::Success) return false;
+	if(renderedPrompt.compare(0, previousChatData.prompt.size(), previousChatData.prompt) != 0) return false;
+	std::string suffix;
+	if(addAssistantPrompt && !previousChatData.prompt.empty() && previousChatData.prompt.back() == '\n') suffix = "\n";
+	suffix.append(renderedPrompt, previousChatData.prompt.size(), std::string::npos);
+	std::vector<llama_token> suffixTokens;
+	if(!TokenizePrompt(slotName, suffix, suffixTokens, false)) return false;
+	const size_t cachedSize = lane.cachedTokens.size();
+	promptTokens = lane.cachedTokens;
+	promptTokens.reserve(cachedSize + suffixTokens.size());
+	promptTokens.insert(promptTokens.end(), suffixTokens.begin(), suffixTokens.end());
+	prefix = cachedSize;
+	return true;
 }
 static bool RestorePromptPrefix(Stud::StudModel* model, const std::vector<llama_token>& promptTokens, const size_t prefix){
 	auto& session = model->session;
@@ -320,6 +340,7 @@ namespace Stud::Internal{
 				lane.messages.push_back(message);
 				lane.messageMedia.push_back(input.media);
 			}
+			lane.endsWithEOG = !addAssistantPrompt;
 			return StudError::Success;
 		}
 		std::vector<common_chat_msg> chatMessages = lane.messages;
@@ -330,18 +351,24 @@ namespace Stud::Internal{
 		error = LoadChatSyntax(model->session.syntax, chatData, toolsEnabled);
 		if(error != StudError::Success) return error;
 		std::vector<llama_token> promptTokens;
-		if(!TokenizePrompt(slotName, chatData.prompt, promptTokens)) return StudError::CantTokenizePrompt;
-		size_t prefix = CommonTokenPrefix(lane.cachedTokens, promptTokens);
-		if(prefix < lane.cachedTokens.size()){
-			if(model->session.speculative && prefix > 0) --prefix;
-			if(!RestorePromptPrefix(model, promptTokens, prefix)) prefix = 0;
+		size_t prefix = 0;
+		if(!TryBuildAppendOnlyPrompt(slotName, chatData.prompt, addAssistantPrompt, promptTokens, prefix)){
+			if(!TokenizePrompt(slotName, chatData.prompt, promptTokens)) return StudError::CantTokenizePrompt;
+			prefix = CommonTokenPrefix(lane.cachedTokens, promptTokens);
+			if(prefix < lane.cachedTokens.size()){
+				if(model->session.speculative && prefix > 0) --prefix;
+				if(!RestorePromptPrefix(model, promptTokens, prefix)) prefix = 0;
+			}
 		}
-		return DecodePromptTokenSuffix(slotName, promptTokens, prefix, appendToChat ? &message : nullptr);
+		const auto decodeError = DecodePromptTokenSuffix(slotName, promptTokens, prefix, appendToChat ? &message : nullptr);
+		if(decodeError == StudError::Success) lane.endsWithEOG = !addAssistantPrompt;
+		return decodeError;
 	}
 }
 StudError RetokenizeChat(const char* slotName, bool rebuildMemory){
 	const auto model = GetModel(slotName);
 	auto& lane = Stud::Internal::ActiveLane(slotName);
+	lane.endsWithEOG = false;
 	Stud::Internal::EnsureMessageMediaAligned(lane);
 	if(!model->session.ctx || !lane.sampler || !model->session.vocab) return StudError::ModelNotLoaded;
 	const bool toolsEnabled = !model->session.tools.empty();
@@ -350,9 +377,15 @@ StudError RetokenizeChat(const char* slotName, bool rebuildMemory){
 		Stud::Internal::ClearSessionMemoryAndSpeculativeState(model);
 		lane.cachedTokens.clear();
 		if(lane.sampler) llama_sampler_reset(lane.sampler);
-		return Stud::Internal::LoadChatSyntax(model->session.syntax, common_chat_params(), false);
+		const auto syntaxError = Stud::Internal::LoadChatSyntax(model->session.syntax, common_chat_params(), false);
+		if(syntaxError == StudError::Success) lane.endsWithEOG = lane.messages.empty();
+		return syntaxError;
 	}
-	if(LaneHasMedia(lane)) return EvaluateVisionPrompt(slotName, lane.messages, lane.messageMedia, false, toolsEnabled);
+	if(LaneHasMedia(lane)){
+		const auto visionError = EvaluateVisionPrompt(slotName, lane.messages, lane.messageMedia, false, toolsEnabled);
+		if(visionError == StudError::Success) lane.endsWithEOG = true;
+		return visionError;
+	}
 	common_chat_params chatData;
 	const auto applyError = Stud::Internal::BuildChatTemplateParams(slotName, chatData, lane.messages, false, toolsEnabled);
 	if(applyError != StudError::Success) return applyError;
@@ -369,7 +402,10 @@ StudError RetokenizeChat(const char* slotName, bool rebuildMemory){
 	const size_t newSize = promptTokens.size();
 	size_t suffix = 0;
 	if(!rebuildMemory && canShift && oldSize > 0 && newSize > 0) while(suffix + prefix < oldSize && suffix + prefix < newSize && suffix < oldSize && suffix < newSize && lane.cachedTokens[oldSize - 1 - suffix] == promptTokens[newSize - 1 - suffix]) ++suffix;
-	if(!rebuildMemory && prefix == oldSize && oldSize == newSize) return StudError::Success;
+	if(!rebuildMemory && prefix == oldSize && oldSize == newSize){
+		lane.endsWithEOG = true;
+		return StudError::Success;
+	}
 	if(newSize > static_cast<size_t>(llama_n_ctx(model->session.ctx))){
 		if(rebuildMemory){
 			Stud::Internal::ClearSessionMemoryAndSpeculativeState(model);
@@ -424,6 +460,7 @@ StudError RetokenizeChat(const char* slotName, bool rebuildMemory){
 	}
 	for(size_t i = decodeEnd; i < newSize; ++i) llama_sampler_accept(lane.sampler, promptTokens[i]);
 	lane.cachedTokens = std::move(promptTokens);
+	lane.endsWithEOG = true;
 	return StudError::Success;
 }
 StudError DialecticRelaySwap(const char* slotName, const char* fromSlotName, const char* toSlotName){
@@ -445,6 +482,7 @@ StudError ResetChat(const char* slotName){
 	lane.messages.clear();
 	lane.messageMedia.clear();
 	lane.cachedTokens.clear();
+	lane.endsWithEOG = true;
 	if(!session.ctx || !lane.sampler || !session.vocab) return StudError::Success;
 	Stud::Internal::ClearSessionMemoryAndSpeculativeState(model);
 	llama_sampler_reset(lane.sampler);
@@ -585,6 +623,7 @@ extern "C" EXPORT void* CaptureChatState(const char* slotName){
 	snapshot->lane.messages = session.lane.messages;
 	snapshot->lane.messageMedia = session.lane.messageMedia;
 	snapshot->lane.cachedTokens = session.lane.cachedTokens;
+	snapshot->lane.endsWithEOG = session.lane.endsWithEOG;
 	snapshot->systemPrompt = session.systemPrompt;
 	snapshot->toolsPrompt = session.toolsPrompt;
 	snapshot->tools = session.tools;
@@ -600,6 +639,7 @@ extern "C" EXPORT void RestoreChatState(const char* slotName, void* state){
 	session.lane.messages = snapshot->lane.messages;
 	session.lane.messageMedia = snapshot->lane.messageMedia;
 	session.lane.cachedTokens = snapshot->lane.cachedTokens;
+	session.lane.endsWithEOG = snapshot->lane.endsWithEOG;
 	RestoreSamplerFromCachedTokens(session);
 	Stud::Internal::FreeSpeculativeContext(session);
 	session.systemPrompt = snapshot->systemPrompt;

@@ -234,6 +234,7 @@ static StudError RollbackGenerate(const char* slotName, const size_t chatStart, 
 	model->session.lane.messages.resize(chatStart + newMessageCount);
 	model->session.lane.messageMedia.resize(chatStart + newMessageCount);
 	if(Stud::Internal::RestoreCachedTokenPrefix(model, cacheStart)){
+		model->session.lane.endsWithEOG = false;
 		outputMessage = common_chat_msg();
 		return error;
 	}
@@ -375,6 +376,7 @@ static StudError Generate(const char* slotName, const std::vector<PromptMessage>
 	}
 	lane.messages.push_back(message);
 	lane.messageMedia.emplace_back();
+	lane.endsWithEOG = endOfGeneration;
 	if(emitFinalCallback && tokenCallback && !callback) tokenCallback(slotName, message.reasoning_content.c_str(), message.content.c_str(), generatedCount, static_cast<int>(lane.cachedTokens.size()), firstTokenTime, 0);
 	outputMessage = std::move(message);
 	return StudError::Success;

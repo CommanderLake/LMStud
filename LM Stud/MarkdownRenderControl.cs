@@ -408,8 +408,10 @@ namespace LMStud{
 		private readonly List<DrawOp> _ops = new List<DrawOp>();
 		private readonly StringBuilder _plainText = new StringBuilder();
 		private const string MeasurementPrefix = "\u200B";
+		private const float EmptyLineHeightFactor = 0.4f;
 		private const int ExactTextRendererMeasurementLimit = 256;
 		private const int MaximumMeasurementCacheEntries = 4096;
+		private const float MinimumLineHeight = 15f;
 		private const TextFormatFlags TextRendererFlags = TextFormatFlags.NoPadding | TextFormatFlags.NoClipping | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine;
 		private Font _baseFont;
 		private Color _codeBackColor;
@@ -465,7 +467,7 @@ namespace LMStud{
 				foreach(var line in lines)
 					if(line.Length == 0){
 						AppendLineBreak();
-						y += _baseFont.GetHeight()*0.6f;
+						y += _baseFont.GetHeight()*EmptyLineHeightFactor;
 					} else{ y = AddPlainParagraph(line, y, _layoutWidth); }
 				PlainText = _plainText.ToString().TrimEnd('\n');
 				TotalHeight = (int)Math.Ceiling(Math.Max(y, _baseFont.GetHeight() + 2));
@@ -485,7 +487,7 @@ namespace LMStud{
 				}
 				if(string.IsNullOrWhiteSpace(line)){
 					AppendLineBreak();
-					y += _baseFont.GetHeight()*0.6f;
+					y += _baseFont.GetHeight()*EmptyLineHeightFactor;
 					continue;
 				}
 				if(MarkdownImages.TryParseStandalone(line, out var image)){
@@ -546,12 +548,12 @@ namespace LMStud{
 		}
 		private float AddPlainParagraph(string text, float y, int width){
 			var font = GetFont(FontStyle.Regular);
-			var lineHeight = Math.Max(font.GetHeight() + 2, 16f);
+			var lineHeight = GetLineHeight(font);
 			var x = 0f;
 			var currentY = y;
 			foreach(var token in EnumerateDrawTokens(text)) AddWrappedToken(token, font, _textColor, false, false, null, ref x, ref currentY, lineHeight, 0, width);
 			AppendLineBreak();
-			return currentY + lineHeight + 4;
+			return currentY + lineHeight;
 		}
 		private float AddImageBlock(string altText, string source, float y, int width){
 			var image = _imageResolver?.Invoke(source);
@@ -573,7 +575,7 @@ namespace LMStud{
 			var captionY = y + imageHeight + 3;
 			AppendVisibleText(caption, 0, captionY, GetFont(FontStyle.Italic, _baseFont.Size*0.9f), _mutedColor, false, false, null, width);
 			AppendLineBreak();
-			return captionY + Math.Max(_baseFont.GetHeight() + 2, 16f) + 6;
+			return captionY + GetLineHeight(_baseFont) + 6;
 		}
 		private static Color Blend(Color foreground, Color background, float foregroundAmount){
 			var backgroundAmount = 1f - foregroundAmount;
@@ -637,7 +639,7 @@ namespace LMStud{
 			var cellWidth = Math.Max(24f, (width - 2)/(float)columns);
 			var normal = GetFont(FontStyle.Regular);
 			var bold = GetFont(FontStyle.Bold);
-			var lineHeight = Math.Max(normal.GetHeight() + 2, 16f);
+			var lineHeight = GetLineHeight(normal);
 			for(var rowIndex = 0; rowIndex < rows.Count; rowIndex++){
 				var cellRuns = new List<InlineRun>[columns];
 				var rowLines = 1;
@@ -748,7 +750,7 @@ namespace LMStud{
 		}
 		private float AddCodeBlock(List<string> codeLines, float y, int width){
 			var mono = GetFont(FontStyle.Regular, _baseFont.Size*0.95f, "Consolas");
-			var lineHeight = Math.Max(mono.GetHeight() + 2, 16f);
+			var lineHeight = GetLineHeight(mono);
 			var wrappedLines = new List<string>();
 			foreach(var wrapped in codeLines.Select(line => WrapText(line, mono, Math.Max(8, width - 16)))){ wrappedLines.AddRange(wrapped); }
 			if(wrappedLines.Count == 0) wrappedLines.Add(string.Empty);
@@ -771,7 +773,7 @@ namespace LMStud{
 			var size = _baseFont.Size;
 			if(headingLevel > 0) size += (4 - Math.Min(headingLevel, 3))*2f;
 			var paragraphFont = GetFont(style, size);
-			var lineHeight = Math.Max(paragraphFont.GetHeight() + 2, 16f);
+			var lineHeight = GetLineHeight(paragraphFont);
 			var x = (float)indent;
 			var currentY = y;
 			if(!string.IsNullOrEmpty(bullet)){
@@ -791,7 +793,7 @@ namespace LMStud{
 				foreach(var token in EnumerateDrawTokens(run.Text)) AddWrappedToken(token, font, color, run.Strike, run.Kind == InlineKind.Code, run.IsLink ? run.LinkUrl : null, ref x, ref currentY, lineHeight, indent, width + indent);
 			}
 			AppendLineBreak();
-			return currentY + lineHeight + (quote ? 2 : 4);
+			return currentY + lineHeight;
 		}
 		private void AddWrappedToken(string token, Font font, Color color, bool strike, bool code, string linkUrl, ref float x, ref float y, float lineHeight, int indent, int rightEdge){
 			if(token.Length == 0) return;
@@ -842,12 +844,13 @@ namespace LMStud{
 		private void AppendVisibleText(string text, float x, float y, Font font, Color color, bool strike, bool code, string linkUrl, float maximumWidth){
 			if(string.IsNullOrEmpty(text)) return;
 			var metrics = MeasureCharacterOffsets(text, font);
-			var rect = new RectangleF(x, y, Math.Min(maximumWidth, metrics[metrics.Length - 1] + 1), Math.Max(font.GetHeight() + 2, 16f));
+			var rect = new RectangleF(x, y, Math.Min(maximumWidth, metrics[metrics.Length - 1] + 1), GetLineHeight(font));
 			var start = _plainText.Length;
 			_plainText.Append(text);
 			_ops.Add(DrawOp.Text(text, rect, font, color, start, metrics, strike, code ? TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine : TextFormatFlags.Default));
 			if(linkUrl != null) _linkRegions.Add(new LinkRegion(rect, linkUrl));
 		}
+		private static float GetLineHeight(Font font){return Math.Max(font.Height, MinimumLineHeight);}
 		private int FittedCharacterCount(string text, int start, int count, Font font, float width){
 			if(count <= 0) return 0;
 			var measuredText = start == 0 && count == text.Length ? text : text.Substring(start, count);

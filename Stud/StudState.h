@@ -16,6 +16,7 @@ namespace Stud{
 		std::vector<common_chat_msg> messages;
 		std::vector<MessageMedia> messageMedia;
 		std::vector<llama_token> cachedTokens;
+		bool endsWithEOG = true;
 	};
 	struct StudSession{
 		llama_context* ctx = nullptr;
