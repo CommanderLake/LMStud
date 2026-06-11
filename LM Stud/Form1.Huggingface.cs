@@ -13,6 +13,32 @@ namespace LMStud{
 		private volatile bool _downloading;
 		private string _modelName;
 		private string _uploader;
+		private void ListViewHugFiles_MouseDown(object sender, MouseEventArgs args){
+			if(args.Button != MouseButtons.Right) return;
+			var item = listViewHugFiles.GetItemAt(args.X, args.Y);
+			if(item == null){
+				listViewHugFiles.SelectedItems.Clear();
+				return;
+			}
+			item.Selected = true;
+			item.Focused = true;
+		}
+		private void ContextHugFiles_Opening(object sender, System.ComponentModel.CancelEventArgs e) {
+			e.Cancel = !CanCopyUrl();
+		}
+		private void CopyURLToolStripMenuItem_Click(object sender, EventArgs e) {
+			if(!CanCopyUrl()) return;
+			var fileName = listViewHugFiles.SelectedItems[0].SubItems[0].Text;
+			try{ Clipboard.SetText(BuildHugDownloadUrl(_uploader, _modelName, fileName)); } catch(ExternalException){}
+		}
+		private bool CanCopyUrl(){
+			return listViewHugFiles.SelectedItems.Count > 0 && !string.IsNullOrEmpty(_uploader) && !string.IsNullOrEmpty(_modelName);
+		}
+		private static string BuildHugDownloadUrl(string uploader, string modelName, string fileName){
+			var pathParts = fileName.Replace('\\', '/').Split('/');
+			for(var i = 0; i < pathParts.Length; i++) pathParts[i] = Uri.EscapeDataString(pathParts[i]);
+			return $"https://huggingface.co/{Uri.EscapeDataString(uploader)}/{Uri.EscapeDataString(modelName)}/resolve/main/{string.Join("/", pathParts)}";
+		}
 		private void TextSearchTerm_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.Enter) return;
 			HugSearch(textSearchTerm.Text);
@@ -120,7 +146,7 @@ namespace LMStud{
 			});
 		}
 		private void HugDownloadFile(string uploader, string modelName, string variantLabel){
-			var downloadUrl = $"https://huggingface.co/{uploader}/{modelName}/resolve/main/{variantLabel}";
+			var downloadUrl = BuildHugDownloadUrl(uploader, modelName, variantLabel);
 			var targetDir = Path.Combine(Common.ModelsDir, uploader, modelName);
 			try{ Directory.CreateDirectory(targetDir); } catch(Exception ex){
 				MessageBox.Show(string.Format(Resources.Failed_to_create_directory___0_, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);

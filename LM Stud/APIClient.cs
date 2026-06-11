@@ -155,7 +155,7 @@ namespace LMStud{
 			return false;
 		}
 		private static string GetStreamingToolKey(JsonNode root){
-			return root.GetString("item_id") ?? root.GetString("output_index") ?? root.GetString("id") ?? "0";
+			return root.GetString("output_index") ?? root.GetString("item_id") ?? root.GetString("id") ?? "0";
 		}
 		private JsonNode BuildResponsesPayload(JsonArrayBuilder history, float temperature, int maxTokens, string toolsJson, JsonNode? toolChoice, bool stream){
 			var payload = Json.ObjectBuilder(Json.P("model", _model), Json.P("input", history), Json.P("temperature", temperature));

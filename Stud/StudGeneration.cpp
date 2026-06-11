@@ -290,7 +290,8 @@ static StudError Generate(const char* slotName, const std::vector<PromptMessage>
 	}
 	int generatedCount = 0;
 	int sampleIndex = -1;
-	while((predictionCount < 0 || generatedCount < predictionCount) && !session.stop.load()){
+	bool endOfGeneration = false;
+	while((predictionCount < 0 || generatedCount < predictionCount) && !endOfGeneration && !session.stop.load()){
 		const StudError pendingError = postProcessor.Error();
 		if(pendingError != StudError::Success) return failWith(pendingError);
 		const int positionStart = static_cast<int>(lane.cachedTokens.size());
@@ -351,7 +352,7 @@ static StudError Generate(const char* slotName, const std::vector<PromptMessage>
 			const llama_token token = acceptedIndex == 0 ? sampledToken : acceptedIndex <= acceptedDrafts ? draft[acceptedIndex - 1] : rejectedToken;
 			lane.cachedTokens.push_back(token);
 			if(llama_vocab_is_eog(session.vocab, token)){
-				session.stop.store(true);
+				endOfGeneration = true;
 				break;
 			}
 			const auto enqueueError = postProcessor.Enqueue(token, static_cast<int>(lane.cachedTokens.size()));
