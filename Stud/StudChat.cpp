@@ -365,7 +365,7 @@ namespace Stud::Internal{
 		return decodeError;
 	}
 }
-StudError RetokenizeChat(const char* slotName, bool rebuildMemory){
+StudError RetokenizeChat(const char* slotName, const bool rebuildMemory){
 	const auto model = GetModel(slotName);
 	auto& lane = Stud::Internal::ActiveLane(slotName);
 	lane.endsWithEOG = false;
@@ -499,12 +499,12 @@ StudError SetSystemPrompt(const char* slotName, const char* prompt, const char* 
 	}
 	return RetokenizeChat(slotName, false);
 }
-StudError SetMessageAt(const char* slotName, const int index, const char* reasoning, const char* message){
+StudError SetMessageAt(const char* slotName, const int index, const char* think, const char* message){
 	auto& session = GetModel(slotName)->session;
 	auto& lane = session.lane;
 	if(index < 0 || index >= static_cast<int>(lane.messages.size())) return StudError::IndexOutOfRange;
 	auto& messageToUpdate = lane.messages[index];
-	messageToUpdate.reasoning_content = messageToUpdate.role._Equal("assistant") ? reasoning : std::string();
+	messageToUpdate.reasoning_content = messageToUpdate.role._Equal("assistant") ? think : std::string();
 	messageToUpdate.content = std::string(message);
 	messageToUpdate.content_parts.clear();
 	Stud::Internal::EnsureMessageMediaAligned(lane);
@@ -515,14 +515,14 @@ StudError SetMessageAt(const char* slotName, const int index, const char* reason
 	}
 	return RetokenizeChat(slotName, false);
 }
-StudError SetMessageAtJson(const char* slotName, const int index, const char* reasoning, const char* contentJson){
+StudError SetMessageAtJson(const char* slotName, const int index, const char* think, const char* contentJson){
 	auto& lane = Stud::Internal::ActiveLane(slotName);
 	if(index < 0 || index >= static_cast<int>(lane.messages.size())) return StudError::IndexOutOfRange;
 	PromptMessage replacement;
 	auto role = Stud::MessageRole::User;
 	if(lane.messages[index].role._Equal("assistant")) role = Stud::MessageRole::Assistant;
 	else if(lane.messages[index].role._Equal("tool")) role = Stud::MessageRole::Tool;
-	const auto parseError = Stud::Internal::ParseContentJson(role, reasoning, contentJson, replacement);
+	const auto parseError = Stud::Internal::ParseContentJson(role, think, contentJson, replacement);
 	if(parseError != StudError::Success) return parseError;
 	replacement.message.tool_calls = lane.messages[index].tool_calls;
 	replacement.message.tool_name = lane.messages[index].tool_name;
@@ -564,26 +564,26 @@ StudError RemoveMessagesStartingAt(const char* slotName, int index){
 	}
 	return RetokenizeChat(slotName, false);
 }
-StudError AddMessage(const char* slotName, const Stud::MessageRole role, const char* reasoning, const char* message){
+StudError AddMessage(const char* slotName, const Stud::MessageRole role, const char* think, const char* message){
 	common_chat_msg chatMessage;
 	chatMessage.role = Stud::Internal::RoleString(role);
-	chatMessage.reasoning_content = std::string(reasoning);
+	chatMessage.reasoning_content = std::string(think);
 	chatMessage.content = std::string(message);
 	auto& lane = Stud::Internal::ActiveLane(slotName);
 	lane.messages.push_back(std::move(chatMessage));
 	lane.messageMedia.emplace_back();
 	return RetokenizeChat(slotName, false);
 }
-StudError AddMessageJson(const char* slotName, const Stud::MessageRole role, const char* reasoning, const char* contentJson){
+StudError AddMessageJson(const char* slotName, const Stud::MessageRole role, const char* think, const char* contentJson){
 	PromptMessage input;
-	const auto parseError = Stud::Internal::ParseContentJson(role, reasoning, contentJson, input);
+	const auto parseError = Stud::Internal::ParseContentJson(role, think, contentJson, input);
 	if(parseError != StudError::Success) return parseError;
 	auto& lane = Stud::Internal::ActiveLane(slotName);
 	lane.messages.push_back(std::move(input.message));
 	lane.messageMedia.push_back(std::move(input.media));
 	return RetokenizeChat(slotName, false);
 }
-StudError SyncChatMessages(const char* slotName, const int* roles, const char** reasoning, const char** messages, const int count){
+StudError SyncChatMessages(const char* slotName, const int* roles, const char** thinks, const char** messages, const int count){
 	std::vector<common_chat_msg> chatMessages;
 	if(count > 0){
 		chatMessages.reserve(static_cast<size_t>(count));
@@ -592,7 +592,7 @@ StudError SyncChatMessages(const char* slotName, const int* roles, const char** 
 			common_chat_msg message;
 			message.role = Stud::Internal::RoleString(role);
 			message.content = messages && messages[i] ? std::string(messages[i]) : std::string();
-			if(role == Stud::MessageRole::Assistant) message.reasoning_content = reasoning && reasoning[i] ? std::string(reasoning[i]) : std::string();
+			if(role == Stud::MessageRole::Assistant) message.reasoning_content = thinks && thinks[i] ? std::string(thinks[i]) : std::string();
 			chatMessages.push_back(std::move(message));
 		}
 	}

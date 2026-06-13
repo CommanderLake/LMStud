@@ -170,14 +170,16 @@ bool ReadUntilMarker(const CommandPromptSession& session, const std::string& mar
 	return markerFound || marker.empty();
 }
 void StripMarker(std::string& text, const std::string& marker){
-	const auto pos = text.find(marker);
-	if(pos == std::string::npos) return;
-	size_t start = pos;
-	while(start > 0 && text[start - 1] != '\n') --start;
-	size_t end = pos + marker.size();
-	if(end < text.size() && text[end] == '\r') ++end;
-	if(end < text.size() && text[end] == '\n') ++end;
-	text.erase(start, end - start);
+	size_t pos = 0;
+	while((pos = text.find(marker, pos)) != std::string::npos){
+		size_t start = pos;
+		while(start > 0 && text[start - 1] != '\n') --start;
+		size_t end = pos + marker.size();
+		while(end < text.size() && text[end] != '\n') ++end;
+		if(end < text.size()) ++end;
+		text.erase(start, end - start);
+		pos = start;
+	}
 }
 void RemoveConsecutiveDuplicateLines(std::string& text){
 	std::vector<std::string> lines;
@@ -198,16 +200,22 @@ void RemoveConsecutiveDuplicateLines(std::string& text){
 		text += result[i];
 	}
 }
-void RemoveCommandEchoLine(std::string& text){
+void RemoveCommandEchoLine(std::string& text, const std::string& command){
 	if(text.empty()) return;
 	std::vector<std::string> lines;
 	std::istringstream stream(text);
 	std::string line;
 	bool foundCommandEcho = false;
 	while(std::getline(stream, line)){
-		if(!foundCommandEcho && line.find(" & echo ") != std::string::npos){
-			foundCommandEcho = true;
-			continue;
+		if(!foundCommandEcho){
+			const auto promptEnd = line.find("> ");
+			const bool powerShellEcho = promptEnd != std::string::npos
+				&& (line.compare(0, 3, "PS ") == 0 || line.find("]: PS ") != std::string::npos)
+				&& line.compare(promptEnd + 2, std::string::npos, command) == 0;
+			if(line.find(" & echo ") != std::string::npos || powerShellEcho){
+				foundCommandEcho = true;
+				continue;
+			}
 		}
 		lines.push_back(line);
 	}
@@ -333,13 +341,13 @@ bool ExecuteCommand(const char* slotName, const std::string& command, std::strin
 			if(!PeekNamedPipe(g_cmdSession.stdoutRead, nullptr, 0, nullptr, &available, nullptr)) break;
 		}
 	}
-	const std::string combinedCommand = command + " & echo " + kEndMarker;
+	const std::string combinedCommand = command + "\r\necho " + kEndMarker;
 	if(!WriteLine(g_cmdSession, combinedCommand, error)){ return false; }
 	std::string lastStreamed;
 	const auto streamCb = [&](const std::string& raw){
 		std::string display = raw;
 		StripMarker(display, kEndMarker);
-		RemoveCommandEchoLine(display);
+		RemoveCommandEchoLine(display, command);
 		RemoveConsecutiveDuplicateLines(display);
 		NormalizeCommandOutput(display);
 		if(display == lastStreamed) return;
@@ -349,7 +357,7 @@ bool ExecuteCommand(const char* slotName, const std::string& command, std::strin
 	if(!ReadUntilMarker(g_cmdSession, kEndMarker, output, error, g_cmdTimeoutMs.load(), streamCb)){ return false; }
 	stop.store(false);
 	StripMarker(output, kEndMarker);
-	RemoveCommandEchoLine(output);
+	RemoveCommandEchoLine(output, command);
 	RemoveConsecutiveDuplicateLines(output);
 	NormalizeCommandOutput(output);
 	return true;
