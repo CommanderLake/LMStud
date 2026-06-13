@@ -319,7 +319,12 @@ namespace LMStud {
 		internal static void StopActiveGeneration(){
 			CancelApiGeneration();
 			var slotName = !string.IsNullOrWhiteSpace(CntDialSlotName) ? CntDialSlotName : ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? ModelSlotManager.MainSlotName;
-			NativeMethods.StopGeneration(slotName);
+			if(NativeMethods.IsModelSlotLoaded(slotName)) NativeMethods.StopGeneration(slotName);
+		}
+		internal static void StopAllGeneration(){
+			CancelApiGeneration();
+			foreach(var slotName in ModelSlotManager.GetLoadedLocalSlotNames())
+				if(NativeMethods.IsModelSlotLoaded(slotName)) NativeMethods.StopGeneration(slotName);
 		}
 		private static void SetApiGenerationCancellation(CancellationTokenSource cts){
 			lock(APICancelSync){

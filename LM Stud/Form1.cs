@@ -17,6 +17,9 @@ namespace LMStud{
 		internal volatile bool Rendering;
 		private int _retokenizeCount;
 		private List<ModelSlotLockLease> _retokSlotLocks;
+		private bool _shutdownPending;
+		private bool _shutdownReady;
+		private List<ModelSlotLockLease> _shutdownSlotLocks;
 		private bool _whisperLoaded;
 		private readonly string _numCtxSizeToolTip;
 		internal bool IsEditing;
@@ -104,19 +107,55 @@ namespace LMStud{
 			_columnClickHandler.RegisterListView(listViewHugFiles, columnDataTypesHugFiles);
 		}
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e){
-			if(Generation.Generating) Generation.StopActiveGeneration();
-			ApiServer.Stop();
-			if(_whisperLoaded){
-				NativeMethods.StopSpeechTranscription();
-				NativeMethods.UnloadWhisperModel();
+			if(!_shutdownReady){
+				if(_shutdownPending){
+					e.Cancel = true;
+					return;
+				}
+				Generation.StopAllGeneration();
+				ApiServer?.Stop();
+				var slotNames = ModelSlotManager.Slots.Select(slot => slot.Name).Concat(Common.LoadedLocalSlots.Keys).ToList();
+				_shutdownSlotLocks = ModelSlotManager.TryEnterSlots(slotNames, 0);
+				if(_shutdownSlotLocks == null){
+					e.Cancel = true;
+					_shutdownPending = true;
+					Enabled = false;
+					ThreadPool.QueueUserWorkItem(_ => WaitForSlotOperationsThenClose(slotNames));
+					return;
+				}
+				_shutdownReady = true;
 			}
-			NativeMethods.CloseCommandPrompt();
-			McpServerManager.DisconnectAll();
-			NativeMethods.FreeAllModelSlots();
-			Common.LoadedLocalSlots.Clear();
-			Common.LlModelLoaded = false;
-			Common.LoadedModel = null;
-			NativeMethods.CurlGlobalCleanup();
+			try{
+				ApiServer?.Stop();
+				if(_whisperLoaded){
+					NativeMethods.StopSpeechTranscription();
+					NativeMethods.UnloadWhisperModel();
+				}
+				NativeMethods.CloseCommandPrompt();
+				McpServerManager.DisconnectAll();
+				NativeMethods.FreeAllModelSlots();
+				Common.LoadedLocalSlots.Clear();
+				Common.LlModelLoaded = false;
+				Common.LoadedModel = null;
+				NativeMethods.CurlGlobalCleanup();
+			} finally{
+				ModelSlotManager.ReleaseSlots(_shutdownSlotLocks);
+				_shutdownSlotLocks = null;
+			}
+		}
+		private void WaitForSlotOperationsThenClose(List<string> slotNames){
+			List<ModelSlotLockLease> slotLocks = null;
+			while(slotLocks == null) slotLocks = ModelSlotManager.TryEnterSlots(slotNames, 100);
+			try{
+				var acquiredSlotLocks = slotLocks;
+				BeginInvoke(new MethodInvoker(() => {
+					_shutdownSlotLocks = acquiredSlotLocks;
+					_shutdownReady = true;
+					Close();
+				}));
+				slotLocks = null;
+			} catch(ObjectDisposedException){} catch(InvalidOperationException){}
+			finally{ ModelSlotManager.ReleaseSlots(slotLocks); }
 		}
 		private void Form1_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.Escape) return;
@@ -394,7 +433,7 @@ namespace LMStud{
 			labelStatusMsg.Visible = visible;
 		}
 		private void UpdateStatusMessage(){
-			if(_retokenizeCount > 0) SetStatusMessageVisible(true, Resources.Retokenizing_chat___);
+			if(_retokenizeCount > 0 && !Generation.Generating) SetStatusMessageVisible(true, Resources.Retokenizing_chat___);
 			else if(IsEditing) SetStatusMessageVisible(true, Resources.Editing_transcription_);
 			else SetStatusMessageVisible(false, null);
 		}
@@ -416,7 +455,8 @@ namespace LMStud{
 				FormControlStates.ListViewModelsEnabled = listViewModels.Enabled;
 				butApply.Enabled = false;
 				butApplyModelSettings.Enabled = false;
-				butGen.Enabled = false;
+				butGen.Enabled = Generation.Generating;
+				butReset.Enabled = false;
 				butLoadMain.Enabled = false;
 				butLoadSlot.Enabled = false;
 				butUnloadMain.Enabled = false;
@@ -433,7 +473,7 @@ namespace LMStud{
 				butGen.Enabled = FormControlStates.ButGenEnabled;
 				butLoadMain.Enabled = FormControlStates.ButLoadEnabled;
 				butLoadSlot.Enabled = FormControlStates.ButLoadSlotEnabled;
-				butReset.Enabled = true;
+				butReset.Enabled = !Generation.Generating;
 				butUnloadMain.Enabled = FormControlStates.ButUnloadEnabled;
 				butUnloadSlot.Enabled = FormControlStates.ButUnloadSlotEnabled;
 				listViewModels.Enabled = FormControlStates.ListViewModelsEnabled;
@@ -476,9 +516,15 @@ namespace LMStud{
 		}
 		internal void FinishedGenerating(){
 			butGen.Text = Resources.Generate;
-			butReset.Enabled = butApply.Enabled = true;
 			Generation.EndUiGeneration();
+			if(Volatile.Read(ref _retokenizeCount) > 0){
+				FormControlStates.ButApplyEnabled = true;
+				FormControlStates.ButGenEnabled = true;
+				butGen.Enabled = false;
+				butReset.Enabled = butApply.Enabled = false;
+			} else butReset.Enabled = butApply.Enabled = true;
 			foreach(var message in ChatMessages) message.Generating = false;
+			UpdateStatusMessage();
 			if(checkVoiceInput.CheckState == CheckState.Checked) STT.RequestStart(false);
 		}
 		private void TextInput_DragEnter(object sender, DragEventArgs e){
