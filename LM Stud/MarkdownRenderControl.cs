@@ -1001,11 +1001,42 @@ namespace LMStud{
 		}
 		private bool TryParseDelimited(string text, ref int index, string marker, bool bold, bool italic, bool strike, bool isLink, string linkUrl, List<InlineRun> runs){
 			if(index + marker.Length > text.Length || string.CompareOrdinal(text, index, marker, 0, marker.Length) != 0) return false;
+			if(!CanOpenDelimiter(text, index, marker.Length, marker[0])) return false;
 			var end = text.IndexOf(marker, index + marker.Length, StringComparison.Ordinal);
+			while(end >= 0 && (IsEscaped(text, end) || !CanCloseDelimiter(text, end, marker.Length, marker[0])))
+				end = text.IndexOf(marker, end + marker.Length, StringComparison.Ordinal);
 			if(end <= index + marker.Length) return false;
 			ParseInlineInto(text.Substring(index + marker.Length, end - index - marker.Length), bold, italic, strike, isLink, linkUrl, runs);
 			index = end + marker.Length;
 			return true;
+		}
+		private static bool CanOpenDelimiter(string text, int index, int length, char marker){
+			GetDelimiterFlanking(text, index, length, out var leftFlanking, out var rightFlanking,
+				out var beforePunctuation, out _);
+			return leftFlanking && (marker == '*' || !rightFlanking || beforePunctuation);
+		}
+		private static bool CanCloseDelimiter(string text, int index, int length, char marker){
+			GetDelimiterFlanking(text, index, length, out var leftFlanking, out var rightFlanking,
+				out _, out var afterPunctuation);
+			return rightFlanking && (marker == '*' || !leftFlanking || afterPunctuation);
+		}
+		private static void GetDelimiterFlanking(string text, int index, int length, out bool leftFlanking,
+			out bool rightFlanking, out bool beforePunctuation, out bool afterPunctuation){
+			var before = index > 0 ? text[index - 1] : '\0';
+			var afterIndex = index + length;
+			var after = afterIndex < text.Length ? text[afterIndex] : '\0';
+			var beforeWhitespace = before == '\0' || char.IsWhiteSpace(before);
+			var afterWhitespace = after == '\0' || char.IsWhiteSpace(after);
+			beforePunctuation = IsPunctuation(before);
+			afterPunctuation = IsPunctuation(after);
+			leftFlanking = !afterWhitespace && (!afterPunctuation || beforeWhitespace || beforePunctuation);
+			rightFlanking = !beforeWhitespace && (!beforePunctuation || afterWhitespace || afterPunctuation);
+		}
+		private static bool IsPunctuation(char value){return value != '\0' && (char.IsPunctuation(value) || char.IsSymbol(value));}
+		private static bool IsEscaped(string text, int index){
+			var slashes = 0;
+			while(index > 0 && text[--index] == '\\') slashes++;
+			return slashes%2 != 0;
 		}
 		private static int FindNextSpecial(string text, int start){
 			for(var i = start; i < text.Length; i++){
