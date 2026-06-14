@@ -2,11 +2,11 @@
 
 > Local LLMs minus the lard.
 >
-> A fast, slightly unhinged WinForms client for `llama.cpp`, `whisper.cpp`, tools, API models, and now entire little committees of models arguing with each other.
+> A fast, slightly unhinged WinForms client for `llama.cpp`, `whisper.cpp`, tools, API models and now entire little committees of models arguing with each other.
 >
 > **Zero Electron. Zero telemetry. Zero cloud dependency unless you deliberately point it at one.**
 
-LM Stud is a Windows desktop app for running and orchestrating local language models without wrapping the whole thing in a browser pretending to be an operating system. It can chat with local GGUF models, call APIs, expose its own API server, run tools, search and fetch web pages, use speech input/output, and route work through multiple model slots.
+LM Stud is a Windows desktop program for running and orchestrating local language models without wrapping the whole thing in a browser pretending to be an operating system. It can chat with local GGUF models, call APIs, expose its own API server, run tools, search and fetch web pages, use speech input/output and route work through multiple model slots.
 
 It runs on Windows 7 and later, because perfectly good old machines deserve to hallucinate too.
 
@@ -22,10 +22,10 @@ R48 is the big slot-system release. If older LM Stud was a local chat client wit
 | **Multiple loaded models** | Different models can be loaded at the same time and generate in parallel. |
 | **Shared local weights** | Multiple slots using the same local model share weights, so memory use does not multiply just because you gave the same model more jobs. |
 | **llama.cpp b9222** | Includes recent upstream work, including MTP / Multi Token Prediction support. |
-| **KV cache type selection** | Pick cache types including TurboQuant and Q8_0. |
+| **KV cache type selection** | Pick cache types including Q4_0, Q5_0 and Q8_0. |
 | **Multiple API formats** | Parses OpenAI Responses, Chat Completions, Anthropic, Ollama and Gemini-style responses. |
 | **Streaming tool output** | Some tools can stream their output into the chat/API flow instead of waiting in silence. |
-| **Dialectic relay** | Let two local slots talk to each other, optionally with different models and system prompts. Civilised debate optional. |
+| **Dialectic relay** | Let 2 local slots talk to each other, optionally with different models and system prompts. Civilised debate optional. |
 
 ---
 
@@ -39,9 +39,9 @@ R48 is the big slot-system release. If older LM Stud was a local chat client wit
 | **API client** | Talk to external model APIs and handle tool calls client-side. |
 | **API server** | Expose LM Stud through API endpoints and route requests to eligible slots. |
 | **Templates** | Export Jinja chat templates from models that contain them. |
-| **Hugging Face** | Search and download models from inside the app. |
+| **Hugging Face** | Search and download models from inside the program. |
 | **Speech** | Optional `whisper.cpp` speech input and text-to-speech workflow. |
-| **UI sanity** | No Electron. No telemetry. No startup ceremony. Just a WinForms app that gets on with it. |
+| **UI sanity** | No Electron. No telemetry. No startup ceremony. Just a WinForms program that gets on with it. |
 
 ---
 
@@ -56,7 +56,7 @@ Slots are named endpoints inside LM Stud. A slot can be a local model, a remote/
 | **Tool** | A model slot exposed as a callable tool, so one model can ask another model for help. |
 | **API Server** | A slot that LM Stud can route incoming API server requests to. |
 
-The fun bit: slots can generate in parallel, and if two local slots point at the same model file, LM Stud shares the model weights. You can give one model multiple roles without paying the full memory cost repeatedly.
+The fun bit: slots can generate in parallel and if 2 local slots point at the same model file, LM Stud shares the model weights. You can give one model multiple roles without paying the full memory cost repeatedly.
 
 Device selection per slot is planned for a later update.
 
