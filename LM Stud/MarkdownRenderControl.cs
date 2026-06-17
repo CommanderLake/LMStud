@@ -408,6 +408,7 @@ namespace LMStud{
 		private readonly List<DrawOp> _ops = new List<DrawOp>();
 		private readonly StringBuilder _plainText = new StringBuilder();
 		private const string MeasurementPrefix = "\u200B";
+		private const string TabSpaces = "    ";
 		private const float EmptyLineHeightFactor = 0.4f;
 		private const int ExactTextRendererMeasurementLimit = 256;
 		private const int MaximumMeasurementCacheEntries = 4096;
@@ -581,7 +582,7 @@ namespace LMStud{
 			var backgroundAmount = 1f - foregroundAmount;
 			return Color.FromArgb((int)(foreground.R*foregroundAmount + background.R*backgroundAmount), (int)(foreground.G*foregroundAmount + background.G*backgroundAmount), (int)(foreground.B*foregroundAmount + background.B*backgroundAmount));
 		}
-		private static string Normalize(string text){return (text ?? string.Empty).Replace("\r\n", "\n").Replace('\r', '\n');}
+		private static string Normalize(string text){return (text ?? string.Empty).Replace("\r\n", "\n").Replace('\r', '\n').Replace("\t", TabSpaces);}
 		private static bool TryGetFence(string line, out string fence){
 			var trimmed = line.TrimStart();
 			fence = null;
