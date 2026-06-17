@@ -169,7 +169,11 @@ namespace LMStud{
 		private void Form1_ResizeEnd(object sender, EventArgs e) {
 			panelChat.AutoScrollEnable = checkAutoScroll.Checked;
 		}
-		private void ButCodeBlock_Click(object sender, EventArgs e){textInput.Paste("```\r\n\r\n```");}
+		private void ButCodeBlock_Click(object sender, EventArgs e){
+			textInput.Paste("```\r\n\r\n```");
+			textInput.Focus();
+			textInput.Select(5, 0);
+		}
 		private void CheckAutoScroll_CheckedChanged(object sender, EventArgs e){
 			panelChat.AutoScrollEnable = checkAutoScroll.Checked;
 		}
