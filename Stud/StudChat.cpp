@@ -236,6 +236,8 @@ static StudError ReplaceChatMessages(const char* slotName, std::vector<common_ch
 	for(auto& message : messages) Stud::Internal::EnsureToolCallIds(message);
 	const auto& session = GetModel(slotName)->session;
 	auto& lane = Stud::Internal::ActiveLane(slotName);
+	auto originalMessages = lane.messages;
+	auto originalMedia = lane.messageMedia;
 	lane.messages = std::move(messages);
 	lane.messageMedia = std::move(media);
 	Stud::Internal::EnsureMessageMediaAligned(lane);
@@ -243,7 +245,18 @@ static StudError ReplaceChatMessages(const char* slotName, std::vector<common_ch
 		lane.cachedTokens.clear();
 		return StudError::Success;
 	}
-	return RetokenizeChat(slotName, false);
+	auto updatedMessages = lane.messages;
+	auto updatedMedia = lane.messageMedia;
+	auto result = RetokenizeChat(slotName, false);
+	if(result == StudError::Success) return result;
+	lane.messages = std::move(updatedMessages);
+	lane.messageMedia = std::move(updatedMedia);
+	result = RetokenizeChat(slotName, true);
+	if(result == StudError::Success) return result;
+	lane.messages = std::move(originalMessages);
+	lane.messageMedia = std::move(originalMedia);
+	RetokenizeChat(slotName, true);
+	return result;
 }
 namespace Stud::Internal{
 	StudLane& ActiveLane(const char* slotName){ return GetModel(slotName)->session.lane; }

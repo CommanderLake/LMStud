@@ -369,14 +369,15 @@ namespace LMStud{
 				try{
 					result = useLegacyIndexMutation ? NativeChat.RemoveMessagesStartingAt(nativeIdx) : NativeChat.SyncActiveMessages(desiredMessages);
 					Invoke(new MethodInvoker(() => {
-						if(result == NativeMethods.StudError.Success || (useLegacyIndexMutation && result != NativeMethods.StudError.IndexOutOfRange))
+						var activeApiSlot = ModelSlotManager.GetActiveChatSlot()?.Source == ModelSlotSource.Api;
+						var removed = result == NativeMethods.StudError.Success || (activeApiSlot && result == NativeMethods.StudError.ModelNotLoaded);
+						if(removed)
 							for(var i = ChatMessages.Count - 1; i >= idx; i--){
 								ChatMessages[i].Dispose();
 								ChatMessages.RemoveAt(i);
 							}
-						var activeApiSlot = ModelSlotManager.GetActiveChatSlot()?.Source == ModelSlotSource.Api;
-						if(result != NativeMethods.StudError.Success && !(activeApiSlot && result == NativeMethods.StudError.ModelNotLoaded)) ShowError(Resources.Error_regenerating_message, result);
-						else regenerate = true;
+						if(removed) regenerate = true;
+						else ShowError(Resources.Error_regenerating_message, result);
 						EndRetokenization();
 					}));
 				} finally{ ReleaseRetokenizationLocks(); }
