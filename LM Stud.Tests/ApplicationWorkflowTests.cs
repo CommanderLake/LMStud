@@ -85,6 +85,30 @@ retry:		try {_form.Invoke(new MethodInvoker(() => { var handle = _form.Handle; }
 		}
 
 		[TestMethod]
+		public void DeletingAfterDisplayOnlyToolCallUsesNativeMessageIndex(){
+			ChatMessageControl finalAnswer = null;
+			_form.Invoke(new MethodInvoker(() => {
+				NativeMethods.AddMessage("main", MessageRole.User, "", "Question");
+				NativeMethods.AddMessage("main", MessageRole.Assistant, "", "");
+				NativeMethods.AddMessage("main", MessageRole.Tool, "", "{\"ok\":true}");
+				NativeMethods.AddMessage("main", MessageRole.Assistant, "", "Final answer");
+
+				_form.AddMessage(MessageRole.User, "", "Question");
+				_form.AddMessage(MessageRole.Assistant, "", "");
+				var toolCallDisplay = _form.AddMessage(MessageRole.Tool, "", "Tool name: test", null, null, false);
+				toolCallDisplay.SetRoleText(Resources.Tool_Call);
+				_form.AddMessage(MessageRole.Tool, "", "{\"ok\":true}");
+				finalAnswer = _form.AddMessage(MessageRole.Assistant, "", "Final answer");
+			}));
+
+			_form.Invoke(new MethodInvoker(() => {_form.MsgButDeleteOnClick(finalAnswer);}));
+			WaitForActiveChatSlotIdle();
+
+			Assert.AreEqual(4, _form.ChatMessages.Count, "Deleting a message after a display-only tool-call row should not hit the native index limit.");
+			Assert.IsFalse(_form.ChatMessages.Contains(finalAnswer), "The selected answer should be removed from the UI.");
+		}
+
+		[TestMethod]
 		public void MarkdownPreferenceUpdatesExistingMessages(){
 			ChatMessageControl message = null;
 			_form.Invoke(new MethodInvoker(() => {

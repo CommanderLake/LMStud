@@ -179,6 +179,7 @@ namespace LMStud {
 		private static List<APIClient.ChatMessage> BuildApiMessages(MessageRole role, string prompt, bool addToChat){
 			var messages = new List<APIClient.ChatMessage>();
 			foreach(var msg in MainForm.ChatMessages){
+				if(!msg.NativeBacked) continue;
 				var hasToolCalls = msg.ApiToolCalls != null && msg.ApiToolCalls.Count > 0;
 				if(msg.Role == MessageRole.Tool && string.IsNullOrWhiteSpace(msg.ApiToolCallId)) continue;
 				var content = msg.ApiMessageContent;
@@ -194,18 +195,24 @@ namespace LMStud {
 		private static NativeMethods.StudError SyncNativeChatMessages(string slotName){
 			if(MainForm.IsDisposed) return NativeMethods.StudError.Success;
 			if(string.IsNullOrWhiteSpace(slotName)) slotName = ModelSlotManager.MainSlotName;
-			var count = MainForm.ChatMessages.Count;
-			var roles = new MessageRole[count];
-			var thinks = new string[count];
-			var messages = new string[count];
+			MessageRole[] roles = null;
+			string[] thinks = null;
+			string[] messages = null;
 			MainForm.RunOnUiThread(() => {
-				for(var i = 0; i < count; i++){
-					var msg = MainForm.ChatMessages[i];
+				var chatMessages = MainForm.ChatMessages.Where(msg => msg.NativeBacked).ToList();
+				var messageCount = chatMessages.Count;
+				roles = new MessageRole[messageCount];
+				thinks = new string[messageCount];
+				messages = new string[messageCount];
+				for(var i = 0; i < messageCount; i++){
+					var msg = chatMessages[i];
 					roles[i] = msg.Role;
 					thinks[i] = msg.Think ?? "";
 					messages[i] = msg.ApiMessageContent;
 				}
 			});
+			if(roles == null) return NativeMethods.StudError.Success;
+			var count = roles.Length;
 			var result = NativeMethods.ResetChat(slotName);
 			if(result != NativeMethods.StudError.Success && result != NativeMethods.StudError.ModelNotLoaded) return result;
 			for(var i = 0; i < count; ++i){
@@ -475,7 +482,7 @@ namespace LMStud {
 					MainForm.BeginInvoke(new MethodInvoker(() => {
 						var displayMessage = Tools.FormatToolMessageForDisplay(tool, message);
 						if(_cntToolMsg == null){
-							_cntToolMsg = MainForm.AddMessage(MessageRole.Tool, "", displayMessage);
+							_cntToolMsg = MainForm.AddMessage(MessageRole.Tool, "", displayMessage, null, null, tool == 1);
 							switch(tool){
 								case 1:
 								case 2: _cntToolMsg.SetRoleText(Resources.Tool_Output);

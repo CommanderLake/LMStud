@@ -314,20 +314,34 @@ namespace LMStud{
 				for(var i = 0; i < panelChat.Controls.Count; ++i) panelChat.Controls[i].Width = panelChat.ClientSize.Width;
 			} finally{ panelChat.ResumeLayout(true); }
 		}
-		internal void MsgButDeleteOnClick(ChatMessageControl cm){
-			if(Generation.Generating) return;
+		private int GetNativeMessageIndex(ChatMessageControl cm){
+			var id = ChatMessages.IndexOf(cm);
+			if(id < 0 || !cm.NativeBacked) return -1;
+			var nativeIndex = 0;
+			for(var i = 0; i < id; i++) if(ChatMessages[i].NativeBacked) nativeIndex++;
+			return nativeIndex;
+		}
+		private void RemoveChatMessage(ChatMessageControl cm){
 			var id = ChatMessages.IndexOf(cm);
 			if(id < 0) return;
+			cm.Dispose();
+			ChatMessages.RemoveAt(id);
+		}
+		internal void MsgButDeleteOnClick(ChatMessageControl cm){
+			if(Generation.Generating) return;
+			if(!cm.NativeBacked){
+				RemoveChatMessage(cm);
+				return;
+			}
+			var nativeIndex = GetNativeMessageIndex(cm);
+			if(nativeIndex < 0) return;
 			if(!TryBeginRetokenization()) return;
 			ThreadPool.QueueUserWorkItem(_ => {
 				NativeMethods.StudError result;
 				try{
-					result = NativeChat.RemoveMessageAt(id);
+					result = NativeChat.RemoveMessageAt(nativeIndex);
 					Invoke(new MethodInvoker(() => {
-						if(result != NativeMethods.StudError.IndexOutOfRange && id < ChatMessages.Count){
-							ChatMessages[id].Dispose();
-							ChatMessages.RemoveAt(id);
-						}
+						if(result == NativeMethods.StudError.Success) RemoveChatMessage(cm);
 						if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_deleting_message, result);
 						EndRetokenization();
 					}));
@@ -335,10 +349,13 @@ namespace LMStud{
 			});
 		}
 		internal void MsgButRegenOnClick(ChatMessageControl cm){
-			if(Generation.Generating || !TryBeginRetokenization()) return;
+			if(Generation.Generating) return;
 			var idx = ChatMessages.IndexOf(cm);
 			if(idx < 0) return;
 			while(ChatMessages[idx].Role == MessageRole.Assistant) if(--idx < 0) return;
+			var nativeIdx = GetNativeMessageIndex(ChatMessages[idx]);
+			if(nativeIdx < 0) return;
+			if(!TryBeginRetokenization()) return;
 			var role = ChatMessages[idx].Role;
 			var msg = ChatMessages[idx].Message;
 			var resetDialecticSeed = checkDialectic.Checked && idx == 0 && role == MessageRole.User;
@@ -346,7 +363,7 @@ namespace LMStud{
 				NativeMethods.StudError result;
 				var regenerate = false;
 				try{
-					result = NativeChat.RemoveMessagesStartingAt(idx);
+					result = NativeChat.RemoveMessagesStartingAt(nativeIdx);
 					Invoke(new MethodInvoker(() => {
 						if(result != NativeMethods.StudError.IndexOutOfRange)
 							for(var i = ChatMessages.Count - 1; i >= idx; i--){
@@ -388,7 +405,7 @@ namespace LMStud{
 		}
 		internal void MsgButEditApplyOnClick(ChatMessageControl cm){
 			if(Generation.Generating || !cm.Editing) return;
-			var idx = ChatMessages.IndexOf(cm);
+			var idx = GetNativeMessageIndex(cm);
 			if(idx < 0 || !TryBeginRetokenization()) return;
 			var oldThink = cm.Think;
 			var oldMessage = cm.Message;
@@ -415,11 +432,17 @@ namespace LMStud{
 			});
 		}
 		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)(((e.Delta/8) << 16) & 0xffff0000), IntPtr.Zero);}
-		internal ChatMessageControl AddMessage(MessageRole role, string think, string message, List<APIClient.ToolCall> toolCalls = null, string toolCallId = null){
+		internal ChatMessageControl AddMessage(MessageRole role, string think, string message, List<APIClient.ToolCall> toolCalls = null, string toolCallId = null, bool nativeBacked = true){
 			var useMarkdown = checkMarkdown.Checked && role != MessageRole.Tool && (toolCalls == null || toolCalls.Count == 0);
-			var cm = new ChatMessageControl(role, think, message ?? "", useMarkdown){ ApiToolCalls = toolCalls, ApiToolCallId = toolCallId };
+			var cm = new ChatMessageControl(role, think, message ?? "", useMarkdown){ ApiToolCalls = toolCalls, ApiToolCallId = toolCallId, NativeBacked = nativeBacked };
 			cm.Parent = panelChat;
 			cm.Width = panelChat.ClientSize.Width;
+			if(!nativeBacked){
+				cm.butEdit.Enabled = false;
+				cm.butEdit.Visible = false;
+				cm.butRegen.Enabled = false;
+				cm.butRegen.Visible = false;
+			}
 			cm.butDelete.Click += (o, args) => MsgButDeleteOnClick(cm);
 			cm.butRegen.Click += (o, args) => MsgButRegenOnClick(cm);
 			cm.butEdit.Click += (o, args) => MsgButEditOnClick(cm);

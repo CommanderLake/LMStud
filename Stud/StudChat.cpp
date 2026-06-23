@@ -542,13 +542,26 @@ StudError RemoveMessageAt(const char* slotName, const int index){
 	auto& lane = session.lane;
 	if(index < 0 || index >= static_cast<int>(lane.messages.size())) return StudError::IndexOutOfRange;
 	Stud::Internal::EnsureMessageMediaAligned(lane);
+	auto originalMessages = lane.messages;
+	auto originalMedia = lane.messageMedia;
 	lane.messages.erase(lane.messages.begin() + index);
 	lane.messageMedia.erase(lane.messageMedia.begin() + index);
 	if(!session.ctx || !lane.sampler || !session.vocab){
 		lane.cachedTokens.clear();
 		return StudError::Success;
 	}
-	return RetokenizeChat(slotName, false);
+	auto updatedMessages = lane.messages;
+	auto updatedMedia = lane.messageMedia;
+	auto result = RetokenizeChat(slotName, false);
+	if(result == StudError::Success) return result;
+	lane.messages = std::move(updatedMessages);
+	lane.messageMedia = std::move(updatedMedia);
+	result = RetokenizeChat(slotName, true);
+	if(result == StudError::Success) return result;
+	lane.messages = std::move(originalMessages);
+	lane.messageMedia = std::move(originalMedia);
+	RetokenizeChat(slotName, true);
+	return result;
 }
 StudError RemoveMessagesStartingAt(const char* slotName, int index){
 	auto& session = GetModel(slotName)->session;
@@ -556,13 +569,26 @@ StudError RemoveMessagesStartingAt(const char* slotName, int index){
 	if(index < 0) index = 0;
 	if(index > static_cast<int>(lane.messages.size())) index = static_cast<int>(lane.messages.size());
 	Stud::Internal::EnsureMessageMediaAligned(lane);
+	auto originalMessages = lane.messages;
+	auto originalMedia = lane.messageMedia;
 	lane.messages.erase(lane.messages.begin() + index, lane.messages.end());
 	lane.messageMedia.erase(lane.messageMedia.begin() + index, lane.messageMedia.end());
 	if(!session.ctx || !lane.sampler || !session.vocab){
 		lane.cachedTokens.clear();
 		return StudError::Success;
 	}
-	return RetokenizeChat(slotName, false);
+	auto updatedMessages = lane.messages;
+	auto updatedMedia = lane.messageMedia;
+	auto result = RetokenizeChat(slotName, false);
+	if(result == StudError::Success) return result;
+	lane.messages = std::move(updatedMessages);
+	lane.messageMedia = std::move(updatedMedia);
+	result = RetokenizeChat(slotName, true);
+	if(result == StudError::Success) return result;
+	lane.messages = std::move(originalMessages);
+	lane.messageMedia = std::move(originalMedia);
+	RetokenizeChat(slotName, true);
+	return result;
 }
 StudError AddMessage(const char* slotName, const Stud::MessageRole role, const char* think, const char* message){
 	common_chat_msg chatMessage;

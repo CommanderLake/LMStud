@@ -13,6 +13,7 @@ namespace LMStud{
 		internal List<APIClient.ToolCall> ApiToolCalls;
 		internal string ApiToolCallId;
 		internal string ApiContent;
+		internal bool NativeBacked = true;
 		internal string ApiMessageContent => ApiContent ?? Message ?? "";
 		private bool _markdown;
 		private bool _markdownLast;
@@ -118,10 +119,10 @@ namespace LMStud{
 				if(!value) _markdown = _markdownLast;
 				richTextMsg.ReadOnly = !value;
 				butDelete.Enabled = !value;
-				butEdit.Enabled = !value;
-				butEdit.Visible = !value;
-				butRegen.Enabled = !value;
-				butRegen.Visible = !value;
+				butEdit.Enabled = !value && NativeBacked;
+				butEdit.Visible = !value && NativeBacked;
+				butRegen.Enabled = !value && NativeBacked;
+				butRegen.Visible = !value && NativeBacked;
 				butCancelEdit.Visible = value;
 				butCancelEdit.Enabled = value;
 				butApplyEdit.Visible = value;
@@ -139,8 +140,8 @@ namespace LMStud{
 				butApplyEdit.Enabled = !value;
 				butCancelEdit.Enabled = !value;
 				butDelete.Enabled = !value;
-				butEdit.Enabled = !value;
-				butRegen.Enabled = !value;
+				butEdit.Enabled = !value && NativeBacked;
+				butRegen.Enabled = !value && NativeBacked;
 				checkThink.Enabled = !value;
 				if(!value && renderTimer.Enabled) RenderText();
 			}
