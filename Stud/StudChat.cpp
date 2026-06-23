@@ -9,6 +9,19 @@
 #include <new>
 using PromptMessage = Stud::PromptMessage;
 static bool LaneHasMedia(const Stud::StudLane& lane){ return std::any_of(lane.messageMedia.begin(), lane.messageMedia.end(), [](const Stud::MessageMedia& media){ return !media.empty(); }); }
+class ScopedRetokenizationCallback{
+	const char* _slotName;
+	Stud::RetokenizationCallbackFn _callback;
+public:
+	explicit ScopedRetokenizationCallback(const char* slotName) : _slotName(slotName), _callback(Stud::retokenizationCb){
+		if(_callback) _callback(_slotName, 1);
+	}
+	~ScopedRetokenizationCallback(){
+		if(_callback) _callback(_slotName, 0);
+	}
+	ScopedRetokenizationCallback(const ScopedRetokenizationCallback&) = delete;
+	ScopedRetokenizationCallback& operator=(const ScopedRetokenizationCallback&) = delete;
+};
 static bool TokenizePrompt(const char* slotName, const std::string& prompt, std::vector<llama_token>& tokens, const bool addSpecial = true){
 	try{
 		tokens = common_tokenize(GetModel(slotName)->session.vocab, prompt, addSpecial, true);
@@ -384,6 +397,7 @@ StudError RetokenizeChat(const char* slotName, const bool rebuildMemory){
 	lane.endsWithEOG = false;
 	Stud::Internal::EnsureMessageMediaAligned(lane);
 	if(!model->session.ctx || !lane.sampler || !model->session.vocab) return StudError::ModelNotLoaded;
+	ScopedRetokenizationCallback retokenizing(slotName);
 	const bool toolsEnabled = !model->session.tools.empty();
 	const auto hasUser = std::any_of(lane.messages.begin(), lane.messages.end(), [](const common_chat_msg& message){ return message.role == "user"; });
 	if(!hasUser){

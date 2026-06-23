@@ -10,6 +10,7 @@ namespace LMStud{
 		internal APIServer ApiServer;
 		private static readonly NativeMethods.WhisperCallback WhisperCallback = STT.WhisperCallback;
 		private static readonly NativeMethods.SpeechEndCallback SpeechEndCallback = STT.SpeechEndCallback;
+		private static readonly NativeMethods.RetokenizationCallback RetokenizationCallback = NativeRetokenizationCallback;
 		internal readonly List<ChatMessageControl> ChatMessages = new List<ChatMessageControl>();
 		internal CheckState CheckVoiceInputLast = CheckState.Unchecked;
 		private LVColumnClickHandler _columnClickHandler;
@@ -57,6 +58,7 @@ namespace LMStud{
 		}
 		private void Form1_Load(object sender, EventArgs e){
 			NativeMethods.SetHWnd(Handle);
+			NativeMethods.SetRetokenizationCallback(RetokenizationCallback);
 			NativeMethods.CurlGlobalInit();
 			PopulateModels();
 			PopulateWhisperModels(true, true);
@@ -261,7 +263,7 @@ namespace LMStud{
 			} else Generation.Generate();
 		}
 		internal void ButReset_Click(object sender, EventArgs e){
-			if(!TryBeginRetokenization()) return;
+			if(!TryEnterRetokenizationLocks()) return;
 			panelChat.SuspendLayout();
 			try{
 				foreach(var message in ChatMessages) message.Dispose();
@@ -275,7 +277,6 @@ namespace LMStud{
 					Invoke(new MethodInvoker(() => {
 						if(result != NativeMethods.StudError.Success && result != NativeMethods.StudError.ModelNotLoaded) ShowError(Resources.Reset_chat, result);
 						labelTokens.Text = NativeMethods.LlamaMemSize(NativeChat.GetActiveSlotName()) + Resources._Tokens;
-						EndRetokenization();
 					}));
 				} finally{ ReleaseRetokenizationLocks(); }
 			});
@@ -336,7 +337,7 @@ namespace LMStud{
 			var useLegacyIndexMutation = Generation.DialecticRelayEnabled;
 			var nativeIndex = useLegacyIndexMutation ? GetNativeMessageIndex(cm) : -1;
 			if(useLegacyIndexMutation && nativeIndex < 0) return;
-			if(!TryBeginRetokenization()) return;
+			if(!TryEnterRetokenizationLocks()) return;
 			var desiredMessages = useLegacyIndexMutation ? null : NativeChat.CaptureMessages(ChatMessages.Where(msg => msg != cm));
 			ThreadPool.QueueUserWorkItem(_ => {
 				NativeMethods.StudError result;
@@ -345,7 +346,6 @@ namespace LMStud{
 					Invoke(new MethodInvoker(() => {
 						if(result == NativeMethods.StudError.Success) RemoveChatMessage(cm);
 						if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_deleting_message, result);
-						EndRetokenization();
 					}));
 				} finally{ ReleaseRetokenizationLocks(); }
 			});
@@ -358,7 +358,7 @@ namespace LMStud{
 			var useLegacyIndexMutation = Generation.DialecticRelayEnabled;
 			var nativeIdx = useLegacyIndexMutation ? GetNativeMessageIndex(ChatMessages[idx]) : -1;
 			if(useLegacyIndexMutation && nativeIdx < 0) return;
-			if(!TryBeginRetokenization()) return;
+			if(!TryEnterRetokenizationLocks()) return;
 			var role = ChatMessages[idx].Role;
 			var msg = ChatMessages[idx].Message;
 			var desiredMessages = useLegacyIndexMutation ? null : NativeChat.CaptureMessages(ChatMessages.Take(idx));
@@ -378,7 +378,6 @@ namespace LMStud{
 							}
 						if(removed) regenerate = true;
 						else ShowError(Resources.Error_regenerating_message, result);
-						EndRetokenization();
 					}));
 				} finally{ ReleaseRetokenizationLocks(); }
 				if(regenerate)
@@ -412,7 +411,7 @@ namespace LMStud{
 			if(Generation.Generating || !cm.Editing) return;
 			var useLegacyIndexMutation = Generation.DialecticRelayEnabled;
 			var idx = GetNativeMessageIndex(cm);
-			if(idx < 0 || !TryBeginRetokenization()) return;
+			if(idx < 0 || !TryEnterRetokenizationLocks()) return;
 			var oldThink = cm.Think;
 			var oldMessage = cm.Message;
 			var newText = cm.richTextMsg.Text;
@@ -434,7 +433,6 @@ namespace LMStud{
 							if(ChatMessages.All(msg => !msg.Editing)) panelChat.AutoScrollEnable = checkAutoScroll.Checked;
 						}
 						else MessageBox.Show(this, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-						EndRetokenization();
 					}));
 				} finally{ ReleaseRetokenizationLocks(); }
 			});
@@ -477,6 +475,14 @@ namespace LMStud{
 			if(InvokeRequired) Invoke(action);
 			else action();
 		}
+		private static void NativeRetokenizationCallback(string slotName, int active){
+			try{
+				var form = Program.MainForm;
+				if(form == null || form.IsDisposed) return;
+				if(active != 0) form.BeginRetokenization();
+				else form.EndRetokenization();
+			} catch{}
+		}
 		private void BeginRetokenization(){
 			if(Interlocked.Increment(ref _retokenizeCount) != 1) return;
 			RunOnUiThread(() => {
@@ -501,7 +507,14 @@ namespace LMStud{
 			});
 		}
 		private void EndRetokenization(){
-			if(Interlocked.Decrement(ref _retokenizeCount) != 0) return;
+			int current;
+			int updated;
+			do{
+				current = Volatile.Read(ref _retokenizeCount);
+				if(current <= 0) return;
+				updated = current - 1;
+			} while(Interlocked.CompareExchange(ref _retokenizeCount, updated, current) != current);
+			if(updated != 0) return;
 			RunOnUiThread(() => {
 				butApply.Enabled = FormControlStates.ButApplyEnabled;
 				butApplyModelSettings.Enabled = FormControlStates.ButApplyModelSettingsEnabled;
@@ -515,7 +528,7 @@ namespace LMStud{
 				UpdateStatusMessage();
 			});
 		}
-		private bool TryBeginRetokenization(){
+		private bool TryEnterRetokenizationLocks(){
 			if(Volatile.Read(ref _retokenizeCount) > 0) return false;
 			var slotLocks = ModelSlotManager.TryEnterSlots(NativeChat.GetActiveSlotNames(), 0);
 			if(slotLocks == null) return false;
@@ -524,7 +537,6 @@ namespace LMStud{
 				return false;
 			}
 			_retokSlotLocks = slotLocks;
-			BeginRetokenization();
 			return true;
 		}
 		private void ReleaseRetokenizationLocks(){

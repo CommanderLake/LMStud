@@ -950,7 +950,7 @@ namespace LMStud{
 		private void ParseInlineInto(string text, bool bold, bool italic, bool strike, bool isLink, string linkUrl, List<InlineRun> runs){
 			var index = 0;
 			while(index < text.Length){
-				if(text[index] == '\\' && index + 1 < text.Length){
+				if(text[index] == '\\' && index + 1 < text.Length && IsEscapableMarkdownPunctuation(text[index + 1])){
 					runs.Add(new InlineRun(text.Substring(index + 1, 1), bold, italic, strike, isLink, InlineKind.Text, linkUrl));
 					index += 2;
 					continue;
@@ -1034,6 +1034,10 @@ namespace LMStud{
 			rightFlanking = !beforeWhitespace && (!beforePunctuation || afterWhitespace || afterPunctuation);
 		}
 		private static bool IsPunctuation(char value){return value != '\0' && (char.IsPunctuation(value) || char.IsSymbol(value));}
+		private static bool IsEscapableMarkdownPunctuation(char value){
+			return value >= '!' && value <= '/' || value >= ':' && value <= '@' ||
+				value >= '[' && value <= '`' || value >= '{' && value <= '~';
+		}
 		private static bool IsEscaped(string text, int index){
 			var slashes = 0;
 			while(index > 0 && text[--index] == '\\') slashes++;

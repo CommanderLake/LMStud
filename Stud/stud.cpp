@@ -70,3 +70,4 @@ void BackendInit(){
 }
 Stud::StudModel* GetModel(const char* slotName){ return &Stud::Internal::GetOrCreateModel(Stud::Internal::NormalizeSlotName(slotName)); }
 void SetTokenCallback(const Stud::TokenCallbackFn callback){ Stud::tokenCb = callback; }
+void SetRetokenizationCallback(const Stud::RetokenizationCallbackFn callback){ Stud::retokenizationCb = callback; }

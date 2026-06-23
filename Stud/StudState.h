@@ -89,5 +89,6 @@ namespace Stud{
 	inline std::mutex sharedModelsMutex;
 	inline std::mutex llamaLogMutex;
 	inline TokenCallbackFn tokenCb = nullptr;
+	inline RetokenizationCallbackFn retokenizationCb = nullptr;
 	inline ManagedToolCallbackFn managedToolCb = nullptr;
 }

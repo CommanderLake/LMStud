@@ -13,6 +13,7 @@ namespace Stud{
 	};
 	using ToolHandlerFn = std::string(*)(const char*, const char*);
 	using TokenCallbackFn = void(*)(const char* slotName, const char* think, const char* message, int tokenCount, int tokensTotal, double ftTime, int tool);
+	using RetokenizationCallbackFn = void(*)(const char* slotName, int active);
 	using ManagedToolCallbackFn = char*(*)(const char* slotName, const char* name, const char* argsJson);
 }
 extern "C" {
@@ -35,6 +36,7 @@ EXPORT StudError LoadVisionProjector(const char* slotName, const char* filename,
 EXPORT bool HasVisionProjector(const char* slotName);
 EXPORT bool HasTool(const char* slotName, const char* name);
 EXPORT void SetTokenCallback(Stud::TokenCallbackFn cb);
+EXPORT void SetRetokenizationCallback(Stud::RetokenizationCallbackFn cb);
 EXPORT void SetManagedToolCallback(Stud::ManagedToolCallbackFn cb);
 EXPORT void StreamManagedToolOutput(const char* slotName, const char* text);
 EXPORT char* FormatJsonForDisplay(const char* json);

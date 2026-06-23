@@ -10,6 +10,8 @@ namespace LMStud{
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate void TokenCallback([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, [MarshalAs(UnmanagedType.LPUTF8Str)] string think, [MarshalAs(UnmanagedType.LPUTF8Str)] string message, int tokenCount, int tokensTotal, double ftTime, int tool);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		public delegate void RetokenizationCallback([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, int active);
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate IntPtr ManagedToolCallback([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, [MarshalAs(UnmanagedType.LPUTF8Str)] string name, [MarshalAs(UnmanagedType.LPUTF8Str)] string argsJson);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate void WhisperCallback([MarshalAs(UnmanagedType.LPUTF8Str)] string transcription);
@@ -106,6 +108,8 @@ namespace LMStud{
 		internal static extern StudError ResetChat([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void SetTokenCallback(TokenCallback cb);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void SetRetokenizationCallback(RetokenizationCallback cb);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void SetManagedToolCallback(ManagedToolCallback cb);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
