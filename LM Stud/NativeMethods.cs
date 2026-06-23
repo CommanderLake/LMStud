@@ -23,8 +23,10 @@ namespace LMStud{
 		}
 		public enum QuantType{
 			Default = 0,
-			TQ1 = 1,
-			TQ2 = 2
+			Q4_0 = 1,
+			Q5_0 = 2,
+			Q8_0 = 3,
+			FP16 = 4
 		}
 		public enum StudError{
 			Success = 0,
@@ -156,8 +158,6 @@ namespace LMStud{
 		internal static extern StudError AddMessage([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string think, [MarshalAs(UnmanagedType.LPUTF8Str)] string message);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError AddMessageJson([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string think, [MarshalAs(UnmanagedType.LPUTF8Str)] string contentJson);
-		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern StudError SyncChatMessages([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.I4)] int[] roles, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)] string[] thinks, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)] string[] messages, int count);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError SyncChatMessagesJson([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, [MarshalAs(UnmanagedType.LPUTF8Str)] string messagesJson);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]

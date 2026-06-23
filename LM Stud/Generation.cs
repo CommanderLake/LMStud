@@ -169,13 +169,6 @@ namespace LMStud {
 			var slotNames = useDialecticLocalSlot ? GetDialecticSlotNames() : null;
 			return slotNames != null && slotNames.Length > 0 ? slotNames : new[]{ slotName };
 		}
-		private static string RoleToApiRole(MessageRole role){
-			switch(role){
-				case MessageRole.Assistant: return "assistant";
-				case MessageRole.Tool: return "tool";
-				default: return "user";
-			}
-		}
 		private static List<APIClient.ChatMessage> BuildApiMessages(MessageRole role, string prompt, bool addToChat){
 			var messages = new List<APIClient.ChatMessage>();
 			foreach(var msg in MainForm.ChatMessages){
@@ -184,46 +177,22 @@ namespace LMStud {
 				if(msg.Role == MessageRole.Tool && string.IsNullOrWhiteSpace(msg.ApiToolCallId)) continue;
 				var content = msg.ApiMessageContent;
 				if(string.IsNullOrWhiteSpace(content) && !hasToolCalls) continue;
-				var apiMessage = new APIClient.ChatMessage(RoleToApiRole(msg.Role), content);
+				var apiMessage = new APIClient.ChatMessage(NativeChat.RoleToJson(msg.Role), content);
 				if(hasToolCalls) apiMessage.ToolCalls = msg.ApiToolCalls;
 				if(!string.IsNullOrWhiteSpace(msg.ApiToolCallId)) apiMessage.ToolCallId = msg.ApiToolCallId;
 				messages.Add(apiMessage);
 			}
-			if(!addToChat && !string.IsNullOrWhiteSpace(prompt)) messages.Add(new APIClient.ChatMessage(RoleToApiRole(role), prompt));
+			if(!addToChat && !string.IsNullOrWhiteSpace(prompt)) messages.Add(new APIClient.ChatMessage(NativeChat.RoleToJson(role), prompt));
 			return messages;
 		}
 		private static NativeMethods.StudError SyncNativeChatMessages(string slotName){
 			if(MainForm.IsDisposed) return NativeMethods.StudError.Success;
 			if(string.IsNullOrWhiteSpace(slotName)) slotName = ModelSlotManager.MainSlotName;
-			MessageRole[] roles = null;
-			string[] thinks = null;
-			string[] messages = null;
+			List<NativeChat.MessageSnapshot> messages = null;
 			MainForm.RunOnUiThread(() => {
-				var chatMessages = MainForm.ChatMessages.Where(msg => msg.NativeBacked).ToList();
-				var messageCount = chatMessages.Count;
-				roles = new MessageRole[messageCount];
-				thinks = new string[messageCount];
-				messages = new string[messageCount];
-				for(var i = 0; i < messageCount; i++){
-					var msg = chatMessages[i];
-					roles[i] = msg.Role;
-					thinks[i] = msg.Think ?? "";
-					messages[i] = msg.ApiMessageContent;
-				}
+				messages = NativeChat.CaptureMessages(MainForm.ChatMessages);
 			});
-			if(roles == null) return NativeMethods.StudError.Success;
-			var count = roles.Length;
-			var result = NativeMethods.ResetChat(slotName);
-			if(result != NativeMethods.StudError.Success && result != NativeMethods.StudError.ModelNotLoaded) return result;
-			for(var i = 0; i < count; ++i){
-				var hasImages = false;
-				var contentJson = roles[i] == MessageRole.User ? MarkdownImages.BuildNativeContentJson(messages[i], out hasImages) : null;
-				result = hasImages
-					? NativeMethods.AddMessageJson(slotName, roles[i], thinks[i], contentJson)
-					: NativeMethods.AddMessage(slotName, roles[i], thinks[i], messages[i]);
-				if(result != NativeMethods.StudError.Success && result != NativeMethods.StudError.ModelNotLoaded) return result;
-			}
-			return NativeMethods.StudError.Success;
+			return messages == null ? NativeMethods.StudError.Success : NativeChat.SyncMessages(slotName, messages);
 		}
 		private static void GenerateWithApiClient(ModelSlot slot, MessageRole role, string prompt, bool addToChat, List<ModelSlotLockLease> slotLeases){
 			Exception error = null;

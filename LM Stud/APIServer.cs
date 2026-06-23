@@ -270,7 +270,7 @@ namespace LMStud{
 		private static JsonNode BuildChatCompletionsPayload(APIClient.ChatCompletionResult result, string model, string sessionId){
 			var createdAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 			var message = Json.ObjectBuilder(Json.P("role", "assistant"), Json.P("content", result?.Content ?? ""));
-			var toolCalls = BuildChatCompletionToolCalls(result?.ToolCalls);
+			var toolCalls = NativeChat.BuildChatCompletionToolCalls(result?.ToolCalls);
 			var finishReason = "stop";
 			if(toolCalls.IsArray && toolCalls.Count > 0){
 				message["tool_calls"] = toolCalls;
@@ -291,15 +291,6 @@ namespace LMStud{
 					output.Add(Json.Object(Json.P("type", "function_call"), Json.P("status", "completed"), Json.P("call_id", toolCall.Id), Json.P("name", toolCall.Name), Json.P("arguments", toolCall.Arguments ?? "")));
 				}
 			return output.ToNode();
-		}
-		private static JsonNode BuildChatCompletionToolCalls(List<APIClient.ToolCall> toolCalls){
-			if(toolCalls == null || toolCalls.Count == 0) return JsonNode.Missing;
-			var array = Json.ArrayBuilder();
-			foreach(var toolCall in toolCalls.Where(call => call != null && !string.IsNullOrWhiteSpace(call.Id) && !string.IsNullOrWhiteSpace(call.Name))){
-				array.Add(Json.Object(Json.P("id", toolCall.Id), Json.P("type", "function"),
-					Json.P("function", Json.Object(Json.P("name", toolCall.Name), Json.P("arguments", toolCall.Arguments ?? "")))));
-			}
-			return array.Count > 0 ? array.ToNode() : JsonNode.Missing;
 		}
 		private static JsonArrayBuilder BuildInputItems(ChatRequest request){
 			if(request == null) return null;
@@ -423,7 +414,7 @@ namespace LMStud{
 				if(message.Content != null || message.ContentJson != null || toolCalls == null || toolCalls.Count == 0)
 					obj["content"] = message.ContentJson == null ? Json.String(message.Content ?? "") : Json.Parse(message.ContentJson);
 				if(!string.IsNullOrWhiteSpace(message.ToolCallId)) obj["tool_call_id"] = Json.String(message.ToolCallId);
-				var toolCallsJson = BuildChatCompletionToolCalls(toolCalls);
+				var toolCallsJson = NativeChat.BuildChatCompletionToolCalls(toolCalls);
 				if(toolCallsJson.Exists) obj["tool_calls"] = toolCallsJson;
 				array.Add(obj.ToNode());
 			}

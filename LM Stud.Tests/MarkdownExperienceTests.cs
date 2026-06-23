@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -80,6 +81,27 @@ namespace LM_Stud.Tests{
 			} finally{
 				if(File.Exists(path)) File.Delete(path);
 			}
+		}
+
+		[TestMethod]
+		public void NativeChatSnapshotPreservesToolCallAndReasoningShape(){
+			var messagesJson = NativeChat.BuildMessagesJson(new[]{
+				new NativeChat.MessageSnapshot(MessageRole.User, "", "Question"),
+				new NativeChat.MessageSnapshot(MessageRole.Assistant, "thinking", "", apiToolCalls: new List<APIClient.ToolCall>{new APIClient.ToolCall("call_1", "lookup", "{\"q\":\"x\"}")}),
+				new NativeChat.MessageSnapshot(MessageRole.Tool, "", "{\"ok\":true}", apiToolCallId: "call_1")
+			});
+
+			var messages = Json.Parse(messagesJson);
+			Assert.AreEqual(3, messages.Count);
+			Assert.AreEqual("user", messages[0].GetString("role"));
+			Assert.AreEqual("Question", messages[0].GetString("content"));
+			Assert.AreEqual("assistant", messages[1].GetString("role"));
+			Assert.AreEqual("thinking", messages[1].GetString("reasoning_content"));
+			Assert.AreEqual("call_1", messages[1]["tool_calls"][0].GetString("id"));
+			Assert.AreEqual("lookup", messages[1]["tool_calls"][0]["function"].GetString("name"));
+			Assert.AreEqual("{\"q\":\"x\"}", messages[1]["tool_calls"][0]["function"].GetString("arguments"));
+			Assert.AreEqual("tool", messages[2].GetString("role"));
+			Assert.AreEqual("call_1", messages[2].GetString("tool_call_id"));
 		}
 	}
 }

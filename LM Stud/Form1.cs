@@ -333,13 +333,15 @@ namespace LMStud{
 				RemoveChatMessage(cm);
 				return;
 			}
-			var nativeIndex = GetNativeMessageIndex(cm);
-			if(nativeIndex < 0) return;
+			var useLegacyIndexMutation = Generation.DialecticRelayEnabled;
+			var nativeIndex = useLegacyIndexMutation ? GetNativeMessageIndex(cm) : -1;
+			if(useLegacyIndexMutation && nativeIndex < 0) return;
 			if(!TryBeginRetokenization()) return;
+			var desiredMessages = useLegacyIndexMutation ? null : NativeChat.CaptureMessages(ChatMessages.Where(msg => msg != cm));
 			ThreadPool.QueueUserWorkItem(_ => {
 				NativeMethods.StudError result;
 				try{
-					result = NativeChat.RemoveMessageAt(nativeIndex);
+					result = useLegacyIndexMutation ? NativeChat.RemoveMessageAt(nativeIndex) : NativeChat.SyncActiveMessages(desiredMessages);
 					Invoke(new MethodInvoker(() => {
 						if(result == NativeMethods.StudError.Success) RemoveChatMessage(cm);
 						if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_deleting_message, result);
@@ -353,19 +355,21 @@ namespace LMStud{
 			var idx = ChatMessages.IndexOf(cm);
 			if(idx < 0) return;
 			while(ChatMessages[idx].Role == MessageRole.Assistant) if(--idx < 0) return;
-			var nativeIdx = GetNativeMessageIndex(ChatMessages[idx]);
-			if(nativeIdx < 0) return;
+			var useLegacyIndexMutation = Generation.DialecticRelayEnabled;
+			var nativeIdx = useLegacyIndexMutation ? GetNativeMessageIndex(ChatMessages[idx]) : -1;
+			if(useLegacyIndexMutation && nativeIdx < 0) return;
 			if(!TryBeginRetokenization()) return;
 			var role = ChatMessages[idx].Role;
 			var msg = ChatMessages[idx].Message;
+			var desiredMessages = useLegacyIndexMutation ? null : NativeChat.CaptureMessages(ChatMessages.Take(idx));
 			var resetDialecticSeed = checkDialectic.Checked && idx == 0 && role == MessageRole.User;
 			ThreadPool.QueueUserWorkItem(_ => {
 				NativeMethods.StudError result;
 				var regenerate = false;
 				try{
-					result = NativeChat.RemoveMessagesStartingAt(nativeIdx);
+					result = useLegacyIndexMutation ? NativeChat.RemoveMessagesStartingAt(nativeIdx) : NativeChat.SyncActiveMessages(desiredMessages);
 					Invoke(new MethodInvoker(() => {
-						if(result != NativeMethods.StudError.IndexOutOfRange)
+						if(result == NativeMethods.StudError.Success || (useLegacyIndexMutation && result != NativeMethods.StudError.IndexOutOfRange))
 							for(var i = ChatMessages.Count - 1; i >= idx; i--){
 								ChatMessages[i].Dispose();
 								ChatMessages.RemoveAt(i);
@@ -405,6 +409,7 @@ namespace LMStud{
 		}
 		internal void MsgButEditApplyOnClick(ChatMessageControl cm){
 			if(Generation.Generating || !cm.Editing) return;
+			var useLegacyIndexMutation = Generation.DialecticRelayEnabled;
 			var idx = GetNativeMessageIndex(cm);
 			if(idx < 0 || !TryBeginRetokenization()) return;
 			var oldThink = cm.Think;
@@ -412,10 +417,12 @@ namespace LMStud{
 			var newText = cm.richTextMsg.Text;
 			var newThink = cm.checkThink.Checked ? newText : oldThink;
 			var newMessage = cm.checkThink.Checked ? oldMessage : newText;
+			var desiredMessages = useLegacyIndexMutation ? null : NativeChat.CaptureMessages(ChatMessages);
+			if(!useLegacyIndexMutation) desiredMessages[idx] = desiredMessages[idx].WithText(newThink, newMessage);
 			ThreadPool.QueueUserWorkItem(_ => {
 				NativeMethods.StudError result;
 				try{
-					result = NativeChat.SetMessageAt(idx, cm.Role, newThink, newMessage);
+					result = useLegacyIndexMutation ? NativeChat.SetMessageAt(idx, cm.Role, newThink, newMessage) : NativeChat.SyncActiveMessages(desiredMessages);
 					Invoke(new MethodInvoker(() => {
 						if(result == NativeMethods.StudError.Success){
 							cm.Think = newThink;
