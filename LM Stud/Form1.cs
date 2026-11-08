@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -441,7 +441,6 @@ namespace LMStud{
 		internal ChatMessageControl AddMessage(MessageRole role, string think, string message, List<APIClient.ToolCall> toolCalls = null, string toolCallId = null, bool nativeBacked = true){
 			var useMarkdown = checkMarkdown.Checked && role != MessageRole.Tool && (toolCalls == null || toolCalls.Count == 0);
 			var cm = new ChatMessageControl(role, think, message ?? "", useMarkdown){ ApiToolCalls = toolCalls, ApiToolCallId = toolCallId, NativeBacked = nativeBacked };
-			cm.Parent = panelChat;
 			cm.Width = panelChat.ClientSize.Width;
 			if(!nativeBacked){
 				cm.butEdit.Enabled = false;

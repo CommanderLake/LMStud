@@ -189,6 +189,9 @@
   <data name="textInput.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
   </data>
+  <data name="textInput.MaxLength" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
   <data name="textInput.Multiline" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
@@ -200,6 +203,9 @@
   </data>
   <data name="textInput.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
+  </data>
+  <data name="textInput.WordWrap" type="System.Boolean, mscorlib">
+    <value>False</value>
   </data>
   <data name="&gt;&gt;textInput.Name" xml:space="preserve">
     <value>textInput</value>
@@ -2962,13 +2968,13 @@
     <value>606, 17</value>
   </metadata>
   <data name="copyURLToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
-    <value>180, 22</value>
+    <value>121, 22</value>
   </data>
   <data name="copyURLToolStripMenuItem.Text" xml:space="preserve">
     <value>Copy URL</value>
   </data>
   <data name="contextHugFiles.Size" type="System.Drawing.Size, System.Drawing">
-    <value>181, 48</value>
+    <value>122, 26</value>
   </data>
   <data name="&gt;&gt;contextHugFiles.Name" xml:space="preserve">
     <value>contextHugFiles</value>
@@ -4397,7 +4403,7 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>MiddleRight</value>
   </data>
   <data name="checkFileReadEnable.ToolTip" xml:space="preserve">
-    <value>Enable the tool for reading the contents of files under the base path.</value>
+    <value>Enable tools for reading file contents and inspecting file metadata and text statistics under the base path.</value>
   </data>
   <data name="&gt;&gt;checkFileReadEnable.Name" xml:space="preserve">
     <value>checkFileReadEnable</value>
@@ -6889,6 +6895,12 @@ An empty path enables full filesystem access with absolute paths.</value>
   <data name="&gt;&gt;columnHeader10.Type" xml:space="preserve">
     <value>System.Windows.Forms.ColumnHeader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="&gt;&gt;copyURLToolStripMenuItem.Name" xml:space="preserve">
+    <value>copyURLToolStripMenuItem</value>
+  </data>
+  <data name="&gt;&gt;copyURLToolStripMenuItem.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="&gt;&gt;folderBrowserDialog1.Name" xml:space="preserve">
     <value>folderBrowserDialog1</value>
   </data>
@@ -6942,12 +6954,6 @@ An empty path enables full filesystem access with absolute paths.</value>
   </data>
   <data name="&gt;&gt;saveFileDialog1.Type" xml:space="preserve">
     <value>System.Windows.Forms.SaveFileDialog, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;copyURLToolStripMenuItem.Name" xml:space="preserve">
-    <value>copyURLToolStripMenuItem</value>
-  </data>
-  <data name="&gt;&gt;copyURLToolStripMenuItem.Type" xml:space="preserve">
-    <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;$this.Name" xml:space="preserve">
     <value>Form1</value>

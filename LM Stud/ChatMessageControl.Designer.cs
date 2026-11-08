@@ -96,6 +96,12 @@
 			this.panelMessage.Controls.Add(this.richTextMsg);
 			this.panelMessage.Name = "panelMessage";
 			// 
+			// markdownView
+			// 
+			resources.ApplyResources(this.markdownView, "markdownView");
+			this.markdownView.Name = "markdownView";
+			this.markdownView.ContentHeightChanged += new System.EventHandler(this.MarkdownViewOnContentHeightChanged);
+			// 
 			// butApplyEdit
 			// 
 			resources.ApplyResources(this.butApplyEdit, "butApplyEdit");
@@ -120,14 +126,6 @@
 			this.renderTimer.Interval = 33;
 			this.renderTimer.Tick += new System.EventHandler(this.RenderTimer_Tick);
 			// 
-			// markdownView
-			// 
-			this.markdownView.BackColor = System.Drawing.SystemColors.Window;
-			resources.ApplyResources(this.markdownView, "markdownView");
-			this.markdownView.ForeColor = System.Drawing.SystemColors.WindowText;
-			this.markdownView.Name = "markdownView";
-			this.markdownView.ContentHeightChanged += new System.EventHandler(this.MarkdownViewOnContentHeightChanged);
-			// 
 			// ChatMessageControl
 			// 
 			resources.ApplyResources(this, "$this");
@@ -139,7 +137,6 @@
 			this.DoubleBuffered = true;
 			this.Name = "ChatMessageControl";
 			this.Load += new System.EventHandler(this.ChatMessage_Load);
-			this.Disposed += new System.EventHandler(this.ChatMessageControl_Disposed);
 			this.panel1.ResumeLayout(false);
 			this.panel1.PerformLayout();
 			this.panelMessage.ResumeLayout(false);

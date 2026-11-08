@@ -135,7 +135,7 @@
     <value>None</value>
   </data>
   <data name="richTextMsg.Size" type="System.Drawing.Size, System.Drawing">
-    <value>191, 20</value>
+    <value>187, 16</value>
   </data>
   <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="richTextMsg.TabIndex" type="System.Int32, mscorlib">
@@ -184,7 +184,7 @@
 </value>
   </data>
   <data name="butDelete.Location" type="System.Drawing.Point, System.Drawing">
-    <value>171, 0</value>
+    <value>167, 0</value>
   </data>
   <data name="butDelete.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -223,7 +223,7 @@
 </value>
   </data>
   <data name="butEdit.Location" type="System.Drawing.Point, System.Drawing">
-    <value>147, 0</value>
+    <value>143, 0</value>
   </data>
   <data name="butEdit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -269,7 +269,7 @@
 </value>
   </data>
   <data name="butRegen.Location" type="System.Drawing.Point, System.Drawing">
-    <value>123, 0</value>
+    <value>119, 0</value>
   </data>
   <data name="butRegen.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -328,14 +328,11 @@
   <data name="markdownView.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
   </data>
-  <data name="markdownView.Font" type="System.Drawing.Font, System.Drawing">
-    <value>Segoe UI Symbol, 9.75pt</value>
-  </data>
   <data name="markdownView.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
   <data name="markdownView.Size" type="System.Drawing.Size, System.Drawing">
-    <value>191, 20</value>
+    <value>187, 16</value>
   </data>
   <data name="markdownView.TabIndex" type="System.Int32, mscorlib">
     <value>6</value>
@@ -359,7 +356,7 @@
     <value>0, 0, 0, 0</value>
   </data>
   <data name="panelMessage.Size" type="System.Drawing.Size, System.Drawing">
-    <value>195, 24</value>
+    <value>191, 20</value>
   </data>
   <data name="panelMessage.TabIndex" type="System.Int32, mscorlib">
     <value>8</value>
@@ -397,7 +394,7 @@
 </value>
   </data>
   <data name="butApplyEdit.Location" type="System.Drawing.Point, System.Drawing">
-    <value>123, 0</value>
+    <value>119, 0</value>
   </data>
   <data name="butApplyEdit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -441,7 +438,7 @@
 </value>
   </data>
   <data name="butCancelEdit.Location" type="System.Drawing.Point, System.Drawing">
-    <value>147, 0</value>
+    <value>143, 0</value>
   </data>
   <data name="butCancelEdit.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -477,7 +474,7 @@
     <value>False</value>
   </data>
   <data name="checkThink.Location" type="System.Drawing.Point, System.Drawing">
-    <value>66, 5</value>
+    <value>62, 5</value>
   </data>
   <data name="checkThink.Size" type="System.Drawing.Size, System.Drawing">
     <value>54, 17</value>
@@ -510,7 +507,7 @@
     <value>0, 0</value>
   </data>
   <data name="panel1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>195, 48</value>
+    <value>191, 44</value>
   </data>
   <data name="panel1.TabIndex" type="System.Int32, mscorlib">
     <value>5</value>
@@ -543,7 +540,7 @@
     <value>0, 0, 0, 0</value>
   </data>
   <data name="$this.Size" type="System.Drawing.Size, System.Drawing">
-    <value>195, 48</value>
+    <value>191, 44</value>
   </data>
   <data name="&gt;&gt;renderTimer.Name" xml:space="preserve">
     <value>renderTimer</value>

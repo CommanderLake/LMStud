@@ -40,22 +40,6 @@ namespace LM_Stud.Tests{
 		}
 
 		[TestMethod]
-		public void VeryLongMarkdownMessagesAreSplitIntoRenderableChunks(){
-			var markdown = new StringBuilder("```text\n");
-			for(var i = 0; i < 2500; i++) markdown.Append("line ").Append(i).Append('\n');
-			markdown.Append("```");
-
-			var chunks = MarkdownMessageChunker.Split(markdown.ToString());
-			Assert.IsTrue(chunks.Count > 1);
-			foreach(var chunk in chunks)
-				using(var renderer = new GdiMarkdownRenderer()){
-					renderer.Layout(chunk, Control.DefaultFont, 500, Color.Black, Color.White);
-					Assert.IsTrue(renderer.TotalHeight > 0);
-					Assert.IsTrue(renderer.TotalHeight + 8 <= MarkdownMessageChunker.MaximumRenderedContentHeight);
-				}
-		}
-
-		[TestMethod]
 		public void AttachedLocalImageIsDeliveredToLocalAndRemoteBackends(){
 			var path = Path.Combine(Path.GetTempPath(), "lmstud-vision-" + Guid.NewGuid().ToString("N") + ".png");
 			try{

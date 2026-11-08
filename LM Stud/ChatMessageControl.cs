@@ -25,7 +25,6 @@ namespace LMStud{
 		private bool _heightUpdatePending;
 		private bool _pendingHeightAutoScroll;
 		private int _pendingHeight;
-		private readonly List<ChatMessageContinuationControl> _continuations = new List<ChatMessageContinuationControl>();
 		private const int HeightOffset = 32;
 		internal int TTSPosition = 0;
 		internal ChatMessageControl(MessageRole role, string message, bool markdown):this(role, "", message, markdown){}
@@ -38,7 +37,6 @@ namespace LMStud{
 			labelRole.Text = role.ToString();
 		}
 		internal MarkdownRenderControl MarkdownView => markdownView;
-		private void ChatMessageControl_Disposed(object sender, EventArgs e){ ClearContinuations(); }
 		private void ChatMessage_Load(object sender, EventArgs e) {
 			if(_message.Length > 0) RenderText();
 		}
@@ -182,62 +180,10 @@ namespace LMStud{
 			richTextMsg.Visible = _editing;
 			if(_editing){
 				if(richTextMsg.Text != text) richTextMsg.Text = text;
-				ClearContinuations();
 				return;
 			}
-			var layoutWidth = Math.Max(10, markdownView.ClientSize.Width - 8);
 			markdownView.SetContent(text, _markdown, false);
-			List<string> chunks;
-			if(MarkdownMessageChunker.RequiresSplit(text, markdownView.ContentHeight, _markdown)){
-				chunks = MarkdownMessageChunker.SplitOversized(text, markdownView.Font, layoutWidth,
-					markdownView.ForeColor, markdownView.BackColor, _markdown);
-				markdownView.SetContent(chunks[0], _markdown, false);
-			}else chunks = new List<string>{text};
-			UpdateContinuations(chunks);
 			ApplyHeight(GetMarkdownControlHeight());
-		}
-		private void UpdateContinuations(List<string> chunks){
-			var required = Math.Max(0, chunks.Count - 1);
-			while(_continuations.Count > required){
-				var last = _continuations[_continuations.Count - 1];
-				_continuations.RemoveAt(_continuations.Count - 1);
-				last.Dispose();
-			}
-			while(_continuations.Count < required){
-				var continuation = new ChatMessageContinuationControl(markdownView.Font, markdownView.BackColor, markdownView.ForeColor);
-				continuation.ContentHeightApplied += ContinuationOnContentHeightApplied;
-				_continuations.Add(continuation);
-			}
-			for(var i = 0; i < required; i++) _continuations[i].SetContent(chunks[i + 1], _markdown);
-			AttachContinuations();
-		}
-		private void ContinuationOnContentHeightApplied(object sender, EventArgs e){
-			if(_autoScroll) (Parent as MyFlowLayoutPanel)?.ScrollToEnd();
-		}
-		private void AttachContinuations(){
-			if(Parent == null || _continuations.Count == 0) return;
-			var ownerIndex = Parent.Controls.GetChildIndex(this);
-			for(var i = 0; i < _continuations.Count; i++){
-				var continuation = _continuations[i];
-				if(continuation.Parent != Parent) continuation.Parent = Parent;
-				continuation.Width = Width;
-				Parent.Controls.SetChildIndex(continuation, Math.Min(ownerIndex + i + 1, Parent.Controls.Count - 1));
-			}
-			if(_autoScroll) (Parent as MyFlowLayoutPanel)?.ScrollToEnd();
-		}
-		private void ClearContinuations(){
-			foreach(var continuation in _continuations) continuation.Dispose();
-			_continuations.Clear();
-		}
-		protected override void OnParentChanged(EventArgs e){
-			base.OnParentChanged(e);
-			AttachContinuations();
-		}
-		protected override void OnSizeChanged(EventArgs e){
-			base.OnSizeChanged(e);
-			foreach(var continuation in _continuations)
-				if(continuation.Width != Width)
-					continuation.Width = Width;
 		}
 		private void RichTextMsgOnLinkClicked(object sender, LinkClickedEventArgs e){
 			try{

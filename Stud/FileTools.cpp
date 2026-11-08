@@ -2,15 +2,21 @@
 #include "JSONCommon.h"
 #include <algorithm>
 #include <charconv>
+#include <climits>
+#include <cstdio>
 #include <cstdint>
 #include <filesystem>
+#include <iomanip>
 #include <locale>
 #include <sstream>
 #include <fstream>
 #include <regex>
 #include <system_error>
+#include <unordered_set>
 #include <windows.h>
 static constexpr std::uintmax_t MaxSearchFileBytes = 16777216;
+static constexpr std::uintmax_t MaxFileInfoTextBytes = 16777216;
+static constexpr size_t MaxDirectoryListingBytes = 16384;
 static bool _fullFileSystemAccess = true;
 static std::string WideToUtf8(const std::wstring& text){
 	if(text.empty()) return std::string();
@@ -114,35 +120,80 @@ static std::string EntriesJson(const std::vector<std::string>& entries){
 	json += "]}";
 	return json;
 }
-static std::string ListAvailableDrives(){
+static bool ListAvailableDrives(std::vector<std::string>& drives){
 	const DWORD required = GetLogicalDriveStringsA(0, nullptr);
-	if(required == 0) return "{\"error\":\"failed to list drives\"}";
+	if(required == 0) return false;
 	std::vector<char> buffer(required + 1, '\0');
 	const DWORD written = GetLogicalDriveStringsA(static_cast<DWORD>(buffer.size()), buffer.data());
-	if(written == 0 || written >= buffer.size()) return "{\"error\":\"failed to list drives\"}";
-	std::vector<std::string> drives;
+	if(written == 0 || written >= buffer.size()) return false;
 	for(const char* drive = buffer.data(); *drive != '\0';){
 		std::string root = drive;
 		std::replace(root.begin(), root.end(), '\\', '/');
 		drives.push_back(root);
 		drive += root.size() + 1;
 	}
-	return EntriesJson(drives);
+	return true;
 }
 static bool IsCurrentDirectoryRequest(const std::string& path){
 	return path.empty() || path == "." || path == "./" || path == ".\\";
+}
+static bool IsGeneratedDirectory(const std::filesystem::path& path){
+	static const std::unordered_set<std::string> names = {
+		"packages", "node_modules", "bower_components", "vendor", "bin", "obj", "build", "debug", "release", "dist", "out", "target",
+		".vs", ".idea", ".venv", "venv", "__pycache__", ".next", ".nuget", ".cache", "coverage", "testresults"
+	};
+	auto name = PathToUtf8Generic(path.filename());
+	std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c){ return c >= 'A' && c <= 'Z' ? static_cast<char>(c + ('a' - 'A')) : static_cast<char>(c); });
+	return names.count(name) != 0;
+}
+static bool ReadDirectoryListingInteger(const char* argsJson, const char* key, int minimum, int maximum, int& value){
+	const auto text = GetArgValue(argsJson, key);
+	if(text.empty()) return true;
+	const auto result = std::from_chars(text.data(), text.data() + text.size(), value);
+	return result.ec == std::errc() && result.ptr == text.data() + text.size() && value >= minimum && value <= maximum;
 }
 std::string ListDirectoryTool(const char* slotName, const char* argsJson){
 	std::string path = GetArgValue(argsJson, "path");
 	const std::string recStr = GetArgValue(argsJson, "recursive");
 	const bool recursive = recStr == "true" || recStr == "1";
-	if(_baseFolder.empty() && _fullFileSystemAccess && IsCurrentDirectoryRequest(path)) return ListAvailableDrives();
+	const auto includeGeneratedStr = GetArgValue(argsJson, "include_generated");
+	if(!includeGeneratedStr.empty() && includeGeneratedStr != "true" && includeGeneratedStr != "false" && includeGeneratedStr != "1" && includeGeneratedStr != "0")
+		return "{\"error\":\"include_generated must be a boolean\"}";
+	const bool includeGenerated = includeGeneratedStr == "true" || includeGeneratedStr == "1";
+	int maxEntries = 200, maxDepth = 4, offset = 0;
+	if(!ReadDirectoryListingInteger(argsJson, "max_entries", 1, 1000, maxEntries)) return "{\"error\":\"max_entries must be an integer from 1 to 1000\"}";
+	if(!ReadDirectoryListingInteger(argsJson, "max_depth", 1, 32, maxDepth)) return "{\"error\":\"max_depth must be an integer from 1 to 32\"}";
+	if(!ReadDirectoryListingInteger(argsJson, "offset", 0, INT_MAX, offset)) return "{\"error\":\"offset must be a non-negative integer up to 2147483647\"}";
+	const bool drivesRequest = _baseFolder.empty() && _fullFileSystemAccess && IsCurrentDirectoryRequest(path);
 	if(path.empty()) path = ".";
 	const std::filesystem::path p = ResolveFileToolPath(path);
-	if(!IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
+	if(!drivesRequest && !IsPathAllowed(p)) return "{\"error\":\"invalid path\"}";
 	std::vector<std::string> files;
+	size_t entryBytes = 2; // Include the entries array brackets in the byte budget.
+	std::uintmax_t seen = 0, nextOffset = 0, excludedDirectories = 0, depthLimitedDirectories = 0, reparseDirectories = 0, oversizedEntries = 0;
+	bool truncated = false;
+	auto addEntry = [&](const std::string& label){
+		const auto index = seen++;
+		if(index < static_cast<std::uintmax_t>(offset)) return true;
+		const auto encodedBytes = JsonString(label).size();
+		if(encodedBytes + 2 > MaxDirectoryListingBytes){ ++oversizedEntries; return true; }
+		const auto bytes = encodedBytes + (files.empty() ? 0 : 1);
+		if(files.size() >= static_cast<size_t>(maxEntries) || entryBytes + bytes > MaxDirectoryListingBytes){
+			truncated = true;
+			nextOffset = index;
+			return false;
+		}
+		files.push_back(label);
+		entryBytes += bytes;
+		return true;
+	};
 	std::error_code ec;
-	if(recursive){
+	if(drivesRequest){
+		// Drive roots use the same budgets and paging as an ordinary directory listing.
+		std::vector<std::string> drives;
+		if(!ListAvailableDrives(drives)) return "{\"error\":\"failed to list drives\"}";
+		for(const auto& drive : drives) if(!addEntry(drive)) break;
+	} else if(recursive){
 		for(auto it = std::filesystem::recursive_directory_iterator(p, ec), end = std::filesystem::recursive_directory_iterator(); it != end; it.increment(ec)){
 			if(ec) break;
 			const auto& entry = *it;
@@ -150,17 +201,52 @@ std::string ListDirectoryTool(const char* slotName, const char* argsJson){
 				it.disable_recursion_pending();
 				continue;
 			}
-			files.push_back(GetFileToolPathLabel(entry.path(), &p));
+			const auto attributes = GetFileAttributesW(entry.path().c_str());
+			if(attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY)){
+				if(attributes & FILE_ATTRIBUTE_REPARSE_POINT){
+					it.disable_recursion_pending();
+					++reparseDirectories;
+				} else if(!includeGenerated && IsGeneratedDirectory(entry.path())){
+					it.disable_recursion_pending();
+					++excludedDirectories;
+				} else if(it.depth() + 1 >= maxDepth){
+					it.disable_recursion_pending();
+					++depthLimitedDirectories;
+				}
+			}
+			if(!addEntry(GetFileToolPathLabel(entry.path(), &p))) break;
 		}
 	} else{
-		for(const auto& entry : std::filesystem::directory_iterator(p, ec)){
+		for(auto it = std::filesystem::directory_iterator(p, ec), end = std::filesystem::directory_iterator(); it != end; it.increment(ec)){
 			if(ec) break;
+			const auto& entry = *it;
 			if(IsGitDirectoryEntry(entry)) continue;
-			files.push_back(GetFileToolPathLabel(entry.path(), &p));
+			if(!addEntry(GetFileToolPathLabel(entry.path(), &p))) break;
 		}
 	}
 	if(ec) return "{\"error\":\"folder not found, maybe its a file\"}";
-	return EntriesJson(files);
+	auto json = EntriesJson(files);
+	json.pop_back();
+	json += ",\"returned_count\":" + std::to_string(files.size()) + ",\"truncated\":" + (truncated ? "true" : "false")
+		+ ",\"next_offset\":" + (truncated ? std::to_string(nextOffset) : "null") + ",\"total_entries\":" + (truncated ? "null" : std::to_string(seen))
+		+ ",\"entries_seen\":" + std::to_string(seen) + ",\"max_entries\":" + std::to_string(maxEntries) + ",\"max_depth\":" + std::to_string(maxDepth)
+		+ ",\"include_generated\":" + (includeGenerated ? "true" : "false") + ",\"excluded_directory_count\":" + std::to_string(excludedDirectories)
+		+ ",\"depth_limited_directory_count\":" + std::to_string(depthLimitedDirectories) + ",\"reparse_directory_count\":" + std::to_string(reparseDirectories)
+		+ ",\"oversized_entry_count\":" + std::to_string(oversizedEntries);
+	if(truncated || excludedDirectories || depthLimitedDirectories || reparseDirectories || oversizedEntries){
+		json += ",\"warning\":\"This is a partial directory view. ";
+		if(truncated) json += "Output budget reached; more entries exist. ";
+		if(excludedDirectories) json += "Dependency/build directories were listed without descending into them. ";
+		if(depthLimitedDirectories) json += "Maximum recursion depth reached. ";
+		if(reparseDirectories) json += "Directory reparse points were not traversed. ";
+		if(oversizedEntries) json += "Some paths were too long to return. ";
+		json += "Use a narrower path or search_files. ";
+		if(truncated) json += "For more entries, repeat the same arguments with offset=" + std::to_string(nextOffset) + "; max_entries can be raised to 1000. ";
+		if(excludedDirectories) json += "Set include_generated=true to enter dependency/build directories, or list one directly. ";
+		if(depthLimitedDirectories) json += "Increase max_depth (up to 32) to recurse deeper. ";
+		json += "\"";
+	}
+	return json + "}";
 }
 std::string SearchFilesTool(const char* slotName, const char* argsJson){
 	std::string path = GetArgValue(argsJson, "path");
@@ -250,6 +336,206 @@ std::string SearchFilesTool(const char* slotName, const char* argsJson){
 	}
 	if(ec) return "{\"error\":\"failed to iterate directory\"}";
 	return EntriesJson(files);
+}
+static std::string FileInfoError(const std::string& message, DWORD code = 0){
+	return "{\"error\":" + JsonString(message) + (code ? ",\"win32_error\":" + std::to_string(code) : "") + "}";
+}
+static std::string FileInfoDate(const FILETIME& time){
+	if(time.dwLowDateTime == 0 && time.dwHighDateTime == 0) return "null";
+	SYSTEMTIME utc{};
+	if(!FileTimeToSystemTime(&time, &utc)) return "null";
+	char buffer[32];
+	sprintf_s(buffer, "%04u-%02u-%02uT%02u:%02u:%02u.%03uZ", utc.wYear, utc.wMonth, utc.wDay, utc.wHour, utc.wMinute, utc.wSecond, utc.wMilliseconds);
+	return JsonString(buffer);
+}
+static std::string FileInfoSize(const std::uintmax_t bytes){
+	static const char* units[] = {"B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"};
+	double size = static_cast<double>(bytes);
+	size_t unit = 0;
+	while(size >= 1024 && unit + 1 < sizeof(units)/sizeof(units[0])){
+		size /= 1024;
+		++unit;
+	}
+	std::ostringstream out;
+	out.imbue(std::locale::classic());
+	out << std::fixed << std::setprecision(unit == 0 ? 0 : 2) << size << ' ' << units[unit];
+	return out.str();
+}
+static bool IsKnownTextFile(const std::filesystem::path& path){
+	static const std::unordered_set<std::string> extensions = {
+		".txt", ".text", ".log", ".md", ".markdown", ".rst", ".adoc", ".csv", ".tsv", ".json", ".jsonl", ".ndjson", ".xml", ".xaml", ".resx", ".svg",
+		".html", ".htm", ".css", ".scss", ".sass", ".less", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".py", ".pyw", ".ipynb", ".rb", ".php",
+		".java", ".kt", ".kts", ".c", ".cpp", ".cc", ".cxx", ".h", ".hpp", ".hh", ".hxx", ".inl", ".ipp", ".cs", ".fs", ".fsx", ".vb", ".go", ".rs", ".swift", ".sql",
+		".sh", ".bash", ".zsh", ".fish", ".bat", ".cmd", ".ps1", ".psm1", ".psd1", ".yml", ".yaml", ".toml", ".ini", ".cfg", ".conf", ".config", ".properties",
+		".sln", ".vcxproj", ".filters", ".props", ".targets", ".csproj", ".fsproj", ".vbproj", ".cmake", ".mak", ".gradle", ".tex", ".rtf", ".lua", ".r", ".pl"
+	};
+	static const std::unordered_set<std::string> names = {
+		"readme", "license", "licence", "copying", "authors", "changelog", "makefile", "gnumakefile", "dockerfile", "containerfile", "cmakelists.txt",
+		".gitignore", ".gitattributes", ".editorconfig", ".dockerignore", ".npmrc", ".env"
+	};
+	auto lower = [](std::string s){
+		std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return c >= 'A' && c <= 'Z' ? static_cast<char>(c + ('a' - 'A')) : static_cast<char>(c); });
+		return s;
+	};
+	const auto name = lower(PathToUtf8Generic(path.filename()));
+	return extensions.count(lower(PathToUtf8Generic(path.extension()))) || names.count(name) || name.rfind(".env.", 0) == 0;
+}
+enum class FileInfoEncoding{ Utf8, Utf16LE, Utf16BE, Utf32LE, Utf32BE, Unknown8Bit };
+static bool ReadFileInfoCodepoint(const std::string& data, size_t& pos, FileInfoEncoding encoding, std::uint32_t& cp){
+	const auto byte = [&](size_t offset){ return static_cast<unsigned char>(data[offset]); };
+	if(encoding == FileInfoEncoding::Unknown8Bit){ cp = byte(pos++); return true; }
+	if(encoding == FileInfoEncoding::Utf8){
+		cp = byte(pos++);
+		if(cp < 0x80) return true;
+		const int extra = cp >= 0xC2 && cp <= 0xDF ? 1 : cp >= 0xE0 && cp <= 0xEF ? 2 : cp >= 0xF0 && cp <= 0xF4 ? 3 : -1;
+		if(extra < 0 || data.size() - pos < static_cast<size_t>(extra)) return false;
+		cp &= (1u << (6 - extra)) - 1;
+		for(int i = 0; i < extra; ++i){
+			const auto next = byte(pos++);
+			if((next & 0xC0) != 0x80) return false;
+			cp = (cp << 6) | (next & 0x3F);
+		}
+		return cp >= (extra == 1 ? 0x80u : extra == 2 ? 0x800u : 0x10000u) && cp <= 0x10FFFF && !(cp >= 0xD800 && cp <= 0xDFFF);
+	}
+	const bool utf16 = encoding == FileInfoEncoding::Utf16LE || encoding == FileInfoEncoding::Utf16BE;
+	const bool littleEndian = encoding == FileInfoEncoding::Utf16LE || encoding == FileInfoEncoding::Utf32LE;
+	const size_t width = utf16 ? 2 : 4;
+	auto readUnit = [&](std::uint32_t& unit){
+		if(data.size() - pos < width) return false;
+		unit = 0;
+		for(size_t i = 0; i < width; ++i) unit |= static_cast<std::uint32_t>(byte(pos + i)) << (8*(littleEndian ? i : width - i - 1));
+		pos += width;
+		return true;
+	};
+	if(!readUnit(cp)) return false;
+	if(utf16 && cp >= 0xD800 && cp <= 0xDBFF){
+		std::uint32_t low;
+		if(!readUnit(low) || low < 0xDC00 || low > 0xDFFF) return false;
+		cp = 0x10000 + ((cp - 0xD800) << 10) + low - 0xDC00;
+	}
+	return cp <= 0x10FFFF && !(cp >= 0xD800 && cp <= 0xDFFF);
+}
+static bool IsFileInfoWhitespace(std::uint32_t cp){
+	return cp == ' ' || (cp >= '\t' && cp <= '\r') || cp == 0x85 || cp == 0xA0 || cp == 0x1680 || (cp >= 0x2000 && cp <= 0x200A) || cp == 0x2028 || cp == 0x2029 || cp == 0x202F || cp == 0x205F || cp == 0x3000;
+}
+struct FileInfoTextStats{
+	std::uintmax_t lines = 0, blankLines = 0, words = 0, characters = 0, longestLine = 0, crlf = 0, lf = 0, cr = 0;
+	bool endsWithNewline = false, nonAscii = false;
+};
+static std::string ScanFileInfoText(const std::string& data, size_t pos, FileInfoEncoding encoding, FileInfoTextStats& stats){
+	std::uintmax_t lineLength = 0;
+	bool blank = true, inWord = false, previousCR = false;
+	auto finishLine = [&](){
+		++stats.lines;
+		if(blank) ++stats.blankLines;
+		stats.longestLine = std::max(stats.longestLine, lineLength);
+		lineLength = 0;
+		blank = true;
+	};
+	while(pos < data.size()){
+		std::uint32_t cp;
+		if(!ReadFileInfoCodepoint(data, pos, encoding, cp)) return "invalid_encoding";
+		if((cp < 0x20 && !(cp >= '\t' && cp <= '\r')) || cp == 0x7F) return "binary_content";
+		const bool whitespace = IsFileInfoWhitespace(cp);
+		++stats.characters;
+		stats.nonAscii = stats.nonAscii || cp > 0x7F;
+		if(!whitespace && !inWord) ++stats.words;
+		inWord = !whitespace;
+		if(cp == '\r'){
+			++stats.cr;
+			finishLine();
+		} else if(cp == '\n'){
+			if(previousCR){ --stats.cr; ++stats.crlf; }
+			else{ ++stats.lf; finishLine(); }
+		} else{
+			++lineLength;
+			if(!whitespace) blank = false;
+		}
+		previousCR = cp == '\r';
+		stats.endsWithNewline = cp == '\r' || cp == '\n';
+	}
+	// A trailing line terminator does not create an extra empty line. BOM-only files have zero lines.
+	if(stats.characters && !stats.endsWithNewline) finishLine();
+	return "";
+}
+static std::string GetFileInfoText(const std::filesystem::path& path, std::uintmax_t size){
+	std::ifstream file(path, std::ios::binary);
+	if(!file.is_open()) return "{\"status\":\"unavailable\",\"reason\":\"open_failed\"}";
+	std::string data(static_cast<size_t>(size), '\0');
+	file.read(data.data(), static_cast<std::streamsize>(data.size()));
+	if(file.bad() || static_cast<size_t>(file.gcount()) != data.size() || file.peek() != std::ifstream::traits_type::eof())
+		return "{\"status\":\"unavailable\",\"reason\":\"read_failed_or_file_changed\"}";
+	FileInfoEncoding encoding = FileInfoEncoding::Utf8;
+	std::string label = "UTF-8";
+	size_t bom = 0;
+	if(data.compare(0, 4, "\xFF\xFE\x00\x00", 4) == 0){ encoding = FileInfoEncoding::Utf32LE; label = "UTF-32LE"; bom = 4; }
+	else if(data.compare(0, 4, "\x00\x00\xFE\xFF", 4) == 0){ encoding = FileInfoEncoding::Utf32BE; label = "UTF-32BE"; bom = 4; }
+	else if(data.compare(0, 3, "\xEF\xBB\xBF", 3) == 0) bom = 3;
+	else if(data.compare(0, 2, "\xFF\xFE", 2) == 0){ encoding = FileInfoEncoding::Utf16LE; label = "UTF-16LE"; bom = 2; }
+	else if(data.compare(0, 2, "\xFE\xFF", 2) == 0){ encoding = FileInfoEncoding::Utf16BE; label = "UTF-16BE"; bom = 2; }
+	FileInfoTextStats stats;
+	auto reason = ScanFileInfoText(data, bom, encoding, stats);
+	if(reason == "invalid_encoding" && bom == 0){
+		// Legacy text still has useful line counts; its character/word counts cannot be inferred reliably.
+		encoding = FileInfoEncoding::Unknown8Bit;
+		label = "unknown-8-bit";
+		stats = {};
+		reason = ScanFileInfoText(data, 0, encoding, stats);
+	}
+	if(!reason.empty()) return "{\"status\":\"unavailable\",\"reason\":" + JsonString(reason) + "}";
+	if(encoding == FileInfoEncoding::Utf8 && !bom && !stats.nonAscii) label = "ASCII";
+	const auto newlineTypes = (stats.crlf > 0) + (stats.lf > 0) + (stats.cr > 0);
+	const char* newlines = newlineTypes > 1 ? "mixed" : stats.crlf ? "CRLF" : stats.lf ? "LF" : stats.cr ? "CR" : "none";
+	const bool knownEncoding = encoding != FileInfoEncoding::Unknown8Bit;
+	return "{\"status\":\"complete\",\"encoding\":" + JsonString(label) + ",\"has_bom\":" + (bom ? "true" : "false")
+		+ ",\"line_count\":" + std::to_string(stats.lines) + ",\"blank_line_count\":" + std::to_string(stats.blankLines)
+		+ ",\"word_count\":" + (knownEncoding ? std::to_string(stats.words) : "null")
+		+ ",\"character_count\":" + (knownEncoding ? std::to_string(stats.characters) : "null")
+		+ ",\"longest_line_characters\":" + (knownEncoding ? std::to_string(stats.longestLine) : "null")
+		+ ",\"newline_style\":" + JsonString(newlines) + ",\"newline_counts\":{\"crlf\":" + std::to_string(stats.crlf) + ",\"lf\":" + std::to_string(stats.lf) + ",\"cr\":" + std::to_string(stats.cr)
+		+ "},\"ends_with_newline\":" + (stats.endsWithNewline ? "true" : "false") + "}";
+}
+std::string GetFileInfoTool(const char* slotName, const char* argsJson){
+	const auto path = GetArgValue(argsJson, "path");
+	if(path.empty()) return FileInfoError("path is required");
+	if(path.find('\0') != std::string::npos) return FileInfoError("invalid path");
+	const auto includeText = GetArgValue(argsJson, "include_text_stats");
+	if(!includeText.empty() && includeText != "true" && includeText != "false" && includeText != "0" && includeText != "1") return FileInfoError("include_text_stats must be a boolean");
+	try{
+		const auto p = ResolveFileToolPath(path);
+		if(!IsPathAllowed(p)) return FileInfoError("invalid path");
+		std::error_code ec;
+		const auto fullPath = absolute(p, ec).lexically_normal();
+		if(ec) return FileInfoError("failed to resolve path");
+		std::string json = "{\"path\":" + JsonString(PathToUtf8Generic(fullPath));
+		WIN32_FILE_ATTRIBUTE_DATA info{};
+		if(!GetFileAttributesExW(fullPath.c_str(), GetFileExInfoStandard, &info)){
+			const auto error = GetLastError();
+			if(error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND) return json + ",\"exists\":false}";
+			return FileInfoError("failed to read file metadata", error);
+		}
+		const bool directory = (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+		const bool reparse = (info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
+		const bool regular = !directory && !reparse && !(info.dwFileAttributes & FILE_ATTRIBUTE_DEVICE);
+		const std::uintmax_t size = (static_cast<std::uintmax_t>(info.nFileSizeHigh) << 32) | info.nFileSizeLow;
+		json += ",\"exists\":true,\"name\":" + JsonString(PathToUtf8Generic(fullPath.filename())) + ",\"extension\":" + JsonString(PathToUtf8Generic(fullPath.extension()));
+		json += ",\"parent\":" + JsonString(PathToUtf8Generic(fullPath.parent_path())) + ",\"type\":" + JsonString(reparse ? "reparse_point" : directory ? "directory" : regular ? "file" : "other");
+		json += ",\"size_bytes\":" + (regular ? std::to_string(size) : "null") + ",\"size_display\":" + (regular ? JsonString(FileInfoSize(size)) : "null");
+		json += ",\"created_utc\":" + FileInfoDate(info.ftCreationTime) + ",\"modified_utc\":" + FileInfoDate(info.ftLastWriteTime) + ",\"accessed_utc\":" + FileInfoDate(info.ftLastAccessTime);
+		json += ",\"read_only\":" + std::string(info.dwFileAttributes & FILE_ATTRIBUTE_READONLY ? "true" : "false") + ",\"hidden\":" + (info.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN ? "true" : "false");
+		json += ",\"system\":" + std::string(info.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM ? "true" : "false") + ",\"reparse_point\":" + (reparse ? "true" : "false");
+		std::string skipReason;
+		if(includeText == "false" || includeText == "0") skipReason = "disabled";
+		else if(!regular) skipReason = "not_a_regular_file";
+		else if(!IsKnownTextFile(fullPath)) skipReason = "unrecognized_text_file";
+		else if(size > MaxFileInfoTextBytes) skipReason = "size_limit";
+		json += ",\"text\":";
+		if(skipReason.empty()) json += GetFileInfoText(fullPath, size);
+		else json += "{\"status\":\"skipped\",\"reason\":" + JsonString(skipReason) + ",\"max_bytes\":" + std::to_string(MaxFileInfoTextBytes) + "}";
+		return json + "}";
+	} catch(const std::filesystem::filesystem_error&){
+		return FileInfoError("invalid path or file metadata unavailable");
+	}
 }
 std::string ReadFileTool(const char* slotName, const char* argsJson){
 	std::string path = GetArgValue(argsJson, "path");

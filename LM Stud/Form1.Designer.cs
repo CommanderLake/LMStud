@@ -140,6 +140,7 @@ namespace LMStud
 			this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeader10 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.contextHugFiles = new System.Windows.Forms.ContextMenuStrip(this.components);
+			this.copyURLToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.checkSpeak = new System.Windows.Forms.CheckBox();
 			this.checkVoiceInput = new System.Windows.Forms.CheckBox();
 			this.checkMarkdown = new System.Windows.Forms.CheckBox();
@@ -265,7 +266,6 @@ namespace LMStud
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
 			this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
-			this.copyURLToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -1206,6 +1206,12 @@ namespace LMStud
 			this.contextHugFiles.Name = "contextHugFiles";
 			resources.ApplyResources(this.contextHugFiles, "contextHugFiles");
 			this.contextHugFiles.Opening += new System.ComponentModel.CancelEventHandler(this.ContextHugFiles_Opening);
+			// 
+			// copyURLToolStripMenuItem
+			// 
+			this.copyURLToolStripMenuItem.Name = "copyURLToolStripMenuItem";
+			resources.ApplyResources(this.copyURLToolStripMenuItem, "copyURLToolStripMenuItem");
+			this.copyURLToolStripMenuItem.Click += new System.EventHandler(this.CopyURLToolStripMenuItem_Click);
 			// 
 			// checkSpeak
 			// 
@@ -2370,12 +2376,6 @@ namespace LMStud
 			// saveFileDialog1
 			// 
 			resources.ApplyResources(this.saveFileDialog1, "saveFileDialog1");
-			// 
-			// copyURLToolStripMenuItem
-			// 
-			this.copyURLToolStripMenuItem.Name = "copyURLToolStripMenuItem";
-			resources.ApplyResources(this.copyURLToolStripMenuItem, "copyURLToolStripMenuItem");
-			this.copyURLToolStripMenuItem.Click += new System.EventHandler(this.CopyURLToolStripMenuItem_Click);
 			// 
 			// Form1
 			// 

@@ -153,6 +153,8 @@
     <Compile Include="ApiCompatibilityTests.cs" />
     <Compile Include="ApiServerRoutingTests.cs" />
     <Compile Include="ApplicationWorkflowTests.cs" />
+    <Compile Include="DirectoryListingToolTests.cs" />
+    <Compile Include="FileInfoToolTests.cs" />
     <Compile Include="MarkdownExperienceTests.cs" />
     <Compile Include="ModelFileTests.cs" />
   </ItemGroup>

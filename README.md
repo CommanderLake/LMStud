@@ -77,11 +77,19 @@ LM Stud can give models a practical little toolbox:
 | Tool family | Notes |
 | --- | --- |
 | **Web** | Google search, webpage preview and webpage text extraction. |
-| **Files** | List directories, search file names, read file lines, search file contents, create files, replace lines and apply patches. |
+| **Files** | List directories, inspect file metadata and text statistics, search file names, read file lines, search file contents, create files, replace lines and apply patches. |
 | **Command prompt** | Start a Windows command prompt session and execute commands through it. |
 | **Model tools** | Local or API model slots can be called as tools by another model. |
 
 File tools are scoped by a base path. If the base path is empty, the file tools can access the full filesystem. That is powerful, useful and exactly the sort of thing you should only enable for models you trust.
+
+`list_directory` returns at most 200 entries by default, with a hard limit of 1,000 entries and 16 KiB of entry JSON per response. Recursive listings default to `max_depth: 4` and show common dependency/build directories (including `packages`, `node_modules`, `vendor`, `bin`, `obj`, `.vs` and virtual environments) without descending into them. Set `include_generated: true`, list one of these directories directly, or increase `max_depth` (up to 32) when needed. `.git` directories remain excluded and nested directory reparse points are not traversed.
+
+Partial listings return a warning, counts of skipped directories, and `truncated: true` with `next_offset` when the output budget is reached. Continue using `offset: <next_offset>` with the same path and options, or narrow the path/use `search_files`. `total_entries` counts the view selected by those options; it is `null` while traversal is cut short, and `entries_seen` provides a lower bound. Paging uses filesystem order, so changes to the directory can shift pages. The tool stops traversal as soon as the budget is reached instead of counting an entire dependency tree first.
+
+With **Read File** enabled, `get_file_info` accepts a `path` and returns its full path, name, extension, type, exact and readable size, creation/modification/access dates in UTC, and read-only/hidden/system attributes. Missing paths return `exists: false`. Set `include_text_stats: false` for metadata only.
+
+For recognized source, config and document text files up to 16 MiB, it also reports encoding/BOM, lines, blank lines, whitespace-delimited words, Unicode character count, longest line, newline style/counts and the final newline. Character counts exclude the BOM and include line terminators; empty files have zero lines, and a final terminator adds no extra line. UTF-8 and BOM-marked UTF-16/UTF-32 are supported; legacy encodings retain line statistics with uncertain character/word counts set to `null`. Binary content, unknown file types, large files, directories and reparse points have an explicit skipped/unavailable reason. Reparse points are not opened for text analysis, and directory sizes are not calculated recursively.
 
 Tool call and output JSON is prettified in the chat UI, because raw one-line JSON walls are bad for the soul.
 
