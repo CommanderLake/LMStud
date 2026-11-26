@@ -888,6 +888,15 @@ namespace LMStud.Properties {
                 return ResourceManager.GetString("Max_context_size_of_selected_model__", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Max GPU layers for the selected model: {0}.
+        /// </summary>
+        internal static string Max_gpu_layers_of_selected_model {
+            get {
+                return ResourceManager.GetString("Max_gpu_layers_of_selected_model", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to MCP.

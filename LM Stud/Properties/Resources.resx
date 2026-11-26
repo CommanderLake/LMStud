@@ -622,4 +622,7 @@ state is null</value>
 <data name="Max_context_size_of_selected_model__" xml:space="preserve">
 	<value>Max context size of selected model: </value>
 </data>
+<data name="Max_gpu_layers_of_selected_model" xml:space="preserve">
+	<value>Max GPU layers for the selected model: {0}</value>
+</data>
 </root>

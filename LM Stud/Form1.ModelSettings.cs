@@ -93,6 +93,10 @@ namespace LMStud{
 			var meta = modelLvi?.Tag as List<GGUFMetadataManager.GGUFMetadataEntry>;
 			return meta == null ? 0 : GGUFMetadataManager.GetGGUFCtxMax(meta);
 		}
+		private static int GetModelLayerCount(ListViewItem modelLvi){
+			var meta = modelLvi?.Tag as List<GGUFMetadataManager.GGUFMetadataEntry>;
+			return meta == null ? 0 : GGUFMetadataManager.GetGGUFLayerCount(meta);
+		}
 		private static int ClampContextSize(ListViewItem modelLvi, int requestedCtxSize){
 			var modelCtxMax = GetModelContextMax(modelLvi);
 			return modelCtxMax <= 0 ? requestedCtxSize : Math.Min(requestedCtxSize, modelCtxMax);
@@ -241,11 +245,19 @@ namespace LMStud{
 			if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(inheritedSystemPromptSlotNames);});
 		}
 		private void PopulateModelSettings(string modelPath){
+			var modelLvi = listViewModels.SelectedItems[0];
+			var modelCtxMax = GetModelContextMax(modelLvi);
+			var ctxSizeToolTip = _numCtxSizeToolTip;
+			if(modelCtxMax > 0) ctxSizeToolTip += "\r\n" + Resources.Max_context_size_of_selected_model__ + modelCtxMax;
+			toolTip1.SetToolTip(numCtxSizeModel, ctxSizeToolTip);
+			var layerCount = GetModelLayerCount(modelLvi);
+			var gpuLayersToolTip = toolTip1.GetToolTip(numGPULayers);
+			if(layerCount > 0) gpuLayersToolTip += "\r\n" + string.Format(Resources.Max_gpu_layers_of_selected_model, layerCount + 1);
+			toolTip1.SetToolTip(numGPULayersModel, gpuLayersToolTip);
 			if(TryGetModelSettings(modelPath, out var ms)){
 				checkOverrideSettings.Checked = ms.OverrideSettings;
 				textSystemPromptModel.Text = ms.SystemPrompt;
 				numCtxSizeModel.Value = ms.CtxSize;
-				toolTip1.SetToolTip(numCtxSizeModel, _numCtxSizeToolTip + "\r\n" + Resources.Max_context_size_of_selected_model__ + GetModelContextMax(listViewModels.SelectedItems[0]));
 				numGPULayersModel.Value = ms.GPULayers;
 				numTempModel.Value = (decimal)ms.Temp;
 				numMinPModel.Value = (decimal)ms.MinP;
@@ -260,7 +272,6 @@ namespace LMStud{
 				checkOverrideSettings.Checked = false;
 				textSystemPromptModel.Text = Common.SystemPrompt;
 				numCtxSizeModel.Value = Common.CtxSize;
-				toolTip1.SetToolTip(numCtxSizeModel, _numCtxSizeToolTip);
 				numGPULayersModel.Value = Common.GPULayers;
 				numTempModel.Value = (decimal)Common.Temp;
 				numMinPModel.Value = (decimal)Common.MinP;

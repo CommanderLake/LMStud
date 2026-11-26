@@ -46,6 +46,18 @@ namespace LMStud{
 				}
 			return -1;
 		}
+		public static int GetGGUFLayerCount(List<GGUFMetadataEntry> metadata){
+			var architecture = metadata.Find(entry => entry.Key == "general.architecture").Val.Value as string;
+			if(string.IsNullOrEmpty(architecture)) return 0;
+			var key = architecture + ".block_count";
+			switch(metadata.Find(entry => entry.Key == key).Val.Value){
+				case uint count when count < int.MaxValue: return (int)count;
+				case int count when count > 0 && count < int.MaxValue: return count;
+				case ulong count when count < int.MaxValue: return (int)count;
+				case long count when count > 0 && count < int.MaxValue: return (int)count;
+				default: return 0;
+			}
+		}
 		private static GGUFMetadataEntry ReadMetadataEntry(BinaryReader br){
 			var key = ReadLengthPrefixedString(br);
 			var typeCode = br.ReadUInt32();

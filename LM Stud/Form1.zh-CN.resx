@@ -132,6 +132,16 @@
   <data name="splitContainer1.ToolTip" xml:space="preserve">
     <value />
   </data>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="checkLoadAuto.Size" type="System.Drawing.Size, System.Drawing">
+    <value>134, 17</value>
+  </data>
+  <data name="checkLoadAuto.Text" xml:space="preserve">
+    <value>启动时加载上个模型</value>
+  </data>
+  <data name="checkLoadAuto.ToolTip" xml:space="preserve">
+    <value />
+  </data>
   <data name="butExtract.Text" xml:space="preserve">
     <value>提取模板</value>
   </data>
@@ -170,7 +180,6 @@
   <data name="label30.AutoSize" type="System.Boolean, mscorlib">
     <value>False</value>
   </data>
-  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="label30.Location" type="System.Drawing.Point, System.Drawing">
     <value>2, 45</value>
   </data>
@@ -240,6 +249,18 @@
   <data name="checkOverrideSettings.ToolTip" xml:space="preserve">
     <value />
   </data>
+  <data name="checkOffloadOPModel.Text" xml:space="preserve">
+    <value>GPU 加速张量运算</value>
+  </data>
+  <data name="checkOffloadOPModel.ToolTip" xml:space="preserve">
+    <value>将原本在 CPU 上执行的张量运算交给 GPU。</value>
+  </data>
+  <data name="checkOffloadKQVModel.Text" xml:space="preserve">
+    <value>GPU 加速 KQV</value>
+  </data>
+  <data name="checkOffloadKQVModel.ToolTip" xml:space="preserve">
+    <value>在 GPU 上执行 KQV 运算，并将 KV 缓存存放在 GPU 上。</value>
+  </data>
   <data name="numMinPModel.ToolTip" xml:space="preserve">
     <value />
   </data>
@@ -255,8 +276,11 @@
   <data name="label27.ToolTip" xml:space="preserve">
     <value />
   </data>
+  <data name="checkFlashAttnModel.Text" xml:space="preserve">
+    <value>启用 Flash Attention</value>
+  </data>
   <data name="checkFlashAttnModel.ToolTip" xml:space="preserve">
-    <value />
+    <value>启用 Flash Attention。复选框处于半选状态时，由 llama.cpp 自动决定是否启用。</value>
   </data>
   <data name="label31.Text" xml:space="preserve">
     <value>Top-K：</value>
@@ -343,22 +367,25 @@
     <value />
   </data>
   <data name="checkSlotsEditLocalOverride.Location" type="System.Drawing.Point, System.Drawing">
-    <value>273, 157</value>
+    <value>261, 157</value>
   </data>
   <data name="checkSlotsEditLocalOverride.Size" type="System.Drawing.Size, System.Drawing">
-    <value>98, 17</value>
+    <value>110, 17</value>
   </data>
   <data name="checkSlotsEditLocalOverride.Text" xml:space="preserve">
-    <value>覆盖模型设置</value>
+    <value>覆盖系统提示词</value>
   </data>
   <data name="checkSlotsEditLocalOverride.ToolTip" xml:space="preserve">
-    <value />
+    <value>为此槽位单独设置系统提示词。取消勾选后，优先使用模型的系统提示词，其次使用全局设置。</value>
   </data>
   <data name="label54.Text" xml:space="preserve">
     <value>工具名称：</value>
   </data>
   <data name="label54.ToolTip" xml:space="preserve">
     <value />
+  </data>
+  <data name="textSlotsEditLocalToolName.ToolTip" xml:space="preserve">
+    <value>将此本地槽位用作工具时，模型调用该工具所用的函数名称。</value>
   </data>
   <data name="comboSlotsEditLocalModel.ToolTip" xml:space="preserve">
     <value>此槽使用的本地模型。</value>
@@ -666,8 +693,8 @@
   <data name="columnHeader13.Text" xml:space="preserve">
     <value>创建时间</value>
   </data>
-  <data name="columnHeader14.Text" xml:space="preserve">
-    <value>修改时间</value>
+  <data name="listViewHugSearch.Size" type="System.Drawing.Size, System.Drawing">
+    <value>1004, 408</value>
   </data>
   <data name="listViewHugSearch.ToolTip" xml:space="preserve">
     <value />
@@ -681,17 +708,35 @@
   <data name="columnHeader10.Text" xml:space="preserve">
     <value>大小</value>
   </data>
+  <data name="copyURLToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+    <value>120, 22</value>
+  </data>
+  <data name="copyURLToolStripMenuItem.Text" xml:space="preserve">
+    <value>复制 URL</value>
+  </data>
+  <data name="contextHugFiles.Size" type="System.Drawing.Size, System.Drawing">
+    <value>121, 26</value>
+  </data>
+  <data name="contextHugFiles.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="listViewHugFiles.Size" type="System.Drawing.Size, System.Drawing">
+    <value>1004, 459</value>
+  </data>
   <data name="listViewHugFiles.ToolTip" xml:space="preserve">
     <value />
   </data>
   <data name="splitContainer3.Panel2.ToolTip" xml:space="preserve">
     <value />
   </data>
+  <data name="splitContainer3.SplitterDistance" type="System.Int32, mscorlib">
+    <value>412</value>
+  </data>
   <data name="splitContainer3.ToolTip" xml:space="preserve">
     <value />
   </data>
   <data name="checkSpeak.Location" type="System.Drawing.Point, System.Drawing">
-    <value>425, 930</value>
+    <value>183, 906</value>
   </data>
   <data name="checkSpeak.Size" type="System.Drawing.Size, System.Drawing">
     <value>74, 17</value>
@@ -702,9 +747,6 @@
   <data name="checkSpeak.ToolTip" xml:space="preserve">
     <value>使用计算机的默认语音朗读生成的回复。</value>
   </data>
-  <data name="checkVoiceInput.Location" type="System.Drawing.Point, System.Drawing">
-    <value>345, 930</value>
-  </data>
   <data name="checkVoiceInput.Size" type="System.Drawing.Size, System.Drawing">
     <value>74, 17</value>
   </data>
@@ -713,21 +755,6 @@
   </data>
   <data name="checkVoiceInput.ToolTip" xml:space="preserve">
     <value>中间选中状态（填充方块）表示仅转录语音而不生成回复；完全选中状态表示在转录后自动生成回复。</value>
-  </data>
-  <data name="checkMarkdown.Location" type="System.Drawing.Point, System.Drawing">
-    <value>263, 930</value>
-  </data>
-  <data name="checkMarkdown.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="checkStream.Size" type="System.Drawing.Size, System.Drawing">
-    <value>74, 17</value>
-  </data>
-  <data name="checkStream.Text" xml:space="preserve">
-    <value>流式输出</value>
-  </data>
-  <data name="checkStream.ToolTip" xml:space="preserve">
-    <value />
   </data>
   <data name="butCodeBlock.Text" xml:space="preserve">
     <value>插入代码块</value>
@@ -768,6 +795,9 @@
   <data name="butDownload.ToolTip" xml:space="preserve">
     <value />
   </data>
+  <data name="checkDialectic.Location" type="System.Drawing.Point, System.Drawing">
+    <value>263, 906</value>
+  </data>
   <data name="checkDialectic.Size" type="System.Drawing.Size, System.Drawing">
     <value>74, 17</value>
   </data>
@@ -777,31 +807,10 @@
   <data name="checkDialectic.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="checkAutoScroll.Text" xml:space="preserve">
-    <value>自动滚动</value>
-  </data>
-  <data name="checkAutoScroll.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="tabPageChat.Text" xml:space="preserve">
     <value>聊天</value>
   </data>
   <data name="tabPageChat.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="label37.Size" type="System.Drawing.Size, System.Drawing">
-    <value>155, 13</value>
-  </data>
-  <data name="label37.Text" xml:space="preserve">
-    <value>已移至“模型”选项卡中的“槽”</value>
-  </data>
-  <data name="label37.ToolTip" xml:space="preserve">
-    <value />
-  </data>
-  <data name="groupBox9.Text" xml:space="preserve">
-    <value>API 客户端</value>
-  </data>
-  <data name="groupBox9.ToolTip" xml:space="preserve">
     <value />
   </data>
   <data name="numCmdTimeout.ToolTip" xml:space="preserve">
@@ -1095,8 +1104,20 @@
   <data name="groupCPUParams.ToolTip" xml:space="preserve">
     <value>控制在 CPU 上生成文本的参数。</value>
   </data>
+  <data name="checkOffloadOP.Text" xml:space="preserve">
+    <value>GPU 加速张量运算</value>
+  </data>
+  <data name="checkOffloadOP.ToolTip" xml:space="preserve">
+    <value>将原本在 CPU 上执行的张量运算交给 GPU。</value>
+  </data>
+  <data name="checkOffloadKQV.Text" xml:space="preserve">
+    <value>GPU 加速 KQV</value>
+  </data>
+  <data name="checkOffloadKQV.ToolTip" xml:space="preserve">
+    <value>在 GPU 上执行 KQV 运算，并将 KV 缓存存放在 GPU 上。</value>
+  </data>
   <data name="numMtpDraftTokens.ToolTip" xml:space="preserve">
-    <value>最大多代币预测草稿代币，0 = 禁用，数值越高，内存使用量越大。</value>
+    <value>多 Token 预测（MTP）可生成的最大草稿 Token 数。设为 0 可禁用，数值越大，占用的内存越多。</value>
   </data>
   <data name="label55.Text" xml:space="preserve">
     <value>MTP 最大令牌数：</value>
@@ -1167,8 +1188,11 @@
   <data name="label23.ToolTip" xml:space="preserve">
     <value />
   </data>
+  <data name="checkFlashAttn.Text" xml:space="preserve">
+    <value>启用 Flash Attention</value>
+  </data>
   <data name="checkFlashAttn.ToolTip" xml:space="preserve">
-    <value>启用 Flash Attention。填充状态表示由 Llama.cpp 自动选择。</value>
+    <value>启用 Flash Attention。复选框处于半选状态时，由 llama.cpp 自动决定是否启用。</value>
   </data>
   <data name="checkMLock.Text" xml:space="preserve">
     <value>锁定内存 (MLock)</value>
@@ -1222,7 +1246,7 @@
     <value>上下文窗口大小（最大 Token 数）。值越高，模型的“记忆”能力越强，但会消耗更多内存。</value>
   </data>
   <data name="numGPULayers.ToolTip" xml:space="preserve">
-    <value>要卸载到 GPU 的模型层数。层数越多，性能越好，但会增加显存（VRAM）使用量。</value>
+    <value>交由 GPU 处理的模型层数。增加层数可提高性能，但会占用更多显存。</value>
   </data>
   <data name="numNGen.ToolTip" xml:space="preserve">
     <value>每次响应生成 Token 的数量（即 AI 回复的最大长度）。-1 表示无限制。</value>
@@ -1296,15 +1320,6 @@
   <data name="tabPageSettings.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="checkLoadAuto.Size" type="System.Drawing.Size, System.Drawing">
-    <value>134, 17</value>
-  </data>
-  <data name="checkLoadAuto.Text" xml:space="preserve">
-    <value>启动时加载上个模型</value>
-  </data>
-  <data name="checkLoadAuto.ToolTip" xml:space="preserve">
-    <value />
-  </data>
   <data name="tabPageModels.Text" xml:space="preserve">
     <value>模型管理</value>
   </data>
@@ -1351,6 +1366,30 @@
     <value>状态栏</value>
   </data>
   <data name="statusStrip1.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="checkAutoScroll.Size" type="System.Drawing.Size, System.Drawing">
+    <value>123, 22</value>
+  </data>
+  <data name="checkAutoScroll.Text" xml:space="preserve">
+    <value>自动滚动</value>
+  </data>
+  <data name="checkStream.Size" type="System.Drawing.Size, System.Drawing">
+    <value>123, 22</value>
+  </data>
+  <data name="checkStream.Text" xml:space="preserve">
+    <value>流式输出</value>
+  </data>
+  <data name="checkMarkdown.Size" type="System.Drawing.Size, System.Drawing">
+    <value>123, 22</value>
+  </data>
+  <data name="viewToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+    <value>57, 20</value>
+  </data>
+  <data name="viewToolStripMenuItem.Text" xml:space="preserve">
+    <value>视图(&amp;V)</value>
+  </data>
+  <data name="menuStrip1.ToolTip" xml:space="preserve">
     <value />
   </data>
   <data name="openFileDialog1.Filter" xml:space="preserve">
