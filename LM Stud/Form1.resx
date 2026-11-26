@@ -930,6 +930,9 @@
   <data name="checkFlashAttnModel.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
+  <data name="checkFlashAttnModel.ToolTip" xml:space="preserve">
+    <value>Enable Flash Attention. The filled state lets Llama.cpp choose automatically.</value>
+  </data>
   <data name="&gt;&gt;checkFlashAttnModel.Name" xml:space="preserve">
     <value>checkFlashAttnModel</value>
   </data>

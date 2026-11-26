@@ -278,7 +278,7 @@
 <data name="Error_initializing_audio_capture_" xml:space="preserve">
 	<value>初始化音频捕获时出错</value>
 </data>
-<data name="Max_context_size_of_last_loaded_model" xml:space="preserve">
+<data name="Max_context_size_of_last_loaded_model__" xml:space="preserve">
 	<value>上次加载的模型最大上下文大小：</value>
 </data>
 <data name="Load_a_model_first_" xml:space="preserve">

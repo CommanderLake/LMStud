@@ -31,9 +31,7 @@ namespace LMStud{
 			var key = Common.GetPathRelativeToModelsDir(modelPath);
 			return key != null && _modelSettings.TryGetValue(key, out settings);
 		}
-		private bool TryGetEnabledModelSettings(string modelPath, out ModelSettings settings){
-			return TryGetModelSettings(modelPath, out settings) && settings != null && settings.OverrideSettings;
-		}
+		private bool TryGetEnabledModelSettings(string modelPath, out ModelSettings settings){return TryGetModelSettings(modelPath, out settings) && settings != null && settings.OverrideSettings;}
 		private static Dictionary<string, ModelSettings> ParseModelSettings(string json){
 			var root = Json.Parse(json);
 			if(!root.IsObject) return null;
@@ -46,8 +44,7 @@ namespace LMStud{
 		}
 		private static ModelSettings ParseModelSettingsValue(JsonNode node){
 			if(!node.IsObject) return null;
-			return new ModelSettings(
-				node.GetBool("OverrideSettings") ?? false,
+			return new ModelSettings(node.GetBool("OverrideSettings") ?? false,
 				node.GetString("SystemPrompt"),
 				node.GetInt("CtxSize") ?? 0,
 				node.GetInt("GPULayers") ?? 0,
@@ -56,11 +53,10 @@ namespace LMStud{
 				(float)(node.GetDouble("TopP") ?? 0),
 				node.GetInt("TopK") ?? 0,
 				(CheckState)(node.GetInt("FlashAttn") ?? 0),
-				node.GetBool("OverrideKQV") ?? true,
-				node.GetBool("OverrideOP") ?? true,
+				node.GetBool("OffloadKQV") ?? true,
+				node.GetBool("OffloadOP") ?? true,
 				node.GetBool("OverrideJinja") ?? false,
-				node.GetString("JinjaTemplate")
-			);
+				node.GetString("JinjaTemplate"));
 		}
 		private static string SerializeModelSettings(Dictionary<string, ModelSettings> settings){
 			var root = Json.ObjectBuilder();
@@ -68,9 +64,19 @@ namespace LMStud{
 			return root.ToJson(JsonFormat.Indented);
 		}
 		private static JsonNode SerializeModelSettingsValue(ModelSettings settings){
-			return Json.Object(Json.P("OverrideSettings", settings.OverrideSettings), Json.P("SystemPrompt", settings.SystemPrompt), Json.P("CtxSize", settings.CtxSize),
-				Json.P("GPULayers", settings.GPULayers), Json.P("Temp", settings.Temp), Json.P("MinP", settings.MinP), Json.P("TopP", settings.TopP),
-				Json.P("TopK", settings.TopK), Json.P("FlashAttn", (int)settings.FlashAttn), Json.P("OverrideJinja", settings.OverrideJinja), Json.P("JinjaTemplate", settings.JinjaTemplate));
+			return Json.Object(Json.P("OverrideSettings", settings.OverrideSettings),
+				Json.P("SystemPrompt", settings.SystemPrompt),
+				Json.P("CtxSize", settings.CtxSize),
+				Json.P("GPULayers", settings.GPULayers),
+				Json.P("Temp", settings.Temp),
+				Json.P("MinP", settings.MinP),
+				Json.P("TopP", settings.TopP),
+				Json.P("TopK", settings.TopK),
+				Json.P("FlashAttn", (int)settings.FlashAttn),
+				Json.P("OffloadKQV", settings.OffloadKQV),
+				Json.P("OffloadOP", settings.OffloadOP),
+				Json.P("OverrideJinja", settings.OverrideJinja),
+				Json.P("JinjaTemplate", settings.JinjaTemplate));
 		}
 		private List<LoadedLocalSlotItem> GetLoadedLocalSlotItems(){
 			var slots = new List<LoadedLocalSlotItem>();
@@ -96,19 +102,6 @@ namespace LMStud{
 			Common.ModelCtxMax = GetModelContextMax(modelLvi);
 			Common.CntCtxMax = contextSize;
 		}
-		private sealed class ReloadRequest{
-			internal string SlotName;
-			internal bool ReloadContext;
-			internal int ContextSize;
-			internal CheckState FlashAttn;
-			internal bool OffloadKQV;
-			internal bool OffloadOP;
-			internal bool ReloadSampler;
-			internal float MinP;
-			internal float TopP;
-			internal int TopK;
-			internal float Temp;
-		}
 		private void QueueReloads(List<ReloadRequest> reloads, Action completed = null){
 			if(reloads == null || reloads.Count == 0){
 				completed?.Invoke();
@@ -118,14 +111,24 @@ namespace LMStud{
 			ThreadPool.QueueUserWorkItem(_ => {
 				try{
 					foreach(var reload in reloads){
-						if(reload.ReloadContext) CreateContext(reload.SlotName, reload.ContextSize, Common.BatchSize, reload.FlashAttn, reload.OffloadKQV, reload.OffloadOP, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType, Common.MtpDraftTokens);
+						if(reload.ReloadContext)
+							CreateContext(reload.SlotName,
+								reload.ContextSize,
+								Common.BatchSize,
+								reload.FlashAttn,
+								reload.OffloadKQV,
+								reload.OffloadOP,
+								Common.NThreads,
+								Common.NThreadsBatch,
+								Common.KType,
+								Common.VType,
+								Common.MtpDraftTokens);
 						if(reload.ReloadSampler) CreateSampler(reload.SlotName, reload.MinP, reload.TopP, reload.TopK, reload.Temp, Common.RepPen);
 					}
 				} finally{
 					try{
 						BeginInvoke(new MethodInvoker(() => {
-							try{ completed?.Invoke(); }
-							finally{ EndRetokenization(); }
+							try{ completed?.Invoke(); } finally{ EndRetokenization(); }
 						}));
 					} catch(ObjectDisposedException){ EndRetokenization(); }
 				}
@@ -151,7 +154,19 @@ namespace LMStud{
 			var offloadOPNew = checkOffloadOPModel.Checked;
 			var jinjaOverrideNew = checkOverrideJinjaModel.Checked;
 			var jinjaTmplNew = textJinjaTmplModel.Text;
-			_modelSettings[modelSettingsKey] = new ModelSettings(overrideNew, systemPromptNew, ctxSizeNew, gpuLayersNew, tempNew, minPNew, topPNew, topKNew, flashNew, offloadKQVNew, offloadOPNew, jinjaOverrideNew, jinjaTmplNew);
+			_modelSettings[modelSettingsKey] = new ModelSettings(overrideNew,
+				systemPromptNew,
+				ctxSizeNew,
+				gpuLayersNew,
+				tempNew,
+				minPNew,
+				topPNew,
+				topKNew,
+				flashNew,
+				offloadKQVNew,
+				offloadOPNew,
+				jinjaOverrideNew,
+				jinjaTmplNew);
 			SaveModelSettings();
 			var loadedSlotNames = ModelSlotManager.GetLoadedLocalSlotNamesForPath(selectedModelPath);
 			if(loadedSlotNames.Count == 0 || !Common.LlModelLoaded) return;
@@ -185,8 +200,7 @@ namespace LMStud{
 			var reloadCtx = ctxSizeOld != ctxSizeEff || flashOld != flashEff || offloadKQVOld != offloadKQVEff || offloadOPOld != offloadOPEff;
 			var reloadSmpl = tempOld != tempEff || minPOld != minPEff || topPOld != topPEff || topKOld != topKEff;
 			var setSystemPrompt = systemPromptOld != systemPromptEff;
-			if(setSystemPrompt && inheritedSystemPromptSlotNames.Count < loadedSlotNames.Count)
-				MessageBox.Show(this, Resources.The_modified_settings_are_overridden_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
+			if(setSystemPrompt && inheritedSystemPromptSlotNames.Count < loadedSlotNames.Count) MessageBox.Show(this, Resources.The_modified_settings_are_overridden_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 			if(reloadModel && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes){
 				foreach(var slotName in loadedSlotNames) LoadModel(slotName, selectedModel, false);
 			} else{
@@ -218,9 +232,10 @@ namespace LMStud{
 						reload.TopK = topKEff;
 						reload.Temp = tempEff;
 					}
-				QueueReloads(reloads, () => {
-					if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(inheritedSystemPromptSlotNames);});
-				});
+				QueueReloads(reloads,
+					() => {
+						if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(inheritedSystemPromptSlotNames);});
+					});
 				return;
 			}
 			if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(inheritedSystemPromptSlotNames);});
@@ -230,6 +245,7 @@ namespace LMStud{
 				checkOverrideSettings.Checked = ms.OverrideSettings;
 				textSystemPromptModel.Text = ms.SystemPrompt;
 				numCtxSizeModel.Value = ms.CtxSize;
+				toolTip1.SetToolTip(numCtxSizeModel, _numCtxSizeToolTip + "\r\n" + Resources.Max_context_size_of_selected_model__ + GetModelContextMax(listViewModels.SelectedItems[0]));
 				numGPULayersModel.Value = ms.GPULayers;
 				numTempModel.Value = (decimal)ms.Temp;
 				numMinPModel.Value = (decimal)ms.MinP;
@@ -244,6 +260,7 @@ namespace LMStud{
 				checkOverrideSettings.Checked = false;
 				textSystemPromptModel.Text = Common.SystemPrompt;
 				numCtxSizeModel.Value = Common.CtxSize;
+				toolTip1.SetToolTip(numCtxSizeModel, _numCtxSizeToolTip);
 				numGPULayersModel.Value = Common.GPULayers;
 				numTempModel.Value = (decimal)Common.Temp;
 				numMinPModel.Value = (decimal)Common.MinP;
@@ -259,6 +276,20 @@ namespace LMStud{
 		private void ButBrowseJinjaTmplModel_Click(object sender, EventArgs e){
 			if(openFileDialog1.ShowDialog(this) == DialogResult.OK) textJinjaTmplModel.Text = openFileDialog1.FileName;
 		}
+		private void CheckUseModelSettings_CheckedChanged(object sender, EventArgs e){groupCommonModel.Enabled = groupAdvancedModel.Enabled = labelSystemPromptModel.Enabled = textSystemPromptModel.Enabled = checkOverrideSettings.Checked;}
+		private sealed class ReloadRequest{
+			internal int ContextSize;
+			internal CheckState FlashAttn;
+			internal float MinP;
+			internal bool OffloadKQV;
+			internal bool OffloadOP;
+			internal bool ReloadContext;
+			internal bool ReloadSampler;
+			internal string SlotName;
+			internal float Temp;
+			internal int TopK;
+			internal float TopP;
+		}
 		private class LoadedLocalSlotItem{
 			public readonly bool HasOverrides;
 			public readonly ListViewItem LoadedModel;
@@ -272,20 +303,32 @@ namespace LMStud{
 			}
 		}
 		private class ModelSettings{
-			public readonly bool OverrideSettings;
-			public readonly string SystemPrompt;
 			public readonly int CtxSize;
-			public readonly int GPULayers;
-			public readonly float Temp;
-			public readonly float MinP;
-			public readonly float TopP;
-			public readonly int TopK;
 			public readonly CheckState FlashAttn;
+			public readonly int GPULayers;
+			public readonly string JinjaTemplate;
+			public readonly float MinP;
 			public readonly bool OffloadKQV;
 			public readonly bool OffloadOP;
 			public readonly bool OverrideJinja;
-			public readonly string JinjaTemplate;
-			public ModelSettings(bool overrideSettings, string systemPrompt, int ctxSize, int gpuLayers, float temp, float minP, float topP, int topK, CheckState flashAttn, bool offloadKqv, bool offloadOp, bool overrideJinja, string jinjaTemplate){
+			public readonly bool OverrideSettings;
+			public readonly string SystemPrompt;
+			public readonly float Temp;
+			public readonly int TopK;
+			public readonly float TopP;
+			public ModelSettings(bool overrideSettings,
+				string systemPrompt,
+				int ctxSize,
+				int gpuLayers,
+				float temp,
+				float minP,
+				float topP,
+				int topK,
+				CheckState flashAttn,
+				bool offloadKqv,
+				bool offloadOp,
+				bool overrideJinja,
+				string jinjaTemplate){
 				OverrideSettings = overrideSettings;
 				SystemPrompt = systemPrompt;
 				CtxSize = ctxSize;
@@ -300,9 +343,6 @@ namespace LMStud{
 				OverrideJinja = overrideJinja;
 				JinjaTemplate = jinjaTemplate;
 			}
-		}
-		private void CheckUseModelSettings_CheckedChanged(object sender, EventArgs e){
-			groupCommonModel.Enabled = groupAdvancedModel.Enabled = labelSystemPromptModel.Enabled = textSystemPromptModel.Enabled = checkOverrideSettings.Checked;
 		}
 	}
 }

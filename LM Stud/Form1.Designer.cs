@@ -626,6 +626,7 @@ namespace LMStud
 			this.checkFlashAttnModel.CheckState = System.Windows.Forms.CheckState.Indeterminate;
 			this.checkFlashAttnModel.Name = "checkFlashAttnModel";
 			this.checkFlashAttnModel.ThreeState = true;
+			this.toolTip1.SetToolTip(this.checkFlashAttnModel, resources.GetString("checkFlashAttnModel.ToolTip"));
 			this.checkFlashAttnModel.UseVisualStyleBackColor = true;
 			// 
 			// label31

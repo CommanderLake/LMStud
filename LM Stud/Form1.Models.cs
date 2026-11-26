@@ -191,13 +191,13 @@ namespace LMStud{
 					detail = "";
 					break;
 				case NativeMethods.StudError.CantLoadVisionProjector:
-					detail = "The multimodal projector could not be loaded.";
+					detail = Resources.The_multimodal_projector_could_not_be_loaded_;
 					break;
 				case NativeMethods.StudError.VisionProjectorNotLoaded:
-					detail = "This local model slot has no multimodal projector loaded. Download the matching mmproj GGUF into the model's folder, then reload the model.";
+					detail = Resources.This_local_model_slot_has_no_multimodal_projector_loaded_;
 					break;
 				case NativeMethods.StudError.CantDecodeImage:
-					detail = "The image could not be decoded for local vision input.";
+					detail = Resources.The_image_could_not_be_decoded_for_local_vision_input_;
 					break;
 				default:
 					detail = error.ToString();
@@ -467,7 +467,7 @@ namespace LMStud{
 								Settings.Default.LoadAuto = true;
 								Settings.Default.Save();
 							}
-							toolTip1.SetToolTip(numCtxSize, _numCtxSizeToolTip + "\r\n" + Resources.Max_context_size_of_last_loaded_model + Common.ModelCtxMax);
+							toolTip1.SetToolTip(numCtxSize, _numCtxSizeToolTip + "\r\n" + Resources.Max_context_size_of_last_loaded_model__ + Common.ModelCtxMax);
 						}));
 					} catch(ObjectDisposedException){}
 				} finally{

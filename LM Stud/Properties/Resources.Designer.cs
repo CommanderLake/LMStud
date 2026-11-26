@@ -874,9 +874,18 @@ namespace LMStud.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Maximum context size of the last loaded model: .
         /// </summary>
-        internal static string Max_context_size_of_last_loaded_model {
+        internal static string Max_context_size_of_last_loaded_model__ {
             get {
-                return ResourceManager.GetString("Max_context_size_of_last_loaded_model", resourceCulture);
+                return ResourceManager.GetString("Max_context_size_of_last_loaded_model__", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Max context size of selected model: .
+        /// </summary>
+        internal static string Max_context_size_of_selected_model__ {
+            get {
+                return ResourceManager.GetString("Max_context_size_of_selected_model__", resourceCulture);
             }
         }
         
@@ -1272,6 +1281,15 @@ namespace LMStud.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The image could not be decoded for local vision input..
+        /// </summary>
+        internal static string The_image_could_not_be_decoded_for_local_vision_input_ {
+            get {
+                return ResourceManager.GetString("The_image_could_not_be_decoded_for_local_vision_input_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The main slot cannot be removed. Edit it instead..
         /// </summary>
         internal static string The_main_slot_cannot_be_removed__Edit_it_instead_ {
@@ -1324,6 +1342,24 @@ namespace LMStud.Properties {
         internal static string The_modified_settings_are_overridden_ {
             get {
                 return ResourceManager.GetString("The_modified_settings_are_overridden_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The multimodal projector could not be loaded..
+        /// </summary>
+        internal static string The_multimodal_projector_could_not_be_loaded_ {
+            get {
+                return ResourceManager.GetString("The_multimodal_projector_could_not_be_loaded_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This local model slot has no multimodal projector loaded. Download the matching mmproj GGUF into the model&apos;s folder, then reload the model..
+        /// </summary>
+        internal static string This_local_model_slot_has_no_multimodal_projector_loaded_ {
+            get {
+                return ResourceManager.GetString("This_local_model_slot_has_no_multimodal_projector_loaded_", resourceCulture);
             }
         }
         
