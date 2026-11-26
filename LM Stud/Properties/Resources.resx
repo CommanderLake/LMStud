@@ -625,4 +625,16 @@ state is null</value>
 <data name="Max_gpu_layers_of_selected_model" xml:space="preserve">
 	<value>Max GPU layers for the selected model: {0}</value>
 </data>
+<data name="Replace_Current_Chat" xml:space="preserve">
+	<value>Replace the current chat and draft with the saved chat?</value>
+</data>
+<data name="Chat_File_Busy" xml:space="preserve">
+	<value>Wait for the current chat or model operation to finish.</value>
+</data>
+<data name="Invalid_Chat_Archive" xml:space="preserve">
+	<value>The file does not contain a valid LM Stud chat.</value>
+</data>
+<data name="Unsupported_Chat_Archive_Version" xml:space="preserve">
+	<value>This LM Stud chat file uses an unsupported version.</value>
+</data>
 </root>

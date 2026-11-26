@@ -56,6 +56,27 @@ namespace LMStud{
 		internal static NativeMethods.StudError SyncActiveMessages(IEnumerable<MessageSnapshot> messages){
 			return RunForActiveSlots(slotName => SyncMessages(slotName, messages));
 		}
+		internal static string ReadHistory(string slotName){
+			var history = NativeMethods.ReadUtf8AndFreeOptional(NativeMethods.GetChatMessagesJson(slotName));
+			if(history == null) throw new InvalidOperationException(NativeMethods.GetLastError());
+			return history;
+		}
+		internal static void RestoreHistory(string slotName, string history, string partnerSlotName, string partnerHistory){
+			var originalHistory = partnerSlotName == null ? null : ReadHistory(slotName);
+			ApplyHistory(slotName, history);
+			if(partnerSlotName == null) return;
+			try{ ApplyHistory(partnerSlotName, partnerHistory); }
+			catch{
+				ApplyHistory(slotName, originalHistory);
+				throw;
+			}
+		}
+		private static void ApplyHistory(string slotName, string history){
+			var error = NativeMethods.SyncChatMessagesJson(slotName, history);
+			if(error == NativeMethods.StudError.Success) return;
+			var detail = error == NativeMethods.StudError.ContextFull ? Properties.Resources.Context_full : error.ToString();
+			throw new InvalidOperationException(Form1.CombineErrorDetails(detail, NativeMethods.GetLastError()));
+		}
 		internal static string BuildMessagesJson(IEnumerable<MessageSnapshot> messages){
 			var array = Json.ArrayBuilder();
 			if(messages == null) return array.ToJson();

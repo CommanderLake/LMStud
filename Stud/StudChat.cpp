@@ -1,10 +1,12 @@
 #include "StudInternal.h"
 #include "JSONCommon.h"
 #include <algorithm>
+#include <base64.hpp>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <json.h>
 #include <mtmd-helper.h>
 #include <new>
 using PromptMessage = Stud::PromptMessage;
@@ -270,9 +272,11 @@ static StudError ReplaceChatMessages(const char* slotName, std::vector<common_ch
 	lane.messageMedia = std::move(updatedMedia);
 	result = RetokenizeChat(slotName, true);
 	if(result == StudError::Success) return result;
+	auto errorMessage = Stud::Internal::LastErrorMessage();
 	lane.messages = std::move(originalMessages);
 	lane.messageMedia = std::move(originalMedia);
 	RetokenizeChat(slotName, true);
+	Stud::Internal::LastErrorMessage() = std::move(errorMessage);
 	return result;
 }
 namespace Stud::Internal{
@@ -662,6 +666,39 @@ StudError SyncChatMessagesJson(const char* slotName, const char* messagesJson){
 	const auto parseError = Stud::ParseChatMessagesJson(json, messages, media, Stud::Internal::LastErrorMessage());
 	if(parseError != StudError::Success) return parseError;
 	return ReplaceChatMessages(slotName, std::move(messages), std::move(media));
+}
+char* GetChatMessagesJson(const char* slotName){
+	auto& error = Stud::Internal::LastErrorMessage();
+	error.clear();
+	try{
+		const auto& lane = Stud::Internal::ActiveLane(slotName);
+		auto messages = common_json::array();
+		for(size_t i = 0; i < lane.messages.size(); ++i){
+			const auto& message = lane.messages[i];
+			auto json = message.to_json_oaicompat();
+			if(i < lane.messageMedia.size() && !lane.messageMedia[i].empty()){
+				const auto& media = lane.messageMedia[i];
+				auto content = common_json::array();
+				size_t imageIndex = 0;
+				for(const auto& part : message.content_parts){
+					if(part.type == "media_marker"){
+						const auto& image = media.at(imageIndex++);
+						const auto url = "data:image/unknown;base64," + base64::encode(reinterpret_cast<const char*>(image.data()), image.size());
+						content.push_back({{"type", "image_url"}, {"image_url", {{"url", url}}}});
+					} else content.push_back({{"type", part.type}, {"text", part.text}});
+				}
+				json["content"] = std::move(content);
+			}
+			messages.push_back(std::move(json));
+		}
+		const auto text = messages.dump_safe();
+		auto* output = static_cast<char*>(std::malloc(text.size() + 1));
+		if(output) std::memcpy(output, text.c_str(), text.size() + 1);
+		return output;
+	} catch(const std::exception& ex){
+		error = ex.what();
+		return nullptr;
+	}
 }
 char* GetContextAsText(const char* slotName){
 	const auto& session = GetModel(slotName)->session;

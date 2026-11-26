@@ -4,18 +4,23 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Text;
 using System.Windows.Forms;
 namespace LMStud{
 	internal sealed class MarkdownImageReference{
 		internal readonly string AltText;
 		internal readonly int Length;
 		internal readonly string Source;
+		internal readonly int SourceLength;
+		internal readonly int SourceStart;
 		internal readonly int Start;
-		internal MarkdownImageReference(string altText, string source, int start, int length){
+		internal MarkdownImageReference(string altText, string source, int start, int length, int sourceStart, int sourceLength){
 			AltText = altText ?? "";
 			Source = source ?? "";
 			Start = start;
 			Length = length;
+			SourceStart = sourceStart;
+			SourceLength = sourceLength;
 		}
 	}
 	internal static class MarkdownImages{
@@ -91,11 +96,15 @@ namespace LMStud{
 			var sourceStart = altEnd + 2;
 			var sourceEnd = FindClosingParenthesis(markdown, sourceStart, limit);
 			if(sourceEnd < 0) return false;
-			var source = markdown.Substring(sourceStart, sourceEnd - sourceStart).Trim();
+			while(sourceStart < sourceEnd && char.IsWhiteSpace(markdown[sourceStart])) sourceStart++;
+			var source = markdown.Substring(sourceStart, sourceEnd - sourceStart).TrimEnd();
 			var titleSeparator = FindTitleSeparator(source);
 			if(titleSeparator >= 0) source = source.Substring(0, titleSeparator).Trim();
-			if(source.Length >= 2 && source[0] == '<' && source[source.Length - 1] == '>') source = source.Substring(1, source.Length - 2);
-			image = new MarkdownImageReference(Unescape(markdown.Substring(altStart, altEnd - altStart)), Unescape(source), start, sourceEnd - start + 1);
+			if(source.Length >= 2 && source[0] == '<' && source[source.Length - 1] == '>'){
+				sourceStart++;
+				source = source.Substring(1, source.Length - 2);
+			}
+			image = new MarkdownImageReference(Unescape(markdown.Substring(altStart, altEnd - altStart)), Unescape(source), start, sourceEnd - start + 1, sourceStart, source.Length);
 			return true;
 		}
 		private static int FindTitleSeparator(string source){
@@ -151,15 +160,46 @@ namespace LMStud{
 		}
 		internal static string SaveClipboardImage(Image image){
 			if(image == null) throw new ArgumentNullException(nameof(image));
-			var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LM Stud", "Attachments");
-			Directory.CreateDirectory(directory);
-			var path = Path.Combine(directory, "clipboard-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff") + "-" + Guid.NewGuid().ToString("N").Substring(0, 8) + ".png");
+			var path = Path.Combine(GetAttachmentDirectory(), "clipboard-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff") + "-" + Guid.NewGuid().ToString("N").Substring(0, 8) + ".png");
 			image.Save(path, ImageFormat.Png);
 			return path;
 		}
+		private static string GetAttachmentDirectory(){
+			var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LM Stud", "Attachments");
+			Directory.CreateDirectory(directory);
+			return directory;
+		}
 		private static string EscapeAlt(string value){return (value ?? "").Replace("\\", "\\\\").Replace("]", "\\]");}
+		internal static string ReplaceImageSources(string markdown, Func<string, string> replaceSource){
+			StringBuilder updated = null;
+			var position = 0;
+			foreach(var image in Find(markdown)){
+				var replacement = replaceSource(image.Source);
+				if(replacement == null) continue;
+				if(updated == null) updated = new StringBuilder();
+				updated.Append(markdown, position, image.SourceStart - position).Append(replacement);
+				position = image.SourceStart + image.SourceLength;
+			}
+			return updated == null ? markdown : updated.Append(markdown, position, markdown.Length - position).ToString();
+		}
+		internal static string GetLocalImageDataUrl(string source){
+			if(source.StartsWith("data:", StringComparison.OrdinalIgnoreCase)) return null;
+			return TryGetVisionUrl(source, false, out var dataUrl, requireImageExtension: true) ? dataUrl : null;
+		}
+		internal static string RestoreEmbeddedImage(string source){
+			const string prefix = "data:image/";
+			if(!source.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || source.Length > MaximumImageBytes*2) return null;
+			var separator = source.IndexOf(';', prefix.Length);
+			if(separator < 0 || !TryReadLocalOrDataBytes(source, out var bytes) || bytes.Length == 0) return null;
+			var extension = source.Substring(prefix.Length, separator - prefix.Length).ToLowerInvariant();
+			if(!ImageExtensions.Contains("." + extension)) extension = "png";
+			var path = Path.Combine(GetAttachmentDirectory(), "restored-" + Guid.NewGuid().ToString("N") + "." + extension);
+			try{ File.WriteAllBytes(path, bytes); }
+			catch{ File.Delete(path); throw; }
+			return path;
+		}
 		internal static bool TryGetVisionUrl(string source, out string visionUrl){return TryGetVisionUrl(source, true, out visionUrl);}
-		private static bool TryGetVisionUrl(string source, bool allowRemote, out string visionUrl){
+		private static bool TryGetVisionUrl(string source, bool allowRemote, out string visionUrl, bool requireImageExtension = false){
 			visionUrl = null;
 			if(string.IsNullOrWhiteSpace(source)) return false;
 			source = source.Trim();
@@ -179,6 +219,7 @@ namespace LMStud{
 			}
 			try{
 				var path = Path.GetFullPath(source);
+				if(requireImageExtension && !IsImageFile(path)) return false;
 				if(!File.Exists(path)) return false;
 				var file = new FileInfo(path);
 				if(file.Length <= 0) return false;

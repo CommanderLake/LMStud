@@ -38,7 +38,9 @@ namespace LMStud{
 		}
 		internal MarkdownRenderControl MarkdownView => markdownView;
 		private void ChatMessage_Load(object sender, EventArgs e) {
-			if(_message.Length > 0) RenderText();
+			var hasReasoning = !string.IsNullOrEmpty(_think);
+			checkThink.Visible = hasReasoning;
+			if(_message.Length > 0 || hasReasoning) RenderText();
 		}
 		internal void SetRoleText(string role){labelRole.Text = role;}
 		private void RichTextMsgOnContentsResized(object sender, ContentsResizedEventArgs e){

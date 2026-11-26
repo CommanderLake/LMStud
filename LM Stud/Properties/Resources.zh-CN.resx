@@ -628,4 +628,16 @@ state 为 null</value>
 <data name="The_image_could_not_be_decoded_for_local_vision_input_" xml:space="preserve">
 	<value>无法解码图像以供本地视觉模型使用。</value>
 </data>
+<data name="Replace_Current_Chat" xml:space="preserve">
+	<value>要用已保存的聊天替换当前聊天和草稿吗？</value>
+</data>
+<data name="Chat_File_Busy" xml:space="preserve">
+	<value>请等待当前聊天或模型操作完成。</value>
+</data>
+<data name="Invalid_Chat_Archive" xml:space="preserve">
+	<value>此文件未包含有效的 LM Stud 聊天记录。</value>
+</data>
+<data name="Unsupported_Chat_Archive_Version" xml:space="preserve">
+	<value>此 LM Stud 聊天文件使用了不受支持的版本。</value>
+</data>
 </root>

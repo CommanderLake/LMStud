@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -122,6 +124,59 @@ retry:		try {_form.Invoke(new MethodInvoker(() => { var handle = _form.Handle; }
 			Assert.AreEqual("formatted", message.MarkdownView.PlainText);
 		}
 
+		[TestMethod]
+		public void ChatArchiveRestoresTranscriptDraftImagesAndNativeHistory(){
+			var imagePath = Path.Combine(_modelsDirectory, "archive-image.png");
+			var archivePath = Path.Combine(_modelsDirectory, "conversation.lmchat");
+			using(var image = new Bitmap(2, 2)) image.Save(imagePath);
+			var originalImage = File.ReadAllBytes(imagePath);
+			var attachment = "![sample](<" + new Uri(imagePath).AbsoluteUri + "> \"sample title\")";
+			var prompt = "First line\r\nDescribe this image. " + attachment;
+			var calls = new List<APIClient.ToolCall>{ new APIClient.ToolCall("call_1", "lookup", "{\"query\":\"image\"}") };
+			var slotName = NativeChat.GetActiveSlotName();
+			_form.Invoke(new MethodInvoker(() => {
+				_form.AddMessage(MessageRole.User, "", prompt);
+				var assistant = _form.AddMessage(MessageRole.Assistant, "Reasoning", "Tool call details", calls);
+				assistant.ApiContent = "";
+				assistant.SetRoleText("Test model");
+				assistant.checkThink.Checked = true;
+				_form.AddMessage(MessageRole.Tool, "", "Tool activity", nativeBacked: false);
+				_form.AddMessage(MessageRole.Tool, "", "Formatted tool result", toolCallId: "call_1").ApiContent = "{\"ok\":true}";
+				_form.textInput.Text = "Unsent draft\r\n" + attachment;
+				Assert.AreEqual(NativeMethods.StudError.Success, NativeChat.SyncMessages(slotName, NativeChat.CaptureMessages(_form.ChatMessages)));
+			}));
+			var nativeHistory = NativeChat.ReadHistory(slotName);
+			File.WriteAllText(archivePath, "Old archive");
+			_form.Invoke(new MethodInvoker(() => _form.ExportChatArchive(archivePath)));
+			WaitForActiveChatSlotIdle();
+			File.Delete(imagePath);
+			ResetConversation();
+
+			_form.Invoke(new MethodInvoker(() => _form.RestoreChatArchive(archivePath)));
+			WaitForActiveChatSlotIdle();
+			var restoredImage = (string)_form.Invoke(new Func<string>(() => new Uri(MarkdownImages.Find(_form.textInput.Text).Single().Source).LocalPath));
+			try{
+				_form.Invoke(new MethodInvoker(() => {
+					Assert.AreEqual(4, _form.ChatMessages.Count);
+					var restoredPrompt = _form.ChatMessages[0].Message;
+					StringAssert.StartsWith(restoredPrompt, "First line\r\nDescribe this image. ![sample](<file:///");
+					StringAssert.EndsWith(restoredPrompt, "> \"sample title\")");
+					Assert.AreEqual(restoredImage, new Uri(MarkdownImages.Find(restoredPrompt).Single().Source).LocalPath);
+					var assistant = _form.ChatMessages[1];
+					Assert.AreEqual("Test model", assistant.labelRole.Text);
+					Assert.AreEqual("Reasoning", assistant.MarkdownView.PlainText);
+					Assert.IsTrue(assistant.checkThink.Visible);
+					Assert.AreEqual("lookup", assistant.ApiToolCalls.Single().Name);
+					Assert.AreEqual("", assistant.ApiContent);
+					Assert.IsFalse(_form.ChatMessages[2].NativeBacked);
+					Assert.AreEqual("call_1", _form.ChatMessages[3].ApiToolCallId);
+					StringAssert.StartsWith(_form.textInput.Text, "Unsent draft\r\n![sample](<file:///");
+				}));
+				CollectionAssert.AreEqual(originalImage, File.ReadAllBytes(restoredImage));
+				Assert.AreEqual(nativeHistory, NativeChat.ReadHistory(slotName));
+			} finally{ File.Delete(restoredImage); }
+		}
+
 		private static void ResetConversation(){
 			_form.Invoke(new MethodInvoker(() => {
 				_form.textInput.Text = "";
@@ -147,11 +202,13 @@ retry:		try {_form.Invoke(new MethodInvoker(() => { var handle = _form.Handle; }
 		private static void WaitForActiveChatSlotIdle(){
 			var deadline = DateTime.UtcNow.AddSeconds(30);
 			while(DateTime.UtcNow < deadline){
-				var slotName = ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? "main";
-				var slotLock = ModelSlotManager.TryEnterSlot(slotName, 50);
-				if(slotLock != null){
-					slotLock.Dispose();
-					return;
+				if(!(bool)_form.Invoke(new Func<bool>(() => _form.ChatFileOperationActive))){
+					var slotName = ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? "main";
+					var slotLock = ModelSlotManager.TryEnterSlot(slotName, 50);
+					if(slotLock != null){
+						slotLock.Dispose();
+						return;
+					}
 				}
 				Thread.Sleep(10);
 			}

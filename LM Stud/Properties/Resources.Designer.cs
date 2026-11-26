@@ -23,6 +23,11 @@ namespace LMStud.Properties {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
+
+        internal static string Replace_Current_Chat => ResourceManager.GetString("Replace_Current_Chat", resourceCulture);
+        internal static string Chat_File_Busy => ResourceManager.GetString("Chat_File_Busy", resourceCulture);
+        internal static string Invalid_Chat_Archive => ResourceManager.GetString("Invalid_Chat_Archive", resourceCulture);
+        internal static string Unsupported_Chat_Archive_Version => ResourceManager.GetString("Unsupported_Chat_Archive_Version", resourceCulture);
         
         private static global::System.Resources.ResourceManager resourceMan;
         

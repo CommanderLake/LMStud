@@ -58,6 +58,7 @@ EXPORT StudError AddMessage(const char* slotName, Stud::MessageRole role, const 
 EXPORT StudError AddMessageJson(const char* slotName, Stud::MessageRole role, const char* think, const char* contentJson);
 EXPORT StudError SyncChatMessages(const char* slotName, const int* roles, const char** thinks, const char** messages, int count);
 EXPORT StudError SyncChatMessagesJson(const char* slotName, const char* messagesJson);
+EXPORT char* GetChatMessagesJson(const char* slotName);
 EXPORT StudError GenerateWithTools(const char* slotName, Stud::MessageRole role, const char* prompt, int nPredict, bool callback);
 EXPORT StudError GenerateWithToolsJson(const char* slotName, Stud::MessageRole role, const char* contentJson, int nPredict, bool callback);
 EXPORT StudError GenerateForAPI(const char* slotName, Stud::MessageRole role, const char* prompt, const char* toolsJson, int nPredict, bool callback, char** responseJson);

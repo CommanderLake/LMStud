@@ -360,9 +360,13 @@ namespace LMStud{
 				Content = content;
 			}
 		}
+		[System.Runtime.Serialization.DataContract]
 		internal sealed class ToolCall{
+			[System.Runtime.Serialization.DataMember(Name = "arguments")]
 			public string Arguments;
+			[System.Runtime.Serialization.DataMember(Name = "id")]
 			public string Id;
+			[System.Runtime.Serialization.DataMember(Name = "name")]
 			public string Name;
 			public ToolCall(string id, string name, string arguments){
 				Id = id;

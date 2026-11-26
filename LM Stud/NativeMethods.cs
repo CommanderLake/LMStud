@@ -165,6 +165,8 @@ namespace LMStud{
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError SyncChatMessagesJson([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, [MarshalAs(UnmanagedType.LPUTF8Str)] string messagesJson);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern IntPtr GetChatMessagesJson([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError GenerateWithTools([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string prompt, int nPredict, bool callback);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError GenerateWithToolsJson([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, MessageRole role, [MarshalAs(UnmanagedType.LPUTF8Str)] string contentJson, int nPredict, bool callback);

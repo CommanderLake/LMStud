@@ -250,7 +250,7 @@ namespace LMStud{
 		}
 		internal void CheckDialectic_CheckedChanged(object sender, EventArgs e){
 			if(checkDialectic.Checked){
-				if(!InitDialectic()){
+				if(!Generation.DialecticRelayEnabled && !InitDialectic()){
 					checkDialectic.Checked = false;
 					return;
 				}
