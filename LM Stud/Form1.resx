@@ -1311,6 +1311,9 @@
   <data name="checkSlotsEditLocalOverride.CheckAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleRight</value>
   </data>
+  <data name="checkSlotsEditLocalOverride.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
   <data name="checkSlotsEditLocalOverride.Location" type="System.Drawing.Point, System.Drawing">
     <value>235, 157</value>
   </data>
@@ -2875,7 +2878,7 @@
     <value>Name</value>
   </data>
   <data name="columnHeader5.Width" type="System.Int32, mscorlib">
-    <value>250</value>
+    <value>347</value>
   </data>
   <data name="columnHeader6.Text" xml:space="preserve">
     <value>Uploader</value>
@@ -2905,13 +2908,7 @@
     <value>Created</value>
   </data>
   <data name="columnHeader13.Width" type="System.Int32, mscorlib">
-    <value>120</value>
-  </data>
-  <data name="columnHeader14.Text" xml:space="preserve">
-    <value>Modified</value>
-  </data>
-  <data name="columnHeader14.Width" type="System.Int32, mscorlib">
-    <value>120</value>
+    <value>143</value>
   </data>
   <data name="listViewHugSearch.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
@@ -6875,12 +6872,6 @@ An empty path enables full filesystem access with absolute paths.</value>
     <value>columnHeader13</value>
   </data>
   <data name="&gt;&gt;columnHeader13.Type" xml:space="preserve">
-    <value>System.Windows.Forms.ColumnHeader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;columnHeader14.Name" xml:space="preserve">
-    <value>columnHeader14</value>
-  </data>
-  <data name="&gt;&gt;columnHeader14.Type" xml:space="preserve">
     <value>System.Windows.Forms.ColumnHeader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;columnHeader8.Name" xml:space="preserve">

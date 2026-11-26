@@ -36,7 +36,6 @@ namespace LMStud
 			this.components = new System.ComponentModel.Container();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-			this.panelChat = new LMStud.MyFlowLayoutPanel();
 			this.textInput = new System.Windows.Forms.TextBox();
 			this.splitContainer2 = new System.Windows.Forms.SplitContainer();
 			this.butExtract = new System.Windows.Forms.Button();
@@ -135,7 +134,6 @@ namespace LMStud
 			this.columnHeader11 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeader12 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeader13 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-			this.columnHeader14 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.listViewHugFiles = new System.Windows.Forms.ListView();
 			this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeader10 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -266,6 +264,7 @@ namespace LMStud
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
 			this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+			this.panelChat = new LMStud.MyFlowLayoutPanel();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -351,14 +350,6 @@ namespace LMStud
 			// splitContainer1.Panel2
 			// 
 			this.splitContainer1.Panel2.Controls.Add(this.textInput);
-			// 
-			// panelChat
-			// 
-			resources.ApplyResources(this.panelChat, "panelChat");
-			this.panelChat.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-			this.panelChat.CausesValidation = false;
-			this.panelChat.Name = "panelChat";
-			this.panelChat.Layout += new System.Windows.Forms.LayoutEventHandler(this.PanelChat_Layout);
 			// 
 			// textInput
 			// 
@@ -1137,8 +1128,7 @@ namespace LMStud
             this.columnHeader7,
             this.columnHeader11,
             this.columnHeader12,
-            this.columnHeader13,
-            this.columnHeader14});
+            this.columnHeader13});
 			resources.ApplyResources(this.listViewHugSearch, "listViewHugSearch");
 			this.listViewHugSearch.GridLines = true;
 			this.listViewHugSearch.HideSelection = false;
@@ -1171,10 +1161,6 @@ namespace LMStud
 			// columnHeader13
 			// 
 			resources.ApplyResources(this.columnHeader13, "columnHeader13");
-			// 
-			// columnHeader14
-			// 
-			resources.ApplyResources(this.columnHeader14, "columnHeader14");
 			// 
 			// listViewHugFiles
 			// 
@@ -2377,6 +2363,14 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.saveFileDialog1, "saveFileDialog1");
 			// 
+			// panelChat
+			// 
+			resources.ApplyResources(this.panelChat, "panelChat");
+			this.panelChat.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+			this.panelChat.CausesValidation = false;
+			this.panelChat.Name = "panelChat";
+			this.panelChat.Layout += new System.Windows.Forms.LayoutEventHandler(this.PanelChat_Layout);
+			// 
 			// Form1
 			// 
 			resources.ApplyResources(this, "$this");
@@ -2553,7 +2547,6 @@ namespace LMStud
 		private System.Windows.Forms.ColumnHeader columnHeader11;
 		private System.Windows.Forms.ColumnHeader columnHeader12;
 		private System.Windows.Forms.ColumnHeader columnHeader13;
-		private System.Windows.Forms.ColumnHeader columnHeader14;
 		private System.Windows.Forms.ProgressBar progressBar1;
 		private System.Windows.Forms.GroupBox groupCPUParamsBatch;
 		private System.Windows.Forms.NumericUpDown numThreadsBatch;

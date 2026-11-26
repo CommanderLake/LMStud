@@ -12,137 +12,109 @@ namespace LMStud{
 		Boolean
 	}
 	public class LVISorter : IComparer{
-		private static readonly NumberStyles NumberStyle = NumberStyles.Any;
-		private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
-		private readonly Dictionary<string, object> _parseCache;
+		private const int MaxCachedValues = 16384;
+		private const NumberStyles NumberStyle = NumberStyles.Any;
+
+		private readonly Dictionary<string, IComparable> _parseCache = new Dictionary<string, IComparable>(StringComparer.Ordinal);
 		private int _columnIndex;
+		private CultureInfo _culture = CultureInfo.InvariantCulture;
 		private SortDataType _dataType;
-		public LVISorter(){
-			_columnIndex = 0;
-			SortOrder = SortOrder.Ascending;
-			_dataType = SortDataType.String;
-			_parseCache = new Dictionary<string, object>(StringComparer.Ordinal);
-		}
+		private SortOrder _sortOrder;
+		public LVISorter() : this(0, SortDataType.String){}
 		public LVISorter(int columnIndex, SortDataType dataType, SortOrder sortOrder = SortOrder.Ascending){
-			_columnIndex = columnIndex;
+			ColumnIndex = columnIndex;
+			DataType = dataType;
 			SortOrder = sortOrder;
-			_dataType = dataType;
-			_parseCache = new Dictionary<string, object>(StringComparer.Ordinal);
 		}
 		public int ColumnIndex{
 			get => _columnIndex;
 			set{
-				if(_columnIndex != value){
-					_columnIndex = value;
-					_parseCache.Clear();
-				}
+				if(value < 0) throw new ArgumentOutOfRangeException(nameof(value));
+				if(_columnIndex == value) return;
+				_columnIndex = value;
+				ClearCache();
 			}
 		}
-		public SortOrder SortOrder{get; set;}
+		public SortOrder SortOrder{
+			get => _sortOrder;
+			set{
+				if(value != SortOrder.None && value != SortOrder.Ascending && value != SortOrder.Descending) throw new ArgumentOutOfRangeException(nameof(value));
+				_sortOrder = value;
+			}
+		}
 		public SortDataType DataType{
 			get => _dataType;
 			set{
-				if(_dataType != value){
-					_dataType = value;
-					_parseCache.Clear();
-				}
+				if(!Enum.IsDefined(typeof(SortDataType), value)) throw new ArgumentOutOfRangeException(nameof(value));
+				if(_dataType == value) return;
+				_dataType = value;
+				ClearCache();
+			}
+		}
+
+		public CultureInfo Culture{
+			get => _culture;
+			set{
+				_culture = CultureInfo.ReadOnly(value ?? throw new ArgumentNullException(nameof(value)));
+				ClearCache();
 			}
 		}
 		public int Compare(object x, object y){
-			if(!(x is ListViewItem itemX) || !(y is ListViewItem itemY)) return 0;
-			if(_columnIndex >= itemX.SubItems.Count || _columnIndex >= itemY.SubItems.Count) return 0;
-			var textX = itemX.SubItems[_columnIndex].Text;
-			var textY = itemY.SubItems[_columnIndex].Text;
-			var result = CompareValues(textX, textY);
-			return SortOrder == SortOrder.Ascending ? result : -result;
+			if(SortOrder == SortOrder.None || ReferenceEquals(x, y)) return 0;
+			if(x != null && !(x is ListViewItem)) throw new ArgumentException("Expected a ListViewItem.", nameof(x));
+			if(y != null && !(y is ListViewItem)) throw new ArgumentException("Expected a ListViewItem.", nameof(y));
+			var itemX = (ListViewItem)x;
+			var itemY = (ListViewItem)y;
+
+			return SortOrder == SortOrder.Descending ? CompareValues(GetText(itemY), GetText(itemX)) : CompareValues(GetText(itemX), GetText(itemY));
 		}
-		private int CompareValues(string textX, string textY){
-			if(string.IsNullOrEmpty(textX) && string.IsNullOrEmpty(textY)) return 0;
-			if(string.IsNullOrEmpty(textX)) return -1;
-			if(string.IsNullOrEmpty(textY)) return 1;
-			switch(_dataType){
-				case SortDataType.String: return string.Compare(textX, textY, StringComparison.OrdinalIgnoreCase);
-				case SortDataType.Integer: return CompareIntegers(textX, textY);
-				case SortDataType.Double: return CompareDoubles(textX, textY);
-				case SortDataType.DateTime: return CompareDateTimes(textX, textY);
-				case SortDataType.Boolean: return CompareBooleans(textX, textY);
-				default: return string.Compare(textX, textY, StringComparison.OrdinalIgnoreCase);
+		private string GetText(ListViewItem item){return item != null && ColumnIndex < item.SubItems.Count ? item.SubItems[ColumnIndex].Text : string.Empty;}
+		private int CompareValues(string left, string right){
+			if(string.Equals(left, right, StringComparison.Ordinal)) return 0;
+
+			var leftBlank = string.IsNullOrWhiteSpace(left);
+			var rightBlank = string.IsNullOrWhiteSpace(right);
+			if(leftBlank || rightBlank) return leftBlank == rightBlank ? 0 : leftBlank ? -1 : 1;
+			if(DataType == SortDataType.String) return StringComparer.OrdinalIgnoreCase.Compare(left, right);
+			var leftValue = GetParsedValue(left);
+			var rightValue = GetParsedValue(right);
+			if(leftValue == null || rightValue == null) return leftValue == rightValue ? 0 : leftValue == null ? -1 : 1;
+			return leftValue.CompareTo(rightValue);
+		}
+		private IComparable GetParsedValue(string text){
+			if(_parseCache.TryGetValue(text, out var cached)) return cached;
+			var parsed = ParseValue(text);
+
+			if(_parseCache.Count < MaxCachedValues) _parseCache.Add(text, parsed);
+			return parsed;
+		}
+		private IComparable ParseValue(string text){
+			switch(DataType){
+				case SortDataType.Integer:
+					if(long.TryParse(text, NumberStyle, Culture, out var integer)) return integer;
+					break;
+				case SortDataType.Double:
+					if(double.TryParse(text, NumberStyle, Culture, out var number)) return number;
+					break;
+				case SortDataType.DateTime:
+					if(DateTime.TryParse(text, Culture, DateTimeStyles.None, out var date)) return date;
+					break;
+				case SortDataType.Boolean:
+					if(bool.TryParse(text, out var boolean)) return boolean;
+					switch(text.Trim().ToLowerInvariant()){
+						case "yes":
+						case "y":
+						case "1":
+						case "on": return true;
+						case "no":
+						case "n":
+						case "0":
+						case "off": return false;
+					}
+					break;
 			}
-		}
-		private int CompareIntegers(string textX, string textY){
-			var valueX = GetCachedInteger(textX);
-			var valueY = GetCachedInteger(textY);
-			if(!valueX.HasValue && !valueY.HasValue) return 0;
-			if(!valueX.HasValue) return -1;
-			if(!valueY.HasValue) return 1;
-			return valueX.Value.CompareTo(valueY.Value);
-		}
-		private int CompareDoubles(string textX, string textY){
-			var valueX = GetCachedDouble(textX);
-			var valueY = GetCachedDouble(textY);
-			if(!valueX.HasValue && !valueY.HasValue) return 0;
-			if(!valueX.HasValue) return -1;
-			if(!valueY.HasValue) return 1;
-			return valueX.Value.CompareTo(valueY.Value);
-		}
-		private int CompareDateTimes(string textX, string textY){
-			var valueX = GetCachedDateTime(textX);
-			var valueY = GetCachedDateTime(textY);
-			if(!valueX.HasValue && !valueY.HasValue) return 0;
-			if(!valueX.HasValue) return -1;
-			if(!valueY.HasValue) return 1;
-			return valueX.Value.CompareTo(valueY.Value);
-		}
-		private int CompareBooleans(string textX, string textY){
-			var valueX = GetCachedBoolean(textX);
-			var valueY = GetCachedBoolean(textY);
-			if(!valueX.HasValue && !valueY.HasValue) return 0;
-			if(!valueX.HasValue) return -1;
-			if(!valueY.HasValue) return 1;
-			return valueX.Value.CompareTo(valueY.Value);
+			return null;
 		}
 		public void ClearCache(){_parseCache.Clear();}
-		#region Cached Parsing Methods
-		private int? GetCachedInteger(string text){
-			if(_parseCache.TryGetValue(text, out var cached)) return cached as int?;
-			var result = int.TryParse(text, NumberStyle, Culture, out var value) ? (int?)value : null;
-			_parseCache[text] = result;
-			return result;
-		}
-		private double? GetCachedDouble(string text){
-			if(_parseCache.TryGetValue(text, out var cached)) return cached as double?;
-			var result = double.TryParse(text, NumberStyle, Culture, out var value) ? (double?)value : null;
-			_parseCache[text] = result;
-			return result;
-		}
-		private DateTime? GetCachedDateTime(string text){
-			if(_parseCache.TryGetValue(text, out var cached)) return cached as DateTime?;
-			var result = DateTime.TryParse(text, Culture, DateTimeStyles.None, out var value) ? (DateTime?)value : null;
-			_parseCache[text] = result;
-			return result;
-		}
-		private bool? GetCachedBoolean(string text){
-			if(_parseCache.TryGetValue(text, out var cached)) return cached as bool?;
-			bool? result = null;
-			if(bool.TryParse(text, out var value)) result = value;
-			else
-				switch(text.ToLowerInvariant()){
-					case "yes":
-					case "y":
-					case "1":
-					case "on":
-						result = true;
-						break;
-					case "no":
-					case "n":
-					case "0":
-					case "off":
-						result = false;
-						break;
-				}
-			_parseCache[text] = result;
-			return result;
-		}
-		#endregion
 	}
 }

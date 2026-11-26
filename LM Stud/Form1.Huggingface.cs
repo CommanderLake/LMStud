@@ -81,8 +81,7 @@ namespace LMStud{
 						var parts = id.Split('/');
 						var uploader = parts.Length > 1 ? parts[0] : "";
 						var modelName = parts.Length > 1 ? parts[1] : id;
-						items.Add(new ListViewItem(new[]{ modelName, uploader, modelToken.GetString("likes"), modelToken.GetString("downloads"), modelToken.GetString("trendingScore"),
-							modelToken.GetString("createdAt"), modelToken.GetString("lastModified") }));
+						items.Add(new ListViewItem(new[]{ modelName, uploader, modelToken.GetString("likes"), modelToken.GetString("downloads"), modelToken.GetString("trendingScore"), modelToken.GetString("createdAt") }));
 					}
 					if(items.Count > 0) Invoke(new MethodInvoker(() => {listViewHugSearch.Items.AddRange(items.ToArray());}));
 				} catch(Exception ex){

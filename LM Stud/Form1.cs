@@ -94,7 +94,7 @@ namespace LMStud{
 				SortDataType.String,// Uploader
 				SortDataType.Integer,// Likes
 				SortDataType.Integer,// Downloads
-				SortDataType.Integer,// Trending
+				SortDataType.Double,// Trending
 				SortDataType.DateTime,// Created
 				SortDataType.DateTime// Modified
 			};
