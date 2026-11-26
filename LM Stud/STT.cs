@@ -1,8 +1,8 @@
 ﻿using System.Threading;
 using System.Windows.Forms;
 using LMStud.Properties;
-namespace LMStud {
-	internal static class STT {
+namespace LMStud{
+	internal static class STT{
 		internal static Form1 MainForm;
 		private static int _restartPending;
 		internal static void RequestStart(bool showErrorOnFailure){

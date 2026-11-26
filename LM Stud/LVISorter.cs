@@ -14,7 +14,6 @@ namespace LMStud{
 	public class LVISorter : IComparer{
 		private const int MaxCachedValues = 16384;
 		private const NumberStyles NumberStyle = NumberStyles.Any;
-
 		private readonly Dictionary<string, IComparable> _parseCache = new Dictionary<string, IComparable>(StringComparer.Ordinal);
 		private int _columnIndex;
 		private CultureInfo _culture = CultureInfo.InvariantCulture;
@@ -51,7 +50,6 @@ namespace LMStud{
 				ClearCache();
 			}
 		}
-
 		public CultureInfo Culture{
 			get => _culture;
 			set{
@@ -65,13 +63,11 @@ namespace LMStud{
 			if(y != null && !(y is ListViewItem)) throw new ArgumentException("Expected a ListViewItem.", nameof(y));
 			var itemX = (ListViewItem)x;
 			var itemY = (ListViewItem)y;
-
 			return SortOrder == SortOrder.Descending ? CompareValues(GetText(itemY), GetText(itemX)) : CompareValues(GetText(itemX), GetText(itemY));
 		}
 		private string GetText(ListViewItem item){return item != null && ColumnIndex < item.SubItems.Count ? item.SubItems[ColumnIndex].Text : string.Empty;}
 		private int CompareValues(string left, string right){
 			if(string.Equals(left, right, StringComparison.Ordinal)) return 0;
-
 			var leftBlank = string.IsNullOrWhiteSpace(left);
 			var rightBlank = string.IsNullOrWhiteSpace(right);
 			if(leftBlank || rightBlank) return leftBlank == rightBlank ? 0 : leftBlank ? -1 : 1;
@@ -84,7 +80,6 @@ namespace LMStud{
 		private IComparable GetParsedValue(string text){
 			if(_parseCache.TryGetValue(text, out var cached)) return cached;
 			var parsed = ParseValue(text);
-
 			if(_parseCache.Count < MaxCachedValues) _parseCache.Add(text, parsed);
 			return parsed;
 		}

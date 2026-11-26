@@ -7,20 +7,14 @@ namespace LMStud.Parsers{
 		internal static JsonNode SanitizeOutputItems(JsonNode output){
 			if(!output.IsArray) return JsonNode.Missing;
 			var sanitized = Json.ArrayBuilder();
-			foreach(var item in output){
-				sanitized.Add(RemoveIdFields(item));
-			}
+			foreach(var item in output) sanitized.Add(RemoveIdFields(item));
 			return sanitized.ToNode();
 		}
-		internal static int? ExtractTotalTokens(JsonNode root){
-			return root["usage"]["total_tokens"].AsInt();
-		}
+		internal static int? ExtractTotalTokens(JsonNode root){return root["usage"]["total_tokens"].AsInt();}
 		internal static void AppendIfNotBlank(StringBuilder sb, string text){
 			if(!string.IsNullOrWhiteSpace(text)) sb.Append(text);
 		}
-		internal static string ToStringOrNull(StringBuilder sb){
-			return sb.Length > 0 ? sb.ToString() : null;
-		}
+		internal static string ToStringOrNull(StringBuilder sb){return sb.Length > 0 ? sb.ToString() : null;}
 		internal static bool HasResultContent(string content, string reasoning, List<APIClient.ToolCall> toolCalls){
 			return !string.IsNullOrWhiteSpace(content) || !string.IsNullOrWhiteSpace(reasoning) || (toolCalls != null && toolCalls.Count > 0);
 		}
@@ -32,8 +26,7 @@ namespace LMStud.Parsers{
 				foreach(var item in contentToken){
 					if(item.IsNull) continue;
 					string text = null;
-					if(item.IsString){ text = item.AsString(); }
-					else if(item.IsObject){
+					if(item.IsString){ text = item.AsString(); } else if(item.IsObject){
 						var obj = item;
 						if(IsNonTextContentItem(obj)) continue;
 						text = obj.GetString("text") ?? obj.GetString("content");
@@ -70,8 +63,9 @@ namespace LMStud.Parsers{
 			var sb = new StringBuilder();
 			foreach(var item in contentToken.Where(item => item.IsObject)){
 				var type = item.GetString("type");
-				if(!string.Equals(type, "reasoning", StringComparison.OrdinalIgnoreCase) && !string.Equals(type, "thinking", StringComparison.OrdinalIgnoreCase) &&
-					!string.Equals(type, "redacted_thinking", StringComparison.OrdinalIgnoreCase)) continue;
+				if(!string.Equals(type, "reasoning", StringComparison.OrdinalIgnoreCase)
+					&& !string.Equals(type, "thinking", StringComparison.OrdinalIgnoreCase)
+					&& !string.Equals(type, "redacted_thinking", StringComparison.OrdinalIgnoreCase)) continue;
 				var reasoningText = item.GetString("text") ?? item.GetString("content") ?? item.GetString("summary");
 				if(!string.IsNullOrWhiteSpace(reasoningText)) sb.Append(reasoningText);
 			}
@@ -94,8 +88,9 @@ namespace LMStud.Parsers{
 			var toolCalls = new List<APIClient.ToolCall>();
 			foreach(var item in contentToken.Where(item => item.IsObject)){
 				var type = item.GetString("type");
-				if(!string.Equals(type, "tool_call", StringComparison.OrdinalIgnoreCase) && !string.Equals(type, "function_call", StringComparison.OrdinalIgnoreCase) &&
-					!string.Equals(type, "tool_use", StringComparison.OrdinalIgnoreCase)) continue;
+				if(!string.Equals(type, "tool_call", StringComparison.OrdinalIgnoreCase)
+					&& !string.Equals(type, "function_call", StringComparison.OrdinalIgnoreCase)
+					&& !string.Equals(type, "tool_use", StringComparison.OrdinalIgnoreCase)) continue;
 				var toolCall = ParseToolCallItem(item);
 				if(toolCall != null) toolCalls.Add(toolCall);
 			}
@@ -131,12 +126,12 @@ namespace LMStud.Parsers{
 		}
 		private static bool IsNonTextContentItem(JsonNode obj){
 			var type = obj.GetString("type");
-			return string.Equals(type, "reasoning", StringComparison.OrdinalIgnoreCase) ||
-				string.Equals(type, "thinking", StringComparison.OrdinalIgnoreCase) ||
-				string.Equals(type, "redacted_thinking", StringComparison.OrdinalIgnoreCase) ||
-				string.Equals(type, "tool_call", StringComparison.OrdinalIgnoreCase) ||
-				string.Equals(type, "function_call", StringComparison.OrdinalIgnoreCase) ||
-				string.Equals(type, "tool_use", StringComparison.OrdinalIgnoreCase);
+			return string.Equals(type, "reasoning", StringComparison.OrdinalIgnoreCase)
+					|| string.Equals(type, "thinking", StringComparison.OrdinalIgnoreCase)
+					|| string.Equals(type, "redacted_thinking", StringComparison.OrdinalIgnoreCase)
+					|| string.Equals(type, "tool_call", StringComparison.OrdinalIgnoreCase)
+					|| string.Equals(type, "function_call", StringComparison.OrdinalIgnoreCase)
+					|| string.Equals(type, "tool_use", StringComparison.OrdinalIgnoreCase);
 		}
 	}
 }

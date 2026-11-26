@@ -1,9 +1,8 @@
-﻿using System;
-using System.Speech.Synthesis;
+﻿using System.Speech.Synthesis;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-namespace LMStud {
+namespace LMStud{
 	internal static class TTS{
 		internal static Form1 MainForm;
 		private static readonly SpeechSynthesizer SS = new SpeechSynthesizer();

@@ -77,7 +77,7 @@ namespace LMStud{
 			if(string.IsNullOrWhiteSpace(resetScope)) resetScope = hasSession ? "session" : "global";
 			if(string.Equals(resetScope, "session", StringComparison.OrdinalIgnoreCase)){
 				if(hasSession) Sessions.Remove(sessionId);
-			}else{
+			} else{
 				Sessions.Clear();
 				NativeMethods.CloseCommandPrompt();
 			}
@@ -149,24 +149,37 @@ namespace LMStud{
 					}
 					var modeSwitch = !string.IsNullOrEmpty(session.LastBackend) && session.LastBackend != backendKey;
 					toolsJson = ResolveClientToolsJsonForBackend(session, request, modeSwitch);
-					if(!Generation.GenerateForApiServer(slot.Name, modeSwitch ? null : session.State, modeSwitch ? IntPtr.Zero : session.NativeChatState, historyJson, ToNativeRole(latestInput.Role), latestInput.Content ?? "", toolsJson, out result, out newState, out newChatState, out tokens, promptContentJson: latestInput.ContentJson)){
+					if(!Generation.GenerateForApiServer(slot.Name,
+							modeSwitch ? null : session.State,
+							modeSwitch ? IntPtr.Zero : session.NativeChatState,
+							historyJson,
+							ToNativeRole(latestInput.Role),
+							latestInput.Content ?? "",
+							toolsJson,
+							out result,
+							out newState,
+							out newChatState,
+							out tokens,
+							promptContentJson: latestInput.ContentJson)){
 						WriteError(ctx, 409, "generation_busy", "The local backend is busy or could not generate a response.");
 						return;
 					}
 					var model = ModelSlotManager.GetServerModelId(slot);
 					resp = outputChatCompletions ? BuildChatCompletionsPayload(result, model, session.Id) : BuildResponsePayload(result, model, session.Id);
-					var sessionActive = Sessions.Apply(session, s => {
-						ResetSessionForModeSwitchCore(s, backendKey);
-						s.LastBackend = backendKey;
-						if(request.Tools.Exists) s.ToolsJson = toolsJson;
-						if(historyMessages != null && historyMessages.Count > 0) s.Messages = CloneMessages(historyMessages);
-						s.Messages.Add(CloneMessage(latestInput));
-						s.Messages.Add(new Message{ Role = "assistant", Content = result.Content, ToolCalls = result.ToolCalls });
-						s.State = newState;
-						s.SetNativeChatState(newChatState);
-						newChatState = IntPtr.Zero;
-						s.TokenCount = tokens;
-					}, () => resp.GetString("id"));
+					var sessionActive = Sessions.Apply(session,
+						s => {
+							ResetSessionForModeSwitchCore(s, backendKey);
+							s.LastBackend = backendKey;
+							if(request.Tools.Exists) s.ToolsJson = toolsJson;
+							if(historyMessages != null && historyMessages.Count > 0) s.Messages = CloneMessages(historyMessages);
+							s.Messages.Add(CloneMessage(latestInput));
+							s.Messages.Add(new Message{ Role = "assistant", Content = result.Content, ToolCalls = result.ToolCalls });
+							s.State = newState;
+							s.SetNativeChatState(newChatState);
+							newChatState = IntPtr.Zero;
+							s.TokenCount = tokens;
+						},
+						() => resp.GetString("id"));
 					if(!sessionActive){
 						WriteError(ctx, 409, "session_reset", "The API session was reset before the request could be stored.");
 						return;
@@ -179,7 +192,13 @@ namespace LMStud{
 				slotLock?.Dispose();
 			}
 		}
-		private void HandleRemoteChat(HttpListenerContext ctx, ChatRequest request, List<Message> incomingMessages, JsonArrayBuilder inputItems, bool store, bool outputChatCompletions, ModelSlot slot){
+		private void HandleRemoteChat(HttpListenerContext ctx,
+			ChatRequest request,
+			List<Message> incomingMessages,
+			JsonArrayBuilder inputItems,
+			bool store,
+			bool outputChatCompletions,
+			ModelSlot slot){
 			var session = Sessions.Get(ResolveSessionId(ctx, request));
 			ctx.Response.AddHeader("X-Session-Id", session.Id);
 			APIClient client = null;
@@ -211,26 +230,26 @@ namespace LMStud{
 					APIClient.AppendOutputItems(persisted, result);
 					var model = ModelSlotManager.GetServerModelId(slot);
 					var resp = outputChatCompletions ? BuildChatCompletionsPayload(result, model, session.Id) : BuildResponsePayload(result, model, session.Id);
-					if(!Sessions.Apply(session, s => {
-						ResetSessionForModeSwitchCore(s, backendKey);
-						if(request.Tools.Exists) s.ToolsJson = toolsJson;
-						foreach(var deltaMessage in incomingDelta){
-							var parsed = ParseInputItemToMessage(deltaMessage);
-							if(parsed != null) s.Messages.Add(parsed);
-						}
-						s.Messages.Add(new Message{ Role = "assistant", Content = result.Content, ToolCalls = result.ToolCalls });
-						s.State = null;
-						s.TokenCount = result.TotalTokens ?? 0;
-						s.LastBackend = backendKey;
-					}, () => resp.GetString("id"))){
+					if(!Sessions.Apply(session,
+							s => {
+								ResetSessionForModeSwitchCore(s, backendKey);
+								if(request.Tools.Exists) s.ToolsJson = toolsJson;
+								foreach(var deltaMessage in incomingDelta){
+									var parsed = ParseInputItemToMessage(deltaMessage);
+									if(parsed != null) s.Messages.Add(parsed);
+								}
+								s.Messages.Add(new Message{ Role = "assistant", Content = result.Content, ToolCalls = result.ToolCalls });
+								s.State = null;
+								s.TokenCount = result.TotalTokens ?? 0;
+								s.LastBackend = backendKey;
+							},
+							() => resp.GetString("id"))){
 						WriteError(ctx, 409, "session_reset", "The API session was reset before the response could be stored.");
 						return;
 					}
 					WriteJson(ctx, resp);
 				}
-			} catch(Exception ex){
-				WriteError(ctx, 502, "upstream_error", ex.Message);
-			} finally{
+			} catch(Exception ex){ WriteError(ctx, 502, "upstream_error", ex.Message); } finally{
 				if(!store) Sessions.Remove(session.Id);
 				slotLock?.Dispose();
 				client?.Dispose();
@@ -264,8 +283,13 @@ namespace LMStud{
 		private static JsonNode BuildResponsePayload(APIClient.ChatCompletionResult result, string model, string sessionId){
 			var createdAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 			var output = result != null && result.OutputItems.IsArray && result.OutputItems.Count > 0 ? result.OutputItems : BuildResponseOutputItems(result?.Content, result?.ToolCalls);
-			return Json.Object(Json.P("id", "resp_" + Guid.NewGuid().ToString("N")), Json.P("object", "response"), Json.P("created_at", createdAt), Json.P("status", "completed"),
-				Json.P("model", model), Json.P("session_id", sessionId), Json.P("output", output));
+			return Json.Object(Json.P("id", "resp_" + Guid.NewGuid().ToString("N")),
+				Json.P("object", "response"),
+				Json.P("created_at", createdAt),
+				Json.P("status", "completed"),
+				Json.P("model", model),
+				Json.P("session_id", sessionId),
+				Json.P("output", output));
 		}
 		private static JsonNode BuildChatCompletionsPayload(APIClient.ChatCompletionResult result, string model, string sessionId){
 			var createdAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -276,20 +300,27 @@ namespace LMStud{
 				message["tool_calls"] = toolCalls;
 				finishReason = "tool_calls";
 			}
-			return Json.Object(Json.P("id", "chatcmpl_" + Guid.NewGuid().ToString("N")), Json.P("object", "chat.completion"), Json.P("created", createdAt), Json.P("model", model),
+			return Json.Object(Json.P("id", "chatcmpl_" + Guid.NewGuid().ToString("N")),
+				Json.P("object", "chat.completion"),
+				Json.P("created", createdAt),
+				Json.P("model", model),
 				Json.P("session_id", sessionId),
 				Json.P("choices", Json.Array(Json.Object(Json.P("index", 0), Json.P("message", message), Json.P("finish_reason", finishReason)))));
 		}
 		private static JsonNode BuildResponseOutputItems(string content, List<APIClient.ToolCall> toolCalls){
 			var output = Json.ArrayBuilder();
-			if(!string.IsNullOrWhiteSpace(content) || toolCalls == null || toolCalls.Count == 0){
-				output.Add(Json.Object(Json.P("type", "message"), Json.P("status", "completed"), Json.P("role", "assistant"),
+			if(!string.IsNullOrWhiteSpace(content) || toolCalls == null || toolCalls.Count == 0)
+				output.Add(Json.Object(Json.P("type", "message"),
+					Json.P("status", "completed"),
+					Json.P("role", "assistant"),
 					Json.P("content", Json.Array(Json.Object(Json.P("type", "output_text"), Json.P("text", content ?? ""))))));
-			}
 			if(toolCalls != null)
-				foreach(var toolCall in toolCalls.Where(call => call != null && !string.IsNullOrWhiteSpace(call.Id) && !string.IsNullOrWhiteSpace(call.Name))){
-					output.Add(Json.Object(Json.P("type", "function_call"), Json.P("status", "completed"), Json.P("call_id", toolCall.Id), Json.P("name", toolCall.Name), Json.P("arguments", toolCall.Arguments ?? "")));
-				}
+				foreach(var toolCall in toolCalls.Where(call => call != null && !string.IsNullOrWhiteSpace(call.Id) && !string.IsNullOrWhiteSpace(call.Name)))
+					output.Add(Json.Object(Json.P("type", "function_call"),
+						Json.P("status", "completed"),
+						Json.P("call_id", toolCall.Id),
+						Json.P("name", toolCall.Name),
+						Json.P("arguments", toolCall.Arguments ?? "")));
 			return output.ToNode();
 		}
 		private static JsonArrayBuilder BuildInputItems(ChatRequest request){
@@ -325,7 +356,10 @@ namespace LMStud{
 			if(message == null) return null;
 			var toolCalls = GetToolCalls(message);
 			return new Message{
-				Role = message.Role, Content = message.Content, ContentJson = message.ContentJson, ToolCallId = message.ToolCallId,
+				Role = message.Role,
+				Content = message.Content,
+				ContentJson = message.ContentJson,
+				ToolCallId = message.ToolCallId,
 				ToolCalls = toolCalls == null ? null : new List<APIClient.ToolCall>(toolCalls)
 			};
 		}
@@ -350,12 +384,11 @@ namespace LMStud{
 				var toolCalls = GetToolCalls(message);
 				var hasToolCalls = toolCalls != null && toolCalls.Count > 0;
 				if(string.IsNullOrWhiteSpace(message.Content) && message.ContentJson == null && !hasToolCalls) continue;
-				if(string.Equals(message.Role, "tool", StringComparison.OrdinalIgnoreCase)){
+				if(string.Equals(message.Role, "tool", StringComparison.OrdinalIgnoreCase))
 					if(!string.IsNullOrWhiteSpace(message.ToolCallId)){
 						history.Add(Json.Object(Json.P("type", "function_call_output"), Json.P("call_id", message.ToolCallId), Json.P("output", message.Content ?? "")));
 						continue;
 					}
-				}
 				if(!hasToolCalls || !string.IsNullOrWhiteSpace(message.Content) || message.ContentJson != null)
 					history.Add(Json.Object(Json.P("role", message.Role), Json.P("content", message.ContentJson == null ? Json.String(message.Content ?? "") : Json.Parse(message.ContentJson))));
 				if(hasToolCalls)
@@ -366,7 +399,8 @@ namespace LMStud{
 		}
 		private static JsonArrayBuilder BuildIncomingDelta(List<Message> incomingMessages, JsonArrayBuilder inputItems){
 			if(incomingMessages != null && incomingMessages.Count > 0){
-				var last = incomingMessages.LastOrDefault(m => !string.IsNullOrWhiteSpace(m?.Role) && (m.Content != null || m.ContentJson != null || (GetToolCalls(m) != null && GetToolCalls(m).Count > 0)));
+				var last = incomingMessages.LastOrDefault(m =>
+					!string.IsNullOrWhiteSpace(m?.Role) && (m.Content != null || m.ContentJson != null || (GetToolCalls(m) != null && GetToolCalls(m).Count > 0)));
 				if(last == null) return null;
 				if(last.ContentJson != null){
 					var single = Json.ArrayBuilder();
@@ -374,8 +408,7 @@ namespace LMStud{
 					return single;
 				}
 				var apiMessage = new APIClient.ChatMessage(last.Role, last.Content ?? ""){ ToolCallId = last.ToolCallId, ToolCalls = GetToolCalls(last) };
-				if(string.Equals(apiMessage.Role, "tool", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(apiMessage.ToolCallId))
-				{
+				if(string.Equals(apiMessage.Role, "tool", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(apiMessage.ToolCallId)){
 					var single = Json.ArrayBuilder();
 					single.Add(Json.Object(Json.P("role", apiMessage.Role), Json.P("content", apiMessage.Content ?? "")));
 					return single;
@@ -389,14 +422,13 @@ namespace LMStud{
 		}
 		private static List<Message> ExtractHistoryAndLatestInput(List<Message> messages, JsonArrayBuilder inputItems, out Message latest){
 			latest = null;
-			if(messages != null && messages.Count > 0){
+			if(messages != null && messages.Count > 0)
 				for(var i = messages.Count - 1; i >= 0; i--){
 					var candidate = messages[i];
 					if(string.IsNullOrWhiteSpace(candidate?.Role) || (candidate.Content == null && candidate.ContentJson == null)) continue;
 					latest = CloneMessage(candidate);
 					return CloneMessages(messages.Take(i).Where(HasMessagePayload));
 				}
-			}
 			latest = ExtractLatestInputMessage(inputItems);
 			return new List<Message>();
 		}
@@ -480,8 +512,7 @@ namespace LMStud{
 			if(input.IsNull) return null;
 			if(input.IsString) return new List<Message>{ new Message{ Role = "user", Content = input.AsString() } };
 			JsonArrayBuilder inputItems = null;
-			if(input.IsArray) inputItems = NormalizeInputItems(input);
-			else if(input.IsObject){
+			if(input.IsArray){ inputItems = NormalizeInputItems(input); } else if(input.IsObject){
 				inputItems = Json.ArrayBuilder();
 				inputItems.Add(input);
 			}
@@ -558,9 +589,9 @@ namespace LMStud{
 			public string Instructions;
 			public List<Message> Messages;
 			public string Model;
+			public string PreviousResponseId;
 			public string ResetScope;
 			public string SessionId;
-			public string PreviousResponseId;
 			public bool? Store;
 			public JsonNode? ToolChoice;
 			public JsonNode Tools;

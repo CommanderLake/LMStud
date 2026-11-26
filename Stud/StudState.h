@@ -65,9 +65,7 @@ namespace Stud{
 	struct StudSharedModel{
 		llama_model* llModel = nullptr;
 		std::string cacheKey;
-		~StudSharedModel(){
-			if(llModel) llama_model_free(llModel);
-		}
+		~StudSharedModel(){ if(llModel) llama_model_free(llModel); }
 	};
 	struct StudModel{
 		llama_model* llModel = nullptr;

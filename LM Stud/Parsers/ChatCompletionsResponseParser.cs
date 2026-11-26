@@ -8,7 +8,8 @@ namespace LMStud.Parsers{
 			var message = choices[0]["message"];
 			if(!message.IsObject) return false;
 			var messageContent = APIResponseParserCommon.ExtractContentText(message["content"]);
-			var reasoning = message.GetString("reasoning_content") ?? APIResponseParserCommon.ExtractReasoningText(message["reasoning"]) ?? APIResponseParserCommon.ExtractReasoningTextFromContent(message["content"]);
+			var reasoning = message.GetString("reasoning_content")
+							?? APIResponseParserCommon.ExtractReasoningText(message["reasoning"]) ?? APIResponseParserCommon.ExtractReasoningTextFromContent(message["content"]);
 			var toolCalls = new List<APIClient.ToolCall>();
 			var directToolCalls = APIResponseParserCommon.ParseToolCalls(message["tool_calls"]);
 			if(directToolCalls != null) toolCalls.AddRange(directToolCalls);

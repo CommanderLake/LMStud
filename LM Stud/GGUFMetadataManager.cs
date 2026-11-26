@@ -5,8 +5,6 @@ using System.Linq;
 using System.Text;
 namespace LMStud{
 	public static class GGUFMetadataManager{
-		internal const uint Magic = 0x46554747;
-		internal const int ArrayPreviewLimit = 32;
 		public enum GGUFType : uint{
 			UINT8 = 0,
 			INT8 = 1,
@@ -22,16 +20,14 @@ namespace LMStud{
 			INT64 = 11,
 			FLOAT64 = 12
 		}
-		public static List<GGUFMetadataEntry> LoadGGUFMetadata(string filename){
-			return LoadGGUFMetadata(filename, null, out _);
-		}
-		internal static List<GGUFMetadataEntry> LoadGGUFMetadataPreview(string filename, out bool checkMtpHead){
-			return LoadGGUFMetadata(filename, new byte[1024], out checkMtpHead);
-		}
+		internal const uint Magic = 0x46554747;
+		internal const int ArrayPreviewLimit = 32;
+		public static List<GGUFMetadataEntry> LoadGGUFMetadata(string filename){return LoadGGUFMetadata(filename, null, out _);}
+		internal static List<GGUFMetadataEntry> LoadGGUFMetadataPreview(string filename, out bool checkMtpHead){return LoadGGUFMetadata(filename, new byte[1024], out checkMtpHead);}
 		private static List<GGUFMetadataEntry> LoadGGUFMetadata(string filename, byte[] skipBuffer, out bool checkMtpHead){
 			checkMtpHead = false;
 			var metadata = new List<GGUFMetadataEntry>();
-			using(var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024))
+			using(var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read, 64*1024))
 			using(var br = new BinaryReader(fs)){
 				var magic = br.ReadUInt32();
 				if(magic != Magic) return null;
@@ -64,7 +60,7 @@ namespace LMStud{
 					var name = Encoding.UTF8.GetString(br.ReadBytes((int)length));
 					if(name.StartsWith("blk.0.", StringComparison.Ordinal)) return false;
 					var dimensions = br.ReadUInt32();
-					SkipBytes(br, dimensions * 8UL + 12, buffer);
+					SkipBytes(br, dimensions*8UL + 12, buffer);
 				}
 			} catch(EndOfStreamException){}
 			return true;
@@ -115,7 +111,7 @@ namespace LMStud{
 				case GGUFType.ARRAY:
 					var subtype = (GGUFType)br.ReadUInt32();
 					arrayCount = br.ReadUInt64();
-					var retained = skipBuffer == null ? arrayCount : Math.Min(arrayCount, (ulong)ArrayPreviewLimit);
+					var retained = skipBuffer == null ? arrayCount : Math.Min(arrayCount, ArrayPreviewLimit);
 					var arr = new List<object>();
 					for(ulong i = 0; i < retained; i++) arr.Add(ReadMetaValue(br, subtype, skipBuffer, out _));
 					if(retained < arrayCount) SkipValues(br, subtype, arrayCount - retained, skipBuffer);
@@ -128,18 +124,22 @@ namespace LMStud{
 				case GGUFType.UINT8:
 				case GGUFType.INT8:
 				case GGUFType.BOOL:
-					SkipBytes(br, count, buffer); break;
+					SkipBytes(br, count, buffer);
+					break;
 				case GGUFType.UINT16:
 				case GGUFType.INT16:
-					SkipBytes(br, checked(count * 2), buffer); break;
+					SkipBytes(br, checked(count*2), buffer);
+					break;
 				case GGUFType.UINT32:
 				case GGUFType.INT32:
 				case GGUFType.FLOAT32:
-					SkipBytes(br, checked(count * 4), buffer); break;
+					SkipBytes(br, checked(count*4), buffer);
+					break;
 				case GGUFType.UINT64:
 				case GGUFType.INT64:
 				case GGUFType.FLOAT64:
-					SkipBytes(br, checked(count * 8), buffer); break;
+					SkipBytes(br, checked(count*8), buffer);
+					break;
 				case GGUFType.STRING:
 					for(ulong i = 0; i < count; i++) SkipBytes(br, br.ReadUInt64(), buffer);
 					break;

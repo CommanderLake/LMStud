@@ -1,28 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using LMStud.Properties;
 namespace LMStud{
 	internal static class NativeChat{
-		internal sealed class MessageSnapshot{
-			internal readonly string ApiContent;
-			internal readonly string ApiToolCallId;
-			internal readonly List<APIClient.ToolCall> ApiToolCalls;
-			internal readonly string Message;
-			internal readonly bool NativeBacked;
-			internal readonly MessageRole Role;
-			internal readonly string Think;
-			internal MessageSnapshot(MessageRole role, string think, string message, string apiContent = null, List<APIClient.ToolCall> apiToolCalls = null, string apiToolCallId = null, bool nativeBacked = true){
-				Role = role;
-				Think = think ?? "";
-				Message = message ?? "";
-				ApiContent = apiContent;
-				ApiToolCalls = apiToolCalls == null ? null : new List<APIClient.ToolCall>(apiToolCalls);
-				ApiToolCallId = apiToolCallId;
-				NativeBacked = nativeBacked;
-			}
-			internal string ApiMessageContent => ApiContent ?? Message ?? "";
-			internal MessageSnapshot WithText(string think, string message){ return new MessageSnapshot(Role, think, message, null, ApiToolCalls, ApiToolCallId, NativeBacked); }
-		}
 		internal static string GetActiveSlotName(){
 			if(!string.IsNullOrWhiteSpace(Generation.CntDialSlotName)) return Generation.CntDialSlotName;
 			return ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? ModelSlotManager.MainSlotName;
@@ -53,9 +34,7 @@ namespace LMStud{
 			if(string.IsNullOrWhiteSpace(slotName)) slotName = GetActiveSlotName();
 			return NativeMethods.SyncChatMessagesJson(slotName, BuildMessagesJson(messages));
 		}
-		internal static NativeMethods.StudError SyncActiveMessages(IEnumerable<MessageSnapshot> messages){
-			return RunForActiveSlots(slotName => SyncMessages(slotName, messages));
-		}
+		internal static NativeMethods.StudError SyncActiveMessages(IEnumerable<MessageSnapshot> messages){return RunForActiveSlots(slotName => SyncMessages(slotName, messages));}
 		internal static string ReadHistory(string slotName){
 			var history = NativeMethods.ReadUtf8AndFreeOptional(NativeMethods.GetChatMessagesJson(slotName));
 			if(history == null) throw new InvalidOperationException(NativeMethods.GetLastError());
@@ -65,8 +44,7 @@ namespace LMStud{
 			var originalHistory = partnerSlotName == null ? null : ReadHistory(slotName);
 			ApplyHistory(slotName, history);
 			if(partnerSlotName == null) return;
-			try{ ApplyHistory(partnerSlotName, partnerHistory); }
-			catch{
+			try{ ApplyHistory(partnerSlotName, partnerHistory); } catch{
 				ApplyHistory(slotName, originalHistory);
 				throw;
 			}
@@ -74,7 +52,7 @@ namespace LMStud{
 		private static void ApplyHistory(string slotName, string history){
 			var error = NativeMethods.SyncChatMessagesJson(slotName, history);
 			if(error == NativeMethods.StudError.Success) return;
-			var detail = error == NativeMethods.StudError.ContextFull ? Properties.Resources.Context_full : error.ToString();
+			var detail = error == NativeMethods.StudError.ContextFull ? Resources.Context_full : error.ToString();
 			throw new InvalidOperationException(Form1.CombineErrorDetails(detail, NativeMethods.GetLastError()));
 		}
 		internal static string BuildMessagesJson(IEnumerable<MessageSnapshot> messages){
@@ -85,7 +63,7 @@ namespace LMStud{
 				if(message.Role == MessageRole.User){
 					var contentJson = MarkdownImages.BuildNativeContentJson(message.ApiMessageContent, out var _);
 					obj["content"] = Json.Parse(contentJson);
-				} else obj["content"] = Json.String(message.ApiMessageContent);
+				} else{ obj["content"] = Json.String(message.ApiMessageContent); }
 				if(message.Role == MessageRole.Assistant && !string.IsNullOrEmpty(message.Think)) obj["reasoning_content"] = Json.String(message.Think);
 				var toolCalls = BuildChatCompletionToolCalls(message.ApiToolCalls);
 				if(toolCalls.Exists) obj["tool_calls"] = toolCalls;
@@ -97,10 +75,8 @@ namespace LMStud{
 		internal static JsonNode BuildChatCompletionToolCalls(IEnumerable<APIClient.ToolCall> toolCalls){
 			if(toolCalls == null) return JsonNode.Missing;
 			var array = Json.ArrayBuilder();
-			foreach(var call in toolCalls.Where(call => call != null && !string.IsNullOrWhiteSpace(call.Id) && !string.IsNullOrWhiteSpace(call.Name))){
-				array.Add(Json.Object(Json.P("id", call.Id), Json.P("type", "function"),
-					Json.P("function", Json.Object(Json.P("name", call.Name), Json.P("arguments", call.Arguments ?? "")))));
-			}
+			foreach(var call in toolCalls.Where(call => call != null && !string.IsNullOrWhiteSpace(call.Id) && !string.IsNullOrWhiteSpace(call.Name)))
+				array.Add(Json.Object(Json.P("id", call.Id), Json.P("type", "function"), Json.P("function", Json.Object(Json.P("name", call.Name), Json.P("arguments", call.Arguments ?? "")))));
 			return array.Count > 0 ? array.ToNode() : JsonNode.Missing;
 		}
 		internal static string RoleToJson(MessageRole role){
@@ -124,6 +100,32 @@ namespace LMStud{
 				break;
 			}
 			return applied && result == NativeMethods.StudError.IndexOutOfRange ? NativeMethods.StudError.Success : result;
+		}
+		internal sealed class MessageSnapshot{
+			internal readonly string ApiContent;
+			internal readonly string ApiToolCallId;
+			internal readonly List<APIClient.ToolCall> ApiToolCalls;
+			internal readonly string Message;
+			internal readonly bool NativeBacked;
+			internal readonly MessageRole Role;
+			internal readonly string Think;
+			internal MessageSnapshot(MessageRole role,
+				string think,
+				string message,
+				string apiContent = null,
+				List<APIClient.ToolCall> apiToolCalls = null,
+				string apiToolCallId = null,
+				bool nativeBacked = true){
+				Role = role;
+				Think = think ?? "";
+				Message = message ?? "";
+				ApiContent = apiContent;
+				ApiToolCalls = apiToolCalls == null ? null : new List<APIClient.ToolCall>(apiToolCalls);
+				ApiToolCallId = apiToolCallId;
+				NativeBacked = nativeBacked;
+			}
+			internal string ApiMessageContent => ApiContent ?? Message ?? "";
+			internal MessageSnapshot WithText(string think, string message){return new MessageSnapshot(Role, think, message, null, ApiToolCalls, ApiToolCallId, NativeBacked);}
 		}
 	}
 }

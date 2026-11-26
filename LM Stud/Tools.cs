@@ -5,8 +5,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using LMStud.Properties;
-namespace LMStud {
-	internal static class Tools {
+namespace LMStud{
+	internal static class Tools{
 		private static readonly Dictionary<string, string> ToolsJsonCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		private static readonly NativeMethods.ManagedToolCallback ManagedToolCallbackFn = ExecuteManagedToolCall;
 		private static bool _managedToolCallbackRegistered;
@@ -17,15 +17,22 @@ namespace LMStud {
 		}
 		private static void RegisterToolsCore(string slotName){
 			EnsureManagedToolCallbackRegistered();
-			NativeMethods.RegisterTools(slotName, Common.DateTimeEnable, Common.GoogleSearchEnable, Common.WebpageFetchEnable, Common.FileListEnable, Common.FileCreateEnable, Common.FileReadEnable, Common.FileWriteEnable, Common.CMDEnable);
+			NativeMethods.RegisterTools(slotName,
+				Common.DateTimeEnable,
+				Common.GoogleSearchEnable,
+				Common.WebpageFetchEnable,
+				Common.FileListEnable,
+				Common.FileCreateEnable,
+				Common.FileReadEnable,
+				Common.FileWriteEnable,
+				Common.CMDEnable);
 			NativeMethods.MCPRegisterToolsForSlot(slotName);
 			RegisterModelCallTools(slotName);
 		}
 		internal static void RegisterToolsForAllSlots(){
 			var slotNames = ModelSlotManager.Slots.Where(slot => slot.Source != ModelSlotSource.Mcp).Select(slot => slot.Name).ToList();
 			var leases = ModelSlotManager.EnterSlots(slotNames);
-			try{ RegisterToolsForSlotsWithoutLock(slotNames); }
-			finally{ ModelSlotManager.ReleaseSlots(leases); }
+			try{ RegisterToolsForSlotsWithoutLock(slotNames); } finally{ ModelSlotManager.ReleaseSlots(leases); }
 		}
 		internal static void RegisterToolsForSlotsWithoutLock(IEnumerable<string> slotNames){
 			foreach(var slotName in (slotNames ?? Enumerable.Empty<string>()).Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase)) RegisterToolsCore(slotName);
@@ -37,7 +44,14 @@ namespace LMStud {
 			InvalidateToolsJsonCache();
 		}
 		private static bool ToolsEnabled(){
-			return Common.DateTimeEnable || Common.GoogleSearchEnable || Common.WebpageFetchEnable || Common.FileListEnable || Common.FileCreateEnable || Common.FileReadEnable || Common.FileWriteEnable || Common.CMDEnable;
+			return Common.DateTimeEnable
+					|| Common.GoogleSearchEnable
+					|| Common.WebpageFetchEnable
+					|| Common.FileListEnable
+					|| Common.FileCreateEnable
+					|| Common.FileReadEnable
+					|| Common.FileWriteEnable
+					|| Common.CMDEnable;
 		}
 		internal static string BuildApiToolsJson(string slotName){
 			var cacheKey = string.IsNullOrWhiteSpace(slotName) ? "" : slotName.Trim();

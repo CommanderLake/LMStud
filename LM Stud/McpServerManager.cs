@@ -14,7 +14,7 @@ namespace LMStud{
 			var enabledIds = new HashSet<string>(enabled.Select(slot => slot.Name), StringComparer.OrdinalIgnoreCase);
 			try{
 				List<string> staleIds;
-				lock(Sync) staleIds = ConnectedServerIds.Where(id => !enabledIds.Contains(id)).ToList();
+				lock(Sync){ staleIds = ConnectedServerIds.Where(id => !enabledIds.Contains(id)).ToList(); }
 				foreach(var id in staleIds) Disconnect(id, false);
 				foreach(var slot in enabled) Connect(slot, false);
 				RefreshRegisteredTools(slotNames, true, afterRegisteredToolsChanged);
@@ -29,7 +29,7 @@ namespace LMStud{
 			var endpoint = slot.GetMcpEndpoint();
 			try{
 				if(string.IsNullOrWhiteSpace(endpoint)){
-					lock(Sync) DisconnectNativeLocked(slot.Name);
+					lock(Sync){ DisconnectNativeLocked(slot.Name); }
 					RefreshRegisteredTools(slotNames, refreshRegisteredTools, afterRegisteredToolsChanged);
 					return ErrorJson(slot.McpTransport == McpSlotTransport.Http ? Resources.MCP_URL_is_required_ : Resources.MCP_command_line_is_required_);
 				}
@@ -37,7 +37,9 @@ namespace LMStud{
 					try{
 						DisconnectNativeLocked(slot.Name);
 						var timeoutMs = slot.McpTimeoutMs > 0 ? slot.McpTimeoutMs : DefaultTimeoutMs;
-						var response = slot.McpTransport == McpSlotTransport.Http ? NativeMethods.ReadUtf8AndFree(NativeMethods.MCPConnectHttp(slot.Name, slot.McpUrl, slot.McpAuthHeader ?? "", timeoutMs)) : NativeMethods.ReadUtf8AndFree(NativeMethods.MCPConnectStdio(slot.Name, slot.McpCommandLine, slot.McpWorkingDirectory ?? "", timeoutMs));
+						var response = slot.McpTransport == McpSlotTransport.Http
+							? NativeMethods.ReadUtf8AndFree(NativeMethods.MCPConnectHttp(slot.Name, slot.McpUrl, slot.McpAuthHeader ?? "", timeoutMs))
+							: NativeMethods.ReadUtf8AndFree(NativeMethods.MCPConnectStdio(slot.Name, slot.McpCommandLine, slot.McpWorkingDirectory ?? "", timeoutMs));
 						if(IsOk(response)) ConnectedServerIds.Add(slot.Name);
 						else ConnectedServerIds.Remove(slot.Name);
 						RefreshRegisteredTools(slotNames, refreshRegisteredTools, afterRegisteredToolsChanged);
@@ -108,9 +110,7 @@ namespace LMStud{
 				return obj.GetBool("ok") == true && !obj["error"].Exists;
 			} catch{ return false; }
 		}
-		private static List<string> GetNativeToolSlotNames(){
-			return ModelSlotManager.Slots.Where(slot => slot.Source != ModelSlotSource.Mcp).Select(slot => slot.Name).ToList();
-		}
+		private static List<string> GetNativeToolSlotNames(){return ModelSlotManager.Slots.Where(slot => slot.Source != ModelSlotSource.Mcp).Select(slot => slot.Name).ToList();}
 		private static void RefreshRegisteredTools(IEnumerable<string> slotNames, bool refreshRegisteredTools, Action<IEnumerable<string>> afterRegisteredToolsChanged){
 			if(!refreshRegisteredTools) return;
 			Tools.RegisterToolsForSlotsWithoutLock(slotNames);
@@ -122,9 +122,10 @@ namespace LMStud{
 				var array = Json.Parse(json);
 				ConnectedServerIds.Clear();
 				if(!array.IsArray) return;
-				foreach(var id in from item in array.Where(item => item.IsObject) let id = item.GetString("id") where !string.IsNullOrWhiteSpace(id) && item.GetBool("initialized") == true select id){ ConnectedServerIds.Add(id); }
+				foreach(var id in from item in array.Where(item => item.IsObject) let id = item.GetString("id") where !string.IsNullOrWhiteSpace(id) && item.GetBool("initialized") == true
+						select id) ConnectedServerIds.Add(id);
 			} catch(Exception){}
 		}
-		private static string ErrorJson(string message){ return Json.Object(Json.P("error", message)).ToJson(); }
+		private static string ErrorJson(string message){return Json.Object(Json.P("error", message)).ToJson();}
 	}
 }

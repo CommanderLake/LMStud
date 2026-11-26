@@ -9,25 +9,24 @@ namespace LMStud{
 		Tool
 	}
 	internal partial class ChatMessageControl : UserControl{
+		private const int HeightOffset = 32;
 		internal readonly MessageRole Role;
-		internal List<APIClient.ToolCall> ApiToolCalls;
-		internal string ApiToolCallId;
-		internal string ApiContent;
-		internal bool NativeBacked = true;
-		internal string ApiMessageContent => ApiContent ?? Message ?? "";
+		private bool _autoScroll = true;
+		private bool _editing;
+		private bool _generating;
+		private bool _heightUpdatePending;
 		private bool _markdown;
 		private bool _markdownLast;
 		private string _message;
-		private string _think;
-		private bool _generating;
-		private bool _editing;
-		private bool _autoScroll = true;
-		private bool _heightUpdatePending;
-		private bool _pendingHeightAutoScroll;
 		private int _pendingHeight;
-		private const int HeightOffset = 32;
+		private bool _pendingHeightAutoScroll;
+		private string _think;
+		internal string ApiContent;
+		internal string ApiToolCallId;
+		internal List<APIClient.ToolCall> ApiToolCalls;
+		internal bool NativeBacked = true;
 		internal int TTSPosition = 0;
-		internal ChatMessageControl(MessageRole role, string message, bool markdown):this(role, "", message, markdown){}
+		internal ChatMessageControl(MessageRole role, string message, bool markdown) : this(role, "", message, markdown){}
 		internal ChatMessageControl(MessageRole role, string think, string message, bool markdown){
 			InitializeComponent();
 			Role = role;
@@ -36,63 +35,15 @@ namespace LMStud{
 			_markdown = markdown;
 			labelRole.Text = role.ToString();
 		}
+		internal string ApiMessageContent => ApiContent ?? Message ?? "";
 		internal MarkdownRenderControl MarkdownView => markdownView;
-		private void ChatMessage_Load(object sender, EventArgs e) {
-			var hasReasoning = !string.IsNullOrEmpty(_think);
-			checkThink.Visible = hasReasoning;
-			if(_message.Length > 0 || hasReasoning) RenderText();
-		}
-		internal void SetRoleText(string role){labelRole.Text = role;}
-		private void RichTextMsgOnContentsResized(object sender, ContentsResizedEventArgs e){
-			if(markdownView.Visible) return;
-			var contentHeight = e.NewRectangle.Height;
-			var maximumContentHeight = Math.Max(18, (Parent?.ClientSize.Height ?? int.MaxValue) - 24);
-			var capped = _editing && contentHeight > maximumContentHeight;
-			richTextMsg.ScrollBars = capped ? RichTextBoxScrollBars.Vertical : RichTextBoxScrollBars.None;
-			var newHeight = Math.Min(contentHeight, maximumContentHeight) + HeightOffset;
-			if(newHeight != Height) ApplyHeight(newHeight);
-		}
-		private void MarkdownViewOnContentHeightChanged(object sender, EventArgs e){
-			if(!markdownView.Visible) return;
-			ApplyHeight(GetMarkdownControlHeight());
-		}
-		private int GetMarkdownControlHeight(){
-			return markdownView.ContentHeight + panelMessage.Top + panelMessage.Height - panelMessage.ClientSize.Height;
-		}
-		private void ApplyHeight(int newHeight){
-			if(IsDisposed || Disposing) return;
-			_pendingHeight = newHeight;
-			_pendingHeightAutoScroll = _autoScroll;
-			if(_heightUpdatePending) return;
-			if(!IsHandleCreated){
-				ApplyPendingHeight();
-				return;
-			}
-			_heightUpdatePending = true;
-			try{
-				BeginInvoke(new MethodInvoker(ApplyPendingHeight));
-			} catch(ObjectDisposedException){ _heightUpdatePending = false; }
-			catch(InvalidOperationException){ _heightUpdatePending = false; }
-		}
-		private void ApplyPendingHeight(){
-			_heightUpdatePending = false;
-			if(IsDisposed || Disposing) return;
-			var newHeight = _pendingHeight;
-			var autoScroll = _pendingHeightAutoScroll;
-			if(Height == newHeight) return;
-			Height = newHeight;
-			if(autoScroll) (Parent as MyFlowLayoutPanel)?.ScrollToEnd();
-		}
 		internal bool Markdown{
 			get => _markdown;
 			set{
-				if(Editing) _markdownLast = value;
-				else{
+				if(Editing){ _markdownLast = value; } else{
 					_markdown = value;
 					_autoScroll = false;
-					try{
-						RenderText();
-					} finally{ _autoScroll = true; }
+					try{ RenderText(); } finally{ _autoScroll = true; }
 				}
 			}
 		}
@@ -146,6 +97,47 @@ namespace LMStud{
 				if(!value && renderTimer.Enabled) RenderText();
 			}
 		}
+		private void ChatMessage_Load(object sender, EventArgs e){
+			var hasReasoning = !string.IsNullOrEmpty(_think);
+			checkThink.Visible = hasReasoning;
+			if(_message.Length > 0 || hasReasoning) RenderText();
+		}
+		internal void SetRoleText(string role){labelRole.Text = role;}
+		private void RichTextMsgOnContentsResized(object sender, ContentsResizedEventArgs e){
+			if(markdownView.Visible) return;
+			var contentHeight = e.NewRectangle.Height;
+			var maximumContentHeight = Math.Max(18, (Parent?.ClientSize.Height ?? int.MaxValue) - 24);
+			var capped = _editing && contentHeight > maximumContentHeight;
+			richTextMsg.ScrollBars = capped ? RichTextBoxScrollBars.Vertical : RichTextBoxScrollBars.None;
+			var newHeight = Math.Min(contentHeight, maximumContentHeight) + HeightOffset;
+			if(newHeight != Height) ApplyHeight(newHeight);
+		}
+		private void MarkdownViewOnContentHeightChanged(object sender, EventArgs e){
+			if(!markdownView.Visible) return;
+			ApplyHeight(GetMarkdownControlHeight());
+		}
+		private int GetMarkdownControlHeight(){return markdownView.ContentHeight + panelMessage.Top + panelMessage.Height - panelMessage.ClientSize.Height;}
+		private void ApplyHeight(int newHeight){
+			if(IsDisposed || Disposing) return;
+			_pendingHeight = newHeight;
+			_pendingHeightAutoScroll = _autoScroll;
+			if(_heightUpdatePending) return;
+			if(!IsHandleCreated){
+				ApplyPendingHeight();
+				return;
+			}
+			_heightUpdatePending = true;
+			try{ BeginInvoke(new MethodInvoker(ApplyPendingHeight)); } catch(ObjectDisposedException){ _heightUpdatePending = false; } catch(InvalidOperationException){ _heightUpdatePending = false; }
+		}
+		private void ApplyPendingHeight(){
+			_heightUpdatePending = false;
+			if(IsDisposed || Disposing) return;
+			var newHeight = _pendingHeight;
+			var autoScroll = _pendingHeightAutoScroll;
+			if(Height == newHeight) return;
+			Height = newHeight;
+			if(autoScroll) (Parent as MyFlowLayoutPanel)?.ScrollToEnd();
+		}
 		internal void UpdateText(string think, string message, bool render){
 			_think = think;
 			_message = message;
@@ -153,11 +145,9 @@ namespace LMStud{
 				if(render) RequestRender();
 			} else{
 				if(!string.IsNullOrEmpty(_think) && checkThink.Visible == false) checkThink.Visible = true;
-				if(!string.IsNullOrEmpty(_think) && string.IsNullOrEmpty(_message) && !checkThink.Checked){
-					checkThink.Checked = true;
-				}else if(!string.IsNullOrEmpty(_message) && checkThink.Checked){
+				if(!string.IsNullOrEmpty(_think) && string.IsNullOrEmpty(_message) && !checkThink.Checked){ checkThink.Checked = true; } else if(!string.IsNullOrEmpty(_message) && checkThink.Checked){
 					checkThink.Checked = false;
-				}else{
+				} else{
 					if(render) RequestRender();
 				}
 			}

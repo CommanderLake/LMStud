@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,7 +31,13 @@ namespace LMStud{
 			_reasoningSummary = reasoningSummary;
 		}
 		public void Dispose(){_apiHttpClient?.Dispose();}
-		internal ChatCompletionResult CreateChatCompletion(JsonArrayBuilder history, float temperature, int maxTokens, string toolsJson, JsonNode? toolChoice, CancellationToken cancellationToken, Action<string> streamCallback = null){
+		internal ChatCompletionResult CreateChatCompletion(JsonArrayBuilder history,
+			float temperature,
+			int maxTokens,
+			string toolsJson,
+			JsonNode? toolChoice,
+			CancellationToken cancellationToken,
+			Action<string> streamCallback = null){
 			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException(Resources.API_base_URL_is_not_configured_);
 			if(history == null) throw new InvalidOperationException(Resources.History_is_not_configured_);
 			var stream = streamCallback != null;
@@ -49,9 +56,7 @@ namespace LMStud{
 			if(ContainsAny(message, "404", "405", "501", "not found", "not implemented")) return true;
 			return ContainsAny(message, "400") && ContainsAny(message, "unknown", "unsupported", "invalid", "parallel_tool_calls", "tool_choice", "max_output_tokens", "input", "responses", "stream");
 		}
-		private static bool ContainsAny(string text, params string[] values){
-			return values.Any(value => text.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0);
-		}
+		private static bool ContainsAny(string text, params string[] values){return values.Any(value => text.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0);}
 		private InvalidOperationException TrySendChatRequest(string endpoint, JsonNode payload, CancellationToken cancellationToken, Action<string> streamCallback, out ChatCompletionResult result){
 			result = null;
 			try{
@@ -127,8 +132,8 @@ namespace LMStud{
 				accumulator.AppendContent(root.GetString("delta"), streamCallback);
 				return false;
 			}
-			if(string.Equals(type, "response.reasoning_text.delta", StringComparison.OrdinalIgnoreCase) ||
-				string.Equals(type, "response.reasoning_summary_text.delta", StringComparison.OrdinalIgnoreCase)){
+			if(string.Equals(type, "response.reasoning_text.delta", StringComparison.OrdinalIgnoreCase)
+				|| string.Equals(type, "response.reasoning_summary_text.delta", StringComparison.OrdinalIgnoreCase)){
 				accumulator.AppendReasoning(root.GetString("delta"));
 				return false;
 			}
@@ -140,7 +145,7 @@ namespace LMStud{
 				if(root["item"].IsObject) accumulator.MergeToolCall(GetStreamingToolKey(root), root["item"]);
 				return false;
 			}
-			if(root["choices"].IsArray){
+			if(root["choices"].IsArray)
 				foreach(var choice in root["choices"].Where(choice => choice.IsObject)){
 					var delta = choice["delta"];
 					if(!delta.IsObject) continue;
@@ -151,12 +156,9 @@ namespace LMStud{
 						foreach(var toolCall in delta["tool_calls"].Where(toolCall => toolCall.IsObject))
 							accumulator.MergeChatToolCall(toolCall);
 				}
-			}
 			return false;
 		}
-		private static string GetStreamingToolKey(JsonNode root){
-			return root.GetString("output_index") ?? root.GetString("item_id") ?? root.GetString("id") ?? "0";
-		}
+		private static string GetStreamingToolKey(JsonNode root){return root.GetString("output_index") ?? root.GetString("item_id") ?? root.GetString("id") ?? "0";}
 		private JsonNode BuildResponsesPayload(JsonArrayBuilder history, float temperature, int maxTokens, string toolsJson, JsonNode? toolChoice, bool stream){
 			var payload = Json.ObjectBuilder(Json.P("model", _model), Json.P("input", history), Json.P("temperature", temperature));
 			if(!string.IsNullOrWhiteSpace(_instructions)) payload["instructions"] = Json.String(_instructions);
@@ -200,10 +202,9 @@ namespace LMStud{
 					continue;
 				}
 				if(string.Equals(itemType, "function_call", StringComparison.OrdinalIgnoreCase)){
-					var toolCall = Json.Object(
-						Json.P("id", item.GetString("call_id")), Json.P("type", "function"),
-						Json.P("function", Json.Object(Json.P("name", item.GetString("name")), Json.P("arguments", item.GetString("arguments") ?? "")))
-					);
+					var toolCall = Json.Object(Json.P("id", item.GetString("call_id")),
+						Json.P("type", "function"),
+						Json.P("function", Json.Object(Json.P("name", item.GetString("name")), Json.P("arguments", item.GetString("arguments") ?? ""))));
 					messages.Add(Json.Object(Json.P("role", "assistant"), Json.P("content", ""), Json.P("tool_calls", Json.Array(toolCall))));
 					continue;
 				}
@@ -337,8 +338,9 @@ namespace LMStud{
 					if(message.IndexOf("401", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("403", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.Authentication_failed;
 					if(message.IndexOf("404", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.API_endpoint_not_found;
 					if(message.IndexOf("429", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.Rate_limit_exceeded;
-					if(message.IndexOf("500", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("502", StringComparison.OrdinalIgnoreCase) >= 0 ||
-						message.IndexOf("503", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.The_API_server_encountered_an_error;
+					if(message.IndexOf("500", StringComparison.OrdinalIgnoreCase) >= 0
+						|| message.IndexOf("502", StringComparison.OrdinalIgnoreCase) >= 0
+						|| message.IndexOf("503", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.The_API_server_encountered_an_error;
 					break;
 				}
 			}
@@ -360,14 +362,11 @@ namespace LMStud{
 				Content = content;
 			}
 		}
-		[System.Runtime.Serialization.DataContract]
+		[DataContract]
 		internal sealed class ToolCall{
-			[System.Runtime.Serialization.DataMember(Name = "arguments")]
-			public string Arguments;
-			[System.Runtime.Serialization.DataMember(Name = "id")]
-			public string Id;
-			[System.Runtime.Serialization.DataMember(Name = "name")]
-			public string Name;
+			[DataMember(Name = "arguments")] public string Arguments;
+			[DataMember(Name = "id")] public string Id;
+			[DataMember(Name = "name")] public string Name;
 			public ToolCall(string id, string name, string arguments){
 				Id = id;
 				Name = name;
@@ -379,8 +378,8 @@ namespace LMStud{
 			public JsonNode OutputItems;
 			public string Reasoning;
 			public string ResponseId;
-			public int? TotalTokens;
 			public List<ToolCall> ToolCalls;
+			public int? TotalTokens;
 			public ChatCompletionResult(string content, string reasoning, List<ToolCall> toolCalls, string responseId, JsonNode outputItems, int? totalTokens = null){
 				Content = content;
 				Reasoning = reasoning;
@@ -440,10 +439,8 @@ namespace LMStud{
 			}
 			internal ChatCompletionResult BuildResult(){
 				if(_finalResult != null) return _finalResult;
-				var toolCalls = _toolCalls.Values
-					.Where(call => !string.IsNullOrWhiteSpace(call.Id) && !string.IsNullOrWhiteSpace(call.Name))
-					.Select(call => new ToolCall(call.Id, call.Name, call.Arguments.ToString()))
-					.ToList();
+				var toolCalls = _toolCalls.Values.Where(call => !string.IsNullOrWhiteSpace(call.Id) && !string.IsNullOrWhiteSpace(call.Name))
+					.Select(call => new ToolCall(call.Id, call.Name, call.Arguments.ToString())).ToList();
 				var finalToolCalls = toolCalls.Count > 0 ? toolCalls : null;
 				if(_content.Length == 0 && _reasoning.Length == 0 && finalToolCalls == null) throw new InvalidOperationException(Resources.API_response_did_not_contain_any_message_);
 				return new ChatCompletionResult(_content.ToString(), _reasoning.Length > 0 ? _reasoning.ToString() : null, finalToolCalls, _responseId, JsonNode.Missing);

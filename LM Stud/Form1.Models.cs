@@ -9,7 +9,8 @@ using LMStud.Properties;
 namespace LMStud{
 	public partial class Form1{
 		private const string DefaultPrompt = "Assist the user to the best of your ability.";
-		private const string FetchPrompt = "\nAfter calling the web_search tool you must subsequently call the get_webpage tool with a url followed by the get_webpage_text tool with the id of any relevant preview.";
+		private const string FetchPrompt =
+			"\nAfter calling the web_search tool you must subsequently call the get_webpage tool with a url followed by the get_webpage_text tool with the id of any relevant preview.";
 		internal volatile SemaphoreSlim PopulateLock = new SemaphoreSlim(1, 1);
 		private void CheckLoadAuto_CheckedChanged(object sender, EventArgs e){
 			if(checkLoadAuto.Checked && GGUFSplit.FindMissingPart(Common.ModelsDir + Settings.Default.LastModel) == null) Settings.Default.LoadAuto = true;
@@ -40,13 +41,9 @@ namespace LMStud{
 			if(e.KeyCode != Keys.F5) return;
 			PopulateModels();
 		}
-		private void ListViewModels_ColumnClick(object sender, EventArgs e){
-			PopulateSlotsEditLocalModelItems();
-		}
-		private void ListViewModels_DoubleClick(object sender, EventArgs e){
-			ButLoad_Click(null, null);
-		}
-		private void ButLoad_Click(object sender, EventArgs e) {
+		private void ListViewModels_ColumnClick(object sender, EventArgs e){PopulateSlotsEditLocalModelItems();}
+		private void ListViewModels_DoubleClick(object sender, EventArgs e){ButLoad_Click(null, null);}
+		private void ButLoad_Click(object sender, EventArgs e){
 			if(listViewModels.SelectedItems.Count == 1){
 				LoadModel(ModelSlotManager.MainSlotName, listViewModels.SelectedItems[0], false);
 				return;
@@ -79,24 +76,19 @@ namespace LMStud{
 				template = entry.Val.Value as string;
 				break;
 			}
-			if(string.IsNullOrWhiteSpace(template)){
+			if(string.IsNullOrWhiteSpace(template))
 				foreach(var entry in meta){
 					if(entry.Key == null || !entry.Key.EndsWith(".chat_template", StringComparison.Ordinal)) continue;
 					template = entry.Val.Value as string;
 					if(!string.IsNullOrWhiteSpace(template)) break;
 				}
-			}
 			if(string.IsNullOrWhiteSpace(template)){
 				MessageBox.Show(this, Resources.No_Jinja_chat_template_was_found_in_the_selected_model_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 				return;
 			}
 			saveFileDialog1.Title = action;
 			if(saveFileDialog1.ShowDialog(this) != DialogResult.OK) return;
-			try{
-				File.WriteAllText(saveFileDialog1.FileName, template, new UTF8Encoding(false));
-			} catch(Exception ex){
-				ShowError(action, ex.Message, false);
-			}
+			try{ File.WriteAllText(saveFileDialog1.FileName, template, new UTF8Encoding(false)); } catch(Exception ex){ ShowError(action, ex.Message, false); }
 		}
 		private bool ModelsFolderExists(bool showError){
 			if(!Directory.Exists(Common.ModelsDir)){
@@ -112,8 +104,7 @@ namespace LMStud{
 			var modelsDirectory = Common.ModelsDir;
 			ThreadPool.QueueUserWorkItem(_ => {
 				try{
-					var files = Directory.EnumerateFiles(modelsDirectory, "*.gguf", SearchOption.AllDirectories)
-						.Where(file => !IsVisionProjectorFile(file) && GGUFSplit.IsCompleteModel(file));
+					var files = Directory.EnumerateFiles(modelsDirectory, "*.gguf", SearchOption.AllDirectories).Where(file => !IsVisionProjectorFile(file) && GGUFSplit.IsCompleteModel(file));
 					var items = new List<ListViewItem>();
 					foreach(var file in files){
 						var meta = GGUFMetadataManager.LoadGGUFMetadataPreview(file, out var checkMtpHead);
@@ -133,11 +124,7 @@ namespace LMStud{
 						} finally{ listViewModels.EndUpdate(); }
 						PopulateSlotsEditLocalModelItems();
 					}));
-				} catch(Exception ex){
-					Invoke(new MethodInvoker(() => {
-						MessageBox.Show(this, ex.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
-					}));
-				} finally{
+				} catch(Exception ex){ Invoke(new MethodInvoker(() => {MessageBox.Show(this, ex.ToString(), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);})); } finally{
 					PopulateLock.Release();
 				}
 			});
@@ -245,7 +232,8 @@ namespace LMStud{
 			} finally{ slotLock?.Dispose(); }
 		}
 		private void SetSystemPromptsForSlots(IEnumerable<string> slotNames){
-			foreach(var slotName in (slotNames ?? Enumerable.Empty<string>()).Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase)) SetSystemPromptForSlot(slotName);
+			foreach(var slotName in (slotNames ?? Enumerable.Empty<string>()).Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase))
+				SetSystemPromptForSlot(slotName);
 		}
 		private void PopulateSlotsEditLocalModelItems(){
 			var selectedModel = GetSlotsEditLocalModelPath();
@@ -264,22 +252,13 @@ namespace LMStud{
 			var slot = ModelSlotManager.GetSlot(slotName);
 			if(slot?.OverrideSystemPrompt == true) return new SystemPromptResolution(slot.Instructions ?? "", true);
 			if(!string.IsNullOrWhiteSpace(slotName) && Common.LoadedLocalSlots.TryGetValue(slotName, out var loadedModel) && loadedModel?.SubItems.Count > 1)
-				if(TryGetEnabledModelSettings(loadedModel.SubItems[1].Text, out var overrides)) return new SystemPromptResolution(overrides.SystemPrompt ?? "", true);
+				if(TryGetEnabledModelSettings(loadedModel.SubItems[1].Text, out var overrides))
+					return new SystemPromptResolution(overrides.SystemPrompt ?? "", true);
 			return new SystemPromptResolution(Common.SystemPrompt ?? "", false);
 		}
-		private bool SlotUsesInheritedSystemPrompt(string slotName){
-			return !(ModelSlotManager.GetSlot(slotName)?.OverrideSystemPrompt ?? false);
-		}
+		private bool SlotUsesInheritedSystemPrompt(string slotName){return !(ModelSlotManager.GetSlot(slotName)?.OverrideSystemPrompt ?? false);}
 		private string GetSystemPromptForModel(string modelPathOrName){
 			return TryGetEnabledModelSettings(ResolveModelPath(modelPathOrName), out var overrides) ? overrides.SystemPrompt ?? "" : Common.SystemPrompt ?? "";
-		}
-		private sealed class SystemPromptResolution{
-			internal readonly bool IsOverride;
-			internal readonly string Text;
-			internal SystemPromptResolution(string text, bool isOverride){
-				Text = text ?? "";
-				IsOverride = isOverride;
-			}
 		}
 		private string ResolveModelPath(string modelPathOrName){
 			if(string.IsNullOrWhiteSpace(modelPathOrName)) return "";
@@ -293,11 +272,12 @@ namespace LMStud{
 		private ListViewItem FindModelItem(string modelPathOrName){
 			if(string.IsNullOrWhiteSpace(modelPathOrName)) return null;
 			var value = modelPathOrName.Trim();
-			return listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item => item.SubItems.Count > 1 &&
-				(SameModelPath(item.SubItems[1].Text, value) ||
-				string.Equals(item.Name, value, StringComparison.OrdinalIgnoreCase) ||
-				string.Equals(item.Text, value, StringComparison.OrdinalIgnoreCase) ||
-				string.Equals(Path.GetFileNameWithoutExtension(item.SubItems[1].Text), value, StringComparison.OrdinalIgnoreCase)));
+			return listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item =>
+				item.SubItems.Count > 1
+				&& (SameModelPath(item.SubItems[1].Text, value)
+					|| string.Equals(item.Name, value, StringComparison.OrdinalIgnoreCase)
+					|| string.Equals(item.Text, value, StringComparison.OrdinalIgnoreCase)
+					|| string.Equals(Path.GetFileNameWithoutExtension(item.SubItems[1].Text), value, StringComparison.OrdinalIgnoreCase)));
 		}
 		private static bool SameModelPath(string a, string b){
 			if(string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b)) return false;
@@ -319,8 +299,9 @@ namespace LMStud{
 			butUnloadMain.Enabled = Common.LoadedLocalSlots.ContainsKey(ModelSlotManager.MainSlotName) && NativeMethods.IsModelSlotLoaded(ModelSlotManager.MainSlotName);
 			if(checkDialectic.Checked && Generation.DialecticRelayEnabled) toolStripStatusLabel1.Text = Resources.Dialectic_relay__ + Generation.DialPriSlotName + " <-> " + Generation.DialSecSlotName;
 			else if(activeApiReady) toolStripStatusLabel1.Text = Resources.Using_slot_ + activeSlot.Name + Resources.colon + activeSlot.DisplayModel();
-			else if(activeLocalLoaded && activeSlot != null) toolStripStatusLabel1.Text = Resources.Using_slot_ + activeSlot.Name + Resources.colon + activeLoadedModel.Text +
-				(NativeMethods.HasVisionProjector(activeSlot.Name) ? " [vision]" : "");
+			else if(activeLocalLoaded && activeSlot != null)
+				toolStripStatusLabel1.Text =
+					Resources.Using_slot_ + activeSlot.Name + Resources.colon + activeLoadedModel.Text + (NativeMethods.HasVisionProjector(activeSlot.Name) ? " [vision]" : "");
 			else if(Common.LlModelLoaded && Common.LoadedModel != null) toolStripStatusLabel1.Text = Resources.Using_Model_ + Common.LoadedModel.Text;
 			else toolStripStatusLabel1.Text = Resources.No_model_loaded;
 			if(activeApiReady && loadedSlot != null) toolStripStatusLabel1.Text += Resources.___Loaded__ + loadedSlot.Name;
@@ -341,10 +322,7 @@ namespace LMStud{
 		private static string FindVisionProjector(string modelPath){
 			var directory = Path.GetDirectoryName(modelPath);
 			if(string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory)) return null;
-			var candidates = Directory.GetFiles(directory, "*.gguf", SearchOption.TopDirectoryOnly)
-				.Where(IsVisionProjectorFile)
-				.OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
-				.ToList();
+			var candidates = Directory.GetFiles(directory, "*.gguf", SearchOption.TopDirectoryOnly).Where(IsVisionProjectorFile).OrderBy(path => path, StringComparer.OrdinalIgnoreCase).ToList();
 			return candidates.Count == 1 ? candidates[0] : null;
 		}
 		private void ClearFailedLocalSlot(string slotName){
@@ -356,10 +334,22 @@ namespace LMStud{
 			}
 			Common.LoadedModel = Common.LoadedLocalSlots.TryGetValue(Common.ActiveModelSlotName ?? "", out var activeLoaded) ? activeLoaded : Common.LoadedLocalSlots.Values.FirstOrDefault();
 		}
-		private NativeMethods.StudError CreateContext(string slotName, int nCtx, int nBatch, CheckState flashAttn, bool offloadKQV, bool offloadOP, int nThreads, int nThreadsBatch, NativeMethods.QuantType kType, NativeMethods.QuantType vType, int mtpDraftTokens){
+		private NativeMethods.StudError CreateContext(string slotName,
+			int nCtx,
+			int nBatch,
+			CheckState flashAttn,
+			bool offloadKQV,
+			bool offloadOP,
+			int nThreads,
+			int nThreadsBatch,
+			NativeMethods.QuantType kType,
+			NativeMethods.QuantType vType,
+			int mtpDraftTokens){
 			var slotLock = ModelSlotManager.EnterSlot(slotName);
 			NativeMethods.StudError result;
-			try{ result = NativeMethods.CreateContext(slotName, nCtx, nBatch, (uint)flashAttn, offloadKQV, offloadOP, nThreads, nThreadsBatch, (int)kType, (int)vType, mtpDraftTokens); } finally{ slotLock.Dispose(); }
+			try{ result = NativeMethods.CreateContext(slotName, nCtx, nBatch, (uint)flashAttn, offloadKQV, offloadOP, nThreads, nThreadsBatch, (int)kType, (int)vType, mtpDraftTokens); } finally{
+				slotLock.Dispose();
+			}
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_context, result);
 			return result;
 		}
@@ -390,8 +380,7 @@ namespace LMStud{
 			var activeChatSlot = ModelSlotManager.GetActiveChatSlot();
 			var loadingActiveChatSlot = activeChatSlot != null && string.Equals(activeChatSlot.Name, slotName, StringComparison.OrdinalIgnoreCase);
 			var activeChatSlotLoaded = activeChatSlot?.Source == ModelSlotSource.Local && ModelSlotManager.CanServeLocalSlot(activeChatSlot);
-			var makeSlotChat = string.Equals(slotName, ModelSlotManager.MainSlotName, StringComparison.OrdinalIgnoreCase) ||
-				(activeChatSlot?.Source == ModelSlotSource.Local && !activeChatSlotLoaded);
+			var makeSlotChat = string.Equals(slotName, ModelSlotManager.MainSlotName, StringComparison.OrdinalIgnoreCase) || (activeChatSlot?.Source == ModelSlotSource.Local && !activeChatSlotLoaded);
 			if(activeChatSlotLoaded && !loadingActiveChatSlot && !string.Equals(slotName, ModelSlotManager.MainSlotName, StringComparison.OrdinalIgnoreCase)) makeSlotChat = false;
 			ThreadPool.QueueUserWorkItem(o => {
 				var slotLock = ModelSlotManager.EnterSlot(slotName);
@@ -413,8 +402,7 @@ namespace LMStud{
 							ShowError(Resources.Error_loading_model, Resources.Jinja_template_file_not_found__ + (templatePath ?? ""), false);
 							return;
 						}
-						try{ jinjaTmpl = File.ReadAllText(templatePath); }
-						catch(Exception ex){
+						try{ jinjaTmpl = File.ReadAllText(templatePath); } catch(Exception ex){
 							ShowError(Resources.Error_loading_model, ex.Message, false);
 							return;
 						}
@@ -445,9 +433,18 @@ namespace LMStud{
 					var contextSize = ClampContextSize(modelLvi, ctxSize);
 					Common.ModelCtxMax = modelCtxMax;
 					Common.CntCtxMax = contextSize;
-					result = NativeMethods.CreateContext(slotName, contextSize, Common.BatchSize, (uint)flashAttn, offloadKQV, offloadOP, Common.NThreads, Common.NThreadsBatch, (int)Common.KType, (int)Common.VType, Common.MtpDraftTokens);
-					if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_context, result);
-					else{
+					result = NativeMethods.CreateContext(slotName,
+						contextSize,
+						Common.BatchSize,
+						(uint)flashAttn,
+						offloadKQV,
+						offloadOP,
+						Common.NThreads,
+						Common.NThreadsBatch,
+						(int)Common.KType,
+						(int)Common.VType,
+						Common.MtpDraftTokens);
+					if(result != NativeMethods.StudError.Success){ ShowError(Resources.Error_creating_context, result); } else{
 						result = NativeMethods.CreateSampler(slotName, minP, topP, topK, temp, Common.RepPen);
 						if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_sampler, result);
 					}
@@ -538,6 +535,14 @@ namespace LMStud{
 				var lvi = new ListViewItem(key);
 				lvi.SubItems.Add(valueStr);
 				listViewMeta.Items.Add(lvi);
+			}
+		}
+		private sealed class SystemPromptResolution{
+			internal readonly bool IsOverride;
+			internal readonly string Text;
+			internal SystemPromptResolution(string text, bool isOverride){
+				Text = text ?? "";
+				IsOverride = isOverride;
 			}
 		}
 	}

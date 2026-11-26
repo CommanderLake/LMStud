@@ -7,7 +7,7 @@ using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
 	public partial class Form1{
-		internal bool ChatFileOperationActive { get; private set; }
+		internal bool ChatFileOperationActive{get; private set;}
 		private bool ChatBusy => Generation.Generating || Volatile.Read(ref _retokenizeCount) > 0 || _shutdownPending || _shutdownReady;
 		private bool HasChatToExport => ChatMessages.Count != 0 || textInput.TextLength != 0;
 		private void ChatToolStripMenuItem_DropDownOpening(object sender, EventArgs e){
@@ -35,9 +35,15 @@ namespace LMStud{
 			var archive = new ChatArchive{
 				Draft = textInput.Text,
 				Messages = ChatMessages.Select(message => new ChatArchive.Message{
-					Role = message.Role, Speaker = message.labelRole.Text, Text = message.Message, Reasoning = message.Think,
-					ShowReasoning = message.checkThink.Checked, DisplayOnly = !message.NativeBacked, ApiContent = message.ApiContent,
-					ToolCalls = message.ApiToolCalls == null ? null : new List<APIClient.ToolCall>(message.ApiToolCalls), ToolCallId = message.ApiToolCallId
+					Role = message.Role,
+					Speaker = message.labelRole.Text,
+					Text = message.Message,
+					Reasoning = message.Think,
+					ShowReasoning = message.checkThink.Checked,
+					DisplayOnly = !message.NativeBacked,
+					ApiContent = message.ApiContent,
+					ToolCalls = message.ApiToolCalls == null ? null : new List<APIClient.ToolCall>(message.ApiToolCalls),
+					ToolCallId = message.ApiToolCallId
 				}).ToList(),
 				PartnerTurn = relaySlots.Length > 1 && string.Equals(Generation.CntDialSlotName, relaySlots[1], StringComparison.OrdinalIgnoreCase)
 			};
@@ -54,8 +60,7 @@ namespace LMStud{
 					if(relaySlots.Length > 1) archive.PartnerHistory = archive.Messages.Count == 0 ? "[]" : NativeChat.ReadHistory(relaySlots[1]);
 					archive.EmbedLocalImages();
 					archive.Write(path);
-				} catch(Exception ex){ error = ex.Message; }
-				finally{
+				} catch(Exception ex){ error = ex.Message; } finally{
 					ModelSlotManager.ReleaseSlots(leases);
 					FinishChatFileOperation(title, error);
 				}
@@ -70,9 +75,7 @@ namespace LMStud{
 			ChatFileOperationActive = true;
 			ThreadPool.QueueUserWorkItem(_ => {
 				string error = null;
-				try{ RestoreChatArchive(ChatArchive.Read(path), title); }
-				catch(Exception ex){ error = ex.GetBaseException().Message; }
-				finally{ FinishChatFileOperation(title, error); }
+				try{ RestoreChatArchive(ChatArchive.Read(path), title); } catch(Exception ex){ error = ex.GetBaseException().Message; } finally{ FinishChatFileOperation(title, error); }
 			});
 		}
 		private void RestoreChatArchive(ChatArchive archive, string title){
@@ -86,7 +89,8 @@ namespace LMStud{
 			try{
 				RunOnUiThread(() => {
 					if(_shutdownPending || _shutdownReady) return;
-					if(HasChatToExport && MessageBox.Show(this, Resources.Replace_Current_Chat, title, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+					if(HasChatToExport
+						&& MessageBox.Show(this, Resources.Replace_Current_Chat, title, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
 					if(ChatBusy) throw new InvalidOperationException(Resources.Chat_File_Busy);
 					relaySlots = archive.PartnerHistory == null ? null : ModelSlotManager.ResolveDialecticLocalSlots();
 					var restoreRelay = relaySlots?.Count == 2;
@@ -119,17 +123,15 @@ namespace LMStud{
 				});
 			} finally{
 				ModelSlotManager.ReleaseSlots(leases);
-				if(!restored){
-					foreach(var file in restoredFiles){
-						try{ File.Delete(file); }
-						catch(IOException){} catch(UnauthorizedAccessException){}
-					}
-				}
-				if(leases != null) RunOnUiThread(() => {
-					tabControlMain.Enabled = tabsEnabled;
-					EndRetokenization();
-					SetModelStatus();
-				});
+				if(!restored)
+					foreach(var file in restoredFiles)
+						try{ File.Delete(file); } catch(IOException){} catch(UnauthorizedAccessException){}
+				if(leases != null)
+					RunOnUiThread(() => {
+						tabControlMain.Enabled = tabsEnabled;
+						EndRetokenization();
+						SetModelStatus();
+					});
 			}
 		}
 		private void FinishChatFileOperation(string title, string error){

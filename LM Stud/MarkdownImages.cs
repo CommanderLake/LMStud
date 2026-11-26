@@ -6,6 +6,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
+using Encoder = System.Drawing.Imaging.Encoder;
 namespace LMStud{
 	internal sealed class MarkdownImageReference{
 		internal readonly string AltText;
@@ -27,10 +28,7 @@ namespace LMStud{
 		private const int MaximumImageBytes = 20*1024*1024;
 		private const long MaximumResizeSourceBytes = 256L*1024*1024;
 		private const int MaximumVisionDimension = 4096;
-		private static readonly HashSet<string> ImageExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase){
-			".bmp", ".gif", ".jpeg", ".jpg",
-			".png", ".tif", ".tiff", ".webp"
-		};
+		private static readonly HashSet<string> ImageExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase){ ".bmp", ".gif", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp" };
 		internal static List<MarkdownImageReference> Find(string markdown){
 			var images = new List<MarkdownImageReference>();
 			if(string.IsNullOrEmpty(markdown)) return images;
@@ -184,7 +182,7 @@ namespace LMStud{
 		}
 		internal static string GetLocalImageDataUrl(string source){
 			if(source.StartsWith("data:", StringComparison.OrdinalIgnoreCase)) return null;
-			return TryGetVisionUrl(source, false, out var dataUrl, requireImageExtension: true) ? dataUrl : null;
+			return TryGetVisionUrl(source, false, out var dataUrl, true) ? dataUrl : null;
 		}
 		internal static string RestoreEmbeddedImage(string source){
 			const string prefix = "data:image/";
@@ -194,8 +192,10 @@ namespace LMStud{
 			var extension = source.Substring(prefix.Length, separator - prefix.Length).ToLowerInvariant();
 			if(!ImageExtensions.Contains("." + extension)) extension = "png";
 			var path = Path.Combine(GetAttachmentDirectory(), "restored-" + Guid.NewGuid().ToString("N") + "." + extension);
-			try{ File.WriteAllBytes(path, bytes); }
-			catch{ File.Delete(path); throw; }
+			try{ File.WriteAllBytes(path, bytes); } catch{
+				File.Delete(path);
+				throw;
+			}
 			return path;
 		}
 		internal static bool TryGetVisionUrl(string source, out string visionUrl){return TryGetVisionUrl(source, true, out visionUrl);}
@@ -225,8 +225,7 @@ namespace LMStud{
 				if(file.Length <= 0) return false;
 				byte[] bytes;
 				var mimeType = GetMimeType(path);
-				if(file.Length <= MaximumImageBytes) bytes = File.ReadAllBytes(path);
-				else{
+				if(file.Length <= MaximumImageBytes){ bytes = File.ReadAllBytes(path); } else{
 					if(!TryDownscaleImage(path, file.Length, out bytes)) return false;
 					mimeType = "image/jpeg";
 				}
@@ -265,7 +264,7 @@ namespace LMStud{
 					var largestDimension = Math.Max(source.Width, source.Height);
 					if(largestDimension <= 0) return false;
 					var dimensionScale = Math.Min(1.0, MaximumVisionDimension/(double)largestDimension);
-					var byteScale = Math.Sqrt((MaximumImageBytes*0.75)/sourceLength);
+					var byteScale = Math.Sqrt(MaximumImageBytes*0.75/sourceLength);
 					var scale = Math.Min(0.95, Math.Min(dimensionScale, byteScale));
 					var quality = 90L;
 					for(var attempt = 0; attempt < 6; attempt++){
@@ -302,7 +301,7 @@ namespace LMStud{
 				return;
 			}
 			using(var parameters = new EncoderParameters(1)){
-				parameters.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, quality);
+				parameters.Param[0] = new EncoderParameter(Encoder.Quality, quality);
 				image.Save(output, encoder, parameters);
 			}
 		}
@@ -322,9 +321,7 @@ namespace LMStud{
 			AppendTextPart(parts, markdown.Substring(position));
 			return parts;
 		}
-		internal static JsonArrayBuilder BuildResponsesContent(string markdown, out bool hasImages){
-			return BuildVisionContent(markdown, true, out hasImages);
-		}
+		internal static JsonArrayBuilder BuildResponsesContent(string markdown, out bool hasImages){return BuildVisionContent(markdown, true, out hasImages);}
 		internal static string BuildNativeContentJson(string markdown, out bool hasImages){
 			var content = BuildVisionContent(markdown ?? "", false, out hasImages);
 			if(!hasImages) return Json.String(markdown ?? "").ToJson();
@@ -340,7 +337,8 @@ namespace LMStud{
 			foreach(var part in content){
 				if(!part.IsObject) continue;
 				var type = part.GetString("type");
-				if(string.Equals(type, "input_text", StringComparison.OrdinalIgnoreCase)){ parts.Add(Json.Object(Json.P("type", "text"), Json.P("text", part.GetString("text") ?? ""))); } else if(string.Equals(type, "input_image", StringComparison.OrdinalIgnoreCase)){
+				if(string.Equals(type, "input_text", StringComparison.OrdinalIgnoreCase)){ parts.Add(Json.Object(Json.P("type", "text"), Json.P("text", part.GetString("text") ?? ""))); } else if
+					(string.Equals(type, "input_image", StringComparison.OrdinalIgnoreCase)){
 					var imageUrl = part.GetString("image_url");
 					if(!string.IsNullOrWhiteSpace(imageUrl)) parts.Add(Json.Object(Json.P("type", "image_url"), Json.P("image_url", Json.Object(Json.P("url", imageUrl)))));
 				} else{ parts.Add(part); }

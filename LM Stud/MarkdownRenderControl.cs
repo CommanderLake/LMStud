@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -31,7 +32,8 @@ namespace LMStud{
 		public MarkdownRenderControl(){
 			_imageLoader = new MarkdownImageLoader(ImageLoaded);
 			DoubleBuffered = true;
-			SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.Selectable | ControlStyles.Opaque, true);
+			SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.Selectable | ControlStyles.Opaque,
+				true);
 			BackColor = SystemColors.Window;
 			ForeColor = SystemColors.WindowText;
 			TabStop = true;
@@ -45,17 +47,11 @@ namespace LMStud{
 		}
 		[Browsable(false)]
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-		internal string MarkdownText{
-			get => _markdownText;
-			set => SetContent(value, _renderMarkdown);
-		}
+		internal string MarkdownText{get => _markdownText; set => SetContent(value, _renderMarkdown);}
 		internal string PlainText => _renderer.PlainText;
 		[Category("Behavior")]
 		[DefaultValue(true)]
-		internal bool RenderMarkdown{
-			get => _renderMarkdown;
-			set => SetContent(_markdownText, value);
-		}
+		internal bool RenderMarkdown{get => _renderMarkdown; set => SetContent(_markdownText, value);}
 		[Browsable(false)]
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		internal int ContentHeight{get; private set;}
@@ -195,7 +191,14 @@ namespace LMStud{
 				e.SuppressKeyPress = true;
 				return;
 			}
-			if(e.KeyCode == Keys.Left || e.KeyCode == Keys.Right || e.KeyCode == Keys.Up || e.KeyCode == Keys.Down || e.KeyCode == Keys.Home || e.KeyCode == Keys.End || e.KeyCode == Keys.PageUp || e.KeyCode == Keys.PageDown){
+			if(e.KeyCode == Keys.Left
+				|| e.KeyCode == Keys.Right
+				|| e.KeyCode == Keys.Up
+				|| e.KeyCode == Keys.Down
+				|| e.KeyCode == Keys.Home
+				|| e.KeyCode == Keys.End
+				|| e.KeyCode == Keys.PageUp
+				|| e.KeyCode == Keys.PageDown){
 				MoveSelection(e.KeyCode, e.Shift, e.Control);
 				e.SuppressKeyPress = true;
 				e.Handled = true;
@@ -391,6 +394,13 @@ namespace LMStud{
 		}
 	}
 	internal sealed class GdiMarkdownRenderer : IDisposable{
+		private const string MeasurementPrefix = "\u200B";
+		private const string TabSpaces = "    ";
+		private const float EmptyLineHeightFactor = 0.4f;
+		private const int ExactTextRendererMeasurementLimit = 256;
+		private const int MaximumMeasurementCacheEntries = 4096;
+		private const float MinimumLineHeight = 15f;
+		private const TextFormatFlags TextRendererFlags = TextFormatFlags.NoPadding | TextFormatFlags.NoClipping | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine;
 		private static readonly Regex OrderedListRegex = new Regex("^(\\s*)(\\d+[.)])\\s+(.+)$", RegexOptions.Compiled);
 		private static readonly Regex UnorderedListRegex = new Regex("^(\\s*)([-+*])\\s+(.+)$", RegexOptions.Compiled);
 		private static readonly Regex TaskListRegex = new Regex("^\\[([ xX])\\]\\s+(.+)$", RegexOptions.Compiled);
@@ -403,30 +413,22 @@ namespace LMStud{
 		private readonly List<LinkRegion> _linkRegions = new List<LinkRegion>();
 		private readonly IntPtr _measureHdc;
 		private readonly Dictionary<Font, Dictionary<string, float[]>> _measurementCache = new Dictionary<Font, Dictionary<string, float[]>>();
-		private int _measurementCacheEntryCount;
 		private readonly Dictionary<Font, int> _measurementPrefixWidths = new Dictionary<Font, int>();
 		private readonly List<DrawOp> _ops = new List<DrawOp>();
 		private readonly StringBuilder _plainText = new StringBuilder();
-		private const string MeasurementPrefix = "\u200B";
-		private const string TabSpaces = "    ";
-		private const float EmptyLineHeightFactor = 0.4f;
-		private const int ExactTextRendererMeasurementLimit = 256;
-		private const int MaximumMeasurementCacheEntries = 4096;
-		private const float MinimumLineHeight = 15f;
-		private const TextFormatFlags TextRendererFlags = TextFormatFlags.NoPadding | TextFormatFlags.NoClipping | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine;
 		private Font _baseFont;
 		private Color _codeBackColor;
 		private Color _codeBorderColor;
 		private Func<string, Image> _imageResolver;
 		private int _layoutWidth;
 		private Color _linkColor;
+		private int _measurementCacheEntryCount;
 		private Color _mutedColor;
 		private IntPtr _originalMeasureFont;
 		private Color _quoteColor;
 		private IntPtr _selectedMeasureFont;
 		private Color _tableCellColor;
 		private Color _tableHeaderColor;
-		private int _textRendererMeasurementCount;
 		private Color _textColor;
 		internal GdiMarkdownRenderer(){
 			_measureHdc = GdiText.CreateCompatibleDC(IntPtr.Zero);
@@ -434,7 +436,7 @@ namespace LMStud{
 		}
 		internal int TotalHeight{get; private set;}
 		internal string PlainText{get; private set;} = string.Empty;
-		internal int TextRendererMeasurementCount => _textRendererMeasurementCount;
+		internal int TextRendererMeasurementCount{get; private set;}
 		public void Dispose(){
 			if(_originalMeasureFont != IntPtr.Zero) GdiText.SelectObject(_measureHdc, _originalMeasureFont);
 			foreach(var handle in _fontHandles.Values) GdiText.DeleteObject(handle);
@@ -580,7 +582,9 @@ namespace LMStud{
 		}
 		private static Color Blend(Color foreground, Color background, float foregroundAmount){
 			var backgroundAmount = 1f - foregroundAmount;
-			return Color.FromArgb((int)(foreground.R*foregroundAmount + background.R*backgroundAmount), (int)(foreground.G*foregroundAmount + background.G*backgroundAmount), (int)(foreground.B*foregroundAmount + background.B*backgroundAmount));
+			return Color.FromArgb((int)(foreground.R*foregroundAmount + background.R*backgroundAmount),
+				(int)(foreground.G*foregroundAmount + background.G*backgroundAmount),
+				(int)(foreground.B*foregroundAmount + background.B*backgroundAmount));
 		}
 		private static string Normalize(string text){return (text ?? string.Empty).Replace("\r\n", "\n").Replace('\r', '\n').Replace("\t", TabSpaces);}
 		private static bool TryGetFence(string line, out string fence){
@@ -718,8 +722,7 @@ namespace LMStud{
 				var font = ResolveRunFont(paragraphFont, run);
 				var color = run.IsLink ? _linkColor : _textColor;
 				foreach(var token in EnumerateDrawTokens(run.Text))
-					AddWrappedToken(token, font, color, run.Strike, run.Kind == InlineKind.Code,
-						run.IsLink ? run.LinkUrl : null, ref x, ref currentY, lineHeight, (int)left, (int)(left + width));
+					AddWrappedToken(token, font, color, run.Strike, run.Kind == InlineKind.Code, run.IsLink ? run.LinkUrl : null, ref x, ref currentY, lineHeight, (int)left, (int)(left + width));
 			}
 		}
 		private List<string> WrapText(string text, Font font, float width){
@@ -753,7 +756,7 @@ namespace LMStud{
 			var mono = GetFont(FontStyle.Regular, _baseFont.Size*0.95f, "Consolas");
 			var lineHeight = GetLineHeight(mono);
 			var wrappedLines = new List<string>();
-			foreach(var wrapped in codeLines.Select(line => WrapText(line, mono, Math.Max(8, width - 16)))){ wrappedLines.AddRange(wrapped); }
+			foreach(var wrapped in codeLines.Select(line => WrapText(line, mono, Math.Max(8, width - 16)))) wrappedLines.AddRange(wrapped);
 			if(wrappedLines.Count == 0) wrappedLines.Add(string.Empty);
 			var blockHeight = wrappedLines.Count*lineHeight + 8;
 			_ops.Add(DrawOp.FilledRect(0, y, width, blockHeight, _codeBackColor));
@@ -791,7 +794,8 @@ namespace LMStud{
 				}
 				var font = ResolveRunFont(paragraphFont, run);
 				var color = run.IsLink ? _linkColor : _textColor;
-				foreach(var token in EnumerateDrawTokens(run.Text)) AddWrappedToken(token, font, color, run.Strike, run.Kind == InlineKind.Code, run.IsLink ? run.LinkUrl : null, ref x, ref currentY, lineHeight, indent, width + indent);
+				foreach(var token in EnumerateDrawTokens(run.Text))
+					AddWrappedToken(token, font, color, run.Strike, run.Kind == InlineKind.Code, run.IsLink ? run.LinkUrl : null, ref x, ref currentY, lineHeight, indent, width + indent);
 			}
 			AppendLineBreak();
 			return currentY + lineHeight;
@@ -890,7 +894,8 @@ namespace LMStud{
 				} else{
 					SelectMeasureFont(font);
 					var cumulativeWidths = new int[text.Length];
-					if(!GdiText.GetTextExtentExPoint(_measureHdc, text, text.Length, int.MaxValue, out _, cumulativeWidths, out _)) throw new InvalidOperationException("Unable to measure rendered text.");
+					if(!GdiText.GetTextExtentExPoint(_measureHdc, text, text.Length, int.MaxValue, out _, cumulativeWidths, out _))
+						throw new InvalidOperationException("Unable to measure rendered text.");
 					var measuredWidth = cumulativeWidths[cumulativeWidths.Length - 1];
 					var targetWidth = MeasureLogicalTextWidth(text, font);
 					var scale = measuredWidth <= 0 ? 1f : targetWidth/measuredWidth;
@@ -903,11 +908,11 @@ namespace LMStud{
 		}
 		private float MeasureLogicalTextWidth(string text, Font font){
 			if(!_measurementPrefixWidths.TryGetValue(font, out var prefixWidth)){
-				_textRendererMeasurementCount++;
+				TextRendererMeasurementCount++;
 				prefixWidth = TextRenderer.MeasureText(MeasurementPrefix, font, new Size(int.MaxValue, int.MaxValue), TextRendererFlags).Width;
 				_measurementPrefixWidths[font] = prefixWidth;
 			}
-			_textRendererMeasurementCount++;
+			TextRendererMeasurementCount++;
 			var measured = TextRenderer.MeasureText(MeasurementPrefix + text, font, new Size(int.MaxValue, int.MaxValue), TextRendererFlags).Width;
 			return Math.Max(0, measured - prefixWidth);
 		}
@@ -1004,25 +1009,21 @@ namespace LMStud{
 			if(index + marker.Length > text.Length || string.CompareOrdinal(text, index, marker, 0, marker.Length) != 0) return false;
 			if(!CanOpenDelimiter(text, index, marker.Length, marker[0])) return false;
 			var end = text.IndexOf(marker, index + marker.Length, StringComparison.Ordinal);
-			while(end >= 0 && (IsEscaped(text, end) || !CanCloseDelimiter(text, end, marker.Length, marker[0])))
-				end = text.IndexOf(marker, end + marker.Length, StringComparison.Ordinal);
+			while(end >= 0 && (IsEscaped(text, end) || !CanCloseDelimiter(text, end, marker.Length, marker[0]))) end = text.IndexOf(marker, end + marker.Length, StringComparison.Ordinal);
 			if(end <= index + marker.Length) return false;
 			ParseInlineInto(text.Substring(index + marker.Length, end - index - marker.Length), bold, italic, strike, isLink, linkUrl, runs);
 			index = end + marker.Length;
 			return true;
 		}
 		private static bool CanOpenDelimiter(string text, int index, int length, char marker){
-			GetDelimiterFlanking(text, index, length, out var leftFlanking, out var rightFlanking,
-				out var beforePunctuation, out _);
+			GetDelimiterFlanking(text, index, length, out var leftFlanking, out var rightFlanking, out var beforePunctuation, out _);
 			return leftFlanking && (marker == '*' || !rightFlanking || beforePunctuation);
 		}
 		private static bool CanCloseDelimiter(string text, int index, int length, char marker){
-			GetDelimiterFlanking(text, index, length, out var leftFlanking, out var rightFlanking,
-				out _, out var afterPunctuation);
+			GetDelimiterFlanking(text, index, length, out var leftFlanking, out var rightFlanking, out _, out var afterPunctuation);
 			return rightFlanking && (marker == '*' || !leftFlanking || afterPunctuation);
 		}
-		private static void GetDelimiterFlanking(string text, int index, int length, out bool leftFlanking,
-			out bool rightFlanking, out bool beforePunctuation, out bool afterPunctuation){
+		private static void GetDelimiterFlanking(string text, int index, int length, out bool leftFlanking, out bool rightFlanking, out bool beforePunctuation, out bool afterPunctuation){
 			var before = index > 0 ? text[index - 1] : '\0';
 			var afterIndex = index + length;
 			var after = afterIndex < text.Length ? text[afterIndex] : '\0';
@@ -1035,8 +1036,7 @@ namespace LMStud{
 		}
 		private static bool IsPunctuation(char value){return value != '\0' && (char.IsPunctuation(value) || char.IsSymbol(value));}
 		private static bool IsEscapableMarkdownPunctuation(char value){
-			return value >= '!' && value <= '/' || value >= ':' && value <= '@' ||
-				value >= '[' && value <= '`' || value >= '{' && value <= '~';
+			return (value >= '!' && value <= '/') || (value >= ':' && value <= '@') || (value >= '[' && value <= '`') || (value >= '{' && value <= '~');
 		}
 		private static bool IsEscaped(string text, int index){
 			var slashes = 0;
@@ -1047,7 +1047,9 @@ namespace LMStud{
 			for(var i = start; i < text.Length; i++){
 				var ch = text[i];
 				if(ch == '\\' || ch == '*' || ch == '_' || ch == '~' || ch == '`' || ch == '[' || ch == '!') return i;
-				if((ch == 'h' || ch == 'H') && i + 7 < text.Length && (text.IndexOf("http://", i, StringComparison.OrdinalIgnoreCase) == i || text.IndexOf("https://", i, StringComparison.OrdinalIgnoreCase) == i)) return i;
+				if((ch == 'h' || ch == 'H')
+					&& i + 7 < text.Length
+					&& (text.IndexOf("http://", i, StringComparison.OrdinalIgnoreCase) == i || text.IndexOf("https://", i, StringComparison.OrdinalIgnoreCase) == i)) return i;
 			}
 			return text.Length;
 		}
@@ -1229,6 +1231,7 @@ namespace LMStud{
 			internal static InlineRun Break(){return new InlineRun(string.Empty, false, false, false, false, InlineKind.Break, null);}
 		}
 		private sealed class DrawOp{
+			private readonly int[] _caretStops;
 			private readonly float[] _characterOffsets;
 			private readonly Color _color;
 			private readonly TextFormatFlags _flags;
@@ -1237,10 +1240,18 @@ namespace LMStud{
 			private readonly OpKind _kind;
 			private readonly bool _strike;
 			private readonly string _text;
-			private readonly int[] _caretStops;
 			internal readonly RectangleF Rect;
 			internal readonly int TextStart;
-			private DrawOp(OpKind kind, RectangleF rect, Color color, string text = null, Font font = null, int textStart = 0, float[] characterOffsets = null, bool strike = false, TextFormatFlags flags = TextFormatFlags.Default, Image image = null){
+			private DrawOp(OpKind kind,
+				RectangleF rect,
+				Color color,
+				string text = null,
+				Font font = null,
+				int textStart = 0,
+				float[] characterOffsets = null,
+				bool strike = false,
+				TextFormatFlags flags = TextFormatFlags.Default,
+				Image image = null){
 				_kind = kind;
 				Rect = rect;
 				_color = color;
@@ -1255,7 +1266,16 @@ namespace LMStud{
 			}
 			internal bool IsText => _kind == OpKind.Text;
 			internal int TextLength => _text?.Length ?? 0;
-			internal static DrawOp Text(string text, RectangleF rect, Font font, Color color, int textStart, float[] characterOffsets, bool strike = false, TextFormatFlags flags = TextFormatFlags.Default){return new DrawOp(OpKind.Text, rect, color, text, font, textStart, characterOffsets, strike, flags);}
+			internal static DrawOp Text(string text,
+				RectangleF rect,
+				Font font,
+				Color color,
+				int textStart,
+				float[] characterOffsets,
+				bool strike = false,
+				TextFormatFlags flags = TextFormatFlags.Default){
+				return new DrawOp(OpKind.Text, rect, color, text, font, textStart, characterOffsets, strike, flags);
+			}
 			internal static DrawOp Image(RectangleF rect, Image image){return new DrawOp(OpKind.Image, rect, Color.Empty, image: image);}
 			internal static DrawOp FilledRect(float x, float y, float width, float height, Color color){return new DrawOp(OpKind.Rectangle, new RectangleF(x, y, width, height), color);}
 			internal static DrawOp StrokeRect(RectangleF rect, Color color){return new DrawOp(OpKind.StrokeRectangle, rect, color);}
@@ -1293,7 +1313,7 @@ namespace LMStud{
 			internal void DrawSelectionText(Graphics graphics, int selectionStart, int selectionLength, Color selectionTextColor, float offsetX, float offsetY){
 				if(!TryGetSelectionRectangle(selectionStart, selectionLength, offsetX, offsetY, out var renderedRect, out var selectionRect)) return;
 				var state = graphics.Save();
-				graphics.SetClip(selectionRect, System.Drawing.Drawing2D.CombineMode.Intersect);
+				graphics.SetClip(selectionRect, CombineMode.Intersect);
 				DrawText(graphics, _text, renderedRect, selectionTextColor);
 				if(_strike) DrawStrike(graphics, renderedRect, selectionTextColor);
 				graphics.Restore(state);
@@ -1363,14 +1383,13 @@ namespace LMStud{
 	}
 	internal static class UnicodeText{
 		internal static List<int> GetCaretBoundaries(string text){
-			var boundaries = new List<int>{0};
+			var boundaries = new List<int>{ 0 };
 			if(string.IsNullOrEmpty(text)) return boundaries;
 			var index = 0;
 			while(index < text.Length){
 				var codePoint = char.ConvertToUtf32(text, index);
 				index += CodePointLength(codePoint);
-				if(codePoint == '\r' && index < text.Length && text[index] == '\n') index++;
-				else if(IsRegionalIndicator(codePoint) && index < text.Length){
+				if(codePoint == '\r' && index < text.Length && text[index] == '\n'){ index++; } else if(IsRegionalIndicator(codePoint) && index < text.Length){
 					var next = char.ConvertToUtf32(text, index);
 					if(IsRegionalIndicator(next)) index += CodePointLength(next);
 				}
@@ -1389,7 +1408,7 @@ namespace LMStud{
 		internal static bool RequiresShapingAwareMeasurement(string text){
 			for(var index = 0; index < text.Length; index++){
 				var value = text[index];
-				if(char.IsSurrogate(value) || value == '\u200D' || value >= '\uFE00' && value <= '\uFE0F') return true;
+				if(char.IsSurrogate(value) || value == '\u200D' || (value >= '\uFE00' && value <= '\uFE0F')) return true;
 				var category = CharUnicodeInfo.GetUnicodeCategory(text, index);
 				if(category == UnicodeCategory.NonSpacingMark || category == UnicodeCategory.SpacingCombiningMark || category == UnicodeCategory.EnclosingMark) return true;
 			}
@@ -1438,8 +1457,8 @@ namespace LMStud{
 			}
 		}
 		private static bool IsExtender(string text, int index, int codePoint){
-			if(codePoint >= 0xFE00 && codePoint <= 0xFE0F || codePoint >= 0xE0100 && codePoint <= 0xE01EF) return true;
-			if(codePoint >= 0x1F3FB && codePoint <= 0x1F3FF || codePoint >= 0xE0020 && codePoint <= 0xE007F) return true;
+			if((codePoint >= 0xFE00 && codePoint <= 0xFE0F) || (codePoint >= 0xE0100 && codePoint <= 0xE01EF)) return true;
+			if((codePoint >= 0x1F3FB && codePoint <= 0x1F3FF) || (codePoint >= 0xE0020 && codePoint <= 0xE007F)) return true;
 			var category = CharUnicodeInfo.GetUnicodeCategory(text, index);
 			return category == UnicodeCategory.NonSpacingMark || category == UnicodeCategory.SpacingCombiningMark || category == UnicodeCategory.EnclosingMark;
 		}

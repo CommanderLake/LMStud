@@ -425,9 +425,7 @@ std::string FormatToolCallForDisplayText(const char* message){
 	if(args.empty()) return text;
 	return TrimCopy(text.substr(0, argsStart)) + "\r\n" + FormatJsonForDisplayText(args.c_str());
 }
-static void AppendJsonIndent(std::string& output, const int depth){
-	output.append(static_cast<size_t>(depth * 2), ' ');
-}
+static void AppendJsonIndent(std::string& output, const int depth){ output.append(static_cast<size_t>(depth * 2), ' '); }
 static bool AppendNormalizedJsonValue(const char*& p, std::string& output, bool indented, int depth);
 static bool AppendNormalizedJsonObject(const char*& p, std::string& output, const bool indented, const int depth){
 	p = SkipJsonWhitespace(p);
@@ -514,11 +512,7 @@ static bool IsJsonPrimitiveRawValid(const std::string& raw){
 		++i;
 		if(i == raw.size()) return false;
 	}
-	if(raw[i] == '0'){
-		++i;
-	} else if(raw[i] >= '1' && raw[i] <= '9'){
-		do{ ++i; } while(i < raw.size() && raw[i] >= '0' && raw[i] <= '9');
-	} else return false;
+	if(raw[i] == '0'){ ++i; } else if(raw[i] >= '1' && raw[i] <= '9'){ do{ ++i; } while(i < raw.size() && raw[i] >= '0' && raw[i] <= '9'); } else return false;
 	if(i < raw.size() && raw[i] == '.'){
 		++i;
 		const size_t fractionStart = i;
@@ -549,7 +543,7 @@ static bool AppendNormalizedJsonValue(const char*& p, std::string& output, const
 	const char* start = p;
 	const char* end = SkipJsonValue(p);
 	if(!end || end == start) return false;
-	std::string raw(start, static_cast<size_t>(end - start));
+	std::string raw(start, end - start);
 	raw = TrimCopy(raw);
 	if(!IsJsonPrimitiveRawValid(raw)) return false;
 	output += raw;
@@ -590,7 +584,7 @@ extern "C" EXPORT int JsonGetKind(const char* json){
 	const char* end = SkipJsonValue(p);
 	if(!end || end == p) return 0;
 	if(kind == 3){
-		const std::string raw(p, static_cast<size_t>(end - p));
+		const std::string raw(p, end - p);
 		if(!IsJsonPrimitiveRawValid(raw)) return 0;
 	}
 	end = SkipJsonWhitespace(end);
@@ -639,10 +633,7 @@ extern "C" EXPORT char* JsonReadStringValue(const char* rawValue){
 		return CopyDisplayCString(value);
 	} catch(...){ return nullptr; }
 }
-extern "C" EXPORT char* JsonMakeString(const char* value){
-	try{ return CopyDisplayCString(JsonString(value ? std::string(value) : std::string())); }
-	catch(...){ return CopyDisplayCString("\"\""); }
-}
+extern "C" EXPORT char* JsonMakeString(const char* value){ try{ return CopyDisplayCString(JsonString(value ? std::string(value) : std::string())); } catch(...){ return CopyDisplayCString("\"\""); } }
 static std::string GetJsonValue(const char* json, const char* key){
 	if(!json || !key) return "";
 	std::string rawValue;

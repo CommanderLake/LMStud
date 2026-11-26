@@ -4,12 +4,10 @@ using System.Linq;
 namespace LMStud{
 	internal class SessionManager{
 		private readonly int _maxSessions;
-		private readonly Dictionary<string, Session> _sessions = new Dictionary<string, Session>();
 		private readonly Dictionary<string, string> _responseSessions = new Dictionary<string, string>();
+		private readonly Dictionary<string, Session> _sessions = new Dictionary<string, Session>();
 		private readonly object _sync = new object();
-		public SessionManager(int maxSessions = 32){
-			_maxSessions = maxSessions;
-		}
+		public SessionManager(int maxSessions = 32){_maxSessions = maxSessions;}
 		public Session Get(string id){
 			List<Session> evicted;
 			Session result;
@@ -27,12 +25,13 @@ namespace LMStud{
 			return result;
 		}
 		public bool Update(Session session, List<APIServer.Message> messages, byte[] state, int tokenCount){
-			return Apply(session, s => {
-				s.Messages = CloneMessages(messages);
-				s.State = CloneState(state);
-				s.ClearNativeChatState();
-				s.TokenCount = tokenCount;
-			});
+			return Apply(session,
+				s => {
+					s.Messages = CloneMessages(messages);
+					s.State = CloneState(state);
+					s.ClearNativeChatState();
+					s.TokenCount = tokenCount;
+				});
 		}
 		public bool Apply(Session session, Action<Session> update, Func<string> responseId = null){
 			if(session == null || update == null) return false;
@@ -82,7 +81,10 @@ namespace LMStud{
 			foreach(var message in messages){
 				if(message == null) continue;
 				clone.Add(new APIServer.Message{
-					Role = message.Role, Content = message.Content, ContentJson = message.ContentJson, ToolCallId = message.ToolCallId,
+					Role = message.Role,
+					Content = message.Content,
+					ContentJson = message.ContentJson,
+					ToolCallId = message.ToolCallId,
 					ToolCalls = message.ToolCalls == null ? null : new List<APIClient.ToolCall>(message.ToolCalls)
 				});
 			}
@@ -107,31 +109,30 @@ namespace LMStud{
 		private static void ClearNativeChatStates(IEnumerable<Session> sessions){
 			if(sessions == null) return;
 			foreach(var session in sessions.Where(session => session != null))
-				lock(session.SyncRoot) session.ClearNativeChatState();
+				lock(session.SyncRoot){ session.ClearNativeChatState(); }
 		}
 		private bool IsActiveNoLock(Session session){
 			if(session == null || string.IsNullOrEmpty(session.Id)) return false;
 			return _sessions.TryGetValue(session.Id, out var active) && ReferenceEquals(active, session);
 		}
 		private void RemoveResponseIdsForSession(string sessionId){
-			foreach(var responseId in _responseSessions.Where(pair => pair.Value == sessionId).Select(pair => pair.Key).ToList())
-				_responseSessions.Remove(responseId);
+			foreach(var responseId in _responseSessions.Where(pair => pair.Value == sessionId).Select(pair => pair.Key).ToList()) _responseSessions.Remove(responseId);
 		}
 		internal class Session{
+			internal readonly object SyncRoot = new object();
 			public string Id = Guid.NewGuid().ToString();
+			public string LastBackend;
 			public DateTime LastUsed;
 			public List<APIServer.Message> Messages = new List<APIServer.Message>();
+			public IntPtr NativeChatState;
 			public byte[] State;
 			public int TokenCount;
-			public string LastBackend;
 			public string ToolsJson;
-			public IntPtr NativeChatState;
-			internal readonly object SyncRoot = new object();
 			public void SetNativeChatState(IntPtr state){
 				if(NativeChatState != IntPtr.Zero && NativeChatState != state) NativeMethods.FreeChatState(NativeChatState);
 				NativeChatState = state;
 			}
-			public void ClearNativeChatState(){ SetNativeChatState(IntPtr.Zero); }
+			public void ClearNativeChatState(){SetNativeChatState(IntPtr.Zero);}
 		}
 	}
 }

@@ -89,24 +89,25 @@ void UnloadWhisperModel(){
 	}
 }
 void HighPassFilter(std::vector<float>& data, const float cutoff, const float sampleRate){
-	const float rc = 1.0f / (2.0f*M_PI*cutoff);
+	const float rc = 1.0f / (2.0f * M_PI * cutoff);
 	const float dt = 1.0f / sampleRate;
 	const float alpha = dt / (rc + dt);
 	float y = data[0];
 	for(size_t i = 1; i < data.size(); i++){
-		y = alpha*(y + data[i] - data[i - 1]);
+		y = alpha * (y + data[i] - data[i - 1]);
 		data[i] = y;
 	}
 }
 float _vadEnergy;
 bool VadSimple(std::vector<float>& pcmf32, const int sampleRate){
 	const int nSamples = pcmf32.size();
-	if(nSamples == 0){ _vadEnergy = 0.0f; return false; }
+	if(nSamples == 0){
+		_vadEnergy = 0.0f;
+		return false;
+	}
 	if(_freqThreshold > 0.0f){ HighPassFilter(pcmf32, _freqThreshold, sampleRate); }
 	float energy = 0.0f;
-	for(int i = 0; i < nSamples; ++i){
-		energy += fabsf(pcmf32[i]);
-	}
+	for(int i = 0; i < nSamples; ++i){ energy += fabsf(pcmf32[i]); }
 	energy /= nSamples;
 	static float energyAvg = 0.0f;
 	if(energyAvg <= 0.0f) energyAvg = energy;
@@ -115,7 +116,7 @@ bool VadSimple(std::vector<float>& pcmf32, const int sampleRate){
 	const float prob = ratio / (ratio + 1.0f);
 	OutputDebugStringA(("VadSimple prob: " + std::to_string(prob) + "\n").c_str());
 	const bool speech = prob >= std::clamp(_vadThreshold, 0.0f, 1.0f);
-	energyAvg = 0.95f*energyAvg + 0.05f*energy;
+	energyAvg = 0.95f * energyAvg + 0.05f * energy;
 	return speech;
 }
 float Similarity(const std::string& s0, const std::string& s1){
@@ -138,9 +139,9 @@ static bool SavePCMBufferToWav(const std::vector<float>& pcm, const std::string&
 	if(!out.is_open()) return false;
 	const uint16_t channels = 1;
 	const uint16_t bitsPerSample = 16;
-	const uint32_t byteRate = sampleRate*channels*bitsPerSample/8;
-	const uint16_t blockAlign = channels*bitsPerSample/8;
-	const uint32_t dataSize = static_cast<uint32_t>(pcm.size()*sizeof(int16_t));
+	const uint32_t byteRate = sampleRate * channels * bitsPerSample / 8;
+	const uint16_t blockAlign = channels * bitsPerSample / 8;
+	const uint32_t dataSize = static_cast<uint32_t>(pcm.size() * sizeof(int16_t));
 	const uint32_t riffSize = 36 + dataSize;
 	out.write("RIFF", 4);
 	out.write(reinterpret_cast<const char*>(&riffSize), sizeof(riffSize));
@@ -159,7 +160,7 @@ static bool SavePCMBufferToWav(const std::vector<float>& pcm, const std::string&
 	out.write(reinterpret_cast<const char*>(&dataSize), sizeof(dataSize));
 	for(const float sample : pcm){
 		const float clamped = std::max(-1.0f, std::min(1.0f, sample));
-		const int16_t pcm16 = static_cast<int16_t>(clamped*std::numeric_limits<int16_t>::max());
+		const int16_t pcm16 = static_cast<int16_t>(clamped * std::numeric_limits<int16_t>::max());
 		out.write(reinterpret_cast<const char*>(&pcm16), sizeof(pcm16));
 	}
 	return out.good();
@@ -170,7 +171,7 @@ bool StartSpeechTranscription(){
 	_transcriptionRunning.store(true);
 	_transcriptionThread = std::thread([]{
 		const int stepMs = 500;
-		const int nSamplesStep = stepMs*WHISPER_SAMPLE_RATE/1000;
+		const int nSamplesStep = stepMs * WHISPER_SAMPLE_RATE / 1000;
 		std::vector<float> pcmBuffer;
 		std::vector<float> pcmStep;
 		auto getWords = [](const std::string& s) -> std::vector<std::string>{
@@ -193,11 +194,9 @@ bool StartSpeechTranscription(){
 			size_t pos = 0;
 			while(pos < text.size() && std::isspace(static_cast<unsigned char>(text[pos]))) ++pos;
 			std::string lowerText = text.substr(pos);
-			std::transform(lowerText.begin(), lowerText.end(), lowerText.begin(),
-				[](unsigned char c){ return static_cast<char>(std::tolower(c)); });
+			std::transform(lowerText.begin(), lowerText.end(), lowerText.begin(), [](unsigned char c){ return static_cast<char>(std::tolower(c)); });
 			std::string lowerWake = _wakeCommand;
-			std::transform(lowerWake.begin(), lowerWake.end(), lowerWake.begin(),
-				[](unsigned char c){ return static_cast<char>(std::tolower(c)); });
+			std::transform(lowerWake.begin(), lowerWake.end(), lowerWake.begin(), [](unsigned char c){ return static_cast<char>(std::tolower(c)); });
 			if(lowerText.rfind(lowerWake, 0) == 0){
 				pos += lowerWake.size();
 				if(pos < text.size() && text[pos] == ',') ++pos;
@@ -216,7 +215,7 @@ bool StartSpeechTranscription(){
 		while(_transcriptionRunning.load()){
 			while(_transcriptionRunning.load()){
 				_audioCapture->get(0, pcmStep);
-				if(static_cast<int>(pcmStep.size()) > 2*nSamplesStep){
+				if(static_cast<int>(pcmStep.size()) > 2 * nSamplesStep){
 					_audioCapture->clear();
 					continue;
 				}
@@ -261,9 +260,7 @@ bool StartSpeechTranscription(){
 					speaking = false;
 					_wakeWordDetected.exchange(false);
 					std::lock_guard<std::mutex> lock(_committedMutex);
-					if(!_committed.empty()){
-						if(_speechEndCallback) _speechEndCallback();
-					}
+					if(!_committed.empty()){ if(_speechEndCallback) _speechEndCallback(); }
 				}
 				continue;
 			}

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -7,33 +8,23 @@ using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
 	public partial class Form1 : Form{
-		internal APIServer ApiServer;
 		private static readonly NativeMethods.WhisperCallback WhisperCallback = STT.WhisperCallback;
 		private static readonly NativeMethods.SpeechEndCallback SpeechEndCallback = STT.SpeechEndCallback;
 		private static readonly NativeMethods.RetokenizationCallback RetokenizationCallback = NativeRetokenizationCallback;
+		private readonly string _numCtxSizeToolTip;
 		internal readonly List<ChatMessageControl> ChatMessages = new List<ChatMessageControl>();
-		internal CheckState CheckVoiceInputLast = CheckState.Unchecked;
 		private LVColumnClickHandler _columnClickHandler;
-		internal string InputEditOldText = "";
-		internal volatile bool Rendering;
 		private int _retokenizeCount;
 		private List<ModelSlotLockLease> _retokSlotLocks;
 		private bool _shutdownPending;
 		private bool _shutdownReady;
 		private List<ModelSlotLockLease> _shutdownSlotLocks;
 		private bool _whisperLoaded;
-		private readonly string _numCtxSizeToolTip;
+		internal APIServer ApiServer;
+		internal CheckState CheckVoiceInputLast = CheckState.Unchecked;
+		internal string InputEditOldText = "";
 		internal bool IsEditing;
-		private struct FormControlStates{
-			internal static bool ButApplyEnabled;
-			internal static bool ButApplyModelSettingsEnabled;
-			internal static bool ButGenEnabled;
-			internal static bool ButLoadEnabled;
-			internal static bool ButLoadSlotEnabled;
-			internal static bool ButUnloadEnabled;
-			internal static bool ButUnloadSlotEnabled;
-			internal static bool ListViewModelsEnabled;
-		}
+		internal volatile bool Rendering;
 		internal Form1() : this(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LM Stud"), "https://huggingface.co"){}
 		internal Form1(string profileDirectory, string huggingFaceUrl){
 			//var culture = new CultureInfo("zh-CN");
@@ -84,7 +75,7 @@ namespace LMStud{
 					try{
 						Invoke(new MethodInvoker(() => {
 							if(IsDisposed) return;
-						var modelLvi = listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item => SameModelPath(item.SubItems[1].Text, modelPath));
+							var modelLvi = listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item => SameModelPath(item.SubItems[1].Text, modelPath));
 							if(modelLvi != null) LoadModel(modelLvi, true);
 						}));
 					} catch(ObjectDisposedException){} catch(InvalidOperationException){}
@@ -163,8 +154,7 @@ namespace LMStud{
 					Close();
 				}));
 				slotLocks = null;
-			} catch(ObjectDisposedException){} catch(InvalidOperationException){}
-			finally{ ModelSlotManager.ReleaseSlots(slotLocks); }
+			} catch(ObjectDisposedException){} catch(InvalidOperationException){} finally{ ModelSlotManager.ReleaseSlots(slotLocks); }
 		}
 		private void Form1_KeyDown(object sender, KeyEventArgs e){
 			if(e.KeyCode != Keys.Escape) return;
@@ -172,20 +162,14 @@ namespace LMStud{
 			if(!Generation.Generating) return;
 			Generation.StopActiveGeneration();
 		}
-		private void Form1_ResizeBegin(object sender, EventArgs e){
-			panelChat.AutoScrollEnable = false;
-		}
-		private void Form1_ResizeEnd(object sender, EventArgs e) {
-			panelChat.AutoScrollEnable = checkAutoScroll.Checked;
-		}
+		private void Form1_ResizeBegin(object sender, EventArgs e){panelChat.AutoScrollEnable = false;}
+		private void Form1_ResizeEnd(object sender, EventArgs e){panelChat.AutoScrollEnable = checkAutoScroll.Checked;}
 		private void ButCodeBlock_Click(object sender, EventArgs e){
 			textInput.Paste("```\r\n\r\n```");
 			textInput.Focus();
 			textInput.Select(5, 0);
 		}
-		private void CheckAutoScroll_CheckedChanged(object sender, EventArgs e){
-			panelChat.AutoScrollEnable = checkAutoScroll.Checked;
-		}
+		private void CheckAutoScroll_CheckedChanged(object sender, EventArgs e){panelChat.AutoScrollEnable = checkAutoScroll.Checked;}
 		internal void CheckMarkdown_CheckedChanged(object sender, EventArgs e){
 			foreach(var message in ChatMessages) message.Markdown = ShouldUseMarkdown(message);
 		}
@@ -228,23 +212,21 @@ namespace LMStud{
 						}
 					}
 					STT.RequestStart(true);
-				} else{
-					NativeMethods.StopSpeechTranscription();
-				}
+				} else{ NativeMethods.StopSpeechTranscription(); }
 			} finally{ CheckVoiceInputLast = checkVoiceInput.CheckState; }
 		}
 		private void CheckSpeak_CheckedChanged(object sender, EventArgs e){
 			UpdateSetting(ref Common.Speak, checkSpeak.Checked, value => {Settings.Default.Speak = value;});
 			Settings.Default.Save();
 		}
-		private bool InitDialectic() {
+		private bool InitDialectic(){
 			var slots = ModelSlotManager.ResolveDialecticLocalSlots();
-			if(slots.Count < 2) {
+			if(slots.Count < 2){
 				MessageBox.Show(this, Resources.Load_a_local_chat_slot_and_a_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 				return false;
 			}
 			var err = NativeMethods.ResetChat(slots[1].Name);
-			if(err != NativeMethods.StudError.Success) {
+			if(err != NativeMethods.StudError.Success){
 				ShowError(Resources.Dialectic_enable, err);
 				return false;
 			}
@@ -257,9 +239,7 @@ namespace LMStud{
 					checkDialectic.Checked = false;
 					return;
 				}
-			} else{
-				Generation.ClearDialecticSlots();
-			}
+			} else{ Generation.ClearDialecticSlots(); }
 			Generation.DialPaused = false;
 			SetModelStatus();
 		}
@@ -267,7 +247,7 @@ namespace LMStud{
 			if(Generation.Generating){
 				Generation.DialPaused = true;
 				Generation.StopActiveGeneration();
-			} else Generation.Generate();
+			} else{ Generation.Generate(); }
 		}
 		internal void ButReset_Click(object sender, EventArgs e){
 			if(!TryEnterRetokenizationLocks()) return;
@@ -308,7 +288,8 @@ namespace LMStud{
 					e.SuppressKeyPress = true;
 					CancelEditing();
 				}
-			} else if(e.KeyCode != Keys.Enter && e.KeyCode != Keys.Escape && checkVoiceInput.CheckState != CheckState.Unchecked){ StartEditing(); } else if(e.KeyCode == Keys.Enter && !e.Control && !e.Shift && butGen.Enabled){
+			} else if(e.KeyCode != Keys.Enter && e.KeyCode != Keys.Escape && checkVoiceInput.CheckState != CheckState.Unchecked){ StartEditing(); } else if
+				(e.KeyCode == Keys.Enter && !e.Control && !e.Shift && butGen.Enabled){
 				e.SuppressKeyPress = true;
 				ButGen_Click(null, null);
 			}
@@ -326,7 +307,9 @@ namespace LMStud{
 			var id = ChatMessages.IndexOf(cm);
 			if(id < 0 || !cm.NativeBacked) return -1;
 			var nativeIndex = 0;
-			for(var i = 0; i < id; i++) if(ChatMessages[i].NativeBacked) nativeIndex++;
+			for(var i = 0; i < id; i++)
+				if(ChatMessages[i].NativeBacked)
+					nativeIndex++;
 			return nativeIndex;
 		}
 		private void RemoveChatMessage(ChatMessageControl cm){
@@ -361,7 +344,9 @@ namespace LMStud{
 			if(Generation.Generating) return;
 			var idx = ChatMessages.IndexOf(cm);
 			if(idx < 0) return;
-			while(ChatMessages[idx].Role == MessageRole.Assistant) if(--idx < 0) return;
+			while(ChatMessages[idx].Role == MessageRole.Assistant)
+				if(--idx < 0)
+					return;
 			var useLegacyIndexMutation = Generation.DialecticRelayEnabled;
 			var nativeIdx = useLegacyIndexMutation ? GetNativeMessageIndex(ChatMessages[idx]) : -1;
 			if(useLegacyIndexMutation && nativeIdx < 0) return;
@@ -438,8 +423,7 @@ namespace LMStud{
 							cm.Editing = false;
 							cm.Markdown = ShouldUseMarkdown(cm);
 							if(ChatMessages.All(msg => !msg.Editing)) panelChat.AutoScrollEnable = checkAutoScroll.Checked;
-						}
-						else MessageBox.Show(this, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+						} else{ MessageBox.Show(this, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation); }
 					}));
 				} finally{ ReleaseRetokenizationLocks(); }
 			});
@@ -575,7 +559,7 @@ namespace LMStud{
 				FormControlStates.ButGenEnabled = true;
 				butGen.Enabled = false;
 				butReset.Enabled = butApply.Enabled = false;
-			} else butReset.Enabled = butApply.Enabled = true;
+			} else{ butReset.Enabled = butApply.Enabled = true; }
 			foreach(var message in ChatMessages) message.Generating = false;
 			UpdateStatusMessage();
 			if(checkVoiceInput.CheckState == CheckState.Checked) STT.RequestStart(false);
@@ -586,7 +570,7 @@ namespace LMStud{
 		private void TextInput_DragDrop(object sender, DragEventArgs e){
 			if(e.Data.GetDataPresent(DataFormats.Bitmap)){
 				try{
-					using(var image = (System.Drawing.Image)e.Data.GetData(DataFormats.Bitmap)){
+					using(var image = (Image)e.Data.GetData(DataFormats.Bitmap)){
 						var path = MarkdownImages.SaveClipboardImage(image);
 						MarkdownImages.AddFileReference(textInput, path, "Dropped image");
 					}
@@ -671,6 +655,16 @@ namespace LMStud{
 					}
 					textInput.AppendText($"[FILE] {fileName}\r\n```{contentType}\r\n{fileContent}\r\n```\r\n\r\n");
 				} catch(Exception ex){ MessageBox.Show(string.Format(Resources.Error_reading_file___0_, ex.Message)); }
+		}
+		private struct FormControlStates{
+			internal static bool ButApplyEnabled;
+			internal static bool ButApplyModelSettingsEnabled;
+			internal static bool ButGenEnabled;
+			internal static bool ButLoadEnabled;
+			internal static bool ButLoadSlotEnabled;
+			internal static bool ButUnloadEnabled;
+			internal static bool ButUnloadSlotEnabled;
+			internal static bool ListViewModelsEnabled;
 		}
 	}
 }

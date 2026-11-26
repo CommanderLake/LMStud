@@ -17,9 +17,7 @@ std::string GoogleSearch(const char* slotName, const char* argsJson){
 	std::string query = GetArgValue(argsJson, "query");
 	if(query.empty()) query = argsJson ? argsJson : "";
 	const auto result = PerformHttpGet(("https://customsearch.googleapis.com/customsearch/v1?key=" + googleAPIKey + "&cx=" + googleSearchID + "&num=" + std::to_string(googleResultCount) + "&fields=items(title,link,snippet)&prettyPrint=true&q=" + UrlEncode(query.c_str())).c_str());
-	if(result == nullptr){
-		return "{\"error\":\"nullptr getting search results\"}";
-	}
+	if(result == nullptr){ return "{\"error\":\"nullptr getting search results\"}"; }
 	auto resultStr = std::string(result);
 	std::free(result);
 	return resultStr;

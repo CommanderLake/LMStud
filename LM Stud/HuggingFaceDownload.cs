@@ -13,15 +13,18 @@ namespace LMStud{
 					var part = index;
 					if(!reportProgress((double)part/files.Length)) throw new OperationCanceledException();
 					Directory.CreateDirectory(Path.GetDirectoryName(staged[part]));
-					var result = NativeMethods.DownloadFileWithProgress(getUrl(files[part]), staged[part], (total, received) => {
-						var fraction = total > 0 ? Math.Min(1.0, (double)received/total) : 0.0;
-						return reportProgress((part + fraction)/files.Length) ? 0 : 1;
-					});
+					var result = NativeMethods.DownloadFileWithProgress(getUrl(files[part]),
+						staged[part],
+						(total, received) => {
+							var fraction = total > 0 ? Math.Min(1.0, (double)received/total) : 0.0;
+							return reportProgress((part + fraction)/files.Length) ? 0 : 1;
+						});
 					if(result != 0) throw new IOException(files[part] + "\r\n" + string.Format(Resources.Download_failed_with_error_code___0_, result));
 					if(files[part].EndsWith(".gguf", StringComparison.OrdinalIgnoreCase))
-						using(var reader = new BinaryReader(File.OpenRead(staged[part])))
+						using(var reader = new BinaryReader(File.OpenRead(staged[part]))){
 							if(reader.BaseStream.Length < 24 || reader.ReadUInt32() != GGUFMetadataManager.Magic)
 								throw new InvalidDataException(string.Format(Resources.Download_Invalid_GGUF, files[part]));
+						}
 				}
 				if(!reportProgress(1.0)) throw new OperationCanceledException();
 				InstallFiles(destinations, staged);
@@ -53,20 +56,20 @@ namespace LMStud{
 				}
 			} catch(Exception installError){
 				var errors = new List<Exception>{ installError };
-				for(var index = destinations.Length - 1; index >= 0; index--){
+				for(var index = destinations.Length - 1; index >= 0; index--)
 					try{
 						if(installed[index]) File.Move(destinations[index], staged[index]);
 						if(backups[index] != null) File.Move(backups[index], destinations[index]);
 					} catch(Exception rollbackError){ errors.Add(rollbackError); }
-				}
 				if(errors.Count > 1) throw new AggregateException(errors);
 				throw;
 			}
-			foreach(var backup in backups) if(backup != null) TryDelete(backup);
+			foreach(var backup in backups)
+				if(backup != null)
+					TryDelete(backup);
 		}
 		private static void TryDelete(string path){
-			try{ File.Delete(path); }
-			catch(IOException){} catch(UnauthorizedAccessException){}
+			try{ File.Delete(path); } catch(IOException){} catch(UnauthorizedAccessException){}
 		}
 	}
 }

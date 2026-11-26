@@ -54,9 +54,7 @@ static bool IsGitPathComponent(const std::filesystem::path& part){
 	return name == ".git";
 }
 static bool HasGitPathComponent(const std::filesystem::path& path){
-	for(const auto& part : path){
-		if(IsGitPathComponent(part)) return true;
-	}
+	for(const auto& part : path){ if(IsGitPathComponent(part)) return true; }
 	return false;
 }
 static bool IsGitDirectoryEntry(const std::filesystem::directory_entry& entry){
@@ -134,14 +132,9 @@ static bool ListAvailableDrives(std::vector<std::string>& drives){
 	}
 	return true;
 }
-static bool IsCurrentDirectoryRequest(const std::string& path){
-	return path.empty() || path == "." || path == "./" || path == ".\\";
-}
+static bool IsCurrentDirectoryRequest(const std::string& path){ return path.empty() || path == "." || path == "./" || path == ".\\"; }
 static bool IsGeneratedDirectory(const std::filesystem::path& path){
-	static const std::unordered_set<std::string> names = {
-		"packages", "node_modules", "bower_components", "vendor", "bin", "obj", "build", "debug", "release", "dist", "out", "target",
-		".vs", ".idea", ".venv", "venv", "__pycache__", ".next", ".nuget", ".cache", "coverage", "testresults"
-	};
+	static const std::unordered_set<std::string> names = {"packages", "node_modules", "bower_components", "vendor", "bin", "obj", "build", "debug", "release", "dist", "out", "target", ".vs", ".idea", ".venv", "venv", "__pycache__", ".next", ".nuget", ".cache", "coverage", "testresults"};
 	auto name = PathToUtf8Generic(path.filename());
 	std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c){ return c >= 'A' && c <= 'Z' ? static_cast<char>(c + ('a' - 'A')) : static_cast<char>(c); });
 	return names.count(name) != 0;
@@ -157,8 +150,7 @@ std::string ListDirectoryTool(const char* slotName, const char* argsJson){
 	const std::string recStr = GetArgValue(argsJson, "recursive");
 	const bool recursive = recStr == "true" || recStr == "1";
 	const auto includeGeneratedStr = GetArgValue(argsJson, "include_generated");
-	if(!includeGeneratedStr.empty() && includeGeneratedStr != "true" && includeGeneratedStr != "false" && includeGeneratedStr != "1" && includeGeneratedStr != "0")
-		return "{\"error\":\"include_generated must be a boolean\"}";
+	if(!includeGeneratedStr.empty() && includeGeneratedStr != "true" && includeGeneratedStr != "false" && includeGeneratedStr != "1" && includeGeneratedStr != "0") return "{\"error\":\"include_generated must be a boolean\"}";
 	const bool includeGenerated = includeGeneratedStr == "true" || includeGeneratedStr == "1";
 	int maxEntries = 200, maxDepth = 4, offset = 0;
 	if(!ReadDirectoryListingInteger(argsJson, "max_entries", 1, 1000, maxEntries)) return "{\"error\":\"max_entries must be an integer from 1 to 1000\"}";
@@ -176,7 +168,10 @@ std::string ListDirectoryTool(const char* slotName, const char* argsJson){
 		const auto index = seen++;
 		if(index < static_cast<std::uintmax_t>(offset)) return true;
 		const auto encodedBytes = JsonString(label).size();
-		if(encodedBytes + 2 > MaxDirectoryListingBytes){ ++oversizedEntries; return true; }
+		if(encodedBytes + 2 > MaxDirectoryListingBytes){
+			++oversizedEntries;
+			return true;
+		}
 		const auto bytes = encodedBytes + (files.empty() ? 0 : 1);
 		if(files.size() >= static_cast<size_t>(maxEntries) || entryBytes + bytes > MaxDirectoryListingBytes){
 			truncated = true;
@@ -227,12 +222,9 @@ std::string ListDirectoryTool(const char* slotName, const char* argsJson){
 	if(ec) return "{\"error\":\"folder not found, maybe its a file\"}";
 	auto json = EntriesJson(files);
 	json.pop_back();
-	json += ",\"returned_count\":" + std::to_string(files.size()) + ",\"truncated\":" + (truncated ? "true" : "false")
-		+ ",\"next_offset\":" + (truncated ? std::to_string(nextOffset) : "null") + ",\"total_entries\":" + (truncated ? "null" : std::to_string(seen))
-		+ ",\"entries_seen\":" + std::to_string(seen) + ",\"max_entries\":" + std::to_string(maxEntries) + ",\"max_depth\":" + std::to_string(maxDepth)
-		+ ",\"include_generated\":" + (includeGenerated ? "true" : "false") + ",\"excluded_directory_count\":" + std::to_string(excludedDirectories)
-		+ ",\"depth_limited_directory_count\":" + std::to_string(depthLimitedDirectories) + ",\"reparse_directory_count\":" + std::to_string(reparseDirectories)
-		+ ",\"oversized_entry_count\":" + std::to_string(oversizedEntries);
+	json += ",\"returned_count\":" + std::to_string(files.size()) + ",\"truncated\":" + (truncated ? "true" : "false") + ",\"next_offset\":" + (truncated ? std::to_string(nextOffset) : "null") + ",\"total_entries\":" + (truncated ? "null" : std::to_string(seen)) + ",\"entries_seen\":" +
+		std::to_string(seen) + ",\"max_entries\":" + std::to_string(maxEntries) + ",\"max_depth\":" + std::to_string(maxDepth) + ",\"include_generated\":" + (includeGenerated ? "true" : "false") + ",\"excluded_directory_count\":" + std::to_string(excludedDirectories) +
+		",\"depth_limited_directory_count\":" + std::to_string(depthLimitedDirectories) + ",\"reparse_directory_count\":" + std::to_string(reparseDirectories) + ",\"oversized_entry_count\":" + std::to_string(oversizedEntries);
 	if(truncated || excludedDirectories || depthLimitedDirectories || reparseDirectories || oversizedEntries){
 		json += ",\"warning\":\"This is a partial directory view. ";
 		if(truncated) json += "Output budget reached; more entries exist. ";
@@ -260,7 +252,7 @@ std::string SearchFilesTool(const char* slotName, const char* argsJson){
 	const bool useRegex = useRegexStr == "true" || useRegexStr == "1";
 	int maxResults = 100;
 	if(!maxResultsStr.empty()){
-		auto[ptr, ec] = std::from_chars(maxResultsStr.data(), maxResultsStr.data() + maxResultsStr.size(), maxResults);
+		auto [ptr, ec] = std::from_chars(maxResultsStr.data(), maxResultsStr.data() + maxResultsStr.size(), maxResults);
 		if(ec != std::errc() || ptr != maxResultsStr.data() + maxResultsStr.size() || maxResults <= 0) return "{\"error\":\"max_results must be a valid positive integer\"}";
 	}
 	auto trim = [](const std::string& s){
@@ -292,9 +284,7 @@ std::string SearchFilesTool(const char* slotName, const char* argsJson){
 			auto flags = std::regex_constants::ECMAScript;
 			if(!caseSensitive) flags |= std::regex_constants::icase;
 			queryRegex = std::regex(query, flags);
-		} catch(const std::regex_error&){
-			return "{\"error\":\"invalid regex query\"}";
-		}
+		} catch(const std::regex_error&){ return "{\"error\":\"invalid regex query\"}"; }
 	}
 	if(path.empty()) path = ".";
 	const std::filesystem::path p = ResolveFileToolPath(path);
@@ -304,9 +294,7 @@ std::string SearchFilesTool(const char* slotName, const char* argsJson){
 	auto isMatch = [&](const std::string& label){
 		if(useRegex) return std::regex_search(label, queryRegex);
 		const std::string searchLabel = caseSensitive ? label : toLower(label);
-		for(const auto& term : terms){
-			if(searchLabel.find(term) != std::string::npos) return true;
-		}
+		for(const auto& term : terms){ if(searchLabel.find(term) != std::string::npos) return true; }
 		return false;
 	};
 	auto addIfMatch = [&](const std::filesystem::directory_entry& entry)-> bool{
@@ -337,9 +325,7 @@ std::string SearchFilesTool(const char* slotName, const char* argsJson){
 	if(ec) return "{\"error\":\"failed to iterate directory\"}";
 	return EntriesJson(files);
 }
-static std::string FileInfoError(const std::string& message, DWORD code = 0){
-	return "{\"error\":" + JsonString(message) + (code ? ",\"win32_error\":" + std::to_string(code) : "") + "}";
-}
+static std::string FileInfoError(const std::string& message, DWORD code = 0){ return "{\"error\":" + JsonString(message) + (code ? ",\"win32_error\":" + std::to_string(code) : "") + "}"; }
 static std::string FileInfoDate(const FILETIME& time){
 	if(time.dwLowDateTime == 0 && time.dwHighDateTime == 0) return "null";
 	SYSTEMTIME utc{};
@@ -352,7 +338,7 @@ static std::string FileInfoSize(const std::uintmax_t bytes){
 	static const char* units[] = {"B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"};
 	double size = static_cast<double>(bytes);
 	size_t unit = 0;
-	while(size >= 1024 && unit + 1 < sizeof(units)/sizeof(units[0])){
+	while(size >= 1024 && unit + 1 < sizeof(units) / sizeof(units[0])){
 		size /= 1024;
 		++unit;
 	}
@@ -363,16 +349,95 @@ static std::string FileInfoSize(const std::uintmax_t bytes){
 }
 static bool IsKnownTextFile(const std::filesystem::path& path){
 	static const std::unordered_set<std::string> extensions = {
-		".txt", ".text", ".log", ".md", ".markdown", ".rst", ".adoc", ".csv", ".tsv", ".json", ".jsonl", ".ndjson", ".xml", ".xaml", ".resx", ".svg",
-		".html", ".htm", ".css", ".scss", ".sass", ".less", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".py", ".pyw", ".ipynb", ".rb", ".php",
-		".java", ".kt", ".kts", ".c", ".cpp", ".cc", ".cxx", ".h", ".hpp", ".hh", ".hxx", ".inl", ".ipp", ".cs", ".fs", ".fsx", ".vb", ".go", ".rs", ".swift", ".sql",
-		".sh", ".bash", ".zsh", ".fish", ".bat", ".cmd", ".ps1", ".psm1", ".psd1", ".yml", ".yaml", ".toml", ".ini", ".cfg", ".conf", ".config", ".properties",
-		".sln", ".vcxproj", ".filters", ".props", ".targets", ".csproj", ".fsproj", ".vbproj", ".cmake", ".mak", ".gradle", ".tex", ".rtf", ".lua", ".r", ".pl"
+		".txt",
+		".text",
+		".log",
+		".md",
+		".markdown",
+		".rst",
+		".adoc",
+		".csv",
+		".tsv",
+		".json",
+		".jsonl",
+		".ndjson",
+		".xml",
+		".xaml",
+		".resx",
+		".svg",
+		".html",
+		".htm",
+		".css",
+		".scss",
+		".sass",
+		".less",
+		".js",
+		".jsx",
+		".mjs",
+		".cjs",
+		".ts",
+		".tsx",
+		".py",
+		".pyw",
+		".ipynb",
+		".rb",
+		".php",
+		".java",
+		".kt",
+		".kts",
+		".c",
+		".cpp",
+		".cc",
+		".cxx",
+		".h",
+		".hpp",
+		".hh",
+		".hxx",
+		".inl",
+		".ipp",
+		".cs",
+		".fs",
+		".fsx",
+		".vb",
+		".go",
+		".rs",
+		".swift",
+		".sql",
+		".sh",
+		".bash",
+		".zsh",
+		".fish",
+		".bat",
+		".cmd",
+		".ps1",
+		".psm1",
+		".psd1",
+		".yml",
+		".yaml",
+		".toml",
+		".ini",
+		".cfg",
+		".conf",
+		".config",
+		".properties",
+		".sln",
+		".vcxproj",
+		".filters",
+		".props",
+		".targets",
+		".csproj",
+		".fsproj",
+		".vbproj",
+		".cmake",
+		".mak",
+		".gradle",
+		".tex",
+		".rtf",
+		".lua",
+		".r",
+		".pl"
 	};
-	static const std::unordered_set<std::string> names = {
-		"readme", "license", "licence", "copying", "authors", "changelog", "makefile", "gnumakefile", "dockerfile", "containerfile", "cmakelists.txt",
-		".gitignore", ".gitattributes", ".editorconfig", ".dockerignore", ".npmrc", ".env"
-	};
+	static const std::unordered_set<std::string> names = {"readme", "license", "licence", "copying", "authors", "changelog", "makefile", "gnumakefile", "dockerfile", "containerfile", "cmakelists.txt", ".gitignore", ".gitattributes", ".editorconfig", ".dockerignore", ".npmrc", ".env"};
 	auto lower = [](std::string s){
 		std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return c >= 'A' && c <= 'Z' ? static_cast<char>(c + ('a' - 'A')) : static_cast<char>(c); });
 		return s;
@@ -383,7 +448,10 @@ static bool IsKnownTextFile(const std::filesystem::path& path){
 enum class FileInfoEncoding{ Utf8, Utf16LE, Utf16BE, Utf32LE, Utf32BE, Unknown8Bit };
 static bool ReadFileInfoCodepoint(const std::string& data, size_t& pos, FileInfoEncoding encoding, std::uint32_t& cp){
 	const auto byte = [&](size_t offset){ return static_cast<unsigned char>(data[offset]); };
-	if(encoding == FileInfoEncoding::Unknown8Bit){ cp = byte(pos++); return true; }
+	if(encoding == FileInfoEncoding::Unknown8Bit){
+		cp = byte(pos++);
+		return true;
+	}
 	if(encoding == FileInfoEncoding::Utf8){
 		cp = byte(pos++);
 		if(cp < 0x80) return true;
@@ -403,7 +471,7 @@ static bool ReadFileInfoCodepoint(const std::string& data, size_t& pos, FileInfo
 	auto readUnit = [&](std::uint32_t& unit){
 		if(data.size() - pos < width) return false;
 		unit = 0;
-		for(size_t i = 0; i < width; ++i) unit |= static_cast<std::uint32_t>(byte(pos + i)) << (8*(littleEndian ? i : width - i - 1));
+		for(size_t i = 0; i < width; ++i) unit |= static_cast<std::uint32_t>(byte(pos + i)) << (8 * (littleEndian ? i : width - i - 1));
 		pos += width;
 		return true;
 	};
@@ -415,9 +483,7 @@ static bool ReadFileInfoCodepoint(const std::string& data, size_t& pos, FileInfo
 	}
 	return cp <= 0x10FFFF && !(cp >= 0xD800 && cp <= 0xDFFF);
 }
-static bool IsFileInfoWhitespace(std::uint32_t cp){
-	return cp == ' ' || (cp >= '\t' && cp <= '\r') || cp == 0x85 || cp == 0xA0 || cp == 0x1680 || (cp >= 0x2000 && cp <= 0x200A) || cp == 0x2028 || cp == 0x2029 || cp == 0x202F || cp == 0x205F || cp == 0x3000;
-}
+static bool IsFileInfoWhitespace(std::uint32_t cp){ return cp == ' ' || (cp >= '\t' && cp <= '\r') || cp == 0x85 || cp == 0xA0 || cp == 0x1680 || (cp >= 0x2000 && cp <= 0x200A) || cp == 0x2028 || cp == 0x2029 || cp == 0x202F || cp == 0x205F || cp == 0x3000; }
 struct FileInfoTextStats{
 	std::uintmax_t lines = 0, blankLines = 0, words = 0, characters = 0, longestLine = 0, crlf = 0, lf = 0, cr = 0;
 	bool endsWithNewline = false, nonAscii = false;
@@ -445,8 +511,13 @@ static std::string ScanFileInfoText(const std::string& data, size_t pos, FileInf
 			++stats.cr;
 			finishLine();
 		} else if(cp == '\n'){
-			if(previousCR){ --stats.cr; ++stats.crlf; }
-			else{ ++stats.lf; finishLine(); }
+			if(previousCR){
+				--stats.cr;
+				++stats.crlf;
+			} else{
+				++stats.lf;
+				finishLine();
+			}
 		} else{
 			++lineLength;
 			if(!whitespace) blank = false;
@@ -461,18 +532,30 @@ static std::string ScanFileInfoText(const std::string& data, size_t pos, FileInf
 static std::string GetFileInfoText(const std::filesystem::path& path, std::uintmax_t size){
 	std::ifstream file(path, std::ios::binary);
 	if(!file.is_open()) return "{\"status\":\"unavailable\",\"reason\":\"open_failed\"}";
-	std::string data(static_cast<size_t>(size), '\0');
+	std::string data((size), '\0');
 	file.read(data.data(), static_cast<std::streamsize>(data.size()));
-	if(file.bad() || static_cast<size_t>(file.gcount()) != data.size() || file.peek() != std::ifstream::traits_type::eof())
-		return "{\"status\":\"unavailable\",\"reason\":\"read_failed_or_file_changed\"}";
-	FileInfoEncoding encoding = FileInfoEncoding::Utf8;
+	if(file.bad() || static_cast<size_t>(file.gcount()) != data.size() || file.peek() != std::ifstream::traits_type::eof()) return "{\"status\":\"unavailable\",\"reason\":\"read_failed_or_file_changed\"}";
+	auto encoding = FileInfoEncoding::Utf8;
 	std::string label = "UTF-8";
 	size_t bom = 0;
-	if(data.compare(0, 4, "\xFF\xFE\x00\x00", 4) == 0){ encoding = FileInfoEncoding::Utf32LE; label = "UTF-32LE"; bom = 4; }
-	else if(data.compare(0, 4, "\x00\x00\xFE\xFF", 4) == 0){ encoding = FileInfoEncoding::Utf32BE; label = "UTF-32BE"; bom = 4; }
-	else if(data.compare(0, 3, "\xEF\xBB\xBF", 3) == 0) bom = 3;
-	else if(data.compare(0, 2, "\xFF\xFE", 2) == 0){ encoding = FileInfoEncoding::Utf16LE; label = "UTF-16LE"; bom = 2; }
-	else if(data.compare(0, 2, "\xFE\xFF", 2) == 0){ encoding = FileInfoEncoding::Utf16BE; label = "UTF-16BE"; bom = 2; }
+	if(data.compare(0, 4, "\xFF\xFE\x00\x00", 4) == 0){
+		encoding = FileInfoEncoding::Utf32LE;
+		label = "UTF-32LE";
+		bom = 4;
+	} else if(data.compare(0, 4, "\x00\x00\xFE\xFF", 4) == 0){
+		encoding = FileInfoEncoding::Utf32BE;
+		label = "UTF-32BE";
+		bom = 4;
+	} else if(data.compare(0, 3, "\xEF\xBB\xBF", 3) == 0) bom = 3;
+	else if(data.compare(0, 2, "\xFF\xFE", 2) == 0){
+		encoding = FileInfoEncoding::Utf16LE;
+		label = "UTF-16LE";
+		bom = 2;
+	} else if(data.compare(0, 2, "\xFE\xFF", 2) == 0){
+		encoding = FileInfoEncoding::Utf16BE;
+		label = "UTF-16BE";
+		bom = 2;
+	}
 	FileInfoTextStats stats;
 	auto reason = ScanFileInfoText(data, bom, encoding, stats);
 	if(reason == "invalid_encoding" && bom == 0){
@@ -487,13 +570,9 @@ static std::string GetFileInfoText(const std::filesystem::path& path, std::uintm
 	const auto newlineTypes = (stats.crlf > 0) + (stats.lf > 0) + (stats.cr > 0);
 	const char* newlines = newlineTypes > 1 ? "mixed" : stats.crlf ? "CRLF" : stats.lf ? "LF" : stats.cr ? "CR" : "none";
 	const bool knownEncoding = encoding != FileInfoEncoding::Unknown8Bit;
-	return "{\"status\":\"complete\",\"encoding\":" + JsonString(label) + ",\"has_bom\":" + (bom ? "true" : "false")
-		+ ",\"line_count\":" + std::to_string(stats.lines) + ",\"blank_line_count\":" + std::to_string(stats.blankLines)
-		+ ",\"word_count\":" + (knownEncoding ? std::to_string(stats.words) : "null")
-		+ ",\"character_count\":" + (knownEncoding ? std::to_string(stats.characters) : "null")
-		+ ",\"longest_line_characters\":" + (knownEncoding ? std::to_string(stats.longestLine) : "null")
-		+ ",\"newline_style\":" + JsonString(newlines) + ",\"newline_counts\":{\"crlf\":" + std::to_string(stats.crlf) + ",\"lf\":" + std::to_string(stats.lf) + ",\"cr\":" + std::to_string(stats.cr)
-		+ "},\"ends_with_newline\":" + (stats.endsWithNewline ? "true" : "false") + "}";
+	return "{\"status\":\"complete\",\"encoding\":" + JsonString(label) + ",\"has_bom\":" + (bom ? "true" : "false") + ",\"line_count\":" + std::to_string(stats.lines) + ",\"blank_line_count\":" + std::to_string(stats.blankLines) + ",\"word_count\":" + (
+			knownEncoding ? std::to_string(stats.words) : "null") + ",\"character_count\":" + (knownEncoding ? std::to_string(stats.characters) : "null") + ",\"longest_line_characters\":" + (knownEncoding ? std::to_string(stats.longestLine) : "null") + ",\"newline_style\":" + JsonString(newlines) +
+		",\"newline_counts\":{\"crlf\":" + std::to_string(stats.crlf) + ",\"lf\":" + std::to_string(stats.lf) + ",\"cr\":" + std::to_string(stats.cr) + "},\"ends_with_newline\":" + (stats.endsWithNewline ? "true" : "false") + "}";
 }
 std::string GetFileInfoTool(const char* slotName, const char* argsJson){
 	const auto path = GetArgValue(argsJson, "path");
@@ -533,9 +612,7 @@ std::string GetFileInfoTool(const char* slotName, const char* argsJson){
 		if(skipReason.empty()) json += GetFileInfoText(fullPath, size);
 		else json += "{\"status\":\"skipped\",\"reason\":" + JsonString(skipReason) + ",\"max_bytes\":" + std::to_string(MaxFileInfoTextBytes) + "}";
 		return json + "}";
-	} catch(const std::filesystem::filesystem_error&){
-		return FileInfoError("invalid path or file metadata unavailable");
-	}
+	} catch(const std::filesystem::filesystem_error&){ return FileInfoError("invalid path or file metadata unavailable"); }
 }
 std::string ReadFileTool(const char* slotName, const char* argsJson){
 	std::string path = GetArgValue(argsJson, "path");
@@ -598,7 +675,7 @@ std::string SearchFileTool(const char* slotName, const char* argsJson){
 	const bool useRegex = useRegexStr == "true" || useRegexStr == "1";
 	int maxResults = 100;
 	if(!maxResultsStr.empty()){
-		auto[ptr, ec] = std::from_chars(maxResultsStr.data(), maxResultsStr.data() + maxResultsStr.size(), maxResults);
+		auto [ptr, ec] = std::from_chars(maxResultsStr.data(), maxResultsStr.data() + maxResultsStr.size(), maxResults);
 		if(ec != std::errc() || ptr != maxResultsStr.data() + maxResultsStr.size() || maxResults <= 0){ return "{\"error\":\"max_results must be a valid positive integer\"}"; }
 	}
 	if(keyword.empty()){ return "{\"error\":\"keyword is required\"}"; }
@@ -636,27 +713,19 @@ std::string SearchFileTool(const char* slotName, const char* argsJson){
 			auto flags = std::regex_constants::ECMAScript;
 			if(!caseSensitive) flags |= std::regex_constants::icase;
 			kwRegex = std::regex(keyword, flags);
-		} catch(const std::regex_error&){
-			return "{\"error\":\"invalid regex keyword\"}";
-		}
+		} catch(const std::regex_error&){ return "{\"error\":\"invalid regex keyword\"}"; }
 	}
 	int matches = 0;
 	auto processFile = [&](const std::filesystem::path& filePath, const std::string& fileLabel)-> bool{
 		std::uintmax_t fileSize = 0;
-		if(!IsRegularFileForReading(filePath, &fileSize) || fileSize > MaxSearchFileBytes){
-			return false;
-		}
+		if(!IsRegularFileForReading(filePath, &fileSize) || fileSize > MaxSearchFileBytes){ return false; }
 		std::ifstream f(filePath);
-		if(!f.is_open()){
-			return false;
-		}
+		if(!f.is_open()){ return false; }
 		std::string line;
 		int lineNo = 1;
 		while(std::getline(f, line)){
 			bool lineMatched = false;
-			if(useRegex){
-				lineMatched = std::regex_search(line, kwRegex);
-			} else{
+			if(useRegex){ lineMatched = std::regex_search(line, kwRegex); } else{
 				const std::string lineSearch = caseSensitive ? line : toLower(line);
 				for(const auto& kwSearch : keywords){
 					if(lineSearch.find(kwSearch) != std::string::npos){
@@ -787,9 +856,7 @@ std::string ApplyPatchTool(const char* slotName, const char* argsJson){
 	bool inHunk = false;
 	std::regex hunkRe(R"(^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@.*$)");
 	auto isIgnoredPatchLine = [](const std::string& patchLine)-> bool{
-		return patchLine.rfind("*** Begin Patch", 0) == 0 || patchLine.rfind("*** End Patch", 0) == 0 || patchLine.rfind("*** Update File", 0) == 0
-			|| patchLine.rfind("diff --git", 0) == 0 || patchLine.rfind("--- ", 0) == 0 || patchLine.rfind("+++ ", 0) == 0
-			|| patchLine.rfind("```", 0) == 0;
+		return patchLine.rfind("*** Begin Patch", 0) == 0 || patchLine.rfind("*** End Patch", 0) == 0 || patchLine.rfind("*** Update File", 0) == 0 || patchLine.rfind("diff --git", 0) == 0 || patchLine.rfind("--- ", 0) == 0 || patchLine.rfind("+++ ", 0) == 0 || patchLine.rfind("```", 0) == 0;
 	};
 	while(std::getline(patchStream, line)){
 		if(!line.empty() && line.back() == '\r') line.pop_back();
@@ -867,9 +934,7 @@ std::string ApplyPatchTool(const char* slotName, const char* argsJson){
 				out.insert(out.begin() + idx, text);
 				++idx;
 				++offset;
-			} else if(tag == '\\'){
-				continue;
-			} else{
+			} else if(tag == '\\'){ } else{
 				if(idx >= static_cast<int>(out.size())) return makeError("context end-of-file at line " + std::to_string(idx + 1));
 				if(out[idx] != pl) return makeError("context mismatch at line " + std::to_string(idx + 1) + ", file='" + shorten(out[idx]) + "', patch='" + shorten(pl) + "'");
 				++idx;

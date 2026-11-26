@@ -10,6 +10,7 @@ AllowShortIfStatementsOnASingleLine: true
 AllowShortLoopsOnASingleLine: true
 AlwaysBreakAfterDefinitionReturnType: false
 AlwaysBreakTemplateDeclarations: No
+BinPackParameters: false
 BraceWrapping: 
   AfterCaseLabel: false
   AfterClass: false

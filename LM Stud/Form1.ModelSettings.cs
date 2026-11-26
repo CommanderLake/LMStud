@@ -7,8 +7,8 @@ using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
 	public partial class Form1{
-		private readonly string _modelSettingsFile;
 		private readonly Dictionary<string, ModelSettings> _modelSettings = new Dictionary<string, ModelSettings>();
+		private readonly string _modelSettingsFile;
 		private void LoadModelSettings(){
 			if(!File.Exists(_modelSettingsFile)) return;
 			try{
@@ -203,8 +203,11 @@ namespace LMStud{
 			var reloadCtx = ctxSizeOld != ctxSizeEff || flashOld != flashEff || offloadKQVOld != offloadKQVEff || offloadOPOld != offloadOPEff;
 			var reloadSmpl = tempOld != tempEff || minPOld != minPEff || topPOld != topPEff || topKOld != topKEff;
 			var setSystemPrompt = systemPromptOld != systemPromptEff;
-			if(setSystemPrompt && inheritedSystemPromptSlotNames.Count < loadedSlotNames.Count) MessageBox.Show(this, Resources.The_modified_settings_are_overridden_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
-			if(reloadModel && MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes){
+			if(setSystemPrompt && inheritedSystemPromptSlotNames.Count < loadedSlotNames.Count)
+				MessageBox.Show(this, Resources.The_modified_settings_are_overridden_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
+			if(reloadModel
+				&& MessageBox.Show(this, Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_, Resources.LM_Stud, MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+				== DialogResult.Yes){
 				foreach(var slotName in loadedSlotNames) LoadModel(slotName, selectedModel, false);
 			} else{
 				var reloads = new List<ReloadRequest>();
@@ -213,12 +216,7 @@ namespace LMStud{
 					foreach(var slotName in loadedSlotNames){
 						UpdateCommonContextLimitForSlot(slotName, selectedModel, contextSize);
 						reloads.Add(new ReloadRequest{
-							SlotName = slotName,
-							ReloadContext = true,
-							ContextSize = contextSize,
-							FlashAttn = flashEff,
-							OffloadKQV = offloadKQVEff,
-							OffloadOP = offloadOPEff
+							SlotName = slotName, ReloadContext = true, ContextSize = contextSize, FlashAttn = flashEff, OffloadKQV = offloadKQVEff, OffloadOP = offloadOPEff
 						});
 					}
 				}
@@ -286,7 +284,9 @@ namespace LMStud{
 		private void ButBrowseJinjaTmplModel_Click(object sender, EventArgs e){
 			if(openFileDialog1.ShowDialog(this) == DialogResult.OK) textJinjaTmplModel.Text = openFileDialog1.FileName;
 		}
-		private void CheckUseModelSettings_CheckedChanged(object sender, EventArgs e){groupCommonModel.Enabled = groupAdvancedModel.Enabled = labelSystemPromptModel.Enabled = textSystemPromptModel.Enabled = checkOverrideSettings.Checked;}
+		private void CheckUseModelSettings_CheckedChanged(object sender, EventArgs e){
+			groupCommonModel.Enabled = groupAdvancedModel.Enabled = labelSystemPromptModel.Enabled = textSystemPromptModel.Enabled = checkOverrideSettings.Checked;
+		}
 		private sealed class ReloadRequest{
 			internal int ContextSize;
 			internal CheckState FlashAttn;

@@ -155,17 +155,9 @@ bool ReadUntilMarker(const CommandPromptSession& session, const std::string& mar
 						Sleep(50);
 					}
 				}
-				if(streamCb){
-					streamCb(output);
-				}
+				if(streamCb){ streamCb(output); }
 			}
-		} else if(markerFound){
-			break;
-		} else if(marker.empty() || stop.load()){
-			return true;
-		} else{
-			Sleep(10);
-		}
+		} else if(markerFound){ break; } else if(marker.empty() || stop.load()){ return true; } else{ Sleep(10); }
 	}
 	return markerFound || marker.empty();
 }
@@ -191,9 +183,7 @@ void RemoveConsecutiveDuplicateLines(std::string& text){
 	}
 	if(lines.empty()) return;
 	std::vector<std::string> result;
-	for(size_t i = 0; i < lines.size(); ++i){
-		if(i == 0 || lines[i] != lines[i - 1]){ result.push_back(lines[i]); }
-	}
+	for(size_t i = 0; i < lines.size(); ++i){ if(i == 0 || lines[i] != lines[i - 1]){ result.push_back(lines[i]); } }
 	text.clear();
 	for(size_t i = 0; i < result.size(); ++i){
 		if(i > 0) text += '\n';
@@ -209,9 +199,7 @@ void RemoveCommandEchoLine(std::string& text, const std::string& command){
 	while(std::getline(stream, line)){
 		if(!foundCommandEcho){
 			const auto promptEnd = line.find("> ");
-			const bool powerShellEcho = promptEnd != std::string::npos
-				&& (line.compare(0, 3, "PS ") == 0 || line.find("]: PS ") != std::string::npos)
-				&& line.compare(promptEnd + 2, std::string::npos, command) == 0;
+			const bool powerShellEcho = promptEnd != std::string::npos && (line.compare(0, 3, "PS ") == 0 || line.find("]: PS ") != std::string::npos) && line.compare(promptEnd + 2, std::string::npos, command) == 0;
 			if(line.find(" & echo ") != std::string::npos || powerShellEcho){
 				foundCommandEcho = true;
 				continue;
@@ -286,21 +274,14 @@ bool StartCommandPromptSession(std::string& startupOutput, std::string& error){
 	PROCESS_INFORMATION pi{};
 	wchar_t commandLine[] = L"cmd.exe /Q";
 	wchar_t userProfile[MAX_PATH];
-	if(GetEnvironmentVariableW(L"USERPROFILE", userProfile, MAX_PATH) == 0){
-		wcscpy_s(userProfile, L"C:\\");
-	}
+	if(GetEnvironmentVariableW(L"USERPROFILE", userProfile, MAX_PATH) == 0){ wcscpy_s(userProfile, L"C:\\"); }
 	if(!CreateProcessW(nullptr, commandLine, nullptr, nullptr, TRUE, CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT, nullptr, userProfile, &si, &pi)){
 		error = FormatWin32Error("CreateProcessW");
 		return false;
 	}
-
 	CloseHandle(pi.hThread);
-	if(stdoutWrite && stdoutWrite != INVALID_HANDLE_VALUE){
-		CloseHandle(stdoutWrite);          
-	}
-	if(stdinRead && stdinRead != INVALID_HANDLE_VALUE){
-		CloseHandle(stdinRead);          
-	}
+	if(stdoutWrite && stdoutWrite != INVALID_HANDLE_VALUE){ CloseHandle(stdoutWrite); }
+	if(stdinRead && stdinRead != INVALID_HANDLE_VALUE){ CloseHandle(stdinRead); }
 	stdoutWrite = nullptr;
 	stdinRead = nullptr;
 	g_cmdSession.process = pi.hProcess;
@@ -376,9 +357,7 @@ std::string CommandPromptExecuteTool(const char* slotName, const char* argsJson)
 	const auto closeArg = TrimCopy(GetArgValue(argsJson, "close"));
 	if(commandArg.empty() && closeArg.empty()){ return "{\"error\":\"command is required\"}"; }
 	std::lock_guard<std::mutex> lock(g_cmdMutex);
-	if(!g_cmdSession.active){
-		return "{\"error\":\"Session not started. Call command_prompt_start first.\"}";
-	}
+	if(!g_cmdSession.active){ return "{\"error\":\"Session not started. Call command_prompt_start first.\"}"; }
 	std::string output;
 	std::string error;
 	if(!ExecuteCommand(slotName, commandArg, output, error)){
@@ -392,7 +371,5 @@ extern "C" EXPORT void CloseCommandPrompt(){
 	std::lock_guard<std::mutex> lock(g_cmdMutex);
 	InternalCloseCommandPrompt(true);
 }
-extern "C" EXPORT void SetCommandPromptTimeout(const int timeoutMs){
-	g_cmdTimeoutMs.store(timeoutMs > 0 ? static_cast<DWORD>(timeoutMs) : INFINITE);
-}
+extern "C" EXPORT void SetCommandPromptTimeout(const int timeoutMs){ g_cmdTimeoutMs.store(timeoutMs > 0 ? static_cast<DWORD>(timeoutMs) : INFINITE); }
 extern "C" EXPORT void StopCMDOutput(){ stop.store(true); }

@@ -31,15 +31,27 @@ static bool ResolveSystemProxyForUrl(const char* url, std::string& outProxy){
 			ok = WinHttpGetProxyForUrl(hSession, w_url.c_str(), &ao, &pi);
 			WinHttpCloseHandle(hSession);
 			if(ok && (!pi.lpszProxy || !pi.lpszProxy[0])){
-				if(pi.lpszProxy){ GlobalFree(pi.lpszProxy); pi.lpszProxy = nullptr; }
-				if(pi.lpszProxyBypass){ GlobalFree(pi.lpszProxyBypass); pi.lpszProxyBypass = nullptr; }
+				if(pi.lpszProxy){
+					GlobalFree(pi.lpszProxy);
+					pi.lpszProxy = nullptr;
+				}
+				if(pi.lpszProxyBypass){
+					GlobalFree(pi.lpszProxyBypass);
+					pi.lpszProxyBypass = nullptr;
+				}
 				ok = FALSE;
 			}
 		}
 	}
 	if(!ok && ie.lpszProxy){
-		if(pi.lpszProxy){ GlobalFree(pi.lpszProxy); pi.lpszProxy = nullptr; }
-		if(pi.lpszProxyBypass){ GlobalFree(pi.lpszProxyBypass); pi.lpszProxyBypass = nullptr; }
+		if(pi.lpszProxy){
+			GlobalFree(pi.lpszProxy);
+			pi.lpszProxy = nullptr;
+		}
+		if(pi.lpszProxyBypass){
+			GlobalFree(pi.lpszProxyBypass);
+			pi.lpszProxyBypass = nullptr;
+		}
 		pi.dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
 		pi.lpszProxy = ie.lpszProxy;
 		ie.lpszProxy = nullptr;

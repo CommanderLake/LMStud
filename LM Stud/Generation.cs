@@ -8,21 +8,13 @@ using System.Threading;
 using System.Windows.Forms;
 using LMStud.Parsers;
 using LMStud.Properties;
-namespace LMStud {
+namespace LMStud{
 	internal static class Generation{
 		internal static Form1 MainForm;
 		internal static readonly NativeMethods.TokenCallback TokenCallbackFn = TokenCallback;
 		private static readonly SemaphoreSlim MsgRenderLock = new SemaphoreSlim(1, 1);
 		private static int _uiGenerationActive;
-		internal static bool Generating{
-			get => Volatile.Read(ref _uiGenerationActive) > 0;
-			set => Interlocked.Exchange(ref _uiGenerationActive, value ? 1 : 0);
-		}
 		private static int _apiServerGenCount;
-		internal static bool APIServerGenerating{
-			get => Volatile.Read(ref _apiServerGenCount) > 0;
-			set => Interlocked.Exchange(ref _apiServerGenCount, value ? 1 : 0);
-		}
 		private static readonly object APICancelSync = new object();
 		private static CancellationTokenSource _apiGenCts;
 		private static readonly object ApiTokenCallbacksSync = new object();
@@ -36,9 +28,12 @@ namespace LMStud {
 		internal static string DialPriSlotName;
 		internal static string DialSecSlotName;
 		internal static string CntDialSlotName;
-		internal static bool DialecticRelayEnabled => !string.IsNullOrWhiteSpace(DialPriSlotName) && !string.IsNullOrWhiteSpace(DialSecSlotName) && !string.Equals(DialPriSlotName, DialSecSlotName, StringComparison.OrdinalIgnoreCase);
 		internal static bool FirstToken = true;
 		private static int _genTokenTotal;
+		internal static bool Generating{get => Volatile.Read(ref _uiGenerationActive) > 0; set => Interlocked.Exchange(ref _uiGenerationActive, value ? 1 : 0);}
+		internal static bool APIServerGenerating{get => Volatile.Read(ref _apiServerGenCount) > 0; set => Interlocked.Exchange(ref _apiServerGenCount, value ? 1 : 0);}
+		internal static bool DialecticRelayEnabled =>
+			!string.IsNullOrWhiteSpace(DialPriSlotName) && !string.IsNullOrWhiteSpace(DialSecSlotName) && !string.Equals(DialPriSlotName, DialSecSlotName, StringComparison.OrdinalIgnoreCase);
 		internal static void ConfigureDialecticSlots(IList<ModelSlot> slots){
 			DialPriSlotName = slots != null && slots.Count > 0 ? slots[0].Name : null;
 			DialSecSlotName = slots != null && slots.Count > 1 ? slots[1].Name : null;
@@ -49,9 +44,7 @@ namespace LMStud {
 			DialSecSlotName = null;
 			CntDialSlotName = null;
 		}
-		internal static string[] GetDialecticSlotNames(){
-			return DialecticRelayEnabled ? new[]{ DialPriSlotName, DialSecSlotName } : new string[0];
-		}
+		internal static string[] GetDialecticSlotNames(){return DialecticRelayEnabled ? new[]{ DialPriSlotName, DialSecSlotName } : new string[0];}
 		private static string GetNextDialecticSlotName(string currentSlotName){
 			if(!DialecticRelayEnabled) return null;
 			return string.Equals(currentSlotName, DialSecSlotName, StringComparison.OrdinalIgnoreCase) ? DialPriSlotName : DialSecSlotName;
@@ -60,9 +53,7 @@ namespace LMStud {
 			var prompt = MainForm.textInput.Text;
 			Generate(MessageRole.User, prompt, true);
 		}
-		internal static void Generate(MessageRole role, string prompt, bool addToChat){
-			Generate(role, prompt, addToChat, null);
-		}
+		internal static void Generate(MessageRole role, string prompt, bool addToChat){Generate(role, prompt, addToChat, null);}
 		private static void Generate(MessageRole role, string prompt, bool addToChat, List<ModelSlotLockLease> slotLeases){
 			var useDialecticLocalSlot = MainForm.checkDialectic.Checked && DialecticRelayEnabled && !string.IsNullOrWhiteSpace(CntDialSlotName);
 			var activeSlot = useDialecticLocalSlot ? ModelSlotManager.GetSlot(CntDialSlotName) : ModelSlotManager.GetActiveChatSlot();
@@ -106,8 +97,7 @@ namespace LMStud {
 				SwRate.Restart();
 				var hasImages = false;
 				var contentJson = role == MessageRole.User ? MarkdownImages.BuildNativeContentJson(newMsg, out hasImages) : null;
-				var genErr = hasImages
-					? NativeMethods.GenerateWithToolsJson(slotName, role, contentJson, Common.NGen, MainForm.checkStream.Checked)
+				var genErr = hasImages ? NativeMethods.GenerateWithToolsJson(slotName, role, contentJson, Common.NGen, MainForm.checkStream.Checked)
 					: NativeMethods.GenerateWithTools(slotName, role, newMsg, Common.NGen, MainForm.checkStream.Checked);
 				SwTot.Stop();
 				SwRate.Stop();
@@ -119,8 +109,7 @@ namespace LMStud {
 				try{
 					MainForm.Invoke(new MethodInvoker(() => {
 						if(genErr != NativeMethods.StudError.Success){
-							if(genErr == NativeMethods.StudError.ContextFull)
-								MessageBox.Show(MainForm, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+							if(genErr == NativeMethods.StudError.ContextFull) MessageBox.Show(MainForm, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 							else MainForm.ShowError(Resources.Generation, genErr);
 						}
 						var elapsed = SwTot.Elapsed.TotalSeconds;
@@ -136,16 +125,19 @@ namespace LMStud {
 						var last = MainForm.ChatMessages.LastOrDefault();
 						if(last == null) return;
 						var nextSlotName = GetNextDialecticSlotName(slotName);
-						var err = string.IsNullOrWhiteSpace(slotName) || string.IsNullOrWhiteSpace(nextSlotName) ? NativeMethods.StudError.Generic : NativeMethods.DialecticRelaySwap(slotName, slotName, nextSlotName);
+						var err = string.IsNullOrWhiteSpace(slotName) || string.IsNullOrWhiteSpace(nextSlotName) ? NativeMethods.StudError.Generic
+							: NativeMethods.DialecticRelaySwap(slotName, slotName, nextSlotName);
 						if(err == NativeMethods.StudError.Success) CntDialSlotName = nextSlotName;
 						switch(err){
 							case NativeMethods.StudError.Success:
 								slotLocksHeld = false;
 								Generate(MessageRole.User, last.Message, false, slotLeases);
 								break;
-							case NativeMethods.StudError.ContextFull: MessageBox.Show(MainForm, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+							case NativeMethods.StudError.ContextFull:
+								MessageBox.Show(MainForm, Resources.Context_full, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 								break;
-							default: MainForm.ShowError(Resources.Generation, err);
+							default:
+								MainForm.ShowError(Resources.Generation, err);
 								break;
 						}
 					}));
@@ -189,9 +181,7 @@ namespace LMStud {
 			if(MainForm.IsDisposed) return NativeMethods.StudError.Success;
 			if(string.IsNullOrWhiteSpace(slotName)) slotName = ModelSlotManager.MainSlotName;
 			List<NativeChat.MessageSnapshot> messages = null;
-			MainForm.RunOnUiThread(() => {
-				messages = NativeChat.CaptureMessages(MainForm.ChatMessages);
-			});
+			MainForm.RunOnUiThread(() => {messages = NativeChat.CaptureMessages(MainForm.ChatMessages);});
 			return messages == null ? NativeMethods.StudError.Success : NativeChat.SyncMessages(slotName, messages);
 		}
 		private static void GenerateWithApiClient(ModelSlot slot, MessageRole role, string prompt, bool addToChat, List<ModelSlotLockLease> slotLeases){
@@ -203,12 +193,11 @@ namespace LMStud {
 				var history = APIClient.BuildInputItems(messages);
 				var toolsJson = Tools.BuildApiToolsJson(slot.Name);
 				if(!ModelSlotManager.CanServeApiSlot(slot)) throw new InvalidOperationException(Resources.The_active_API_model_slot_is_incomplete_);
-				using(var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, slot.GetInstructionsOrDefault(),
-					slot.ApiReasoningEffort, slot.ApiReasoningSummary)){
+				using(var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, slot.GetInstructionsOrDefault(), slot.ApiReasoningEffort, slot.ApiReasoningSummary)){
 					string lastToolSignature = null;
 					while(true){
 						var streamOutput = false;
-						MainForm.RunOnUiThread(() => { streamOutput = MainForm.checkStream.Checked; });
+						MainForm.RunOnUiThread(() => {streamOutput = MainForm.checkStream.Checked;});
 						var streamedContent = new StringBuilder();
 						ChatMessageControl streamedMessage = null;
 						Action<string> streamCallback = null;
@@ -220,10 +209,10 @@ namespace LMStud {
 								try{
 									if(!MsgRenderLock.Wait(0)) return;
 									MainForm.BeginInvoke(new MethodInvoker(() => {
-										try {
+										try{
 											if(streamedMessage == null) streamedMessage = AddGeneratedAssistantMessage(slot.Name, "", "");
 											streamedMessage.UpdateText("", snapshot, true);
-										} finally { MsgRenderLock.Release(); }
+										} finally{ MsgRenderLock.Release(); }
 									}));
 								} catch(ObjectDisposedException){ MsgRenderLock.Release(); } catch(InvalidOperationException){ MsgRenderLock.Release(); }
 							};
@@ -269,13 +258,12 @@ namespace LMStud {
 					}
 				}
 				syncError = SyncNativeChatMessages(slot.Name);
-			} catch(OperationCanceledException){
-				error = null;
-			} catch(Exception ex){ error = ex; }
+			} catch(OperationCanceledException){ error = null; } catch(Exception ex){ error = ex; }
 			try{
 				MainForm.Invoke(new MethodInvoker(() => {
 					if(error != null) APIClient.ShowApiClientError(Resources.API_Client, error);
-					if(error == null && syncError != NativeMethods.StudError.Success && syncError != NativeMethods.StudError.ContextFull) MainForm.ShowError(Resources.API_Client, syncError.ToString(), true);
+					if(error == null && syncError != NativeMethods.StudError.Success && syncError != NativeMethods.StudError.ContextFull)
+						MainForm.ShowError(Resources.API_Client, syncError.ToString(), true);
 					MainForm.FinishedGenerating();
 				}));
 			} catch(ObjectDisposedException){} finally{
@@ -288,9 +276,8 @@ namespace LMStud {
 		}
 		private static void UpdateApiTotalTokensLabel(int? totalTokens){
 			if(!totalTokens.HasValue || MainForm == null || MainForm.IsDisposed) return;
-			try{
-				MainForm.BeginInvoke(new MethodInvoker(() => { MainForm.labelTokens.Text = FormatTokenLabel(totalTokens.Value); }));
-			} catch(ObjectDisposedException){} catch(InvalidOperationException){}
+			try{ MainForm.BeginInvoke(new MethodInvoker(() => {MainForm.labelTokens.Text = FormatTokenLabel(totalTokens.Value);})); } catch(ObjectDisposedException){} catch
+				(InvalidOperationException){}
 		}
 		internal static void StopActiveGeneration(){
 			CancelApiGeneration();
@@ -300,7 +287,8 @@ namespace LMStud {
 		internal static void StopAllGeneration(){
 			CancelApiGeneration();
 			foreach(var slotName in ModelSlotManager.GetLoadedLocalSlotNames())
-				if(NativeMethods.IsModelSlotLoaded(slotName)) NativeMethods.StopGeneration(slotName);
+				if(NativeMethods.IsModelSlotLoaded(slotName))
+					NativeMethods.StopGeneration(slotName);
 		}
 		private static void SetApiGenerationCancellation(CancellationTokenSource cts){
 			lock(APICancelSync){
@@ -344,7 +332,21 @@ namespace LMStud {
 			}
 			if(err != NativeMethods.StudError.Success) MainForm.ShowError(Resources.API_Server, Resources.SetStateData, true);
 		}
-		internal static bool GenerateForApiServer(string slotName, byte[] state, IntPtr chatState, string historyJson, MessageRole role, string prompt, string toolsJson, out APIClient.ChatCompletionResult result, out byte[] newState, out IntPtr newChatState, out int tokenCount, int? maxTokens = null, string instructions = null, Action<string> streamCallback = null, string promptContentJson = null){
+		internal static bool GenerateForApiServer(string slotName,
+			byte[] state,
+			IntPtr chatState,
+			string historyJson,
+			MessageRole role,
+			string prompt,
+			string toolsJson,
+			out APIClient.ChatCompletionResult result,
+			out byte[] newState,
+			out IntPtr newChatState,
+			out int tokenCount,
+			int? maxTokens = null,
+			string instructions = null,
+			Action<string> streamCallback = null,
+			string promptContentJson = null){
 			result = null;
 			newState = null;
 			newChatState = IntPtr.Zero;
@@ -367,23 +369,19 @@ namespace LMStud {
 					if(resetResult != NativeMethods.StudError.Success) return false;
 					var syncResult = NativeMethods.SyncChatMessagesJson(slotName, historyJson);
 					if(syncResult != NativeMethods.StudError.Success) return false;
-				}
-				else if(state != null && state.Length > 0 && chatState != IntPtr.Zero){
+				} else if(state != null && state.Length > 0 && chatState != IntPtr.Zero){
 					SetState(slotName, state);
 					NativeMethods.RestoreChatState(slotName, chatState);
-				}
-				else{
+				} else{
 					var resetResult = NativeMethods.ResetChat(slotName);
 					if(resetResult != NativeMethods.StudError.Success) return false;
 				}
 				IntPtr responsePtr;
-				var generationError = promptContentJson == null
-					? NativeMethods.GenerateForAPI(slotName, role, prompt, toolsJson, maxTokens ?? Common.NGen, streamCallback != null, out responsePtr)
+				var generationError = promptContentJson == null ? NativeMethods.GenerateForAPI(slotName, role, prompt, toolsJson, maxTokens ?? Common.NGen, streamCallback != null, out responsePtr)
 					: NativeMethods.GenerateForAPIJson(slotName, role, promptContentJson, toolsJson, maxTokens ?? Common.NGen, streamCallback != null, out responsePtr);
 				if(generationError != NativeMethods.StudError.Success) return false;
 				if(responsePtr == IntPtr.Zero) return false;
-				try{ result = APIResponseParser.ParseResponseBody(ReadNativeUtf8(responsePtr)); }
-				finally{ NativeMethods.FreeMemory(responsePtr); }
+				try{ result = APIResponseParser.ParseResponseBody(ReadNativeUtf8(responsePtr)); } finally{ NativeMethods.FreeMemory(responsePtr); }
 				newState = GetState(slotName);
 				newChatState = NativeMethods.CaptureChatState(slotName);
 				if(newChatState == IntPtr.Zero) return false;
@@ -391,10 +389,12 @@ namespace LMStud {
 				return true;
 			} finally{
 				if(originalState != null) SetState(slotName, originalState);
-				if(chatSnapshot != IntPtr.Zero) try{ NativeMethods.RestoreChatState(slotName, chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
+				if(chatSnapshot != IntPtr.Zero)
+					try{ NativeMethods.RestoreChatState(slotName, chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
 				SetApiTokenCallback(slotName, null);
 				Interlocked.Decrement(ref _apiServerGenCount);
-				if(MainForm != null) try{ MainForm.Invoke((MethodInvoker)(() => STT.RetryStart())); } catch(ObjectDisposedException){}
+				if(MainForm != null)
+					try{ MainForm.Invoke((MethodInvoker)(() => STT.RetryStart())); } catch(ObjectDisposedException){}
 			}
 		}
 		private static void SetApiTokenCallback(string slotName, Action<string> callback){
@@ -411,21 +411,6 @@ namespace LMStud {
 				return stream;
 			}
 		}
-		private sealed class ApiTokenStream{
-			private readonly object _sync = new object();
-			private readonly Action<string> _callback;
-			private string _lastMessage = "";
-			internal ApiTokenStream(Action<string> callback){ _callback = callback; }
-			internal void Emit(string message){
-				if(string.IsNullOrEmpty(message)) return;
-				string delta;
-				lock(_sync){
-					delta = message.StartsWith(_lastMessage, StringComparison.Ordinal) ? message.Substring(_lastMessage.Length) : message;
-					_lastMessage = message;
-				}
-				if(!string.IsNullOrEmpty(delta)) _callback(delta);
-			}
-		}
 		private static string ReadNativeUtf8(IntPtr ptr){
 			if(ptr == IntPtr.Zero) return null;
 			var length = 0;
@@ -435,7 +420,9 @@ namespace LMStud {
 			return Encoding.UTF8.GetString(buffer);
 		}
 		private static int FindSentenceEnd(StringBuilder sb){
-			for(var i = 0; i < sb.Length - 1; i++) if((sb[i] == '.' || sb[i] == '!' || sb[i] == '?') && char.IsWhiteSpace(sb[i + 1])) return i;
+			for(var i = 0; i < sb.Length - 1; i++)
+				if((sb[i] == '.' || sb[i] == '!' || sb[i] == '?') && char.IsWhiteSpace(sb[i + 1]))
+					return i;
 			return -1;
 		}
 		private static void TokenCallback(string slotName, string think, string message, int tokenCount, int tokensTotal, double ftTime, int tool){
@@ -454,13 +441,14 @@ namespace LMStud {
 							_cntToolMsg = MainForm.AddMessage(MessageRole.Tool, "", displayMessage, null, null, tool == 1);
 							switch(tool){
 								case 1:
-								case 2: _cntToolMsg.SetRoleText(Resources.Tool_Output);
+								case 2:
+									_cntToolMsg.SetRoleText(Resources.Tool_Output);
 									break;
-								case 3: _cntToolMsg.SetRoleText(Resources.Tool_Call);
+								case 3:
+									_cntToolMsg.SetRoleText(Resources.Tool_Call);
 									break;
 							}
-						}
-						else{ _cntToolMsg.UpdateText("", displayMessage, true); }
+						} else{ _cntToolMsg.UpdateText("", displayMessage, true); }
 						if(tool == 1) _cntToolMsg.ApiContent = message ?? "";
 						_cntAssMsg = null;
 						MainForm.labelTokens.Text = FormatTokenLabel(tokensTotal);
@@ -506,6 +494,21 @@ namespace LMStud {
 					} catch(ObjectDisposedException){} finally{ MainForm.Rendering = false; }
 				}));
 			} catch(ObjectDisposedException){}
+		}
+		private sealed class ApiTokenStream{
+			private readonly Action<string> _callback;
+			private readonly object _sync = new object();
+			private string _lastMessage = "";
+			internal ApiTokenStream(Action<string> callback){_callback = callback;}
+			internal void Emit(string message){
+				if(string.IsNullOrEmpty(message)) return;
+				string delta;
+				lock(_sync){
+					delta = message.StartsWith(_lastMessage, StringComparison.Ordinal) ? message.Substring(_lastMessage.Length) : message;
+					_lastMessage = message;
+				}
+				if(!string.IsNullOrEmpty(delta)) _callback(delta);
+			}
 		}
 	}
 }

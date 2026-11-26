@@ -23,18 +23,30 @@ namespace LMStud{
 	internal readonly struct JsonMember{
 		internal readonly string Name;
 		internal readonly object Value;
-		internal JsonMember(string name, object value){ Name = name; Value = value; }
+		internal JsonMember(string name, object value){
+			Name = name;
+			Value = value;
+		}
 	}
 	internal readonly struct JsonProperty{
 		internal readonly string Name;
 		internal readonly JsonNode Value;
-		internal JsonProperty(string name, JsonNode value){ Name = name; Value = value; }
+		internal JsonProperty(string name, JsonNode value){
+			Name = name;
+			Value = value;
+		}
 	}
 	internal readonly struct JsonNode : IEnumerable<JsonNode>{
 		private readonly string _raw;
 		private readonly bool _missing;
-		internal JsonNode(string raw){ _raw = raw ?? "null"; _missing = false; }
-		private JsonNode(bool missing){ _raw = null; _missing = missing; }
+		internal JsonNode(string raw){
+			_raw = raw ?? "null";
+			_missing = false;
+		}
+		private JsonNode(bool missing){
+			_raw = null;
+			_missing = missing;
+		}
 		internal static JsonNode Missing => new JsonNode(true);
 		internal static JsonNode Null => new JsonNode("null");
 		internal bool Exists => !_missing;
@@ -61,11 +73,11 @@ namespace LMStud{
 				return raw == null ? Missing : new JsonNode(raw);
 			}
 		}
-		internal string GetString(string key){ return this[key].AsString(); }
-		internal int? GetInt(string key){ return this[key].AsInt(); }
-		internal long? GetLong(string key){ return this[key].AsLong(); }
-		internal double? GetDouble(string key){ return this[key].AsDouble(); }
-		internal bool? GetBool(string key){ return this[key].AsBool(); }
+		internal string GetString(string key){return this[key].AsString();}
+		internal int? GetInt(string key){return this[key].AsInt();}
+		internal long? GetLong(string key){return this[key].AsLong();}
+		internal double? GetDouble(string key){return this[key].AsDouble();}
+		internal bool? GetBool(string key){return this[key].AsBool();}
 		internal string AsString(){
 			if(IsNull) return null;
 			if(IsString) return NativeMethods.ReadUtf8AndFreeOptional(NativeMethods.JsonReadStringValue(Raw));
@@ -99,35 +111,33 @@ namespace LMStud{
 			if(format == JsonFormat.Compact) return Raw;
 			var pretty = NativeMethods.JsonPrettyNative(Raw);
 			if(pretty.Length == 0) return Raw;
-			try{ if(new JsonNode(pretty).Kind != JsonKind.Invalid) return pretty; }
-			catch{}
+			try{
+				if(new JsonNode(pretty).Kind != JsonKind.Invalid) return pretty;
+			} catch{}
 			return Raw;
 		}
-		public override string ToString(){ return ToJson(); }
+		public override string ToString(){return ToJson();}
 		public IEnumerator<JsonNode> GetEnumerator(){
 			for(var i = 0; i < Count; ++i) yield return this[i];
 		}
-		IEnumerator IEnumerable.GetEnumerator(){ return GetEnumerator(); }
+		IEnumerator IEnumerable.GetEnumerator(){return GetEnumerator();}
 	}
 	internal sealed class JsonArrayBuilder : IEnumerable<JsonNode>{
 		private readonly List<JsonNode> _items = new List<JsonNode>();
 		internal int Count => _items.Count;
 		internal JsonNode this[int index] => _items[index];
-		internal void Add(object value){ _items.Add(Json.Value(value)); }
-		internal void Insert(int index, object value){ _items.Insert(index, Json.Value(value)); }
-		internal JsonNode ToNode(){ return new JsonNode(Json.BuildArrayRaw(_items)); }
-		internal string ToJson(JsonFormat format = JsonFormat.Compact){ return ToNode().ToJson(format); }
-		public override string ToString(){ return ToJson(); }
-		public IEnumerator<JsonNode> GetEnumerator(){ return _items.GetEnumerator(); }
-		IEnumerator IEnumerable.GetEnumerator(){ return GetEnumerator(); }
+		public IEnumerator<JsonNode> GetEnumerator(){return _items.GetEnumerator();}
+		IEnumerator IEnumerable.GetEnumerator(){return GetEnumerator();}
+		internal void Add(object value){_items.Add(Json.Value(value));}
+		internal void Insert(int index, object value){_items.Insert(index, Json.Value(value));}
+		internal JsonNode ToNode(){return new JsonNode(Json.BuildArrayRaw(_items));}
+		internal string ToJson(JsonFormat format = JsonFormat.Compact){return ToNode().ToJson(format);}
+		public override string ToString(){return ToJson();}
 	}
 	internal sealed class JsonObjectBuilder{
 		private readonly List<string> _order = new List<string>();
 		private readonly Dictionary<string, JsonNode> _values = new Dictionary<string, JsonNode>();
-		internal JsonNode this[string key]{
-			get => _values.TryGetValue(key, out var value) ? value : JsonNode.Missing;
-			set => Set(key, value);
-		}
+		internal JsonNode this[string key]{get => _values.TryGetValue(key, out var value) ? value : JsonNode.Missing; set => Set(key, value);}
 		internal void Set(string key, object value){
 			if(key == null) throw new ArgumentNullException(nameof(key));
 			if(!_values.ContainsKey(key)) _order.Add(key);
@@ -146,19 +156,19 @@ namespace LMStud{
 			json.Append('}');
 			return new JsonNode(json.ToString());
 		}
-		internal string ToJson(JsonFormat format = JsonFormat.Compact){ return ToNode().ToJson(format); }
-		public override string ToString(){ return ToJson(); }
+		internal string ToJson(JsonFormat format = JsonFormat.Compact){return ToNode().ToJson(format);}
+		public override string ToString(){return ToJson();}
 	}
 	internal static class Json{
 		private static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
-		internal static JsonMember P(string name, object value){ return new JsonMember(name, value); }
+		internal static JsonMember P(string name, object value){return new JsonMember(name, value);}
 		internal static JsonNode Parse(string raw){
 			if(string.IsNullOrWhiteSpace(raw)) throw new InvalidOperationException(Resources.Invalid_JSON_);
 			var node = new JsonNode(raw);
 			if(node.Kind == JsonKind.Invalid) throw new InvalidOperationException(Resources.Invalid_JSON_);
 			return node;
 		}
-		internal static JsonNode String(string value){ return new JsonNode(NativeMethods.ReadUtf8AndFree(NativeMethods.JsonMakeString(value ?? ""))); }
+		internal static JsonNode String(string value){return new JsonNode(NativeMethods.ReadUtf8AndFree(NativeMethods.JsonMakeString(value ?? "")));}
 		internal static JsonNode Object(params JsonMember[] members){
 			var obj = new JsonObjectBuilder();
 			foreach(var member in members ?? System.Array.Empty<JsonMember>()) obj.Set(member.Name, member.Value);
@@ -169,7 +179,7 @@ namespace LMStud{
 			foreach(var value in values ?? System.Array.Empty<object>()) array.Add(value);
 			return array.ToNode();
 		}
-		internal static JsonArrayBuilder ArrayBuilder(){ return new JsonArrayBuilder(); }
+		internal static JsonArrayBuilder ArrayBuilder(){return new JsonArrayBuilder();}
 		internal static JsonObjectBuilder ObjectBuilder(params JsonMember[] members){
 			var obj = new JsonObjectBuilder();
 			foreach(var member in members ?? System.Array.Empty<JsonMember>()) obj.Set(member.Name, member.Value);

@@ -9,10 +9,11 @@ namespace LMStud{
 		public void Dispose(){
 			if(_disposed) return;
 			_disposed = true;
-
 			foreach(var listView in new List<ListView>(_listViewSorters.Keys)) UnregisterListView(listView);
 		}
-		internal void RegisterListView(ListView listView, SortDataType[] columnDataTypes = null, int initialSortColumn = -1, SortOrder initialSortOrder = SortOrder.Ascending){RegisterListView(listView, columnDataTypes, initialSortColumn, initialSortOrder, CultureInfo.InvariantCulture);}
+		internal void RegisterListView(ListView listView, SortDataType[] columnDataTypes = null, int initialSortColumn = -1, SortOrder initialSortOrder = SortOrder.Ascending){
+			RegisterListView(listView, columnDataTypes, initialSortColumn, initialSortOrder, CultureInfo.InvariantCulture);
+		}
 		internal void RegisterListView(ListView listView, SortDataType[] columnDataTypes, int initialSortColumn, SortOrder initialSortOrder, CultureInfo culture){
 			ThrowIfDisposed();
 			if(listView == null) throw new ArgumentNullException(nameof(listView));
@@ -23,7 +24,6 @@ namespace LMStud{
 			var sortInfo = new ListViewSortInfo(columnDataTypes);
 			sortInfo.Sorter.Culture = culture;
 			UnregisterListView(listView);
-
 			listView.Sorting = SortOrder.None;
 			if(listView.ListViewItemSorter != null) listView.ListViewItemSorter = null;
 			_listViewSorters.Add(listView, sortInfo);
@@ -60,7 +60,6 @@ namespace LMStud{
 			if(columnIndex < 0 || columnIndex >= listView.Columns.Count) throw new ArgumentOutOfRangeException(nameof(columnIndex));
 			ApplySort(listView, sortInfo, columnIndex, sortOrder);
 		}
-
 		public void RefreshSort(ListView listView){
 			var sortInfo = GetSortInfo(listView);
 			var sorter = sortInfo.Sorter;
@@ -72,7 +71,6 @@ namespace LMStud{
 			sorter.ClearCache();
 			ApplySort(listView, sortInfo, sorter.ColumnIndex, sorter.SortOrder);
 		}
-
 		public void ClearSort(ListView listView){
 			var sortInfo = GetSortInfo(listView);
 			sortInfo.Sorter.SortOrder = SortOrder.None;
@@ -93,7 +91,6 @@ namespace LMStud{
 				sorter.ColumnIndex = columnIndex;
 				sorter.DataType = sortInfo.GetColumnDataType(columnIndex);
 				sorter.SortOrder = sortOrder;
-
 				if(ReferenceEquals(listView.ListViewItemSorter, sorter)) listView.Sort();
 				else listView.ListViewItemSorter = sorter;
 				sortInfo.MarkHeader(listView.Columns[columnIndex], sortOrder);

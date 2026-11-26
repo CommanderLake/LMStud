@@ -143,9 +143,16 @@ struct PendingToken{
 class AsyncTokenPostProcessor{
 public:
 	AsyncTokenPostProcessor(const char* slotName, const Stud::TokenCallbackFn callback, const bool streamCallback, const common_chat_parser_params& chatSyntax, const Clock::time_point& preparationStart, common_chat_input& response, common_chat_msg& parsedMessage, double& firstTokenTime) :
-		_slotName(slotName), _model(GetModel(slotName)), _callback(callback), _streamCallback(streamCallback), _chatSyntax(chatSyntax), _preparationStart(preparationStart), _response(response), _parsedMessage(parsedMessage), _firstTokenTime(firstTokenTime), _queue(QueueCapacity){
-		_worker = std::thread([this]{ WorkerLoop(); });
-	}
+		_slotName(slotName),
+		_model(GetModel(slotName)),
+		_callback(callback),
+		_streamCallback(streamCallback),
+		_chatSyntax(chatSyntax),
+		_preparationStart(preparationStart),
+		_response(response),
+		_parsedMessage(parsedMessage),
+		_firstTokenTime(firstTokenTime),
+		_queue(QueueCapacity){ _worker = std::thread([this]{ WorkerLoop(); }); }
 	~AsyncTokenPostProcessor(){ Close(); }
 	StudError Error() const{ return _asyncError.load(std::memory_order_acquire); }
 	void Close(){

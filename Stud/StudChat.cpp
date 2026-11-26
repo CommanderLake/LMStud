@@ -15,12 +15,8 @@ class ScopedRetokenizationCallback{
 	const char* _slotName;
 	Stud::RetokenizationCallbackFn _callback;
 public:
-	explicit ScopedRetokenizationCallback(const char* slotName) : _slotName(slotName), _callback(Stud::retokenizationCb){
-		if(_callback) _callback(_slotName, 1);
-	}
-	~ScopedRetokenizationCallback(){
-		if(_callback) _callback(_slotName, 0);
-	}
+	explicit ScopedRetokenizationCallback(const char* slotName) : _slotName(slotName), _callback(Stud::retokenizationCb){ if(_callback) _callback(_slotName, 1); }
+	~ScopedRetokenizationCallback(){ if(_callback) _callback(_slotName, 0); }
 	ScopedRetokenizationCallback(const ScopedRetokenizationCallback&) = delete;
 	ScopedRetokenizationCallback& operator=(const ScopedRetokenizationCallback&) = delete;
 };
@@ -482,7 +478,7 @@ StudError RetokenizeChat(const char* slotName, const bool rebuildMemory){
 	if(batchSize > 0){
 		for(size_t i = prefix; i < decodeEnd; i += evaluationBatchSize){
 			const int tokenCount = std::min(evaluationBatchSize, static_cast<int>(decodeEnd - i));
-		const auto decodeError = Stud::Internal::DecodeTokenBatch(model->session, &promptTokens[i], tokenCount, static_cast<llama_pos>(i));
+			const auto decodeError = Stud::Internal::DecodeTokenBatch(model->session, &promptTokens[i], tokenCount, static_cast<llama_pos>(i));
 			if(decodeError != StudError::Success){
 				Stud::Internal::ClearSessionMemoryAndSpeculativeState(model);
 				lane.cachedTokens.clear();

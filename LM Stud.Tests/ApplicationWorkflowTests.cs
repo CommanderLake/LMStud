@@ -11,7 +11,6 @@ using System.Windows.Forms;
 using LMStud;
 using LMStud.Properties;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 namespace LM_Stud.Tests{
 	[TestClass]
 	[DoNotParallelize]
@@ -26,7 +25,6 @@ namespace LM_Stud.Tests{
 		private static string _files;
 		private static ManualResetEventSlim _shown;
 		private static volatile Exception _uiError;
-
 		[ClassInitialize]
 		public static void Start(TestContext context){
 			_profile = Path.Combine(Path.GetTempPath(), "lmstud-workflows-" + Guid.NewGuid().ToString("N"));
@@ -35,10 +33,8 @@ namespace LM_Stud.Tests{
 			Directory.CreateDirectory(_models);
 			Directory.CreateDirectory(_files);
 			_upstream = new LoopbackServer();
-			var slot = Json.Object(Json.P("Name", Slot), Json.P("Source", "Api"), Json.P("Use", "Chat,Server"),
-				Json.P("ApiBaseUrl", _upstream.Url), Json.P("ApiModel", "workflow-model"));
+			var slot = Json.Object(Json.P("Name", Slot), Json.P("Source", "Api"), Json.P("Use", "Chat,Server"), Json.P("ApiBaseUrl", _upstream.Url), Json.P("ApiModel", "workflow-model"));
 			File.WriteAllText(Path.Combine(_profile, "ModelSlots.json"), Json.Object(Json.P("ActiveChatSlot", Slot), Json.P("Slots", Json.Array(slot))).ToJson());
-
 			var settings = Settings.Default;
 			settings.ModelsDir = _models;
 			settings.LoadAuto = false;
@@ -60,7 +56,10 @@ namespace LM_Stud.Tests{
 						form.Shown += (sender, args) => _shown.Set();
 						Application.Run(form);
 					}
-				} catch(Exception ex){ _uiError = ex; _shown.Set(); }
+				} catch(Exception ex){
+					_uiError = ex;
+					_shown.Set();
+				}
 			}){ IsBackground = true };
 			_ui.SetApartmentState(ApartmentState.STA);
 			_ui.Start();
@@ -69,16 +68,14 @@ namespace LM_Stud.Tests{
 			Assert.IsTrue(_form.PopulateLock.Wait(TimeoutMs), "The initial model scan did not finish.");
 			_form.PopulateLock.Release();
 		}
-
 		[ClassCleanup]
 		public static void Stop(){
 			try{
-				if(_form != null && !_form.IsDisposed){
+				if(_form != null && !_form.IsDisposed)
 					_form.BeginInvoke(new MethodInvoker(() => {
 						CloseDialog();
 						_form.BeginInvoke(new MethodInvoker(_form.Close));
 					}));
-				}
 				Assert.IsTrue(_ui == null || _ui.Join(TimeoutMs), "The form did not close.");
 				_shown?.Dispose();
 			} finally{
@@ -88,7 +85,6 @@ namespace LM_Stud.Tests{
 				if(Directory.Exists(_profile)) Directory.Delete(_profile, true);
 			}
 		}
-
 		[TestInitialize]
 		public void ResetConversation(){
 			_upstream.Error = null;
@@ -106,7 +102,6 @@ namespace LM_Stud.Tests{
 		public void CloseTestDialog(){
 			if(_uiError == null && !_form.IsDisposed) OnForm(CloseDialog);
 		}
-
 		[TestMethod]
 		public void StreamEditRegenerateAndReopenAConversation(){
 			const string original = "Original question";
@@ -123,18 +118,17 @@ namespace LM_Stud.Tests{
 						WriteEvent(context.Response, " reply");
 						return;
 					}
-					if(question == edited){ Reply(context, Message("Regenerated answer")); return; }
-					CollectionAssert.AreEqual(new[]{ edited, "Regenerated answer", "Continue the saved chat" },
-						input.Select(item => item.GetString("content")).ToArray(), "The reopened conversation must reach the model.");
+					if(question == edited){
+						Reply(context, Message("Regenerated answer"));
+						return;
+					}
+					CollectionAssert.AreEqual(new[]{ edited, "Regenerated answer", "Continue the saved chat" }, input.Select(item => item.GetString("content")).ToArray(), "The reopened conversation must reach the model.");
 					Reply(context, Message("Continued from saved history"));
 				};
-
 				Send(original);
-				try{ WaitFor(() => Generation.Generating && VisibleReply() == "First", "the live streamed reply"); }
-				finally{ continueStream.Set(); }
+				try{ WaitFor(() => Generation.Generating && VisibleReply() == "First", "the live streamed reply"); } finally{ continueStream.Set(); }
 				WaitForReply("First reply");
 			}
-
 			OnForm(() => {
 				var message = _form.ChatMessages[0];
 				message.butEdit.PerformClick();
@@ -148,7 +142,6 @@ namespace LM_Stud.Tests{
 			WaitFor(() => ChatIsIdle() && _form.ChatMessages[0].Message == edited, "the applied edit");
 			OnForm(() => _form.ChatMessages[0].butRegen.PerformClick());
 			WaitForReply("Regenerated answer");
-
 			var path = Path.Combine(_profile, "conversation.lmchat");
 			OnForm(() => {
 				_form.textInput.Text = "Unsent draft";
@@ -161,16 +154,13 @@ namespace LM_Stud.Tests{
 			Send("Continue the saved chat");
 			WaitForReply("Continued from saved history");
 		}
-
 		[TestMethod]
 		public void ChatFindsAndInspectsAFileThroughItsTools(){
 			const string name = "\u6587\u4ef6 sample.txt";
 			File.WriteAllText(Path.Combine(_files, name), "one\r\n\r\nlast");
 			_upstream.Handle = context => {
 				var results = ReadRequest(context)["input"].Where(item => item.GetString("type") == "function_call_output").ToArray();
-				if(results.Length == 0){
-					Reply(context, ToolCall("list", "list_directory", Json.Object(Json.P("path", "."))));
-				} else if(results.Length == 1){
+				if(results.Length == 0){ Reply(context, ToolCall("list", "list_directory", Json.Object(Json.P("path", ".")))); } else if(results.Length == 1){
 					var listing = results[0].GetString("output");
 					Assert.IsTrue(Json.Parse(listing)["entries"].Any(item => item.AsString() == name), listing);
 					Reply(context, ToolCall("inspect", "get_file_info", Json.Object(Json.P("path", name))));
@@ -184,7 +174,6 @@ namespace LM_Stud.Tests{
 			WaitForReply("The file has 3 lines.");
 			Assert.AreEqual(2, OnForm(() => _form.ChatMessages.Count(message => message.Role == MessageRole.Tool)));
 		}
-
 		[TestMethod]
 		public void DownloadAndFindASplitModelInTheLibrary(){
 			const string repo = "fixtures/split-model";
@@ -203,8 +192,7 @@ namespace LM_Stud.Tests{
 						Reply(context, Json.Array(Json.Object(Json.P("id", repo))));
 						break;
 					case "/api/models/" + repo:
-						Reply(context, Json.Object(Json.P("sha", "fixture-revision"), Json.P("siblings", Json.Array(
-							Json.Object(Json.P("rfilename", first)), Json.Object(Json.P("rfilename", second))))));
+						Reply(context, Json.Object(Json.P("sha", "fixture-revision"), Json.P("siblings", Json.Array(Json.Object(Json.P("rfilename", first)), Json.Object(Json.P("rfilename", second))))));
 						break;
 					case "/" + repo + "/resolve/fixture-revision/" + first:
 						Write(context, ++attempt == 1 ? model : replacement);
@@ -217,7 +205,6 @@ namespace LM_Stud.Tests{
 					default: throw new InvalidOperationException(context.Request.RawUrl);
 				}
 			};
-
 			OnForm(() => {
 				Control<TabControl>("tabControlMain").SelectTab("tabPageHuggingFace");
 				Control<TextBox>("textSearchTerm").Text = "split-model";
@@ -234,32 +221,37 @@ namespace LM_Stud.Tests{
 			var firstPath = Path.GetFullPath(Path.Combine(destination, first));
 			var secondPath = Path.GetFullPath(Path.Combine(destination, second));
 			WaitFor(() => {
-				CloseDialog();
-				return _form.listViewModels.Items.Count == 1 && Path.GetFileName(_form.listViewModels.Items[0].SubItems[1].Text) == Path.GetFileName(first);
-			}, "one downloaded model in the local library");
-
+					CloseDialog();
+					return _form.listViewModels.Items.Count == 1 && Path.GetFileName(_form.listViewModels.Items[0].SubItems[1].Text) == Path.GetFileName(first);
+				},
+				"one downloaded model in the local library");
 			OnForm(() => Control<Button>("butDownload").PerformClick());
 			WaitFor(() => {
-				CloseDialog();
-				return Volatile.Read(ref secondPartRequests) == 2 && Control<Button>("butDownload").Text == Resources.Download;
-			}, "the failed replacement to finish");
+					CloseDialog();
+					return Volatile.Read(ref secondPartRequests) == 2 && Control<Button>("butDownload").Text == Resources.Download;
+				},
+				"the failed replacement to finish");
 			CollectionAssert.AreEqual(model, File.ReadAllBytes(firstPath));
 			CollectionAssert.AreEqual(model, File.ReadAllBytes(secondPath));
 		}
-
 		[TestMethod]
 		public void TheRunningFormServesChatThroughItsConfiguredSlot(){
 			_upstream.Handle = context => {
-				if(context.Request.Url.AbsolutePath == "/v1/responses"){ context.Response.StatusCode = 404; return; }
+				if(context.Request.Url.AbsolutePath == "/v1/responses"){
+					context.Response.StatusCode = 404;
+					return;
+				}
 				Assert.AreEqual("/v1/chat/completions", context.Request.Url.AbsolutePath);
 				var request = ReadRequest(context);
 				Assert.AreEqual("workflow-model", request.GetString("model"));
 				Assert.AreEqual("Reply through my slot", request["messages"].Last().GetString("content"));
-				Reply(context, Json.Object(Json.P("choices", Json.Array(Json.Object(Json.P("message",
-					Json.Object(Json.P("role", "assistant"), Json.P("content", "Reply from the configured slot"))))))));
+				Reply(context, Json.Object(Json.P("choices", Json.Array(Json.Object(Json.P("message", Json.Object(Json.P("role", "assistant"), Json.P("content", "Reply from the configured slot"))))))));
 			};
 			var port = LoopbackServer.FreePort();
-			OnForm(() => { Common.APIServerPort = port; _form.ApiServer.Start("127.0.0.1"); });
+			OnForm(() => {
+				Common.APIServerPort = port;
+				_form.ApiServer.Start("127.0.0.1");
+			});
 			try{
 				var address = "http://127.0.0.1:" + port;
 				using(var client = new WebClient{ Encoding = Encoding.UTF8, Proxy = null }){
@@ -272,15 +264,19 @@ namespace LM_Stud.Tests{
 				}
 			} finally{ OnForm(() => _form.ApiServer.Stop()); }
 		}
-
-		private static T Control<T>(string name) where T : Control{ return (T)_form.Controls.Find(name, true).Single(); }
+		private static T Control<T>(string name) where T : Control{return (T)_form.Controls.Find(name, true).Single();}
 		private static T OnForm<T>(Func<T> action){
 			Assert.IsNull(_uiError, _uiError?.ToString());
 			var pending = _form.BeginInvoke(action);
 			Assert.IsTrue(pending.AsyncWaitHandle.WaitOne(TimeoutMs), "The application window did not respond.");
 			return (T)_form.EndInvoke(pending);
 		}
-		private static void OnForm(Action action){ OnForm(() => { action(); return true; }); }
+		private static void OnForm(Action action){
+			OnForm(() => {
+				action();
+				return true;
+			});
+		}
 		private static void WaitFor(Func<bool> condition, string action){
 			var watch = Stopwatch.StartNew();
 			while(watch.ElapsedMilliseconds < TimeoutMs){
@@ -292,20 +288,22 @@ namespace LM_Stud.Tests{
 		}
 		private static bool ChatIsIdle(){
 			if(Generation.Generating || _form.ChatFileOperationActive) return false;
-			using(var lease = ModelSlotManager.TryEnterSlot(Slot, 0)) return lease != null;
+			using(var lease = ModelSlotManager.TryEnterSlot(Slot, 0)){ return lease != null; }
 		}
-		private static string VisibleReply(){ return _form.ChatMessages.LastOrDefault()?.MarkdownView.PlainText; }
-		private static void Send(string prompt){ OnForm(() => { _form.textInput.Text = prompt; _form.butGen.PerformClick(); }); }
-		private static void WaitForReply(string text){ WaitFor(() => ChatIsIdle() && VisibleReply() == text, text); }
-
+		private static string VisibleReply(){return _form.ChatMessages.LastOrDefault()?.MarkdownView.PlainText;}
+		private static void Send(string prompt){
+			OnForm(() => {
+				_form.textInput.Text = prompt;
+				_form.butGen.PerformClick();
+			});
+		}
+		private static void WaitForReply(string text){WaitFor(() => ChatIsIdle() && VisibleReply() == text, text);}
 		private static JsonNode ReadRequest(HttpListenerContext context){
-			using(var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding)) return Json.Parse(reader.ReadToEnd());
+			using(var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding)){ return Json.Parse(reader.ReadToEnd()); }
 		}
-		private static JsonNode Message(string text){ return Json.Object(Json.P("output", Json.Array(Json.Object(
-			Json.P("type", "message"), Json.P("role", "assistant"), Json.P("content", Json.Array(Json.Object(Json.P("type", "output_text"), Json.P("text", text)))))))); }
-		private static JsonNode ToolCall(string id, string name, JsonNode arguments){ return Json.Object(Json.P("output", Json.Array(
-			Json.Object(Json.P("type", "function_call"), Json.P("call_id", id), Json.P("name", name), Json.P("arguments", arguments.ToJson()))))); }
-		private static void Reply(HttpListenerContext context, JsonNode body){ Write(context, Encoding.UTF8.GetBytes(body.ToJson()), "application/json"); }
+		private static JsonNode Message(string text){return Json.Object(Json.P("output", Json.Array(Json.Object(Json.P("type", "message"), Json.P("role", "assistant"), Json.P("content", Json.Array(Json.Object(Json.P("type", "output_text"), Json.P("text", text))))))));}
+		private static JsonNode ToolCall(string id, string name, JsonNode arguments){return Json.Object(Json.P("output", Json.Array(Json.Object(Json.P("type", "function_call"), Json.P("call_id", id), Json.P("name", name), Json.P("arguments", arguments.ToJson())))));}
+		private static void Reply(HttpListenerContext context, JsonNode body){Write(context, Encoding.UTF8.GetBytes(body.ToJson()), "application/json");}
 		private static void Write(HttpListenerContext context, byte[] bytes, string type = "application/octet-stream"){
 			context.Response.ContentType = type;
 			context.Response.ContentLength64 = bytes.Length;
@@ -317,45 +315,51 @@ namespace LM_Stud.Tests{
 			response.OutputStream.Write(bytes, 0, bytes.Length);
 			response.OutputStream.Flush();
 		}
-
 		private static void CloseDialog(){
 			var dialog = FindDialog();
 			if(dialog != IntPtr.Zero) PostMessage(dialog, 0x0010, IntPtr.Zero, IntPtr.Zero);
 		}
 		private static IntPtr FindDialog(){
 			var dialog = IntPtr.Zero;
-			EnumThreadWindows(GetCurrentThreadId(), (window, state) => {
-				if(window == _form.Handle || GetDlgItem(window, 1) == IntPtr.Zero) return true;
-				dialog = window;
-				return false;
-			}, IntPtr.Zero);
+			EnumThreadWindows(GetCurrentThreadId(),
+				(window, state) => {
+					if(window == _form.Handle || GetDlgItem(window, 1) == IntPtr.Zero) return true;
+					dialog = window;
+					return false;
+				},
+				IntPtr.Zero);
 			return dialog;
 		}
+		[DllImport("kernel32.dll")]
+		private static extern uint GetCurrentThreadId();
+		[DllImport("user32.dll")]
+		private static extern bool EnumThreadWindows(uint threadId, EnumWindowCallback callback, IntPtr state);
+		[DllImport("user32.dll")]
+		private static extern IntPtr GetDlgItem(IntPtr window, int id);
+		[DllImport("user32.dll")]
+		private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
 		private delegate bool EnumWindowCallback(IntPtr window, IntPtr state);
-		[DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
-		[DllImport("user32.dll")] private static extern bool EnumThreadWindows(uint threadId, EnumWindowCallback callback, IntPtr state);
-		[DllImport("user32.dll")] private static extern IntPtr GetDlgItem(IntPtr window, int id);
-		[DllImport("user32.dll")] private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
-
 		private sealed class LoopbackServer : IDisposable{
 			private readonly HttpListener _listener = new HttpListener();
 			private readonly Thread _thread;
 			internal readonly string Url = "http://127.0.0.1:" + FreePort();
-			internal volatile Action<HttpListenerContext> Handle;
 			internal volatile Exception Error;
+			internal volatile Action<HttpListenerContext> Handle;
 			internal LoopbackServer(){
 				_listener.Prefixes.Add(Url + "/");
 				_listener.Start();
 				_thread = new Thread(Listen){ IsBackground = true };
 				_thread.Start();
 			}
+			public void Dispose(){
+				_listener.Close();
+				Assert.IsTrue(_thread.Join(TimeoutMs), "The loopback server did not stop.");
+			}
 			private void Listen(){
 				while(_listener.IsListening){
 					HttpListenerContext context;
-					try{ context = _listener.GetContext(); }
-					catch(HttpListenerException){ return; } catch(ObjectDisposedException){ return; }
-					try{ Handle(context); }
-					catch(Exception ex){
+					try{ context = _listener.GetContext(); } catch(HttpListenerException){ return; } catch(ObjectDisposedException){ return; }
+					try{ Handle(context); } catch(Exception ex){
 						Error = ex;
 						try{ context.Response.StatusCode = 500; } catch(InvalidOperationException){}
 					} finally{
@@ -369,10 +373,6 @@ namespace LM_Stud.Tests{
 				var port = ((IPEndPoint)socket.LocalEndpoint).Port;
 				socket.Stop();
 				return port;
-			}
-			public void Dispose(){
-				_listener.Close();
-				Assert.IsTrue(_thread.Join(TimeoutMs), "The loopback server did not stop.");
 			}
 		}
 	}

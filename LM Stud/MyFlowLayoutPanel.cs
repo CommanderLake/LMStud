@@ -58,9 +58,7 @@ namespace LMStud{
 			var detents = _wheelDeltaRemainder/WheelDelta;
 			_wheelDeltaRemainder %= WheelDelta;
 			if(detents == 0) return;
-			var distance = scrollLines == WheelPageScroll
-				? Math.Max(1, ClientSize.Height)
-				: Math.Max(1, Font.Height)*Math.Max(1, scrollLines);
+			var distance = scrollLines == WheelPageScroll ? Math.Max(1, ClientSize.Height) : Math.Max(1, Font.Height)*Math.Max(1, scrollLines);
 			var current = -AutoScrollPosition.Y;
 			var maximum = Math.Max(0, DisplayRectangle.Height - ClientSize.Height);
 			var target = Math.Max(0, Math.Min(maximum, current - detents*distance));
@@ -99,8 +97,7 @@ namespace LMStud{
 					var m = Message.Create(Handle, WmVscroll, _sbBottom, IntPtr.Zero);
 					base.WndProc(ref m);
 				}));
-			} catch(ObjectDisposedException){ _scrollToEndPending = false; }
-			catch(InvalidOperationException){ _scrollToEndPending = false; }
+			} catch(ObjectDisposedException){ _scrollToEndPending = false; } catch(InvalidOperationException){ _scrollToEndPending = false; }
 		}
 		protected override Point ScrollToControl(Control activeControl){return AutoScrollPosition;}
 	}

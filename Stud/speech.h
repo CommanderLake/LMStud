@@ -27,16 +27,16 @@ inline std::string _vadModel;
 inline std::atomic<bool> _transcriptionRunning(false);
 inline std::thread _transcriptionThread;
 inline std::atomic<int> _silenceTimeoutMs(2000);
-typedef void(*WhisperCallbackFn)(const char* transcription);
+using WhisperCallbackFn = void(*)(const char* transcription);
 inline WhisperCallbackFn _whisperCallback = nullptr;
-typedef void(*SpeechEndCallbackFn)();
+using SpeechEndCallbackFn = void(*)();
 inline SpeechEndCallbackFn _speechEndCallback = nullptr;
 inline whisper_context* _whisperCtx = nullptr;
 inline whisper_full_params _wparams = {};
 inline whisper_vad_context* _vadCtx = nullptr;
 inline audio_async* _audioCapture = nullptr;
 inline std::string _committed;
-extern "C"{
+extern "C" {
 	EXPORT StudError LoadWhisperModel(const char* modelPath, int nThreads, bool useGPU, bool useVAD, const char* vadModel);
 	EXPORT void UnloadWhisperModel();
 	EXPORT bool StartSpeechTranscription();

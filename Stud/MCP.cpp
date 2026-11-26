@@ -73,8 +73,7 @@ bool StartsWithNoCase(const std::string& value, const char* prefix){
 	if(!prefix) return false;
 	const size_t len = std::strlen(prefix);
 	if(value.size() < len) return false;
-	for(size_t i = 0; i < len; ++i)
-		if(std::tolower(static_cast<unsigned char>(value[i])) != std::tolower(static_cast<unsigned char>(prefix[i]))) return false;
+	for(size_t i = 0; i < len; ++i) if(std::tolower(static_cast<unsigned char>(value[i])) != std::tolower(static_cast<unsigned char>(prefix[i]))) return false;
 	return true;
 }
 extern std::string FormatWin32Error(const char* context);
@@ -327,8 +326,7 @@ bool DecodeHttpResponseBody(const McpHttpExchange& exchange, const int requestId
 		error = "MCP HTTP response body was empty.";
 		return false;
 	}
-	if(exchange.contentType.find("text/event-stream") != std::string::npos || StartsWithNoCase(body, "data:") || StartsWithNoCase(body, "event:") || StartsWithNoCase(body, "id:"))
-		return ExtractSseJsonResponse(exchange.body, requestId, response, error);
+	if(exchange.contentType.find("text/event-stream") != std::string::npos || StartsWithNoCase(body, "data:") || StartsWithNoCase(body, "event:") || StartsWithNoCase(body, "id:")) return ExtractSseJsonResponse(exchange.body, requestId, response, error);
 	response = body;
 	return true;
 }
@@ -425,9 +423,7 @@ bool SendHttpNotification(McpServerSession& session, const std::string& method, 
 bool SendRequest(McpServerSession& session, const std::string& method, const std::string& paramsJson, std::string& response, std::string& error){
 	return session.transport == McpTransport::Http ? SendHttpRequest(session, method, paramsJson, response, error) : SendStdioRequest(session, method, paramsJson, response, error);
 }
-bool SendNotification(McpServerSession& session, const std::string& method, const std::string& paramsJson, std::string& error){
-	return session.transport == McpTransport::Http ? SendHttpNotification(session, method, paramsJson, error) : SendStdioNotification(session, method, paramsJson, error);
-}
+bool SendNotification(McpServerSession& session, const std::string& method, const std::string& paramsJson, std::string& error){ return session.transport == McpTransport::Http ? SendHttpNotification(session, method, paramsJson, error) : SendStdioNotification(session, method, paramsJson, error); }
 std::string BuildInitializeParams(){ return std::string("{\"protocolVersion\":\"") + kProtocolVersion + "\",\"capabilities\":{},\"clientInfo\":{\"name\":\"LM Stud\",\"title\":\"LM Stud\",\"version\":\"1.0\"}}"; }
 std::string ExtractResultObject(const std::string& response){
 	std::string result;

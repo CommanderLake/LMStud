@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -8,14 +9,14 @@ using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
 	public partial class Form1{
-		private readonly string _huggingFaceUrl;
 		private const string Filter = "gguf";
-		private bool _downloading;
+		private readonly string _huggingFaceUrl;
 		private volatile bool _cancelDownload;
+		private bool _downloading;
+		private int _hugFileRequest;
+		private string _hugRevision;
 		private string _modelName;
 		private string _uploader;
-		private string _hugRevision;
-		private int _hugFileRequest;
 		private void ListViewHugFiles_MouseDown(object sender, MouseEventArgs args){
 			if(args.Button != MouseButtons.Right) return;
 			var item = listViewHugFiles.GetItemAt(args.X, args.Y);
@@ -26,17 +27,13 @@ namespace LMStud{
 			item.Selected = true;
 			item.Focused = true;
 		}
-		private void ContextHugFiles_Opening(object sender, System.ComponentModel.CancelEventArgs e) {
-			e.Cancel = !CanCopyUrl();
-		}
-		private void CopyURLToolStripMenuItem_Click(object sender, EventArgs e) {
+		private void ContextHugFiles_Opening(object sender, CancelEventArgs e){e.Cancel = !CanCopyUrl();}
+		private void CopyURLToolStripMenuItem_Click(object sender, EventArgs e){
 			if(!CanCopyUrl()) return;
 			var fileName = listViewHugFiles.SelectedItems[0].SubItems[0].Text;
 			try{ Clipboard.SetText(BuildHugDownloadUrl(_uploader, _modelName, fileName)); } catch(ExternalException){}
 		}
-		private bool CanCopyUrl(){
-			return listViewHugFiles.SelectedItems.Count > 0 && !string.IsNullOrEmpty(_uploader) && !string.IsNullOrEmpty(_modelName);
-		}
+		private bool CanCopyUrl(){return listViewHugFiles.SelectedItems.Count > 0 && !string.IsNullOrEmpty(_uploader) && !string.IsNullOrEmpty(_modelName);}
 		private string BuildHugDownloadUrl(string uploader, string modelName, string fileName, string revision = null){
 			var pathParts = fileName.Replace('\\', '/').Split('/');
 			for(var i = 0; i < pathParts.Length; i++) pathParts[i] = Uri.EscapeDataString(pathParts[i]);
@@ -84,11 +81,14 @@ namespace LMStud{
 						var parts = id.Split('/');
 						var uploader = parts.Length > 1 ? parts[0] : "";
 						var modelName = parts.Length > 1 ? parts[1] : id;
-						items.Add(new ListViewItem(new[]{ modelName, uploader, modelToken.GetString("likes"), modelToken.GetString("downloads"), modelToken.GetString("trendingScore"), modelToken.GetString("createdAt") }));
+						items.Add(new ListViewItem(new[]{
+							modelName, uploader, modelToken.GetString("likes"), modelToken.GetString("downloads"), modelToken.GetString("trendingScore"), modelToken.GetString("createdAt")
+						}));
 					}
 					if(items.Count > 0) Invoke(new MethodInvoker(() => {listViewHugSearch.Items.AddRange(items.ToArray());}));
 				} catch(Exception ex){
-					Invoke(new MethodInvoker(() => {MessageBox.Show(this, string.Format(Resources.Model_search_error___0_, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+					Invoke(new MethodInvoker(
+						() => {MessageBox.Show(this, string.Format(Resources.Model_search_error___0_, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
 				} finally{
 					Invoke(new MethodInvoker(() => {
 						listViewHugSearch.EndUpdate();
@@ -174,8 +174,7 @@ namespace LMStud{
 				if(_cancelDownload || IsDisposed || Disposing) return false;
 				var progress = (int)(fraction*1000);
 				if(progress != lastProgress){
-					try{ Invoke(new MethodInvoker(() => { progressBar1.Value = progress; })); }
-					catch(ObjectDisposedException){ return false; } catch(InvalidOperationException){ return false; }
+					try{ Invoke(new MethodInvoker(() => {progressBar1.Value = progress;})); } catch(ObjectDisposedException){ return false; } catch(InvalidOperationException){ return false; }
 					lastProgress = progress;
 				}
 				return !_cancelDownload;
@@ -183,8 +182,9 @@ namespace LMStud{
 			ThreadPool.QueueUserWorkItem(_ => {
 				string targetPath = null;
 				string error = null;
-				try{ targetPath = HuggingFaceDownload.Download(targetDir, files, file => BuildHugDownloadUrl(uploader, modelName, file, revision), ReportProgress); }
-				catch(Exception ex){ error = ex.Message; }
+				try{ targetPath = HuggingFaceDownload.Download(targetDir, files, file => BuildHugDownloadUrl(uploader, modelName, file, revision), ReportProgress); } catch(Exception ex){
+					error = ex.Message;
+				}
 				try{
 					BeginInvoke(new MethodInvoker(() => {
 						progressBar1.Value = 0;
@@ -192,11 +192,11 @@ namespace LMStud{
 						butDownload.Enabled = true;
 						_downloading = false;
 						if(targetPath != null){
-							var message = files.Length == 1 ? string.Format(Resources.Downloaded__0__to___1_, files[0], targetPath) :
-								string.Format(Resources.Downloaded_GGUF_Parts, files.Length, Path.GetDirectoryName(targetPath));
+							var message = files.Length == 1 ? string.Format(Resources.Downloaded__0__to___1_, files[0], targetPath)
+								: string.Format(Resources.Downloaded_GGUF_Parts, files.Length, Path.GetDirectoryName(targetPath));
 							MessageBox.Show(this, message, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 							PopulateModels();
-						} else if(!_cancelDownload) MessageBox.Show(this, string.Format(Resources.Download_failed___0_, error), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+						} else if(!_cancelDownload){ MessageBox.Show(this, string.Format(Resources.Download_failed___0_, error), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error); }
 					}));
 				} catch(ObjectDisposedException){} catch(InvalidOperationException){}
 			});

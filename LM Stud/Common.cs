@@ -57,29 +57,31 @@ namespace LMStud{
 		internal static int CntCtxMax;
 		internal static int ModelCtxMax;
 		internal static ListViewItem LoadedModel;
-		internal static readonly Dictionary<string, ListViewItem> LoadedLocalSlots = new Dictionary<string, ListViewItem>(System.StringComparer.OrdinalIgnoreCase);
-		internal static readonly string[] ReasoningEffortValues = { null, "none", "low", "medium", "high", "xhigh" };
-		internal static readonly string[] ReasoningSummaryValues = { null, "auto", "concise", "detailed" };
-		internal static string GetReasoningEffort(int index) { return GetReasoningValue(ReasoningEffortValues, index); }
-		internal static string GetReasoningSummaryType(int index) { return GetReasoningValue(ReasoningSummaryValues, index); }
-		private static string GetReasoningValue(string[] values, int index) { return index > 0 && index < values.Length ? values[index] : null; }
+		internal static readonly Dictionary<string, ListViewItem> LoadedLocalSlots = new Dictionary<string, ListViewItem>(StringComparer.OrdinalIgnoreCase);
+		internal static readonly string[] ReasoningEffortValues ={ null, "none", "low", "medium", "high", "xhigh" };
+		internal static readonly string[] ReasoningSummaryValues ={ null, "auto", "concise", "detailed" };
+		internal static string GetReasoningEffort(int index){return GetReasoningValue(ReasoningEffortValues, index);}
+		internal static string GetReasoningSummaryType(int index){return GetReasoningValue(ReasoningSummaryValues, index);}
+		private static string GetReasoningValue(string[] values, int index){return index > 0 && index < values.Length ? values[index] : null;}
 		internal static string GetPathRelativeToModelsDir(string path){
 			if(string.IsNullOrWhiteSpace(path)) return "";
 			if(string.IsNullOrWhiteSpace(ModelsDir)) return path;
 			try{
 				var fullPath = Path.GetFullPath(path).TrimEnd('\\', '/');
 				var fullModelsDir = Path.GetFullPath(ModelsDir).TrimEnd('\\', '/');
-				var isInsideModelsDir = string.Equals(fullPath, fullModelsDir, StringComparison.OrdinalIgnoreCase) ||
-					(fullPath.StartsWith(fullModelsDir, StringComparison.OrdinalIgnoreCase) && fullPath.Length > fullModelsDir.Length &&
-					(fullPath[fullModelsDir.Length] == '\\' || fullPath[fullModelsDir.Length] == '/'));
+				var isInsideModelsDir = string.Equals(fullPath, fullModelsDir, StringComparison.OrdinalIgnoreCase)
+										|| (fullPath.StartsWith(fullModelsDir, StringComparison.OrdinalIgnoreCase)
+											&& fullPath.Length > fullModelsDir.Length
+											&& (fullPath[fullModelsDir.Length] == '\\' || fullPath[fullModelsDir.Length] == '/'));
 				if(!isInsideModelsDir) return path;
 				if(fullPath.Length == fullModelsDir.Length) return "";
 				return fullPath.Substring(fullModelsDir.Length).TrimStart('\\', '/');
 			} catch{
 				var modelsDir = ModelsDir.TrimEnd('\\', '/');
-				var isInsideModelsDir = string.Equals(path, modelsDir, StringComparison.OrdinalIgnoreCase) ||
-					(path.StartsWith(modelsDir, StringComparison.OrdinalIgnoreCase) && path.Length > modelsDir.Length &&
-					(path[modelsDir.Length] == '\\' || path[modelsDir.Length] == '/'));
+				var isInsideModelsDir = string.Equals(path, modelsDir, StringComparison.OrdinalIgnoreCase)
+										|| (path.StartsWith(modelsDir, StringComparison.OrdinalIgnoreCase)
+											&& path.Length > modelsDir.Length
+											&& (path[modelsDir.Length] == '\\' || path[modelsDir.Length] == '/'));
 				return isInsideModelsDir ? path.Substring(modelsDir.Length).TrimStart('\\', '/') : path;
 			}
 		}

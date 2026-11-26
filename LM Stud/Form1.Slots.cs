@@ -11,9 +11,9 @@ namespace LMStud{
 		private bool _populatingSlotEditor;
 		private string _slotEditorAutoToolName;
 		private string _slotLoadButtonText;
-		private string _slotUnloadButtonText;
 		private bool _slotSelectionChanged;
-		private void ListViewSlots_DoubleClick(object sender, EventArgs e) {
+		private string _slotUnloadButtonText;
+		private void ListViewSlots_DoubleClick(object sender, EventArgs e){
 			if(listViewSlots.SelectedItems.Count != 1) return;
 			var slot = (ModelSlot)listViewSlots.SelectedItems[0].Tag;
 			if(slot.Source == ModelSlotSource.Mcp){
@@ -25,7 +25,7 @@ namespace LMStud{
 			PopulateSlotsList();
 			SelectSlot(slot.Name);
 		}
-		private void ListViewSlots_Click(object sender, EventArgs e) {
+		private void ListViewSlots_Click(object sender, EventArgs e){
 			if(_slotSelectionChanged){
 				_slotSelectionChanged = false;
 				return;
@@ -33,7 +33,7 @@ namespace LMStud{
 			PopulateSlotEditorFromSelection();
 			UpdateSlotButtons();
 		}
-		private void ListViewSlots_SelectedIndexChanged(object sender, EventArgs e) {
+		private void ListViewSlots_SelectedIndexChanged(object sender, EventArgs e){
 			PopulateSlotEditorFromSelection();
 			UpdateSlotButtons();
 			_slotSelectionChanged = true;
@@ -45,13 +45,13 @@ namespace LMStud{
 			} else if(e.KeyCode == Keys.Delete){
 				e.SuppressKeyPress = true;
 				ButSlotsRemove_Click(sender, EventArgs.Empty);
-			} else if(e.KeyCode == Keys.F5) PopulateSlotsList();
+			} else if(e.KeyCode == Keys.F5){ PopulateSlotsList(); }
 		}
-		private void TextSlotsEditName_TextChanged(object sender, EventArgs e) {
+		private void TextSlotsEditName_TextChanged(object sender, EventArgs e){
 			if(_populatingSlotEditor) return;
 			UpdateAutoToolNamesForNameChange();
 		}
-		private void ComboSlotsEditSource_SelectedIndexChanged(object sender, EventArgs e) {
+		private void ComboSlotsEditSource_SelectedIndexChanged(object sender, EventArgs e){
 			if(comboSlotsEditSource.SelectedIndex < 0) comboSlotsEditSource.SelectedIndex = 0;
 			var source = GetSlotEditorSource();
 			var local = source == ModelSlotSource.Local;
@@ -86,9 +86,7 @@ namespace LMStud{
 			if(!_populatingSlotEditor && GetSlotEditorSource() == ModelSlotSource.Local && !checkSlotsEditLocalOverride.Checked)
 				textSlotsEditSystemPrompt.Text = GetSystemPromptForModel(GetSlotsEditLocalModelPath());
 		}
-		private void CheckSlotsEditLocalOverride_CheckedChanged(object sender, EventArgs e){
-			UpdateSlotSystemPromptUi();
-		}
+		private void CheckSlotsEditLocalOverride_CheckedChanged(object sender, EventArgs e){UpdateSlotSystemPromptUi();}
 		private void ButSlotsAdd_Click(object sender, EventArgs e){
 			if(!TryReadSlotEditor(null, true, out var slot)) return;
 			ModelSlotManager.AddOrUpdate(slot);
@@ -104,7 +102,8 @@ namespace LMStud{
 			if(MessageBox.Show(this, string.Format(Resources.Remove_the__0__slot_, slot.Name), Resources.LM_Stud, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
 			var unloadLocalSlot = SlotHasLoadedLocalModel(slot.Name);
 			if(slot.Source == ModelSlotSource.Mcp) McpServerManager.Disconnect(slot.Name, RetokenizeLoadedLocalSlotsForToolChange);
-			if(!ModelSlotManager.Remove(slot.Name)) MessageBox.Show(this, Resources.The_main_slot_cannot_be_removed__Edit_it_instead_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
+			if(!ModelSlotManager.Remove(slot.Name))
+				MessageBox.Show(this, Resources.The_main_slot_cannot_be_removed__Edit_it_instead_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
 			else if(unloadLocalSlot) UnloadModel(true, slot.Name);
 			ApplyActiveSlotToModel();
 			PopulateSlotsList();
@@ -144,7 +143,7 @@ namespace LMStud{
 			if(_populatingSlotEditor || GetSlotEditorSource() != ModelSlotSource.Mcp) return;
 			UpdateMcpTransportUi();
 		}
-		private void ButSlotsEditUseSelectedModel_Click(object sender, EventArgs e) {
+		private void ButSlotsEditUseSelectedModel_Click(object sender, EventArgs e){
 			if(listViewModels.SelectedItems.Count == 0) return;
 			SetSlotsEditLocalModel(listViewModels.SelectedItems[0].SubItems[1].Text);
 			comboSlotsEditSource.SelectedIndex = 0;
@@ -212,9 +211,7 @@ namespace LMStud{
 				checkSlotsEditTool.Checked = slot.HasUse(ModelSlotUse.Tool);
 				checkSlotsEditServer.Checked = slot.Source != ModelSlotSource.Mcp && slot.HasUse(ModelSlotUse.Server);
 				ComboSlotsEditSource_SelectedIndexChanged(null, null);
-			} finally{
-				_populatingSlotEditor = false;
-			}
+			} finally{ _populatingSlotEditor = false; }
 		}
 		private void UpdateSlotButtons(){
 			var hasSelection = listViewSlots != null && listViewSlots.SelectedItems.Count == 1;
@@ -234,14 +231,17 @@ namespace LMStud{
 			Common.LoadedLocalSlots.TryGetValue(original.Name, out var loadedModel);
 			var unloadStaleLocalSlot = SlotEditInvalidatesLoadedLocalSlot(original, slot, loadedModel) && SlotHasLoadedLocalModel(original.Name);
 			ModelSlotManager.AddOrUpdate(slot, original.Name);
-			if(original.Source == ModelSlotSource.Mcp && (slot.Source != ModelSlotSource.Mcp || !string.Equals(original.Name, slot.Name, StringComparison.OrdinalIgnoreCase))) McpServerManager.Disconnect(original.Name, RetokenizeLoadedLocalSlotsForToolChange);
+			if(original.Source == ModelSlotSource.Mcp && (slot.Source != ModelSlotSource.Mcp || !string.Equals(original.Name, slot.Name, StringComparison.OrdinalIgnoreCase)))
+				McpServerManager.Disconnect(original.Name, RetokenizeLoadedLocalSlotsForToolChange);
 			ApplyMcpSlotConnectionState(slot);
 			if(unloadStaleLocalSlot){
-				UnloadModel(true, original.Name, () => {
-					ApplyActiveSlotToModel();
-					PopulateSlotsList();
-					SelectSlot(slot.Name);
-				});
+				UnloadModel(true,
+					original.Name,
+					() => {
+						ApplyActiveSlotToModel();
+						PopulateSlotsList();
+						SelectSlot(slot.Name);
+					});
 				return;
 			}
 			if(slot.Source == ModelSlotSource.Local && SlotHasLoadedLocalModel(slot.Name) && SlotSystemPromptChanged(original, slot))
@@ -253,21 +253,20 @@ namespace LMStud{
 		internal static bool SlotEditInvalidatesLoadedLocalSlot(ModelSlot original, ModelSlot updated, ListViewItem loadedModel){
 			if(original == null || updated == null) return false;
 			if(loadedModel != null && loadedModel.SubItems.Count >= 2)
-				return updated.Source != ModelSlotSource.Local ||
-					!string.Equals(original.Name, updated.Name, StringComparison.OrdinalIgnoreCase) ||
-					!SameModelPath(loadedModel.SubItems[1].Text, updated.ResolveLocalPath());
+				return updated.Source != ModelSlotSource.Local
+						|| !string.Equals(original.Name, updated.Name, StringComparison.OrdinalIgnoreCase)
+						|| !SameModelPath(loadedModel.SubItems[1].Text, updated.ResolveLocalPath());
 			if(original.Source != ModelSlotSource.Local) return false;
-			return updated.Source != ModelSlotSource.Local ||
-				!string.Equals(original.Name, updated.Name, StringComparison.OrdinalIgnoreCase) ||
-				!SameModelPath(original.ResolveLocalPath(), updated.ResolveLocalPath());
+			return updated.Source != ModelSlotSource.Local
+					|| !string.Equals(original.Name, updated.Name, StringComparison.OrdinalIgnoreCase)
+					|| !SameModelPath(original.ResolveLocalPath(), updated.ResolveLocalPath());
 		}
 		private static bool SlotHasLoadedLocalModel(string slotName){
 			return !string.IsNullOrWhiteSpace(slotName) && (Common.LoadedLocalSlots.ContainsKey(slotName) || NativeMethods.IsModelSlotLoaded(slotName));
 		}
 		private static bool SlotSystemPromptChanged(ModelSlot original, ModelSlot updated){
 			if(original == null || updated == null) return false;
-			return original.OverrideSystemPrompt != updated.OverrideSystemPrompt ||
-				!string.Equals(original.Instructions ?? "", updated.Instructions ?? "", StringComparison.Ordinal);
+			return original.OverrideSystemPrompt != updated.OverrideSystemPrompt || !string.Equals(original.Instructions ?? "", updated.Instructions ?? "", StringComparison.Ordinal);
 		}
 		private bool TryReadSlotEditor(string originalName, bool adding, out ModelSlot slot){
 			slot = null;
@@ -277,8 +276,8 @@ namespace LMStud{
 				textSlotsEditName.Focus();
 				return false;
 			}
-			var duplicate = ModelSlotManager.Slots.Any(existing => string.Equals(existing.Name, name, StringComparison.OrdinalIgnoreCase) &&
-				(adding || !string.Equals(existing.Name, originalName, StringComparison.OrdinalIgnoreCase)));
+			var duplicate = ModelSlotManager.Slots.Any(existing =>
+				string.Equals(existing.Name, name, StringComparison.OrdinalIgnoreCase) && (adding || !string.Equals(existing.Name, originalName, StringComparison.OrdinalIgnoreCase)));
 			if(duplicate){
 				MessageBox.Show(this, Resources.Another_slot_already_uses_that_name_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 				textSlotsEditName.Focus();
@@ -300,7 +299,12 @@ namespace LMStud{
 			var apiBaseUrl = textSlotsEditApiUrl.Text.Trim();
 			var mcpEndpoint = textSlotsEditMcpUrl.Text.Trim();
 			if(source == ModelSlotSource.Mcp && checkSlotsEditTool.Checked && string.IsNullOrWhiteSpace(mcpEndpoint)){
-				MessageBox.Show(this, mcpTransport == McpSlotTransport.Http ? Resources.MCP_URL_is_required_when_the_MCP_slot_is_enabled_as_a_tool_ : Resources.MCP_command_is_required_when_the_MCP_slot_is_enabled_as_a_tool_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+				MessageBox.Show(this,
+					mcpTransport == McpSlotTransport.Http ? Resources.MCP_URL_is_required_when_the_MCP_slot_is_enabled_as_a_tool_
+						: Resources.MCP_command_is_required_when_the_MCP_slot_is_enabled_as_a_tool_,
+					Resources.LM_Stud,
+					MessageBoxButtons.OK,
+					MessageBoxIcon.Exclamation);
 				textSlotsEditMcpUrl.Focus();
 				return false;
 			}
@@ -319,7 +323,7 @@ namespace LMStud{
 				ApiReasoningEffort = GetComboSelectedIndex(comboSlotEditReasonEffort),
 				ApiReasoningSummary = GetComboSelectedIndex(comboSlotEditReasonSummary),
 				ApiStore = checkSlotsEditStore.Checked,
-				Instructions = source == ModelSlotSource.Mcp ? "" : (localSystemPromptOverride || apiSystemPromptOverride ? textSlotsEditSystemPrompt.Text.Trim() : ""),
+				Instructions = source == ModelSlotSource.Mcp ? "" : localSystemPromptOverride || apiSystemPromptOverride ? textSlotsEditSystemPrompt.Text.Trim() : "",
 				McpAuthHeader = source == ModelSlotSource.Mcp && mcpTransport == McpSlotTransport.Http ? textSlotsEditMcpHeader.Text.Trim() : "",
 				McpCommandLine = source == ModelSlotSource.Mcp && mcpTransport == McpSlotTransport.Stdio ? mcpEndpoint : "",
 				McpTimeoutMs = source == ModelSlotSource.Mcp ? existingMcpTimeoutMs : McpServerManager.DefaultTimeoutMs,
@@ -420,12 +424,8 @@ namespace LMStud{
 			LoadModel(slot.Name, item, false);
 			return true;
 		}
-		private static int GetComboSelectedIndex(ComboBox combo){
-			return combo.SelectedIndex > 0 && combo.SelectedIndex < combo.Items.Count ? combo.SelectedIndex : 0;
-		}
-		private static void SetComboSelectedIndex(ComboBox combo, int selectedIndex){
-			combo.SelectedIndex = selectedIndex > 0 && selectedIndex < combo.Items.Count ? selectedIndex : 0;
-		}
+		private static int GetComboSelectedIndex(ComboBox combo){return combo.SelectedIndex > 0 && combo.SelectedIndex < combo.Items.Count ? combo.SelectedIndex : 0;}
+		private static void SetComboSelectedIndex(ComboBox combo, int selectedIndex){combo.SelectedIndex = selectedIndex > 0 && selectedIndex < combo.Items.Count ? selectedIndex : 0;}
 		private string GetSlotsEditLocalModelPath(){
 			if(comboSlotsEditLocalModel.SelectedItem is ListViewItem item && item.SubItems.Count > 1) return item.SubItems[1].Text;
 			return ResolveModelPath(comboSlotsEditLocalModel.Text);
@@ -448,20 +448,16 @@ namespace LMStud{
 		}
 		private void ApplyMcpSlotConnectionState(ModelSlot slot){
 			if(slot?.Source != ModelSlotSource.Mcp) return;
-			var response = slot.HasUse(ModelSlotUse.Tool) ? McpServerManager.Connect(slot, RetokenizeLoadedLocalSlotsForToolChange) : McpServerManager.Disconnect(slot.Name, RetokenizeLoadedLocalSlotsForToolChange);
+			var response = slot.HasUse(ModelSlotUse.Tool) ? McpServerManager.Connect(slot, RetokenizeLoadedLocalSlotsForToolChange)
+				: McpServerManager.Disconnect(slot.Name, RetokenizeLoadedLocalSlotsForToolChange);
 			if(slot.HasUse(ModelSlotUse.Tool) && !McpServerManager.IsOk(response)) ShowError(Resources.MCP_Connect, response, false);
 		}
 		private void RetokenizeLoadedLocalSlotsForToolChange(IEnumerable<string> slotNames){
 			var loadedSlots = ModelSlotManager.GetLoadedLocalSlotNames();
-			foreach(var slotName in (slotNames ?? Enumerable.Empty<string>()).Where(name => loadedSlots.Contains(name, StringComparer.OrdinalIgnoreCase)))
-				SetSystemPromptForSlot(slotName, false);
+			foreach(var slotName in (slotNames ?? Enumerable.Empty<string>()).Where(name => loadedSlots.Contains(name, StringComparer.OrdinalIgnoreCase))) SetSystemPromptForSlot(slotName, false);
 		}
-		private McpSlotTransport GetMcpEditorTransport(){
-			return comboSlotsEditMcpTransport.SelectedIndex == 0 ? McpSlotTransport.Http : McpSlotTransport.Stdio;
-		}
-		private void SetMcpTransportCombo(McpSlotTransport transport){
-			comboSlotsEditMcpTransport.SelectedIndex = transport == McpSlotTransport.Http ? 0 : 1;
-		}
+		private McpSlotTransport GetMcpEditorTransport(){return comboSlotsEditMcpTransport.SelectedIndex == 0 ? McpSlotTransport.Http : McpSlotTransport.Stdio;}
+		private void SetMcpTransportCombo(McpSlotTransport transport){comboSlotsEditMcpTransport.SelectedIndex = transport == McpSlotTransport.Http ? 0 : 1;}
 		private void UpdateMcpTransportUi(){
 			var http = GetMcpEditorTransport() == McpSlotTransport.Http;
 			label41.Text = http ? Resources.URL_ : Resources.Command_;
