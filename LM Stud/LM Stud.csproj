@@ -142,6 +142,8 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="GGUFMetadataManager.cs" />
+    <Compile Include="GGUFSplit.cs" />
+    <Compile Include="HuggingFaceDownload.cs" />
     <Compile Include="LVISorter.cs" />
     <Compile Include="MarkdownImages.cs" />
     <Compile Include="MarkdownRenderControl.cs" />

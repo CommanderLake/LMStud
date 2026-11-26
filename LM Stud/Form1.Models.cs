@@ -12,7 +12,7 @@ namespace LMStud{
 		private const string FetchPrompt = "\nAfter calling the web_search tool you must subsequently call the get_webpage tool with a url followed by the get_webpage_text tool with the id of any relevant preview.";
 		internal volatile SemaphoreSlim PopulateLock = new SemaphoreSlim(1, 1);
 		private void CheckLoadAuto_CheckedChanged(object sender, EventArgs e){
-			if(checkLoadAuto.Checked && File.Exists(Common.ModelsDir + Settings.Default.LastModel)) Settings.Default.LoadAuto = true;
+			if(checkLoadAuto.Checked && GGUFSplit.FindMissingPart(Common.ModelsDir + Settings.Default.LastModel) == null) Settings.Default.LoadAuto = true;
 			else Settings.Default.LoadAuto = false;
 			Settings.Default.Save();
 		}
@@ -108,13 +108,16 @@ namespace LMStud{
 			return true;
 		}
 		private void PopulateModels(){
-			if(!PopulateLock.Wait(0) || !ModelsFolderExists(true)) return;
+			if(!ModelsFolderExists(true) || !PopulateLock.Wait(0)) return;
+			var modelsDirectory = Common.ModelsDir;
 			ThreadPool.QueueUserWorkItem(_ => {
 				try{
-					var files = Directory.GetFiles(Common.ModelsDir, "*.gguf", SearchOption.AllDirectories).Where(file => !IsVisionProjectorFile(file));
+					var files = Directory.EnumerateFiles(modelsDirectory, "*.gguf", SearchOption.AllDirectories)
+						.Where(file => !IsVisionProjectorFile(file) && GGUFSplit.IsCompleteModel(file));
 					var items = new List<ListViewItem>();
 					foreach(var file in files){
-						var meta = GGUFMetadataManager.LoadGGUFMetadata(file);
+						var meta = GGUFMetadataManager.LoadGGUFMetadataPreview(file, out var checkMtpHead);
+						if(checkMtpHead && NativeMethods.IsStandaloneMtpHead(file)) continue;
 						var name = Path.GetFileNameWithoutExtension(file);
 						var lvi = new ListViewItem(name){ Name = name };
 						lvi.SubItems.Add(file);
@@ -299,8 +302,8 @@ namespace LMStud{
 		private static bool SameModelPath(string a, string b){
 			if(string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b)) return false;
 			try{
-				a = Path.GetFullPath(Path.IsPathRooted(a) ? a : Path.Combine(Common.ModelsDir ?? "", a)).TrimEnd('\\', '/');
-				b = Path.GetFullPath(Path.IsPathRooted(b) ? b : Path.Combine(Common.ModelsDir ?? "", b)).TrimEnd('\\', '/');
+				a = GGUFSplit.FirstPath(Path.GetFullPath(Path.IsPathRooted(a) ? a : Path.Combine(Common.ModelsDir ?? "", a)).TrimEnd('\\', '/'));
+				b = GGUFSplit.FirstPath(Path.GetFullPath(Path.IsPathRooted(b) ? b : Path.Combine(Common.ModelsDir ?? "", b)).TrimEnd('\\', '/'));
 			} catch{}
 			return string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 		}
@@ -375,8 +378,9 @@ namespace LMStud{
 		internal void LoadModel(ListViewItem modelLvi, bool autoLoad){LoadModel(ModelSlotManager.MainSlotName, modelLvi, autoLoad);}
 		private void LoadModel(string slotName, ListViewItem modelLvi, bool autoLoad){
 			var modelPath = modelLvi.SubItems[1].Text;
-			if(!File.Exists(modelPath)){
-				ShowError(Resources.Load_Model, Resources.Model_File_Not_Found + modelPath, false);
+			var missingPart = GGUFSplit.FindMissingPart(modelPath);
+			if(missingPart != null){
+				ShowError(Resources.Load_Model, Resources.Model_File_Not_Found + missingPart, false);
 				checkLoadAuto.Checked = false;
 				return;
 			}
@@ -420,7 +424,7 @@ namespace LMStud{
 					if(result != NativeMethods.StudError.Success){
 						Settings.Default.LoadAuto = false;
 						Settings.Default.Save();
-						ClearFailedLocalSlot(slotName);
+						if(!NativeMethods.IsModelSlotLoaded(slotName)) ClearFailedLocalSlot(slotName);
 						return;
 					}
 					var visionProjector = FindVisionProjector(modelPath);
@@ -518,10 +522,11 @@ namespace LMStud{
 			switch(metaVal.Type){
 				case GGUFMetadataManager.GGUFType.ARRAY:
 					if(!(metaVal.Value is List<object> list)) return "[]";
-					const int limit = 32;
+					const int limit = GGUFMetadataManager.ArrayPreviewLimit;
 					var truncated = list.Count > limit ? list.GetRange(0, limit) : list;
 					var joined = string.Join(", ", truncated);
-					return list.Count > limit ? $"[ {joined}, ... (total {list.Count} items) ]" : $"[ {joined} ]";
+					var total = Math.Max(metaVal.ArrayCount, (ulong)list.Count);
+					return total > limit ? $"[ {joined}, ... (total {total} items) ]" : $"[ {joined} ]";
 				default: return metaVal.Value?.ToString() ?? "";
 			}
 		}

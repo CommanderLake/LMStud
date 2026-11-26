@@ -34,10 +34,13 @@ namespace LMStud{
 			internal static bool ButUnloadSlotEnabled;
 			internal static bool ListViewModelsEnabled;
 		}
-		internal Form1(){
+		internal Form1() : this(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LM Stud"), "https://huggingface.co"){}
+		internal Form1(string profileDirectory, string huggingFaceUrl){
 			//var culture = new CultureInfo("zh-CN");
 			//Thread.CurrentThread.CurrentUICulture = culture;
 			//Thread.CurrentThread.CurrentCulture = culture;
+			_modelSettingsFile = Path.Combine(profileDirectory, "ModelSettings.json");
+			_huggingFaceUrl = huggingFaceUrl.TrimEnd('/');
 			InitializeComponent();
 			Icon = Resources.LM_Stud_256;
 			Generation.MainForm = this;
@@ -48,7 +51,7 @@ namespace LMStud{
 			InitializeListViews();
 			_numCtxSizeToolTip = toolTip1.GetToolTip(numCtxSize);
 			LoadConfig();
-			ModelSlotManager.Load();
+			ModelSlotManager.Load(profileDirectory);
 			ApplyActiveSlotToModel(false);
 			LoadModelSettings();
 			PopulateSlotsList();
@@ -77,11 +80,11 @@ namespace LMStud{
 			ThreadPool.QueueUserWorkItem(o => {
 				try{
 					PopulateLock.Wait(-1);
-					var modelPath = Common.ModelsDir + Settings.Default.LastModel;
+					var modelPath = GGUFSplit.FirstPath(Common.ModelsDir + Settings.Default.LastModel);
 					try{
 						Invoke(new MethodInvoker(() => {
 							if(IsDisposed) return;
-							var modelLvi = listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item => item.SubItems[1].Text == modelPath);
+						var modelLvi = listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item => SameModelPath(item.SubItems[1].Text, modelPath));
 							if(modelLvi != null) LoadModel(modelLvi, true);
 						}));
 					} catch(ObjectDisposedException){} catch(InvalidOperationException){}

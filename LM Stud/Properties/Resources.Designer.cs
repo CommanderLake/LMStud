@@ -28,6 +28,9 @@ namespace LMStud.Properties {
         internal static string Chat_File_Busy => ResourceManager.GetString("Chat_File_Busy", resourceCulture);
         internal static string Invalid_Chat_Archive => ResourceManager.GetString("Invalid_Chat_Archive", resourceCulture);
         internal static string Unsupported_Chat_Archive_Version => ResourceManager.GetString("Unsupported_Chat_Archive_Version", resourceCulture);
+        internal static string Download_Invalid_GGUF => ResourceManager.GetString("Download_Invalid_GGUF", resourceCulture);
+        internal static string Download_Invalid_Path => ResourceManager.GetString("Download_Invalid_Path", resourceCulture);
+        internal static string Downloaded_GGUF_Parts => ResourceManager.GetString("Downloaded_GGUF_Parts", resourceCulture);
         
         private static global::System.Resources.ResourceManager resourceMan;
         

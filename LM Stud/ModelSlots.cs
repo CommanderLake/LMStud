@@ -66,8 +66,7 @@ namespace LMStud{
 		}
 		internal string ResolveLocalPath(){
 			if(string.IsNullOrWhiteSpace(LocalPath)) return "";
-			if(Path.IsPathRooted(LocalPath)) return LocalPath;
-			return Path.Combine(Common.ModelsDir ?? "", LocalPath);
+			return GGUFSplit.FirstPath(Path.IsPathRooted(LocalPath) ? LocalPath : Path.Combine(Common.ModelsDir ?? "", LocalPath));
 		}
 	}
 	internal sealed class ModelSlotLockLease : IDisposable{
@@ -85,8 +84,7 @@ namespace LMStud{
 		private static readonly Regex InvalidToolChars = new Regex("[^a-zA-Z0-9_]", RegexOptions.Compiled);
 		private static readonly object Sync = new object();
 		private static readonly object SlotLocksSync = new object();
-		private static readonly string SlotsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LM Stud");
-		private static readonly string SlotsFile = Path.Combine(SlotsFolder, "ModelSlots.json");
+		private static string _slotsFile;
 		private static readonly List<ModelSlot> SlotsInternal = new List<ModelSlot>();
 		private static readonly Dictionary<string, SemaphoreSlim> SlotLocks = new Dictionary<string, SemaphoreSlim>(StringComparer.OrdinalIgnoreCase);
 		private static string ActiveChatSlotName { get; set; } = MainSlotName;
@@ -95,8 +93,9 @@ namespace LMStud{
 				lock(Sync) return SlotsInternal.Select(slot => slot.Clone()).ToList();
 			}
 		}
-		internal static void Load(){
+		internal static void Load(string profileDirectory){
 			lock(Sync){
+				_slotsFile = Path.Combine(profileDirectory, "ModelSlots.json");
 				SlotsInternal.Clear();
 				var config = LoadConfigFile();
 				if(config?.Slots != null) SlotsInternal.AddRange(config.Slots.Where(IsUsableSlot).Select(NormalizeSlot));
@@ -111,8 +110,8 @@ namespace LMStud{
 				EnsureMainSlot();
 				EnsureSingleChatSlot();
 				var config = new ModelSlotConfig{ ActiveChatSlot = ActiveChatSlotName, Slots = SlotsInternal.Select(slot => slot.Clone()).ToList() };
-				if(!Directory.Exists(SlotsFolder)) Directory.CreateDirectory(SlotsFolder);
-				File.WriteAllText(SlotsFile, SerializeConfig(config));
+				Directory.CreateDirectory(Path.GetDirectoryName(_slotsFile));
+				File.WriteAllText(_slotsFile, SerializeConfig(config));
 			}
 			Common.ActiveModelSlotName = ActiveChatSlotName;
 			Tools.InvalidateToolsJsonCache();
@@ -341,7 +340,7 @@ namespace LMStud{
 			if(slot.Source == ModelSlotSource.Api) return CanServeApiSlot(slot) ? Resources.Ready : Resources.Incomplete;
 			var path = slot.ResolveLocalPath();
 			if(string.IsNullOrWhiteSpace(path)) return Resources.Empty;
-			if(!File.Exists(path)) return Resources.Missing;
+			if(GGUFSplit.FindMissingPart(path) != null) return Resources.Missing;
 			if(CanServeLocalSlot(slot)) return Resources.Loaded;
 			return Resources.Cold;
 		}
@@ -467,9 +466,9 @@ namespace LMStud{
 			return slot != null && !string.IsNullOrWhiteSpace(callerSlotName) && string.Equals(slot.Name, callerSlotName.Trim(), StringComparison.OrdinalIgnoreCase);
 		}
 		private static ModelSlotConfig LoadConfigFile(){
-			if(!File.Exists(SlotsFile)) return null;
+			if(!File.Exists(_slotsFile)) return null;
 			try{
-				var json = File.ReadAllText(SlotsFile);
+				var json = File.ReadAllText(_slotsFile);
 				try{ return ParseConfig(json); }
 				catch{
 					var repaired = RepairLegacyMalformedSlotsJson(json);

@@ -407,11 +407,12 @@ namespace LMStud{
 				return true;
 			}
 			var path = slot.ResolveLocalPath();
-			if(string.IsNullOrWhiteSpace(path) || !File.Exists(path)){
-				ShowError(Resources.Load_Slot, Resources.Model_File_Not_Found + path, false);
+			var missingPart = GGUFSplit.FindMissingPart(path);
+			if(missingPart != null){
+				ShowError(Resources.Load_Slot, Resources.Model_File_Not_Found + missingPart, false);
 				return true;
 			}
-			var item = listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(lvi => string.Equals(lvi.SubItems[1].Text, path, StringComparison.OrdinalIgnoreCase));
+			var item = listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(lvi => SameModelPath(lvi.SubItems[1].Text, path));
 			if(item == null){
 				ShowError(Resources.Load_Slot, Resources.The_model_is_not_in_the_current_models_list__ + path, false);
 				return true;

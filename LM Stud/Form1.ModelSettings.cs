@@ -7,13 +7,12 @@ using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
 	public partial class Form1{
-		private static readonly string ModelSettingsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LM Stud");
-		private static readonly string ModelSettingsFile = Path.Combine(ModelSettingsFolder, "ModelSettings.json");
+		private readonly string _modelSettingsFile;
 		private readonly Dictionary<string, ModelSettings> _modelSettings = new Dictionary<string, ModelSettings>();
 		private void LoadModelSettings(){
-			if(!File.Exists(ModelSettingsFile)) return;
+			if(!File.Exists(_modelSettingsFile)) return;
 			try{
-				var json = File.ReadAllText(ModelSettingsFile);
+				var json = File.ReadAllText(_modelSettingsFile);
 				var dict = ParseModelSettings(json);
 				if(dict == null) return;
 				foreach(var kv in dict) _modelSettings[kv.Key] = kv.Value;
@@ -22,8 +21,8 @@ namespace LMStud{
 		private void SaveModelSettings(){
 			try{
 				var json = SerializeModelSettings(_modelSettings);
-				if(!Directory.Exists(ModelSettingsFolder)) Directory.CreateDirectory(ModelSettingsFolder);
-				File.WriteAllText(ModelSettingsFile, json);
+				Directory.CreateDirectory(Path.GetDirectoryName(_modelSettingsFile));
+				File.WriteAllText(_modelSettingsFile, json);
 			} catch{}
 		}
 		private bool TryGetModelSettings(string modelPath, out ModelSettings settings){

@@ -1,7 +1,9 @@
 #include "StudInternal.h"
 #include <algorithm>
+#include <charconv>
 #include <cctype>
 #include <filesystem>
+#include <ggml-cpp.h>
 #include <jinja\parser.h>
 #include <system_error>
 static constexpr int MtpDraftTokensMax = 62;
@@ -305,9 +307,67 @@ void FreeAllModelSlots(){
 	}
 	modelsToFree.clear();
 }
+static uint32_t GetGgufCount(const gguf_context* gguf, const char* key){
+	const auto index = gguf_find_key(gguf, key);
+	if(index < 0) return 0;
+	switch(gguf_get_kv_type(gguf, index)){
+		case GGUF_TYPE_UINT16: return gguf_get_val_u16(gguf, index);
+		case GGUF_TYPE_UINT32: return gguf_get_val_u32(gguf, index);
+		default: return 0;
+	}
+}
+static bool HasTrunkBlocks(const gguf_context* gguf, uint32_t firstHeadBlock, uint32_t blockCount, bool& hasHead){
+	for(int64_t i = 0; i < gguf_get_n_tensors(gguf); ++i){
+		const std::string_view name = gguf_get_tensor_name(gguf, i);
+		if(name.compare(0, 4, "blk.") != 0) continue;
+		const auto end = name.find('.', 4);
+		if(end == std::string_view::npos) continue;
+		uint32_t block;
+		const auto parsed = std::from_chars(name.data() + 4, name.data() + end, block);
+		if(parsed.ec != std::errc{} || parsed.ptr != name.data() + end) continue;
+		if(block < firstHeadBlock) return true;
+		if(block < blockCount && name.compare(end, 7, ".nextn.") == 0) hasHead = true;
+	}
+	return false;
+}
+bool IsStandaloneMtpHead(const char* filename){
+	if(!filename || !filename[0]) return false;
+	try{
+		const gguf_init_params params{true, nullptr};
+		const gguf_context_ptr gguf(gguf_init_from_file(filename, params));
+		if(!gguf) return false;
+		const auto index = gguf_find_key(gguf.get(), "general.architecture");
+		if(index < 0 || gguf_get_kv_type(gguf.get(), index) != GGUF_TYPE_STRING) return false;
+		const std::string architecture = gguf_get_val_str(gguf.get(), index);
+		const auto blocks = GetGgufCount(gguf.get(), (architecture + ".block_count").c_str());
+		const auto headBlocks = GetGgufCount(gguf.get(), (architecture + ".nextn_predict_layers").c_str());
+		if(headBlocks == 0 || headBlocks > blocks) return false;
+		const auto firstHeadBlock = blocks - headBlocks;
+		bool hasHead = false;
+		if(HasTrunkBlocks(gguf.get(), firstHeadBlock, blocks, hasHead)) return false;
+		const auto splitCount = GetGgufCount(gguf.get(), "split.count");
+		if(splitCount > 1){
+			const auto splitNo = GetGgufCount(gguf.get(), "split.no");
+			std::vector<char> prefix(std::string_view(filename).size() + 1);
+			if(splitNo >= splitCount || !llama_split_prefix(prefix.data(), prefix.size(), filename, splitNo, splitCount)) return false;
+			std::vector<char> path(prefix.size());
+			for(uint32_t i = 0; i < splitCount; ++i){
+				if(i == splitNo) continue;
+				if(!llama_split_path(path.data(), path.size(), prefix.data(), i, splitCount)) return false;
+				const gguf_context_ptr part(gguf_init_from_file(path.data(), params));
+				if(!part || HasTrunkBlocks(part.get(), firstHeadBlock, blocks, hasHead)) return false;
+			}
+		}
+		return hasHead;
+	} catch(...){ return false; }
+}
 StudError LoadModel(const char* slotName, const char* filename, const char* jinjaTemplate, const int nGPULayers, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy){
-	const auto model = GetModel(slotName);
 	auto& errorMessage = Stud::Internal::LastErrorMessage();
+	if(IsStandaloneMtpHead(filename)){
+		errorMessage = "This GGUF contains only an MTP draft head. Select the full model GGUF.";
+		return StudError::CantLoadModel;
+	}
+	const auto model = GetModel(slotName);
 	if(model->llModel || model->sharedModel) FreeModel(slotName);
 	model->sharedModel = LoadOrReuseSharedModel(filename, nGPULayers, mMap, mLock, numaStrategy);
 	model->llModel = model->sharedModel ? model->sharedModel->llModel : nullptr;

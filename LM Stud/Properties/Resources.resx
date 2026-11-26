@@ -637,4 +637,13 @@ state is null</value>
 <data name="Unsupported_Chat_Archive_Version" xml:space="preserve">
 	<value>This LM Stud chat file uses an unsupported version.</value>
 </data>
+<data name="Download_Invalid_GGUF" xml:space="preserve">
+	<value>The download for “{0}” did not contain a GGUF file.</value>
+</data>
+<data name="Download_Invalid_Path" xml:space="preserve">
+	<value>The repository file path “{0}” is invalid.</value>
+</data>
+<data name="Downloaded_GGUF_Parts" xml:space="preserve">
+	<value>Downloaded all {0} GGUF shards to “{1}”.</value>
+</data>
 </root>

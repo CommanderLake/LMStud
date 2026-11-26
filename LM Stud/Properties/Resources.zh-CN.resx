@@ -640,4 +640,13 @@ state 为 null</value>
 <data name="Unsupported_Chat_Archive_Version" xml:space="preserve">
 	<value>此 LM Stud 聊天文件使用了不受支持的版本。</value>
 </data>
+<data name="Download_Invalid_GGUF" xml:space="preserve">
+	<value>下载的“{0}”不是有效的 GGUF 文件。</value>
+</data>
+<data name="Download_Invalid_Path" xml:space="preserve">
+	<value>仓库文件路径“{0}”无效。</value>
+</data>
+<data name="Downloaded_GGUF_Parts" xml:space="preserve">
+	<value>已将全部 {0} 个 GGUF 分片下载到“{1}”。</value>
+</data>
 </root>

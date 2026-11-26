@@ -115,12 +115,21 @@ static int InternalProgressCallback(void* clientp, curl_off_t dltotal, curl_off_
 }
 static int DownloadCore(const char* url, const char* targetPath, NativeProgressCallback progressCallback){
 	if(!url || !targetPath) return -1;
+	const auto destination = Utf8ToWide(targetPath);
+	const auto separator = destination.find_last_of(L"\\/");
+	const auto directory = separator == std::wstring::npos ? L"." : destination.substr(0, separator + 1);
+	wchar_t temporaryPath[MAX_PATH];
+	if(destination.empty() || !GetTempFileNameW(directory.c_str(), L"lms", 0, temporaryPath)) return -2;
 	FILE* fp = nullptr;
-	fopen_s(&fp, targetPath, "wb");
-	if(!fp) return -2;
+	_wfopen_s(&fp, temporaryPath, L"wb");
+	if(!fp){
+		DeleteFileW(temporaryPath);
+		return -2;
+	}
 	CURL* curl = curl_easy_init();
 	if(!curl){
 		std::fclose(fp);
+		DeleteFileW(temporaryPath);
 		return -3;
 	}
 	curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -128,20 +137,26 @@ static int DownloadCore(const char* url, const char* targetPath, NativeProgressC
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+	curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
 	curl_easy_setopt(curl, CURLOPT_BUFFERSIZE, 1048576);
 	if(progressCallback != nullptr){
 		curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, InternalProgressCallback);
 		curl_easy_setopt(curl, CURLOPT_XFERINFODATA, (void*)progressCallback);
 		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
 	}
-	const CURLcode res = PerformWithRetry(curl, url);
-	curl_easy_cleanup(curl);
-	std::fclose(fp);
-	if(res != CURLE_OK){
-		std::remove(targetPath);
-		return res;
+	CURLcode result = PerformWithRetry(curl, url);
+	curl_off_t total = 0;
+	curl_off_t received = 0;
+	if(result == CURLE_OK && progressCallback){
+		curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &total);
+		curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD_T, &received);
 	}
-	return 0;
+	curl_easy_cleanup(curl);
+	if(std::fclose(fp) != 0 && result == CURLE_OK) result = CURLE_WRITE_ERROR;
+	if(result == CURLE_OK && progressCallback && progressCallback(total > 0 ? total : 0, received)) result = CURLE_ABORTED_BY_CALLBACK;
+	if(result == CURLE_OK && !MoveFileExW(temporaryPath, destination.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) result = CURLE_WRITE_ERROR;
+	if(result != CURLE_OK) DeleteFileW(temporaryPath);
+	return result;
 }
 int DownloadFile(const char* url, const char* targetPath){ return DownloadCore(url, targetPath, nullptr); }
 int DownloadFileWithProgress(const char* url, const char* targetPath, NativeProgressCallback progressCallback){ return DownloadCore(url, targetPath, progressCallback); }

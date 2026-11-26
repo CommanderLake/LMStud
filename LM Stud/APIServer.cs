@@ -14,12 +14,12 @@ namespace LMStud{
 		private CancellationTokenSource _cts;
 		private HttpListener _listener;
 		private bool IsRunning => _listener != null && _listener.IsListening;
-		internal void Start(){
+		internal void Start(string host = "*"){
 			if(IsRunning) return;
 			try{
 				_cts = new CancellationTokenSource();
 				_listener = new HttpListener();
-				_listener.Prefixes.Add($"http://*:{Common.APIServerPort}/");
+				_listener.Prefixes.Add($"http://{host}:{Common.APIServerPort}/");
 				_listener.Start();
 				ThreadPool.QueueUserWorkItem(o => {ListenLoop(_cts.Token);});
 			} catch(HttpListenerException ex){

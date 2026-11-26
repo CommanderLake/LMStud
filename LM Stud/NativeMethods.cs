@@ -96,6 +96,9 @@ namespace LMStud{
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void FreeAllModelSlots();
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		[return: MarshalAs(UnmanagedType.I1)]
+		internal static extern bool IsStandaloneMtpHead([MarshalAs(UnmanagedType.LPUTF8Str)] string filename);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError LoadModel([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, [MarshalAs(UnmanagedType.LPUTF8Str)] string filename, [MarshalAs(UnmanagedType.LPUTF8Str)] string jinjaTemplate, int nGPULayers, bool mMap, bool mLock, GgmlNumaStrategy numaStrategy);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError LoadVisionProjector([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, [MarshalAs(UnmanagedType.LPUTF8Str)] string filename, bool useGPU, int nThreads, uint flashAttn);
