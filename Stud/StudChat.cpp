@@ -67,13 +67,15 @@ static StudError EvaluateVisionPrompt(const char* slotName, const std::vector<co
 	common_chat_params chatData;
 	auto error = Stud::Internal::BuildChatTemplateParams(slotName, chatData, messages, addGenerationPrompt, includeTools);
 	if(error != StudError::Success) return error;
-	error = Stud::Internal::LoadChatSyntax(session.syntax, chatData, includeTools && !session.tools.empty());
+	error = Stud::Internal::LoadChatSyntax(session, chatData);
 	if(error != StudError::Success) return error;
 	mtmd::bitmaps bitmaps;
 	for(const auto& media : messageMedia){
 		for(const auto& image : media){
-			mtmd::bitmap bitmap(mtmd_helper_bitmap_init_from_buf(session.visionCtx, image.data(), image.size()));
-			if(!bitmap.ptr){
+			const auto decoded = mtmd_helper_bitmap_init_from_buf(session.visionCtx, image.data(), image.size(), false, mtmd_helper_init_opt_default());
+			mtmd::bitmap bitmap(decoded.bitmap);
+			const mtmd_helper::video_ptr video(decoded.video_ctx);
+			if(!bitmap.ptr || video || mtmd_bitmap_is_audio(bitmap.ptr.get())){
 				errorMessage = "The multimodal projector could not decode an image.";
 				return StudError::CantDecodeImage;
 			}
@@ -82,7 +84,8 @@ static StudError EvaluateVisionPrompt(const char* slotName, const std::vector<co
 			bitmaps.entries.push_back(std::move(bitmap));
 		}
 	}
-	const mtmd_input_text input{chatData.prompt.c_str(), true, true};
+	const auto prompt = chatData.prompt.str();
+	const mtmd_input_text input{prompt.data(), prompt.size(), true, true};
 	const mtmd::input_chunks chunks(mtmd_input_chunks_init());
 	auto bitmapPointers = bitmaps.c_ptr();
 	const int32_t tokenizeResult = mtmd_tokenize(session.visionCtx, chunks.ptr.get(), &input, bitmapPointers.data(), bitmapPointers.size());
@@ -148,10 +151,11 @@ static bool TryBuildAppendOnlyPrompt(const char* slotName, const std::string& re
 	common_chat_params previousChatData;
 	const bool toolsEnabled = !model->session.tools.empty();
 	if(Stud::Internal::BuildChatTemplateParams(slotName, previousChatData, lane.messages, false, toolsEnabled) != StudError::Success) return false;
-	if(renderedPrompt.compare(0, previousChatData.prompt.size(), previousChatData.prompt) != 0) return false;
+	const auto previousPrompt = previousChatData.prompt.str();
+	if(renderedPrompt.compare(0, previousPrompt.size(), previousPrompt) != 0) return false;
 	std::string suffix;
-	if(addAssistantPrompt && !previousChatData.prompt.empty() && previousChatData.prompt.back() == '\n') suffix = "\n";
-	suffix.append(renderedPrompt, previousChatData.prompt.size(), std::string::npos);
+	if(addAssistantPrompt && !previousPrompt.empty() && previousPrompt.back() == '\n') suffix = "\n";
+	suffix.append(renderedPrompt, previousPrompt.size(), std::string::npos);
 	std::vector<llama_token> suffixTokens;
 	if(!TokenizePrompt(slotName, suffix, suffixTokens, false)) return false;
 	const size_t cachedSize = lane.cachedTokens.size();
@@ -192,7 +196,7 @@ static StudError DecodePromptTokenSuffix(const char* slotName, const std::vector
 	if(promptTokens.size() > lane.cachedTokens.size()) lane.cachedTokens.reserve(promptTokens.size());
 	size_t position = prefix;
 	while(position < promptTokens.size() && !session.stop.load()){
-		const int evaluationCount = std::min<int>(Stud::Internal::EvalBatchSize(session), static_cast<int>(promptTokens.size() - position));
+		const int evaluationCount = std::min<int>(session.batchSize, static_cast<int>(promptTokens.size() - position));
 		const int contextSize = llama_n_ctx(session.ctx);
 		const int usedContext = static_cast<int>(lane.cachedTokens.size());
 		if(usedContext + evaluationCount > contextSize){
@@ -203,7 +207,7 @@ static StudError DecodePromptTokenSuffix(const char* slotName, const std::vector
 			RestorePromptPrefix(model, promptTokens, prefix);
 			return StudError::ConvTooLong;
 		}
-		const auto result = Stud::Internal::DecodeTokenBatch(session, const_cast<llama_token*>(&promptTokens[position]), evaluationCount, static_cast<llama_pos>(position), true);
+		const auto result = Stud::Internal::DecodeTokenBatch(session, &promptTokens[position], evaluationCount, static_cast<llama_pos>(position));
 		if(result != StudError::Success){
 			if(appendedMessage){
 				lane.messages.pop_back();
@@ -302,9 +306,9 @@ namespace Stud::Internal{
 		inputs.use_jinja = true;
 		inputs.messages = templatedMessages;
 		inputs.add_generation_prompt = addGenerationPrompt;
+		inputs.tool_choice = useTools ? COMMON_CHAT_TOOL_CHOICE_AUTO : COMMON_CHAT_TOOL_CHOICE_NONE;
 		if(useTools){
 			inputs.tools = model->session.tools;
-			inputs.tool_choice = COMMON_CHAT_TOOL_CHOICE_AUTO;
 			inputs.parallel_tool_calls = model->caps.supports_parallel_tool_calls;
 		}
 		inputs.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
@@ -315,15 +319,13 @@ namespace Stud::Internal{
 		}
 		return StudError::Success;
 	}
-	StudError LoadChatSyntax(common_chat_parser_params& syntax, const common_chat_params& chatData, const bool parseToolCalls){
-		syntax.format = chatData.format;
-		syntax.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
-		syntax.reasoning_in_content = false;
-		syntax.generation_prompt = chatData.generation_prompt;
-		syntax.parse_tool_calls = parseToolCalls;
+	StudError LoadChatSyntax(StudSession& session, common_chat_params& chatData){
 		try{
-			syntax.parser = common_peg_arena();
-			if(!chatData.parser.empty()) syntax.parser.load(chatData.parser);
+			common_chat_parser_params syntax;
+			syntax.format = chatData.format;
+			syntax.generation_prompt = common_chat_input_tokenize(session.vocab, chatData.generation_prompt);
+			syntax.parser = std::move(chatData.parser);
+			session.syntax = std::move(syntax);
 		} catch(const std::exception& e){
 			LastErrorMessage() = e.what();
 			return StudError::ChatParseError;
@@ -374,12 +376,13 @@ namespace Stud::Internal{
 		common_chat_params chatData;
 		auto error = BuildChatTemplateParams(slotName, chatData, chatMessages, addAssistantPrompt, toolsEnabled);
 		if(error != StudError::Success) return error;
-		error = LoadChatSyntax(model->session.syntax, chatData, toolsEnabled);
+		error = LoadChatSyntax(model->session, chatData);
 		if(error != StudError::Success) return error;
 		std::vector<llama_token> promptTokens;
 		size_t prefix = 0;
-		if(!TryBuildAppendOnlyPrompt(slotName, chatData.prompt, addAssistantPrompt, promptTokens, prefix)){
-			if(!TokenizePrompt(slotName, chatData.prompt, promptTokens)) return StudError::CantTokenizePrompt;
+		const auto prompt = chatData.prompt.str();
+		if(!TryBuildAppendOnlyPrompt(slotName, prompt, addAssistantPrompt, promptTokens, prefix)){
+			if(!TokenizePrompt(slotName, prompt, promptTokens)) return StudError::CantTokenizePrompt;
 			prefix = CommonTokenPrefix(lane.cachedTokens, promptTokens);
 			if(prefix < lane.cachedTokens.size()){
 				if(model->session.speculative && prefix > 0) --prefix;
@@ -404,9 +407,9 @@ StudError RetokenizeChat(const char* slotName, const bool rebuildMemory){
 		Stud::Internal::ClearSessionMemoryAndSpeculativeState(model);
 		lane.cachedTokens.clear();
 		if(lane.sampler) llama_sampler_reset(lane.sampler);
-		const auto syntaxError = Stud::Internal::LoadChatSyntax(model->session.syntax, common_chat_params(), false);
-		if(syntaxError == StudError::Success) lane.endsWithEOG = lane.messages.empty();
-		return syntaxError;
+		model->session.syntax = {};
+		lane.endsWithEOG = lane.messages.empty();
+		return StudError::Success;
 	}
 	if(LaneHasMedia(lane)){
 		const auto visionError = EvaluateVisionPrompt(slotName, lane.messages, lane.messageMedia, false, toolsEnabled);
@@ -416,10 +419,10 @@ StudError RetokenizeChat(const char* slotName, const bool rebuildMemory){
 	common_chat_params chatData;
 	const auto applyError = Stud::Internal::BuildChatTemplateParams(slotName, chatData, lane.messages, false, toolsEnabled);
 	if(applyError != StudError::Success) return applyError;
-	const auto syntaxError = Stud::Internal::LoadChatSyntax(model->session.syntax, chatData, toolsEnabled);
+	const auto syntaxError = Stud::Internal::LoadChatSyntax(model->session, chatData);
 	if(syntaxError != StudError::Success) return syntaxError;
 	std::vector<llama_token> promptTokens;
-	if(!TokenizePrompt(slotName, chatData.prompt, promptTokens)) return StudError::CantTokenizePrompt;
+	if(!TokenizePrompt(slotName, chatData.prompt.str(), promptTokens)) return StudError::CantTokenizePrompt;
 	size_t prefix = 0;
 	if(!rebuildMemory) while(prefix < lane.cachedTokens.size() && prefix < promptTokens.size() && lane.cachedTokens[prefix] == promptTokens[prefix]) ++prefix;
 	const size_t matchedPrefix = prefix;
@@ -470,12 +473,12 @@ StudError RetokenizeChat(const char* slotName, const bool rebuildMemory){
 	llama_sampler_reset(lane.sampler);
 	for(size_t i = 0; i < prefix; ++i) llama_sampler_accept(lane.sampler, promptTokens[i]);
 	const size_t decodeEnd = newSize - suffix;
-	const int evaluationBatchSize = Stud::Internal::EvalBatchSize(model->session);
+	const int evaluationBatchSize = model->session.batchSize;
 	const int batchSize = std::min(evaluationBatchSize, static_cast<int>(decodeEnd - prefix));
 	if(batchSize > 0){
 		for(size_t i = prefix; i < decodeEnd; i += evaluationBatchSize){
 			const int tokenCount = std::min(evaluationBatchSize, static_cast<int>(decodeEnd - i));
-			const auto decodeError = Stud::Internal::DecodeTokenBatch(model->session, &promptTokens[i], tokenCount, static_cast<llama_pos>(i), true);
+		const auto decodeError = Stud::Internal::DecodeTokenBatch(model->session, &promptTokens[i], tokenCount, static_cast<llama_pos>(i));
 			if(decodeError != StudError::Success){
 				Stud::Internal::ClearSessionMemoryAndSpeculativeState(model);
 				lane.cachedTokens.clear();
@@ -513,7 +516,8 @@ StudError ResetChat(const char* slotName){
 	if(!session.ctx || !lane.sampler || !session.vocab) return StudError::Success;
 	Stud::Internal::ClearSessionMemoryAndSpeculativeState(model);
 	llama_sampler_reset(lane.sampler);
-	return Stud::Internal::LoadChatSyntax(session.syntax, common_chat_params(), false);
+	session.syntax = {};
+	return StudError::Success;
 }
 StudError SetSystemPrompt(const char* slotName, const char* prompt, const char* toolsPrompt){
 	auto& session = GetModel(slotName)->session;

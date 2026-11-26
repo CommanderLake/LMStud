@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <thread>
+#include <utility>
 extern "C" void CloseCommandPrompt();
 extern "C" void StopCMDOutput();
 extern "C" void MarkToolsJsonDirty();
@@ -96,8 +97,8 @@ private:
 	common_chat_parser_params _syntaxSnapshot{};
 	bool _restored = false;
 };
-static std::string NormalizeXmlToolBoolParameters(const std::string& response){
-	std::string normalized = response;
+static void NormalizeXmlToolBoolParameters(common_chat_input& response){
+	auto& normalized = response.text;
 	const std::string parameterTag = "<parameter=";
 	const std::string closeTag = "</parameter>";
 	size_t searchFrom = 0;
@@ -111,22 +112,28 @@ static std::string NormalizeXmlToolBoolParameters(const std::string& response){
 		while(trimStart < trimEnd && std::isspace(static_cast<unsigned char>(normalized[trimStart]))) ++trimStart;
 		while(trimEnd > trimStart && std::isspace(static_cast<unsigned char>(normalized[trimEnd - 1]))) --trimEnd;
 		const std::string value = normalized.substr(trimStart, trimEnd - trimStart);
-		if(value == "True") normalized.replace(trimStart, value.size(), "true");
-		else if(value == "False") normalized.replace(trimStart, value.size(), "false");
+		if(value == "True" || value == "False"){
+			normalized[trimStart] = value == "True" ? 't' : 'f';
+			std::fill(response.tokens.begin() + trimStart, response.tokens.begin() + trimEnd, LLAMA_TOKEN_NULL);
+		}
 		searchFrom = closeStart + closeTag.size();
 	}
-	return normalized;
 }
-static common_chat_msg ParseGeneratedMessage(const std::string& response, const common_chat_parser_params& syntax, const bool isPartial, std::string* toolParseError = nullptr){
-	const std::string normalizedResponse = syntax.parse_tool_calls ? NormalizeXmlToolBoolParameters(response) : response;
-	try{ return common_chat_parse(normalizedResponse, isPartial, syntax); } catch(const std::exception& e){
-		if(!isPartial && syntax.parse_tool_calls && toolParseError) *toolParseError = e.what();
+static common_chat_msg ParseGeneratedMessage(const common_chat_input& response, const common_chat_parser_params& syntax, const bool isPartial, const bool toolsEnabled = false, std::string* toolParseError = nullptr){
+	try{
+		if(!isPartial && toolsEnabled && response.text.find("<parameter=") != std::string::npos){
+			auto normalized = response;
+			NormalizeXmlToolBoolParameters(normalized);
+			return common_chat_parse(normalized, false, syntax);
+		}
+		return common_chat_parse(response, isPartial, syntax);
+	} catch(const std::exception& e){
+		if(!isPartial && toolsEnabled && toolParseError) *toolParseError = e.what();
 		OutputDebugStringA((std::string("CHAT PARSE FALLBACK:\r\n") + e.what()).c_str());
-		common_chat_parser_params fallback;
-		fallback.reasoning_format = syntax.reasoning_format;
-		fallback.reasoning_in_content = syntax.reasoning_in_content;
-		fallback.parse_tool_calls = false;
-		return common_chat_parse(response, isPartial, fallback);
+		common_chat_msg fallback;
+		fallback.role = "assistant";
+		fallback.content = response.text;
+		return fallback;
 	}
 }
 struct PendingToken{
@@ -135,9 +142,8 @@ struct PendingToken{
 };
 class AsyncTokenPostProcessor{
 public:
-	AsyncTokenPostProcessor(const char* slotName, const Stud::TokenCallbackFn callback, const bool streamCallback, const common_chat_parser_params& chatSyntax, const Clock::time_point& preparationStart, std::string& responseText, common_chat_msg& parsedMessage, double& firstTokenTime) :
-		_slotName(slotName), _model(GetModel(slotName)), _callback(callback), _streamCallback(streamCallback), _chatSyntax(chatSyntax), _preparationStart(preparationStart), _responseText(responseText), _parsedMessage(parsedMessage), _firstTokenTime(firstTokenTime), _queue(QueueCapacity){
-		_chatSyntax.parse_tool_calls = false;
+	AsyncTokenPostProcessor(const char* slotName, const Stud::TokenCallbackFn callback, const bool streamCallback, const common_chat_parser_params& chatSyntax, const Clock::time_point& preparationStart, common_chat_input& response, common_chat_msg& parsedMessage, double& firstTokenTime) :
+		_slotName(slotName), _model(GetModel(slotName)), _callback(callback), _streamCallback(streamCallback), _chatSyntax(chatSyntax), _preparationStart(preparationStart), _response(response), _parsedMessage(parsedMessage), _firstTokenTime(firstTokenTime), _queue(QueueCapacity){
 		_worker = std::thread([this]{ WorkerLoop(); });
 	}
 	~AsyncTokenPostProcessor(){ Close(); }
@@ -165,7 +171,7 @@ public:
 private:
 	void EmitStreamingCallback(const int memorySize){
 		if(!_callback || !_streamCallback || _pendingCallbackTokens <= 0) return;
-		_parsedMessage = ParseGeneratedMessage(_responseText, _chatSyntax, true);
+		_parsedMessage = ParseGeneratedMessage(_response, _chatSyntax, true);
 		_callback(_slotName, _parsedMessage.reasoning_content.c_str(), _parsedMessage.content.c_str(), _pendingCallbackTokens, memorySize, _firstTokenTime, 0);
 		_pendingCallbackTokens = 0;
 		_lastCallbackTime = std::chrono::steady_clock::now();
@@ -190,7 +196,7 @@ private:
 			const PendingToken pending = _queue[head % QueueCapacity];
 			_queueHead.store(head + 1, std::memory_order_release);
 			char buffer[256];
-			const int length = llama_token_to_piece(_model->session.vocab, pending.token, buffer, sizeof buffer, 0, false);
+			const int length = llama_token_to_piece(_model->session.vocab, pending.token, buffer, sizeof buffer, 0, true);
 			if(length < 0){
 				_asyncError.store(StudError::CantConvertToken, std::memory_order_release);
 				_queueClosed.store(true, std::memory_order_release);
@@ -198,7 +204,7 @@ private:
 				return;
 			}
 			if(_firstTokenTime == 0.0) _firstTokenTime = std::chrono::duration<double>(Clock::now() - _preparationStart).count();
-			_responseText.append(buffer, static_cast<size_t>(length));
+			_response.append(std::string(buffer, static_cast<size_t>(length)), pending.token);
 			if(length > 0){
 				lastMemorySize = pending.memorySize;
 				++_pendingCallbackTokens;
@@ -215,7 +221,7 @@ private:
 	bool _streamCallback;
 	common_chat_parser_params _chatSyntax;
 	Clock::time_point _preparationStart;
-	std::string& _responseText;
+	common_chat_input& _response;
 	common_chat_msg& _parsedMessage;
 	double& _firstTokenTime;
 	std::vector<PendingToken> _queue;
@@ -267,55 +273,43 @@ static StudError Generate(const char* slotName, const std::vector<PromptMessage>
 	if(promptError != StudError::Success) return promptError;
 	const size_t cacheStart = lane.cachedTokens.size();
 	const bool toolsEnabled = !session.tools.empty();
-	common_chat_parser_params streamSyntax = session.syntax;
-	if(callback){
-		common_chat_params streamChatData;
-		auto streamSyntaxError = Stud::Internal::BuildChatTemplateParams(slotName, streamChatData, lane.messages, true, false);
-		if(streamSyntaxError == StudError::Success) streamSyntaxError = Stud::Internal::LoadChatSyntax(streamSyntax, streamChatData, false);
-		if(streamSyntaxError != StudError::Success) return RollbackGenerate(slotName, chatStart, messages.size(), cacheStart, outputMessage, streamSyntaxError);
-	} else streamSyntax.parse_tool_calls = false;
-	std::string response;
+	common_chat_input response;
 	common_chat_msg message;
 	double firstTokenTime = 0.0;
-	AsyncTokenPostProcessor postProcessor(slotName, tokenCallback, callback, streamSyntax, preparationStart, response, message, firstTokenTime);
+	AsyncTokenPostProcessor postProcessor(slotName, tokenCallback, callback, session.syntax, preparationStart, response, message, firstTokenTime);
 	auto failWith = [&](const StudError error){
 		postProcessor.Close();
 		return RollbackGenerate(slotName, chatStart, messages.size(), cacheStart, outputMessage, error);
 	};
+	const int maxDraft = session.speculative ? common_speculative_n_max(session.speculative) : 0;
 	if(session.speculative) common_speculative_begin(session.speculative, 0, lane.cachedTokens);
 	std::vector<llama_token> draft;
 	std::vector<llama_token> decodeTokens;
-	if(session.speculative){
-		draft.reserve(session.mtpDraftTokens);
-		decodeTokens.reserve(static_cast<size_t>(session.mtpDraftTokens) + 1);
-	}
+	draft.reserve(maxDraft);
+	decodeTokens.reserve(static_cast<size_t>(maxDraft) + 1);
 	int generatedCount = 0;
-	int sampleIndex = -1;
+	llama_token nextSample = LLAMA_TOKEN_NULL;
 	bool endOfGeneration = false;
-	while((predictionCount < 0 || generatedCount < predictionCount) && !endOfGeneration && !session.stop.load()){
+	while((predictionCount < 0 || generatedCount < predictionCount) && !endOfGeneration && (!session.stop.load() || nextSample != LLAMA_TOKEN_NULL)){
 		const StudError pendingError = postProcessor.Error();
 		if(pendingError != StudError::Success) return failWith(pendingError);
 		const int positionStart = static_cast<int>(lane.cachedTokens.size());
 		if(positionStart + 1 > static_cast<int>(llama_n_ctx(session.ctx))) return failWith(StudError::ConvTooLong);
-		const llama_token sampledToken = llama_sampler_sample(lane.sampler, session.ctx, sampleIndex);
+		const llama_token sampledToken = nextSample == LLAMA_TOKEN_NULL ? llama_sampler_sample(lane.sampler, session.ctx, -1) : std::exchange(nextSample, LLAMA_TOKEN_NULL);
 		if(sampledToken == LLAMA_TOKEN_NULL) return failWith(StudError::LlamaDecodeError);
 		const bool sampledEndOfGeneration = llama_vocab_is_eog(session.vocab, sampledToken);
 		draft.clear();
 		decodeTokens.clear();
 		decodeTokens.push_back(sampledToken);
-		int acceptedDrafts = 0;
-		bool hasRejectedToken = false;
-		llama_token rejectedToken = LLAMA_TOKEN_NULL;
-		if(session.speculative && !sampledEndOfGeneration){
+		if(maxDraft > 0 && !sampledEndOfGeneration && !session.stop.load()){
 			const int contextRoom = static_cast<int>(llama_n_ctx(session.ctx)) - positionStart - 1;
-			const int batchRoom = std::max(0, static_cast<int>(llama_n_batch(session.ctx)) - 1);
-			const int predictionRoom = predictionCount < 0 ? session.mtpDraftTokens : std::max(0, predictionCount - generatedCount - 1);
-			const int draftMaximum = std::min({session.mtpDraftTokens, contextRoom, batchRoom, predictionRoom});
-			if(draftMaximum == session.mtpDraftTokens && draftMaximum > 0){
+			const int batchRoom = static_cast<int>(llama_n_batch(session.ctx)) - 1;
+			const int predictionRoom = predictionCount < 0 ? maxDraft : predictionCount - generatedCount - 1;
+			if(maxDraft <= std::min({contextRoom, batchRoom, predictionRoom})){
 				auto& draftParams = common_speculative_get_draft_params(session.speculative, 0);
 				draftParams.drafting = true;
-				draftParams.n_max = draftMaximum;
-				draftParams.n_past = static_cast<llama_pos>(positionStart);
+				draftParams.n_max = maxDraft;
+				draftParams.pos0 = static_cast<llama_pos>(positionStart);
 				draftParams.id_last = sampledToken;
 				draftParams.prompt = &lane.cachedTokens;
 				draftParams.result = &draft;
@@ -323,34 +317,30 @@ static StudError Generate(const char* slotName, const std::vector<PromptMessage>
 				if(!Stud::Internal::RemoveMtpMemoryAfter(session, positionStart)) return failWith(StudError::LlamaDecodeError);
 				const auto endOfGenerationDraft = std::find_if(draft.begin(), draft.end(), [&](const llama_token token){ return llama_vocab_is_eog(session.vocab, token); });
 				if(endOfGenerationDraft != draft.end()) draft.erase(endOfGenerationDraft + 1, draft.end());
-				if(!draft.empty()) decodeTokens.insert(decodeTokens.end(), draft.begin(), draft.end());
+				decodeTokens.insert(decodeTokens.end(), draft.begin(), draft.end());
 			}
 		}
-		const auto decodeError = Stud::Internal::DecodeTokenBatch(session, decodeTokens.data(), static_cast<int>(decodeTokens.size()), positionStart, true);
+		const auto decodeError = Stud::Internal::DecodeTokenBatch(session, decodeTokens.data(), static_cast<int>(decodeTokens.size()), positionStart, !draft.empty());
 		if(decodeError != StudError::Success) return failWith(decodeError);
+		size_t acceptedCount = 1;
 		if(!draft.empty()){
 			for(size_t draftIndex = 0; draftIndex < draft.size(); ++draftIndex){
 				const auto targetToken = llama_sampler_sample(lane.sampler, session.ctx, static_cast<int32_t>(draftIndex));
 				if(targetToken == LLAMA_TOKEN_NULL) return failWith(StudError::LlamaDecodeError);
 				if(targetToken != draft[draftIndex]){
-					rejectedToken = targetToken;
-					hasRejectedToken = true;
+					nextSample = targetToken;
 					break;
 				}
-				++acceptedDrafts;
+				++acceptedCount;
 				if(llama_vocab_is_eog(session.vocab, targetToken)) break;
 			}
-			common_speculative_accept(session.speculative, 0, static_cast<uint16_t>(acceptedDrafts));
-			if(acceptedDrafts < static_cast<int>(draft.size()) && !Stud::Internal::RemoveSessionMemoryAfter(session, positionStart + 1 + acceptedDrafts)) return failWith(StudError::LlamaDecodeError);
-			if(hasRejectedToken){
-				const auto rejectedDecodeError = Stud::Internal::DecodeTokenBatch(session, &rejectedToken, 1, positionStart + 1 + acceptedDrafts, true);
-				if(rejectedDecodeError != StudError::Success) return failWith(rejectedDecodeError);
-				sampleIndex = -1;
-			} else sampleIndex = acceptedDrafts;
-		} else sampleIndex = -1;
-		const int acceptedCount = 1 + acceptedDrafts + (hasRejectedToken ? 1 : 0);
-		for(int acceptedIndex = 0; acceptedIndex < acceptedCount && (predictionCount < 0 || generatedCount < predictionCount); ++acceptedIndex){
-			const llama_token token = acceptedIndex == 0 ? sampledToken : acceptedIndex <= acceptedDrafts ? draft[acceptedIndex - 1] : rejectedToken;
+			if(acceptedCount < decodeTokens.size() && !Stud::Internal::RemoveSessionMemoryAfter(session, positionStart + static_cast<llama_pos>(acceptedCount))) return failWith(StudError::LlamaDecodeError);
+			session.targetBatch.tokens.resize(acceptedCount);
+			if(!common_speculative_process(session.speculative, session.targetBatch)) return failWith(StudError::LlamaDecodeError);
+			common_speculative_accept(session.speculative, 0, static_cast<uint16_t>(acceptedCount - 1));
+		}
+		for(size_t acceptedIndex = 0; acceptedIndex < acceptedCount; ++acceptedIndex){
+			const llama_token token = decodeTokens[acceptedIndex];
 			lane.cachedTokens.push_back(token);
 			if(llama_vocab_is_eog(session.vocab, token)){
 				endOfGeneration = true;
@@ -363,12 +353,8 @@ static StudError Generate(const char* slotName, const std::vector<PromptMessage>
 	}
 	postProcessor.Close();
 	if(postProcessor.Error() != StudError::Success) return RollbackGenerate(slotName, chatStart, messages.size(), cacheStart, outputMessage, postProcessor.Error());
-	common_chat_params finalChatData;
-	auto finalSyntaxError = Stud::Internal::BuildChatTemplateParams(slotName, finalChatData, lane.messages, true, toolsEnabled);
-	if(finalSyntaxError == StudError::Success) finalSyntaxError = Stud::Internal::LoadChatSyntax(session.syntax, finalChatData, toolsEnabled);
-	if(finalSyntaxError != StudError::Success) return RollbackGenerate(slotName, chatStart, messages.size(), cacheStart, outputMessage, finalSyntaxError);
 	try{
-		message = ParseGeneratedMessage(response, session.syntax, false, toolParseError);
+		message = ParseGeneratedMessage(response, session.syntax, false, toolsEnabled, toolParseError);
 		Stud::Internal::EnsureToolCallIds(message);
 	} catch(const std::exception& e){
 		Stud::Internal::LastErrorMessage() = e.what();

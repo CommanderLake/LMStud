@@ -21,8 +21,7 @@ namespace Stud::Internal{
 	void ClearSessionMemoryAndSpeculativeState(StudModel* model);
 	bool RemoveSessionMemoryAfter(StudSession& session, llama_pos position);
 	bool RemoveMtpMemoryAfter(StudSession& session, llama_pos position);
-	int EvalBatchSize(const StudSession& session);
-	StudError DecodeTokenBatch(StudSession& session, llama_token* tokens, int tokenCount, llama_pos startPosition, bool outputAll);
+	StudError DecodeTokenBatch(StudSession& session, const llama_token* tokens, int tokenCount, llama_pos startPosition, bool verifyDraft = false);
 	void RecreateSpeculativeContext(StudModel* model);
 	StudLane& ActiveLane(const char* slotName);
 	std::string RoleString(MessageRole role);
@@ -30,7 +29,7 @@ namespace Stud::Internal{
 	void EnsureToolCallIds(common_chat_msg& message);
 	StudError ParseContentJson(MessageRole role, const char* reasoning, const char* contentJson, PromptMessage& result);
 	StudError BuildChatTemplateParams(const char* slotName, common_chat_params& chatData, const std::vector<common_chat_msg>& messages, bool addGenerationPrompt, bool includeTools);
-	StudError LoadChatSyntax(common_chat_parser_params& syntax, const common_chat_params& chatData, bool parseToolCalls);
+	StudError LoadChatSyntax(StudSession& session, common_chat_params& chatData);
 	bool RestoreCachedTokenPrefix(StudModel* model, size_t prefix);
 	StudError DecodeSinglePromptMessage(const char* slotName, const PromptMessage& input, bool addAssistantPrompt, bool appendToChat = true);
 }

@@ -55,6 +55,7 @@ namespace LMStud{
 			tabControlModelStuff.SelectedIndex = 2;
 			comboSlotEditReasonEffort.SelectedIndex = 0;
 			comboSlotEditReasonSummary.SelectedIndex = 0;
+			viewToolStripMenuItem.DropDown.Closing += DropDownOnClosing;
 		}
 		private void Form1_Load(object sender, EventArgs e){
 			NativeMethods.SetHWnd(Handle);
@@ -144,6 +145,9 @@ namespace LMStud{
 				ModelSlotManager.ReleaseSlots(_shutdownSlotLocks);
 				_shutdownSlotLocks = null;
 			}
+		}
+		private static void DropDownOnClosing(object sender, ToolStripDropDownClosingEventArgs e){
+			if(e.CloseReason == ToolStripDropDownCloseReason.ItemClicked) e.Cancel = true;
 		}
 		private void WaitForSlotOperationsThenClose(List<string> slotNames){
 			List<ModelSlotLockLease> slotLocks = null;

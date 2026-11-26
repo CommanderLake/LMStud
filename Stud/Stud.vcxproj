@@ -67,7 +67,7 @@
     <TargetName>Stud</TargetName>
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>I:\llama.cpp\include;I:\llama.cpp\common;I:\llama.cpp\ggml\include;I:\llama.cpp\src;I:\llama.cpp\tools\mtmd;I:\llama.cpp\vendor;I:\whisper.cpp\include;I:\whisper.cpp\examples;I:\vcpkg-2025.04.09\installed\x64-windows-static\include;$(UniversalCRTSdkDir)Include\$(WindowsTargetPlatformVersion)\ucrt;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
-    <LibraryPath>I:\vcpkg-2025.04.09\installed\x64-windows-static\lib;I:\llama.cpp\build\common\RelWithDebInfo;I:\llama.cpp\build\ggml\src\RelWithDebInfo;I:\llama.cpp\build\src\RelWithDebInfo;I:\llama.cpp\build\tools\mtmd\RelWithDebInfo;I:\whisper.cpp-1.7.6\build\src\RelWithDebInfo;$(UniversalCRTSdkDir)Lib\$(WindowsTargetPlatformVersion)\ucrt\x64;$(WindowsSdkDir)Lib\$(WindowsTargetPlatformVersion)\um\x64;$(VC_LibraryPath_x64);$(LibraryPath)</LibraryPath>
+    <LibraryPath>I:\vcpkg-2025.04.09\installed\x64-windows-static\lib;I:\llama.cpp\build\common\Release;I:\llama.cpp\build\ggml\src\Release;I:\llama.cpp\build\src\Release;I:\llama.cpp\build\tools\mtmd\Release;I:\whisper.cpp-1.7.6\build\src\RelWithDebInfo;$(UniversalCRTSdkDir)Lib\$(WindowsTargetPlatformVersion)\ucrt\x64;$(WindowsSdkDir)Lib\$(WindowsTargetPlatformVersion)\um\x64;$(VC_LibraryPath_x64);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCUDA12|x64'">
     <TargetName>Stud</TargetName>
@@ -95,11 +95,6 @@
       <EnableUAC>false</EnableUAC>
       <IgnoreSpecificDefaultLibraries>libmmdd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
-    <PostBuildEvent>
-      <Command>xcopy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"
-xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"
-xcopy /Y "I:\llama.cpp\build\bin\Debug\mtmd.dll" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -122,10 +117,6 @@ xcopy /Y "I:\llama.cpp\build\bin\Debug\mtmd.dll" "$(SolutionDir)LM Stud\bin\$(Pl
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
-    <PostBuildEvent>
-      <Command>xcopy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"
-xcopy /Y "I:\llama.cpp\build\bin\RelWithDebInfo\mtmd.dll" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseCUDA12|x64'">
     <ClCompile>
@@ -150,10 +141,6 @@ xcopy /Y "I:\llama.cpp\build\bin\RelWithDebInfo\mtmd.dll" "$(SolutionDir)LM Stud
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
-    <PostBuildEvent>
-      <Command>xcopy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"
-xcopy /Y "I:\llama.cpp\build\bin\RelWithDebInfo\mtmd.dll" "$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ChatMessageParser.h" />
@@ -186,6 +173,21 @@ xcopy /Y "I:\llama.cpp\build\bin\RelWithDebInfo\mtmd.dll" "$(SolutionDir)LM Stud
     <ClCompile Include="WebTools.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="StageStudRuntime" AfterTargets="Build">
+    <ItemGroup>
+      <StudRuntime Include="$(TargetPath)" />
+      <StudRuntime Include="$(TargetDir)$(TargetName).pdb" Condition="'$(Configuration)'=='Debug'" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(Configuration)'!='ReleaseCUDA12'">
+      <StudRuntime Include="I:\llama.cpp\build\bin\$(Configuration)\llama.dll;I:\llama.cpp\build\bin\$(Configuration)\llama-common.dll;I:\llama.cpp\build\bin\$(Configuration)\mtmd.dll" />
+      <StudRuntime Include="I:\llama.cpp\build\bin\$(Configuration)\ggml*.dll;I:\llama.cpp\build\bin\$(Configuration)\cudart64_*.dll;I:\llama.cpp\build\bin\$(Configuration)\cublas64_*.dll;I:\llama.cpp\build\bin\$(Configuration)\cublasLt64_*.dll" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(Configuration)'=='ReleaseCUDA12'">
+      <StudRuntime Include="I:\llama.cpp\build\bin\RelWithDebInfo\llama.dll;I:\llama.cpp\build\bin\RelWithDebInfo\llama-common.dll;I:\llama.cpp\build\bin\RelWithDebInfo\mtmd.dll" />
+      <StudRuntime Include="I:\llama.cpp\build\bin\RelWithDebInfo\ggml*.dll;I:\llama.cpp\build\bin\RelWithDebInfo\cudart64_*.dll;I:\llama.cpp\build\bin\RelWithDebInfo\cublas64_*.dll;I:\llama.cpp\build\bin\RelWithDebInfo\cublasLt64_*.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(StudRuntime)" DestinationFolder="$(SolutionDir)LM Stud\bin\$(Platform)\$(Configuration)\" SkipUnchangedFiles="true" />
+  </Target>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

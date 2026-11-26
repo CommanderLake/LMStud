@@ -36,6 +36,7 @@ namespace LMStud
 			this.components = new System.ComponentModel.Container();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+			this.panelChat = new LMStud.MyFlowLayoutPanel();
 			this.textInput = new System.Windows.Forms.TextBox();
 			this.splitContainer2 = new System.Windows.Forms.SplitContainer();
 			this.butExtract = new System.Windows.Forms.Button();
@@ -141,8 +142,6 @@ namespace LMStud
 			this.copyURLToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.checkSpeak = new System.Windows.Forms.CheckBox();
 			this.checkVoiceInput = new System.Windows.Forms.CheckBox();
-			this.checkMarkdown = new System.Windows.Forms.CheckBox();
-			this.checkStream = new System.Windows.Forms.CheckBox();
 			this.butCodeBlock = new System.Windows.Forms.Button();
 			this.butReset = new System.Windows.Forms.Button();
 			this.butGen = new System.Windows.Forms.Button();
@@ -154,10 +153,7 @@ namespace LMStud
 			this.tabControlMain = new System.Windows.Forms.TabControl();
 			this.tabPageChat = new System.Windows.Forms.TabPage();
 			this.checkDialectic = new System.Windows.Forms.CheckBox();
-			this.checkAutoScroll = new System.Windows.Forms.CheckBox();
 			this.tabPageSettings = new System.Windows.Forms.TabPage();
-			this.groupBox9 = new System.Windows.Forms.GroupBox();
-			this.label37 = new System.Windows.Forms.Label();
 			this.groupBox8 = new System.Windows.Forms.GroupBox();
 			this.numCmdTimeout = new System.Windows.Forms.NumericUpDown();
 			this.label36 = new System.Windows.Forms.Label();
@@ -264,7 +260,11 @@ namespace LMStud
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
 			this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
-			this.panelChat = new LMStud.MyFlowLayoutPanel();
+			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+			this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.checkAutoScroll = new System.Windows.Forms.ToolStripMenuItem();
+			this.checkStream = new System.Windows.Forms.ToolStripMenuItem();
+			this.checkMarkdown = new System.Windows.Forms.ToolStripMenuItem();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -298,7 +298,6 @@ namespace LMStud
 			this.tabControlMain.SuspendLayout();
 			this.tabPageChat.SuspendLayout();
 			this.tabPageSettings.SuspendLayout();
-			this.groupBox9.SuspendLayout();
 			this.groupBox8.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.numCmdTimeout)).BeginInit();
 			this.groupBox7.SuspendLayout();
@@ -334,6 +333,7 @@ namespace LMStud
 			this.tabPageModels.SuspendLayout();
 			this.tabPageHuggingFace.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
+			this.menuStrip1.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// splitContainer1
@@ -350,6 +350,14 @@ namespace LMStud
 			// splitContainer1.Panel2
 			// 
 			this.splitContainer1.Panel2.Controls.Add(this.textInput);
+			// 
+			// panelChat
+			// 
+			resources.ApplyResources(this.panelChat, "panelChat");
+			this.panelChat.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+			this.panelChat.CausesValidation = false;
+			this.panelChat.Name = "panelChat";
+			this.panelChat.Layout += new System.Windows.Forms.LayoutEventHandler(this.PanelChat_Layout);
 			// 
 			// textInput
 			// 
@@ -369,6 +377,7 @@ namespace LMStud
 			// 
 			// splitContainer2.Panel1
 			// 
+			this.splitContainer2.Panel1.Controls.Add(this.checkLoadAuto);
 			this.splitContainer2.Panel1.Controls.Add(this.butExtract);
 			this.splitContainer2.Panel1.Controls.Add(this.listViewModels);
 			this.splitContainer2.Panel1.Controls.Add(this.butUnloadMain);
@@ -1216,23 +1225,6 @@ namespace LMStud
 			this.checkVoiceInput.UseVisualStyleBackColor = true;
 			this.checkVoiceInput.CheckedChanged += new System.EventHandler(this.CheckVoiceInput_CheckedChanged);
 			// 
-			// checkMarkdown
-			// 
-			resources.ApplyResources(this.checkMarkdown, "checkMarkdown");
-			this.checkMarkdown.Checked = true;
-			this.checkMarkdown.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkMarkdown.Name = "checkMarkdown";
-			this.checkMarkdown.UseVisualStyleBackColor = true;
-			this.checkMarkdown.CheckedChanged += new System.EventHandler(this.CheckMarkdown_CheckedChanged);
-			// 
-			// checkStream
-			// 
-			resources.ApplyResources(this.checkStream, "checkStream");
-			this.checkStream.Checked = true;
-			this.checkStream.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkStream.Name = "checkStream";
-			this.checkStream.UseVisualStyleBackColor = true;
-			// 
 			// butCodeBlock
 			// 
 			resources.ApplyResources(this.butCodeBlock, "butCodeBlock");
@@ -1298,14 +1290,11 @@ namespace LMStud
 			// tabPageChat
 			// 
 			this.tabPageChat.Controls.Add(this.checkDialectic);
-			this.tabPageChat.Controls.Add(this.checkAutoScroll);
 			this.tabPageChat.Controls.Add(this.checkSpeak);
 			this.tabPageChat.Controls.Add(this.splitContainer1);
 			this.tabPageChat.Controls.Add(this.checkVoiceInput);
 			this.tabPageChat.Controls.Add(this.butReset);
-			this.tabPageChat.Controls.Add(this.checkMarkdown);
 			this.tabPageChat.Controls.Add(this.butGen);
-			this.tabPageChat.Controls.Add(this.checkStream);
 			this.tabPageChat.Controls.Add(this.butCodeBlock);
 			resources.ApplyResources(this.tabPageChat, "tabPageChat");
 			this.tabPageChat.Name = "tabPageChat";
@@ -1318,18 +1307,8 @@ namespace LMStud
 			this.checkDialectic.UseVisualStyleBackColor = true;
 			this.checkDialectic.CheckedChanged += new System.EventHandler(this.CheckDialectic_CheckedChanged);
 			// 
-			// checkAutoScroll
-			// 
-			resources.ApplyResources(this.checkAutoScroll, "checkAutoScroll");
-			this.checkAutoScroll.Checked = true;
-			this.checkAutoScroll.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkAutoScroll.Name = "checkAutoScroll";
-			this.checkAutoScroll.UseVisualStyleBackColor = true;
-			this.checkAutoScroll.CheckedChanged += new System.EventHandler(this.CheckAutoScroll_CheckedChanged);
-			// 
 			// tabPageSettings
 			// 
-			this.tabPageSettings.Controls.Add(this.groupBox9);
 			this.tabPageSettings.Controls.Add(this.groupBox8);
 			this.tabPageSettings.Controls.Add(this.groupBox7);
 			this.tabPageSettings.Controls.Add(this.textModelsDir);
@@ -1351,18 +1330,6 @@ namespace LMStud
 			resources.ApplyResources(this.tabPageSettings, "tabPageSettings");
 			this.tabPageSettings.Name = "tabPageSettings";
 			this.tabPageSettings.UseVisualStyleBackColor = true;
-			// 
-			// groupBox9
-			// 
-			this.groupBox9.Controls.Add(this.label37);
-			resources.ApplyResources(this.groupBox9, "groupBox9");
-			this.groupBox9.Name = "groupBox9";
-			this.groupBox9.TabStop = false;
-			// 
-			// label37
-			// 
-			resources.ApplyResources(this.label37, "label37");
-			this.label37.Name = "label37";
 			// 
 			// groupBox8
 			// 
@@ -2279,7 +2246,6 @@ namespace LMStud
 			// tabPageModels
 			// 
 			this.tabPageModels.Controls.Add(this.splitContainer2);
-			this.tabPageModels.Controls.Add(this.checkLoadAuto);
 			resources.ApplyResources(this.tabPageModels, "tabPageModels");
 			this.tabPageModels.Name = "tabPageModels";
 			this.tabPageModels.UseVisualStyleBackColor = true;
@@ -2363,13 +2329,48 @@ namespace LMStud
 			// 
 			resources.ApplyResources(this.saveFileDialog1, "saveFileDialog1");
 			// 
-			// panelChat
+			// menuStrip1
 			// 
-			resources.ApplyResources(this.panelChat, "panelChat");
-			this.panelChat.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-			this.panelChat.CausesValidation = false;
-			this.panelChat.Name = "panelChat";
-			this.panelChat.Layout += new System.Windows.Forms.LayoutEventHandler(this.PanelChat_Layout);
+			this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.viewToolStripMenuItem});
+			resources.ApplyResources(this.menuStrip1, "menuStrip1");
+			this.menuStrip1.Name = "menuStrip1";
+			// 
+			// viewToolStripMenuItem
+			// 
+			this.viewToolStripMenuItem.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+			this.viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.checkAutoScroll,
+            this.checkStream,
+            this.checkMarkdown});
+			this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
+			resources.ApplyResources(this.viewToolStripMenuItem, "viewToolStripMenuItem");
+			// 
+			// checkAutoScroll
+			// 
+			this.checkAutoScroll.Checked = true;
+			this.checkAutoScroll.CheckOnClick = true;
+			this.checkAutoScroll.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkAutoScroll.Name = "checkAutoScroll";
+			resources.ApplyResources(this.checkAutoScroll, "checkAutoScroll");
+			this.checkAutoScroll.CheckedChanged += new System.EventHandler(this.CheckAutoScroll_CheckedChanged);
+			// 
+			// checkStream
+			// 
+			this.checkStream.Checked = true;
+			this.checkStream.CheckOnClick = true;
+			this.checkStream.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkStream.Name = "checkStream";
+			resources.ApplyResources(this.checkStream, "checkStream");
+			// 
+			// checkMarkdown
+			// 
+			this.checkMarkdown.Checked = true;
+			this.checkMarkdown.CheckOnClick = true;
+			this.checkMarkdown.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkMarkdown.Name = "checkMarkdown";
+			resources.ApplyResources(this.checkMarkdown, "checkMarkdown");
+			this.checkMarkdown.CheckedChanged += new System.EventHandler(this.CheckMarkdown_CheckedChanged);
 			// 
 			// Form1
 			// 
@@ -2377,9 +2378,11 @@ namespace LMStud
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
 			this.AutoValidate = System.Windows.Forms.AutoValidate.Disable;
 			this.Controls.Add(this.statusStrip1);
+			this.Controls.Add(this.menuStrip1);
 			this.Controls.Add(this.tabControlMain);
 			this.DoubleBuffered = true;
 			this.KeyPreview = true;
+			this.MainMenuStrip = this.menuStrip1;
 			this.Name = "Form1";
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
 			this.Load += new System.EventHandler(this.Form1_Load);
@@ -2392,6 +2395,7 @@ namespace LMStud
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
 			this.splitContainer1.ResumeLayout(false);
 			this.splitContainer2.Panel1.ResumeLayout(false);
+			this.splitContainer2.Panel1.PerformLayout();
 			this.splitContainer2.Panel2.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
 			this.splitContainer2.ResumeLayout(false);
@@ -2428,8 +2432,6 @@ namespace LMStud
 			this.tabPageChat.PerformLayout();
 			this.tabPageSettings.ResumeLayout(false);
 			this.tabPageSettings.PerformLayout();
-			this.groupBox9.ResumeLayout(false);
-			this.groupBox9.PerformLayout();
 			this.groupBox8.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.numCmdTimeout)).EndInit();
 			this.groupBox7.ResumeLayout(false);
@@ -2466,11 +2468,12 @@ namespace LMStud
 			((System.ComponentModel.ISupportInitialize)(this.numNGen)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numTemp)).EndInit();
 			this.tabPageModels.ResumeLayout(false);
-			this.tabPageModels.PerformLayout();
 			this.tabPageHuggingFace.ResumeLayout(false);
 			this.tabPageHuggingFace.PerformLayout();
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();
+			this.menuStrip1.ResumeLayout(false);
+			this.menuStrip1.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -2520,7 +2523,6 @@ namespace LMStud
 		private System.Windows.Forms.ComboBox comboNUMAStrat;
 		private System.Windows.Forms.Button butUnloadMain;
 		internal System.Windows.Forms.ToolStripStatusLabel labelTokens;
-		internal System.Windows.Forms.CheckBox checkMarkdown;
 		internal MyFlowLayoutPanel panelChat;
 		private System.Windows.Forms.CheckBox checkLoadAuto;
 		private System.Windows.Forms.SplitContainer splitContainer2;
@@ -2570,7 +2572,6 @@ namespace LMStud
 		private System.Windows.Forms.NumericUpDown numVadThreshold;
 		private System.Windows.Forms.CheckBox checkSpeak;
 		private System.Windows.Forms.CheckBox checkFlashAttn;
-		internal System.Windows.Forms.CheckBox checkStream;
 		private System.Windows.Forms.GroupBox groupBox2;
 		private System.Windows.Forms.Label label20;
 		private System.Windows.Forms.Label label19;
@@ -2629,7 +2630,6 @@ namespace LMStud
 		private System.Windows.Forms.NumericUpDown numGenDelay;
 		private System.Windows.Forms.Label label29;
 		private System.Windows.Forms.ToolStripStatusLabel labelStatusMsg;
-		internal System.Windows.Forms.CheckBox checkAutoScroll;
 		internal System.Windows.Forms.CheckBox checkDialectic;
 		private System.Windows.Forms.GroupBox groupJinjaTmplModel;
 		private System.Windows.Forms.Label label30;
@@ -2680,8 +2680,6 @@ namespace LMStud
 		private System.Windows.Forms.Label label51;
 		private System.Windows.Forms.ComboBox comboSlotEditReasonSummary;
 		private System.Windows.Forms.ComboBox comboSlotEditReasonEffort;
-		private System.Windows.Forms.GroupBox groupBox9;
-		private System.Windows.Forms.Label label37;
 		private System.Windows.Forms.ComboBox comboVType;
 		private System.Windows.Forms.Label label39;
 		private System.Windows.Forms.ComboBox comboKType;
@@ -2707,5 +2705,10 @@ namespace LMStud
 		private System.Windows.Forms.Label label55;
 		private System.Windows.Forms.ContextMenuStrip contextHugFiles;
 		private System.Windows.Forms.ToolStripMenuItem copyURLToolStripMenuItem;
+		private System.Windows.Forms.MenuStrip menuStrip1;
+		private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem checkAutoScroll;
+		internal System.Windows.Forms.ToolStripMenuItem checkStream;
+		internal System.Windows.Forms.ToolStripMenuItem checkMarkdown;
 	}
 }

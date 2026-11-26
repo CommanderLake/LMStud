@@ -1,7 +1,7 @@
 #include "ChatMessageParser.h"
 #include <base64.hpp>
 #include <mtmd.h>
-#include <nlohmann\json.hpp>
+#include <json.h>
 #include <stdexcept>
 #include <utility>
 namespace{
@@ -36,13 +36,13 @@ namespace{
 			return StudError::CantDecodeImage;
 		}
 	}
-	StudError NormalizeMessageJson(nlohmann::ordered_json messageJson, common_chat_msg& message, Stud::MessageMedia& media, std::string& error){
+	StudError NormalizeMessageJson(common_json messageJson, common_chat_msg& message, Stud::MessageMedia& media, std::string& error){
 		try{
 			if(!messageJson.is_object()) throw std::invalid_argument("Expected a message object.");
 			if(!messageJson.contains("content")) messageJson["content"] = "";
 			auto& content = messageJson["content"];
 			if(content.is_array()){
-				nlohmann::ordered_json normalized = nlohmann::ordered_json::array();
+				auto normalized = common_json::array();
 				for(const auto& part : content){
 					if(!part.is_object()) throw std::invalid_argument("Expected an object in message content.");
 					const std::string type = part.value("type", "");
@@ -69,7 +69,7 @@ namespace{
 				}
 				content = std::move(normalized);
 			}
-			auto parsed = common_chat_msgs_parse_oaicompat(nlohmann::ordered_json::array({messageJson}));
+			auto parsed = common_chat_msgs_parse_oaicompat(common_json::array({std::move(messageJson)}));
 			if(parsed.size() != 1) throw std::runtime_error("Unable to parse the chat message.");
 			message = std::move(parsed.front());
 			return StudError::Success;
@@ -83,9 +83,9 @@ StudError Stud::ParseChatContentJson(const std::string& role, const char* reason
 	result = PromptMessage();
 	error.clear();
 	try{
-		nlohmann::ordered_json messageJson;
+		auto messageJson = common_json::object();
 		messageJson["role"] = role;
-		messageJson["content"] = contentJson && contentJson[0] != '\0' ? nlohmann::ordered_json::parse(contentJson) : nlohmann::ordered_json("");
+		messageJson["content"] = contentJson && contentJson[0] != '\0' ? common_json::parse(contentJson) : common_json("");
 		if(role == "assistant" && reasoning && reasoning[0] != '\0') messageJson["reasoning_content"] = reasoning;
 		return NormalizeMessageJson(std::move(messageJson), result.message, result.media, error);
 	} catch(const std::exception& e){
@@ -99,7 +99,7 @@ StudError Stud::ParseChatMessagesJson(const char* messagesJson, std::vector<comm
 	error.clear();
 	if(!messagesJson || messagesJson[0] == '\0') return StudError::Success;
 	try{
-		const auto root = nlohmann::ordered_json::parse(messagesJson);
+		const auto root = common_json::parse(messagesJson);
 		if(!root.is_array()) throw std::invalid_argument("Expected a messages array.");
 		messages.reserve(root.size());
 		media.reserve(root.size());

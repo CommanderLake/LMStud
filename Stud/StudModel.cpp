@@ -5,7 +5,6 @@
 #include <jinja\parser.h>
 #include <system_error>
 static constexpr int MtpDraftTokensMax = 62;
-static constexpr int MtpPrefillBatchMax = 32;
 static constexpr int VisionImageMaxTokens = 1024;
 static std::string NormalizeModelPathKey(const char* filename){
 	if(!filename || filename[0] == '\0') return std::string();
@@ -45,8 +44,8 @@ static std::shared_ptr<Stud::StudSharedModel> LoadOrReuseSharedModel(const char*
 	}
 	auto params = llama_model_default_params();
 	params.n_gpu_layers = nGpuLayers;
-	params.use_mlock = memoryLock;
-	params.use_mmap = memoryMap;
+	params.load_mode = memoryMap ? (memoryLock ? LLAMA_LOAD_MODE_MMAP_MLOCK : LLAMA_LOAD_MODE_MMAP) : (memoryLock ? LLAMA_LOAD_MODE_MLOCK : LLAMA_LOAD_MODE_NONE);
+	params.load_mtp = true;
 	llama_numa_init(numaStrategy);
 	Stud::Internal::GpuOomDetected() = false;
 	llama_model* llamaModel = nullptr;
@@ -72,30 +71,6 @@ static int EffectiveMtpDraftTokens(const int requestedDraftTokens, const llama_c
 	const int batchRoom = std::max(0, static_cast<int>(contextParams.n_batch) - 1);
 	return std::min({requestedDraftTokens, contextRoom, batchRoom});
 }
-static llama_batch* EnsureMtpTargetBatch(Stud::StudSession& session, const int tokenCount){
-	if(session.mtpTargetBatchCapacity >= tokenCount) return &session.mtpTargetBatch;
-	if(session.mtpTargetBatchCapacity > 0){
-		llama_batch_free(session.mtpTargetBatch);
-		session.mtpTargetBatch = {};
-		session.mtpTargetBatchCapacity = 0;
-	}
-	session.mtpTargetBatch = llama_batch_init(tokenCount, 0, 1);
-	if(!session.mtpTargetBatch.token || !session.mtpTargetBatch.pos || !session.mtpTargetBatch.n_seq_id || !session.mtpTargetBatch.seq_id || !session.mtpTargetBatch.logits){
-		llama_batch_free(session.mtpTargetBatch);
-		session.mtpTargetBatch = {};
-		return nullptr;
-	}
-	session.mtpTargetBatchCapacity = tokenCount;
-	return &session.mtpTargetBatch;
-}
-static void AddSingleSequenceToken(llama_batch& batch, const llama_token token, const llama_pos position, const bool outputLogits){
-	const int index = batch.n_tokens++;
-	batch.token[index] = token;
-	batch.pos[index] = position;
-	batch.n_seq_id[index] = 1;
-	batch.seq_id[index][0] = 0;
-	batch.logits[index] = outputLogits;
-}
 static void TryCreateMtpContext(Stud::StudModel* model, llama_context_params contextParams, const int draftTokens){
 	if(draftTokens <= 0 || !model->session.ctx) return;
 	if(model->session.visionCtx){
@@ -108,7 +83,11 @@ static void TryCreateMtpContext(Stud::StudModel* model, llama_context_params con
 		return;
 	}
 	contextParams.ctx_type = LLAMA_CONTEXT_TYPE_MTP;
-	contextParams.n_rs_seq = static_cast<uint32_t>(draftTokens + 1);
+	contextParams.ctx_other = model->session.ctx;
+	contextParams.n_ctx = llama_n_ctx(model->session.ctx);
+	contextParams.n_rs_seq = 0;
+	contextParams.n_outputs_max = 1;
+	contextParams.n_outputs_max_per_seq = 1;
 	llama_context* mtpContext = nullptr;
 	try{ mtpContext = llama_init_from_model(model->llModel, contextParams); } catch(const std::exception& e){ Stud::Internal::AppendLastErrorLogMessage(e.what()); } catch(...){ Stud::Internal::AppendLastErrorLogMessage("llama_init_from_model failed for the MTP context."); }
 	if(!mtpContext){
@@ -138,14 +117,15 @@ static void TryCreateMtpContext(Stud::StudModel* model, llama_context_params con
 	model->session.mtpCtx = mtpContext;
 	model->session.mtpDraftTokens = draftTokens;
 }
-static StudError CreateSamplerInternal(const float minP, const float topP, const int topK, const float temperature, const float repeatPenalty, llama_sampler*& sampler){
+static StudError CreateSamplerInternal(const llama_vocab* vocab, const float minP, const float topP, const int topK, const float temperature, const float repeatPenalty, llama_sampler*& sampler){
+	if(!vocab) return StudError::ModelNotLoaded;
 	if(sampler){
 		llama_sampler_free(sampler);
 		sampler = nullptr;
 	}
 	sampler = llama_sampler_chain_init(llama_sampler_chain_default_params());
 	if(!sampler) return StudError::CantCreateSampler;
-	llama_sampler_chain_add(sampler, llama_sampler_init_penalties(128, repeatPenalty, 0.0f, 0.0f));
+	llama_sampler_chain_add(sampler, llama_sampler_init_penalties(llama_vocab_n_tokens(vocab), 128, repeatPenalty, 0.0f, 0.0f));
 	llama_sampler_chain_add(sampler, llama_sampler_init_temp(temperature));
 	if(topK > 0) llama_sampler_chain_add(sampler, llama_sampler_init_top_k(topK));
 	if(topP < 1.0f) llama_sampler_chain_add(sampler, llama_sampler_init_top_p(topP, 1));
@@ -158,15 +138,11 @@ namespace Stud::Internal{
 		if(session.speculative){
 			common_speculative_free(session.speculative);
 			session.speculative = nullptr;
+			llama_set_embeddings_nextn(session.ctx, false, false);
 		}
 		if(session.mtpCtx){
 			llama_free(session.mtpCtx);
 			session.mtpCtx = nullptr;
-		}
-		if(session.mtpTargetBatchCapacity > 0){
-			llama_batch_free(session.mtpTargetBatch);
-			session.mtpTargetBatch = {};
-			session.mtpTargetBatchCapacity = 0;
 		}
 	}
 	bool RemoveSessionMemoryAfter(StudSession& session, const llama_pos position){
@@ -180,21 +156,15 @@ namespace Stud::Internal{
 		const auto mtpMemory = llama_get_memory(session.mtpCtx);
 		return !mtpMemory || llama_memory_seq_rm(mtpMemory, 0, position, -1);
 	}
-	int EvalBatchSize(const StudSession& session){ return session.speculative ? std::max(1, std::min(session.batchSize, MtpPrefillBatchMax)) : session.batchSize; }
-	StudError DecodeTokenBatch(StudSession& session, llama_token* tokens, const int tokenCount, const llama_pos startPosition, const bool outputAll){
+	StudError DecodeTokenBatch(StudSession& session, const llama_token* tokens, const int tokenCount, const llama_pos startPosition, const bool verifyDraft){
 		if(tokenCount <= 0) return StudError::Success;
-		if(!session.speculative){
-			const auto batch = llama_batch_get_one(tokens, tokenCount);
-			const auto result = llama_decode(session.ctx, batch);
-			return result == 0 ? StudError::Success : result == 1 ? StudError::ConvTooLong : StudError::LlamaDecodeError;
-		}
-		auto* batchPointer = EnsureMtpTargetBatch(session, tokenCount);
-		if(!batchPointer) return StudError::LlamaDecodeError;
-		auto& batch = *batchPointer;
-		common_batch_clear(batch);
-		for(int i = 0; i < tokenCount; ++i) AddSingleSequenceToken(batch, tokens[i], startPosition + i, outputAll || i == tokenCount - 1);
-		const auto result = llama_decode(session.ctx, batch);
-		if(result == 0 && !common_speculative_process(session.speculative, batch)) return StudError::LlamaDecodeError;
+		auto& batch = session.targetBatch;
+		if(!batch.batch) batch = common_batch(session.ctx);
+		if(!batch.batch) return StudError::LlamaDecodeError;
+		batch.clear();
+		for(int i = 0; i < tokenCount; ++i) batch.add(tokens[i], startPosition + i, 0, verifyDraft || i == tokenCount - 1);
+		const auto result = llama_process(session.ctx, LLAMA_PROCESS_TYPE_DECODE, batch.get());
+		if(result == 0 && session.speculative && !verifyDraft && !common_speculative_process(session.speculative, batch)) return StudError::LlamaDecodeError;
 		return result == 0 ? StudError::Success : result == 1 ? StudError::ConvTooLong : StudError::LlamaDecodeError;
 	}
 	void RecreateSpeculativeContext(StudModel* model){
@@ -216,23 +186,26 @@ bool IsModelSlotLoaded(const char* slotName){
 }
 StudError CreateContext(const char* slotName, const int contextSize, const int batchSize, const unsigned int flashAttention, const int threadCount, const int batchThreadCount, const int keyType, const int valueType, const int mtpDraftTokens){
 	const auto model = GetModel(slotName);
+	if(!model->llModel) return StudError::ModelNotLoaded;
 	auto& errorMessage = Stud::Internal::LastErrorMessage();
 	Stud::Internal::FreeSpeculativeContext(model->session);
 	model->session.mtpDraftTokens = 0;
+	model->session.targetBatch = common_batch();
 	if(model->session.ctx){
 		llama_free(model->session.ctx);
 		model->session.ctx = nullptr;
 		model->session.memory = nullptr;
 	}
-	model->session.syntax.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
-	model->session.batchSize = batchSize;
+	model->session.syntax = {};
 	auto contextParams = llama_context_default_params();
 	contextParams.n_ctx = contextSize;
 	contextParams.n_batch = batchSize;
-	const int requestedDraftTokens = model->session.visionCtx ? 0 : mtpDraftTokens;
+	const int requestedDraftTokens = model->session.visionCtx || llama_model_n_layer_nextn(model->llModel) == 0 ? 0 : mtpDraftTokens;
 	const int effectiveDraftTokens = EffectiveMtpDraftTokens(std::max(0, std::min(requestedDraftTokens, MtpDraftTokensMax)), contextParams);
 	model->session.mtpDraftTokens = effectiveDraftTokens;
 	contextParams.n_rs_seq = effectiveDraftTokens > 0 ? static_cast<uint32_t>(effectiveDraftTokens) : 0;
+	contextParams.n_outputs_max = effectiveDraftTokens + 1;
+	contextParams.n_outputs_max_per_seq = effectiveDraftTokens + 1;
 	contextParams.offload_kqv = true;
 	contextParams.op_offload = true;
 	if(flashAttention == 0) contextParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED;
@@ -276,6 +249,7 @@ StudError CreateContext(const char* slotName, const int contextSize, const int b
 		return Stud::Internal::GpuOomDetected() ? StudError::GpuOutOfMemory : StudError::CantCreateContext;
 	}
 	model->session.memory = llama_get_memory(model->session.ctx);
+	model->session.batchSize = std::min(std::max(1, batchSize), static_cast<int>(llama_n_batch(model->session.ctx)));
 	model->session.ctxParams = contextParams;
 	model->session.hasCtxParams = true;
 	TryCreateMtpContext(model, contextParams, effectiveDraftTokens);
@@ -286,11 +260,12 @@ StudError CreateContext(const char* slotName, const int contextSize, const int b
 }
 StudError CreateSampler(const char* slotName, const float minP, const float topP, const int topK, const float temperature, const float repeatPenalty){
 	const auto model = GetModel(slotName);
-	return CreateSamplerInternal(minP, topP, topK, temperature, repeatPenalty, model->session.lane.sampler);
+	return CreateSamplerInternal(model->session.vocab, minP, topP, topK, temperature, repeatPenalty, model->session.lane.sampler);
 }
 void DestroySession(const char* slotName){
 	const auto model = GetModel(slotName);
 	Stud::Internal::FreeSpeculativeContext(model->session);
+	model->session.targetBatch = common_batch();
 	if(model->session.lane.sampler){
 		llama_sampler_free(model->session.lane.sampler);
 		model->session.lane.sampler = nullptr;

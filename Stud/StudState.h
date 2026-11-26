@@ -23,8 +23,7 @@ namespace Stud{
 		mtmd_context* visionCtx = nullptr;
 		llama_context* mtpCtx = nullptr;
 		common_speculative* speculative = nullptr;
-		llama_batch mtpTargetBatch{};
-		int mtpTargetBatchCapacity = 0;
+		common_batch targetBatch;
 		const llama_vocab* vocab = nullptr;
 		llama_memory_t memory = nullptr;
 		StudLane lane;
@@ -51,11 +50,7 @@ namespace Stud{
 				llama_free(mtpCtx);
 				mtpCtx = nullptr;
 			}
-			if(mtpTargetBatchCapacity > 0){
-				llama_batch_free(mtpTargetBatch);
-				mtpTargetBatch = {};
-				mtpTargetBatchCapacity = 0;
-			}
+			targetBatch.batch.reset();
 			if(visionCtx){
 				mtmd_free(visionCtx);
 				visionCtx = nullptr;
