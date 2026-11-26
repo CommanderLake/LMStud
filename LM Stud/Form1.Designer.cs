@@ -39,6 +39,7 @@ namespace LMStud
 			this.panelChat = new LMStud.MyFlowLayoutPanel();
 			this.textInput = new System.Windows.Forms.TextBox();
 			this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+			this.checkLoadAuto = new System.Windows.Forms.CheckBox();
 			this.butExtract = new System.Windows.Forms.Button();
 			this.listViewModels = new System.Windows.Forms.ListView();
 			this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -57,6 +58,8 @@ namespace LMStud
 			this.butApplyModelSettings = new System.Windows.Forms.Button();
 			this.checkOverrideSettings = new System.Windows.Forms.CheckBox();
 			this.groupAdvancedModel = new System.Windows.Forms.GroupBox();
+			this.checkOffloadOPModel = new System.Windows.Forms.CheckBox();
+			this.checkOffloadKQVModel = new System.Windows.Forms.CheckBox();
 			this.numMinPModel = new System.Windows.Forms.NumericUpDown();
 			this.numTopKModel = new System.Windows.Forms.NumericUpDown();
 			this.numTopPModel = new System.Windows.Forms.NumericUpDown();
@@ -212,6 +215,8 @@ namespace LMStud
 			this.numThreads = new System.Windows.Forms.NumericUpDown();
 			this.label2 = new System.Windows.Forms.Label();
 			this.groupAdvanced = new System.Windows.Forms.GroupBox();
+			this.checkOffloadOP = new System.Windows.Forms.CheckBox();
+			this.checkOffloadKQV = new System.Windows.Forms.CheckBox();
 			this.numMtpDraftTokens = new System.Windows.Forms.NumericUpDown();
 			this.label55 = new System.Windows.Forms.Label();
 			this.comboVType = new System.Windows.Forms.ComboBox();
@@ -248,7 +253,6 @@ namespace LMStud
 			this.label1 = new System.Windows.Forms.Label();
 			this.textSystemPrompt = new System.Windows.Forms.TextBox();
 			this.tabPageModels = new System.Windows.Forms.TabPage();
-			this.checkLoadAuto = new System.Windows.Forms.CheckBox();
 			this.tabPageHuggingFace = new System.Windows.Forms.TabPage();
 			this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
 			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
@@ -387,6 +391,13 @@ namespace LMStud
 			// 
 			this.splitContainer2.Panel2.Controls.Add(this.tabControlModelStuff);
 			// 
+			// checkLoadAuto
+			// 
+			resources.ApplyResources(this.checkLoadAuto, "checkLoadAuto");
+			this.checkLoadAuto.Name = "checkLoadAuto";
+			this.checkLoadAuto.UseVisualStyleBackColor = true;
+			this.checkLoadAuto.CheckedChanged += new System.EventHandler(this.CheckLoadAuto_CheckedChanged);
+			// 
 			// butExtract
 			// 
 			resources.ApplyResources(this.butExtract, "butExtract");
@@ -515,6 +526,8 @@ namespace LMStud
 			// 
 			// groupAdvancedModel
 			// 
+			this.groupAdvancedModel.Controls.Add(this.checkOffloadOPModel);
+			this.groupAdvancedModel.Controls.Add(this.checkOffloadKQVModel);
 			this.groupAdvancedModel.Controls.Add(this.numMinPModel);
 			this.groupAdvancedModel.Controls.Add(this.numTopKModel);
 			this.groupAdvancedModel.Controls.Add(this.numTopPModel);
@@ -525,6 +538,24 @@ namespace LMStud
 			resources.ApplyResources(this.groupAdvancedModel, "groupAdvancedModel");
 			this.groupAdvancedModel.Name = "groupAdvancedModel";
 			this.groupAdvancedModel.TabStop = false;
+			// 
+			// checkOffloadOPModel
+			// 
+			resources.ApplyResources(this.checkOffloadOPModel, "checkOffloadOPModel");
+			this.checkOffloadOPModel.Checked = true;
+			this.checkOffloadOPModel.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkOffloadOPModel.Name = "checkOffloadOPModel";
+			this.toolTip1.SetToolTip(this.checkOffloadOPModel, resources.GetString("checkOffloadOPModel.ToolTip"));
+			this.checkOffloadOPModel.UseVisualStyleBackColor = true;
+			// 
+			// checkOffloadKQVModel
+			// 
+			resources.ApplyResources(this.checkOffloadKQVModel, "checkOffloadKQVModel");
+			this.checkOffloadKQVModel.Checked = true;
+			this.checkOffloadKQVModel.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkOffloadKQVModel.Name = "checkOffloadKQVModel";
+			this.toolTip1.SetToolTip(this.checkOffloadKQVModel, resources.GetString("checkOffloadKQVModel.ToolTip"));
+			this.checkOffloadKQVModel.UseVisualStyleBackColor = true;
 			// 
 			// numMinPModel
 			// 
@@ -1853,6 +1884,8 @@ namespace LMStud
 			// 
 			// groupAdvanced
 			// 
+			this.groupAdvanced.Controls.Add(this.checkOffloadOP);
+			this.groupAdvanced.Controls.Add(this.checkOffloadKQV);
 			this.groupAdvanced.Controls.Add(this.numMtpDraftTokens);
 			this.groupAdvanced.Controls.Add(this.label55);
 			this.groupAdvanced.Controls.Add(this.comboVType);
@@ -1877,6 +1910,24 @@ namespace LMStud
 			resources.ApplyResources(this.groupAdvanced, "groupAdvanced");
 			this.groupAdvanced.Name = "groupAdvanced";
 			this.groupAdvanced.TabStop = false;
+			// 
+			// checkOffloadOP
+			// 
+			resources.ApplyResources(this.checkOffloadOP, "checkOffloadOP");
+			this.checkOffloadOP.Checked = true;
+			this.checkOffloadOP.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkOffloadOP.Name = "checkOffloadOP";
+			this.toolTip1.SetToolTip(this.checkOffloadOP, resources.GetString("checkOffloadOP.ToolTip"));
+			this.checkOffloadOP.UseVisualStyleBackColor = true;
+			// 
+			// checkOffloadKQV
+			// 
+			resources.ApplyResources(this.checkOffloadKQV, "checkOffloadKQV");
+			this.checkOffloadKQV.Checked = true;
+			this.checkOffloadKQV.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkOffloadKQV.Name = "checkOffloadKQV";
+			this.toolTip1.SetToolTip(this.checkOffloadKQV, resources.GetString("checkOffloadKQV.ToolTip"));
+			this.checkOffloadKQV.UseVisualStyleBackColor = true;
 			// 
 			// numMtpDraftTokens
 			// 
@@ -2249,13 +2300,6 @@ namespace LMStud
 			resources.ApplyResources(this.tabPageModels, "tabPageModels");
 			this.tabPageModels.Name = "tabPageModels";
 			this.tabPageModels.UseVisualStyleBackColor = true;
-			// 
-			// checkLoadAuto
-			// 
-			resources.ApplyResources(this.checkLoadAuto, "checkLoadAuto");
-			this.checkLoadAuto.Name = "checkLoadAuto";
-			this.checkLoadAuto.UseVisualStyleBackColor = true;
-			this.checkLoadAuto.CheckedChanged += new System.EventHandler(this.CheckLoadAuto_CheckedChanged);
 			// 
 			// tabPageHuggingFace
 			// 
@@ -2710,5 +2754,9 @@ namespace LMStud
 		private System.Windows.Forms.ToolStripMenuItem checkAutoScroll;
 		internal System.Windows.Forms.ToolStripMenuItem checkStream;
 		internal System.Windows.Forms.ToolStripMenuItem checkMarkdown;
+		private System.Windows.Forms.CheckBox checkOffloadKQV;
+		private System.Windows.Forms.CheckBox checkOffloadOP;
+		private System.Windows.Forms.CheckBox checkOffloadOPModel;
+		private System.Windows.Forms.CheckBox checkOffloadKQVModel;
 	}
 }

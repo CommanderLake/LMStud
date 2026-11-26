@@ -586,7 +586,7 @@ namespace LMStud.Properties {
                 this["VType"] = value;
             }
         }
-
+        
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("0")]
@@ -596,6 +596,30 @@ namespace LMStud.Properties {
             }
             set {
                 this["MtpDraftTokens"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool OffloadKQV {
+            get {
+                return ((bool)(this["OffloadKQV"]));
+            }
+            set {
+                this["OffloadKQV"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool OffloadOP {
+            get {
+                return ((bool)(this["OffloadOP"]));
+            }
+            set {
+                this["OffloadOP"] = value;
             }
         }
     }

@@ -28,6 +28,8 @@ namespace LMStud{
 		internal static float MinP;
 		internal static bool MLock;
 		internal static bool MMap;
+		internal static bool OffloadKQV;
+		internal static bool OffloadOP;
 		internal static string ModelsDir;
 		internal static int MtpDraftTokens;
 		internal static int NGen;

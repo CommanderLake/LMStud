@@ -27,6 +27,8 @@ namespace LMStud{
 			Common.VType = (NativeMethods.QuantType)(comboVType.SelectedIndex = Settings.Default.VType);
 			Common.MMap = checkMMap.Checked = Settings.Default.MMap;
 			Common.MLock = checkMLock.Checked = Settings.Default.MLock;
+			Common.OffloadKQV = checkOffloadKQV.Checked = Settings.Default.OffloadKQV;
+			Common.OffloadOP = checkOffloadOP.Checked = Settings.Default.OffloadOP;
 			Common.MtpDraftTokens = (int)(numMtpDraftTokens.Value = Math.Min(numMtpDraftTokens.Maximum, Math.Max(numMtpDraftTokens.Minimum, Settings.Default.MtpDraftTokens)));
 			Common.NThreads = (int)(numThreads.Value = Settings.Default.Threads);
 			Common.NThreadsBatch = (int)(numThreadsBatch.Value = Settings.Default.ThreadsBatch);
@@ -159,6 +161,14 @@ namespace LMStud{
 			});
 			UpdateSetting(ref Common.MLock, checkMLock.Checked, value => {
 				Settings.Default.MLock = value;
+				reloadModelForAllSlots = true;
+			});
+			UpdateSetting(ref Common.OffloadKQV, checkOffloadKQV.Checked, value => {
+				Settings.Default.OffloadKQV = value;
+				reloadModelForAllSlots = true;
+			});
+			UpdateSetting(ref Common.OffloadOP, checkOffloadOP.Checked, value => {
+				Settings.Default.OffloadOP = value;
 				reloadModelForAllSlots = true;
 			});
 			if(Common.NThreads != (int)numThreads.Value || Common.NThreadsBatch != (int)numThreadsBatch.Value){

@@ -56,6 +56,8 @@ namespace LMStud{
 				(float)(node.GetDouble("TopP") ?? 0),
 				node.GetInt("TopK") ?? 0,
 				(CheckState)(node.GetInt("FlashAttn") ?? 0),
+				node.GetBool("OverrideKQV") ?? true,
+				node.GetBool("OverrideOP") ?? true,
 				node.GetBool("OverrideJinja") ?? false,
 				node.GetString("JinjaTemplate")
 			);
@@ -99,6 +101,8 @@ namespace LMStud{
 			internal bool ReloadContext;
 			internal int ContextSize;
 			internal CheckState FlashAttn;
+			internal bool OffloadKQV;
+			internal bool OffloadOP;
 			internal bool ReloadSampler;
 			internal float MinP;
 			internal float TopP;
@@ -114,7 +118,7 @@ namespace LMStud{
 			ThreadPool.QueueUserWorkItem(_ => {
 				try{
 					foreach(var reload in reloads){
-						if(reload.ReloadContext) CreateContext(reload.SlotName, reload.ContextSize, Common.BatchSize, reload.FlashAttn, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType, Common.MtpDraftTokens);
+						if(reload.ReloadContext) CreateContext(reload.SlotName, reload.ContextSize, Common.BatchSize, reload.FlashAttn, reload.OffloadKQV, reload.OffloadOP, Common.NThreads, Common.NThreadsBatch, Common.KType, Common.VType, Common.MtpDraftTokens);
 						if(reload.ReloadSampler) CreateSampler(reload.SlotName, reload.MinP, reload.TopP, reload.TopK, reload.Temp, Common.RepPen);
 					}
 				} finally{
@@ -143,9 +147,11 @@ namespace LMStud{
 			var topPNew = (float)numTopPModel.Value;
 			var topKNew = (int)numTopKModel.Value;
 			var flashNew = checkFlashAttnModel.CheckState;
+			var offloadKQVNew = checkOffloadKQVModel.Checked;
+			var offloadOPNew = checkOffloadOPModel.Checked;
 			var jinjaOverrideNew = checkOverrideJinjaModel.Checked;
 			var jinjaTmplNew = textJinjaTmplModel.Text;
-			_modelSettings[modelSettingsKey] = new ModelSettings(overrideNew, systemPromptNew, ctxSizeNew, gpuLayersNew, tempNew, minPNew, topPNew, topKNew, flashNew, jinjaOverrideNew, jinjaTmplNew);
+			_modelSettings[modelSettingsKey] = new ModelSettings(overrideNew, systemPromptNew, ctxSizeNew, gpuLayersNew, tempNew, minPNew, topPNew, topKNew, flashNew, offloadKQVNew, offloadOPNew, jinjaOverrideNew, jinjaTmplNew);
 			SaveModelSettings();
 			var loadedSlotNames = ModelSlotManager.GetLoadedLocalSlotNamesForPath(selectedModelPath);
 			if(loadedSlotNames.Count == 0 || !Common.LlModelLoaded) return;
@@ -159,6 +165,8 @@ namespace LMStud{
 			var topPOld = overrideOld ? oldSettings.TopP : Common.TopP;
 			var topKOld = overrideOld ? oldSettings.TopK : Common.TopK;
 			var flashOld = overrideOld ? oldSettings.FlashAttn : Common.FlashAttn;
+			var offloadKQVOld = overrideOld ? oldSettings.OffloadKQV : Common.OffloadKQV;
+			var offloadOPOld = overrideOld ? oldSettings.OffloadOP : Common.OffloadOP;
 			var jinjaOverrideOld = overrideOld && (oldSettings?.OverrideJinja ?? false);
 			var jinjaTmplOld = jinjaOverrideOld ? oldSettings.JinjaTemplate ?? string.Empty : string.Empty;
 			var systemPromptEff = overrideNew ? systemPromptNew : Common.SystemPrompt;
@@ -169,10 +177,12 @@ namespace LMStud{
 			var topPEff = overrideNew ? topPNew : Common.TopP;
 			var topKEff = overrideNew ? topKNew : Common.TopK;
 			var flashEff = overrideNew ? flashNew : Common.FlashAttn;
+			var offloadKQVEff = overrideNew ? offloadKQVNew : Common.OffloadKQV;
+			var offloadOPEff = overrideNew ? offloadOPNew : Common.OffloadOP;
 			var jinjaOverrideEff = overrideNew && jinjaOverrideNew;
 			var jinjaTmplEff = jinjaOverrideEff ? jinjaTmplNew : string.Empty;
 			var reloadModel = gpuLayersOld != gpuLayersEff || jinjaOverrideOld != jinjaOverrideEff || jinjaTmplOld != jinjaTmplEff;
-			var reloadCtx = ctxSizeOld != ctxSizeEff || flashOld != flashEff;
+			var reloadCtx = ctxSizeOld != ctxSizeEff || flashOld != flashEff || offloadKQVOld != offloadKQVEff || offloadOPOld != offloadOPEff;
 			var reloadSmpl = tempOld != tempEff || minPOld != minPEff || topPOld != topPEff || topKOld != topKEff;
 			var setSystemPrompt = systemPromptOld != systemPromptEff;
 			if(setSystemPrompt && inheritedSystemPromptSlotNames.Count < loadedSlotNames.Count)
@@ -189,7 +199,9 @@ namespace LMStud{
 							SlotName = slotName,
 							ReloadContext = true,
 							ContextSize = contextSize,
-							FlashAttn = flashEff
+							FlashAttn = flashEff,
+							OffloadKQV = offloadKQVEff,
+							OffloadOP = offloadOPEff
 						});
 					}
 				}
@@ -205,7 +217,7 @@ namespace LMStud{
 						reload.TopP = topPEff;
 						reload.TopK = topKEff;
 						reload.Temp = tempEff;
-				}
+					}
 				QueueReloads(reloads, () => {
 					if(setSystemPrompt) ThreadPool.QueueUserWorkItem(o => {SetSystemPromptsForSlots(inheritedSystemPromptSlotNames);});
 				});
@@ -224,6 +236,8 @@ namespace LMStud{
 				numTopPModel.Value = (decimal)ms.TopP;
 				numTopKModel.Value = ms.TopK;
 				checkFlashAttnModel.CheckState = ms.FlashAttn;
+				checkOffloadKQVModel.Checked = ms.OffloadKQV;
+				checkOffloadOPModel.Checked = ms.OffloadOP;
 				checkOverrideJinjaModel.Checked = ms.OverrideJinja;
 				textJinjaTmplModel.Text = ms.JinjaTemplate;
 			} else{
@@ -236,6 +250,8 @@ namespace LMStud{
 				numTopPModel.Value = (decimal)Common.TopP;
 				numTopKModel.Value = Common.TopK;
 				checkFlashAttnModel.CheckState = Common.FlashAttn;
+				checkOffloadKQVModel.Checked = Common.OffloadKQV;
+				checkOffloadOPModel.Checked = Common.OffloadOP;
 				checkOverrideJinjaModel.Checked = false;
 				textJinjaTmplModel.Text = string.Empty;
 			}
@@ -256,19 +272,20 @@ namespace LMStud{
 			}
 		}
 		private class ModelSettings{
-			public readonly int CtxSize;
-			public readonly CheckState FlashAttn;
-			public readonly int GPULayers;
-			public readonly string JinjaTemplate;
-			public readonly float MinP;
-			public readonly bool OverrideJinja;
 			public readonly bool OverrideSettings;
 			public readonly string SystemPrompt;
+			public readonly int CtxSize;
+			public readonly int GPULayers;
 			public readonly float Temp;
-			public readonly int TopK;
+			public readonly float MinP;
 			public readonly float TopP;
-			public ModelSettings(bool overrideSettings, string systemPrompt, int ctxSize, int gpuLayers, float temp, float minP, float topP, int topK, CheckState flashAttn, bool overrideJinja,
-				string jinjaTemplate){
+			public readonly int TopK;
+			public readonly CheckState FlashAttn;
+			public readonly bool OffloadKQV;
+			public readonly bool OffloadOP;
+			public readonly bool OverrideJinja;
+			public readonly string JinjaTemplate;
+			public ModelSettings(bool overrideSettings, string systemPrompt, int ctxSize, int gpuLayers, float temp, float minP, float topP, int topK, CheckState flashAttn, bool offloadKqv, bool offloadOp, bool overrideJinja, string jinjaTemplate){
 				OverrideSettings = overrideSettings;
 				SystemPrompt = systemPrompt;
 				CtxSize = ctxSize;
@@ -278,6 +295,8 @@ namespace LMStud{
 				TopP = topP;
 				TopK = topK;
 				FlashAttn = flashAttn;
+				OffloadKQV = offloadKqv;
+				OffloadOP = offloadOp;
 				OverrideJinja = overrideJinja;
 				JinjaTemplate = jinjaTemplate;
 			}

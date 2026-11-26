@@ -146,5 +146,11 @@
     <Setting Name="MtpDraftTokens" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">0</Value>
     </Setting>
+    <Setting Name="OffloadKQV" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="OffloadOP" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

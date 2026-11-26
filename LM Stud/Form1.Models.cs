@@ -353,10 +353,10 @@ namespace LMStud{
 			}
 			Common.LoadedModel = Common.LoadedLocalSlots.TryGetValue(Common.ActiveModelSlotName ?? "", out var activeLoaded) ? activeLoaded : Common.LoadedLocalSlots.Values.FirstOrDefault();
 		}
-		private NativeMethods.StudError CreateContext(string slotName, int nCtx, int nBatch, CheckState flashAttn, int nThreads, int nThreadsBatch, NativeMethods.QuantType kType, NativeMethods.QuantType vType, int mtpDraftTokens){
+		private NativeMethods.StudError CreateContext(string slotName, int nCtx, int nBatch, CheckState flashAttn, bool offloadKQV, bool offloadOP, int nThreads, int nThreadsBatch, NativeMethods.QuantType kType, NativeMethods.QuantType vType, int mtpDraftTokens){
 			var slotLock = ModelSlotManager.EnterSlot(slotName);
 			NativeMethods.StudError result;
-			try{ result = NativeMethods.CreateContext(slotName, nCtx, nBatch, (uint)flashAttn, nThreads, nThreadsBatch, (int)kType, (int)vType, mtpDraftTokens); } finally{ slotLock.Dispose(); }
+			try{ result = NativeMethods.CreateContext(slotName, nCtx, nBatch, (uint)flashAttn, offloadKQV, offloadOP, nThreads, nThreadsBatch, (int)kType, (int)vType, mtpDraftTokens); } finally{ slotLock.Dispose(); }
 			if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_context, result);
 			return result;
 		}
@@ -400,6 +400,8 @@ namespace LMStud{
 					var topP = overrideSettings ? overrides.TopP : Common.TopP;
 					var topK = overrideSettings ? overrides.TopK : Common.TopK;
 					var flashAttn = overrideSettings ? overrides.FlashAttn : Common.FlashAttn;
+					var offloadKQV = overrideSettings ? overrides.OffloadKQV : Common.OffloadKQV;
+					var offloadOP = overrideSettings ? overrides.OffloadOP : Common.OffloadOP;
 					string jinjaTmpl = null;
 					if(overrideSettings && overrides.OverrideJinja){
 						var templatePath = overrides.JinjaTemplate;
@@ -439,7 +441,7 @@ namespace LMStud{
 					var contextSize = ClampContextSize(modelLvi, ctxSize);
 					Common.ModelCtxMax = modelCtxMax;
 					Common.CntCtxMax = contextSize;
-					result = NativeMethods.CreateContext(slotName, contextSize, Common.BatchSize, (uint)flashAttn, Common.NThreads, Common.NThreadsBatch, (int)Common.KType, (int)Common.VType, Common.MtpDraftTokens);
+					result = NativeMethods.CreateContext(slotName, contextSize, Common.BatchSize, (uint)flashAttn, offloadKQV, offloadOP, Common.NThreads, Common.NThreadsBatch, (int)Common.KType, (int)Common.VType, Common.MtpDraftTokens);
 					if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_context, result);
 					else{
 						result = NativeMethods.CreateSampler(slotName, minP, topP, topK, temp, Common.RepPen);

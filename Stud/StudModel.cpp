@@ -62,7 +62,7 @@ static std::shared_ptr<Stud::StudSharedModel> LoadOrReuseSharedModel(const char*
 	Stud::sharedModels[key] = shared;
 	return shared;
 }
-static void ClearSessionMemory(Stud::StudSession& session){
+static void ClearSessionMemory(const Stud::StudSession& session){
 	if(session.memory) llama_memory_clear(session.memory, true);
 	if(session.mtpCtx){ if(const auto mtpMemory = llama_get_memory(session.mtpCtx)) llama_memory_clear(mtpMemory, true); }
 }
@@ -145,13 +145,13 @@ namespace Stud::Internal{
 			session.mtpCtx = nullptr;
 		}
 	}
-	bool RemoveSessionMemoryAfter(StudSession& session, const llama_pos position){
+	bool RemoveSessionMemoryAfter(const StudSession& session, const llama_pos position){
 		bool success = true;
 		if(session.memory) success = llama_memory_seq_rm(session.memory, 0, position, -1) && success;
 		if(session.mtpCtx){ if(const auto mtpMemory = llama_get_memory(session.mtpCtx)) success = llama_memory_seq_rm(mtpMemory, 0, position, -1) && success; }
 		return success;
 	}
-	bool RemoveMtpMemoryAfter(StudSession& session, const llama_pos position){
+	bool RemoveMtpMemoryAfter(const StudSession& session, const llama_pos position){
 		if(!session.mtpCtx) return true;
 		const auto mtpMemory = llama_get_memory(session.mtpCtx);
 		return !mtpMemory || llama_memory_seq_rm(mtpMemory, 0, position, -1);
@@ -184,7 +184,7 @@ bool IsModelSlotLoaded(const char* slotName){
 	const auto* model = Stud::Internal::FindModel(Stud::Internal::NormalizeSlotName(slotName));
 	return model && model->sharedModel && model->llModel && model->session.ctx;
 }
-StudError CreateContext(const char* slotName, const int contextSize, const int batchSize, const unsigned int flashAttention, const int threadCount, const int batchThreadCount, const int keyType, const int valueType, const int mtpDraftTokens){
+StudError CreateContext(const char* slotName, const int nCtx, const int nBatch, const unsigned int flashAttn, const bool offloadKQV, const bool offloadOP, const int nThreads, const int nThreadsBatch, const int kType, const int vType, const int mtpDraftTokens){
 	const auto model = GetModel(slotName);
 	if(!model->llModel) return StudError::ModelNotLoaded;
 	auto& errorMessage = Stud::Internal::LastErrorMessage();
@@ -198,22 +198,22 @@ StudError CreateContext(const char* slotName, const int contextSize, const int b
 	}
 	model->session.syntax = {};
 	auto contextParams = llama_context_default_params();
-	contextParams.n_ctx = contextSize;
-	contextParams.n_batch = batchSize;
+	contextParams.n_ctx = nCtx;
+	contextParams.n_batch = nBatch;
 	const int requestedDraftTokens = model->session.visionCtx || llama_model_n_layer_nextn(model->llModel) == 0 ? 0 : mtpDraftTokens;
 	const int effectiveDraftTokens = EffectiveMtpDraftTokens(std::max(0, std::min(requestedDraftTokens, MtpDraftTokensMax)), contextParams);
 	model->session.mtpDraftTokens = effectiveDraftTokens;
 	contextParams.n_rs_seq = effectiveDraftTokens > 0 ? static_cast<uint32_t>(effectiveDraftTokens) : 0;
 	contextParams.n_outputs_max = effectiveDraftTokens + 1;
 	contextParams.n_outputs_max_per_seq = effectiveDraftTokens + 1;
-	contextParams.offload_kqv = true;
-	contextParams.op_offload = true;
-	if(flashAttention == 0) contextParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED;
-	else if(flashAttention == 1) contextParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_ENABLED;
-	else if(flashAttention == 2) contextParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_AUTO;
-	contextParams.n_threads = threadCount;
-	contextParams.n_threads_batch = batchThreadCount;
-	switch(keyType){
+	contextParams.offload_kqv = offloadKQV;
+	contextParams.op_offload = offloadOP;
+	if(flashAttn == 0) contextParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED;
+	else if(flashAttn == 1) contextParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_ENABLED;
+	else if(flashAttn == 2) contextParams.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_AUTO;
+	contextParams.n_threads = nThreads;
+	contextParams.n_threads_batch = nThreadsBatch;
+	switch(kType){
 		case 1: contextParams.type_k = GGML_TYPE_Q4_0;
 			break;
 		case 2: contextParams.type_k = GGML_TYPE_Q5_0;
@@ -224,7 +224,7 @@ StudError CreateContext(const char* slotName, const int contextSize, const int b
 			break;
 		default: ;
 	}
-	switch(valueType){
+	switch(vType){
 		case 1: contextParams.type_v = GGML_TYPE_Q4_0;
 			break;
 		case 2: contextParams.type_v = GGML_TYPE_Q5_0;
@@ -249,7 +249,7 @@ StudError CreateContext(const char* slotName, const int contextSize, const int b
 		return Stud::Internal::GpuOomDetected() ? StudError::GpuOutOfMemory : StudError::CantCreateContext;
 	}
 	model->session.memory = llama_get_memory(model->session.ctx);
-	model->session.batchSize = std::min(std::max(1, batchSize), static_cast<int>(llama_n_batch(model->session.ctx)));
+	model->session.batchSize = std::min(std::max(1, nBatch), static_cast<int>(llama_n_batch(model->session.ctx)));
 	model->session.ctxParams = contextParams;
 	model->session.hasCtxParams = true;
 	TryCreateMtpContext(model, contextParams, effectiveDraftTokens);
@@ -305,11 +305,11 @@ void FreeAllModelSlots(){
 	}
 	modelsToFree.clear();
 }
-StudError LoadModel(const char* slotName, const char* filename, const char* jinjaTemplate, const int nGpuLayers, const bool memoryMap, const bool memoryLock, const ggml_numa_strategy numaStrategy){
+StudError LoadModel(const char* slotName, const char* filename, const char* jinjaTemplate, const int nGPULayers, const bool mMap, const bool mLock, const ggml_numa_strategy numaStrategy){
 	const auto model = GetModel(slotName);
 	auto& errorMessage = Stud::Internal::LastErrorMessage();
 	if(model->llModel || model->sharedModel) FreeModel(slotName);
-	model->sharedModel = LoadOrReuseSharedModel(filename, nGpuLayers, memoryMap, memoryLock, numaStrategy);
+	model->sharedModel = LoadOrReuseSharedModel(filename, nGPULayers, mMap, mLock, numaStrategy);
 	model->llModel = model->sharedModel ? model->sharedModel->llModel : nullptr;
 	if(!model->llModel) return Stud::Internal::GpuOomDetected() ? StudError::GpuOutOfMemory : StudError::CantLoadModel;
 	model->session.vocab = llama_model_get_vocab(model->llModel);
@@ -341,7 +341,7 @@ StudError LoadModel(const char* slotName, const char* filename, const char* jinj
 	}
 	return StudError::Success;
 }
-StudError LoadVisionProjector(const char* slotName, const char* filename, const bool useGpu, const int threadCount, const unsigned int flashAttention){
+StudError LoadVisionProjector(const char* slotName, const char* filename, const bool useGPU, const int nThreads, const unsigned int flashAttn){
 	const auto model = GetModel(slotName);
 	auto& errorMessage = Stud::Internal::LastErrorMessage();
 	if(!model->llModel){
@@ -354,14 +354,14 @@ StudError LoadVisionProjector(const char* slotName, const char* filename, const 
 	}
 	if(!filename || filename[0] == '\0') return StudError::Success;
 	mtmd_context_params params = mtmd_context_params_default();
-	params.use_gpu = useGpu;
+	params.use_gpu = useGPU;
 	params.print_timings = false;
-	params.n_threads = std::max(1, threadCount);
+	params.n_threads = std::max(1, nThreads);
 	params.image_max_tokens = VisionImageMaxTokens;
-	if(flashAttention == 0) params.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED;
-	else if(flashAttention == 1) params.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_ENABLED;
+	if(flashAttn == 0) params.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED;
+	else if(flashAttn == 1) params.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_ENABLED;
 	else params.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_AUTO;
-	if(useGpu && params.flash_attn_type == LLAMA_FLASH_ATTN_TYPE_ENABLED) params.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_AUTO;
+	if(useGPU && params.flash_attn_type == LLAMA_FLASH_ATTN_TYPE_ENABLED) params.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_AUTO;
 	Stud::Internal::GpuOomDetected() = false;
 	errorMessage.clear();
 	{

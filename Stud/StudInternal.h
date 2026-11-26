@@ -19,8 +19,8 @@ namespace Stud::Internal{
 	StudModel* FindModel(const std::string& slotName);
 	void FreeSpeculativeContext(StudSession& session);
 	void ClearSessionMemoryAndSpeculativeState(StudModel* model);
-	bool RemoveSessionMemoryAfter(StudSession& session, llama_pos position);
-	bool RemoveMtpMemoryAfter(StudSession& session, llama_pos position);
+	bool RemoveSessionMemoryAfter(const StudSession& session, llama_pos position);
+	bool RemoveMtpMemoryAfter(const StudSession& session, llama_pos position);
 	StudError DecodeTokenBatch(StudSession& session, const llama_token* tokens, int tokenCount, llama_pos startPosition, bool verifyDraft = false);
 	void RecreateSpeculativeContext(StudModel* model);
 	StudLane& ActiveLane(const char* slotName);
