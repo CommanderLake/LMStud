@@ -478,6 +478,18 @@
   <data name="checkSlotsEditStore.ToolTip" xml:space="preserve">
     <value>使用此槽作为主 API 聊天槽时发送 store=true。</value>
   </data>
+  <data name="labelSlotsEditApiMode.Text" xml:space="preserve">
+    <value>API 模式</value>
+  </data>
+  <data name="labelSlotsEditApiMode.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="comboSlotsEditApiMode.Items" xml:space="preserve">
+    <value>自动</value>
+  </data>
+  <data name="comboSlotsEditApiMode.ToolTip" xml:space="preserve">
+    <value>自动模式优先使用 Responses，端点不可用时改用 Chat Completions。</value>
+  </data>
   <data name="textSlotsEditApiToolName.ToolTip" xml:space="preserve">
     <value>启用此 API 槽作为工具时，向模型公开的函数名称。</value>
   </data>
@@ -829,6 +841,24 @@
   </data>
   <data name="checkApiServerEnable.ToolTip" xml:space="preserve">
     <value />
+  </data>
+  <data name="labelApiServerHost.Text" xml:space="preserve">
+    <value>监听地址</value>
+  </data>
+  <data name="labelApiServerHost.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="textApiServerHost.ToolTip" xml:space="preserve">
+    <value>使用 localhost 仅允许本机访问，也可以输入指定的局域网地址。</value>
+  </data>
+  <data name="labelApiServerToken.Text" xml:space="preserve">
+    <value>访问令牌</value>
+  </data>
+  <data name="labelApiServerToken.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="textApiServerToken.ToolTip" xml:space="preserve">
+    <value>设置后客户端必须发送此访问令牌。局域网访问必须设置令牌。</value>
   </data>
   <data name="groupBox7.Text" xml:space="preserve">
     <value>API 服务器</value>
@@ -1349,26 +1379,26 @@
   <data name="statusStrip1.ToolTip" xml:space="preserve">
     <value />
   </data>
-  <data name="checkAutoScroll.Size" type="System.Drawing.Size, System.Drawing">
-    <value>123, 22</value>
-  </data>
   <data name="exportChatToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
-    <value>155, 22</value>
+    <value>149, 22</value>
   </data>
   <data name="exportChatToolStripMenuItem.Text" xml:space="preserve">
     <value>导出聊天(&amp;E)...</value>
   </data>
   <data name="restoreChatToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
-    <value>155, 22</value>
+    <value>149, 22</value>
   </data>
   <data name="restoreChatToolStripMenuItem.Text" xml:space="preserve">
     <value>恢复聊天(&amp;R)...</value>
   </data>
   <data name="chatToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
-    <value>57, 20</value>
+    <value>58, 20</value>
   </data>
   <data name="chatToolStripMenuItem.Text" xml:space="preserve">
     <value>聊天(&amp;C)</value>
+  </data>
+  <data name="checkAutoScroll.Size" type="System.Drawing.Size, System.Drawing">
+    <value>123, 22</value>
   </data>
   <data name="checkAutoScroll.Text" xml:space="preserve">
     <value>自动滚动</value>
@@ -1411,32 +1441,5 @@
   </data>
   <data name="$this.ToolTip" xml:space="preserve">
     <value />
-  </data>
-  <data name="labelSlotsEditApiMode.Text" xml:space="preserve">
-    <value>API 模式</value>
-  </data>
-  <data name="comboSlotsEditApiMode.Items" xml:space="preserve">
-    <value>自动</value>
-  </data>
-  <data name="comboSlotsEditApiMode.Items1" xml:space="preserve">
-    <value>Responses</value>
-  </data>
-  <data name="comboSlotsEditApiMode.Items2" xml:space="preserve">
-    <value>Chat Completions</value>
-  </data>
-  <data name="comboSlotsEditApiMode.ToolTip" xml:space="preserve">
-    <value>自动模式优先使用 Responses，端点不可用时改用 Chat Completions。</value>
-  </data>
-  <data name="labelApiServerHost.Text" xml:space="preserve">
-    <value>监听地址</value>
-  </data>
-  <data name="textApiServerHost.ToolTip" xml:space="preserve">
-    <value>使用 localhost 仅允许本机访问，也可以输入指定的局域网地址。</value>
-  </data>
-  <data name="labelApiServerToken.Text" xml:space="preserve">
-    <value>访问令牌</value>
-  </data>
-  <data name="textApiServerToken.ToolTip" xml:space="preserve">
-    <value>设置后客户端必须发送此访问令牌。局域网访问必须设置令牌。</value>
   </data>
 </root>
