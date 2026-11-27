@@ -62,6 +62,7 @@ extern "C" {
 	EXPORT StudError GenerateWithToolsJson(const char* slotName, Stud::MessageRole role, const char* contentJson, int nPredict, bool callback);
 	EXPORT StudError GenerateForAPI(const char* slotName, Stud::MessageRole role, const char* prompt, const char* toolsJson, int nPredict, bool callback, char** responseJson);
 	EXPORT StudError GenerateForAPIJson(const char* slotName, Stud::MessageRole role, const char* contentJson, const char* toolsJson, int nPredict, bool callback, char** responseJson);
+	EXPORT StudError GenerateForAPIMessage(const char* slotName, const char* messageJson, const char* toolsJson, int nPredict, bool callback, float temperature, float topP, char** responseJson);
 	EXPORT void StopGeneration(const char* slotName);
 	EXPORT const char* GetLastErrorMessage();
 	EXPORT void ClearLastErrorMessage();

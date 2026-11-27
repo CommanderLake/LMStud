@@ -22,6 +22,8 @@ namespace LMStud{
 		private bool _pendingHeightAutoScroll;
 		private string _think;
 		internal string ApiContent;
+		internal JsonNode ApiOutputItems{get; set;} = JsonNode.Missing;
+		internal string ApiReplayKey;
 		internal string ApiToolCallId;
 		internal List<APIClient.ToolCall> ApiToolCalls;
 		internal bool NativeBacked = true;

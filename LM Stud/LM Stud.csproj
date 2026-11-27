@@ -105,6 +105,7 @@
   <ItemGroup>
     <Compile Include="APIClient.cs" />
     <Compile Include="APIServer.cs" />
+    <Compile Include="APIServer.Reply.cs" />
     <Compile Include="ChatArchive.cs" />
     <Compile Include="ChatMessageControl.cs">
       <SubType>UserControl</SubType>

@@ -119,7 +119,7 @@ static void TryCreateMtpContext(Stud::StudModel* model, llama_context_params con
 	model->session.mtpCtx = mtpContext;
 	model->session.mtpDraftTokens = draftTokens;
 }
-static StudError CreateSamplerInternal(const llama_vocab* vocab, const float minP, const float topP, const int topK, const float temperature, const float repeatPenalty, llama_sampler*& sampler){
+StudError Stud::Internal::CreateSampler(const llama_vocab* vocab, const StudSession::Sampling& options, llama_sampler*& sampler){
 	if(!vocab) return StudError::ModelNotLoaded;
 	if(sampler){
 		llama_sampler_free(sampler);
@@ -127,11 +127,11 @@ static StudError CreateSamplerInternal(const llama_vocab* vocab, const float min
 	}
 	sampler = llama_sampler_chain_init(llama_sampler_chain_default_params());
 	if(!sampler) return StudError::CantCreateSampler;
-	llama_sampler_chain_add(sampler, llama_sampler_init_penalties(llama_vocab_n_tokens(vocab), 128, repeatPenalty, 0.0f, 0.0f));
-	llama_sampler_chain_add(sampler, llama_sampler_init_temp(temperature));
-	if(topK > 0) llama_sampler_chain_add(sampler, llama_sampler_init_top_k(topK));
-	if(topP < 1.0f) llama_sampler_chain_add(sampler, llama_sampler_init_top_p(topP, 1));
-	if(minP > 0.0f) llama_sampler_chain_add(sampler, llama_sampler_init_min_p(minP, 1));
+	llama_sampler_chain_add(sampler, llama_sampler_init_penalties(llama_vocab_n_tokens(vocab), 128, options.repeatPenalty, 0.0f, 0.0f));
+	llama_sampler_chain_add(sampler, llama_sampler_init_temp(options.temperature));
+	if(options.topK > 0) llama_sampler_chain_add(sampler, llama_sampler_init_top_k(options.topK));
+	if(options.topP < 1.0f) llama_sampler_chain_add(sampler, llama_sampler_init_top_p(options.topP, 1));
+	if(options.minP > 0.0f) llama_sampler_chain_add(sampler, llama_sampler_init_min_p(options.minP, 1));
 	llama_sampler_chain_add(sampler, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
 	return StudError::Success;
 }
@@ -262,7 +262,8 @@ StudError CreateContext(const char* slotName, const int nCtx, const int nBatch, 
 }
 StudError CreateSampler(const char* slotName, const float minP, const float topP, const int topK, const float temperature, const float repeatPenalty){
 	const auto model = GetModel(slotName);
-	return CreateSamplerInternal(model->session.vocab, minP, topP, topK, temperature, repeatPenalty, model->session.lane.sampler);
+	model->session.sampling = {minP, topP, topK, temperature, repeatPenalty};
+	return Stud::Internal::CreateSampler(model->session.vocab, model->session.sampling, model->session.lane.sampler);
 }
 void DestroySession(const char* slotName){
 	const auto model = GetModel(slotName);

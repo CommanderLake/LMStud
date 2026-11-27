@@ -60,6 +60,9 @@ namespace LMStud{
 			if(archive._version != CurrentVersion) throw new InvalidDataException(Resources.Unsupported_Chat_Archive_Version);
 			if(archive.Messages == null || archive.Messages.Any(message => message == null || message.Text == null || !Enum.IsDefined(typeof(MessageRole), message.Role)))
 				throw new InvalidDataException(Resources.Invalid_Chat_Archive);
+			if(archive.Messages.Any(message => message.ApiOutputItems != null
+				&& (message.Role != MessageRole.Assistant || string.IsNullOrEmpty(message.ApiReplayKey) || !Json.Parse(message.ApiOutputItems).IsArray)))
+				throw new InvalidDataException(Resources.Invalid_Chat_Archive);
 			if((archive.LocalHistory != null && !Json.Parse(archive.LocalHistory).IsArray) || (archive.PartnerHistory != null && !Json.Parse(archive.PartnerHistory).IsArray))
 				throw new InvalidDataException(Resources.Invalid_Chat_Archive);
 			return archive;
@@ -95,6 +98,10 @@ namespace LMStud{
 			internal string ToolCallId;
 			[DataMember(Name = "toolCalls", EmitDefaultValue = false, Order = 7)]
 			internal List<APIClient.ToolCall> ToolCalls;
+			[DataMember(Name = "apiOutputItems", EmitDefaultValue = false, Order = 9)]
+			internal string ApiOutputItems;
+			[DataMember(Name = "apiReplayKey", EmitDefaultValue = false, Order = 10)]
+			internal string ApiReplayKey;
 			internal NativeChat.MessageSnapshot ToSnapshot(){return new NativeChat.MessageSnapshot(Role, Reasoning, Text, ApiContent, ToolCalls, ToolCallId, !DisplayOnly);}
 		}
 	}

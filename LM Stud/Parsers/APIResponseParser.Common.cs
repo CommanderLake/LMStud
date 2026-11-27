@@ -4,12 +4,6 @@ using System.Linq;
 using System.Text;
 namespace LMStud.Parsers{
 	internal static class APIResponseParserCommon{
-		internal static JsonNode SanitizeOutputItems(JsonNode output){
-			if(!output.IsArray) return JsonNode.Missing;
-			var sanitized = Json.ArrayBuilder();
-			foreach(var item in output) sanitized.Add(RemoveIdFields(item));
-			return sanitized.ToNode();
-		}
 		internal static int? ExtractTotalTokens(JsonNode root){return root["usage"]["total_tokens"].AsInt();}
 		internal static void AppendIfNotBlank(StringBuilder sb, string text){
 			if(!string.IsNullOrWhiteSpace(text)) sb.Append(text);
@@ -105,24 +99,6 @@ namespace LMStud.Parsers{
 				if(toolCall != null) toolCalls.Add(toolCall);
 			}
 			return toolCalls.Count > 0 ? toolCalls : null;
-		}
-		private static JsonNode RemoveIdFields(JsonNode token){
-			if(token.IsNull) return JsonNode.Null;
-			if(token.IsObject){
-				var obj = Json.ObjectBuilder();
-				foreach(var property in token.Properties()){
-					if(string.Equals(property.Name, "id", StringComparison.OrdinalIgnoreCase)) continue;
-					obj.Set(property.Name, RemoveIdFields(property.Value));
-				}
-				return obj.ToNode();
-			}
-			if(token.IsArray){
-				var array = Json.ArrayBuilder();
-				foreach(var item in token) array.Add(RemoveIdFields(item));
-				return array.ToNode();
-			}
-			if(token.IsString) return Json.String(token.AsString());
-			return token;
 		}
 		private static bool IsNonTextContentItem(JsonNode obj){
 			var type = obj.GetString("type");

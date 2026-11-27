@@ -19,6 +19,13 @@ namespace Stud{
 		bool endsWithEOG = true;
 	};
 	struct StudSession{
+		struct Sampling{
+			float minP = 0.0f;
+			float topP = 1.0f;
+			int topK = 0;
+			float temperature = 1.0f;
+			float repeatPenalty = 1.0f;
+		} sampling;
 		llama_context* ctx = nullptr;
 		mtmd_context* visionCtx = nullptr;
 		llama_context* mtpCtx = nullptr;

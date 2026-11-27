@@ -19,6 +19,7 @@ namespace LM_Stud.Tests{
 		private const string Slot = "workflow-chat";
 		private static Form1 _form;
 		private static Thread _ui;
+		private static MessageBoxIcon _downloadNotice;
 		private static LoopbackServer _upstream;
 		private static string _profile;
 		private static string _models;
@@ -51,7 +52,7 @@ namespace LM_Stud.Tests{
 					Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException, true);
 					Application.EnableVisualStyles();
 					Application.SetCompatibleTextRenderingDefault(false);
-					using(var form = new Form1(_profile, _upstream.Url)){
+					using(var form = new Form1(_profile, _upstream.Url, (_, icon) => _downloadNotice = icon)){
 						Program.MainForm = _form = form;
 						form.Shown += (sender, args) => _shown.Set();
 						Application.Run(form);
@@ -116,13 +117,18 @@ namespace LM_Stud.Tests{
 						WriteEvent(context.Response, "**First**");
 						if(!continueStream.Wait(TimeoutMs)) throw new TimeoutException("The first delta never appeared in chat.");
 						WriteEvent(context.Response, " reply");
+						WriteSse(context.Response, Json.Object(Json.P("type", "response.completed"), Json.P("response", Message("**First** reply"))).ToJson());
 						return;
 					}
 					if(question == edited){
-						Reply(context, Message("Regenerated answer"));
+						var item = Json.Object(Json.P("type", "reasoning"), Json.P("id", "rs_regenerated"), Json.P("encrypted_content", "test-state"), Json.P("summary", Json.Array()));
+						Reply(context, Json.Object(Json.P("output", Json.Array(item, Message("Regenerated answer")["output"][0]))));
 						return;
 					}
-					CollectionAssert.AreEqual(new[]{ edited, "Regenerated answer", "Continue the saved chat" }, input.Select(item => item.GetString("content")).ToArray(), "The reopened conversation must reach the model.");
+					CollectionAssert.AreEqual(new[]{ edited, "Regenerated answer", "Continue the saved chat" },
+						input.Where(item => item["role"].Exists).Select(item => item["content"].IsString ? item.GetString("content") : item["content"][0].GetString("text")).ToArray(),
+						"The reopened conversation must reach the model.");
+					Assert.AreEqual("test-state", input.Single(item => item.GetString("id") == "rs_regenerated").GetString("encrypted_content"));
 					Reply(context, Message("Continued from saved history"));
 				};
 				Send(original);
@@ -220,49 +226,238 @@ namespace LM_Stud.Tests{
 			var destination = Path.Combine(_models, "fixtures", "split-model");
 			var firstPath = Path.GetFullPath(Path.Combine(destination, first));
 			var secondPath = Path.GetFullPath(Path.Combine(destination, second));
-			WaitFor(() => {
-					CloseDialog();
-					return _form.listViewModels.Items.Count == 1 && Path.GetFileName(_form.listViewModels.Items[0].SubItems[1].Text) == Path.GetFileName(first);
-				},
-				"one downloaded model in the local library");
+			WaitFor(() => _downloadNotice == MessageBoxIcon.Information && _form.listViewModels.Items.Count == 1
+				&& Path.GetFileName(_form.listViewModels.Items[0].SubItems[1].Text) == Path.GetFileName(first), "one downloaded model in the local library");
 			OnForm(() => Control<Button>("butDownload").PerformClick());
-			WaitFor(() => {
-					CloseDialog();
-					return Volatile.Read(ref secondPartRequests) == 2 && Control<Button>("butDownload").Text == Resources.Download;
-				},
-				"the failed replacement to finish");
+			WaitFor(() => Volatile.Read(ref secondPartRequests) == 2 && _downloadNotice == MessageBoxIcon.Error, "the failed replacement to finish");
 			CollectionAssert.AreEqual(model, File.ReadAllBytes(firstPath));
 			CollectionAssert.AreEqual(model, File.ReadAllBytes(secondPath));
 		}
 		[TestMethod]
 		public void TheRunningFormServesChatThroughItsConfiguredSlot(){
+			const string token = "workflow-token";
+			var original = ModelSlotManager.GetActiveChatSlot();
+			var slot = original.Clone();
+			slot.ApiStore = true;
+			slot.ApiBaseUrl = _upstream.Url + "/gateway/openai/";
+			var address = "http://127.0.0.1:" + LoopbackServer.FreePort();
+			OnForm(() => {
+				ModelSlotManager.AddOrUpdate(slot);
+				Common.APIServerPort = new Uri(address).Port;
+				Assert.IsTrue(_form.ApiServer.Start("localhost", token));
+			});
+			try{
+				Assert.AreEqual(HttpStatusCode.Unauthorized, ReadApiError(() => ApiRequest(address + "/v1/models", null)));
+				using(var models = ApiRequest(address + "/v1/models", token))
+				using(var reader = new StreamReader(models.GetResponseStream()))
+					Assert.IsTrue(Json.Parse(reader.ReadToEnd())["data"].Any(item => item.GetString("id") == "lmstud/" + Slot));
+
+				var prefix = address + "/v1/responses";
+				var transcript = Json.Array(
+					Json.Object(Json.P("role", "developer"), Json.P("content", "Use the supplied context.")),
+					Json.Object(Json.P("role", "user"), Json.P("content", "Prior context")),
+					Json.Object(Json.P("role", "assistant"), Json.P("content", "Acknowledged")),
+					Json.Object(Json.P("role", "user"), Json.P("content", "Parent")));
+				_upstream.Handle = context => {
+					Assert.AreEqual("/gateway/openai/responses", context.Request.Url.AbsolutePath);
+					var request = ReadRequest(context);
+					var input = request["input"].Select(item => item["content"].IsString ? item.GetString("content") : item["content"][0].GetString("text")).ToArray();
+					CollectionAssert.AreEqual(new[]{ "Use the supplied context.", "Prior context", "Acknowledged", "Parent" }, input.Take(4).ToArray());
+					if(input.Last() == "Parent"){
+						Assert.AreEqual(17, request.GetInt("max_output_tokens"));
+						Assert.AreEqual(0.2d, request.GetDouble("temperature"));
+					} else{
+						Assert.AreEqual(6, input.Length, "A continuation should use the specified response snapshot.");
+						Assert.AreEqual("From the slot", input[4]);
+					}
+					Assert.AreEqual(input.Last() != "Private branch", request.GetBool("store"));
+					Reply(context, Message("From the slot"));
+				};
+				var parent = PostApi(prefix, token, Json.P("input", transcript), Json.P("max_output_tokens", 17), Json.P("temperature", 0.2));
+				var id = parent.GetString("id");
+				PostApi(prefix, token, Json.P("input", "First branch"), Json.P("previous_response_id", id));
+				var privateBranch = PostApi(prefix, token, Json.P("input", "Private branch"), Json.P("previous_response_id", id), Json.P("store", false));
+				Assert.AreEqual(HttpStatusCode.NotFound, ReadApiError(() => ApiRequest(prefix + "/" + privateBranch.GetString("id"), token)));
+				PostApi(prefix, token, Json.P("input", "Third branch"), Json.P("previous_response_id", id));
+				Assert.AreEqual(HttpStatusCode.NotFound, ReadApiError(() => PostApi(prefix, token, Json.P("input", "Missing parent"), Json.P("previous_response_id", "resp_missing"))));
+
+				using(var finish = new ManualResetEventSlim()){
+					_upstream.Handle = context => {
+						var request = ReadRequest(context);
+						Assert.AreEqual(true, request.GetBool("stream"));
+						Assert.AreEqual(7, request.GetInt("max_output_tokens"));
+						context.Response.ContentType = "text/event-stream";
+						context.Response.SendChunked = true;
+						WriteSse(context.Response, "{\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"id\":\"msg_stream\",\"type\":\"message\",\"role\":\"assistant\",\"status\":\"in_progress\",\"content\":[]}}");
+						WriteSse(context.Response, "{\"type\":\"response.output_text.delta\",\"output_index\":0,\"content_index\":0,\"item_id\":\"msg_stream\",\"delta\":\"Streamed\"}");
+						if(!finish.Wait(TimeoutMs)) throw new TimeoutException("The server buffered the upstream stream.");
+						var item = Json.Object(Json.P("id", "msg_stream"), Json.P("type", "message"), Json.P("status", "incomplete"), Json.P("role", "assistant"),
+							Json.P("content", Message("Streamed")["output"][0]["content"]));
+						WriteSse(context.Response, Json.Object(Json.P("type", "response.output_item.done"), Json.P("output_index", 0), Json.P("item", item)).ToJson());
+						WriteSse(context.Response, Json.Object(Json.P("type", "response.incomplete"), Json.P("response",
+							Json.Object(Json.P("output", Json.Array(item)), Json.P("status", "incomplete"),
+								Json.P("incomplete_details", Json.Object(Json.P("reason", "max_output_tokens"))),
+								Json.P("usage", Json.Object(Json.P("input_tokens", 9), Json.P("output_tokens", 7), Json.P("total_tokens", 16)))))).ToJson());
+					};
+					try{
+						using(var response = ApiRequest(prefix, token, Json.Object(Json.P("model", "lmstud/" + Slot), Json.P("input", "Stream"),
+							Json.P("stream", true), Json.P("max_output_tokens", 7))))
+						using(var reader = new StreamReader(response.GetResponseStream())){
+							StringAssert.StartsWith(response.ContentType, "text/event-stream");
+							var delta = ReadApiEvent(reader, "response.output_text.delta");
+							Assert.AreEqual("Streamed", delta.GetString("delta"));
+							Assert.AreEqual("msg_stream", delta.GetString("item_id"));
+							finish.Set();
+							var completed = ReadApiEvent(reader, "response.incomplete")["response"];
+							Assert.AreEqual("max_output_tokens", completed["incomplete_details"].GetString("reason"));
+							Assert.AreEqual(16, completed["usage"].GetInt("total_tokens"));
+							Assert.AreEqual("msg_stream", completed["output"][0].GetString("id"));
+						}
+					} finally{ finish.Set(); }
+				}
+				CheckChatCompletionsFallback(address, token);
+
+				slot.ApiModel = "gpt-6.2-sol";
+				slot.ApiReasoningEffort = 1;
+				OnForm(() => ModelSlotManager.AddOrUpdate(slot));
+				_upstream.Handle = context => {
+					Assert.AreEqual("/gateway/openai/responses", context.Request.Url.AbsolutePath);
+					var request = ReadRequest(context);
+					Assert.AreEqual("gpt-6.2-sol", request.GetString("model"));
+					Assert.AreEqual("low", request["reasoning"].GetString("effort"));
+					Assert.IsFalse(request["temperature"].Exists);
+					context.Response.StatusCode = 400;
+					Reply(context, Json.Object(Json.P("error", Json.Object(Json.P("code", "invalid_value"), Json.P("message", "Invalid input")))));
+				};
+				Assert.AreEqual(HttpStatusCode.BadRequest,
+					ReadApiError(() => PostApi(prefix, token, Json.P("input", "No fallback on rejected input"), Json.P("temperature", 0.4))));
+				Assert.IsNull(_upstream.Error, _upstream.Error?.ToString());
+			} finally{
+				OnForm(() => {
+					_form.ApiServer.Stop();
+					ModelSlotManager.AddOrUpdate(original);
+				});
+			}
+			CheckClientStreamFailures();
+		}
+		private static void CheckChatCompletionsFallback(string address, string token){
+			var tool = Json.Object(Json.P("name", "lookup"), Json.P("strict", true),
+				Json.P("parameters", Json.Object(Json.P("type", "object"), Json.P("properties", Json.Object()), Json.P("additionalProperties", false), Json.P("required", Json.Array()))));
+			var calls = NativeChat.BuildChatCompletionToolCalls(new[]{
+				new APIClient.ToolCall("call_a", "lookup", "{}"), new APIClient.ToolCall("call_b", "lookup", "{}")
+			});
+			var messages = Json.Array(Json.Object(Json.P("role", "user"), Json.P("content", "Look up both items.")),
+				Json.Object(Json.P("role", "assistant"), Json.P("tool_calls", calls)),
+				Json.Object(Json.P("role", "tool"), Json.P("tool_call_id", "call_a"), Json.P("content", "First result")),
+				Json.Object(Json.P("role", "tool"), Json.P("tool_call_id", "call_b"), Json.P("content", "Second result")));
+			var probes = 0;
 			_upstream.Handle = context => {
-				if(context.Request.Url.AbsolutePath == "/v1/responses"){
+				var request = ReadRequest(context);
+				if(context.Request.Url.AbsolutePath == "/gateway/openai/responses"){
+					Interlocked.Increment(ref probes);
+					Assert.AreEqual(true, request["tools"][0].GetBool("strict"));
+					Assert.AreEqual("lookup", request["tool_choice"].GetString("name"));
 					context.Response.StatusCode = 404;
 					return;
 				}
-				Assert.AreEqual("/v1/chat/completions", context.Request.Url.AbsolutePath);
-				var request = ReadRequest(context);
+				Assert.AreEqual("/gateway/openai/chat/completions", context.Request.Url.AbsolutePath);
 				Assert.AreEqual("workflow-model", request.GetString("model"));
-				Assert.AreEqual("Reply through my slot", request["messages"].Last().GetString("content"));
-				Reply(context, Json.Object(Json.P("choices", Json.Array(Json.Object(Json.P("message", Json.Object(Json.P("role", "assistant"), Json.P("content", "Reply from the configured slot"))))))));
+				CollectionAssert.AreEqual(new[]{ "user", "assistant", "tool", "tool" }, request["messages"].Select(item => item.GetString("role")).ToArray());
+				Assert.AreEqual(2, request["messages"][1]["tool_calls"].Count);
+				Assert.AreEqual(true, request["tools"][0]["function"].GetBool("strict"));
+				Assert.AreEqual("lookup", request["tool_choice"]["function"].GetString("name"));
+				Assert.AreEqual(false, request.GetBool("parallel_tool_calls"));
+				Assert.AreEqual(true, request["stream_options"].GetBool("include_usage"));
+				context.Response.ContentType = "text/event-stream";
+				context.Response.SendChunked = true;
+				WriteSse(context.Response, "{\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Both items found\"},\"finish_reason\":null}]}");
+				WriteSse(context.Response, "{\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}");
+				WriteSse(context.Response, "{\"choices\":[],\"usage\":{\"prompt_tokens\":11,\"completion_tokens\":3,\"total_tokens\":14}}");
+				WriteSse(context.Response, "[DONE]");
 			};
-			var port = LoopbackServer.FreePort();
-			OnForm(() => {
-				Common.APIServerPort = port;
-				_form.ApiServer.Start("127.0.0.1");
-			});
-			try{
-				var address = "http://127.0.0.1:" + port;
-				using(var client = new WebClient{ Encoding = Encoding.UTF8, Proxy = null }){
-					var models = Json.Parse(client.DownloadString(address + "/v1/models"))["data"];
-					Assert.IsTrue(models.Any(model => model.GetString("id") == "lmstud/" + Slot));
-					client.Headers[HttpRequestHeader.ContentType] = "application/json";
-					var request = Json.Object(Json.P("model", "lmstud/" + Slot), Json.P("input", "Reply through my slot"), Json.P("store", false));
-					var reply = client.UploadString(address + "/v1/responses", request.ToJson());
-					StringAssert.Contains(reply, "Reply from the configured slot");
+			var body = Json.Object(Json.P("model", "lmstud/" + Slot), Json.P("messages", messages), Json.P("stream", true),
+				Json.P("stream_options", Json.Object(Json.P("include_usage", true))), Json.P("parallel_tool_calls", false),
+				Json.P("tools", Json.Array(Json.Object(Json.P("type", "function"), Json.P("function", tool)))),
+				Json.P("tool_choice", Json.Object(Json.P("type", "function"), Json.P("function", Json.Object(Json.P("name", "lookup"))))));
+			using(var response = ApiRequest(address + "/v1/chat/completions", token, body))
+			using(var reader = new StreamReader(response.GetResponseStream())){
+				StringAssert.StartsWith(response.ContentType, "text/event-stream");
+				var stream = reader.ReadToEnd();
+				StringAssert.Contains(stream, "Both items found");
+				StringAssert.Contains(stream, "\"finish_reason\":\"stop\"");
+				StringAssert.Contains(stream, "\"total_tokens\":14");
+				StringAssert.Contains(stream, "data: [DONE]");
+			}
+			Assert.AreEqual(1, Volatile.Read(ref probes));
+		}
+		private static void CheckClientStreamFailures(){
+			using(var release = new ManualResetEventSlim())
+			using(var finished = new ManualResetEventSlim()){
+				_upstream.Handle = context => {
+					context.Response.ContentType = "text/event-stream";
+					context.Response.SendChunked = true;
+					WriteEvent(context.Response, "Pending text");
+					release.Wait(TimeoutMs);
+					finished.Set();
+				};
+				Send("Stop this stream");
+				try{
+					WaitFor(() => Generation.Generating && VisibleReply() == "Pending text", "stream text before Stop");
+					OnForm(() => _form.butGen.PerformClick());
+					WaitFor(() => ChatIsIdle() && !_form.ChatMessages.Last().NativeBacked, "Stop to release the blocked response");
+					Assert.IsFalse(release.IsSet);
+				} finally{
+					release.Set();
+					Assert.IsTrue(finished.Wait(TimeoutMs));
 				}
-			} finally{ OnForm(() => _form.ApiServer.Stop()); }
+			}
+			_upstream.Handle = context => {
+				context.Response.ContentType = "text/event-stream";
+				context.Response.SendChunked = true;
+				WriteEvent(context.Response, "Failed text");
+				WriteSse(context.Response, "{\"type\":\"response.failed\",\"response\":{\"status\":\"failed\",\"error\":{\"message\":\"Workflow failure\"}}}");
+			};
+			Send("Fail this stream");
+			WaitFor(() => ChatIsIdle() && VisibleReply() == "Failed text" && !_form.ChatMessages.Last().NativeBacked
+				&& _form.ChatMessages.Last().labelRole.Text == Resources.Incomplete, "failed text to be marked incomplete and kept out of conversation history");
+		}
+		private static HttpWebResponse ApiRequest(string url, string token, JsonNode body = default(JsonNode)){
+			var request = (HttpWebRequest)WebRequest.Create(url);
+			request.Proxy = null;
+			request.Timeout = request.ReadWriteTimeout = TimeoutMs;
+			if(token != null) request.Headers[HttpRequestHeader.Authorization] = "Bearer " + token;
+			if(!body.IsNull){
+				request.Method = "POST";
+				request.ContentType = "application/json";
+				var data = Encoding.UTF8.GetBytes(body.ToJson());
+				request.ContentLength = data.Length;
+				using(var stream = request.GetRequestStream()) stream.Write(data, 0, data.Length);
+			}
+			return (HttpWebResponse)request.GetResponse();
+		}
+		private static JsonNode PostApi(string url, string token, params JsonMember[] fields){
+			var payload = Json.ObjectBuilder(fields);
+			payload.Set("model", "lmstud/" + Slot);
+			using(var response = ApiRequest(url, token, payload.ToNode()))
+			using(var reader = new StreamReader(response.GetResponseStream())){ return Json.Parse(reader.ReadToEnd()); }
+		}
+		private static HttpStatusCode ReadApiError(Action send){
+			try{ send(); }
+			catch(WebException ex) when(ex.Response is HttpWebResponse){
+				using(var response = (HttpWebResponse)ex.Response){ return response.StatusCode; }
+			}
+			Assert.Fail("Expected an HTTP error.");
+			return 0;
+		}
+		private static JsonNode ReadApiEvent(StreamReader reader, string type){
+			string line;
+			while((line = reader.ReadLine()) != null){
+				if(!line.StartsWith("data: ", StringComparison.Ordinal)) continue;
+				var item = Json.Parse(line.Substring(6));
+				if(item.GetString("type") == type) return item;
+			}
+			Assert.Fail("The stream ended before " + type);
+			return JsonNode.Missing;
 		}
 		private static T Control<T>(string name) where T : Control{return (T)_form.Controls.Find(name, true).Single();}
 		private static T OnForm<T>(Func<T> action){
@@ -310,8 +505,10 @@ namespace LM_Stud.Tests{
 			context.Response.OutputStream.Write(bytes, 0, bytes.Length);
 		}
 		private static void WriteEvent(HttpListenerResponse response, string text){
-			var payload = Json.Object(Json.P("type", "response.output_text.delta"), Json.P("delta", text)).ToJson();
-			var bytes = Encoding.UTF8.GetBytes("data: " + payload + "\n\n");
+			WriteSse(response, Json.Object(Json.P("type", "response.output_text.delta"), Json.P("delta", text)).ToJson());
+		}
+		private static void WriteSse(HttpListenerResponse response, string data){
+			var bytes = Encoding.UTF8.GetBytes("data: " + data + "\n\n");
 			response.OutputStream.Write(bytes, 0, bytes.Length);
 			response.OutputStream.Flush();
 		}

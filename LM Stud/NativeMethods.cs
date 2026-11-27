@@ -224,21 +224,9 @@ namespace LMStud{
 			int nPredict,
 			bool callback);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern StudError GenerateForAPI([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			MessageRole role,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string prompt,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string toolsJson,
-			int nPredict,
-			bool callback,
-			out IntPtr responseJson);
-		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-		internal static extern StudError GenerateForAPIJson([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			MessageRole role,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string contentJson,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string toolsJson,
-			int nPredict,
-			bool callback,
-			out IntPtr responseJson);
+		internal static extern StudError GenerateForAPIMessage([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
+			[MarshalAs(UnmanagedType.LPUTF8Str)] string messageJson, [MarshalAs(UnmanagedType.LPUTF8Str)] string toolsJson,
+			int nPredict, bool callback, float temperature, float topP, out IntPtr responseJson);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr MCPConnectStdio([MarshalAs(UnmanagedType.LPUTF8Str)] string serverId,
 			[MarshalAs(UnmanagedType.LPUTF8Str)] string commandLine,

@@ -42,6 +42,8 @@ namespace LMStud{
 					ShowReasoning = message.checkThink.Checked,
 					DisplayOnly = !message.NativeBacked,
 					ApiContent = message.ApiContent,
+					ApiOutputItems = message.ApiOutputItems.IsArray ? message.ApiOutputItems.ToJson() : null,
+					ApiReplayKey = message.ApiReplayKey,
 					ToolCalls = message.ApiToolCalls == null ? null : new List<APIClient.ToolCall>(message.ApiToolCalls),
 					ToolCallId = message.ApiToolCallId
 				}).ToList(),
@@ -152,6 +154,10 @@ namespace LMStud{
 				foreach(var saved in archive.Messages){
 					var message = AddMessage(saved.Role, saved.Reasoning ?? "", saved.Text, saved.ToolCalls, saved.ToolCallId, !saved.DisplayOnly);
 					message.ApiContent = saved.ApiContent;
+					if(saved.ApiOutputItems != null){
+						message.ApiOutputItems = Json.Parse(saved.ApiOutputItems);
+						message.ApiReplayKey = saved.ApiReplayKey;
+					}
 					if(saved.Speaker != null) message.SetRoleText(saved.Speaker);
 					message.checkThink.Checked = saved.ShowReasoning && !string.IsNullOrEmpty(saved.Reasoning);
 				}

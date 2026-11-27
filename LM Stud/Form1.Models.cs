@@ -225,8 +225,7 @@ namespace LMStud{
 				if(slotLock == null) return;
 			}
 			try{
-				var prompt = GetSystemPromptResolutionForSlot(slotName);
-				var systemPrompt = prompt.Text.Length > 0 || prompt.IsOverride ? prompt.Text : DefaultPrompt;
+				var systemPrompt = GetDefaultSystemPromptForSlot(slotName);
 				var error = NativeChat.SetSystemPrompt(slotName, systemPrompt, Common.GoogleSearchEnable && Common.WebpageFetchEnable ? FetchPrompt : "");
 				if(error != NativeMethods.StudError.ModelNotLoaded && error != NativeMethods.StudError.Success) ShowError(Resources.Error_setting_system_prompt, error);
 			} finally{ slotLock?.Dispose(); }
@@ -255,6 +254,10 @@ namespace LMStud{
 				if(TryGetEnabledModelSettings(loadedModel.SubItems[1].Text, out var overrides))
 					return new SystemPromptResolution(overrides.SystemPrompt ?? "", true);
 			return new SystemPromptResolution(Common.SystemPrompt ?? "", false);
+		}
+		internal string GetDefaultSystemPromptForSlot(string slotName){
+			var prompt = GetSystemPromptResolutionForSlot(slotName);
+			return prompt.Text.Length > 0 || prompt.IsOverride ? prompt.Text : DefaultPrompt;
 		}
 		private bool SlotUsesInheritedSystemPrompt(string slotName){return !(ModelSlotManager.GetSlot(slotName)?.OverrideSystemPrompt ?? false);}
 		private string GetSystemPromptForModel(string modelPathOrName){

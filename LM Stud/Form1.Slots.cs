@@ -132,13 +132,31 @@ namespace LMStud{
 		}
 		private void ComboSlotsEditApiModel_DropDown(object sender, EventArgs e){
 			if(GetSlotEditorSource() != ModelSlotSource.Api) return;
-			try{
-				comboSlotsEditApiModel.Items.Clear();
-				using(var client = new APIClient(textSlotsEditApiUrl.Text.Trim(), textSlotsEditApiKey.Text, "", checkSlotsEditStore.Checked)){
-					foreach(var model in client.GetModels(CancellationToken.None)) comboSlotsEditApiModel.Items.Add(model);
-				}
-			} catch(Exception ex){ APIClient.ShowApiClientError(Resources.API_Client, ex); }
+			var url = textSlotsEditApiUrl.Text.Trim();
+			var key = textSlotsEditApiKey.Text;
+			if(string.IsNullOrWhiteSpace(url)) return;
+			var mode = (ApiMode)GetComboSelectedIndex(comboSlotsEditApiMode);
+			var request = ++_apiModelListRequest;
+			ThreadPool.QueueUserWorkItem(_ => {
+				List<string> models = null;
+				Exception error = null;
+				try{ models = new APIClient(url, key, "", false, mode: mode).GetModels(CancellationToken.None); }
+				catch(Exception ex){ error = ex; }
+				try{
+					BeginInvoke(new MethodInvoker(() => {
+						if(request != _apiModelListRequest || url != textSlotsEditApiUrl.Text.Trim() || key != textSlotsEditApiKey.Text
+							|| GetSlotEditorSource() != ModelSlotSource.Api) return;
+						if(error != null){ APIClient.ShowApiClientError(Resources.API_Client, error); return; }
+						comboSlotsEditApiModel.BeginUpdate();
+						try{
+							comboSlotsEditApiModel.Items.Clear();
+							comboSlotsEditApiModel.Items.AddRange(models.ToArray());
+						} finally{ comboSlotsEditApiModel.EndUpdate(); }
+					}));
+				} catch(InvalidOperationException){}
+			});
 		}
+		private int _apiModelListRequest;
 		private void ComboSlotsEditMcpTransport_SelectedIndexChanged(object sender, EventArgs e){
 			if(_populatingSlotEditor || GetSlotEditorSource() != ModelSlotSource.Mcp) return;
 			UpdateMcpTransportUi();
@@ -199,6 +217,7 @@ namespace LMStud{
 				checkSlotsEditStore.Checked = slot.ApiStore;
 				SetComboSelectedIndex(comboSlotEditReasonEffort, slot.ApiReasoningEffort);
 				SetComboSelectedIndex(comboSlotEditReasonSummary, slot.ApiReasoningSummary);
+				SetComboSelectedIndex(comboSlotsEditApiMode, (int)slot.ApiMode);
 				checkSlotsEditLocalOverride.Checked = slot.Source == ModelSlotSource.Local && slot.OverrideSystemPrompt;
 				if(slot.Source == ModelSlotSource.Mcp) textSlotsEditSystemPrompt.Text = "";
 				else if(slot.Source == ModelSlotSource.Local && !slot.OverrideSystemPrompt) textSlotsEditSystemPrompt.Text = GetSystemPromptForModel(slot.ResolveLocalPath());
@@ -320,6 +339,7 @@ namespace LMStud{
 				ApiBaseUrl = source == ModelSlotSource.Api ? apiBaseUrl : "",
 				ApiKey = source == ModelSlotSource.Api ? textSlotsEditApiKey.Text.Trim() : "",
 				ApiModel = source == ModelSlotSource.Api ? comboSlotsEditApiModel.Text.Trim() : "",
+				ApiMode = (ApiMode)GetComboSelectedIndex(comboSlotsEditApiMode),
 				ApiReasoningEffort = GetComboSelectedIndex(comboSlotEditReasonEffort),
 				ApiReasoningSummary = GetComboSelectedIndex(comboSlotEditReasonSummary),
 				ApiStore = checkSlotsEditStore.Checked,

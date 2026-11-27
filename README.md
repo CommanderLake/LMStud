@@ -125,21 +125,17 @@ or at least entertainingly.
 
 ## API Notes
 
-LM Stud includes both an API client and an API server.
+Configure a remote model in **Models → Slots**. Choose **Responses**, **Chat Completions**, or **Auto**. Auto switches to Chat Completions when the upstream Responses endpoint is unavailable. Enter the provider's API base URL, including its path prefix if it has one. A host-only URL uses `/v1`. Gemini's OpenAI-compatible base, for example, ends in `/v1beta/openai/`.
 
-The client-side parser supports several common response shapes:
+Enable **API Server** in Settings to serve local or remote model slots. The default listener accepts requests from the same computer at `http://127.0.0.1:11434`. For LAN access, set **Listen host** to a specific local address and set **Bearer token**. Whenever a token is set, clients must send `Authorization: Bearer <token>`.
 
-```text
-- OpenAI Responses
-- OpenAI-compatible Chat Completions
-- Anthropic-style responses
-- Ollama-style responses
-- Gemini-style responses
-```
+- Use `GET /v1/models` to list slot IDs such as `lmstud/main`.
+- Send a full `messages` array to `POST /v1/chat/completions` or send `input` to `POST /v1/responses`. Both support server-sent events with `stream:true`.
+- Chain Responses calls with `previous_response_id`. Each saved ID refers to that turn, so it can be used to fork a conversation. `store:false` keeps the new turn out of server storage and preserves the parent. The proxy also disables upstream storage for that request.
+- Saved Responses are held in memory and can be read or deleted at `/v1/responses/{id}`. The `session_id` and `X-Session-Id` extensions and `POST /v1/reset` are available for existing clients.
+- Local slots support text, inline images with a vision projector, and function tools with automatic tool choice. Features such as structured output and forced tool choice require a compatible upstream slot.
 
-The server can route requests through configured API Server slots. Tool streaming and model-tool routing make it possible to build workflows where one model delegates work to another without leaving LM Stud.
-
-See [API example.bat](./API%20example.bat) for a small local server example.
+[API example.bat](./API%20example.bat) makes a Responses request and follows up without storing the second reply. Set `LMSTUD_API_BASE`, `LMSTUD_API_TOKEN`, or `LMSTUD_API_MODEL` to use a different address, token, or model slot.
 
 ---
 

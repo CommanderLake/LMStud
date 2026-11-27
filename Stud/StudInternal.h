@@ -18,6 +18,7 @@ namespace Stud::Internal{
 	std::string NormalizeSlotName(const char* slotName);
 	StudModel* FindModel(const std::string& slotName);
 	void FreeSpeculativeContext(StudSession& session);
+	StudError CreateSampler(const llama_vocab* vocab, const StudSession::Sampling& options, llama_sampler*& sampler);
 	void ClearSessionMemoryAndSpeculativeState(StudModel* model);
 	bool RemoveSessionMemoryAfter(const StudSession& session, llama_pos position);
 	bool RemoveMtpMemoryAfter(const StudSession& session, llama_pos position);

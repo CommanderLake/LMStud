@@ -58,6 +58,8 @@ namespace LMStud{
 			Common.CMDTimeoutMs = (int)(numCmdTimeout.Value = Settings.Default.CMDToolTimeoutMs);
 			Common.APIServerEnable = checkApiServerEnable.Checked = Settings.Default.APIServerEnable;
 			Common.APIServerPort = (int)(numApiServerPort.Value = Settings.Default.APIServerPort);
+			textApiServerHost.Text = Settings.Default.APIServerHost;
+			textApiServerToken.Text = Settings.Default.APIServerToken;
 			Common.GenDelay = (int)(numGenDelay.Value = Settings.Default.GenDelay);
 			NativeMethods.SetSilenceTimeout(Common.GenDelay);
 			NativeMethods.SetFileBaseDir(Common.FileBaseDir);
@@ -72,6 +74,29 @@ namespace LMStud{
 			if(EqualityComparer<T>.Default.Equals(currentValue, newValue)) return;
 			currentValue = newValue;
 			updateAction(newValue);
+		}
+		private void ApplyApiServerSettings(){
+			var settings = Settings.Default;
+			var host = textApiServerHost.Text.Trim();
+			if(host.Length == 0) host = "localhost";
+			var token = textApiServerToken.Text.Trim();
+			var port = (int)numApiServerPort.Value;
+			var enabled = checkApiServerEnable.Checked;
+			if(enabled == Common.APIServerEnable && port == Common.APIServerPort && host == settings.APIServerHost && token == settings.APIServerToken) return;
+			var previousPort = Common.APIServerPort;
+			ApiServer.Stop();
+			Common.APIServerPort = port;
+			if(enabled && !ApiServer.Start(host, token)){
+				Common.APIServerPort = previousPort;
+				Common.APIServerEnable = Common.APIServerEnable && ApiServer.Start();
+				checkApiServerEnable.Checked = Common.APIServerEnable;
+				settings.APIServerEnable = Common.APIServerEnable;
+				return;
+			}
+			Common.APIServerEnable = settings.APIServerEnable = enabled;
+			settings.APIServerPort = port;
+			settings.APIServerHost = host;
+			settings.APIServerToken = token;
 		}
 		private void ButApply_Click(object sender, EventArgs e){
 			var popModels = false;
@@ -350,22 +375,7 @@ namespace LMStud{
 					Settings.Default.CMDToolTimeoutMs = value;
 					NativeMethods.SetCommandPromptTimeout(value);
 				});
-			UpdateSetting(ref Common.APIServerPort,
-				(int)numApiServerPort.Value,
-				value => {
-					Settings.Default.APIServerPort = value;
-					if(Common.APIServerEnable){
-						ApiServer.Stop();
-						ApiServer.Start();
-					}
-				});
-			UpdateSetting(ref Common.APIServerEnable,
-				checkApiServerEnable.Checked,
-				value => {
-					Settings.Default.APIServerEnable = value;
-					if(value) ApiServer.Start();
-					else ApiServer.Stop();
-				});
+			ApplyApiServerSettings();
 			UpdateSetting(ref Common.GenDelay,
 				(int)numGenDelay.Value,
 				value => {

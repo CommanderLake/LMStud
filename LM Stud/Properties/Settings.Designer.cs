@@ -526,6 +526,22 @@ namespace LMStud.Properties {
                 this["APIServerPort"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("localhost")]
+        public string APIServerHost {
+            get { return ((string)(this["APIServerHost"])); }
+            set { this["APIServerHost"] = value; }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string APIServerToken {
+            get { return ((string)(this["APIServerToken"])); }
+            set { this["APIServerToken"] = value; }
+        }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]

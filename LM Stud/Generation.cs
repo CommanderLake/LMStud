@@ -161,18 +161,18 @@ namespace LMStud{
 			var slotNames = useDialecticLocalSlot ? GetDialecticSlotNames() : null;
 			return slotNames != null && slotNames.Length > 0 ? slotNames : new[]{ slotName };
 		}
-		private static List<APIClient.ChatMessage> BuildApiMessages(MessageRole role, string prompt, bool addToChat){
+		private static List<APIClient.ChatMessage> BuildApiMessages(MessageRole role, string prompt, bool addToChat, string replayKey){
 			var messages = new List<APIClient.ChatMessage>();
 			foreach(var msg in MainForm.ChatMessages){
 				if(!msg.NativeBacked) continue;
-				var hasToolCalls = msg.ApiToolCalls != null && msg.ApiToolCalls.Count > 0;
+				var hasToolCalls = msg.ApiToolCalls?.Count > 0;
+				var output = msg.ApiReplayKey == replayKey ? msg.ApiOutputItems : JsonNode.Missing;
 				if(msg.Role == MessageRole.Tool && string.IsNullOrWhiteSpace(msg.ApiToolCallId)) continue;
 				var content = msg.ApiMessageContent;
-				if(string.IsNullOrWhiteSpace(content) && !hasToolCalls) continue;
-				var apiMessage = new APIClient.ChatMessage(NativeChat.RoleToJson(msg.Role), content);
-				if(hasToolCalls) apiMessage.ToolCalls = msg.ApiToolCalls;
-				if(!string.IsNullOrWhiteSpace(msg.ApiToolCallId)) apiMessage.ToolCallId = msg.ApiToolCallId;
-				messages.Add(apiMessage);
+				if(string.IsNullOrWhiteSpace(content) && !hasToolCalls && !output.IsArray) continue;
+				messages.Add(new APIClient.ChatMessage(NativeChat.RoleToJson(msg.Role), content){
+					ToolCalls = msg.ApiToolCalls, ToolCallId = msg.ApiToolCallId, OutputItems = output
+				});
 			}
 			if(!addToChat && !string.IsNullOrWhiteSpace(prompt)) messages.Add(new APIClient.ChatMessage(NativeChat.RoleToJson(role), prompt));
 			return messages;
@@ -188,85 +188,101 @@ namespace LMStud{
 			Exception error = null;
 			var syncError = NativeMethods.StudError.Success;
 			var cancellationToken = GetApiGenerationCancellationToken();
+			ChatMessageControl pending = null;
 			try{
-				var messages = BuildApiMessages(role, prompt, addToChat);
-				var history = APIClient.BuildInputItems(messages);
-				var toolsJson = Tools.BuildApiToolsJson(slot.Name);
 				if(!ModelSlotManager.CanServeApiSlot(slot)) throw new InvalidOperationException(Resources.The_active_API_model_slot_is_incomplete_);
-				using(var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, slot.GetInstructionsOrDefault(), slot.ApiReasoningEffort, slot.ApiReasoningSummary)){
-					string lastToolSignature = null;
-					while(true){
-						var streamOutput = false;
-						MainForm.RunOnUiThread(() => {streamOutput = MainForm.checkStream.Checked;});
-						var streamedContent = new StringBuilder();
-						ChatMessageControl streamedMessage = null;
-						Action<string> streamCallback = null;
-						if(streamOutput)
-							streamCallback = delta => {
-								if(string.IsNullOrEmpty(delta)) return;
-								streamedContent.Append(delta);
-								var snapshot = streamedContent.ToString();
-								try{
-									if(!MsgRenderLock.Wait(0)) return;
-									MainForm.BeginInvoke(new MethodInvoker(() => {
-										try{
-											if(streamedMessage == null) streamedMessage = AddGeneratedAssistantMessage(slot.Name, "", "");
-											streamedMessage.UpdateText("", snapshot, true);
-										} finally{ MsgRenderLock.Release(); }
-									}));
-								} catch(ObjectDisposedException){ MsgRenderLock.Release(); } catch(InvalidOperationException){ MsgRenderLock.Release(); }
-							};
-						var result = client.CreateChatCompletion(history, Common.Temp, Common.NGen, toolsJson, null, cancellationToken, streamCallback);
-						UpdateApiTotalTokensLabel(result.TotalTokens);
-						APIClient.AppendOutputItems(history, result);
-						var content = result.Content;
-						var reasoning = result.Reasoning;
-						var toolCalls = result.ToolCalls;
-						if(!string.IsNullOrWhiteSpace(content) || (toolCalls != null && toolCalls.Count > 0) || !string.IsNullOrWhiteSpace(reasoning)){
-							var displayContent = toolCalls != null && toolCalls.Count > 0 ? Tools.FormatToolCallDisplayText(content, toolCalls) : content;
+				string replayKey;
+				using(var sha = System.Security.Cryptography.SHA256.Create())
+					replayKey = Convert.ToBase64String(sha.ComputeHash(Encoding.UTF8.GetBytes(slot.ApiBaseUrl + "\n" + slot.ApiModel)));
+				JsonArrayBuilder history = null;
+				var streaming = false;
+				MainForm.RunOnUiThread(() => {
+					history = APIClient.BuildInputItems(BuildApiMessages(role, prompt, addToChat, replayKey));
+					streaming = MainForm.checkStream.Checked;
+				});
+				var toolsJson = Tools.BuildApiToolsJson(slot.Name);
+				var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, slot.GetInstructionsOrDefault(),
+					slot.ApiReasoningEffort, slot.ApiReasoningSummary, slot.ApiMode);
+				string lastToolSignature = null;
+				while(true){
+					var streamedContent = new StringBuilder();
+					Action<string> streamCallback = null;
+					if(streaming)
+						streamCallback = delta => {
+							streamedContent.Append(delta);
+							var snapshot = streamedContent.ToString();
+							if(!MsgRenderLock.Wait(0)) return;
 							try{
-								MainForm.Invoke(new MethodInvoker(() => {
-									var message = streamedMessage ?? AddGeneratedAssistantMessage(slot.Name, reasoning ?? "", displayContent ?? "", toolCalls);
-									if(streamedMessage != null){
-										message.ApiToolCalls = toolCalls;
-										message.UpdateText(reasoning ?? "", displayContent ?? "", true);
-									}
-									if(toolCalls != null && toolCalls.Count > 0){
-										message.ApiContent = content ?? "";
-										message.Markdown = false;
-										message.SetRoleText(Resources.Tool_Call);
-									}
-									if(Common.Speak && !string.IsNullOrWhiteSpace(content)) TTS.QueueSpeech(content);
+								MainForm.BeginInvoke(new MethodInvoker(() => {
+									try{
+										if(pending == null){
+											pending = AddGeneratedAssistantMessage(slot.Name, "", "");
+											pending.NativeBacked = false;
+										}
+										pending.UpdateText("", snapshot, true);
+									} finally{ MsgRenderLock.Release(); }
 								}));
-							} catch(ObjectDisposedException){}
+							} catch(InvalidOperationException){ MsgRenderLock.Release(); }
+						};
+
+					var result = client.CreateChatCompletion(history, Common.Temp, Common.NGen, toolsJson, null, cancellationToken, streamCallback);
+					UpdateApiTotalTokensLabel(result.TotalTokens);
+					APIClient.AppendOutputItems(history, result);
+					var content = string.IsNullOrEmpty(result.Content) ? result.Refusal ?? "" : result.Content;
+					var reasoning = result.Reasoning ?? "";
+					var toolCalls = result.ToolCalls;
+					var hasTools = toolCalls?.Count > 0;
+					var displayContent = hasTools ? Tools.FormatToolCallDisplayText(content, toolCalls) : content;
+					MainForm.RunOnUiThread(() => {
+						if(pending == null && string.IsNullOrWhiteSpace(displayContent) && string.IsNullOrWhiteSpace(reasoning)
+							&& !hasTools && !result.Incomplete) return;
+						var message = pending ?? AddGeneratedAssistantMessage(slot.Name, reasoning, displayContent, toolCalls);
+						if(pending != null){
+							pending.ApiToolCalls = toolCalls;
+							pending.UpdateText(reasoning, displayContent, true);
+							pending = null;
 						}
-						if(toolCalls == null || toolCalls.Count == 0) break;
-						var toolSignature = string.Join("|", toolCalls.Select(call => string.Format(Resources._0___1___2_, call.Id, call.Name, call.Arguments)));
-						if(toolSignature == lastToolSignature) throw new InvalidOperationException(Resources.Repeated_tool_calls_detected);
-						lastToolSignature = toolSignature;
-						foreach(var toolCall in toolCalls){
-							var toolStream = streamOutput ? new ToolStreamRenderer(toolCall.Id) : null;
-							var toolResult = Tools.ExecuteToolCall(toolCall, slot.Name, toolStream == null ? (Action<string>)null : toolStream.Append);
-							var toolMessage = new APIClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id };
-							history.Add(APIClient.BuildInputMessagePayload(toolMessage));
-							if(toolStream != null){
-								if(!string.IsNullOrWhiteSpace(toolResult) || toolStream.HasContent) toolStream.Complete(toolResult);
-								continue;
-							}
-							if(!string.IsNullOrWhiteSpace(toolResult)) Tools.AddToolOutputMessage(toolCall.Id, toolResult);
+						message.NativeBacked = true;
+						if(!result.Incomplete && result.OutputItems.IsArray){
+							message.ApiOutputItems = result.OutputItems;
+							message.ApiReplayKey = replayKey;
 						}
+						if(hasTools){
+							message.ApiContent = content;
+							message.Markdown = false;
+							message.SetRoleText(Resources.Tool_Call);
+						}
+						if(result.Incomplete) MainForm.MarkIncompleteApiReply(message, result.IncompleteReason ?? result.FinishReason);
+						if(Common.Speak && !string.IsNullOrWhiteSpace(content)) TTS.QueueSpeech(content);
+					});
+					if(!hasTools) break;
+
+					var signature = string.Join("|", toolCalls.Select(call => string.Format(Resources._0___1___2_, call.Id, call.Name, call.Arguments)));
+					if(signature == lastToolSignature) throw new InvalidOperationException(Resources.Repeated_tool_calls_detected);
+					lastToolSignature = signature;
+					foreach(var toolCall in toolCalls){
+						cancellationToken.ThrowIfCancellationRequested();
+						var toolStream = streaming ? new ToolStreamRenderer(toolCall.Id) : null;
+						var toolResult = Tools.ExecuteToolCall(toolCall, slot.Name, toolStream == null ? (Action<string>)null : toolStream.Append);
+						history.Add(APIClient.BuildInputMessagePayload(new APIClient.ChatMessage("tool", toolResult){ ToolCallId = toolCall.Id }));
+						if(toolStream != null){
+							if(!string.IsNullOrWhiteSpace(toolResult) || toolStream.HasContent) toolStream.Complete(toolResult);
+							continue;
+						}
+						if(!string.IsNullOrWhiteSpace(toolResult)) Tools.AddToolOutputMessage(toolCall.Id, toolResult);
 					}
 				}
 				syncError = SyncNativeChatMessages(slot.Name);
-			} catch(OperationCanceledException){ error = null; } catch(Exception ex){ error = ex; }
+			} catch(OperationCanceledException){} catch(Exception ex){ error = ex; }
 			try{
 				MainForm.Invoke(new MethodInvoker(() => {
-					if(error != null) APIClient.ShowApiClientError(Resources.API_Client, error);
-					if(error == null && syncError != NativeMethods.StudError.Success && syncError != NativeMethods.StudError.ContextFull)
-						MainForm.ShowError(Resources.API_Client, syncError.ToString(), true);
+					if(pending != null) MainForm.MarkIncompleteApiReply(pending, error?.Message ?? Resources.The_API_request_was_canceled_before_completion);
 					MainForm.FinishedGenerating();
+					if(error != null && pending == null) APIClient.ShowApiClientError(Resources.API_Client, error);
+					else if(syncError != NativeMethods.StudError.Success && syncError != NativeMethods.StudError.ContextFull)
+						MainForm.ShowError(Resources.API_Client, syncError.ToString(), true);
 				}));
-			} catch(ObjectDisposedException){} finally{
+			} catch(InvalidOperationException){} finally{
 				ClearApiGenerationCancellation();
 				ModelSlotManager.ReleaseSlots(slotLeases);
 			}
@@ -313,31 +329,21 @@ namespace LMStud{
 		}
 		private static byte[] GetState(string slotName){
 			var size = NativeMethods.GetStateSize(slotName);
+			if(size <= 0) return null;
 			var data = new byte[size];
-			NativeMethods.StudError err;
 			unsafe{
-				fixed(byte* p = data){ err = NativeMethods.GetStateData(slotName, (IntPtr)p, size); }
+				fixed(byte* p = data){ return NativeMethods.GetStateData(slotName, (IntPtr)p, size) == NativeMethods.StudError.Success ? data : null; }
 			}
-			if(err != NativeMethods.StudError.Success) MainForm.ShowError(Resources.API_Server, Resources.GetStateData, true);
-			return data;
 		}
-		private static void SetState(string slotName, byte[] state){
-			if(state == null || state.Length == 0){
-				MainForm.ShowError(Resources.API_Server, Resources.SetState__State_is_null, false);
-				return;
-			}
-			NativeMethods.StudError err;
+		private static bool TrySetState(string slotName, byte[] state){
+			if(state == null || state.Length == 0) return false;
 			unsafe{
-				fixed(byte* p = state){ err = NativeMethods.SetStateData(slotName, (IntPtr)p, state.Length); }
+				fixed(byte* p = state){ return NativeMethods.SetStateData(slotName, (IntPtr)p, state.Length) == NativeMethods.StudError.Success; }
 			}
-			if(err != NativeMethods.StudError.Success) MainForm.ShowError(Resources.API_Server, Resources.SetStateData, true);
 		}
 		internal static bool GenerateForApiServer(string slotName,
-			byte[] state,
-			IntPtr chatState,
+			JsonNode prompt,
 			string historyJson,
-			MessageRole role,
-			string prompt,
 			string toolsJson,
 			out APIClient.ChatCompletionResult result,
 			out byte[] newState,
@@ -346,55 +352,69 @@ namespace LMStud{
 			int? maxTokens = null,
 			string instructions = null,
 			Action<string> streamCallback = null,
-			string promptContentJson = null){
+			byte[] state = null,
+			IntPtr chatState = default,
+			bool captureState = false,
+			float? temperature = null,
+			float? topP = null,
+			CancellationToken cancellationToken = default){
 			result = null;
 			newState = null;
 			newChatState = IntPtr.Zero;
 			tokenCount = 0;
-			if(prompt == null) return false;
+			if(!prompt.IsObject) return false;
 			if(string.IsNullOrWhiteSpace(slotName) || !NativeMethods.IsModelSlotLoaded(slotName)) return false;
 			Interlocked.Increment(ref _apiServerGenCount);
 			byte[] originalState = null;
 			var chatSnapshot = IntPtr.Zero;
+			Exception streamError = null;
 			try{
-				SetApiTokenCallback(slotName, streamCallback);
 				originalState = GetState(slotName);
 				chatSnapshot = NativeMethods.CaptureChatState(slotName);
-				if(!string.IsNullOrWhiteSpace(instructions)){
-					var promptResult = NativeMethods.SetSystemPrompt(slotName, instructions, "");
-					if(promptResult != NativeMethods.StudError.Success) return false;
-				}
-				if(!string.IsNullOrWhiteSpace(historyJson)){
-					var resetResult = NativeMethods.ResetChat(slotName);
-					if(resetResult != NativeMethods.StudError.Success) return false;
-					var syncResult = NativeMethods.SyncChatMessagesJson(slotName, historyJson);
-					if(syncResult != NativeMethods.StudError.Success) return false;
-				} else if(state != null && state.Length > 0 && chatState != IntPtr.Zero){
-					SetState(slotName, state);
+				if(originalState == null || chatSnapshot == IntPtr.Zero) return false;
+				if(chatState != IntPtr.Zero && TrySetState(slotName, state)){
 					NativeMethods.RestoreChatState(slotName, chatState);
 				} else{
-					var resetResult = NativeMethods.ResetChat(slotName);
-					if(resetResult != NativeMethods.StudError.Success) return false;
+					if(NativeMethods.ResetChat(slotName) != NativeMethods.StudError.Success) return false;
+					if(instructions != null && NativeMethods.SetSystemPrompt(slotName, instructions, "") != NativeMethods.StudError.Success) return false;
+					if(!string.IsNullOrWhiteSpace(historyJson) && NativeMethods.SyncChatMessagesJson(slotName, historyJson) != NativeMethods.StudError.Success) return false;
 				}
-				IntPtr responsePtr;
-				var generationError = promptContentJson == null ? NativeMethods.GenerateForAPI(slotName, role, prompt, toolsJson, maxTokens ?? Common.NGen, streamCallback != null, out responsePtr)
-					: NativeMethods.GenerateForAPIJson(slotName, role, promptContentJson, toolsJson, maxTokens ?? Common.NGen, streamCallback != null, out responsePtr);
-				if(generationError != NativeMethods.StudError.Success) return false;
-				if(responsePtr == IntPtr.Zero) return false;
-				try{ result = APIResponseParser.ParseResponseBody(ReadNativeUtf8(responsePtr)); } finally{ NativeMethods.FreeMemory(responsePtr); }
-				newState = GetState(slotName);
-				newChatState = NativeMethods.CaptureChatState(slotName);
-				if(newChatState == IntPtr.Zero) return false;
+				if(streamCallback != null){
+					SetApiTokenCallback(slotName, delta => {
+						if(streamError != null) return;
+						try{ streamCallback(delta); }
+						catch(Exception ex){
+							streamError = ex;
+							NativeMethods.StopGeneration(slotName);
+						}
+					});
+				}
+				using(cancellationToken.Register(() => NativeMethods.StopGeneration(slotName))){
+					cancellationToken.ThrowIfCancellationRequested();
+					var generated = NativeMethods.GenerateForAPIMessage(slotName, Json.Array(prompt).ToJson(), toolsJson, maxTokens ?? Common.NGen,
+						streamCallback != null, temperature ?? -1, topP ?? -1, out var responsePtr);
+					try{
+						cancellationToken.ThrowIfCancellationRequested();
+						if(streamError != null) throw streamError;
+						if(generated != NativeMethods.StudError.Success || responsePtr == IntPtr.Zero) return false;
+						result = APIResponseParser.ParseResponseBody(ReadNativeUtf8(responsePtr));
+					} finally{ if(responsePtr != IntPtr.Zero) NativeMethods.FreeMemory(responsePtr); }
+				}
+				if(captureState && !result.Incomplete){
+					newState = GetState(slotName);
+					if(newState != null) newChatState = NativeMethods.CaptureChatState(slotName);
+				}
 				tokenCount = NativeMethods.LlamaMemSize(slotName);
 				return true;
 			} finally{
-				if(originalState != null) SetState(slotName, originalState);
 				if(chatSnapshot != IntPtr.Zero)
-					try{ NativeMethods.RestoreChatState(slotName, chatSnapshot); } finally{ NativeMethods.FreeChatState(chatSnapshot); }
+					try{
+						if(TrySetState(slotName, originalState)) NativeMethods.RestoreChatState(slotName, chatSnapshot);
+					} finally{ NativeMethods.FreeChatState(chatSnapshot); }
 				SetApiTokenCallback(slotName, null);
 				Interlocked.Decrement(ref _apiServerGenCount);
 				if(MainForm != null)
-					try{ MainForm.Invoke((MethodInvoker)(() => STT.RetryStart())); } catch(ObjectDisposedException){}
+					try{ MainForm.BeginInvoke((MethodInvoker)(() => STT.RetryStart())); } catch(InvalidOperationException){}
 			}
 		}
 		private static void SetApiTokenCallback(string slotName, Action<string> callback){

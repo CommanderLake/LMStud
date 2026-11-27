@@ -3769,7 +3769,7 @@
     <value>621, 156</value>
   </data>
   <data name="groupBox7.Size" type="System.Drawing.Size, System.Drawing">
-    <value>200, 64</value>
+    <value>200, 119</value>
   </data>
   <data name="groupBox7.TabIndex" type="System.Int32, mscorlib">
     <value>43</value>
@@ -7098,5 +7098,86 @@ An empty path enables full filesystem access with absolute paths.</value>
   </data>
   <data name="&gt;&gt;$this.Type" xml:space="preserve">
     <value>System.Windows.Forms.Form, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="labelSlotsEditApiMode.Location" type="System.Drawing.Point, System.Drawing">
+    <value>3, 159</value>
+  </data>
+  <data name="labelSlotsEditApiMode.Size" type="System.Drawing.Size, System.Drawing">
+    <value>85, 16</value>
+  </data>
+  <data name="labelSlotsEditApiMode.Text" xml:space="preserve">
+    <value>API mode</value>
+  </data>
+  <data name="labelSlotsEditApiMode.TabIndex" type="System.Int32, mscorlib">
+    <value>13</value>
+  </data>
+  <data name="comboSlotsEditApiMode.Location" type="System.Drawing.Point, System.Drawing">
+    <value>94, 155</value>
+  </data>
+  <data name="comboSlotsEditApiMode.Size" type="System.Drawing.Size, System.Drawing">
+    <value>180, 21</value>
+  </data>
+  <data name="comboSlotsEditApiMode.TabIndex" type="System.Int32, mscorlib">
+    <value>14</value>
+  </data>
+  <data name="comboSlotsEditApiMode.Items" xml:space="preserve">
+    <value>Auto</value>
+  </data>
+  <data name="comboSlotsEditApiMode.Items1" xml:space="preserve">
+    <value>Responses</value>
+  </data>
+  <data name="comboSlotsEditApiMode.Items2" xml:space="preserve">
+    <value>Chat Completions</value>
+  </data>
+  <data name="comboSlotsEditApiMode.ToolTip" xml:space="preserve">
+    <value>Auto tries Responses and switches to Chat Completions when the endpoint is unavailable.</value>
+  </data>
+  <data name="labelApiServerHost.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 68</value>
+  </data>
+  <data name="labelApiServerHost.Size" type="System.Drawing.Size, System.Drawing">
+    <value>67, 16</value>
+  </data>
+  <data name="labelApiServerHost.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="labelApiServerHost.Text" xml:space="preserve">
+    <value>Listen host</value>
+  </data>
+  <data name="textApiServerHost.Location" type="System.Drawing.Point, System.Drawing">
+    <value>74, 64</value>
+  </data>
+  <data name="textApiServerHost.Size" type="System.Drawing.Size, System.Drawing">
+    <value>120, 20</value>
+  </data>
+  <data name="textApiServerHost.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="textApiServerHost.ToolTip" xml:space="preserve">
+    <value>Use localhost for access from this computer, or enter a specific LAN address.</value>
+  </data>
+  <data name="labelApiServerToken.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 94</value>
+  </data>
+  <data name="labelApiServerToken.Size" type="System.Drawing.Size, System.Drawing">
+    <value>67, 16</value>
+  </data>
+  <data name="labelApiServerToken.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="labelApiServerToken.Text" xml:space="preserve">
+    <value>Bearer token</value>
+  </data>
+  <data name="textApiServerToken.Location" type="System.Drawing.Point, System.Drawing">
+    <value>74, 90</value>
+  </data>
+  <data name="textApiServerToken.Size" type="System.Drawing.Size, System.Drawing">
+    <value>120, 20</value>
+  </data>
+  <data name="textApiServerToken.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="textApiServerToken.ToolTip" xml:space="preserve">
+    <value>Clients must send this bearer token when set. Required for LAN access.</value>
   </data>
 </root>

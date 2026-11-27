@@ -2,219 +2,308 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Net.Sockets;
+using System.Net;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using LMStud.Parsers;
 using LMStud.Properties;
 namespace LMStud{
-	internal sealed class APIClient : IDisposable{
-		private readonly string _apiBaseUrl;
-		private readonly bool _apiClientStore;
-		private readonly HttpClient _apiHttpClient = new HttpClient{ Timeout = Timeout.InfiniteTimeSpan };
+	internal enum ApiMode{ Auto, Responses, ChatCompletions }
+
+	internal sealed class APIClient{
+		private readonly Uri _baseUri;
 		private readonly string _apiKey;
 		private readonly string _instructions;
 		private readonly string _model;
+		private readonly bool _store;
 		private readonly int _reasoningEffort;
 		private readonly int _reasoningSummary;
-		internal APIClient(string apiBaseUrl, string apiKey, string model, bool apiClientStore, string instructions = null, int reasoningEffort = 0, int reasoningSummary = 0){
-			_apiClientStore = apiClientStore;
-			_apiBaseUrl = apiBaseUrl?.Trim() ?? "";
-			_apiKey = apiKey?.Trim() ?? "";
+		private readonly ApiMode _mode;
+		private readonly bool _explicitStore;
+		private bool _chatFallback;
+
+		internal APIClient(string apiBaseUrl, string apiKey, string model, bool store, string instructions = null,
+			int reasoningEffort = 0, int reasoningSummary = 0, ApiMode mode = ApiMode.Auto, bool explicitStore = false){
+			if(!Uri.TryCreate(apiBaseUrl?.Trim(), UriKind.Absolute, out var uri) || (uri.Scheme != "http" && uri.Scheme != "https"))
+				throw new InvalidOperationException(Resources.API_base_URL_is_not_configured_);
+			var path = uri.AbsolutePath.TrimEnd('/');
+			if(path.EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase)){
+				path = path.Substring(0, path.Length - "/chat/completions".Length);
+				if(mode == ApiMode.Auto) mode = ApiMode.ChatCompletions;
+			} else if(path.EndsWith("/responses", StringComparison.OrdinalIgnoreCase)){
+				path = path.Substring(0, path.Length - "/responses".Length);
+				if(mode == ApiMode.Auto) mode = ApiMode.Responses;
+			}
+			_baseUri = new UriBuilder(uri){ Path = path.Length == 0 ? "/v1" : path, Fragment = "" }.Uri;
+			_store = store;
+			_apiKey = apiKey?.Trim();
 			_model = model?.Trim() ?? "";
-			_instructions = instructions?.Trim();
+			_instructions = instructions;
 			_reasoningEffort = reasoningEffort;
 			_reasoningSummary = reasoningSummary;
+			_mode = mode;
+			_explicitStore = explicitStore;
 		}
-		public void Dispose(){_apiHttpClient?.Dispose();}
-		internal ChatCompletionResult CreateChatCompletion(JsonArrayBuilder history,
-			float temperature,
-			int maxTokens,
-			string toolsJson,
-			JsonNode? toolChoice,
-			CancellationToken cancellationToken,
-			Action<string> streamCallback = null){
-			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException(Resources.API_base_URL_is_not_configured_);
+
+		private string ModelFamily => _model.Substring(_model.LastIndexOf('/') + 1).ToLowerInvariant();
+		private bool IsGpt62 => ModelFamily.StartsWith("gpt-6.2", StringComparison.Ordinal);
+		private bool IsOSeries => ModelFamily.Length > 1 && ModelFamily[0] == 'o' && char.IsDigit(ModelFamily[1]);
+		private bool IsOpenAi => _baseUri.Host.Equals("api.openai.com", StringComparison.OrdinalIgnoreCase);
+
+		internal ChatCompletionResult CreateChatCompletion(JsonArrayBuilder history, float? temperature, int? maxTokens, string toolsJson, JsonNode? toolChoice,
+			CancellationToken cancellationToken, Action<string> streamCallback = null, bool? parallelToolCalls = null, float? topP = null, JsonNode textFormat = default,
+			bool includeUsage = false, Func<JsonNode, bool> responseEvent = null){
 			if(history == null) throw new InvalidOperationException(Resources.History_is_not_configured_);
-			var stream = streamCallback != null;
-			var responsesPayload = BuildResponsesPayload(history, temperature, maxTokens, toolsJson, toolChoice, stream);
-			var responsesError = TrySendChatRequest(BuildResponsesEndpoint(_apiBaseUrl), responsesPayload, cancellationToken, streamCallback, out var responsesResult);
-			if(responsesResult != null) return responsesResult;
-			if(!ShouldFallbackToChatCompletions(responsesError)) throw responsesError ?? new InvalidOperationException(Resources.API_response_did_not_contain_any_message_);
-			var chatCompletionsPayload = BuildChatCompletionsPayload(history, temperature, maxTokens, toolsJson, toolChoice, stream);
-			var chatCompletionsError = TrySendChatRequest(BuildChatCompletionsEndpoint(_apiBaseUrl), chatCompletionsPayload, cancellationToken, streamCallback, out var chatCompletionsResult);
-			if(chatCompletionsResult != null) return chatCompletionsResult;
-			throw chatCompletionsError ?? responsesError ?? new InvalidOperationException(Resources.API_response_did_not_contain_any_message_);
+			var tools = string.IsNullOrWhiteSpace(toolsJson) ? JsonNode.Missing : Json.Parse(toolsJson);
+			var requiresResponses = tools.IsArray && tools.Any(tool => {
+				var type = tool.GetString("type") ?? "function";
+				return type != "function";
+			});
+			requiresResponses |= IsGpt62 && tools.Count > 0;
+			if(_mode != ApiMode.ChatCompletions && (!_chatFallback || requiresResponses)){
+				var responses = BuildPayload(history, temperature, maxTokens, tools, toolChoice, streamCallback != null, parallelToolCalls, topP, textFormat, false, includeUsage);
+				try{ return Send("POST", "responses", responses, cancellationToken, streamCallback, (reader, token, callback) =>
+					ReadCompletion(reader, token, callback, responseEvent)); }
+				catch(RequestException ex) when(_mode == ApiMode.Auto && !requiresResponses && ex.EndpointUnavailable){
+					_chatFallback = true;
+				}
+			}
+			if(requiresResponses) throw new InvalidOperationException("The selected tools require the Responses API.");
+			var chat = BuildPayload(history, temperature, maxTokens, tools, toolChoice, streamCallback != null, parallelToolCalls, topP, textFormat, true, includeUsage);
+			return Send("POST", "chat/completions", chat, cancellationToken, streamCallback, (reader, token, callback) =>
+				ReadCompletion(reader, token, callback, null));
 		}
-		private static bool ShouldFallbackToChatCompletions(InvalidOperationException error){
-			if(error == null) return true;
-			var message = error.Message ?? "";
-			if(ContainsAny(message, "404", "405", "501", "not found", "not implemented")) return true;
-			return ContainsAny(message, "400") && ContainsAny(message, "unknown", "unsupported", "invalid", "parallel_tool_calls", "tool_choice", "max_output_tokens", "input", "responses", "stream");
-		}
-		private static bool ContainsAny(string text, params string[] values){return values.Any(value => text.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0);}
-		private InvalidOperationException TrySendChatRequest(string endpoint, JsonNode payload, CancellationToken cancellationToken, Action<string> streamCallback, out ChatCompletionResult result){
-			result = null;
-			try{
-				using(var request = CreateRequest(HttpMethod.Post, endpoint)){
-					var content = payload.ToJson();
-					request.Content = new StringContent(content, Encoding.UTF8, "application/json");
-					var completionOption = streamCallback == null ? HttpCompletionOption.ResponseContentRead : HttpCompletionOption.ResponseHeadersRead;
-					using(var response = _apiHttpClient.SendAsync(request, completionOption, cancellationToken).GetAwaiter().GetResult()){
-						if(streamCallback != null && response.IsSuccessStatusCode){
-							result = ParseStreamingResponse(response.Content, streamCallback, cancellationToken);
-							return null;
+
+		private T Send<T>(string method, string resource, JsonNode payload, CancellationToken token, Action<string> streamCallback,
+			Func<StreamReader, CancellationToken, Action<string>, T> read){
+			token.ThrowIfCancellationRequested();
+			var endpoint = new UriBuilder(_baseUri){ Path = _baseUri.AbsolutePath.TrimEnd('/') + "/" + resource }.Uri;
+			var request = (HttpWebRequest)WebRequest.Create(endpoint);
+			request.Method = method;
+			request.Timeout = 300000;
+			request.ReadWriteTimeout = 120000;
+			request.AllowAutoRedirect = false;
+			if(endpoint.IsLoopback) request.Proxy = null;
+			request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+			request.Accept = streamCallback == null ? "application/json" : "text/event-stream, application/json";
+			if(!string.IsNullOrWhiteSpace(_apiKey)) request.Headers[HttpRequestHeader.Authorization] = "Bearer " + _apiKey;
+			using(token.Register(request.Abort)){
+				try{
+					if(method == "POST"){
+						var bytes = Encoding.UTF8.GetBytes(payload.ToJson());
+						request.ContentType = "application/json; charset=utf-8";
+						request.ContentLength = bytes.Length;
+						using(var output = request.GetRequestStream()) output.Write(bytes, 0, bytes.Length);
+					}
+					using(var response = (HttpWebResponse)request.GetResponse())
+					using(var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8)){
+						if((int)response.StatusCode >= 300) throw new RequestException((int)response.StatusCode, "");
+						var result = read(reader, token, streamCallback);
+						token.ThrowIfCancellationRequested();
+						return result;
+					}
+				} catch(WebException ex) when(ex.Response is HttpWebResponse){
+					using(var response = (HttpWebResponse)ex.Response){
+						token.ThrowIfCancellationRequested();
+						using(var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8)){
+							var buffer = new char[8192];
+							throw new RequestException((int)response.StatusCode, new string(buffer, 0, reader.ReadBlock(buffer, 0, buffer.Length)));
 						}
-						var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-						if(!response.IsSuccessStatusCode) throw new InvalidOperationException(string.Format(Resources.API_error___0_____1_, (int)response.StatusCode, body));
-						result = APIResponseParser.ParseResponseBody(body);
-						return null;
 					}
+				} catch(Exception) when(token.IsCancellationRequested){
+					throw new OperationCanceledException(token);
 				}
-			} catch(OperationCanceledException){ throw; } catch(InvalidOperationException ex){ return ex; } catch(Exception ex){ return new InvalidOperationException(ex.Message, ex); }
+			}
 		}
-		private HttpRequestMessage CreateRequest(HttpMethod method, string endpoint){
-			var request = new HttpRequestMessage(method, endpoint);
-			if(!string.IsNullOrWhiteSpace(_apiKey)) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
-			return request;
+
+		private static ChatCompletionResult ReadCompletion(StreamReader reader, CancellationToken token, Action<string> callback, Func<JsonNode, bool> responseEvent){
+			if(callback == null) return APIResponseParser.ParseResponseBody(reader.ReadToEnd());
+			var response = new StreamingResponse();
+			var data = new StringBuilder();
+			var body = new StringBuilder();
+			var eventName = "";
+			var sawData = false;
+			string line;
+			while((line = reader.ReadLine()) != null){
+				token.ThrowIfCancellationRequested();
+				if(line.Length == 0){
+					if(response.Process(eventName, data.ToString(), callback, responseEvent)) return response.Result();
+					data.Clear();
+					eventName = "";
+				} else if(line.StartsWith("event:", StringComparison.Ordinal)) eventName = line.Substring(6).Trim();
+				else if(line.StartsWith("data:", StringComparison.Ordinal)){
+					if(data.Length > 0) data.Append('\n');
+					data.Append(line.Length > 5 && line[5] == ' ' ? line.Substring(6) : line.Substring(5));
+					sawData = true;
+				} else if(!sawData && line[0] != ':') body.AppendLine(line);
+			}
+			token.ThrowIfCancellationRequested();
+			if(!sawData && body.Length > 0) return APIResponseParser.ParseResponseBody(body.ToString());
+			if(data.Length > 0) response.Process(eventName, data.ToString(), callback, responseEvent);
+			return response.Result();
 		}
-		private ChatCompletionResult ParseStreamingResponse(HttpContent content, Action<string> streamCallback, CancellationToken cancellationToken){
-			var accumulator = new StreamingResponseAccumulator();
-			using(var stream = content.ReadAsStreamAsync().GetAwaiter().GetResult())
-			using(var reader = new StreamReader(stream)){
-				var eventName = "";
-				var data = new StringBuilder();
-				var rawBody = new StringBuilder();
-				var sawSseData = false;
-				while(!reader.EndOfStream){
-					cancellationToken.ThrowIfCancellationRequested();
-					var line = reader.ReadLine();
-					if(line == null) break;
-					if(line.Length == 0){
-						if(ProcessStreamingEvent(eventName, data.ToString(), accumulator, streamCallback)) break;
-						eventName = "";
-						data.Clear();
-						continue;
-					}
-					if(line.StartsWith("event:", StringComparison.OrdinalIgnoreCase)){
-						eventName = line.Substring(6).Trim();
-						continue;
-					}
-					if(line.StartsWith("data:", StringComparison.OrdinalIgnoreCase)){
-						sawSseData = true;
-						if(data.Length > 0) data.Append('\n');
-						data.Append(line.Substring(5).TrimStart());
-						continue;
-					}
-					if(!line.StartsWith(":", StringComparison.Ordinal)) rawBody.AppendLine(line);
-				}
-				if(!sawSseData && rawBody.Length > 0) return APIResponseParser.ParseResponseBody(rawBody.ToString());
-				if(data.Length > 0) ProcessStreamingEvent(eventName, data.ToString(), accumulator, streamCallback);
-			}
-			return accumulator.BuildResult();
-		}
-		private static bool ProcessStreamingEvent(string eventName, string data, StreamingResponseAccumulator accumulator, Action<string> streamCallback){
-			if(string.IsNullOrWhiteSpace(data)) return false;
-			if(string.Equals(data.Trim(), "[DONE]", StringComparison.OrdinalIgnoreCase)) return true;
-			var root = Json.Parse(data);
-			if(!root.IsObject) return false;
-			accumulator.RememberResponseId(root.GetString("id"));
-			var type = root.GetString("type") ?? eventName;
-			if(string.Equals(type, "response.completed", StringComparison.OrdinalIgnoreCase) || string.Equals(type, "response.done", StringComparison.OrdinalIgnoreCase)){
-				if(root["response"].IsObject) accumulator.SetFinalResponse(root["response"]);
-				return false;
-			}
-			if(string.Equals(type, "response.output_text.delta", StringComparison.OrdinalIgnoreCase)){
-				accumulator.AppendContent(root.GetString("delta"), streamCallback);
-				return false;
-			}
-			if(string.Equals(type, "response.reasoning_text.delta", StringComparison.OrdinalIgnoreCase)
-				|| string.Equals(type, "response.reasoning_summary_text.delta", StringComparison.OrdinalIgnoreCase)){
-				accumulator.AppendReasoning(root.GetString("delta"));
-				return false;
-			}
-			if(string.Equals(type, "response.function_call_arguments.delta", StringComparison.OrdinalIgnoreCase)){
-				accumulator.AppendToolArguments(GetStreamingToolKey(root), root.GetString("delta"));
-				return false;
-			}
-			if(string.Equals(type, "response.output_item.done", StringComparison.OrdinalIgnoreCase) || string.Equals(type, "response.output_item.added", StringComparison.OrdinalIgnoreCase)){
-				if(root["item"].IsObject) accumulator.MergeToolCall(GetStreamingToolKey(root), root["item"]);
-				return false;
-			}
-			if(root["choices"].IsArray)
-				foreach(var choice in root["choices"].Where(choice => choice.IsObject)){
-					var delta = choice["delta"];
-					if(!delta.IsObject) continue;
-					var contentDelta = APIResponseParserCommon.ExtractContentText(delta["content"]);
-					accumulator.AppendContent(contentDelta, streamCallback);
-					accumulator.AppendReasoning(delta.GetString("reasoning_content") ?? delta.GetString("reasoning"));
-					if(delta["tool_calls"].IsArray)
-						foreach(var toolCall in delta["tool_calls"].Where(toolCall => toolCall.IsObject))
-							accumulator.MergeChatToolCall(toolCall);
-				}
-			return false;
-		}
-		private static string GetStreamingToolKey(JsonNode root){return root.GetString("output_index") ?? root.GetString("item_id") ?? root.GetString("id") ?? "0";}
-		private JsonNode BuildResponsesPayload(JsonArrayBuilder history, float temperature, int maxTokens, string toolsJson, JsonNode? toolChoice, bool stream){
-			var payload = Json.ObjectBuilder(Json.P("model", _model), Json.P("input", history), Json.P("temperature", temperature));
-			if(!string.IsNullOrWhiteSpace(_instructions)) payload["instructions"] = Json.String(_instructions);
-			payload["store"] = Json.Value(_apiClientStore);
-			if(stream) payload["stream"] = Json.Value(true);
-			if(maxTokens > 0) payload["max_output_tokens"] = Json.Value(maxTokens);
+
+		private JsonNode BuildPayload(JsonArrayBuilder history, float? temperature, int? maxTokens, JsonNode tools, JsonNode? choice, bool stream,
+			bool? parallelToolCalls, float? topP, JsonNode textFormat, bool chat, bool includeUsage){
+			var payload = Json.ObjectBuilder(Json.P("model", _model));
 			var effort = Common.GetReasoningEffort(_reasoningEffort);
-			var summaryType = Common.GetReasoningSummaryType(_reasoningSummary);
-			if(effort != null || summaryType != null){
-				var reasoningPayload = Json.ObjectBuilder();
-				if(effort != null) reasoningPayload["effort"] = Json.String(effort);
-				if(summaryType != null) reasoningPayload["summary"] = Json.String(summaryType);
-				payload["reasoning"] = reasoningPayload.ToNode();
+			if(IsGpt62 && effort == "none") effort = "low";
+			if(!IsGpt62 && !IsOSeries && (!ModelFamily.StartsWith("gpt-5", StringComparison.Ordinal) || effort == "none")){
+				if(temperature.HasValue) payload.Set("temperature", temperature.Value);
+				if(topP.HasValue) payload.Set("top_p", topP.Value);
 			}
-			AddToolOptions(payload, toolsJson, toolChoice, false);
-			return payload.ToNode();
-		}
-		private JsonNode BuildChatCompletionsPayload(JsonArrayBuilder history, float temperature, int maxTokens, string toolsJson, JsonNode? toolChoice, bool stream){
-			var messages = ConvertHistoryToChatCompletionMessages(history);
-			if(!string.IsNullOrWhiteSpace(_instructions)) messages.Insert(0, Json.Object(Json.P("role", "system"), Json.P("content", _instructions)));
-			var payload = Json.ObjectBuilder(Json.P("model", _model), Json.P("messages", messages), Json.P("temperature", temperature));
-			if(stream) payload["stream"] = Json.Value(true);
-			if(maxTokens > 0) payload["max_tokens"] = Json.Value(maxTokens);
-			AddToolOptions(payload, toolsJson, toolChoice, true);
-			return payload.ToNode();
-		}
-		private static void AddToolOptions(JsonObjectBuilder payload, string toolsJson, JsonNode? toolChoice, bool chatCompletions){
-			if(string.IsNullOrWhiteSpace(toolsJson)) return;
-			var normalized = NormalizeToolsJson(toolsJson, chatCompletions);
-			payload["tools"] = normalized.Exists ? normalized : Json.Parse(toolsJson);
-			payload["tool_choice"] = toolChoice.HasValue && toolChoice.Value.Exists ? toolChoice.Value : Json.String("auto");
-			payload["parallel_tool_calls"] = Json.Value(true);
-		}
-		internal static JsonArrayBuilder ConvertHistoryToChatCompletionMessages(JsonArrayBuilder history){
-			var messages = Json.ArrayBuilder();
-			if(history == null) return messages;
-			foreach(var item in history.Where(item => item.IsObject)){
-				var itemType = item.GetString("type");
-				if(string.Equals(itemType, "function_call_output", StringComparison.OrdinalIgnoreCase)){
-					messages.Add(Json.Object(Json.P("role", "tool"), Json.P("tool_call_id", item.GetString("call_id")), Json.P("content", item.GetString("output") ?? "")));
-					continue;
+			if(stream) payload.Set("stream", true);
+			if(chat){
+				var messages = ConvertHistoryToChatCompletionMessages(history);
+				if(!string.IsNullOrWhiteSpace(_instructions))
+					messages.Insert(0, Json.Object(Json.P("role", IsGpt62 || IsOSeries || ModelFamily.StartsWith("gpt-5", StringComparison.Ordinal) ? "developer" : "system"),
+						Json.P("content", _instructions)));
+				payload.Set("messages", messages);
+				var modernLimit = IsOpenAi || IsGpt62 || IsOSeries || ModelFamily.StartsWith("gpt-5", StringComparison.Ordinal)
+					|| _baseUri.Host.Equals("generativelanguage.googleapis.com", StringComparison.OrdinalIgnoreCase);
+				if(maxTokens > 0) payload.Set(modernLimit ? "max_completion_tokens" : "max_tokens", maxTokens.Value);
+				if(effort != null) payload.Set("reasoning_effort", effort);
+				if(IsOpenAi || _store || _explicitStore) payload.Set("store", _store);
+				if(stream && (IsOpenAi || includeUsage)) payload.Set("stream_options", Json.Object(Json.P("include_usage", true)));
+			} else{
+				payload.Set("input", history);
+				if(!string.IsNullOrWhiteSpace(_instructions)) payload.Set("instructions", _instructions);
+				payload.Set("store", _store);
+				if(maxTokens > 0) payload.Set("max_output_tokens", maxTokens.Value);
+				var summary = Common.GetReasoningSummaryType(_reasoningSummary);
+				if(effort != null || summary != null){
+					var reasoning = Json.ObjectBuilder();
+					if(effort != null) reasoning.Set("effort", effort);
+					if(summary != null) reasoning.Set("summary", summary);
+					payload.Set("reasoning", reasoning);
 				}
-				if(string.Equals(itemType, "function_call", StringComparison.OrdinalIgnoreCase)){
-					var toolCall = Json.Object(Json.P("id", item.GetString("call_id")),
-						Json.P("type", "function"),
-						Json.P("function", Json.Object(Json.P("name", item.GetString("name")), Json.P("arguments", item.GetString("arguments") ?? ""))));
-					messages.Add(Json.Object(Json.P("role", "assistant"), Json.P("content", ""), Json.P("tool_calls", Json.Array(toolCall))));
+				if(IsOpenAi && !_store && (IsGpt62 || IsOSeries || ModelFamily.StartsWith("gpt-5", StringComparison.Ordinal)))
+					payload.Set("include", Json.Array("reasoning.encrypted_content"));
+			}
+			if(!textFormat.IsNull){
+				var format = ConvertTextFormat(textFormat, chat);
+				payload.Set(chat ? "response_format" : "text", chat ? format : Json.Object(Json.P("format", format)));
+			}
+			if(tools.Exists && !tools.IsNull){
+				if(!tools.IsArray) throw new InvalidOperationException("tools must be an array.");
+				if(tools.Count > 0) payload.Set("tools", Json.Array(tools.Select(tool => ConvertNamedTool(tool, chat)).Cast<object>().ToArray()));
+			}
+			if(!chat || !IsGpt62){
+				if(choice.HasValue && !choice.Value.IsNull) payload.Set("tool_choice", ConvertToolChoice(choice.Value, chat));
+				if(parallelToolCalls.HasValue) payload.Set("parallel_tool_calls", parallelToolCalls.Value);
+			}
+			return payload.ToNode();
+		}
+
+		private static JsonNode ConvertNamedTool(JsonNode tool, bool chat){
+			var type = tool.GetString("type") ?? "function";
+			if(type != "function" && type != "custom") return tool;
+			var definition = tool[type].IsObject ? tool[type] : tool;
+			var fields = Json.ObjectBuilder();
+			if(!chat) fields.Set("type", type);
+			foreach(var property in definition.Properties())
+				if(property.Name != "type") fields.Set(property.Name, property.Value);
+			return chat ? Json.Object(Json.P("type", type), Json.P(type, fields)) : fields.ToNode();
+		}
+		private static JsonNode ConvertToolChoice(JsonNode choice, bool chat){
+			if(choice.GetString("type") != "allowed_tools") return choice.IsObject ? ConvertNamedTool(choice, chat) : choice;
+			var options = choice["allowed_tools"].IsObject ? choice["allowed_tools"] : choice;
+			var tools = Json.Array(options["tools"].Select(tool => ConvertNamedTool(tool, chat)).Cast<object>().ToArray());
+			var builder = Json.ObjectBuilder(Json.P("mode", options["mode"]), Json.P("tools", tools));
+			if(chat) return Json.Object(Json.P("type", "allowed_tools"), Json.P("allowed_tools", builder));
+			builder.Set("type", "allowed_tools");
+			return builder.ToNode();
+		}
+		private static JsonNode ConvertTextFormat(JsonNode format, bool chat){
+			if(format.GetString("type") != "json_schema") return format;
+			var schema = format["json_schema"].IsObject ? format["json_schema"] : format;
+			var builder = Json.ObjectBuilder();
+			if(!chat) builder.Set("type", "json_schema");
+			foreach(var property in schema.Properties())
+				if(property.Name != "type") builder.Set(property.Name, property.Value);
+			return chat ? Json.Object(Json.P("type", "json_schema"), Json.P("json_schema", builder)) : builder.ToNode();
+		}
+
+		internal static JsonArrayBuilder ConvertHistoryToChatCompletionMessages(IEnumerable<JsonNode> history){
+			var messages = Json.ArrayBuilder();
+			JsonObjectBuilder assistant = null;
+			JsonArrayBuilder calls = null;
+			void FlushAssistant(){
+				if(assistant == null) return;
+				if(calls != null) assistant.Set("tool_calls", calls);
+				messages.Add(assistant);
+				assistant = null;
+				calls = null;
+			}
+			foreach(var item in history ?? Enumerable.Empty<JsonNode>()){
+				var type = item.GetString("type");
+				if(type == "reasoning") continue;
+				if(type == "function_call"){
+					if(assistant == null) assistant = Json.ObjectBuilder(Json.P("role", "assistant"), Json.P("content", null));
+					if(calls == null) calls = Json.ArrayBuilder();
+					calls.Add(Json.Object(Json.P("id", item.GetString("call_id")), Json.P("type", "function"),
+						Json.P("function", Json.Object(Json.P("name", item.GetString("name")), Json.P("arguments", item.GetString("arguments") ?? "")))));
 					continue;
 				}
 				var role = item.GetString("role");
-				if(string.IsNullOrWhiteSpace(role)) continue;
-				var content = item["content"].Exists ? item["content"] : Json.String("");
-				messages.Add(Json.Object(Json.P("role", role), Json.P("content", MarkdownImages.ConvertResponsesContentToChat(content))));
+				if(type != "function_call_output" && string.IsNullOrWhiteSpace(role)) continue;
+				FlushAssistant();
+				if(type == "function_call_output"){
+					messages.Add(Json.Object(Json.P("role", "tool"), Json.P("tool_call_id", item.GetString("call_id")),
+						Json.P("content", MarkdownImages.ConvertResponsesContentToChat(item["output"]))));
+					continue;
+				}
+				var message = Json.ObjectBuilder(Json.P("role", role), Json.P("content", MarkdownImages.ConvertResponsesContentToChat(item["content"])));
+				if(role == "assistant") assistant = message;
+				else messages.Add(message);
 			}
+			FlushAssistant();
 			return messages;
 		}
+
+		internal static JsonArrayBuilder ConvertChatMessagesToInput(JsonNode messages){
+			if(!messages.IsArray) throw new InvalidOperationException("messages must be an array.");
+			var items = Json.ArrayBuilder();
+			foreach(var message in messages){
+				var role = message.GetString("role");
+				if(string.IsNullOrWhiteSpace(role)) throw new InvalidOperationException("Every message needs a role.");
+				var content = ConvertChatContentToInput(message["content"], role == "assistant");
+				if(role == "tool"){
+					var id = message.GetString("tool_call_id");
+					if(string.IsNullOrWhiteSpace(id)) throw new InvalidOperationException(Resources.Tool_call_output_requires_a_call_id_);
+					items.Add(Json.Object(Json.P("type", "function_call_output"), Json.P("call_id", id), Json.P("output", content)));
+					continue;
+				}
+				var calls = message["tool_calls"];
+				if(!content.IsNull || calls.Count == 0)
+					items.Add(Json.Object(Json.P("role", role), Json.P("content", content.IsNull ? Json.String("") : content)));
+				foreach(var call in calls){
+					var name = call["function"].GetString("name");
+					var id = call.GetString("id");
+					if(string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(id)) throw new InvalidOperationException("Each function call needs a name and ID.");
+					items.Add(Json.Object(Json.P("type", "function_call"), Json.P("name", name),
+						Json.P("call_id", id), Json.P("arguments", call["function"].GetString("arguments") ?? "")));
+				}
+			}
+			return items;
+		}
+		private static JsonNode ConvertChatContentToInput(JsonNode content, bool assistant){
+			if(!content.IsArray) return content;
+			var parts = Json.ArrayBuilder();
+			foreach(var part in content){
+				var type = part.GetString("type");
+				if(type == "text") parts.Add(Json.Object(Json.P("type", assistant ? "output_text" : "input_text"), Json.P("text", part["text"])));
+				else if(type == "image_url"){
+					var image = part["image_url"];
+					var builder = Json.ObjectBuilder(Json.P("type", "input_image"), Json.P("image_url", image.GetString("url")));
+					if(image["detail"].Exists) builder.Set("detail", image["detail"]);
+					parts.Add(builder);
+				} else parts.Add(part);
+			}
+			return parts.ToNode();
+		}
+
 		internal static JsonNode BuildInputMessagePayload(ChatMessage message){
 			var isToolRole = string.Equals(message.Role, "tool", StringComparison.OrdinalIgnoreCase);
 			if(isToolRole){
@@ -231,6 +320,10 @@ namespace LMStud{
 			if(messages == null) return Json.ArrayBuilder();
 			var items = Json.ArrayBuilder();
 			foreach(var message in messages.Where(message => message != null)){
+				if(message.OutputItems.IsArray && message.OutputItems.Count > 0){
+					foreach(var item in message.OutputItems) items.Add(item);
+					continue;
+				}
 				var hasToolCalls = message.ToolCalls != null && message.ToolCalls.Count > 0;
 				var hasContent = !string.IsNullOrWhiteSpace(message.Content);
 				var isToolRole = string.Equals(message.Role, "tool", StringComparison.OrdinalIgnoreCase);
@@ -246,114 +339,67 @@ namespace LMStud{
 			return items;
 		}
 		internal static void AppendOutputItems(JsonArrayBuilder history, ChatCompletionResult result){
-			if(history == null || result == null) return;
-			if(result.OutputItems.IsArray){
-				foreach(var item in result.OutputItems) history.Add(ConvertOutputItemToInputItem(item));
+			if(result.OutputItems.IsArray && result.OutputItems.Count > 0){
+				foreach(var item in result.OutputItems)
+					if(!result.Incomplete || (item.GetString("type") != "function_call" && item.GetString("type") != "custom_tool_call")) history.Add(item);
 				return;
 			}
-			if(string.IsNullOrWhiteSpace(result.Content) && (result.ToolCalls == null || result.ToolCalls.Count == 0)) return;
-			var message = new ChatMessage("assistant", result.Content ?? ""){ ToolCalls = result.ToolCalls };
-			foreach(var item in BuildInputItems(new[]{ message })) history.Add(item);
+			if(!string.IsNullOrWhiteSpace(result.Content) || result.ToolCalls?.Count > 0)
+				foreach(var item in BuildInputItems(new[]{ new ChatMessage("assistant", result.Content ?? ""){ ToolCalls = result.ToolCalls } })) history.Add(item);
 		}
-		private static JsonNode ConvertOutputItemToInputItem(JsonNode item){
-			if(!item.IsObject) return item;
-			var obj = item;
-			var type = obj.GetString("type");
-			if(string.Equals(type, "message", StringComparison.OrdinalIgnoreCase)){
-				var role = obj.GetString("role") ?? "assistant";
-				var content = APIResponseParserCommon.ExtractContentText(obj["content"]) ?? obj.GetString("text") ?? "";
-				return Json.Object(Json.P("role", role), Json.P("content", content));
-			}
-			if(string.Equals(type, "output_text", StringComparison.OrdinalIgnoreCase)){
-				var content = obj.GetString("text") ?? obj.GetString("content") ?? "";
-				return Json.Object(Json.P("role", "assistant"), Json.P("content", content));
-			}
-			return obj;
+		internal List<string> GetModels(CancellationToken token){
+			return Send("GET", "models", JsonNode.Missing, token, null, (reader, _, callback) =>
+				Json.Parse(reader.ReadToEnd())["data"].Select(item => item.GetString("id")).Where(id => !string.IsNullOrWhiteSpace(id)).ToList());
 		}
-		private static JsonNode NormalizeToolsJson(string toolsJson, bool chatCompletions){
-			try{
-				var toolsArray = Json.Parse(toolsJson);
-				if(!toolsArray.IsArray) return JsonNode.Missing;
-				var normalized = Json.ArrayBuilder();
-				foreach(var tool in toolsArray.Where(tool => tool.IsObject)){
-					var type = tool.GetString("type") ?? "function";
-					var functionSource = tool["function"].IsObject ? tool["function"] : tool;
-					var function = BuildToolFunction(functionSource);
-					if(!function.Exists) continue;
-					normalized.Add(chatCompletions ? Json.Object(Json.P("type", "function"), Json.P("function", function)) : BuildResponsesTool(type, function));
-				}
-				return normalized.Count > 0 ? normalized.ToNode() : JsonNode.Missing;
-			} catch{ return JsonNode.Missing; }
-		}
-		private static JsonNode BuildResponsesTool(string type, JsonNode function){
-			var tool = Json.ObjectBuilder(Json.P("type", type), Json.P("name", function["name"]));
-			if(function["description"].Exists) tool["description"] = function["description"];
-			if(function["parameters"].Exists) tool["parameters"] = function["parameters"];
-			return tool.ToNode();
-		}
-		private static JsonNode BuildToolFunction(JsonNode source){
-			var name = source.GetString("name");
-			if(string.IsNullOrWhiteSpace(name)) return JsonNode.Missing;
-			var function = Json.ObjectBuilder(Json.P("name", name));
-			var description = source.GetString("description");
-			if(!string.IsNullOrWhiteSpace(description)) function["description"] = Json.String(description);
-			if(source["parameters"].Exists) function["parameters"] = source["parameters"];
-			return function.ToNode();
-		}
-		internal List<string> GetModels(CancellationToken cancellationToken){
-			if(string.IsNullOrWhiteSpace(_apiBaseUrl)) throw new InvalidOperationException(Resources.API_base_URL_is_not_configured_);
-			using(var request = CreateRequest(HttpMethod.Get, BuildModelsEndpoint(_apiBaseUrl))){
-				using(var response = _apiHttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()){
-					var body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-					if(!response.IsSuccessStatusCode) throw new InvalidOperationException(string.Format(Resources.API_error___0_____1_, (int)response.StatusCode, body));
-					var json = Json.Parse(body);
-					var models = new List<string>();
-					var data = json["data"];
-					if(!data.IsArray) return models;
-					models.AddRange(data.Select(item => item["id"].AsString()).Where(id => !string.IsNullOrWhiteSpace(id)));
-					return models;
-				}
-			}
-		}
-		private static string BuildResponsesEndpoint(string apiBaseUrl){return BuildV1Endpoint(apiBaseUrl, "responses");}
-		private static string BuildChatCompletionsEndpoint(string apiBaseUrl){return BuildV1Endpoint(apiBaseUrl, "chat/completions");}
-		private static string BuildModelsEndpoint(string apiBaseUrl){return BuildV1Endpoint(apiBaseUrl, "models");}
-		private static string BuildV1Endpoint(string apiBaseUrl, string resource){
-			var normalized = apiBaseUrl.TrimEnd('/');
-			if(normalized.EndsWith("/v1", StringComparison.OrdinalIgnoreCase)) return normalized + "/" + resource;
-			return normalized + "/v1/" + resource;
-		}
-		private static string GetApiClientFriendlyError(Exception exception){
-			if(exception == null) return Resources.Unknown_API_error_;
-			var root = exception;
-			while(root?.InnerException != null) root = root.InnerException;
-			switch(root){
-				case SocketException _:
-				case HttpRequestException _: return Resources.Unable_to_connect_to_the_API_server;
-				case TaskCanceledException _:
-				case TimeoutException _: return Resources.The_API_request_timed_out;
-				case OperationCanceledException _: return Resources.The_API_request_was_canceled_before_completion;
-				case InvalidOperationException _:{
-					var message = root.Message ?? "";
-					if(message.IndexOf("401", StringComparison.OrdinalIgnoreCase) >= 0 || message.IndexOf("403", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.Authentication_failed;
-					if(message.IndexOf("404", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.API_endpoint_not_found;
-					if(message.IndexOf("429", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.Rate_limit_exceeded;
-					if(message.IndexOf("500", StringComparison.OrdinalIgnoreCase) >= 0
-						|| message.IndexOf("502", StringComparison.OrdinalIgnoreCase) >= 0
-						|| message.IndexOf("503", StringComparison.OrdinalIgnoreCase) >= 0) return Resources.The_API_server_encountered_an_error;
-					break;
-				}
-			}
-			return root?.Message;
-		}
+
 		internal static void ShowApiClientError(string action, Exception exception){
-			var detail = GetApiClientFriendlyError(exception);
-			var technical = exception?.Message;
-			if(!string.IsNullOrWhiteSpace(technical) && !string.Equals(technical, detail, StringComparison.Ordinal)) detail += "\r\n\r\n" + technical;
+			var detail = exception.Message;
+			if(exception is RequestException request){
+				switch(request.StatusCode){
+					case 401:
+					case 403: detail = Resources.Authentication_failed; break;
+					case 404 when request.EndpointUnavailable: detail = Resources.API_endpoint_not_found; break;
+					case 429: detail = Resources.Rate_limit_exceeded; break;
+					case 500:
+					case 502:
+					case 503: detail = Resources.The_API_server_encountered_an_error; break;
+				}
+			} else if(exception is WebException web){
+				detail = web.Status == WebExceptionStatus.Timeout ? Resources.The_API_request_timed_out : Resources.Unable_to_connect_to_the_API_server;
+			}
+			if(!string.Equals(detail, exception.Message, StringComparison.Ordinal)) detail += "\r\n\r\n" + exception.Message;
 			Program.MainForm.ShowError(action, detail, false);
 		}
+		internal sealed class RequestException : InvalidOperationException{
+			internal int StatusCode{get;}
+			internal bool EndpointUnavailable{get;}
+			internal string Code{get;}
+			internal string Parameter{get;}
+			internal string UpstreamMessage{get;}
+			internal RequestException(int status, string body) : base(string.Format(Resources.API_error___0_____1_, status, body)){
+				StatusCode = status;
+				var error = JsonNode.Missing;
+				try{
+					error = Json.Parse(body)["error"];
+					Code = error.GetString("code");
+					Parameter = error.GetString("param");
+					UpstreamMessage = error.GetString("message") ?? (error.IsString ? error.AsString() : null);
+				} catch(InvalidOperationException){}
+				if(status == 405 || status == 501){ EndpointUnavailable = true; return; }
+				if(status != 404) return;
+				if(error.Exists){
+					EndpointUnavailable = Code == "endpoint_not_found" || Code == "unsupported_endpoint" || Code == "route_not_found";
+					return;
+				}
+				body = body.Trim();
+				EndpointUnavailable = body.Length == 0 || body.Equals("404 page not found", StringComparison.OrdinalIgnoreCase)
+					|| body.Equals("Not Found", StringComparison.OrdinalIgnoreCase);
+			}
+		}
+
 		internal sealed class ChatMessage{
 			public string Content;
+			public JsonNode OutputItems;
 			public string Role;
 			public string ToolCallId;
 			public List<ToolCall> ToolCalls;
@@ -380,6 +426,12 @@ namespace LMStud{
 			public string ResponseId;
 			public List<ToolCall> ToolCalls;
 			public int? TotalTokens;
+			public int? InputTokens;
+			public int? OutputTokens;
+			public string FinishReason;
+			public string IncompleteReason;
+			public string Refusal;
+			internal bool Incomplete => IncompleteReason != null || FinishReason == "length" || FinishReason == "content_filter";
 			public ChatCompletionResult(string content, string reasoning, List<ToolCall> toolCalls, string responseId, JsonNode outputItems, int? totalTokens = null){
 				Content = content;
 				Reasoning = reasoning;
@@ -388,73 +440,109 @@ namespace LMStud{
 				OutputItems = outputItems;
 				TotalTokens = totalTokens;
 			}
+			internal void ReadUsage(JsonNode usage){
+				InputTokens = usage.GetInt("input_tokens") ?? usage.GetInt("prompt_tokens");
+				OutputTokens = usage.GetInt("output_tokens") ?? usage.GetInt("completion_tokens");
+				TotalTokens = usage.GetInt("total_tokens") ?? TotalTokens;
+			}
 		}
-		private sealed class StreamingResponseAccumulator{
-			private readonly StringBuilder _content = new StringBuilder();
+
+		private sealed class StreamingResponse{
+			private readonly StringBuilder _text = new StringBuilder();
 			private readonly StringBuilder _reasoning = new StringBuilder();
-			private readonly Dictionary<string, StreamingToolCall> _toolCalls = new Dictionary<string, StreamingToolCall>();
-			private ChatCompletionResult _finalResult;
-			private string _responseId;
-			internal void RememberResponseId(string responseId){
-				if(!string.IsNullOrWhiteSpace(responseId)) _responseId = responseId;
-			}
-			internal void SetFinalResponse(JsonNode responseObj){
-				if(!responseObj.IsObject) return;
-				RememberResponseId(responseObj.GetString("id"));
-				try{ _finalResult = APIResponseParser.ParseResponseBody(responseObj.ToJson()); } catch(InvalidOperationException){}
-			}
-			internal void AppendContent(string delta, Action<string> streamCallback){
-				if(string.IsNullOrEmpty(delta)) return;
-				_content.Append(delta);
-				streamCallback?.Invoke(delta);
-			}
-			internal void AppendReasoning(string delta){
-				if(!string.IsNullOrEmpty(delta)) _reasoning.Append(delta);
-			}
-			internal void AppendToolArguments(string key, string delta){
-				if(string.IsNullOrEmpty(delta)) return;
-				GetToolCall(key).Arguments.Append(delta);
-			}
-			internal void MergeToolCall(string key, JsonNode item){
-				if(!item.IsObject) return;
-				var type = item.GetString("type");
-				if(!string.Equals(type, "function_call", StringComparison.OrdinalIgnoreCase) && !string.Equals(type, "tool_call", StringComparison.OrdinalIgnoreCase)) return;
-				var toolCall = GetToolCall(key);
-				toolCall.Id = item.GetString("call_id") ?? item.GetString("id") ?? toolCall.Id;
-				toolCall.Name = item.GetString("name") ?? item["function"].GetString("name") ?? toolCall.Name;
-				var argumentsToken = item["arguments"];
-				if(!argumentsToken.Exists) argumentsToken = item["function"]["arguments"];
-				if(!argumentsToken.Exists) return;
-				var arguments = argumentsToken.IsString ? argumentsToken.AsString() : argumentsToken.ToJson();
-				if(toolCall.Arguments.Length == 0 && !string.IsNullOrEmpty(arguments)) toolCall.Arguments.Append(arguments);
-			}
-			internal void MergeChatToolCall(JsonNode toolCallDelta){
-				if(!toolCallDelta.IsObject) return;
-				var key = toolCallDelta.GetString("index") ?? toolCallDelta.GetString("id") ?? "0";
-				var toolCall = GetToolCall(key);
-				toolCall.Id = toolCallDelta.GetString("id") ?? toolCall.Id;
-				toolCall.Name = toolCallDelta["function"].GetString("name") ?? toolCallDelta.GetString("name") ?? toolCall.Name;
-				var arguments = toolCallDelta["function"].GetString("arguments") ?? toolCallDelta.GetString("arguments");
-				if(!string.IsNullOrEmpty(arguments)) toolCall.Arguments.Append(arguments);
-			}
-			internal ChatCompletionResult BuildResult(){
-				if(_finalResult != null) return _finalResult;
-				var toolCalls = _toolCalls.Values.Where(call => !string.IsNullOrWhiteSpace(call.Id) && !string.IsNullOrWhiteSpace(call.Name))
-					.Select(call => new ToolCall(call.Id, call.Name, call.Arguments.ToString())).ToList();
-				var finalToolCalls = toolCalls.Count > 0 ? toolCalls : null;
-				if(_content.Length == 0 && _reasoning.Length == 0 && finalToolCalls == null) throw new InvalidOperationException(Resources.API_response_did_not_contain_any_message_);
-				return new ChatCompletionResult(_content.ToString(), _reasoning.Length > 0 ? _reasoning.ToString() : null, finalToolCalls, _responseId, JsonNode.Missing);
-			}
-			private StreamingToolCall GetToolCall(string key){
-				key = string.IsNullOrWhiteSpace(key) ? "0" : key;
-				if(!_toolCalls.TryGetValue(key, out var toolCall)){
-					toolCall = new StreamingToolCall();
-					_toolCalls[key] = toolCall;
+			private readonly StringBuilder _refusal = new StringBuilder();
+			private readonly SortedDictionary<int, ToolCallDelta> _calls = new SortedDictionary<int, ToolCallDelta>();
+			private readonly SortedDictionary<int, JsonNode> _items = new SortedDictionary<int, JsonNode>();
+			private ChatCompletionResult _final;
+			private JsonNode _usage = JsonNode.Missing;
+			private string _id;
+			private string _finishReason;
+			private bool _terminal;
+			private bool _responses;
+			internal bool Process(string eventName, string data, Action<string> callback, Func<JsonNode, bool> responseEvent){
+				if(string.IsNullOrWhiteSpace(data)) return false;
+				if(data.Trim() == "[DONE]"){ _terminal = true; return true; }
+				var root = Json.Parse(data);
+				var type = root.GetString("type") ?? eventName;
+				_responses |= type.StartsWith("response.", StringComparison.Ordinal);
+				var forwarded = responseEvent != null && responseEvent(root);
+				_id = root.GetString("id") ?? root["response"].GetString("id") ?? _id;
+				var itemIndex = root.GetInt("output_index") ?? 0;
+				switch(type){
+					case "error":
+					case "response.failed":
+						throw new InvalidOperationException(root["response"]["error"].GetString("message") ?? root["error"].GetString("message")
+							?? root.GetString("message") ?? "The upstream stream failed.");
+					case "response.completed":
+					case "response.done":
+					case "response.incomplete":
+						var response = root["response"];
+						if(response["usage"].IsObject) _usage = response["usage"];
+						_final = response["output"].Count > 0 || response.GetString("status") == "incomplete" ? APIResponseParser.ParseResponseBody(response.ToJson()) : null;
+						if(type == "response.incomplete"){
+							if(_final == null) _final = new ChatCompletionResult(_text.ToString(), _reasoning.ToString(), null, _id, JsonNode.Missing);
+							_final.IncompleteReason = response["incomplete_details"].GetString("reason") ?? "max_output_tokens";
+							_final.ReadUsage(_usage);
+							_final.ToolCalls = null;
+						}
+						_terminal = true;
+						return true;
+					case "response.output_item.done":
+						if(root["item"].IsObject) _items[itemIndex] = root["item"];
+						break;
+					case "response.output_text.delta":
+						AppendText(root.GetString("delta"), forwarded ? null : callback);
+						break;
+					case "response.reasoning_text.delta":
+					case "response.reasoning_summary_text.delta":
+						_reasoning.Append(root.GetString("delta"));
+						break;
+					case "response.refusal.delta":
+						_refusal.Append(root.GetString("delta"));
+						break;
 				}
-				return toolCall;
+				if(root["usage"].IsObject) _usage = root["usage"];
+				foreach(var choice in root["choices"]){
+					if((choice.GetInt("index") ?? 0) != 0) continue;
+					_finishReason = choice.GetString("finish_reason") ?? _finishReason;
+					var delta = choice["delta"];
+					AppendText(APIResponseParserCommon.ExtractContentText(delta["content"]), callback);
+					_reasoning.Append(delta.GetString("reasoning_content") ?? delta.GetString("reasoning"));
+					_refusal.Append(delta.GetString("refusal"));
+					foreach(var tool in delta["tool_calls"]){
+						var index = tool.GetInt("index") ?? 0;
+						if(!_calls.TryGetValue(index, out var call)) _calls[index] = call = new ToolCallDelta();
+						var function = tool["function"];
+						call.Id = tool.GetString("id") ?? call.Id;
+						call.Name = function.GetString("name") ?? call.Name;
+						call.Arguments.Append(function.GetString("arguments"));
+					}
+				}
+				return false;
+			}
+			private void AppendText(string text, Action<string> callback){
+				if(string.IsNullOrEmpty(text)) return;
+				_text.Append(text);
+				callback?.Invoke(text);
+			}
+			internal ChatCompletionResult Result(){
+				if(!_terminal && (_responses || _finishReason == null)) throw new InvalidOperationException("The API stream ended before a completion event.");
+				if(_final != null) return _final;
+				if(_items.Count > 0)
+					return APIResponseParser.ParseResponseBody(Json.Object(Json.P("id", _id),
+						Json.P("output", Json.Array(_items.Values.Cast<object>().ToArray()))).ToJson());
+				var tools = _calls.Values.Where(call => !string.IsNullOrWhiteSpace(call.Id) && !string.IsNullOrWhiteSpace(call.Name))
+					.Select(call => new ToolCall(call.Id, call.Name, call.Arguments.ToString())).ToList();
+				var result = new ChatCompletionResult(_text.ToString(), _reasoning.ToString(), tools.Count == 0 ? null : tools, _id, JsonNode.Missing){
+					FinishReason = _finishReason,
+					Refusal = _refusal.Length == 0 ? null : _refusal.ToString()
+				};
+				if(result.Incomplete) result.ToolCalls = null;
+				result.ReadUsage(_usage);
+				return result;
 			}
 		}
-		private sealed class StreamingToolCall{
+		private sealed class ToolCallDelta{
 			internal readonly StringBuilder Arguments = new StringBuilder();
 			internal string Id;
 			internal string Name;

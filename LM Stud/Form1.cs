@@ -26,12 +26,13 @@ namespace LMStud{
 		internal bool IsEditing;
 		internal volatile bool Rendering;
 		internal Form1() : this(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LM Stud"), "https://huggingface.co"){}
-		internal Form1(string profileDirectory, string huggingFaceUrl){
+		internal Form1(string profileDirectory, string huggingFaceUrl, Action<string, MessageBoxIcon> downloadNotification = null){
 			//var culture = new CultureInfo("zh-CN");
 			//Thread.CurrentThread.CurrentUICulture = culture;
 			//Thread.CurrentThread.CurrentCulture = culture;
 			_modelSettingsFile = Path.Combine(profileDirectory, "ModelSettings.json");
 			_huggingFaceUrl = huggingFaceUrl.TrimEnd('/');
+			_showDownloadNotification = downloadNotification ?? ((message, icon) => MessageBox.Show(this, message, Resources.LM_Stud, MessageBoxButtons.OK, icon));
 			InitializeComponent();
 			Icon = Resources.LM_Stud_256;
 			Generation.MainForm = this;
@@ -49,6 +50,7 @@ namespace LMStud{
 			tabControlModelStuff.SelectedIndex = 2;
 			comboSlotEditReasonEffort.SelectedIndex = 0;
 			comboSlotEditReasonSummary.SelectedIndex = 0;
+			comboSlotsEditApiMode.SelectedIndex = 0;
 			viewToolStripMenuItem.DropDown.Closing += DropDownOnClosing;
 		}
 		private void Form1_Load(object sender, EventArgs e){
@@ -65,7 +67,7 @@ namespace LMStud{
 			Tools.RegisterToolsForAllSlots();
 			SetModelStatus();
 			ApiServer = new APIServer();
-			if(Common.APIServerEnable) ApiServer.Start();
+			if(Common.APIServerEnable && !ApiServer.Start()) Common.APIServerEnable = checkApiServerEnable.Checked = false;
 			if(!Settings.Default.LoadAuto) return;
 			checkLoadAuto.Checked = true;
 			ThreadPool.QueueUserWorkItem(o => {
@@ -124,6 +126,7 @@ namespace LMStud{
 			}
 			try{
 				ApiServer?.Stop();
+				ApiServer?.Sessions.Clear();
 				if(_whisperLoaded){
 					NativeMethods.StopSpeechTranscription();
 					NativeMethods.UnloadWhisperModel();
@@ -420,6 +423,10 @@ namespace LMStud{
 							cm.Think = newThink;
 							cm.Message = newMessage;
 							cm.ApiContent = null;
+							foreach(var message in ChatMessages.SkipWhile(message => message != cm)){
+								message.ApiOutputItems = JsonNode.Missing;
+								message.ApiReplayKey = null;
+							}
 							cm.Editing = false;
 							cm.Markdown = ShouldUseMarkdown(cm);
 							if(ChatMessages.All(msg => !msg.Editing)) panelChat.AutoScrollEnable = checkAutoScroll.Checked;
@@ -429,6 +436,10 @@ namespace LMStud{
 			});
 		}
 		private void RichTextMsgOnMouseWheel(object sender, MouseEventArgs e){NativeMethods.SendMessage(panelChat.Handle, 0x020A, (IntPtr)(((e.Delta/8) << 16) & 0xffff0000), IntPtr.Zero);}
+		internal void MarkIncompleteApiReply(ChatMessageControl message, string detail){
+			message.SetRoleText(Resources.Incomplete);
+			toolTip1.SetToolTip(message.labelRole, detail);
+		}
 		internal ChatMessageControl AddMessage(MessageRole role, string think, string message, List<APIClient.ToolCall> toolCalls = null, string toolCallId = null, bool nativeBacked = true){
 			var useMarkdown = checkMarkdown.Checked && role != MessageRole.Tool && (toolCalls == null || toolCalls.Count == 0);
 			var cm = new ChatMessageControl(role, think, message ?? "", useMarkdown){ ApiToolCalls = toolCalls, ApiToolCallId = toolCallId, NativeBacked = nativeBacked };

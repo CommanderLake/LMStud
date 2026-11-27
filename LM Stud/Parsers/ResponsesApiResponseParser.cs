@@ -8,9 +8,9 @@ namespace LMStud.Parsers{
 			result = null;
 			var output = root["output"];
 			if(!output.IsArray) return false;
-			var sanitizedOutput = APIResponseParserCommon.SanitizeOutputItems(output);
 			var content = new StringBuilder();
 			var reasoning = new StringBuilder();
+			var refusal = new StringBuilder();
 			var toolCalls = new List<APIClient.ToolCall>();
 			foreach(var item in output.Where(item => item.IsObject)){
 				var type = item.GetString("type");
@@ -18,6 +18,7 @@ namespace LMStud.Parsers{
 					var role = item.GetString("role");
 					if(!string.Equals(role, "assistant", StringComparison.OrdinalIgnoreCase)) continue;
 					var messageContent = APIResponseParserCommon.ExtractContentText(item["content"]);
+					foreach(var part in item["content"].Where(part => part.GetString("type") == "refusal")) refusal.Append(part.GetString("refusal"));
 					APIResponseParserCommon.AppendIfNotBlank(content, messageContent);
 					var messageReasoning = APIResponseParserCommon.ExtractReasoningTextFromContent(item["content"]);
 					APIResponseParserCommon.AppendIfNotBlank(reasoning, messageReasoning);
@@ -53,8 +54,11 @@ namespace LMStud.Parsers{
 				var outputReasoning = APIResponseParserCommon.ExtractReasoningText(root["reasoning"]) ?? APIResponseParserCommon.ExtractContentText(root["reasoning"]);
 				if(!string.IsNullOrWhiteSpace(outputReasoning)) finalReasoning = outputReasoning;
 			}
-			if(!APIResponseParserCommon.HasResultContent(finalContent, finalReasoning, finalToolCalls)) return false;
-			result = new APIClient.ChatCompletionResult(finalContent ?? "", finalReasoning, finalToolCalls, responseId, sanitizedOutput, APIResponseParserCommon.ExtractTotalTokens(root));
+			if(!APIResponseParserCommon.HasResultContent(finalContent, finalReasoning, finalToolCalls) && refusal.Length == 0
+				&& output.Count == 0 && root.GetString("status") != "incomplete" && root.GetString("finish_reason") == null) return false;
+			result = new APIClient.ChatCompletionResult(finalContent ?? "", finalReasoning, finalToolCalls, responseId, output, APIResponseParserCommon.ExtractTotalTokens(root)){
+				Refusal = refusal.Length == 0 ? null : refusal.ToString()
+			};
 			return true;
 		}
 	}

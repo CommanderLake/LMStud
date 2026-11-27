@@ -266,7 +266,12 @@ static StudError DecodePromptMessages(const char* slotName, const std::vector<Pr
 	}
 	return StudError::Success;
 }
-static StudError Generate(const char* slotName, const std::vector<PromptMessage>& messages, const int predictionCount, const bool callback, common_chat_msg& outputMessage, const bool emitFinalCallback = true, std::string* toolParseError = nullptr){
+struct ApiUsage{
+	int input = 0;
+	int output = 0;
+	bool lengthLimited = false;
+};
+static StudError Generate(const char* slotName, const std::vector<PromptMessage>& messages, const int predictionCount, const bool callback, common_chat_msg& outputMessage, const bool emitFinalCallback = true, std::string* toolParseError = nullptr, ApiUsage* usage = nullptr){
 	if(toolParseError) toolParseError->clear();
 	const auto preparationStart = Clock::now();
 	auto model = GetModel(slotName);
@@ -370,6 +375,11 @@ static StudError Generate(const char* slotName, const std::vector<PromptMessage>
 	lane.messages.push_back(message);
 	lane.messageMedia.emplace_back();
 	lane.endsWithEOG = endOfGeneration;
+	if(usage){
+		usage->input = static_cast<int>(cacheStart);
+		usage->output = generatedCount + (endOfGeneration ? 1 : 0);
+		usage->lengthLimited = !endOfGeneration && predictionCount >= 0 && generatedCount >= predictionCount;
+	}
 	if(emitFinalCallback && tokenCallback && !callback) tokenCallback(slotName, message.reasoning_content.c_str(), message.content.c_str(), generatedCount, static_cast<int>(lane.cachedTokens.size()), firstTokenTime, 0);
 	outputMessage = std::move(message);
 	return StudError::Success;
@@ -419,18 +429,22 @@ static StudError GenerateWithToolsPrompt(const char* slotName, PromptMessage inp
 	} while(toolCalled);
 	return StudError::Success;
 }
-static std::string BuildApiResponseJson(const common_chat_msg& message){
+static std::string BuildApiResponseJson(const common_chat_msg& message, const ApiUsage& usage){
 	const bool hasContent = !message.content.empty();
-	const bool hasToolCalls = !message.tool_calls.empty();
+	const bool hasToolCalls = !usage.lengthLimited && !message.tool_calls.empty();
+	const auto itemStatus = usage.lengthLimited ? "incomplete" : "completed";
 	std::string json = "{";
 	json += "\"role\":\"assistant\",";
 	json += "\"content\":" + JsonString(message.content) + ",";
 	json += "\"reasoning\":" + JsonString(message.reasoning_content) + ",";
 	json += "\"finish_reason\":\"";
-	json += hasToolCalls ? "tool_calls" : "stop";
+	json += usage.lengthLimited ? "length" : hasToolCalls ? "tool_calls" : "stop";
 	json += "\",";
+	json += "\"usage\":{\"input_tokens\":" + std::to_string(usage.input);
+	json += ",\"output_tokens\":" + std::to_string(usage.output);
+	json += ",\"total_tokens\":" + std::to_string(usage.input + usage.output) + "},";
 	json += "\"tool_calls\":[";
-	for(size_t i = 0; i < message.tool_calls.size(); ++i){
+	for(size_t i = 0; hasToolCalls && i < message.tool_calls.size(); ++i){
 		const auto& toolCall = message.tool_calls[i];
 		if(i > 0) json += ",";
 		json += "{\"id\":" + JsonString(toolCall.id) + ",\"type\":\"function\",\"function\":{";
@@ -441,10 +455,11 @@ static std::string BuildApiResponseJson(const common_chat_msg& message){
 	json += "],\"output\":[";
 	bool hasOutputItem = false;
 	if(hasContent){
-		json += "{\"type\":\"message\",\"status\":\"completed\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":" + JsonString(message.content) + "}]}";
+		json += "{\"type\":\"message\",\"status\":" + JsonString(itemStatus) + ",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":" + JsonString(message.content) + "}]}";
 		hasOutputItem = true;
 	}
 	for(const auto& toolCall : message.tool_calls){
+		if(!hasToolCalls) break;
 		if(hasOutputItem) json += ",";
 		json += "{\"type\":\"function_call\",\"status\":\"completed\",";
 		json += "\"call_id\":" + JsonString(toolCall.id) + ",";
@@ -456,22 +471,52 @@ static std::string BuildApiResponseJson(const common_chat_msg& message){
 	json += "]}";
 	return json;
 }
-static StudError GenerateForApiPrompt(const char* slotName, PromptMessage inputMessage, const char* toolsJson, const int predictionCount, const bool callback, char** responseJson){
+class ScopedApiSampler{
+	Stud::StudSession& _session;
+	llama_sampler* _saved = nullptr;
+public:
+	explicit ScopedApiSampler(Stud::StudSession& session) : _session(session){}
+	~ScopedApiSampler(){
+		if(!_saved) return;
+		llama_sampler_free(_session.lane.sampler);
+		_session.lane.sampler = _saved;
+	}
+	StudError Override(const float temperature, const float topP){
+		if(temperature < 0.0f && topP < 0.0f) return StudError::Success;
+		if(!_session.lane.sampler) return StudError::CantCreateSampler;
+		auto options = _session.sampling;
+		if(temperature >= 0.0f) options.temperature = temperature;
+		if(topP >= 0.0f) options.topP = topP;
+		llama_sampler* replacement = nullptr;
+		const auto error = Stud::Internal::CreateSampler(_session.vocab, options, replacement);
+		if(error != StudError::Success) return error;
+		for(const auto token : _session.lane.cachedTokens)
+			if(token != LLAMA_TOKEN_NULL) llama_sampler_accept(replacement, token);
+		_saved = _session.lane.sampler;
+		_session.lane.sampler = replacement;
+		return StudError::Success;
+	}
+};
+static StudError GenerateForApiPrompt(const char* slotName, PromptMessage inputMessage, const char* toolsJson, const int predictionCount, const bool callback, char** responseJson, const float temperature = -1.0f, const float topP = -1.0f){
 	if(responseJson) *responseJson = nullptr;
 	if(!responseJson){
 		Stud::Internal::LastErrorMessage() = "responseJson is null.";
 		return StudError::Generic;
 	}
 	ScopedApiTools apiTools(slotName);
+	ScopedApiSampler apiSampler(GetModel(slotName)->session);
+	const auto samplerError = apiSampler.Override(temperature, topP);
+	if(samplerError != StudError::Success) return samplerError;
 	const auto toolsError = RegisterApiToolSchemas(slotName, toolsJson);
 	if(toolsError != StudError::Success) return toolsError;
 	const auto retokenizeError = RetokenizeChat(slotName, false);
 	if(retokenizeError != StudError::Success) return retokenizeError;
 	const std::vector<PromptMessage> messages{std::move(inputMessage)};
 	common_chat_msg outputMessage;
-	const auto generateError = Generate(slotName, messages, predictionCount, callback, outputMessage, false);
+	ApiUsage usage;
+	const auto generateError = Generate(slotName, messages, predictionCount, callback, outputMessage, false, nullptr, &usage);
 	if(generateError != StudError::Success) return generateError;
-	*responseJson = CopyCString(BuildApiResponseJson(outputMessage));
+	*responseJson = CopyCString(BuildApiResponseJson(outputMessage, usage));
 	if(!*responseJson){
 		Stud::Internal::LastErrorMessage() = "Unable to allocate API generation response.";
 		return StudError::Generic;
@@ -541,6 +586,16 @@ StudError GenerateForAPIJson(const char* slotName, const Stud::MessageRole role,
 	const auto parseError = Stud::Internal::ParseContentJson(role, "", contentJson, input);
 	if(parseError != StudError::Success) return parseError;
 	return GenerateForApiPrompt(slotName, std::move(input), toolsJson, predictionCount, callback, responseJson);
+}
+StudError GenerateForAPIMessage(const char* slotName, const char* messageJson, const char* toolsJson, const int predictionCount, const bool callback, const float temperature, const float topP, char** responseJson){
+	if(responseJson) *responseJson = nullptr;
+	std::vector<common_chat_msg> messages;
+	std::vector<Stud::MessageMedia> media;
+	const auto parseError = Stud::ParseChatMessagesJson(messageJson, messages, media, Stud::Internal::LastErrorMessage());
+	if(parseError != StudError::Success) return parseError;
+	if(messages.size() != 1) return StudError::ChatParseError;
+	PromptMessage input{std::move(messages.front()), std::move(media.front())};
+	return GenerateForApiPrompt(slotName, std::move(input), toolsJson, predictionCount, callback, responseJson, temperature, topP);
 }
 void StopGeneration(const char* slotName){
 	GetModel(slotName)->session.stop.store(true);

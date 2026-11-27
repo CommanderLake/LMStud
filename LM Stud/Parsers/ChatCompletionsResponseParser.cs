@@ -16,8 +16,13 @@ namespace LMStud.Parsers{
 			var contentToolCalls = APIResponseParserCommon.ParseToolCallsFromContent(message["content"]);
 			if(contentToolCalls != null) toolCalls.AddRange(contentToolCalls);
 			var finalToolCalls = toolCalls.Count > 0 ? toolCalls : null;
-			if(!APIResponseParserCommon.HasResultContent(messageContent, reasoning, finalToolCalls)) return false;
-			result = new APIClient.ChatCompletionResult(messageContent ?? "", reasoning, finalToolCalls, responseId, JsonNode.Missing, APIResponseParserCommon.ExtractTotalTokens(root));
+			var reason = choices[0].GetString("finish_reason");
+			var refusal = message.GetString("refusal");
+			if(!APIResponseParserCommon.HasResultContent(messageContent, reasoning, finalToolCalls) && reason == null && refusal == null) return false;
+			result = new APIClient.ChatCompletionResult(messageContent ?? "", reasoning, finalToolCalls, responseId, JsonNode.Missing, APIResponseParserCommon.ExtractTotalTokens(root)){
+				FinishReason = reason,
+				Refusal = refusal
+			};
 			return true;
 		}
 	}

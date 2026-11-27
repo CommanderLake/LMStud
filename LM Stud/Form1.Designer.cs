@@ -103,6 +103,8 @@ namespace LMStud
 			this.comboSlotEditReasonEffort = new System.Windows.Forms.ComboBox();
 			this.label47 = new System.Windows.Forms.Label();
 			this.checkSlotsEditStore = new System.Windows.Forms.CheckBox();
+			this.labelSlotsEditApiMode = new System.Windows.Forms.Label();
+			this.comboSlotsEditApiMode = new System.Windows.Forms.ComboBox();
 			this.textSlotsEditApiToolName = new System.Windows.Forms.TextBox();
 			this.panelSlotsEditMcp = new System.Windows.Forms.Panel();
 			this.textSlotsEditMcpHeader = new System.Windows.Forms.TextBox();
@@ -164,6 +166,10 @@ namespace LMStud
 			this.label36 = new System.Windows.Forms.Label();
 			this.checkCMDEnable = new System.Windows.Forms.CheckBox();
 			this.groupBox7 = new System.Windows.Forms.GroupBox();
+			this.labelApiServerHost = new System.Windows.Forms.Label();
+			this.textApiServerHost = new System.Windows.Forms.TextBox();
+			this.labelApiServerToken = new System.Windows.Forms.Label();
+			this.textApiServerToken = new System.Windows.Forms.TextBox();
 			this.numApiServerPort = new System.Windows.Forms.NumericUpDown();
 			this.label28 = new System.Windows.Forms.Label();
 			this.checkApiServerEnable = new System.Windows.Forms.CheckBox();
@@ -864,6 +870,8 @@ namespace LMStud
 			this.panelSlotsEditApi.Controls.Add(this.comboSlotEditReasonEffort);
 			this.panelSlotsEditApi.Controls.Add(this.label47);
 			this.panelSlotsEditApi.Controls.Add(this.checkSlotsEditStore);
+			this.panelSlotsEditApi.Controls.Add(this.labelSlotsEditApiMode);
+			this.panelSlotsEditApi.Controls.Add(this.comboSlotsEditApiMode);
 			this.panelSlotsEditApi.Controls.Add(this.textSlotsEditApiToolName);
 			this.panelSlotsEditApi.Name = "panelSlotsEditApi";
 			// 
@@ -950,7 +958,24 @@ namespace LMStud
 			this.checkSlotsEditStore.Name = "checkSlotsEditStore";
 			this.toolTip1.SetToolTip(this.checkSlotsEditStore, resources.GetString("checkSlotsEditStore.ToolTip"));
 			this.checkSlotsEditStore.UseVisualStyleBackColor = true;
-			// 
+			//
+			// labelSlotsEditApiMode
+			//
+			resources.ApplyResources(this.labelSlotsEditApiMode, "labelSlotsEditApiMode");
+			this.labelSlotsEditApiMode.Name = "labelSlotsEditApiMode";
+			//
+			// comboSlotsEditApiMode
+			//
+			resources.ApplyResources(this.comboSlotsEditApiMode, "comboSlotsEditApiMode");
+			this.comboSlotsEditApiMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.comboSlotsEditApiMode.FormattingEnabled = true;
+			this.comboSlotsEditApiMode.Items.AddRange(new object[] {
+			resources.GetString("comboSlotsEditApiMode.Items"),
+			resources.GetString("comboSlotsEditApiMode.Items1"),
+			resources.GetString("comboSlotsEditApiMode.Items2")});
+			this.comboSlotsEditApiMode.Name = "comboSlotsEditApiMode";
+			this.toolTip1.SetToolTip(this.comboSlotsEditApiMode, resources.GetString("comboSlotsEditApiMode.ToolTip"));
+			//
 			// textSlotsEditApiToolName
 			// 
 			resources.ApplyResources(this.textSlotsEditApiToolName, "textSlotsEditApiToolName");
@@ -1416,6 +1441,10 @@ namespace LMStud
 			this.groupBox7.Controls.Add(this.numApiServerPort);
 			this.groupBox7.Controls.Add(this.label28);
 			this.groupBox7.Controls.Add(this.checkApiServerEnable);
+			this.groupBox7.Controls.Add(this.labelApiServerHost);
+			this.groupBox7.Controls.Add(this.textApiServerHost);
+			this.groupBox7.Controls.Add(this.labelApiServerToken);
+			this.groupBox7.Controls.Add(this.textApiServerToken);
 			resources.ApplyResources(this.groupBox7, "groupBox7");
 			this.groupBox7.Name = "groupBox7";
 			this.groupBox7.TabStop = false;
@@ -1445,7 +1474,30 @@ namespace LMStud
 			resources.ApplyResources(this.checkApiServerEnable, "checkApiServerEnable");
 			this.checkApiServerEnable.Name = "checkApiServerEnable";
 			this.checkApiServerEnable.UseVisualStyleBackColor = true;
-			// 
+			//
+			// labelApiServerHost
+			//
+			resources.ApplyResources(this.labelApiServerHost, "labelApiServerHost");
+			this.labelApiServerHost.Name = "labelApiServerHost";
+			//
+			// textApiServerHost
+			//
+			resources.ApplyResources(this.textApiServerHost, "textApiServerHost");
+			this.textApiServerHost.Name = "textApiServerHost";
+			this.toolTip1.SetToolTip(this.textApiServerHost, resources.GetString("textApiServerHost.ToolTip"));
+			//
+			// labelApiServerToken
+			//
+			resources.ApplyResources(this.labelApiServerToken, "labelApiServerToken");
+			this.labelApiServerToken.Name = "labelApiServerToken";
+			//
+			// textApiServerToken
+			//
+			resources.ApplyResources(this.textApiServerToken, "textApiServerToken");
+			this.textApiServerToken.Name = "textApiServerToken";
+			this.textApiServerToken.UseSystemPasswordChar = true;
+			this.toolTip1.SetToolTip(this.textApiServerToken, resources.GetString("textApiServerToken.ToolTip"));
+			//
 			// textModelsDir
 			// 
 			resources.ApplyResources(this.textModelsDir, "textModelsDir");
@@ -2715,6 +2767,10 @@ namespace LMStud
 		private System.Windows.Forms.NumericUpDown numApiServerPort;
 		private System.Windows.Forms.Label label28;
 		private System.Windows.Forms.CheckBox checkApiServerEnable;
+		private System.Windows.Forms.Label labelApiServerHost;
+		private System.Windows.Forms.TextBox textApiServerHost;
+		private System.Windows.Forms.Label labelApiServerToken;
+		private System.Windows.Forms.TextBox textApiServerToken;
 		private System.Windows.Forms.NumericUpDown numGenDelay;
 		private System.Windows.Forms.Label label29;
 		private System.Windows.Forms.ToolStripStatusLabel labelStatusMsg;
@@ -2767,6 +2823,8 @@ namespace LMStud
 		private System.Windows.Forms.Label label52;
 		private System.Windows.Forms.Label label51;
 		private System.Windows.Forms.ComboBox comboSlotEditReasonSummary;
+		private System.Windows.Forms.Label labelSlotsEditApiMode;
+		private System.Windows.Forms.ComboBox comboSlotsEditApiMode;
 		private System.Windows.Forms.ComboBox comboSlotEditReasonEffort;
 		private System.Windows.Forms.ComboBox comboVType;
 		private System.Windows.Forms.Label label39;

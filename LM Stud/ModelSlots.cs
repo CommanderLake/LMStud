@@ -27,6 +27,7 @@ namespace LMStud{
 	internal sealed class ModelSlot{
 		public string ApiBaseUrl{get; set;}
 		public string ApiKey{get; set;}
+		public ApiMode ApiMode{get; set;}
 		public string ApiModel{get; set;}
 		public int ApiReasoningEffort{get; set;}
 		public int ApiReasoningSummary{get; set;}
@@ -48,6 +49,7 @@ namespace LMStud{
 			return new ModelSlot{
 				ApiBaseUrl = ApiBaseUrl,
 				ApiKey = ApiKey,
+				ApiMode = ApiMode,
 				ApiModel = ApiModel,
 				ApiReasoningEffort = ApiReasoningEffort,
 				ApiReasoningSummary = ApiReasoningSummary,
@@ -204,6 +206,7 @@ namespace LMStud{
 				if(existing == null){ SlotsInternal.Add(slot); } else{
 					existing.ApiBaseUrl = slot.ApiBaseUrl;
 					existing.ApiKey = slot.ApiKey;
+					existing.ApiMode = slot.ApiMode;
 					existing.ApiModel = slot.ApiModel;
 					existing.ApiReasoningEffort = slot.ApiReasoningEffort;
 					existing.ApiReasoningSummary = slot.ApiReasoningSummary;
@@ -457,46 +460,29 @@ namespace LMStud{
 		}
 		private static string ExecuteApiModelTool(ModelSlot slot, string prompt, string instructions, int maxTokens, Action<string> streamCallback){
 			var history = APIClient.BuildInputItems(new[]{ new APIClient.ChatMessage("user", prompt) });
-			using(var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, GetToolInstructions(slot, instructions), slot.ApiReasoningEffort, slot.ApiReasoningSummary)){
-				var response = client.CreateChatCompletion(history, Common.Temp, maxTokens, null, null, CancellationToken.None, streamCallback);
-				return Json.Object(Json.P("slot", slot.Name),
-					Json.P("source", "api"),
-					Json.P("model", slot.ApiModel),
-					Json.P("content", response.Content ?? ""),
-					Json.P("reasoning", response.Reasoning ?? ""),
-					Json.P("total_tokens", response.TotalTokens)).ToJson(JsonFormat.Indented);
-			}
+			var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, GetToolInstructions(slot, instructions),
+				slot.ApiReasoningEffort, slot.ApiReasoningSummary, slot.ApiMode);
+			var response = client.CreateChatCompletion(history, Common.Temp, maxTokens, null, null, CancellationToken.None, streamCallback);
+			return Json.Object(Json.P("slot", slot.Name),
+				Json.P("source", "api"),
+				Json.P("model", slot.ApiModel),
+				Json.P("content", response.Refusal ?? response.Content ?? ""),
+				Json.P("reasoning", response.Reasoning ?? ""),
+				Json.P("total_tokens", response.TotalTokens),
+				Json.P("incomplete_reason", response.IncompleteReason)).ToJson(JsonFormat.Indented);
 		}
 		private static string ExecuteLocalModelTool(ModelSlot slot, string prompt, string instructions, int maxTokens, Action<string> streamCallback){
-			var chatState = IntPtr.Zero;
-			try{
-				byte[] ignoredState;
-				int tokenCount;
-				APIClient.ChatCompletionResult response;
-				if(!Generation.GenerateForApiServer(slot.Name,
-						null,
-						IntPtr.Zero,
-						null,
-						MessageRole.User,
-						prompt,
-						null,
-						out response,
-						out ignoredState,
-						out chatState,
-						out tokenCount,
-						maxTokens,
-						GetLocalToolInstructions(slot, instructions),
-						streamCallback)) return ErrorJson(Resources.Local_model_tool_slot_could_not_generate_a_response__ + slot.Name);
-				return Json.Object(Json.P("slot", slot.Name),
-					Json.P("source", "local"),
-					Json.P("model", slot.DisplayModel()),
-					Json.P("content", response?.Content ?? ""),
-					Json.P("reasoning", response?.Reasoning ?? ""),
-					Json.P("total_tokens", response?.TotalTokens),
-					Json.P("tokens", tokenCount)).ToJson(JsonFormat.Indented);
-			} finally{
-				if(chatState != IntPtr.Zero) NativeMethods.FreeChatState(chatState);
-			}
+			var message = Json.Object(Json.P("role", "user"), Json.P("content", prompt));
+			if(!Generation.GenerateForApiServer(slot.Name, message, null, null, out var response, out _, out _, out var tokenCount,
+				maxTokens, GetLocalToolInstructions(slot, instructions), streamCallback))
+				return ErrorJson(Resources.Local_model_tool_slot_could_not_generate_a_response__ + slot.Name);
+			return Json.Object(Json.P("slot", slot.Name),
+				Json.P("source", "local"),
+				Json.P("model", slot.DisplayModel()),
+				Json.P("content", response?.Content ?? ""),
+				Json.P("reasoning", response?.Reasoning ?? ""),
+				Json.P("total_tokens", response?.TotalTokens),
+				Json.P("tokens", tokenCount)).ToJson(JsonFormat.Indented);
 		}
 		private static bool IsCallerSlot(ModelSlot slot, string callerSlotName){
 			return slot != null && !string.IsNullOrWhiteSpace(callerSlotName) && string.Equals(slot.Name, callerSlotName.Trim(), StringComparison.OrdinalIgnoreCase);
@@ -548,6 +534,7 @@ namespace LMStud{
 		private static JsonNode SerializeSlot(ModelSlot slot){
 			return Json.Object(Json.P("ApiBaseUrl", slot.ApiBaseUrl),
 				Json.P("ApiKey", slot.ApiKey),
+				Json.P("ApiMode", (int)slot.ApiMode),
 				Json.P("ApiModel", slot.ApiModel),
 				Json.P("ApiReasoningEffort", slot.ApiReasoningEffort),
 				Json.P("ApiReasoningSummary", slot.ApiReasoningSummary),
@@ -581,8 +568,9 @@ namespace LMStud{
 		private static ModelSlot ParseSlot(JsonNode node){
 			if(!node.IsObject) return null;
 			return new ModelSlot{
-				ApiBaseUrl = node.GetString("ApiBaseUrl"),
+				ApiBaseUrl = ReadApiBaseUrl(node),
 				ApiKey = node.GetString("ApiKey"),
+				ApiMode = (ApiMode)(node.GetInt("ApiMode") ?? 0),
 				ApiModel = node.GetString("ApiModel"),
 				ApiReasoningEffort = node.GetInt("ApiReasoningEffort") ?? 0,
 				ApiReasoningSummary = node.GetInt("ApiReasoningSummary") ?? 0,
@@ -602,6 +590,15 @@ namespace LMStud{
 				Use = (ModelSlotUse)ReadEnumValue(node["Use"], 0, typeof(ModelSlotUse))
 			};
 		}
+		private static string ReadApiBaseUrl(JsonNode node){
+			var url = node.GetString("ApiBaseUrl");
+			if(node["ApiMode"].Exists || !Uri.TryCreate(url, UriKind.Absolute, out var uri) || (uri.Scheme != "http" && uri.Scheme != "https")) return url;
+			var path = uri.AbsolutePath.TrimEnd('/');
+			if(path.Length == 0 || path.EndsWith("/responses", StringComparison.OrdinalIgnoreCase) || path.EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase)
+				|| path.Split('/').Any(segment => segment.Length > 1 && (segment[0] == 'v' || segment[0] == 'V') && char.IsDigit(segment[1]))) return url;
+			// Older slots supplied a prefix that LM Stud would extend with /v1.
+			return new UriBuilder(uri){ Path = path + "/v1" }.Uri.AbsoluteUri;
+		}
 		private static int ReadEnumValue(JsonNode token, int fallback, Type enumType = null){
 			var numeric = token.AsInt();
 			if(numeric.HasValue) return numeric.Value;
@@ -616,6 +613,7 @@ namespace LMStud{
 			slot = slot.Clone();
 			slot.Name = string.IsNullOrWhiteSpace(slot.Name) ? MainSlotName : slot.Name.Trim();
 			slot.ApiBaseUrl = slot.ApiBaseUrl?.Trim() ?? "";
+			if(!Enum.IsDefined(typeof(ApiMode), slot.ApiMode)) slot.ApiMode = ApiMode.Auto;
 			slot.ApiKey = slot.ApiKey?.Trim() ?? "";
 			slot.ApiModel = slot.ApiModel?.Trim() ?? "";
 			slot.ApiReasoningEffort = NormalizeReasoningIndex(slot.ApiReasoningEffort, Common.ReasoningEffortValues.Length);

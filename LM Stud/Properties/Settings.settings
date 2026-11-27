@@ -128,6 +128,12 @@
     <Setting Name="APIServerPort" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">11434</Value>
     </Setting>
+    <Setting Name="APIServerHost" Type="System.String" Scope="User">
+      <Value Profile="(Default)">localhost</Value>
+    </Setting>
+    <Setting Name="APIServerToken" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
     <Setting Name="GenDelay" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">2000</Value>
     </Setting>

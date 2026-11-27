@@ -11,6 +11,7 @@ namespace LMStud{
 	public partial class Form1{
 		private const string Filter = "gguf";
 		private readonly string _huggingFaceUrl;
+		private readonly Action<string, MessageBoxIcon> _showDownloadNotification;
 		private volatile bool _cancelDownload;
 		private bool _downloading;
 		private int _hugFileRequest;
@@ -194,9 +195,9 @@ namespace LMStud{
 						if(targetPath != null){
 							var message = files.Length == 1 ? string.Format(Resources.Downloaded__0__to___1_, files[0], targetPath)
 								: string.Format(Resources.Downloaded_GGUF_Parts, files.Length, Path.GetDirectoryName(targetPath));
-							MessageBox.Show(this, message, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Information);
+							_showDownloadNotification(message, MessageBoxIcon.Information);
 							PopulateModels();
-						} else if(!_cancelDownload){ MessageBox.Show(this, string.Format(Resources.Download_failed___0_, error), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error); }
+						} else if(!_cancelDownload) _showDownloadNotification(string.Format(Resources.Download_failed___0_, error), MessageBoxIcon.Error);
 					}));
 				} catch(ObjectDisposedException){} catch(InvalidOperationException){}
 			});
