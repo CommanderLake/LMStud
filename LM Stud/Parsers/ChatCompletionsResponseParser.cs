@@ -20,8 +20,7 @@ namespace LMStud.Parsers{
 			var refusal = message.GetString("refusal");
 			if(!APIResponseParserCommon.HasResultContent(messageContent, reasoning, finalToolCalls) && reason == null && refusal == null) return false;
 			result = new APIClient.ChatCompletionResult(messageContent ?? "", reasoning, finalToolCalls, responseId, JsonNode.Missing, APIResponseParserCommon.ExtractTotalTokens(root)){
-				FinishReason = reason,
-				Refusal = refusal
+				FinishReason = reason, Refusal = refusal
 			};
 			return true;
 		}

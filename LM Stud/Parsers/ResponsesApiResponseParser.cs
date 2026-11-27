@@ -54,8 +54,11 @@ namespace LMStud.Parsers{
 				var outputReasoning = APIResponseParserCommon.ExtractReasoningText(root["reasoning"]) ?? APIResponseParserCommon.ExtractContentText(root["reasoning"]);
 				if(!string.IsNullOrWhiteSpace(outputReasoning)) finalReasoning = outputReasoning;
 			}
-			if(!APIResponseParserCommon.HasResultContent(finalContent, finalReasoning, finalToolCalls) && refusal.Length == 0
-				&& output.Count == 0 && root.GetString("status") != "incomplete" && root.GetString("finish_reason") == null) return false;
+			if(!APIResponseParserCommon.HasResultContent(finalContent, finalReasoning, finalToolCalls)
+				&& refusal.Length == 0
+				&& output.Count == 0
+				&& root.GetString("status") != "incomplete"
+				&& root.GetString("finish_reason") == null) return false;
 			result = new APIClient.ChatCompletionResult(finalContent ?? "", finalReasoning, finalToolCalls, responseId, output, APIResponseParserCommon.ExtractTotalTokens(root)){
 				Refusal = refusal.Length == 0 ? null : refusal.ToString()
 			};

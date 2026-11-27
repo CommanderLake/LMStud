@@ -18,14 +18,14 @@ namespace LMStud{
 		private static void RegisterToolsCore(string slotName){
 			EnsureManagedToolCallbackRegistered();
 			NativeMethods.RegisterTools(slotName,
-				Common.DateTimeEnable,
-				Common.GoogleSearchEnable,
-				Common.WebpageFetchEnable,
-				Common.FileListEnable,
-				Common.FileCreateEnable,
-				Common.FileReadEnable,
-				Common.FileWriteEnable,
-				Common.CMDEnable);
+										Common.DateTimeEnable,
+										Common.GoogleSearchEnable,
+										Common.WebpageFetchEnable,
+										Common.FileListEnable,
+										Common.FileCreateEnable,
+										Common.FileReadEnable,
+										Common.FileWriteEnable,
+										Common.CMDEnable);
 			NativeMethods.MCPRegisterToolsForSlot(slotName);
 			RegisterModelCallTools(slotName);
 		}

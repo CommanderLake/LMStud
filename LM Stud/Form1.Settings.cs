@@ -114,123 +114,123 @@ namespace LMStud{
 			var setSystemPrompt = false;
 			var modelOverrideChanged = false;
 			UpdateSetting(ref Common.SystemPrompt,
-				textSystemPrompt.Text,
-				value => {
-					Settings.Default.SystemPrompt = value;
-					setSystemPrompt = true;
-				});
+						textSystemPrompt.Text,
+						value => {
+							Settings.Default.SystemPrompt = value;
+							setSystemPrompt = true;
+						});
 			if(Directory.Exists(textModelsDir.Text)){
 				UpdateSetting(ref Common.ModelsDir,
-					textModelsDir.Text,
-					mp => {
-						mp = mp[mp.Length - 1] == '\\' || mp[mp.Length - 1] == '/' ? mp : mp + '\\';
-						textModelsDir.Text = Common.ModelsDir = Settings.Default.ModelsDir = mp;
-						popModels = true;
-					});
+							textModelsDir.Text,
+							mp => {
+								mp = mp[mp.Length - 1] == '\\' || mp[mp.Length - 1] == '/' ? mp : mp + '\\';
+								textModelsDir.Text = Common.ModelsDir = Settings.Default.ModelsDir = mp;
+								popModels = true;
+							});
 			} else{
 				MessageBox.Show(this, Resources.Models_folder_not_found, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 				textModelsDir.Text = Common.ModelsDir = Settings.Default.ModelsDir;
 			}
 			UpdateSetting(ref Common.CtxSize,
-				(int)numCtxSize.Value,
-				value => {
-					Settings.Default.CtxSize = value;
-					reloadCtxForDefaultSlots = true;
-				});
+						(int)numCtxSize.Value,
+						value => {
+							Settings.Default.CtxSize = value;
+							reloadCtxForDefaultSlots = true;
+						});
 			UpdateSetting(ref Common.GPULayers,
-				(int)numGPULayers.Value,
-				value => {
-					Settings.Default.GPULayers = value;
-					reloadModelForDefaultSlots = true;
-				});
+						(int)numGPULayers.Value,
+						value => {
+							Settings.Default.GPULayers = value;
+							reloadModelForDefaultSlots = true;
+						});
 			UpdateSetting(ref Common.Temp,
-				(float)numTemp.Value,
-				value => {
-					Settings.Default.Temp = numTemp.Value;
-					reloadSmplForDefaultSlots = true;
-				});
+						(float)numTemp.Value,
+						value => {
+							Settings.Default.Temp = numTemp.Value;
+							reloadSmplForDefaultSlots = true;
+						});
 			UpdateSetting(ref Common.NGen, (int)numNGen.Value, value => {Settings.Default.NGen = value;});
 			var newNumaIndex = comboNUMAStrat.SelectedIndex;
 			UpdateSetting(ref Common.NumaStrat,
-				(NativeMethods.GgmlNumaStrategy)newNumaIndex,
-				value => {
-					Settings.Default.NUMAStrat = newNumaIndex;
-					reloadModelForAllSlots = true;
-				});
+						(NativeMethods.GgmlNumaStrategy)newNumaIndex,
+						value => {
+							Settings.Default.NUMAStrat = newNumaIndex;
+							reloadModelForAllSlots = true;
+						});
 			UpdateSetting(ref Common.RepPen,
-				(float)numRepPen.Value,
-				value => {
-					Settings.Default.RepPen = numRepPen.Value;
-					reloadSmplForAllSlots = true;
-				});
+						(float)numRepPen.Value,
+						value => {
+							Settings.Default.RepPen = numRepPen.Value;
+							reloadSmplForAllSlots = true;
+						});
 			UpdateSetting(ref Common.TopK,
-				(int)numTopK.Value,
-				value => {
-					Settings.Default.TopK = value;
-					reloadSmplForDefaultSlots = true;
-				});
+						(int)numTopK.Value,
+						value => {
+							Settings.Default.TopK = value;
+							reloadSmplForDefaultSlots = true;
+						});
 			UpdateSetting(ref Common.TopP,
-				(float)numTopP.Value,
-				value => {
-					Settings.Default.TopP = numTopP.Value;
-					reloadSmplForDefaultSlots = true;
-				});
+						(float)numTopP.Value,
+						value => {
+							Settings.Default.TopP = numTopP.Value;
+							reloadSmplForDefaultSlots = true;
+						});
 			UpdateSetting(ref Common.MinP,
-				(float)numMinP.Value,
-				value => {
-					Settings.Default.MinP = numMinP.Value;
-					reloadSmplForDefaultSlots = true;
-				});
+						(float)numMinP.Value,
+						value => {
+							Settings.Default.MinP = numMinP.Value;
+							reloadSmplForDefaultSlots = true;
+						});
 			UpdateSetting(ref Common.BatchSize,
-				(int)numBatchSize.Value,
-				value => {
-					Settings.Default.BatchSize = value;
-					reloadCtxForAllSlots = true;
-				});
+						(int)numBatchSize.Value,
+						value => {
+							Settings.Default.BatchSize = value;
+							reloadCtxForAllSlots = true;
+						});
 			UpdateSetting(ref Common.MtpDraftTokens,
-				(int)Math.Min(numMtpDraftTokens.Maximum, Math.Max(numMtpDraftTokens.Minimum, numMtpDraftTokens.Value)),
-				value => {
-					Settings.Default.MtpDraftTokens = value;
-					reloadCtxForAllSlots = true;
-				});
+						(int)Math.Min(numMtpDraftTokens.Maximum, Math.Max(numMtpDraftTokens.Minimum, numMtpDraftTokens.Value)),
+						value => {
+							Settings.Default.MtpDraftTokens = value;
+							reloadCtxForAllSlots = true;
+						});
 			var newKType = comboKType.SelectedIndex;
 			UpdateSetting(ref Common.KType,
-				(NativeMethods.QuantType)newKType,
-				value => {
-					Settings.Default.KType = newKType;
-					reloadCtxForAllSlots = true;
-				});
+						(NativeMethods.QuantType)newKType,
+						value => {
+							Settings.Default.KType = newKType;
+							reloadCtxForAllSlots = true;
+						});
 			var newVType = comboVType.SelectedIndex;
 			UpdateSetting(ref Common.VType,
-				(NativeMethods.QuantType)newVType,
-				value => {
-					Settings.Default.VType = newVType;
-					reloadCtxForAllSlots = true;
-				});
+						(NativeMethods.QuantType)newVType,
+						value => {
+							Settings.Default.VType = newVType;
+							reloadCtxForAllSlots = true;
+						});
 			UpdateSetting(ref Common.MMap,
-				checkMMap.Checked,
-				value => {
-					Settings.Default.MMap = value;
-					reloadModelForAllSlots = true;
-				});
+						checkMMap.Checked,
+						value => {
+							Settings.Default.MMap = value;
+							reloadModelForAllSlots = true;
+						});
 			UpdateSetting(ref Common.MLock,
-				checkMLock.Checked,
-				value => {
-					Settings.Default.MLock = value;
-					reloadModelForAllSlots = true;
-				});
+						checkMLock.Checked,
+						value => {
+							Settings.Default.MLock = value;
+							reloadModelForAllSlots = true;
+						});
 			UpdateSetting(ref Common.OffloadKQV,
-				checkOffloadKQV.Checked,
-				value => {
-					Settings.Default.OffloadKQV = value;
-					reloadModelForAllSlots = true;
-				});
+						checkOffloadKQV.Checked,
+						value => {
+							Settings.Default.OffloadKQV = value;
+							reloadModelForAllSlots = true;
+						});
 			UpdateSetting(ref Common.OffloadOP,
-				checkOffloadOP.Checked,
-				value => {
-					Settings.Default.OffloadOP = value;
-					reloadModelForAllSlots = true;
-				});
+						checkOffloadOP.Checked,
+						value => {
+							Settings.Default.OffloadOP = value;
+							reloadModelForAllSlots = true;
+						});
 			if(Common.NThreads != (int)numThreads.Value || Common.NThreadsBatch != (int)numThreadsBatch.Value){
 				UpdateSetting(ref Common.NThreads, (int)numThreads.Value, value => {Settings.Default.Threads = value;});
 				UpdateSetting(ref Common.NThreadsBatch, (int)numThreadsBatch.Value, value => {Settings.Default.ThreadsBatch = value;});
@@ -238,150 +238,150 @@ namespace LMStud{
 			}
 			string GetModelString(int index){return index < 0 ? "" : Common.GetPathRelativeToModelsDir(_whisperModels[index]);}
 			UpdateSetting(ref Common.WhisperModel,
-				GetModelString(comboWhisperModel.SelectedIndex),
-				value => {
-					Settings.Default.WhisperModel = value;
-					reloadWhisper = true;
-				});
+						GetModelString(comboWhisperModel.SelectedIndex),
+						value => {
+							Settings.Default.WhisperModel = value;
+							reloadWhisper = true;
+						});
 			UpdateSetting(ref Common.VADModel,
-				GetModelString(comboVADModel.SelectedIndex),
-				value => {
-					Settings.Default.VADModel = value;
-					reloadWhisper = true;
-				});
+						GetModelString(comboVADModel.SelectedIndex),
+						value => {
+							Settings.Default.VADModel = value;
+							reloadWhisper = true;
+						});
 			UpdateSetting(ref Common.WakeWord,
-				textWakeWord.Text,
-				value => {
-					Settings.Default.WakeWord = value;
-					NativeMethods.SetWakeCommand(value);
-				});
+						textWakeWord.Text,
+						value => {
+							Settings.Default.WakeWord = value;
+							NativeMethods.SetWakeCommand(value);
+						});
 			UpdateSetting(ref Common.WakeWordSimilarity,
-				(float)numWakeWordSimilarity.Value,
-				value => {
-					Settings.Default.WakeWordSimilarity = numWakeWordSimilarity.Value;
-					setWWS = true;
-				});
+						(float)numWakeWordSimilarity.Value,
+						value => {
+							Settings.Default.WakeWordSimilarity = numWakeWordSimilarity.Value;
+							setWWS = true;
+						});
 			UpdateSetting(ref Common.FreqThreshold,
-				(float)numFreqThreshold.Value,
-				value => {
-					Settings.Default.FreqThreshold = numFreqThreshold.Value;
-					setVAD = true;
-				});
+						(float)numFreqThreshold.Value,
+						value => {
+							Settings.Default.FreqThreshold = numFreqThreshold.Value;
+							setVAD = true;
+						});
 			UpdateSetting(ref Common.WhisperTemp,
-				(float)numWhisperTemp.Value,
-				value => {
-					Settings.Default.WhisperTemp = numWhisperTemp.Value;
-					reloadWhisper = true;
-				});
+						(float)numWhisperTemp.Value,
+						value => {
+							Settings.Default.WhisperTemp = numWhisperTemp.Value;
+							reloadWhisper = true;
+						});
 			UpdateSetting(ref Common.WhisperUseGPU,
-				checkWhisperUseGPU.Checked,
-				value => {
-					Settings.Default.whisperUseGPU = value;
-					reloadWhisper = true;
-				});
+						checkWhisperUseGPU.Checked,
+						value => {
+							Settings.Default.whisperUseGPU = value;
+							reloadWhisper = true;
+						});
 			UpdateSetting(ref Common.UseWhisperVAD,
-				radioWhisperVAD.Checked,
-				value => {
-					Settings.Default.UseWhisperVAD = value;
-					reloadWhisper = true;
-				});
+						radioWhisperVAD.Checked,
+						value => {
+							Settings.Default.UseWhisperVAD = value;
+							reloadWhisper = true;
+						});
 			UpdateSetting(ref Common.VADThreshold,
-				(float)numVadThreshold.Value,
-				value => {
-					Settings.Default.VadThreshold = numVadThreshold.Value;
-					setVAD = true;
-				});
+						(float)numVadThreshold.Value,
+						value => {
+							Settings.Default.VadThreshold = numVadThreshold.Value;
+							setVAD = true;
+						});
 			UpdateSetting(ref Common.FlashAttn,
-				checkFlashAttn.CheckState,
-				value => {
-					Settings.Default.FlashAttn = (uint)value;
-					reloadCtxForDefaultSlots = true;
-				});
+						checkFlashAttn.CheckState,
+						value => {
+							Settings.Default.FlashAttn = (uint)value;
+							reloadCtxForDefaultSlots = true;
+						});
 			UpdateSetting(ref Common.GoogleAPIKey,
-				textGoogleApiKey.Text,
-				value => {
-					Settings.Default.GoogleAPIKey = value;
-					setGoogle = true;
-				});
+						textGoogleApiKey.Text,
+						value => {
+							Settings.Default.GoogleAPIKey = value;
+							setGoogle = true;
+						});
 			UpdateSetting(ref Common.GoogleSearchID,
-				textGoogleSearchID.Text,
-				value => {
-					Settings.Default.GoogleSearchID = value;
-					setGoogle = true;
-				});
+						textGoogleSearchID.Text,
+						value => {
+							Settings.Default.GoogleSearchID = value;
+							setGoogle = true;
+						});
 			UpdateSetting(ref Common.GoogleSearchResultCount,
-				(int)numGoogleResults.Value,
-				value => {
-					Settings.Default.GoogleSearchResultCount = value;
-					setGoogle = true;
-				});
+						(int)numGoogleResults.Value,
+						value => {
+							Settings.Default.GoogleSearchResultCount = value;
+							setGoogle = true;
+						});
 			UpdateSetting(ref Common.GoogleSearchEnable,
-				checkGoogleEnable.Checked,
-				value => {
-					Settings.Default.GoogleSearchEnable = value;
-					registerTools = true;
-				});
+						checkGoogleEnable.Checked,
+						value => {
+							Settings.Default.GoogleSearchEnable = value;
+							registerTools = true;
+						});
 			UpdateSetting(ref Common.WebpageFetchEnable,
-				checkWebpageFetchEnable.Checked,
-				value => {
-					Settings.Default.WebpageFetchEnable = value;
-					registerTools = true;
-				});
+						checkWebpageFetchEnable.Checked,
+						value => {
+							Settings.Default.WebpageFetchEnable = value;
+							registerTools = true;
+						});
 			UpdateSetting(ref Common.FileBaseDir,
-				textFileBasePath.Text,
-				value => {
-					Settings.Default.FileBaseDir = value;
-					NativeMethods.SetFileBaseDir(value);
-				});
+						textFileBasePath.Text,
+						value => {
+							Settings.Default.FileBaseDir = value;
+							NativeMethods.SetFileBaseDir(value);
+						});
 			UpdateSetting(ref Common.FileListEnable,
-				checkFileListEnable.Checked,
-				value => {
-					Settings.Default.FileListEnable = value;
-					registerTools = true;
-				});
+						checkFileListEnable.Checked,
+						value => {
+							Settings.Default.FileListEnable = value;
+							registerTools = true;
+						});
 			UpdateSetting(ref Common.FileCreateEnable,
-				checkFileCreateEnable.Checked,
-				value => {
-					Settings.Default.FileCreateEnable = value;
-					registerTools = true;
-				});
+						checkFileCreateEnable.Checked,
+						value => {
+							Settings.Default.FileCreateEnable = value;
+							registerTools = true;
+						});
 			UpdateSetting(ref Common.FileReadEnable,
-				checkFileReadEnable.Checked,
-				value => {
-					Settings.Default.FileReadEnable = value;
-					registerTools = true;
-				});
+						checkFileReadEnable.Checked,
+						value => {
+							Settings.Default.FileReadEnable = value;
+							registerTools = true;
+						});
 			UpdateSetting(ref Common.FileWriteEnable,
-				checkFileWriteEnable.Checked,
-				value => {
-					Settings.Default.FileWriteEnable = value;
-					registerTools = true;
-				});
+						checkFileWriteEnable.Checked,
+						value => {
+							Settings.Default.FileWriteEnable = value;
+							registerTools = true;
+						});
 			UpdateSetting(ref Common.DateTimeEnable,
-				checkDateTimeEnable.Checked,
-				value => {
-					Settings.Default.DateTimeEnable = value;
-					registerTools = true;
-				});
+						checkDateTimeEnable.Checked,
+						value => {
+							Settings.Default.DateTimeEnable = value;
+							registerTools = true;
+						});
 			UpdateSetting(ref Common.CMDEnable,
-				checkCMDEnable.Checked,
-				value => {
-					Settings.Default.CMDToolEnable = value;
-					registerTools = true;
-				});
+						checkCMDEnable.Checked,
+						value => {
+							Settings.Default.CMDToolEnable = value;
+							registerTools = true;
+						});
 			UpdateSetting(ref Common.CMDTimeoutMs,
-				(int)numCmdTimeout.Value,
-				value => {
-					Settings.Default.CMDToolTimeoutMs = value;
-					NativeMethods.SetCommandPromptTimeout(value);
-				});
+						(int)numCmdTimeout.Value,
+						value => {
+							Settings.Default.CMDToolTimeoutMs = value;
+							NativeMethods.SetCommandPromptTimeout(value);
+						});
 			ApplyApiServerSettings();
 			UpdateSetting(ref Common.GenDelay,
-				(int)numGenDelay.Value,
-				value => {
-					Settings.Default.GenDelay = value;
-					NativeMethods.SetSilenceTimeout(value);
-				});
+						(int)numGenDelay.Value,
+						value => {
+							Settings.Default.GenDelay = value;
+							NativeMethods.SetSilenceTimeout(value);
+						});
 			if(popModels){
 				PopulateModels();
 				PopulateWhisperModels(true, true);
@@ -395,10 +395,10 @@ namespace LMStud{
 				var anyReloadModel = slots.Any(slot => reloadModelForAllSlots || (reloadModelForDefaultSlots && !slot.HasOverrides));
 				var reloadLoadedModels = anyReloadModel
 										&& MessageBox.Show(this,
-											Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_,
-											Resources.LM_Stud,
-											MessageBoxButtons.YesNo,
-											MessageBoxIcon.Question)
+															Resources.A_changed_setting_requires_the_model_to_be_reloaded__reload_now_,
+															Resources.LM_Stud,
+															MessageBoxButtons.YesNo,
+															MessageBoxIcon.Question)
 										== DialogResult.Yes;
 				foreach(var slot in slots){
 					var reloadModel = reloadModelForAllSlots || (reloadModelForDefaultSlots && !slot.HasOverrides);
@@ -503,11 +503,12 @@ namespace LMStud{
 				if(vad) comboVADModel.Items.Clear();
 				var files = Directory.GetFiles(Common.ModelsDir, "*.bin", SearchOption.AllDirectories);
 				foreach(var file in files){
-					using(var fs = new FileStream(file, FileMode.Open, FileAccess.Read))
-					using(var br = new BinaryReader(fs)){
-						var magic = br.ReadUInt32();
-						if(magic != 0x67676D6C)// "lmgg" in little-endian
-							continue;
+					using(var fs = new FileStream(file, FileMode.Open, FileAccess.Read)){
+						using(var br = new BinaryReader(fs)){
+							var magic = br.ReadUInt32();
+							if(magic != 0x67676D6C)// "lmgg" in little-endian
+								continue;
+						}
 					}
 					_whisperModels.Add(file);
 					if(whisper) comboWhisperModel.Items.Add(Path.GetFileName(file));

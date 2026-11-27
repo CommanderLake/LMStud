@@ -5,8 +5,8 @@ namespace LMStud{
 	internal static class NativeMethods{
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate IntPtr ManagedToolCallback([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string name,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string argsJson);
+													[MarshalAs(UnmanagedType.LPUTF8Str)] string name,
+													[MarshalAs(UnmanagedType.LPUTF8Str)] string argsJson);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate int ProgressCallback(long totalBytes, long downloadedBytes);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -15,12 +15,12 @@ namespace LMStud{
 		public delegate void SpeechEndCallback();
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate void TokenCallback([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string think,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string message,
-			int tokenCount,
-			int tokensTotal,
-			double ftTime,
-			int tool);
+											[MarshalAs(UnmanagedType.LPUTF8Str)] string think,
+											[MarshalAs(UnmanagedType.LPUTF8Str)] string message,
+											int tokenCount,
+											int tokensTotal,
+											double ftTime,
+											int tool);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate void WhisperCallback([MarshalAs(UnmanagedType.LPUTF8Str)] string transcription);
 		public enum GgmlNumaStrategy{
@@ -92,16 +92,16 @@ namespace LMStud{
 		internal static extern void BackendInit();
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError CreateContext([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			int nCtx,
-			int nBatch,
-			uint flashAttn,
-			bool offloadKQV,
-			bool offloadOP,
-			int nThreads,
-			int nThreadsBatch,
-			int kType,
-			int vType,
-			int mtpDraftTokens);
+														int nCtx,
+														int nBatch,
+														uint flashAttn,
+														bool offloadKQV,
+														bool offloadOP,
+														int nThreads,
+														int nThreadsBatch,
+														int kType,
+														int vType,
+														int mtpDraftTokens);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError CreateSampler([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, float minP, float topP, int topK, float temp, float repeatPenalty);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
@@ -116,18 +116,18 @@ namespace LMStud{
 		internal static extern bool IsStandaloneMtpHead([MarshalAs(UnmanagedType.LPUTF8Str)] string filename);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError LoadModel([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string filename,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string jinjaTemplate,
-			int nGPULayers,
-			bool mMap,
-			bool mLock,
-			GgmlNumaStrategy numaStrategy);
+													[MarshalAs(UnmanagedType.LPUTF8Str)] string filename,
+													[MarshalAs(UnmanagedType.LPUTF8Str)] string jinjaTemplate,
+													int nGPULayers,
+													bool mMap,
+													bool mLock,
+													GgmlNumaStrategy numaStrategy);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError LoadVisionProjector([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string filename,
-			bool useGPU,
-			int nThreads,
-			uint flashAttn);
+															[MarshalAs(UnmanagedType.LPUTF8Str)] string filename,
+															bool useGPU,
+															int nThreads,
+															uint flashAttn);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		[return: MarshalAs(UnmanagedType.I1)]
 		internal static extern bool HasVisionProjector([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
@@ -177,66 +177,71 @@ namespace LMStud{
 		internal static extern StudError SetStateData([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, IntPtr src, int size);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError DialecticRelaySwap([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string fromSlotName,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string toSlotName);
+															[MarshalAs(UnmanagedType.LPUTF8Str)] string fromSlotName,
+															[MarshalAs(UnmanagedType.LPUTF8Str)] string toSlotName);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError SetSystemPrompt([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string prompt,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string toolsPrompt);
+														[MarshalAs(UnmanagedType.LPUTF8Str)] string prompt,
+														[MarshalAs(UnmanagedType.LPUTF8Str)] string toolsPrompt);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError SetMessageAt([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			int index,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string think,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string message);
+													int index,
+													[MarshalAs(UnmanagedType.LPUTF8Str)] string think,
+													[MarshalAs(UnmanagedType.LPUTF8Str)] string message);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError SetMessageAtJson([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			int index,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string think,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string contentJson);
+														int index,
+														[MarshalAs(UnmanagedType.LPUTF8Str)] string think,
+														[MarshalAs(UnmanagedType.LPUTF8Str)] string contentJson);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError RemoveMessageAt([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, int index);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError RemoveMessagesStartingAt([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, int index);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError AddMessage([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			MessageRole role,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string think,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string message);
+													MessageRole role,
+													[MarshalAs(UnmanagedType.LPUTF8Str)] string think,
+													[MarshalAs(UnmanagedType.LPUTF8Str)] string message);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError AddMessageJson([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			MessageRole role,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string think,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string contentJson);
+														MessageRole role,
+														[MarshalAs(UnmanagedType.LPUTF8Str)] string think,
+														[MarshalAs(UnmanagedType.LPUTF8Str)] string contentJson);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError SyncChatMessagesJson([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, [MarshalAs(UnmanagedType.LPUTF8Str)] string messagesJson);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr GetChatMessagesJson([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError GenerateWithTools([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			MessageRole role,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string prompt,
-			int nPredict,
-			bool callback);
+															MessageRole role,
+															[MarshalAs(UnmanagedType.LPUTF8Str)] string prompt,
+															int nPredict,
+															bool callback);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError GenerateWithToolsJson([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			MessageRole role,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string contentJson,
-			int nPredict,
-			bool callback);
+																MessageRole role,
+																[MarshalAs(UnmanagedType.LPUTF8Str)] string contentJson,
+																int nPredict,
+																bool callback);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError GenerateForAPIMessage([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string messageJson, [MarshalAs(UnmanagedType.LPUTF8Str)] string toolsJson,
-			int nPredict, bool callback, float temperature, float topP, out IntPtr responseJson);
+																[MarshalAs(UnmanagedType.LPUTF8Str)] string messageJson,
+																[MarshalAs(UnmanagedType.LPUTF8Str)] string toolsJson,
+																int nPredict,
+																bool callback,
+																float temperature,
+																float topP,
+																out IntPtr responseJson);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr MCPConnectStdio([MarshalAs(UnmanagedType.LPUTF8Str)] string serverId,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string commandLine,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string workingDirectory,
-			int timeoutMs);
+													[MarshalAs(UnmanagedType.LPUTF8Str)] string commandLine,
+													[MarshalAs(UnmanagedType.LPUTF8Str)] string workingDirectory,
+													int timeoutMs);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr MCPConnectHttp([MarshalAs(UnmanagedType.LPUTF8Str)] string serverId,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string url,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string customHeader,
-			int timeoutMs);
+													[MarshalAs(UnmanagedType.LPUTF8Str)] string url,
+													[MarshalAs(UnmanagedType.LPUTF8Str)] string customHeader,
+													int timeoutMs);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr MCPDisconnect([MarshalAs(UnmanagedType.LPUTF8Str)] string serverId);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
@@ -258,8 +263,8 @@ namespace LMStud{
 		internal static extern void StopGeneration([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr ExecuteTool([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string name,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string argsJson);
+												[MarshalAs(UnmanagedType.LPUTF8Str)] string name,
+												[MarshalAs(UnmanagedType.LPUTF8Str)] string argsJson);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr GetToolsJson([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName, out int length);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
@@ -268,20 +273,20 @@ namespace LMStud{
 		internal static extern void SetFileBaseDir([MarshalAs(UnmanagedType.LPUTF8Str)] string dir);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void RegisterTools([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			bool dateTime,
-			bool googleSearch,
-			bool webpageFetch,
-			bool fileList,
-			bool fileCreate,
-			bool fileRead,
-			bool fileWrite,
-			bool commandPrompt);
+												bool dateTime,
+												bool googleSearch,
+												bool webpageFetch,
+												bool fileList,
+												bool fileCreate,
+												bool fileRead,
+												bool fileWrite,
+												bool commandPrompt);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void AddTool([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string name,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string description,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string parameters,
-			IntPtr handler);
+											[MarshalAs(UnmanagedType.LPUTF8Str)] string name,
+											[MarshalAs(UnmanagedType.LPUTF8Str)] string description,
+											[MarshalAs(UnmanagedType.LPUTF8Str)] string parameters,
+											IntPtr handler);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void ClearTools([MarshalAs(UnmanagedType.LPUTF8Str)] string slotName);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
@@ -300,10 +305,10 @@ namespace LMStud{
 		internal static extern void SetSpeechEndCallback(SpeechEndCallback cb);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern StudError LoadWhisperModel([MarshalAs(UnmanagedType.LPUTF8Str)] string modelPath,
-			int nThreads,
-			bool useGPU,
-			bool useVAD,
-			[MarshalAs(UnmanagedType.LPUTF8Str)] string vadModel);
+														int nThreads,
+														bool useGPU,
+														bool useVAD,
+														[MarshalAs(UnmanagedType.LPUTF8Str)] string vadModel);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void UnloadWhisperModel();
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]

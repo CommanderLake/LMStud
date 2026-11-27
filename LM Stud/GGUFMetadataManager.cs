@@ -27,19 +27,20 @@ namespace LMStud{
 		private static List<GGUFMetadataEntry> LoadGGUFMetadata(string filename, byte[] skipBuffer, out bool checkMtpHead){
 			checkMtpHead = false;
 			var metadata = new List<GGUFMetadataEntry>();
-			using(var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read, 64*1024))
-			using(var br = new BinaryReader(fs)){
-				var magic = br.ReadUInt32();
-				if(magic != Magic) return null;
-				br.ReadUInt32();
-				var tensorCount = br.ReadUInt64();
-				var metadataCount = br.ReadUInt64();
-				metadata.Capacity = (int)metadataCount;
-				for(ulong i = 0; i < metadataCount; i++){
-					var entry = ReadMetadataEntry(br, skipBuffer);
-					metadata.Add(entry);
+			using(var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read, 64*1024)){
+				using(var br = new BinaryReader(fs)){
+					var magic = br.ReadUInt32();
+					if(magic != Magic) return null;
+					br.ReadUInt32();
+					var tensorCount = br.ReadUInt64();
+					var metadataCount = br.ReadUInt64();
+					metadata.Capacity = (int)metadataCount;
+					for(ulong i = 0; i < metadataCount; i++){
+						var entry = ReadMetadataEntry(br, skipBuffer);
+						metadata.Add(entry);
+					}
+					if(skipBuffer != null) checkMtpHead = NeedsMtpHeadCheck(br, metadata, tensorCount, skipBuffer);
 				}
-				if(skipBuffer != null) checkMtpHead = NeedsMtpHeadCheck(br, metadata, tensorCount, skipBuffer);
 			}
 			return metadata;
 		}

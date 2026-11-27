@@ -110,12 +110,12 @@ namespace LMStud{
 			internal readonly MessageRole Role;
 			internal readonly string Think;
 			internal MessageSnapshot(MessageRole role,
-				string think,
-				string message,
-				string apiContent = null,
-				List<APIClient.ToolCall> apiToolCalls = null,
-				string apiToolCallId = null,
-				bool nativeBacked = true){
+									string think,
+									string message,
+									string apiContent = null,
+									List<APIClient.ToolCall> apiToolCalls = null,
+									string apiToolCallId = null,
+									bool nativeBacked = true){
 				Role = role;
 				Think = think ?? "";
 				Message = message ?? "";

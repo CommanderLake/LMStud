@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -10,12 +12,11 @@ using LMStud.Parsers;
 using LMStud.Properties;
 namespace LMStud{
 	public partial class APIServer{
-		private const int MaxRequestBytes = 32 * 1024 * 1024;
-		internal readonly SessionManager Sessions = new SessionManager();
+		private const int MaxRequestBytes = 32*1024*1024;
 		private readonly SemaphoreSlim _requests = new SemaphoreSlim(32, 32);
-		private CancellationTokenSource _stop;
+		internal readonly SessionManager Sessions = new SessionManager();
 		private HttpListener _listener;
-
+		private CancellationTokenSource _stop;
 		internal bool Start(string host = null, string token = null){
 			if(_listener != null) return true;
 			host = (host ?? Settings.Default.APIServerHost ?? "").Trim();
@@ -32,7 +33,7 @@ namespace LMStud{
 					listener.Prefixes.Add($"http://localhost:{Common.APIServerPort}/");
 					listener.Prefixes.Add($"http://127.0.0.1:{Common.APIServerPort}/");
 				} else{
-					var prefixHost = ip?.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 ? "[" + ip + "]" : host;
+					var prefixHost = ip?.AddressFamily == AddressFamily.InterNetworkV6 ? "[" + ip + "]" : host;
 					listener.Prefixes.Add($"http://{prefixHost}:{Common.APIServerPort}/");
 				}
 				listener.Start();
@@ -43,12 +44,10 @@ namespace LMStud{
 				return true;
 			} catch(Exception ex) when(ex is HttpListenerException || ex is ArgumentException || ex is InvalidOperationException){
 				listener.Close();
-				MessageBox.Show(string.Format(Resources.API_server_could_not_start_on_port__, Common.APIServerPort, ex.Message),
-					Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+				MessageBox.Show(string.Format(Resources.API_server_could_not_start_on_port__, Common.APIServerPort, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
 				return false;
 			}
 		}
-
 		internal void Stop(){
 			var listener = _listener;
 			if(listener == null) return;
@@ -61,9 +60,7 @@ namespace LMStud{
 		private void Listen(HttpListener listener, CancellationToken stopping, string token, bool loopback){
 			while(!stopping.IsCancellationRequested){
 				HttpListenerContext context;
-				try{ context = listener.GetContext(); }
-				catch(HttpListenerException){ break; }
-				catch(ObjectDisposedException){ break; }
+				try{ context = listener.GetContext(); } catch(HttpListenerException){ break; } catch(ObjectDisposedException){ break; }
 				ThreadPool.QueueUserWorkItem(_ => Handle(context, stopping, token, loopback));
 			}
 		}
@@ -86,25 +83,18 @@ namespace LMStud{
 				}
 				var method = context.Request.HttpMethod;
 				var path = context.Request.Url.AbsolutePath.TrimEnd('/');
-				if(method == "GET" && path == "/v1/models")
-					WriteJson(context, Json.Object(Json.P("object", "list"), Json.P("data", ModelSlotManager.BuildServerModels())));
-				else if(method == "POST" && (path == "/v1/responses" || path == "/v1/chat/completions"))
-					HandleChat(context, path == "/v1/chat/completions", stopping);
+				if(method == "GET" && path == "/v1/models") WriteJson(context, Json.Object(Json.P("object", "list"), Json.P("data", ModelSlotManager.BuildServerModels())));
+				else if(method == "POST" && (path == "/v1/responses" || path == "/v1/chat/completions")) HandleChat(context, path == "/v1/chat/completions", stopping);
 				else if(method == "POST" && path == "/v1/reset") HandleReset(context);
 				else if((method == "GET" || method == "DELETE") && path.StartsWith("/v1/responses/", StringComparison.Ordinal))
 					HandleSavedResponse(context, path.Substring("/v1/responses/".Length), method == "DELETE");
 				else Error(context, 404, "endpoint_not_found", "Unknown API endpoint.");
-			} catch(ApiError ex){ TryError(context, ex.Status, ex.Code, ex.Message, ex.Parameter); }
-			catch(HttpListenerException){}
-			catch(ObjectDisposedException){}
-			catch(OperationCanceledException){}
-			catch(Exception ex){ TryError(context, 500, "server_error", ex.Message); }
-			finally{
+			} catch(ApiError ex){ TryError(context, ex.Status, ex.Code, ex.Message, ex.Parameter); } catch(HttpListenerException){} catch(ObjectDisposedException){} catch
+				(OperationCanceledException){} catch(Exception ex){ TryError(context, 500, "server_error", ex.Message); } finally{
 				if(entered) _requests.Release();
 				try{ context.Response.Close(); } catch{}
 			}
 		}
-
 		private static bool Authorized(string header, string token){
 			const string prefix = "Bearer ";
 			if(header == null || !header.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || header.Length != prefix.Length + token.Length) return false;
@@ -123,18 +113,17 @@ namespace LMStud{
 				}
 				if(allowEmpty && body.Length == 0) return Json.Object();
 				JsonNode json;
-				try{ json = Json.Parse(Encoding.UTF8.GetString(body.GetBuffer(), 0, (int)body.Length).TrimStart('\uFEFF')); }
-				catch(InvalidOperationException){ throw new ApiError(400, "invalid_json", "Expected a JSON object."); }
+				try{ json = Json.Parse(Encoding.UTF8.GetString(body.GetBuffer(), 0, (int)body.Length).TrimStart('\uFEFF')); } catch(InvalidOperationException){
+					throw new ApiError(400, "invalid_json", "Expected a JSON object.");
+				}
 				if(!json.IsObject) throw new ApiError(400, "invalid_json", "Expected a JSON object.");
 				return json;
 			}
 		}
-
 		private static string SessionId(HttpListenerContext context, JsonNode body){
 			var sessionId = body.GetString("session_id") ?? context.Request.Headers["X-Session-Id"];
 			if(string.IsNullOrWhiteSpace(sessionId)) return null;
-			if(sessionId.Length > 128 || sessionId.Any(ch => ch < '!' || ch > '~'))
-				throw new ApiError(400, "invalid_value", "The session ID must be a short printable identifier.", "session_id");
+			if(sessionId.Length > 128 || sessionId.Any(ch => ch < '!' || ch > '~')) throw new ApiError(400, "invalid_value", "The session ID must be a short printable identifier.", "session_id");
 			return sessionId;
 		}
 		private void HandleReset(HttpListenerContext context){
@@ -149,19 +138,16 @@ namespace LMStud{
 			} else if(scope == "global"){
 				Sessions.Clear();
 				NativeMethods.CloseCommandPrompt();
-			} else throw new ApiError(400, "invalid_value", "Expected session or global.", "scope");
+			} else{ throw new ApiError(400, "invalid_value", "Expected session or global.", "scope"); }
 			WriteJson(context, Json.Object(Json.P("status", "reset"), Json.P("scope", scope)));
 		}
 		private void HandleSavedResponse(HttpListenerContext context, string id, bool delete){
 			if(delete){
 				if(!Sessions.DeleteResponse(id)) throw MissingResponse(id);
 				WriteJson(context, Json.Object(Json.P("id", id), Json.P("object", "response.deleted"), Json.P("deleted", true)));
-			} else WriteJson(context, (Sessions.FindResponse(id) ?? throw MissingResponse(id)).Payload);
+			} else{ WriteJson(context, (Sessions.FindResponse(id) ?? throw MissingResponse(id)).Payload); }
 		}
-		private static ApiError MissingResponse(string id){
-			return new ApiError(404, "response_not_found", "Unknown or expired response: " + id, "previous_response_id");
-		}
-
+		private static ApiError MissingResponse(string id){return new ApiError(404, "response_not_found", "Unknown or expired response: " + id, "previous_response_id");}
 		private void HandleChat(HttpListenerContext context, bool chat, CancellationToken stopping){
 			var request = new ChatRequest(ReadBody(context.Request), chat);
 			var explicitSession = SessionId(context, request.Body);
@@ -175,9 +161,7 @@ namespace LMStud{
 				throw new ApiError(409, "slot_not_ready", "The requested model slot is not ready: " + slot.Name, "model");
 			var model = ModelSlotManager.GetServerModelId(slot);
 			var backend = remote ? model + "|" + slot.ApiBaseUrl + "|" + slot.ApiModel : model + "|" + slot.ResolveLocalPath();
-			if(parent != null && parent.Backend != backend)
-				throw new ApiError(400, "model_mismatch", "Use the model slot that created the previous response.", "model");
-
+			if(parent != null && parent.Backend != backend) throw new ApiError(400, "model_mismatch", "Use the model slot that created the previous response.", "model");
 			var store = request.Store ?? (!chat || explicitSession != null);
 			var session = parent?.Session ?? Sessions.Get(explicitSession, store);
 			var reply = new ServerReply(context, request, model, session.Id, store);
@@ -189,26 +173,43 @@ namespace LMStud{
 					var prior = parent ?? (explicitSession == null ? null : session.Latest);
 					if(prior?.Backend != backend) prior = null;
 					// Legacy requests may send either one new message or a complete messages array.
-					var append = prior != null && (parent != null || !request.UsesMessages || request.Body["messages"].Count == 1
-						|| request.Body["messages"].All(message => message.GetString("role") == "tool"));
+					var append = prior != null
+								&& (parent != null || !request.UsesMessages || request.Body["messages"].Count == 1 || request.Body["messages"].All(message => message.GetString("role") == "tool"));
 					var history = Json.ArrayBuilder();
-					if(append) foreach(var item in prior.Items) history.Add(item);
+					if(append)
+						foreach(var item in prior.Items)
+							history.Add(item);
 					foreach(var item in request.Input) history.Add(item);
 					var tools = request.Tools.Exists ? request.Tools.ToJson() : explicitSession != null && parent == null ? prior?.ToolsJson : null;
 					if(!remote) ValidateLocalOptions(request, tools);
 					var instructions = request.Instructions ?? (remote ? slot.GetInstructionsOrDefault() : Program.MainForm?.GetDefaultSystemPromptForSlot(slot.Name) ?? Common.SystemPrompt);
-
-					IntPtr newChatState = IntPtr.Zero;
+					var newChatState = IntPtr.Zero;
 					try{
 						APIClient.ChatCompletionResult result;
 						byte[] newState = null;
-						Action<string> stream = request.Stream ? (Action<string>)reply.TextDelta : null;
+						var stream = request.Stream ? (Action<string>)reply.TextDelta : null;
 						if(remote){
-							var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, store && slot.ApiStore, instructions,
-								slot.ApiReasoningEffort, slot.ApiReasoningSummary, slot.ApiMode, explicitStore: request.Store.HasValue);
-							result = client.CreateChatCompletion(history, request.Temperature ?? Common.Temp, request.MaxTokens ?? Common.NGen, tools,
-								request.ToolChoice, stopping, stream, request.ParallelToolCalls, request.TopP, request.TextFormat, request.IncludeUsage,
-								request.Stream && !request.Chat ? (Func<JsonNode, bool>)reply.ForwardResponseEvent : null);
+							var client = new APIClient(slot.ApiBaseUrl,
+														slot.ApiKey,
+														slot.ApiModel,
+														store && slot.ApiStore,
+														instructions,
+														slot.ApiReasoningEffort,
+														slot.ApiReasoningSummary,
+														slot.ApiMode,
+														request.Store.HasValue);
+							result = client.CreateChatCompletion(history,
+																request.Temperature ?? Common.Temp,
+																request.MaxTokens ?? Common.NGen,
+																tools,
+																request.ToolChoice,
+																stopping,
+																stream,
+																request.ParallelToolCalls,
+																request.TopP,
+																request.TextFormat,
+																request.IncludeUsage,
+																request.Stream && !request.Chat ? (Func<JsonNode, bool>)reply.ForwardResponseEvent : null);
 						} else{
 							var instructionParts = new List<string>{ instructions };
 							var messages = Json.ArrayBuilder();
@@ -223,10 +224,23 @@ namespace LMStud{
 							foreach(var message in messages.Take(messages.Count - 1)) replay.Add(message);
 							var reuse = append && ReferenceEquals(prior, session.Latest) && request.Input.Count == 1 && prior.Instructions == instructions;
 							var prompt = messages[messages.Count - 1];
-							if(!Generation.GenerateForApiServer(slot.Name, prompt, replay.Count == 0 ? null : replay.ToJson(), request.ToolChoice?.AsString() == "none" ? null : tools,
-								out result, out newState, out newChatState, out _, request.MaxTokens, instructions, stream,
-								state: reuse ? session.State : null, chatState: reuse ? session.NativeChatState : IntPtr.Zero, captureState: store,
-								temperature: request.Temperature, topP: request.TopP, cancellationToken: stopping))
+							if(!Generation.GenerateForApiServer(slot.Name,
+																prompt,
+																replay.Count == 0 ? null : replay.ToJson(),
+																request.ToolChoice?.AsString() == "none" ? null : tools,
+																out result,
+																out newState,
+																out newChatState,
+																out _,
+																request.MaxTokens,
+																instructions,
+																stream,
+																reuse ? session.State : null,
+																reuse ? session.NativeChatState : IntPtr.Zero,
+																store,
+																request.Temperature,
+																request.TopP,
+																stopping))
 								throw new ApiError(500, "generation_failed", NativeMethods.GetLastError() ?? "The local model could not generate a response.");
 						}
 						stopping.ThrowIfCancellationRequested();
@@ -234,28 +248,22 @@ namespace LMStud{
 						if(store){
 							APIClient.AppendOutputItems(history, result);
 							var turn = new SessionManager.Turn(session, reply.Id, model, backend, instructions, tools, history.ToArray(), payload);
-							if(!Sessions.Save(session, turn, newState, newChatState, !chat))
-								throw new ApiError(409, "session_reset", "The session was reset before the reply could be saved.");
+							if(!Sessions.Save(session, turn, newState, newChatState, !chat)) throw new ApiError(409, "session_reset", "The session was reset before the reply could be saved.");
 							newChatState = IntPtr.Zero;
 						}
 						reply.Finish(result, payload);
-					} catch(ApiError ex) when(reply.Started){ reply.Fail(ex.Code, ex.Message); }
-					catch(APIClient.RequestException ex){
+					} catch(ApiError ex) when(reply.Started){ reply.Fail(ex.Code, ex.Message); } catch(APIClient.RequestException ex){
 						reply.Fail(ex.StatusCode < 400 ? 502 : ex.StatusCode, ex.Code ?? "upstream_error", ex.UpstreamMessage ?? ex.Message, ex.Parameter);
-					}
-					catch(WebException ex) when(remote && ex.Status == WebExceptionStatus.Timeout){ reply.Fail(504, "upstream_timeout", ex.Message); }
-					catch(Exception ex) when(remote && !(ex is OperationCanceledException) && !(ex is HttpListenerException) && !(ex is ApiError)){
-						reply.Fail(502, "upstream_error", ex.Message);
-					} catch(Exception ex) when(reply.Started && !(ex is OperationCanceledException) && !(ex is HttpListenerException)){
-						reply.Fail("generation_failed", ex.Message);
-					} finally{
+					} catch(WebException ex) when(remote && ex.Status == WebExceptionStatus.Timeout){ reply.Fail(504, "upstream_timeout", ex.Message); } catch(Exception ex) when
+						(remote && !(ex is OperationCanceledException) && !(ex is HttpListenerException) && !(ex is ApiError)){ reply.Fail(502, "upstream_error", ex.Message); } catch(Exception ex)
+						when(reply.Started && !(ex is OperationCanceledException) && !(ex is HttpListenerException)){ reply.Fail("generation_failed", ex.Message); } finally{
 						if(newChatState != IntPtr.Zero) NativeMethods.FreeChatState(newChatState);
 					}
 				}
 			}
 		}
 		private static ModelSlotLockLease EnterSlot(string name, CancellationToken stopping){
-			var timer = System.Diagnostics.Stopwatch.StartNew();
+			var timer = Stopwatch.StartNew();
 			do{
 				stopping.ThrowIfCancellationRequested();
 				var lease = ModelSlotManager.TryEnterSlot(name, 100);
@@ -271,12 +279,10 @@ namespace LMStud{
 			if(string.IsNullOrEmpty(toolsJson) || request.ToolChoice?.AsString() == "none") return;
 			var tools = Json.Parse(toolsJson);
 			if(tools.Count == 0) return;
-			if(tools.Any(tool => tool.GetString("type") != "function"))
-				throw new ApiError(400, "unsupported_parameter", "The local model supports function tools.", "tools");
+			if(tools.Any(tool => tool.GetString("type") != "function")) throw new ApiError(400, "unsupported_parameter", "The local model supports function tools.", "tools");
 			if(tools.Any(tool => (tool["function"].GetBool("strict") ?? tool.GetBool("strict")) == true))
 				throw new ApiError(400, "unsupported_parameter", "The local model cannot enforce strict tool schemas.", "tools");
-			if(request.ParallelToolCalls == false)
-				throw new ApiError(400, "unsupported_parameter", "The local model cannot enforce a single tool call.", "parallel_tool_calls");
+			if(request.ParallelToolCalls == false) throw new ApiError(400, "unsupported_parameter", "The local model cannot enforce a single tool call.", "parallel_tool_calls");
 		}
 		private static void WriteJson(HttpListenerContext context, JsonNode payload){
 			var bytes = Encoding.UTF8.GetBytes(payload.ToJson());
@@ -296,34 +302,33 @@ namespace LMStud{
 			try{ Error(context, status, code, message, parameter); } catch(HttpListenerException){} catch(InvalidOperationException){}
 		}
 		private sealed class ApiError : InvalidOperationException{
-			internal readonly int Status;
 			internal readonly string Code;
 			internal readonly string Parameter;
+			internal readonly int Status;
 			internal ApiError(int status, string code, string message, string parameter = null) : base(message){
 				Status = status;
 				Code = code;
 				Parameter = parameter;
 			}
 		}
-
 		private sealed class ChatRequest{
 			internal readonly JsonNode Body;
 			internal readonly bool Chat;
-			internal readonly bool UsesMessages;
+			internal readonly bool IncludeUsage;
 			internal readonly JsonArrayBuilder Input;
-			internal readonly string Model;
-			internal readonly string PreviousId;
 			internal readonly string Instructions;
+			internal readonly int? MaxTokens;
+			internal readonly string Model;
+			internal readonly bool? ParallelToolCalls;
+			internal readonly string PreviousId;
 			internal readonly bool? Store;
 			internal readonly bool Stream;
-			internal readonly bool IncludeUsage;
-			internal readonly int? MaxTokens;
 			internal readonly float? Temperature;
-			internal readonly float? TopP;
-			internal readonly bool? ParallelToolCalls;
-			internal readonly JsonNode Tools;
-			internal readonly JsonNode? ToolChoice;
 			internal readonly JsonNode TextFormat;
+			internal readonly JsonNode? ToolChoice;
+			internal readonly JsonNode Tools;
+			internal readonly float? TopP;
+			internal readonly bool UsesMessages;
 			internal ChatRequest(JsonNode body, bool chat){
 				Body = body;
 				Chat = chat;
@@ -343,8 +348,9 @@ namespace LMStud{
 				TextFormat = chat ? body["response_format"] : body["text"]["format"];
 				if(chat && (ReadInt(body, "n") ?? 1) != 1) throw Invalid("n", "Only one choice is supported.");
 				UsesMessages = body["input"].IsNull && body["messages"].Exists;
-				try{ Input = UsesMessages ? APIClient.ConvertChatMessagesToInput(body["messages"]) : ReadInput(body["input"]); }
-				catch(InvalidOperationException ex) when(!(ex is ApiError)){ throw Invalid(chat ? "messages" : "input", ex.Message); }
+				try{ Input = UsesMessages ? APIClient.ConvertChatMessagesToInput(body["messages"]) : ReadInput(body["input"]); } catch(InvalidOperationException ex) when(!(ex is ApiError)){
+					throw Invalid(chat ? "messages" : "input", ex.Message);
+				}
 				if(Input.Count == 0) throw Invalid(chat ? "messages" : "input", "Expected at least one input item.");
 			}
 			private static JsonArrayBuilder ReadInput(JsonNode input){
@@ -354,7 +360,9 @@ namespace LMStud{
 					else if(item.IsObject) items.Add(item);
 					else throw Invalid("input", "Input items must be objects or strings.");
 				}
-				if(input.IsArray) foreach(var item in input) Add(item);
+				if(input.IsArray)
+					foreach(var item in input)
+						Add(item);
 				else if(!input.IsNull) Add(input);
 				return items;
 			}

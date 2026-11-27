@@ -88,8 +88,9 @@ namespace LMStud{
 					}
 					if(items.Count > 0) Invoke(new MethodInvoker(() => {listViewHugSearch.Items.AddRange(items.ToArray());}));
 				} catch(Exception ex){
-					Invoke(new MethodInvoker(
-						() => {MessageBox.Show(this, string.Format(Resources.Model_search_error___0_, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);}));
+					Invoke(new MethodInvoker(() => {
+						MessageBox.Show(this, string.Format(Resources.Model_search_error___0_, ex.Message), Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Error);
+					}));
 				} finally{
 					Invoke(new MethodInvoker(() => {
 						listViewHugSearch.EndUpdate();
@@ -197,7 +198,7 @@ namespace LMStud{
 								: string.Format(Resources.Downloaded_GGUF_Parts, files.Length, Path.GetDirectoryName(targetPath));
 							_showDownloadNotification(message, MessageBoxIcon.Information);
 							PopulateModels();
-						} else if(!_cancelDownload) _showDownloadNotification(string.Format(Resources.Download_failed___0_, error), MessageBoxIcon.Error);
+						} else if(!_cancelDownload){ _showDownloadNotification(string.Format(Resources.Download_failed___0_, error), MessageBoxIcon.Error); }
 					}));
 				} catch(ObjectDisposedException){} catch(InvalidOperationException){}
 			});

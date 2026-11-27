@@ -33,7 +33,7 @@ namespace LMStud{
 			_imageLoader = new MarkdownImageLoader(ImageLoaded);
 			DoubleBuffered = true;
 			SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.Selectable | ControlStyles.Opaque,
-				true);
+					true);
 			BackColor = SystemColors.Window;
 			ForeColor = SystemColors.WindowText;
 			TabStop = true;
@@ -376,8 +376,9 @@ namespace LMStud{
 					bytes = HttpClient.GetByteArrayAsync(uri).GetAwaiter().GetResult();
 					if(bytes.Length > MaximumDownloadBytes) return;
 				}
-				using(var stream = new MemoryStream(bytes))
-				using(var sourceImage = Image.FromStream(stream)){ image = new Bitmap(sourceImage); }
+				using(var stream = new MemoryStream(bytes)){
+					using(var sourceImage = Image.FromStream(stream)){ image = new Bitmap(sourceImage); }
+				}
 			} catch{}
 			if(image == null) return;
 			lock(_images){
@@ -583,8 +584,8 @@ namespace LMStud{
 		private static Color Blend(Color foreground, Color background, float foregroundAmount){
 			var backgroundAmount = 1f - foregroundAmount;
 			return Color.FromArgb((int)(foreground.R*foregroundAmount + background.R*backgroundAmount),
-				(int)(foreground.G*foregroundAmount + background.G*backgroundAmount),
-				(int)(foreground.B*foregroundAmount + background.B*backgroundAmount));
+								(int)(foreground.G*foregroundAmount + background.G*backgroundAmount),
+								(int)(foreground.B*foregroundAmount + background.B*backgroundAmount));
 		}
 		private static string Normalize(string text){return (text ?? string.Empty).Replace("\r\n", "\n").Replace('\r', '\n').Replace("\t", TabSpaces);}
 		private static bool TryGetFence(string line, out string fence){
@@ -1243,15 +1244,15 @@ namespace LMStud{
 			internal readonly RectangleF Rect;
 			internal readonly int TextStart;
 			private DrawOp(OpKind kind,
-				RectangleF rect,
-				Color color,
-				string text = null,
-				Font font = null,
-				int textStart = 0,
-				float[] characterOffsets = null,
-				bool strike = false,
-				TextFormatFlags flags = TextFormatFlags.Default,
-				Image image = null){
+							RectangleF rect,
+							Color color,
+							string text = null,
+							Font font = null,
+							int textStart = 0,
+							float[] characterOffsets = null,
+							bool strike = false,
+							TextFormatFlags flags = TextFormatFlags.Default,
+							Image image = null){
 				_kind = kind;
 				Rect = rect;
 				_color = color;
@@ -1267,13 +1268,13 @@ namespace LMStud{
 			internal bool IsText => _kind == OpKind.Text;
 			internal int TextLength => _text?.Length ?? 0;
 			internal static DrawOp Text(string text,
-				RectangleF rect,
-				Font font,
-				Color color,
-				int textStart,
-				float[] characterOffsets,
-				bool strike = false,
-				TextFormatFlags flags = TextFormatFlags.Default){
+										RectangleF rect,
+										Font font,
+										Color color,
+										int textStart,
+										float[] characterOffsets,
+										bool strike = false,
+										TextFormatFlags flags = TextFormatFlags.Default){
 				return new DrawOp(OpKind.Text, rect, color, text, font, textStart, characterOffsets, strike, flags);
 			}
 			internal static DrawOp Image(RectangleF rect, Image image){return new DrawOp(OpKind.Image, rect, Color.Empty, image: image);}

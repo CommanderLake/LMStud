@@ -9,22 +9,31 @@ using System.Threading;
 using LMStud.Parsers;
 using LMStud.Properties;
 namespace LMStud{
-	internal enum ApiMode{ Auto, Responses, ChatCompletions }
-
+	internal enum ApiMode{
+		Auto,
+		Responses,
+		ChatCompletions
+	}
 	internal sealed class APIClient{
-		private readonly Uri _baseUri;
 		private readonly string _apiKey;
+		private readonly Uri _baseUri;
+		private readonly bool _explicitStore;
 		private readonly string _instructions;
+		private readonly ApiMode _mode;
 		private readonly string _model;
-		private readonly bool _store;
 		private readonly int _reasoningEffort;
 		private readonly int _reasoningSummary;
-		private readonly ApiMode _mode;
-		private readonly bool _explicitStore;
+		private readonly bool _store;
 		private bool _chatFallback;
-
-		internal APIClient(string apiBaseUrl, string apiKey, string model, bool store, string instructions = null,
-			int reasoningEffort = 0, int reasoningSummary = 0, ApiMode mode = ApiMode.Auto, bool explicitStore = false){
+		internal APIClient(string apiBaseUrl,
+							string apiKey,
+							string model,
+							bool store,
+							string instructions = null,
+							int reasoningEffort = 0,
+							int reasoningSummary = 0,
+							ApiMode mode = ApiMode.Auto,
+							bool explicitStore = false){
 			if(!Uri.TryCreate(apiBaseUrl?.Trim(), UriKind.Absolute, out var uri) || (uri.Scheme != "http" && uri.Scheme != "https"))
 				throw new InvalidOperationException(Resources.API_base_URL_is_not_configured_);
 			var path = uri.AbsolutePath.TrimEnd('/');
@@ -45,38 +54,40 @@ namespace LMStud{
 			_mode = mode;
 			_explicitStore = explicitStore;
 		}
-
 		private string ModelFamily => _model.Substring(_model.LastIndexOf('/') + 1).ToLowerInvariant();
 		private bool IsGpt62 => ModelFamily.StartsWith("gpt-6.2", StringComparison.Ordinal);
 		private bool IsOSeries => ModelFamily.Length > 1 && ModelFamily[0] == 'o' && char.IsDigit(ModelFamily[1]);
 		private bool IsOpenAi => _baseUri.Host.Equals("api.openai.com", StringComparison.OrdinalIgnoreCase);
-
-		internal ChatCompletionResult CreateChatCompletion(JsonArrayBuilder history, float? temperature, int? maxTokens, string toolsJson, JsonNode? toolChoice,
-			CancellationToken cancellationToken, Action<string> streamCallback = null, bool? parallelToolCalls = null, float? topP = null, JsonNode textFormat = default,
-			bool includeUsage = false, Func<JsonNode, bool> responseEvent = null){
+		internal ChatCompletionResult CreateChatCompletion(JsonArrayBuilder history,
+															float? temperature,
+															int? maxTokens,
+															string toolsJson,
+															JsonNode? toolChoice,
+															CancellationToken cancellationToken,
+															Action<string> streamCallback = null,
+															bool? parallelToolCalls = null,
+															float? topP = null,
+															JsonNode textFormat = default,
+															bool includeUsage = false,
+															Func<JsonNode, bool> responseEvent = null){
 			if(history == null) throw new InvalidOperationException(Resources.History_is_not_configured_);
 			var tools = string.IsNullOrWhiteSpace(toolsJson) ? JsonNode.Missing : Json.Parse(toolsJson);
-			var requiresResponses = tools.IsArray && tools.Any(tool => {
-				var type = tool.GetString("type") ?? "function";
-				return type != "function";
-			});
+			var requiresResponses = tools.IsArray
+									&& tools.Any(tool => {
+										var type = tool.GetString("type") ?? "function";
+										return type != "function";
+									});
 			requiresResponses |= IsGpt62 && tools.Count > 0;
 			if(_mode != ApiMode.ChatCompletions && (!_chatFallback || requiresResponses)){
 				var responses = BuildPayload(history, temperature, maxTokens, tools, toolChoice, streamCallback != null, parallelToolCalls, topP, textFormat, false, includeUsage);
-				try{ return Send("POST", "responses", responses, cancellationToken, streamCallback, (reader, token, callback) =>
-					ReadCompletion(reader, token, callback, responseEvent)); }
-				catch(RequestException ex) when(_mode == ApiMode.Auto && !requiresResponses && ex.EndpointUnavailable){
-					_chatFallback = true;
-				}
+				try{ return Send("POST", "responses", responses, cancellationToken, streamCallback, (reader, token, callback) => ReadCompletion(reader, token, callback, responseEvent)); } catch
+					(RequestException ex) when(_mode == ApiMode.Auto && !requiresResponses && ex.EndpointUnavailable){ _chatFallback = true; }
 			}
 			if(requiresResponses) throw new InvalidOperationException("The selected tools require the Responses API.");
 			var chat = BuildPayload(history, temperature, maxTokens, tools, toolChoice, streamCallback != null, parallelToolCalls, topP, textFormat, true, includeUsage);
-			return Send("POST", "chat/completions", chat, cancellationToken, streamCallback, (reader, token, callback) =>
-				ReadCompletion(reader, token, callback, null));
+			return Send("POST", "chat/completions", chat, cancellationToken, streamCallback, (reader, token, callback) => ReadCompletion(reader, token, callback, null));
 		}
-
-		private T Send<T>(string method, string resource, JsonNode payload, CancellationToken token, Action<string> streamCallback,
-			Func<StreamReader, CancellationToken, Action<string>, T> read){
+		private T Send<T>(string method, string resource, JsonNode payload, CancellationToken token, Action<string> streamCallback, Func<StreamReader, CancellationToken, Action<string>, T> read){
 			token.ThrowIfCancellationRequested();
 			var endpoint = new UriBuilder(_baseUri){ Path = _baseUri.AbsolutePath.TrimEnd('/') + "/" + resource }.Uri;
 			var request = (HttpWebRequest)WebRequest.Create(endpoint);
@@ -94,14 +105,15 @@ namespace LMStud{
 						var bytes = Encoding.UTF8.GetBytes(payload.ToJson());
 						request.ContentType = "application/json; charset=utf-8";
 						request.ContentLength = bytes.Length;
-						using(var output = request.GetRequestStream()) output.Write(bytes, 0, bytes.Length);
+						using(var output = request.GetRequestStream()){ output.Write(bytes, 0, bytes.Length); }
 					}
-					using(var response = (HttpWebResponse)request.GetResponse())
-					using(var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8)){
-						if((int)response.StatusCode >= 300) throw new RequestException((int)response.StatusCode, "");
-						var result = read(reader, token, streamCallback);
-						token.ThrowIfCancellationRequested();
-						return result;
+					using(var response = (HttpWebResponse)request.GetResponse()){
+						using(var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8)){
+							if((int)response.StatusCode >= 300) throw new RequestException((int)response.StatusCode, "");
+							var result = read(reader, token, streamCallback);
+							token.ThrowIfCancellationRequested();
+							return result;
+						}
 					}
 				} catch(WebException ex) when(ex.Response is HttpWebResponse){
 					using(var response = (HttpWebResponse)ex.Response){
@@ -111,12 +123,9 @@ namespace LMStud{
 							throw new RequestException((int)response.StatusCode, new string(buffer, 0, reader.ReadBlock(buffer, 0, buffer.Length)));
 						}
 					}
-				} catch(Exception) when(token.IsCancellationRequested){
-					throw new OperationCanceledException(token);
-				}
+				} catch(Exception) when(token.IsCancellationRequested){ throw new OperationCanceledException(token); }
 			}
 		}
-
 		private static ChatCompletionResult ReadCompletion(StreamReader reader, CancellationToken token, Action<string> callback, Func<JsonNode, bool> responseEvent){
 			if(callback == null) return APIResponseParser.ParseResponseBody(reader.ReadToEnd());
 			var response = new StreamingResponse();
@@ -131,21 +140,28 @@ namespace LMStud{
 					if(response.Process(eventName, data.ToString(), callback, responseEvent)) return response.Result();
 					data.Clear();
 					eventName = "";
-				} else if(line.StartsWith("event:", StringComparison.Ordinal)) eventName = line.Substring(6).Trim();
-				else if(line.StartsWith("data:", StringComparison.Ordinal)){
+				} else if(line.StartsWith("event:", StringComparison.Ordinal)){ eventName = line.Substring(6).Trim(); } else if(line.StartsWith("data:", StringComparison.Ordinal)){
 					if(data.Length > 0) data.Append('\n');
 					data.Append(line.Length > 5 && line[5] == ' ' ? line.Substring(6) : line.Substring(5));
 					sawData = true;
-				} else if(!sawData && line[0] != ':') body.AppendLine(line);
+				} else if(!sawData && line[0] != ':'){ body.AppendLine(line); }
 			}
 			token.ThrowIfCancellationRequested();
 			if(!sawData && body.Length > 0) return APIResponseParser.ParseResponseBody(body.ToString());
 			if(data.Length > 0) response.Process(eventName, data.ToString(), callback, responseEvent);
 			return response.Result();
 		}
-
-		private JsonNode BuildPayload(JsonArrayBuilder history, float? temperature, int? maxTokens, JsonNode tools, JsonNode? choice, bool stream,
-			bool? parallelToolCalls, float? topP, JsonNode textFormat, bool chat, bool includeUsage){
+		private JsonNode BuildPayload(JsonArrayBuilder history,
+									float? temperature,
+									int? maxTokens,
+									JsonNode tools,
+									JsonNode? choice,
+									bool stream,
+									bool? parallelToolCalls,
+									float? topP,
+									JsonNode textFormat,
+									bool chat,
+									bool includeUsage){
 			var payload = Json.ObjectBuilder(Json.P("model", _model));
 			var effort = Common.GetReasoningEffort(_reasoningEffort);
 			if(IsGpt62 && effort == "none") effort = "low";
@@ -157,11 +173,15 @@ namespace LMStud{
 			if(chat){
 				var messages = ConvertHistoryToChatCompletionMessages(history);
 				if(!string.IsNullOrWhiteSpace(_instructions))
-					messages.Insert(0, Json.Object(Json.P("role", IsGpt62 || IsOSeries || ModelFamily.StartsWith("gpt-5", StringComparison.Ordinal) ? "developer" : "system"),
-						Json.P("content", _instructions)));
+					messages.Insert(0,
+									Json.Object(Json.P("role", IsGpt62 || IsOSeries || ModelFamily.StartsWith("gpt-5", StringComparison.Ordinal) ? "developer" : "system"),
+												Json.P("content", _instructions)));
 				payload.Set("messages", messages);
-				var modernLimit = IsOpenAi || IsGpt62 || IsOSeries || ModelFamily.StartsWith("gpt-5", StringComparison.Ordinal)
-					|| _baseUri.Host.Equals("generativelanguage.googleapis.com", StringComparison.OrdinalIgnoreCase);
+				var modernLimit = IsOpenAi
+								|| IsGpt62
+								|| IsOSeries
+								|| ModelFamily.StartsWith("gpt-5", StringComparison.Ordinal)
+								|| _baseUri.Host.Equals("generativelanguage.googleapis.com", StringComparison.OrdinalIgnoreCase);
 				if(maxTokens > 0) payload.Set(modernLimit ? "max_completion_tokens" : "max_tokens", maxTokens.Value);
 				if(effort != null) payload.Set("reasoning_effort", effort);
 				if(IsOpenAi || _store || _explicitStore) payload.Set("store", _store);
@@ -178,8 +198,7 @@ namespace LMStud{
 					if(summary != null) reasoning.Set("summary", summary);
 					payload.Set("reasoning", reasoning);
 				}
-				if(IsOpenAi && !_store && (IsGpt62 || IsOSeries || ModelFamily.StartsWith("gpt-5", StringComparison.Ordinal)))
-					payload.Set("include", Json.Array("reasoning.encrypted_content"));
+				if(IsOpenAi && !_store && (IsGpt62 || IsOSeries || ModelFamily.StartsWith("gpt-5", StringComparison.Ordinal))) payload.Set("include", Json.Array("reasoning.encrypted_content"));
 			}
 			if(!textFormat.IsNull){
 				var format = ConvertTextFormat(textFormat, chat);
@@ -195,7 +214,6 @@ namespace LMStud{
 			}
 			return payload.ToNode();
 		}
-
 		private static JsonNode ConvertNamedTool(JsonNode tool, bool chat){
 			var type = tool.GetString("type") ?? "function";
 			if(type != "function" && type != "custom") return tool;
@@ -203,7 +221,8 @@ namespace LMStud{
 			var fields = Json.ObjectBuilder();
 			if(!chat) fields.Set("type", type);
 			foreach(var property in definition.Properties())
-				if(property.Name != "type") fields.Set(property.Name, property.Value);
+				if(property.Name != "type")
+					fields.Set(property.Name, property.Value);
 			return chat ? Json.Object(Json.P("type", type), Json.P(type, fields)) : fields.ToNode();
 		}
 		private static JsonNode ConvertToolChoice(JsonNode choice, bool chat){
@@ -221,10 +240,10 @@ namespace LMStud{
 			var builder = Json.ObjectBuilder();
 			if(!chat) builder.Set("type", "json_schema");
 			foreach(var property in schema.Properties())
-				if(property.Name != "type") builder.Set(property.Name, property.Value);
+				if(property.Name != "type")
+					builder.Set(property.Name, property.Value);
 			return chat ? Json.Object(Json.P("type", "json_schema"), Json.P("json_schema", builder)) : builder.ToNode();
 		}
-
 		internal static JsonArrayBuilder ConvertHistoryToChatCompletionMessages(IEnumerable<JsonNode> history){
 			var messages = Json.ArrayBuilder();
 			JsonObjectBuilder assistant = null;
@@ -242,16 +261,18 @@ namespace LMStud{
 				if(type == "function_call"){
 					if(assistant == null) assistant = Json.ObjectBuilder(Json.P("role", "assistant"), Json.P("content", null));
 					if(calls == null) calls = Json.ArrayBuilder();
-					calls.Add(Json.Object(Json.P("id", item.GetString("call_id")), Json.P("type", "function"),
-						Json.P("function", Json.Object(Json.P("name", item.GetString("name")), Json.P("arguments", item.GetString("arguments") ?? "")))));
+					calls.Add(Json.Object(Json.P("id", item.GetString("call_id")),
+										Json.P("type", "function"),
+										Json.P("function", Json.Object(Json.P("name", item.GetString("name")), Json.P("arguments", item.GetString("arguments") ?? "")))));
 					continue;
 				}
 				var role = item.GetString("role");
 				if(type != "function_call_output" && string.IsNullOrWhiteSpace(role)) continue;
 				FlushAssistant();
 				if(type == "function_call_output"){
-					messages.Add(Json.Object(Json.P("role", "tool"), Json.P("tool_call_id", item.GetString("call_id")),
-						Json.P("content", MarkdownImages.ConvertResponsesContentToChat(item["output"]))));
+					messages.Add(Json.Object(Json.P("role", "tool"),
+											Json.P("tool_call_id", item.GetString("call_id")),
+											Json.P("content", MarkdownImages.ConvertResponsesContentToChat(item["output"]))));
 					continue;
 				}
 				var message = Json.ObjectBuilder(Json.P("role", role), Json.P("content", MarkdownImages.ConvertResponsesContentToChat(item["content"])));
@@ -261,7 +282,6 @@ namespace LMStud{
 			FlushAssistant();
 			return messages;
 		}
-
 		internal static JsonArrayBuilder ConvertChatMessagesToInput(JsonNode messages){
 			if(!messages.IsArray) throw new InvalidOperationException("messages must be an array.");
 			var items = Json.ArrayBuilder();
@@ -276,14 +296,12 @@ namespace LMStud{
 					continue;
 				}
 				var calls = message["tool_calls"];
-				if(!content.IsNull || calls.Count == 0)
-					items.Add(Json.Object(Json.P("role", role), Json.P("content", content.IsNull ? Json.String("") : content)));
+				if(!content.IsNull || calls.Count == 0) items.Add(Json.Object(Json.P("role", role), Json.P("content", content.IsNull ? Json.String("") : content)));
 				foreach(var call in calls){
 					var name = call["function"].GetString("name");
 					var id = call.GetString("id");
 					if(string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(id)) throw new InvalidOperationException("Each function call needs a name and ID.");
-					items.Add(Json.Object(Json.P("type", "function_call"), Json.P("name", name),
-						Json.P("call_id", id), Json.P("arguments", call["function"].GetString("arguments") ?? "")));
+					items.Add(Json.Object(Json.P("type", "function_call"), Json.P("name", name), Json.P("call_id", id), Json.P("arguments", call["function"].GetString("arguments") ?? "")));
 				}
 			}
 			return items;
@@ -293,17 +311,15 @@ namespace LMStud{
 			var parts = Json.ArrayBuilder();
 			foreach(var part in content){
 				var type = part.GetString("type");
-				if(type == "text") parts.Add(Json.Object(Json.P("type", assistant ? "output_text" : "input_text"), Json.P("text", part["text"])));
-				else if(type == "image_url"){
+				if(type == "text"){ parts.Add(Json.Object(Json.P("type", assistant ? "output_text" : "input_text"), Json.P("text", part["text"]))); } else if(type == "image_url"){
 					var image = part["image_url"];
 					var builder = Json.ObjectBuilder(Json.P("type", "input_image"), Json.P("image_url", image.GetString("url")));
 					if(image["detail"].Exists) builder.Set("detail", image["detail"]);
 					parts.Add(builder);
-				} else parts.Add(part);
+				} else{ parts.Add(part); }
 			}
 			return parts.ToNode();
 		}
-
 		internal static JsonNode BuildInputMessagePayload(ChatMessage message){
 			var isToolRole = string.Equals(message.Role, "tool", StringComparison.OrdinalIgnoreCase);
 			if(isToolRole){
@@ -341,41 +357,47 @@ namespace LMStud{
 		internal static void AppendOutputItems(JsonArrayBuilder history, ChatCompletionResult result){
 			if(result.OutputItems.IsArray && result.OutputItems.Count > 0){
 				foreach(var item in result.OutputItems)
-					if(!result.Incomplete || (item.GetString("type") != "function_call" && item.GetString("type") != "custom_tool_call")) history.Add(item);
+					if(!result.Incomplete || (item.GetString("type") != "function_call" && item.GetString("type") != "custom_tool_call"))
+						history.Add(item);
 				return;
 			}
 			if(!string.IsNullOrWhiteSpace(result.Content) || result.ToolCalls?.Count > 0)
-				foreach(var item in BuildInputItems(new[]{ new ChatMessage("assistant", result.Content ?? ""){ ToolCalls = result.ToolCalls } })) history.Add(item);
+				foreach(var item in BuildInputItems(new[]{ new ChatMessage("assistant", result.Content ?? ""){ ToolCalls = result.ToolCalls } }))
+					history.Add(item);
 		}
 		internal List<string> GetModels(CancellationToken token){
-			return Send("GET", "models", JsonNode.Missing, token, null, (reader, _, callback) =>
-				Json.Parse(reader.ReadToEnd())["data"].Select(item => item.GetString("id")).Where(id => !string.IsNullOrWhiteSpace(id)).ToList());
+			return Send("GET",
+						"models",
+						JsonNode.Missing,
+						token,
+						null,
+						(reader, _, callback) => Json.Parse(reader.ReadToEnd())["data"].Select(item => item.GetString("id")).Where(id => !string.IsNullOrWhiteSpace(id)).ToList());
 		}
-
 		internal static void ShowApiClientError(string action, Exception exception){
 			var detail = exception.Message;
-			if(exception is RequestException request){
+			if(exception is RequestException request)
 				switch(request.StatusCode){
 					case 401:
-					case 403: detail = Resources.Authentication_failed; break;
-					case 404 when request.EndpointUnavailable: detail = Resources.API_endpoint_not_found; break;
-					case 429: detail = Resources.Rate_limit_exceeded; break;
+					case 403:
+						detail = Resources.Authentication_failed;
+						break;
+					case 404 when request.EndpointUnavailable:
+						detail = Resources.API_endpoint_not_found;
+						break;
+					case 429:
+						detail = Resources.Rate_limit_exceeded;
+						break;
 					case 500:
 					case 502:
-					case 503: detail = Resources.The_API_server_encountered_an_error; break;
+					case 503:
+						detail = Resources.The_API_server_encountered_an_error;
+						break;
 				}
-			} else if(exception is WebException web){
-				detail = web.Status == WebExceptionStatus.Timeout ? Resources.The_API_request_timed_out : Resources.Unable_to_connect_to_the_API_server;
-			}
+			else if(exception is WebException web) detail = web.Status == WebExceptionStatus.Timeout ? Resources.The_API_request_timed_out : Resources.Unable_to_connect_to_the_API_server;
 			if(!string.Equals(detail, exception.Message, StringComparison.Ordinal)) detail += "\r\n\r\n" + exception.Message;
 			Program.MainForm.ShowError(action, detail, false);
 		}
 		internal sealed class RequestException : InvalidOperationException{
-			internal int StatusCode{get;}
-			internal bool EndpointUnavailable{get;}
-			internal string Code{get;}
-			internal string Parameter{get;}
-			internal string UpstreamMessage{get;}
 			internal RequestException(int status, string body) : base(string.Format(Resources.API_error___0_____1_, status, body)){
 				StatusCode = status;
 				var error = JsonNode.Missing;
@@ -385,18 +407,24 @@ namespace LMStud{
 					Parameter = error.GetString("param");
 					UpstreamMessage = error.GetString("message") ?? (error.IsString ? error.AsString() : null);
 				} catch(InvalidOperationException){}
-				if(status == 405 || status == 501){ EndpointUnavailable = true; return; }
+				if(status == 405 || status == 501){
+					EndpointUnavailable = true;
+					return;
+				}
 				if(status != 404) return;
 				if(error.Exists){
 					EndpointUnavailable = Code == "endpoint_not_found" || Code == "unsupported_endpoint" || Code == "route_not_found";
 					return;
 				}
 				body = body.Trim();
-				EndpointUnavailable = body.Length == 0 || body.Equals("404 page not found", StringComparison.OrdinalIgnoreCase)
-					|| body.Equals("Not Found", StringComparison.OrdinalIgnoreCase);
+				EndpointUnavailable = body.Length == 0 || body.Equals("404 page not found", StringComparison.OrdinalIgnoreCase) || body.Equals("Not Found", StringComparison.OrdinalIgnoreCase);
 			}
+			internal int StatusCode{get;}
+			internal bool EndpointUnavailable{get;}
+			internal string Code{get;}
+			internal string Parameter{get;}
+			internal string UpstreamMessage{get;}
 		}
-
 		internal sealed class ChatMessage{
 			public string Content;
 			public JsonNode OutputItems;
@@ -421,17 +449,16 @@ namespace LMStud{
 		}
 		internal sealed class ChatCompletionResult{
 			public string Content;
+			public string FinishReason;
+			public string IncompleteReason;
+			public int? InputTokens;
 			public JsonNode OutputItems;
+			public int? OutputTokens;
 			public string Reasoning;
+			public string Refusal;
 			public string ResponseId;
 			public List<ToolCall> ToolCalls;
 			public int? TotalTokens;
-			public int? InputTokens;
-			public int? OutputTokens;
-			public string FinishReason;
-			public string IncompleteReason;
-			public string Refusal;
-			internal bool Incomplete => IncompleteReason != null || FinishReason == "length" || FinishReason == "content_filter";
 			public ChatCompletionResult(string content, string reasoning, List<ToolCall> toolCalls, string responseId, JsonNode outputItems, int? totalTokens = null){
 				Content = content;
 				Reasoning = reasoning;
@@ -440,28 +467,31 @@ namespace LMStud{
 				OutputItems = outputItems;
 				TotalTokens = totalTokens;
 			}
+			internal bool Incomplete => IncompleteReason != null || FinishReason == "length" || FinishReason == "content_filter";
 			internal void ReadUsage(JsonNode usage){
 				InputTokens = usage.GetInt("input_tokens") ?? usage.GetInt("prompt_tokens");
 				OutputTokens = usage.GetInt("output_tokens") ?? usage.GetInt("completion_tokens");
 				TotalTokens = usage.GetInt("total_tokens") ?? TotalTokens;
 			}
 		}
-
 		private sealed class StreamingResponse{
-			private readonly StringBuilder _text = new StringBuilder();
-			private readonly StringBuilder _reasoning = new StringBuilder();
-			private readonly StringBuilder _refusal = new StringBuilder();
 			private readonly SortedDictionary<int, ToolCallDelta> _calls = new SortedDictionary<int, ToolCallDelta>();
 			private readonly SortedDictionary<int, JsonNode> _items = new SortedDictionary<int, JsonNode>();
+			private readonly StringBuilder _reasoning = new StringBuilder();
+			private readonly StringBuilder _refusal = new StringBuilder();
+			private readonly StringBuilder _text = new StringBuilder();
 			private ChatCompletionResult _final;
-			private JsonNode _usage = JsonNode.Missing;
-			private string _id;
 			private string _finishReason;
-			private bool _terminal;
+			private string _id;
 			private bool _responses;
+			private bool _terminal;
+			private JsonNode _usage = JsonNode.Missing;
 			internal bool Process(string eventName, string data, Action<string> callback, Func<JsonNode, bool> responseEvent){
 				if(string.IsNullOrWhiteSpace(data)) return false;
-				if(data.Trim() == "[DONE]"){ _terminal = true; return true; }
+				if(data.Trim() == "[DONE]"){
+					_terminal = true;
+					return true;
+				}
 				var root = Json.Parse(data);
 				var type = root.GetString("type") ?? eventName;
 				_responses |= type.StartsWith("response.", StringComparison.Ordinal);
@@ -471,8 +501,8 @@ namespace LMStud{
 				switch(type){
 					case "error":
 					case "response.failed":
-						throw new InvalidOperationException(root["response"]["error"].GetString("message") ?? root["error"].GetString("message")
-							?? root.GetString("message") ?? "The upstream stream failed.");
+						throw new InvalidOperationException(root["response"]["error"].GetString("message")
+															?? root["error"].GetString("message") ?? root.GetString("message") ?? "The upstream stream failed.");
 					case "response.completed":
 					case "response.done":
 					case "response.incomplete":
@@ -528,14 +558,11 @@ namespace LMStud{
 			internal ChatCompletionResult Result(){
 				if(!_terminal && (_responses || _finishReason == null)) throw new InvalidOperationException("The API stream ended before a completion event.");
 				if(_final != null) return _final;
-				if(_items.Count > 0)
-					return APIResponseParser.ParseResponseBody(Json.Object(Json.P("id", _id),
-						Json.P("output", Json.Array(_items.Values.Cast<object>().ToArray()))).ToJson());
+				if(_items.Count > 0) return APIResponseParser.ParseResponseBody(Json.Object(Json.P("id", _id), Json.P("output", Json.Array(_items.Values.Cast<object>().ToArray()))).ToJson());
 				var tools = _calls.Values.Where(call => !string.IsNullOrWhiteSpace(call.Id) && !string.IsNullOrWhiteSpace(call.Name))
 					.Select(call => new ToolCall(call.Id, call.Name, call.Arguments.ToString())).ToList();
 				var result = new ChatCompletionResult(_text.ToString(), _reasoning.ToString(), tools.Count == 0 ? null : tools, _id, JsonNode.Missing){
-					FinishReason = _finishReason,
-					Refusal = _refusal.Length == 0 ? null : _refusal.ToString()
+					FinishReason = _finishReason, Refusal = _refusal.Length == 0 ? null : _refusal.ToString()
 				};
 				if(result.Incomplete) result.ToolCalls = null;
 				result.ReadUsage(_usage);

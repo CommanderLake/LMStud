@@ -123,7 +123,7 @@ namespace LMStud{
 				ConnectedServerIds.Clear();
 				if(!array.IsArray) return;
 				foreach(var id in from item in array.Where(item => item.IsObject) let id = item.GetString("id") where !string.IsNullOrWhiteSpace(id) && item.GetBool("initialized") == true
-						select id) ConnectedServerIds.Add(id);
+								select id) ConnectedServerIds.Add(id);
 			} catch(Exception){}
 		}
 		private static string ErrorJson(string message){return Json.Object(Json.P("error", message)).ToJson();}

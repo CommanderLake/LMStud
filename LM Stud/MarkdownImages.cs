@@ -337,8 +337,7 @@ namespace LMStud{
 			foreach(var part in content){
 				if(!part.IsObject) continue;
 				var type = part.GetString("type");
-				if(type == "input_text" || type == "output_text") parts.Add(Json.Object(Json.P("type", "text"), Json.P("text", part.GetString("text") ?? "")));
-				else if(type == "input_image"){
+				if(type == "input_text" || type == "output_text"){ parts.Add(Json.Object(Json.P("type", "text"), Json.P("text", part.GetString("text") ?? ""))); } else if(type == "input_image"){
 					var imageUrl = part.GetString("image_url");
 					if(string.IsNullOrWhiteSpace(imageUrl)) throw new InvalidOperationException("Chat Completions requires an image URL for this image input.");
 					var image = Json.ObjectBuilder(Json.P("url", imageUrl));

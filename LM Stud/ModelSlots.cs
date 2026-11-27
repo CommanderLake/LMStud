@@ -290,9 +290,9 @@ namespace LMStud{
 				var normalized = NormalizeServerModelName(requestedModel);
 				var exact = SlotsInternal.FirstOrDefault(slot => IsServerRoutableSlot(slot) && string.Equals(slot.Name, normalized, StringComparison.OrdinalIgnoreCase));
 				if(exact != null) return exact.Clone();
-				var modelMatch = SlotsInternal.FirstOrDefault(slot =>
-					IsServerRoutableSlot(slot)
-					&& (string.Equals(slot.DisplayModel(), requestedModel, StringComparison.OrdinalIgnoreCase) || string.Equals(slot.ApiModel, requestedModel, StringComparison.OrdinalIgnoreCase)));
+				var modelMatch = SlotsInternal.FirstOrDefault(slot => IsServerRoutableSlot(slot)
+																	&& (string.Equals(slot.DisplayModel(), requestedModel, StringComparison.OrdinalIgnoreCase)
+																		|| string.Equals(slot.ApiModel, requestedModel, StringComparison.OrdinalIgnoreCase)));
 				return modelMatch?.Clone();
 			}
 		}
@@ -317,11 +317,11 @@ namespace LMStud{
 			}
 			foreach(var slot in slots)
 				array.Add(Json.Object(Json.P("id", GetServerModelId(slot)),
-					Json.P("object", "model"),
-					Json.P("created", 0),
-					Json.P("owned_by", "lmstud"),
-					Json.P("source", slot.Source == ModelSlotSource.Api ? "api" : "local"),
-					Json.P("display_name", slot.DisplayModel())));
+									Json.P("object", "model"),
+									Json.P("created", 0),
+									Json.P("owned_by", "lmstud"),
+									Json.P("source", slot.Source == ModelSlotSource.Api ? "api" : "local"),
+									Json.P("display_name", slot.DisplayModel())));
 			return array.ToNode();
 		}
 		internal static bool CanServeLocalSlot(ModelSlot slot){
@@ -336,7 +336,7 @@ namespace LMStud{
 			var slots = new List<string>();
 			if(string.IsNullOrWhiteSpace(modelPath)) return slots;
 			slots.AddRange(from loaded in Common.LoadedLocalSlots let loadedModel = loaded.Value where loadedModel != null && loadedModel.SubItems.Count >= 2
-				where SamePath(loadedModel.SubItems[1].Text, modelPath) select loaded.Key);
+							where SamePath(loadedModel.SubItems[1].Text, modelPath) select loaded.Key);
 			return slots;
 		}
 		internal static bool CanServeApiSlot(ModelSlot slot){
@@ -388,14 +388,19 @@ namespace LMStud{
 			foreach(var slot in slots){
 				var source = slot.Source == ModelSlotSource.Local ? "local" : "API";
 				var function = Json.Object(Json.P("name", GetToolName(slot)),
-					Json.P("description", "Ask the " + slot.Name + " " + source + " model slot for a second opinion or a specialised answer."),
-					Json.P("parameters",
-						Json.Object(Json.P("type", "object"),
-							Json.P("properties",
-								Json.Object(Json.P("prompt", Json.Object(Json.P("type", "string"), Json.P("description", "The question or task to send to the model slot."))),
-									Json.P("instructions", Json.Object(Json.P("type", "string"), Json.P("description", "Optional system instructions for this call."))),
-									Json.P("max_tokens", Json.Object(Json.P("type", "integer"), Json.P("description", "Optional response token limit."))))),
-							Json.P("required", Json.Array("prompt")))));
+											Json.P("description", "Ask the " + slot.Name + " " + source + " model slot for a second opinion or a specialised answer."),
+											Json.P("parameters",
+													Json.Object(Json.P("type", "object"),
+																Json.P("properties",
+																		Json.Object(Json.P("prompt",
+																							Json.Object(Json.P("type", "string"),
+																										Json.P("description", "The question or task to send to the model slot."))),
+																					Json.P("instructions",
+																							Json.Object(Json.P("type", "string"),
+																										Json.P("description", "Optional system instructions for this call."))),
+																					Json.P("max_tokens",
+																							Json.Object(Json.P("type", "integer"), Json.P("description", "Optional response token limit."))))),
+																Json.P("required", Json.Array("prompt")))));
 				tools.Add(Json.Object(Json.P("type", "function"), Json.P("function", function)));
 			}
 			return tools.ToNode();
@@ -460,29 +465,43 @@ namespace LMStud{
 		}
 		private static string ExecuteApiModelTool(ModelSlot slot, string prompt, string instructions, int maxTokens, Action<string> streamCallback){
 			var history = APIClient.BuildInputItems(new[]{ new APIClient.ChatMessage("user", prompt) });
-			var client = new APIClient(slot.ApiBaseUrl, slot.ApiKey, slot.ApiModel, slot.ApiStore, GetToolInstructions(slot, instructions),
-				slot.ApiReasoningEffort, slot.ApiReasoningSummary, slot.ApiMode);
+			var client = new APIClient(slot.ApiBaseUrl,
+										slot.ApiKey,
+										slot.ApiModel,
+										slot.ApiStore,
+										GetToolInstructions(slot, instructions),
+										slot.ApiReasoningEffort,
+										slot.ApiReasoningSummary,
+										slot.ApiMode);
 			var response = client.CreateChatCompletion(history, Common.Temp, maxTokens, null, null, CancellationToken.None, streamCallback);
 			return Json.Object(Json.P("slot", slot.Name),
-				Json.P("source", "api"),
-				Json.P("model", slot.ApiModel),
-				Json.P("content", response.Refusal ?? response.Content ?? ""),
-				Json.P("reasoning", response.Reasoning ?? ""),
-				Json.P("total_tokens", response.TotalTokens),
-				Json.P("incomplete_reason", response.IncompleteReason)).ToJson(JsonFormat.Indented);
+								Json.P("source", "api"),
+								Json.P("model", slot.ApiModel),
+								Json.P("content", response.Refusal ?? response.Content ?? ""),
+								Json.P("reasoning", response.Reasoning ?? ""),
+								Json.P("total_tokens", response.TotalTokens),
+								Json.P("incomplete_reason", response.IncompleteReason)).ToJson(JsonFormat.Indented);
 		}
 		private static string ExecuteLocalModelTool(ModelSlot slot, string prompt, string instructions, int maxTokens, Action<string> streamCallback){
 			var message = Json.Object(Json.P("role", "user"), Json.P("content", prompt));
-			if(!Generation.GenerateForApiServer(slot.Name, message, null, null, out var response, out _, out _, out var tokenCount,
-				maxTokens, GetLocalToolInstructions(slot, instructions), streamCallback))
-				return ErrorJson(Resources.Local_model_tool_slot_could_not_generate_a_response__ + slot.Name);
+			if(!Generation.GenerateForApiServer(slot.Name,
+												message,
+												null,
+												null,
+												out var response,
+												out _,
+												out _,
+												out var tokenCount,
+												maxTokens,
+												GetLocalToolInstructions(slot, instructions),
+												streamCallback)) return ErrorJson(Resources.Local_model_tool_slot_could_not_generate_a_response__ + slot.Name);
 			return Json.Object(Json.P("slot", slot.Name),
-				Json.P("source", "local"),
-				Json.P("model", slot.DisplayModel()),
-				Json.P("content", response?.Content ?? ""),
-				Json.P("reasoning", response?.Reasoning ?? ""),
-				Json.P("total_tokens", response?.TotalTokens),
-				Json.P("tokens", tokenCount)).ToJson(JsonFormat.Indented);
+								Json.P("source", "local"),
+								Json.P("model", slot.DisplayModel()),
+								Json.P("content", response?.Content ?? ""),
+								Json.P("reasoning", response?.Reasoning ?? ""),
+								Json.P("total_tokens", response?.TotalTokens),
+								Json.P("tokens", tokenCount)).ToJson(JsonFormat.Indented);
 		}
 		private static bool IsCallerSlot(ModelSlot slot, string callerSlotName){
 			return slot != null && !string.IsNullOrWhiteSpace(callerSlotName) && string.Equals(slot.Name, callerSlotName.Trim(), StringComparison.OrdinalIgnoreCase);
@@ -533,25 +552,25 @@ namespace LMStud{
 		}
 		private static JsonNode SerializeSlot(ModelSlot slot){
 			return Json.Object(Json.P("ApiBaseUrl", slot.ApiBaseUrl),
-				Json.P("ApiKey", slot.ApiKey),
-				Json.P("ApiMode", (int)slot.ApiMode),
-				Json.P("ApiModel", slot.ApiModel),
-				Json.P("ApiReasoningEffort", slot.ApiReasoningEffort),
-				Json.P("ApiReasoningSummary", slot.ApiReasoningSummary),
-				Json.P("ApiStore", slot.ApiStore),
-				Json.P("Instructions", slot.Instructions),
-				Json.P("LocalPath", slot.LocalPath),
-				Json.P("McpAuthHeader", slot.McpAuthHeader),
-				Json.P("McpCommandLine", slot.McpCommandLine),
-				Json.P("McpTimeoutMs", slot.McpTimeoutMs),
-				Json.P("McpTransport", (int)slot.McpTransport),
-				Json.P("McpUrl", slot.McpUrl),
-				Json.P("McpWorkingDirectory", slot.McpWorkingDirectory),
-				Json.P("Name", slot.Name),
-				Json.P("OverrideSystemPrompt", slot.OverrideSystemPrompt),
-				Json.P("Source", (int)slot.Source),
-				Json.P("ToolName", slot.ToolName),
-				Json.P("Use", (int)slot.Use));
+								Json.P("ApiKey", slot.ApiKey),
+								Json.P("ApiMode", (int)slot.ApiMode),
+								Json.P("ApiModel", slot.ApiModel),
+								Json.P("ApiReasoningEffort", slot.ApiReasoningEffort),
+								Json.P("ApiReasoningSummary", slot.ApiReasoningSummary),
+								Json.P("ApiStore", slot.ApiStore),
+								Json.P("Instructions", slot.Instructions),
+								Json.P("LocalPath", slot.LocalPath),
+								Json.P("McpAuthHeader", slot.McpAuthHeader),
+								Json.P("McpCommandLine", slot.McpCommandLine),
+								Json.P("McpTimeoutMs", slot.McpTimeoutMs),
+								Json.P("McpTransport", (int)slot.McpTransport),
+								Json.P("McpUrl", slot.McpUrl),
+								Json.P("McpWorkingDirectory", slot.McpWorkingDirectory),
+								Json.P("Name", slot.Name),
+								Json.P("OverrideSystemPrompt", slot.OverrideSystemPrompt),
+								Json.P("Source", (int)slot.Source),
+								Json.P("ToolName", slot.ToolName),
+								Json.P("Use", (int)slot.Use));
 		}
 		private static ModelSlotConfig ParseConfig(string json){
 			var root = Json.Parse(json);
@@ -594,7 +613,9 @@ namespace LMStud{
 			var url = node.GetString("ApiBaseUrl");
 			if(node["ApiMode"].Exists || !Uri.TryCreate(url, UriKind.Absolute, out var uri) || (uri.Scheme != "http" && uri.Scheme != "https")) return url;
 			var path = uri.AbsolutePath.TrimEnd('/');
-			if(path.Length == 0 || path.EndsWith("/responses", StringComparison.OrdinalIgnoreCase) || path.EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase)
+			if(path.Length == 0
+				|| path.EndsWith("/responses", StringComparison.OrdinalIgnoreCase)
+				|| path.EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase)
 				|| path.Split('/').Any(segment => segment.Length > 1 && (segment[0] == 'v' || segment[0] == 'V') && char.IsDigit(segment[1]))) return url;
 			// Older slots supplied a prefix that LM Stud would extend with /v1.
 			return new UriBuilder(uri){ Path = path + "/v1" }.Uri.AbsoluteUri;

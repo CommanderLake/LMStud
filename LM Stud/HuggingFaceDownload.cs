@@ -14,11 +14,11 @@ namespace LMStud{
 					if(!reportProgress((double)part/files.Length)) throw new OperationCanceledException();
 					Directory.CreateDirectory(Path.GetDirectoryName(staged[part]));
 					var result = NativeMethods.DownloadFileWithProgress(getUrl(files[part]),
-						staged[part],
-						(total, received) => {
-							var fraction = total > 0 ? Math.Min(1.0, (double)received/total) : 0.0;
-							return reportProgress((part + fraction)/files.Length) ? 0 : 1;
-						});
+																		staged[part],
+																		(total, received) => {
+																			var fraction = total > 0 ? Math.Min(1.0, (double)received/total) : 0.0;
+																			return reportProgress((part + fraction)/files.Length) ? 0 : 1;
+																		});
 					if(result != 0) throw new IOException(files[part] + "\r\n" + string.Format(Resources.Download_failed_with_error_code___0_, result));
 					if(files[part].EndsWith(".gguf", StringComparison.OrdinalIgnoreCase))
 						using(var reader = new BinaryReader(File.OpenRead(staged[part]))){

@@ -275,12 +275,13 @@ namespace LMStud{
 		private ListViewItem FindModelItem(string modelPathOrName){
 			if(string.IsNullOrWhiteSpace(modelPathOrName)) return null;
 			var value = modelPathOrName.Trim();
-			return listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item =>
-				item.SubItems.Count > 1
-				&& (SameModelPath(item.SubItems[1].Text, value)
-					|| string.Equals(item.Name, value, StringComparison.OrdinalIgnoreCase)
-					|| string.Equals(item.Text, value, StringComparison.OrdinalIgnoreCase)
-					|| string.Equals(Path.GetFileNameWithoutExtension(item.SubItems[1].Text), value, StringComparison.OrdinalIgnoreCase)));
+			return listViewModels.Items.Cast<ListViewItem>().FirstOrDefault(item => item.SubItems.Count > 1
+																					&& (SameModelPath(item.SubItems[1].Text, value)
+																						|| string.Equals(item.Name, value, StringComparison.OrdinalIgnoreCase)
+																						|| string.Equals(item.Text, value, StringComparison.OrdinalIgnoreCase)
+																						|| string.Equals(Path.GetFileNameWithoutExtension(item.SubItems[1].Text),
+																										value,
+																										StringComparison.OrdinalIgnoreCase)));
 		}
 		private static bool SameModelPath(string a, string b){
 			if(string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b)) return false;
@@ -338,16 +339,16 @@ namespace LMStud{
 			Common.LoadedModel = Common.LoadedLocalSlots.TryGetValue(Common.ActiveModelSlotName ?? "", out var activeLoaded) ? activeLoaded : Common.LoadedLocalSlots.Values.FirstOrDefault();
 		}
 		private NativeMethods.StudError CreateContext(string slotName,
-			int nCtx,
-			int nBatch,
-			CheckState flashAttn,
-			bool offloadKQV,
-			bool offloadOP,
-			int nThreads,
-			int nThreadsBatch,
-			NativeMethods.QuantType kType,
-			NativeMethods.QuantType vType,
-			int mtpDraftTokens){
+													int nCtx,
+													int nBatch,
+													CheckState flashAttn,
+													bool offloadKQV,
+													bool offloadOP,
+													int nThreads,
+													int nThreadsBatch,
+													NativeMethods.QuantType kType,
+													NativeMethods.QuantType vType,
+													int mtpDraftTokens){
 			var slotLock = ModelSlotManager.EnterSlot(slotName);
 			NativeMethods.StudError result;
 			try{ result = NativeMethods.CreateContext(slotName, nCtx, nBatch, (uint)flashAttn, offloadKQV, offloadOP, nThreads, nThreadsBatch, (int)kType, (int)vType, mtpDraftTokens); } finally{
@@ -437,16 +438,16 @@ namespace LMStud{
 					Common.ModelCtxMax = modelCtxMax;
 					Common.CntCtxMax = contextSize;
 					result = NativeMethods.CreateContext(slotName,
-						contextSize,
-						Common.BatchSize,
-						(uint)flashAttn,
-						offloadKQV,
-						offloadOP,
-						Common.NThreads,
-						Common.NThreadsBatch,
-						(int)Common.KType,
-						(int)Common.VType,
-						Common.MtpDraftTokens);
+														contextSize,
+														Common.BatchSize,
+														(uint)flashAttn,
+														offloadKQV,
+														offloadOP,
+														Common.NThreads,
+														Common.NThreadsBatch,
+														(int)Common.KType,
+														(int)Common.VType,
+														Common.MtpDraftTokens);
 					if(result != NativeMethods.StudError.Success){ ShowError(Resources.Error_creating_context, result); } else{
 						result = NativeMethods.CreateSampler(slotName, minP, topP, topK, temp, Common.RepPen);
 						if(result != NativeMethods.StudError.Success) ShowError(Resources.Error_creating_sampler, result);

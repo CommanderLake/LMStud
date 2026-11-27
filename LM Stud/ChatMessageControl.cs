@@ -22,7 +22,6 @@ namespace LMStud{
 		private bool _pendingHeightAutoScroll;
 		private string _think;
 		internal string ApiContent;
-		internal JsonNode ApiOutputItems{get; set;} = JsonNode.Missing;
 		internal string ApiReplayKey;
 		internal string ApiToolCallId;
 		internal List<APIClient.ToolCall> ApiToolCalls;
@@ -37,6 +36,7 @@ namespace LMStud{
 			_markdown = markdown;
 			labelRole.Text = role.ToString();
 		}
+		internal JsonNode ApiOutputItems{get; set;} = JsonNode.Missing;
 		internal string ApiMessageContent => ApiContent ?? Message ?? "";
 		internal MarkdownRenderControl MarkdownView => markdownView;
 		internal bool Markdown{

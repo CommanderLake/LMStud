@@ -61,7 +61,7 @@ namespace LMStud{
 			if(archive.Messages == null || archive.Messages.Any(message => message == null || message.Text == null || !Enum.IsDefined(typeof(MessageRole), message.Role)))
 				throw new InvalidDataException(Resources.Invalid_Chat_Archive);
 			if(archive.Messages.Any(message => message.ApiOutputItems != null
-				&& (message.Role != MessageRole.Assistant || string.IsNullOrEmpty(message.ApiReplayKey) || !Json.Parse(message.ApiOutputItems).IsArray)))
+												&& (message.Role != MessageRole.Assistant || string.IsNullOrEmpty(message.ApiReplayKey) || !Json.Parse(message.ApiOutputItems).IsArray)))
 				throw new InvalidDataException(Resources.Invalid_Chat_Archive);
 			if((archive.LocalHistory != null && !Json.Parse(archive.LocalHistory).IsArray) || (archive.PartnerHistory != null && !Json.Parse(archive.PartnerHistory).IsArray))
 				throw new InvalidDataException(Resources.Invalid_Chat_Archive);
@@ -82,6 +82,10 @@ namespace LMStud{
 		internal sealed class Message{
 			[DataMember(Name = "apiContent", EmitDefaultValue = false, Order = 6)]
 			internal string ApiContent;
+			[DataMember(Name = "apiOutputItems", EmitDefaultValue = false, Order = 9)]
+			internal string ApiOutputItems;
+			[DataMember(Name = "apiReplayKey", EmitDefaultValue = false, Order = 10)]
+			internal string ApiReplayKey;
 			[DataMember(Name = "displayOnly", EmitDefaultValue = false, Order = 5)]
 			internal bool DisplayOnly;
 			[DataMember(Name = "reasoning", Order = 3)]
@@ -98,10 +102,6 @@ namespace LMStud{
 			internal string ToolCallId;
 			[DataMember(Name = "toolCalls", EmitDefaultValue = false, Order = 7)]
 			internal List<APIClient.ToolCall> ToolCalls;
-			[DataMember(Name = "apiOutputItems", EmitDefaultValue = false, Order = 9)]
-			internal string ApiOutputItems;
-			[DataMember(Name = "apiReplayKey", EmitDefaultValue = false, Order = 10)]
-			internal string ApiReplayKey;
 			internal NativeChat.MessageSnapshot ToSnapshot(){return new NativeChat.MessageSnapshot(Role, Reasoning, Text, ApiContent, ToolCalls, ToolCallId, !DisplayOnly);}
 		}
 	}

@@ -6,18 +6,16 @@ namespace LMStud{
 	public partial class APIServer{
 		private sealed class ServerReply{
 			private readonly HttpListenerContext _context;
-			private readonly ChatRequest _request;
-			private readonly string _model;
-			private readonly string _sessionId;
-			private readonly bool _store;
 			private readonly long _created = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 			private readonly string _messageId = "msg_" + Guid.NewGuid().ToString("N");
+			private readonly string _model;
+			private readonly ChatRequest _request;
+			private readonly string _sessionId;
+			private readonly bool _store;
 			private readonly StringBuilder _text = new StringBuilder();
-			private int _sequence;
-			private bool _forwardingItems;
 			internal readonly string Id;
-			internal bool Started{get; private set;}
-
+			private bool _forwardingItems;
+			private int _sequence;
 			internal ServerReply(HttpListenerContext context, ChatRequest request, string model, string sessionId, bool store){
 				_context = context;
 				_request = request;
@@ -27,12 +25,11 @@ namespace LMStud{
 				Id = (request.Chat ? "chatcmpl_" : "resp_") + Guid.NewGuid().ToString("N");
 				context.Response.AddHeader("X-Session-Id", sessionId);
 			}
-
+			internal bool Started{get; private set;}
 			internal void TextDelta(string text){
 				if(string.IsNullOrEmpty(text)) return;
 				StartStream();
-				if(_request.Chat) Chunk(Json.Object(Json.P("content", text)));
-				else{
+				if(_request.Chat){ Chunk(Json.Object(Json.P("content", text))); } else{
 					if(_text.Length == 0){
 						ItemEvent("response.output_item.added", 0, Message(_messageId, Json.Array(), "in_progress"));
 						PartEvent("response.content_part.added", _messageId, 0, 0, TextPart(""));
@@ -44,15 +41,19 @@ namespace LMStud{
 			internal bool ForwardResponseEvent(JsonNode source){
 				var type = source.GetString("type");
 				if(type == null || !type.StartsWith("response.", StringComparison.Ordinal)) return false;
-				if(type == "response.created" || type == "response.in_progress" || type == "response.queued"
-					|| type == "response.completed" || type == "response.done" || type == "response.incomplete" || type == "response.failed") return false;
+				if(type == "response.created"
+					|| type == "response.in_progress"
+					|| type == "response.queued"
+					|| type == "response.completed"
+					|| type == "response.done"
+					|| type == "response.incomplete"
+					|| type == "response.failed") return false;
 				if(!_forwardingItems){
 					if(type != "response.output_item.added" || _text.Length > 0 || string.IsNullOrEmpty(source["item"].GetString("id"))) return false;
 					_forwardingItems = true;
 				}
 				StartStream();
-				Event(type, source.Properties().Where(property => property.Name != "type" && property.Name != "sequence_number")
-					.Select(property => Json.P(property.Name, property.Value)).ToArray());
+				Event(type, source.Properties().Where(property => property.Name != "type" && property.Name != "sequence_number").Select(property => Json.P(property.Name, property.Value)).ToArray());
 				return true;
 			}
 			internal JsonNode BuildResult(APIClient.ChatCompletionResult result){
@@ -64,10 +65,14 @@ namespace LMStud{
 						if(string.IsNullOrEmpty(result.Content)) message.Set("content", null);
 					}
 					if(!string.IsNullOrEmpty(result.Reasoning)) message.Set("reasoning_content", result.Reasoning);
-					return Json.Object(Json.P("id", Id), Json.P("object", "chat.completion"), Json.P("created", _created),
-						Json.P("model", _model), Json.P("session_id", _sessionId), Json.P("usage", Usage(result, true)),
-						Json.P("choices", Json.Array(Json.Object(Json.P("index", 0), Json.P("message", message), Json.P("logprobs", null),
-							Json.P("finish_reason", FinishReason(result))))));
+					return Json.Object(Json.P("id", Id),
+										Json.P("object", "chat.completion"),
+										Json.P("created", _created),
+										Json.P("model", _model),
+										Json.P("session_id", _sessionId),
+										Json.P("usage", Usage(result, true)),
+										Json.P("choices",
+												Json.Array(Json.Object(Json.P("index", 0), Json.P("message", message), Json.P("logprobs", null), Json.P("finish_reason", FinishReason(result))))));
 				}
 				var status = result.Incomplete ? "incomplete" : "completed";
 				var output = Json.ArrayBuilder();
@@ -91,15 +96,22 @@ namespace LMStud{
 						output.Add(Message(_messageId, parts.ToNode(), status));
 					}
 					foreach(var call in result.ToolCalls ?? Enumerable.Empty<APIClient.ToolCall>())
-						output.Add(Json.Object(Json.P("id", "fc_" + Guid.NewGuid().ToString("N")), Json.P("type", "function_call"), Json.P("status", status),
-							Json.P("call_id", call.Id), Json.P("name", call.Name), Json.P("arguments", call.Arguments)));
+						output.Add(Json.Object(Json.P("id", "fc_" + Guid.NewGuid().ToString("N")),
+												Json.P("type", "function_call"),
+												Json.P("status", status),
+												Json.P("call_id", call.Id),
+												Json.P("name", call.Name),
+												Json.P("arguments", call.Arguments)));
 				}
-				var incomplete = result.Incomplete ? Json.Object(Json.P("reason", result.IncompleteReason ?? (result.FinishReason == "content_filter" ? "content_filter" : "max_output_tokens"))) : JsonNode.Null;
+				var incomplete = result.Incomplete ? Json.Object(Json.P("reason", result.IncompleteReason ?? (result.FinishReason == "content_filter" ? "content_filter" : "max_output_tokens")))
+					: JsonNode.Null;
 				return Response(status, output.ToNode(), Usage(result, false), JsonNode.Null, incomplete);
 			}
-
 			internal void Finish(APIClient.ChatCompletionResult result, JsonNode payload){
-				if(!_request.Stream){ WriteJson(_context, payload); return; }
+				if(!_request.Stream){
+					WriteJson(_context, payload);
+					return;
+				}
 				StartStream();
 				if(_request.Chat){
 					FinishChat(result);
@@ -122,14 +134,15 @@ namespace LMStud{
 				if(result.ToolCalls != null){
 					var calls = Json.ArrayBuilder();
 					foreach(var call in result.ToolCalls)
-						calls.Add(Json.Object(Json.P("index", calls.Count), Json.P("id", call.Id), Json.P("type", "function"),
-							Json.P("function", Json.Object(Json.P("name", call.Name), Json.P("arguments", call.Arguments ?? "")))));
+						calls.Add(Json.Object(Json.P("index", calls.Count),
+											Json.P("id", call.Id),
+											Json.P("type", "function"),
+											Json.P("function", Json.Object(Json.P("name", call.Name), Json.P("arguments", call.Arguments ?? "")))));
 					if(calls.Count > 0) Chunk(Json.Object(Json.P("tool_calls", calls)));
 				}
 				Chunk(Json.Object(), FinishReason(result));
 				var usage = Usage(result, true);
-				if(_request.IncludeUsage && !usage.IsNull)
-					Data(null, ChatChunk(Json.Array(), usage).ToJson());
+				if(_request.IncludeUsage && !usage.IsNull) Data(null, ChatChunk(Json.Array(), usage).ToJson());
 				Data(null, "[DONE]");
 			}
 			private void FinishItem(JsonNode item, int index, bool wasStreaming){
@@ -146,7 +159,10 @@ namespace LMStud{
 					var contentIndex = 0;
 					foreach(var part in item["content"]){
 						var refusal = part.GetString("type") == "refusal";
-						if(!refusal && part.GetString("type") != "output_text"){ contentIndex++; continue; }
+						if(!refusal && part.GetString("type") != "output_text"){
+							contentIndex++;
+							continue;
+						}
 						var partStarted = wasStreaming && contentIndex == 0;
 						var kind = refusal ? "refusal" : "output_text";
 						var textField = refusal ? "refusal" : "text";
@@ -160,19 +176,20 @@ namespace LMStud{
 				} else if(type == "function_call"){
 					var arguments = item.GetString("arguments") ?? "";
 					if(arguments.Length > 0) Event("response.function_call_arguments.delta", Json.P("item_id", id), Json.P("output_index", index), Json.P("delta", arguments));
-					Event("response.function_call_arguments.done", Json.P("item_id", id), Json.P("output_index", index),
-						Json.P("name", item.GetString("name")), Json.P("arguments", arguments));
+					Event("response.function_call_arguments.done", Json.P("item_id", id), Json.P("output_index", index), Json.P("name", item.GetString("name")), Json.P("arguments", arguments));
 				}
 				ItemEvent("response.output_item.done", index, item);
 			}
-			internal void Fail(string code, string message){ Fail(500, code, message); }
+			internal void Fail(string code, string message){Fail(500, code, message);}
 			internal void Fail(int status, string code, string message, string parameter = null){
-				if(!Started){ Error(_context, status, code, message, parameter); return; }
+				if(!Started){
+					Error(_context, status, code, message, parameter);
+					return;
+				}
 				var error = ErrorObject(status, code, message, parameter);
 				if(_request.Chat) Data(null, Json.Object(Json.P("error", error)).ToJson());
 				else Event("response.failed", Json.P("response", Response("failed", Json.Array(), JsonNode.Null, error, JsonNode.Null)));
 			}
-
 			private void StartStream(){
 				if(Started) return;
 				var response = _context.Response;
@@ -180,16 +197,13 @@ namespace LMStud{
 				response.SendChunked = true;
 				response.Headers[HttpResponseHeader.CacheControl] = "no-cache";
 				Started = true;
-				if(_request.Chat) Chunk(Json.Object(Json.P("role", "assistant"), Json.P("content", "")));
-				else{
+				if(_request.Chat){ Chunk(Json.Object(Json.P("role", "assistant"), Json.P("content", ""))); } else{
 					var state = Response("in_progress", Json.Array(), JsonNode.Null, JsonNode.Null, JsonNode.Null);
 					Event("response.created", Json.P("response", state));
 					Event("response.in_progress", Json.P("response", state));
 				}
 			}
-			private void ItemEvent(string type, int index, JsonNode item){
-				Event(type, Json.P("output_index", index), Json.P("item", item));
-			}
+			private void ItemEvent(string type, int index, JsonNode item){Event(type, Json.P("output_index", index), Json.P("item", item));}
 			private void PartEvent(string type, string itemId, int index, int part, JsonNode content){
 				Event(type, Json.P("item_id", itemId), Json.P("output_index", index), Json.P("content_index", part), Json.P("part", content));
 			}
@@ -206,8 +220,7 @@ namespace LMStud{
 				Data(null, ChatChunk(Json.Array(choice), JsonNode.Null).ToJson());
 			}
 			private JsonNode ChatChunk(JsonNode choices, JsonNode usage){
-				var node = Json.ObjectBuilder(Json.P("id", Id), Json.P("object", "chat.completion.chunk"),
-					Json.P("created", _created), Json.P("model", _model), Json.P("choices", choices));
+				var node = Json.ObjectBuilder(Json.P("id", Id), Json.P("object", "chat.completion.chunk"), Json.P("created", _created), Json.P("model", _model), Json.P("choices", choices));
 				if(_request.IncludeUsage) node.Set("usage", usage);
 				return node.ToNode();
 			}
@@ -218,18 +231,32 @@ namespace LMStud{
 				stream.Flush();
 			}
 			private JsonNode Response(string status, JsonNode output, JsonNode usage, JsonNode error, JsonNode incomplete){
-				return Json.Object(Json.P("id", Id), Json.P("object", "response"), Json.P("created_at", _created), Json.P("model", _model),
-					Json.P("status", status), Json.P("error", error), Json.P("incomplete_details", incomplete), Json.P("output", output), Json.P("usage", usage),
-					Json.P("previous_response_id", _request.PreviousId), Json.P("store", _store), Json.P("session_id", _sessionId), Json.P("max_output_tokens", _request.MaxTokens),
-					Json.P("instructions", _request.Instructions), Json.P("parallel_tool_calls", _request.ParallelToolCalls ?? true),
-					Json.P("temperature", _request.Temperature), Json.P("top_p", _request.TopP), Json.P("metadata", _request.Body["metadata"].IsObject ? _request.Body["metadata"] : Json.Object()),
-					Json.P("tools", _request.Tools.IsArray ? _request.Tools : Json.Array()), Json.P("tool_choice", _request.ToolChoice ?? Json.String("auto")));
+				return Json.Object(Json.P("id", Id),
+									Json.P("object", "response"),
+									Json.P("created_at", _created),
+									Json.P("model", _model),
+									Json.P("status", status),
+									Json.P("error", error),
+									Json.P("incomplete_details", incomplete),
+									Json.P("output", output),
+									Json.P("usage", usage),
+									Json.P("previous_response_id", _request.PreviousId),
+									Json.P("store", _store),
+									Json.P("session_id", _sessionId),
+									Json.P("max_output_tokens", _request.MaxTokens),
+									Json.P("instructions", _request.Instructions),
+									Json.P("parallel_tool_calls", _request.ParallelToolCalls ?? true),
+									Json.P("temperature", _request.Temperature),
+									Json.P("top_p", _request.TopP),
+									Json.P("metadata", _request.Body["metadata"].IsObject ? _request.Body["metadata"] : Json.Object()),
+									Json.P("tools", _request.Tools.IsArray ? _request.Tools : Json.Array()),
+									Json.P("tool_choice", _request.ToolChoice ?? Json.String("auto")));
 			}
 			private static JsonNode Usage(APIClient.ChatCompletionResult result, bool chat){
 				if(!result.InputTokens.HasValue || !result.OutputTokens.HasValue) return JsonNode.Null;
 				return Json.Object(Json.P(chat ? "prompt_tokens" : "input_tokens", result.InputTokens),
-					Json.P(chat ? "completion_tokens" : "output_tokens", result.OutputTokens),
-					Json.P("total_tokens", result.TotalTokens ?? (long)result.InputTokens.Value + result.OutputTokens.Value));
+									Json.P(chat ? "completion_tokens" : "output_tokens", result.OutputTokens),
+									Json.P("total_tokens", result.TotalTokens ?? (long)result.InputTokens.Value + result.OutputTokens.Value));
 			}
 			private static string FinishReason(APIClient.ChatCompletionResult result){
 				if(result.FinishReason != null) return result.FinishReason;
@@ -252,13 +279,12 @@ namespace LMStud{
 				if(item["status"].IsNull && (type == "message" || type == "function_call")) builder.Set("status", status);
 				if(type == "message"){
 					var parts = Json.ArrayBuilder();
-					foreach(var part in item["content"]){
+					foreach(var part in item["content"])
 						if(part.GetString("type") == "output_text" && part["annotations"].IsNull){
 							var text = Copy(part);
 							text.Set("annotations", Json.Array());
 							parts.Add(text);
-						} else parts.Add(part);
-					}
+						} else{ parts.Add(part); }
 					if(item["content"].IsArray) builder.Set("content", parts);
 				}
 				return builder.ToNode();

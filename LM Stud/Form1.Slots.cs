@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using LMStud.Properties;
 namespace LMStud{
 	public partial class Form1{
+		private int _apiModelListRequest;
 		private bool _populatingSlotEditor;
 		private string _slotEditorAutoToolName;
 		private string _slotLoadButtonText;
@@ -140,13 +141,14 @@ namespace LMStud{
 			ThreadPool.QueueUserWorkItem(_ => {
 				List<string> models = null;
 				Exception error = null;
-				try{ models = new APIClient(url, key, "", false, mode: mode).GetModels(CancellationToken.None); }
-				catch(Exception ex){ error = ex; }
+				try{ models = new APIClient(url, key, "", false, mode: mode).GetModels(CancellationToken.None); } catch(Exception ex){ error = ex; }
 				try{
 					BeginInvoke(new MethodInvoker(() => {
-						if(request != _apiModelListRequest || url != textSlotsEditApiUrl.Text.Trim() || key != textSlotsEditApiKey.Text
-							|| GetSlotEditorSource() != ModelSlotSource.Api) return;
-						if(error != null){ APIClient.ShowApiClientError(Resources.API_Client, error); return; }
+						if(request != _apiModelListRequest || url != textSlotsEditApiUrl.Text.Trim() || key != textSlotsEditApiKey.Text || GetSlotEditorSource() != ModelSlotSource.Api) return;
+						if(error != null){
+							APIClient.ShowApiClientError(Resources.API_Client, error);
+							return;
+						}
 						comboSlotsEditApiModel.BeginUpdate();
 						try{
 							comboSlotsEditApiModel.Items.Clear();
@@ -156,7 +158,6 @@ namespace LMStud{
 				} catch(InvalidOperationException){}
 			});
 		}
-		private int _apiModelListRequest;
 		private void ComboSlotsEditMcpTransport_SelectedIndexChanged(object sender, EventArgs e){
 			if(_populatingSlotEditor || GetSlotEditorSource() != ModelSlotSource.Mcp) return;
 			UpdateMcpTransportUi();
@@ -255,12 +256,12 @@ namespace LMStud{
 			ApplyMcpSlotConnectionState(slot);
 			if(unloadStaleLocalSlot){
 				UnloadModel(true,
-					original.Name,
-					() => {
-						ApplyActiveSlotToModel();
-						PopulateSlotsList();
-						SelectSlot(slot.Name);
-					});
+							original.Name,
+							() => {
+								ApplyActiveSlotToModel();
+								PopulateSlotsList();
+								SelectSlot(slot.Name);
+							});
 				return;
 			}
 			if(slot.Source == ModelSlotSource.Local && SlotHasLoadedLocalModel(slot.Name) && SlotSystemPromptChanged(original, slot))
@@ -295,8 +296,8 @@ namespace LMStud{
 				textSlotsEditName.Focus();
 				return false;
 			}
-			var duplicate = ModelSlotManager.Slots.Any(existing =>
-				string.Equals(existing.Name, name, StringComparison.OrdinalIgnoreCase) && (adding || !string.Equals(existing.Name, originalName, StringComparison.OrdinalIgnoreCase)));
+			var duplicate = ModelSlotManager.Slots.Any(existing => string.Equals(existing.Name, name, StringComparison.OrdinalIgnoreCase)
+																	&& (adding || !string.Equals(existing.Name, originalName, StringComparison.OrdinalIgnoreCase)));
 			if(duplicate){
 				MessageBox.Show(this, Resources.Another_slot_already_uses_that_name_, Resources.LM_Stud, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 				textSlotsEditName.Focus();
@@ -319,11 +320,11 @@ namespace LMStud{
 			var mcpEndpoint = textSlotsEditMcpUrl.Text.Trim();
 			if(source == ModelSlotSource.Mcp && checkSlotsEditTool.Checked && string.IsNullOrWhiteSpace(mcpEndpoint)){
 				MessageBox.Show(this,
-					mcpTransport == McpSlotTransport.Http ? Resources.MCP_URL_is_required_when_the_MCP_slot_is_enabled_as_a_tool_
-						: Resources.MCP_command_is_required_when_the_MCP_slot_is_enabled_as_a_tool_,
-					Resources.LM_Stud,
-					MessageBoxButtons.OK,
-					MessageBoxIcon.Exclamation);
+								mcpTransport == McpSlotTransport.Http ? Resources.MCP_URL_is_required_when_the_MCP_slot_is_enabled_as_a_tool_
+									: Resources.MCP_command_is_required_when_the_MCP_slot_is_enabled_as_a_tool_,
+								Resources.LM_Stud,
+								MessageBoxButtons.OK,
+								MessageBoxIcon.Exclamation);
 				textSlotsEditMcpUrl.Focus();
 				return false;
 			}
