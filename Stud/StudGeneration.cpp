@@ -11,7 +11,6 @@
 #include <utility>
 extern "C" void CloseCommandPrompt();
 extern "C" void StopCMDOutput();
-extern "C" void MarkToolsJsonDirty();
 using Clock = std::chrono::high_resolution_clock;
 using PromptMessage = Stud::PromptMessage;
 static char* CopyCString(const std::string& text){
@@ -87,7 +86,6 @@ public:
 		_model->session.tools = std::move(_toolsSnapshot);
 		_model->session.toolHandlers = std::move(_handlersSnapshot);
 		_model->session.syntax = _syntaxSnapshot;
-		MarkToolsJsonDirty();
 		_restored = true;
 	}
 private:
@@ -532,14 +530,16 @@ void AddTool(const char* slotName, const char* name, const char* description, co
 	if(parameters) tool.parameters = parameters;
 	model->session.tools.push_back(tool);
 	if(handler) model->session.toolHandlers[name] = handler;
-	MarkToolsJsonDirty();
+}
+void ClearMcpToolSchemas(const char* slotName){
+	auto& tools = GetModel(slotName)->session.tools;
+	tools.erase(std::remove_if(tools.begin(), tools.end(), [](const common_chat_tool& tool){ return _strnicmp(tool.name.c_str(), "mcp_", 4) == 0; }), tools.end());
 }
 void ClearTools(const char* slotName){
 	const auto model = GetModel(slotName);
 	CloseCommandPrompt();
 	model->session.tools.clear();
 	model->session.toolHandlers.clear();
-	MarkToolsJsonDirty();
 }
 bool HasTool(const char* slotName, const char* name){
 	const auto model = GetModel(slotName);

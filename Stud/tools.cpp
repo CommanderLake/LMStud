@@ -4,8 +4,6 @@
 #include "JSONCommon.h"
 #include <ctime>
 #include <regex>
-static std::string _toolsJsonCache;
-static bool _toolsJsonDirty = true;
 void SetGoogle(const char* apiKey, const char* searchEngineId, const int resultCount){
 	if(apiKey){ googleAPIKey = apiKey; } else{ googleAPIKey.clear(); }
 	if(searchEngineId){ googleSearchID = searchEngineId; } else{ googleSearchID.clear(); }
@@ -57,11 +55,10 @@ void RegisterTools(const char* slotName, const bool dateTime, const bool googleS
 		AddTool(slotName, "command_prompt_execute", "Execute a command in the active Windows command prompt session", "{\"type\":\"object\",\"properties\":{\"command\":{\"type\":\"string\"},\"close\":{\"type\":\"boolean\"}},\"required\":[\"command\"]}", CommandPromptExecuteTool);
 	} else CloseCommandPrompt();
 }
-extern "C" void MarkToolsJsonDirty(){ _toolsJsonDirty = true; }
-static void RefreshToolsJsonCache(const char* slotName){
-	if(!_toolsJsonDirty) return;
+extern "C" EXPORT const char* GetToolsJson(const char* slotName, int* length){
+	thread_local std::string json;
+	json = "[";
 	const auto& tools = GetModel(slotName)->session.tools;
-	std::string json = "[";
 	for(size_t i = 0; i < tools.size(); i++){
 		const auto& tool = tools[i];
 		if(i > 0) json += ",";
@@ -74,11 +71,6 @@ static void RefreshToolsJsonCache(const char* slotName){
 		json += "}}";
 	}
 	json += "]";
-	_toolsJsonCache = json;
-	_toolsJsonDirty = false;
-}
-extern "C" EXPORT const char* GetToolsJson(const char* slotName, int* length){
-	RefreshToolsJsonCache(slotName);
-	if(length) *length = static_cast<int>(_toolsJsonCache.size());
-	return _toolsJsonCache.c_str();
+	if(length) *length = static_cast<int>(json.size());
+	return json.c_str();
 }

@@ -233,6 +233,15 @@ namespace LMStud{
 																float topP,
 																out IntPtr responseJson);
 		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void MCPStart();
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void MCPAbortAll();
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern uint MCPGetCatalogRevision();
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+		[return: MarshalAs(UnmanagedType.I1)]
+		internal static extern bool MCPIsConnected([MarshalAs(UnmanagedType.LPUTF8Str)] string serverId);
+		[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr MCPConnectStdio([MarshalAs(UnmanagedType.LPUTF8Str)] string serverId,
 													[MarshalAs(UnmanagedType.LPUTF8Str)] string commandLine,
 													[MarshalAs(UnmanagedType.LPUTF8Str)] string workingDirectory,

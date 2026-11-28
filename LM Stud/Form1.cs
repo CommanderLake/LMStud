@@ -16,7 +16,7 @@ namespace LMStud{
 		private LVColumnClickHandler _columnClickHandler;
 		private int _retokenizeCount;
 		private List<ModelSlotLockLease> _retokSlotLocks;
-		private bool _shutdownPending;
+		private volatile bool _shutdownPending;
 		private bool _shutdownReady;
 		private List<ModelSlotLockLease> _shutdownSlotLocks;
 		private bool _whisperLoaded;
@@ -60,10 +60,7 @@ namespace LMStud{
 			PopulateModels();
 			PopulateWhisperModels(true, true);
 			NativeMethods.BackendInit();
-			ThreadPool.QueueUserWorkItem(_ => {
-				McpServerManager.SyncConfiguredServers(RetokenizeLoadedLocalSlotsForToolChange);
-				try{ BeginInvoke(new MethodInvoker(PopulateSlotsList)); } catch(ObjectDisposedException){} catch(InvalidOperationException){}
-			});
+			StartMcpServers();
 			Tools.RegisterToolsForAllSlots();
 			SetModelStatus();
 			ApiServer = new APIServer();
@@ -107,22 +104,22 @@ namespace LMStud{
 		}
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e){
 			if(!_shutdownReady){
-				if(_shutdownPending){
-					e.Cancel = true;
-					return;
-				}
+				e.Cancel = true;
+				if(_shutdownPending) return;
+				_shutdownPending = true;
+				Enabled = false;
+				_mcpTimer?.Dispose();
+				NativeMethods.MCPAbortAll();
 				Generation.StopAllGeneration();
 				ApiServer?.Stop();
 				var slotNames = ModelSlotManager.Slots.Select(slot => slot.Name).Concat(Common.LoadedLocalSlots.Keys).ToList();
-				_shutdownSlotLocks = ModelSlotManager.TryEnterSlots(slotNames, 0);
-				if(_shutdownSlotLocks == null){
-					e.Cancel = true;
-					_shutdownPending = true;
-					Enabled = false;
-					ThreadPool.QueueUserWorkItem(_ => WaitForSlotOperationsThenClose(slotNames));
-					return;
-				}
-				_shutdownReady = true;
+				_mcpWorkers.Signal();
+				ThreadPool.QueueUserWorkItem(_ => {
+					_mcpWorkers.Wait();
+					NativeMethods.MCPDisconnectAll();
+					WaitForSlotOperationsThenClose(slotNames);
+				});
+				return;
 			}
 			try{
 				ApiServer?.Stop();
@@ -132,12 +129,12 @@ namespace LMStud{
 					NativeMethods.UnloadWhisperModel();
 				}
 				NativeMethods.CloseCommandPrompt();
-				McpServerManager.DisconnectAll();
 				NativeMethods.FreeAllModelSlots();
 				Common.LoadedLocalSlots.Clear();
 				Common.LlModelLoaded = false;
 				Common.LoadedModel = null;
 				NativeMethods.CurlGlobalCleanup();
+				_mcpWorkers.Dispose();
 			} finally{
 				ModelSlotManager.ReleaseSlots(_shutdownSlotLocks);
 				_shutdownSlotLocks = null;

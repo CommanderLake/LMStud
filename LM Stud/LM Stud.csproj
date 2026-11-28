@@ -95,6 +95,8 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Design" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Runtime.Serialization" />
@@ -113,7 +115,16 @@
     <Compile Include="ChatMessageControl.Designer.cs">
       <DependentUpon>ChatMessageControl.cs</DependentUpon>
     </Compile>
+    <Compile Include="ComboTabControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ComboTabControl.Designer.cs">
+      <DependentUpon>ComboTabControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Common.cs" />
+    <Compile Include="Form1.Mcp.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Form1.ModelSettings.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -174,6 +185,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ChatMessageControl.zh-CN.resx">
       <DependentUpon>ChatMessageControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ComboTabControl.resx">
+      <DependentUpon>ComboTabControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>

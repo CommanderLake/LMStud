@@ -10,7 +10,9 @@ namespace LMStud{
 		private static readonly Dictionary<string, string> ToolsJsonCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		private static readonly NativeMethods.ManagedToolCallback ManagedToolCallbackFn = ExecuteManagedToolCall;
 		private static bool _managedToolCallbackRegistered;
-		private static volatile bool _toolsJsonCacheDirty = true;
+		private static readonly object ToolsJsonSync = new object();
+		private static int _toolsJsonVersion;
+		private static uint _mcpCatalogRevision;
 		internal static void RegisterTools(string slotName){
 			RegisterToolsCore(slotName);
 			InvalidateToolsJsonCache();
@@ -26,6 +28,9 @@ namespace LMStud{
 										Common.FileReadEnable,
 										Common.FileWriteEnable,
 										Common.CMDEnable);
+			RegisterMcpTools(slotName);
+		}
+		internal static void RegisterMcpTools(string slotName){
 			NativeMethods.MCPRegisterToolsForSlot(slotName);
 			RegisterModelCallTools(slotName);
 		}
@@ -55,7 +60,17 @@ namespace LMStud{
 		}
 		internal static string BuildApiToolsJson(string slotName){
 			var cacheKey = string.IsNullOrWhiteSpace(slotName) ? "" : slotName.Trim();
-			if(!_toolsJsonCacheDirty && ToolsJsonCache.TryGetValue(cacheKey, out var cached) && !string.IsNullOrWhiteSpace(cached)) return cached;
+			int cacheVersion;
+			lock(ToolsJsonSync){
+				var revision = NativeMethods.MCPGetCatalogRevision();
+				if(_mcpCatalogRevision != revision){
+					_mcpCatalogRevision = revision;
+					ToolsJsonCache.Clear();
+					_toolsJsonVersion++;
+				}
+				if(ToolsJsonCache.TryGetValue(cacheKey, out var cached)) return cached;
+				cacheVersion = _toolsJsonVersion;
+			}
 			var tools = Json.ArrayBuilder();
 			var toolNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			if(ToolsEnabled()){
@@ -63,25 +78,27 @@ namespace LMStud{
 				if(ptr != IntPtr.Zero && length > 0){
 					var buffer = new byte[length];
 					Marshal.Copy(ptr, buffer, 0, length);
-					AddTools(tools, Encoding.UTF8.GetString(buffer), toolNames);
+					AddTools(tools, Encoding.UTF8.GetString(buffer), toolNames, true);
 				}
 			}
-			foreach(var tool in ModelSlotManager.BuildModelCallTools(slotName).Where(tool => tool.IsObject)) AddTool(tools, tool, toolNames);
 			AddTools(tools, McpServerManager.BuildToolsJson(), toolNames);
-			if(tools.Count == 0) return null;
-			var toolsJson = tools.ToJson();
-			ToolsJsonCache[cacheKey] = toolsJson;
-			_toolsJsonCacheDirty = false;
+			foreach(var tool in ModelSlotManager.BuildModelCallTools(slotName).Where(tool => tool.IsObject)) AddTool(tools, tool, toolNames);
+			var toolsJson = tools.Count == 0 ? null : tools.ToJson();
+			lock(ToolsJsonSync){
+				if(cacheVersion == _toolsJsonVersion) ToolsJsonCache[cacheKey] = toolsJson;
+			}
 			return toolsJson;
 		}
 		internal static void InvalidateToolsJsonCache(){
-			_toolsJsonCacheDirty = true;
-			ToolsJsonCache.Clear();
+			lock(ToolsJsonSync){
+				_toolsJsonVersion++;
+				ToolsJsonCache.Clear();
+			}
 		}
 		internal static string ExecuteToolCall(APIClient.ToolCall toolCall, string callerSlotName, Action<string> streamCallback = null){
 			if(toolCall == null || string.IsNullOrWhiteSpace(toolCall.Name)) return "{\"error\":\"missing tool name\"}";
-			if(ModelSlotManager.TryExecuteToolCall(toolCall, callerSlotName, streamCallback, out var modelResult)) return modelResult;
 			if(McpServerManager.TryExecuteToolCall(toolCall, out var mcpResult)) return mcpResult;
+			if(ModelSlotManager.TryExecuteToolCall(toolCall, callerSlotName, streamCallback, out var modelResult)) return modelResult;
 			var slotName = ModelSlotManager.GetActiveChatSlot()?.Name ?? Common.ActiveModelSlotName ?? ModelSlotManager.MainSlotName;
 			var ptr = NativeMethods.ExecuteTool(slotName, toolCall.Name, toolCall.Arguments ?? "");
 			if(ptr == IntPtr.Zero) return "{\"error\":\"tool execution failed\"}";
@@ -138,12 +155,15 @@ namespace LMStud{
 			Marshal.WriteByte(ptr, bytes.Length, 0);
 			return ptr;
 		}
-		private static void AddTools(JsonArrayBuilder destination, string toolsJson, HashSet<string> toolNames){
+		private static void AddTools(JsonArrayBuilder destination, string toolsJson, HashSet<string> toolNames, bool skipMcp = false){
 			if(string.IsNullOrWhiteSpace(toolsJson)) return;
 			try{
 				var array = Json.Parse(toolsJson);
 				if(!array.IsArray) return;
-				foreach(var tool in array) AddTool(destination, tool, toolNames);
+				foreach(var tool in array){
+					if(skipMcp && (GetToolName(tool)?.StartsWith("mcp_", StringComparison.OrdinalIgnoreCase) ?? false)) continue;
+					AddTool(destination, tool, toolNames);
+				}
 			} catch{}
 		}
 		private static void AddToolNames(string toolsJson, HashSet<string> toolNames){

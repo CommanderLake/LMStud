@@ -181,6 +181,214 @@ namespace LM_Stud.Tests{
 			Assert.AreEqual(2, OnForm(() => _form.ChatMessages.Count(message => message.Role == MessageRole.Tool)));
 		}
 		[TestMethod]
+		public void TheSlotsEditorConnectsAndUsesMcpToolsAcrossProtocolVersions(){
+			const string legacyName = "workflow";
+			const string modernName = "workflow_pages";
+			const string legacyVersion = "2025-06-18";
+			const string modernVersion = "2026-07-28";
+			const string pagedTool = "mcp_workflow_pages_echo";
+			const string failureTool = "mcp_workflow_structured_error";
+			const string greeting = "\u4e2d ";
+			using(var legacy = new LoopbackServer())
+			using(var modern = new LoopbackServer(true))
+			using(var allowConnection = new ManualResetEventSlim())
+			using(var releaseReply = new ManualResetEventSlim())
+			using(var releaseChange = new ManualResetEventSlim()){
+				var legacySessions = 0;
+				var closedSessions = 0;
+				var expireNext = 0;
+				var expiredCalls = 0;
+				var changed = 0;
+				var subscriptions = 0;
+				legacy.Handle = context => {
+					if(context.Request.HttpMethod == "DELETE"){
+						Assert.AreEqual(legacyVersion, context.Request.Headers["MCP-Protocol-Version"]);
+						Assert.AreEqual("workflow-" + legacySessions, context.Request.Headers["MCP-Session-Id"]);
+						Interlocked.Increment(ref closedSessions);
+						context.Response.StatusCode = 204;
+						return;
+					}
+					var request = ReadRequest(context);
+					var method = request.GetString("method");
+					if(method == "server/discover"){
+						Assert.IsTrue(allowConnection.Wait(TimeoutMs));
+						context.Response.StatusCode = 400;
+						return;
+					}
+					if(method == "initialize"){
+						context.Response.Headers["MCP-Session-Id"] = "workflow-" + ++legacySessions;
+						Reply(context, RpcResult(request, Json.Object(Json.P("protocolVersion", legacyVersion),
+							Json.P("serverInfo", Json.Object(Json.P("name", "Legacy workflow"))), Json.P("capabilities", McpToolCapability(false)))));
+						return;
+					}
+					Assert.AreEqual(legacyVersion, context.Request.Headers["MCP-Protocol-Version"]);
+					Assert.AreEqual("workflow-" + legacySessions, context.Request.Headers["MCP-Session-Id"]);
+					switch(method){
+						case "notifications/initialized":
+							context.Response.StatusCode = 202;
+							break;
+						case "tools/list":
+							var cursor = request["params"].GetString("cursor");
+							if(cursor == null)
+								Reply(context, RpcResult(request, Json.Object(Json.P("tools", Json.Array(McpTool("pages_echo"))), Json.P("nextCursor", "next"))));
+							else{
+								Assert.AreEqual("next", cursor);
+								Reply(context, RpcResult(request, Json.Object(Json.P("tools", Json.Array(McpTool("structured_error"))))));
+							}
+							break;
+						case "tools/call":
+							if(Interlocked.Exchange(ref expireNext, 0) == 1){
+								Interlocked.Increment(ref expiredCalls);
+								context.Response.StatusCode = 404;
+							} else if(request["params"].GetString("name") == "pages_echo"){
+								context.Response.ContentType = "text/event-stream";
+								context.Response.SendChunked = true;
+								WriteSse(context.Response, "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/progress\",\"params\":{\"progressToken\":1,\"progress\":1}}");
+								WriteSse(context.Response, RpcResult(request, McpTextResult("Legacy SSE worked")).ToJson());
+								Assert.IsTrue(releaseReply.Wait(TimeoutMs), "The form did not finish the tool call while the stream stayed open.");
+							} else{
+								Assert.AreEqual("structured_error", request["params"].GetString("name"));
+								Reply(context, RpcResult(request, Json.Object(Json.P("isError", true), Json.P("structuredContent", Json.Object(Json.P("message", "Workflow error"))))));
+							}
+							break;
+						default: Assert.Fail(method); break;
+					}
+				};
+				modern.Handle = context => {
+					var request = ReadRequest(context);
+					var method = request.GetString("method");
+					Assert.AreEqual(modernVersion, context.Request.Headers["MCP-Protocol-Version"]);
+					Assert.AreEqual(method, context.Request.Headers["Mcp-Method"]);
+					Assert.AreEqual(modernVersion, request["params"]["_meta"].GetString("io.modelcontextprotocol/protocolVersion"));
+					Assert.IsNull(context.Request.Headers["MCP-Session-Id"]);
+					switch(method){
+						case "server/discover":
+							Reply(context, RpcResult(request, Json.Object(Json.P("supportedVersions", Json.Array(modernVersion)),
+								Json.P("capabilities", McpToolCapability(true)))));
+							break;
+						case "tools/list":
+							var fields = Json.Object(Json.P("text", Json.Object(Json.P("type", "string"), Json.P("x-mcp-header", "Greeting"))));
+							var schema = Json.Object(Json.P("type", "object"), Json.P("properties", Json.Object(
+								Json.P("input", Json.Object(Json.P("type", "object"), Json.P("properties", fields))))));
+							Reply(context, RpcResult(request, Json.Object(Json.P("tools", Json.Array(McpTool(Volatile.Read(ref changed) == 0 ? "echo" : "new_echo", schema))))));
+							break;
+						case "subscriptions/listen":
+							if(Interlocked.Increment(ref subscriptions) > 1){
+								context.Response.StatusCode = 405;
+								break;
+							}
+							Assert.AreEqual(true, request["params"]["notifications"].GetBool("toolsListChanged"));
+							context.Response.ContentType = "text/event-stream";
+							context.Response.SendChunked = true;
+							var meta = Json.Object(Json.P("io.modelcontextprotocol/subscriptionId", request["id"]));
+							var filter = Json.Object(Json.P("toolsListChanged", true));
+							WriteSse(context.Response, McpNotification("notifications/subscriptions/acknowledged", Json.P("_meta", meta), Json.P("notifications", filter)).ToJson());
+							Assert.IsTrue(releaseChange.Wait(TimeoutMs));
+							if(Volatile.Read(ref changed) != 0)
+								WriteSse(context.Response, McpNotification("notifications/tools/list_changed", Json.P("_meta", meta)).ToJson());
+							break;
+						case "tools/call":
+							Assert.AreEqual("echo", context.Request.Headers["Mcp-Name"]);
+							Assert.AreEqual("=?base64?" + Convert.ToBase64String(Encoding.UTF8.GetBytes(greeting)) + "?=", context.Request.Headers["Mcp-Param-Greeting"]);
+							Assert.AreEqual(greeting, request["params"]["arguments"]["input"].GetString("text"));
+							Reply(context, RpcResult(request, McpTextResult("Modern tool worked")));
+							break;
+						default: Assert.Fail(method); break;
+					}
+				};
+				try{
+					AddMcpSlot(legacyName, legacy.Url);
+					OnForm(() => Assert.IsTrue(Control<TextBox>("textSlotsEditMcpUrl").Visible));
+					allowConnection.Set();
+					WaitFor(() => McpTools(legacyName).Contains(failureTool), "both pages of legacy MCP tools");
+					AddMcpSlot(modernName, modern.Url);
+					WaitFor(() => McpTools(modernName).Length == 1 && Volatile.Read(ref subscriptions) > 0, "stateless MCP tools and notifications");
+					var modernTool = OnForm(() => McpTools(modernName).Single());
+					Assert.AreNotEqual(pagedTool, modernTool);
+
+					_upstream.Handle = context => {
+						var request = ReadRequest(context);
+						var results = request["input"].Where(item => item.GetString("type") == "function_call_output").ToArray();
+						switch(results.Length){
+							case 0:
+								foreach(var name in new[]{pagedTool, failureTool, modernTool})
+									Assert.IsTrue(request["tools"].Any(tool => tool.GetString("name") == name), name);
+								Reply(context, ToolCall("legacy", pagedTool, Json.Object()));
+								break;
+							case 1:
+								Assert.AreEqual("Legacy SSE worked", results[0].GetString("output"));
+								releaseReply.Set();
+								Reply(context, ToolCall("error", failureTool, Json.Object()));
+								break;
+							case 2:
+								var error = Json.Parse(results[1].GetString("output"));
+								Assert.AreEqual(true, error.GetBool("isError"));
+								Assert.AreEqual("Workflow error", error["structuredContent"].GetString("message"));
+								Reply(context, ToolCall("modern", modernTool, Json.Object(Json.P("input", Json.Object(Json.P("text", greeting))))));
+								break;
+							default:
+								Assert.AreEqual("Modern tool worked", results[2].GetString("output"), modern.Error?.ToString());
+								Reply(context, Message("Both MCP servers worked."));
+								break;
+						}
+					};
+					OnForm(() => Control<TabControl>("tabControlMain").SelectTab("tabPageChat"));
+					Send("Check both MCP servers");
+					WaitForReply("Both MCP servers worked.");
+					Interlocked.Exchange(ref changed, 1);
+					releaseChange.Set();
+					WaitFor(() => McpTools(modernName).Length == 1 && McpTools(modernName)[0] != modernTool, "tool discovery after a change notification");
+					var available = Tools.BuildApiToolsJson(Slot);
+					Assert.IsFalse(available.Contains("\"name\":\"" + modernTool + "\""));
+					StringAssert.Contains(available, OnForm(() => McpTools(modernName).Single()));
+
+					Interlocked.Exchange(ref expireNext, 1);
+					var retry = Tools.ExecuteToolCall(new APIClient.ToolCall("expired", failureTool, "{}"), Slot);
+					StringAssert.Contains(retry, "reconnected");
+					Assert.AreEqual(1, Volatile.Read(ref expiredCalls), "A failed call must never be repeated on a fresh session.");
+					Assert.AreEqual(2, legacySessions);
+
+					DisconnectMcpSlot(modernName);
+					DisconnectMcpSlot(legacyName);
+					Assert.AreEqual(1, Volatile.Read(ref closedSessions));
+					Assert.IsNull(legacy.Error, legacy.Error?.ToString());
+					Assert.IsNull(modern.Error, modern.Error?.ToString());
+				} finally{
+					allowConnection.Set();
+					releaseReply.Set();
+					releaseChange.Set();
+				}
+			}
+		}
+		private static void AddMcpSlot(string name, string url){
+			OnForm(() => {
+				Control<TabControl>("tabControlMain").SelectTab("tabPageModels");
+				Control<TabControl>("tabControlModelStuff").SelectTab("tabPageSlots");
+				Control<TextBox>("textSlotsEditName").Text = name;
+				Control<ComboBox>("comboSlotsEditSource").SelectedIndex = 2;
+				Control<ComboBox>("comboSlotsEditMcpTransport").SelectedIndex = 0;
+				Control<TextBox>("textSlotsEditMcpUrl").Text = url;
+				Control<Button>("butSlotsAdd").PerformClick();
+			});
+		}
+		private static void DisconnectMcpSlot(string name){
+			OnForm(() => {
+				Control<TabControl>("tabControlMain").SelectTab("tabPageModels");
+				Control<ListView>("listViewSlots").Items.Cast<ListViewItem>().Single(item => item.Text == name).Selected = true;
+				Control<Button>("butUnloadSlot").PerformClick();
+			});
+			WaitFor(() => !McpServerManager.IsConnected(name) && Control<Button>("butLoadSlot").Enabled, "MCP disconnect");
+		}
+		private static string[] McpTools(string name){
+			return McpServerManager.GetStatuses().TryGetValue(name, out var status)
+				? status["tools"].Select(tool => tool.AsString()).ToArray() : Array.Empty<string>();
+		}
+		private static JsonNode RpcResult(JsonNode request, JsonNode result){return Json.Object(Json.P("jsonrpc", "2.0"), Json.P("id", request["id"]), Json.P("result", result));}
+		private static JsonNode McpNotification(string method, params JsonMember[] arguments){return Json.Object(Json.P("jsonrpc", "2.0"), Json.P("method", method), Json.P("params", Json.Object(arguments)));}
+		private static JsonNode McpToolCapability(bool changes){return Json.Object(Json.P("tools", Json.Object(Json.P("listChanged", changes))));}
+		private static JsonNode McpTool(string name, JsonNode schema = default(JsonNode)){return Json.Object(Json.P("name", name), Json.P("inputSchema", schema.IsNull ? Json.Object(Json.P("type", "object")) : schema));}
+		private static JsonNode McpTextResult(string text){return Json.Object(Json.P("content", Json.Array(Json.Object(Json.P("type", "text"), Json.P("text", text)))));}
+		[TestMethod]
 		public void DownloadAndFindASplitModelInTheLibrary(){
 			const string repo = "fixtures/split-model";
 			const string folder = "nested variant/";
@@ -494,7 +702,7 @@ namespace LM_Stud.Tests{
 		}
 		private static void WaitForReply(string text){WaitFor(() => ChatIsIdle() && VisibleReply() == text, text);}
 		private static JsonNode ReadRequest(HttpListenerContext context){
-			using(var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding)){ return Json.Parse(reader.ReadToEnd()); }
+			using(var reader = new StreamReader(context.Request.InputStream, Encoding.UTF8)){ return Json.Parse(reader.ReadToEnd()); }
 		}
 		private static JsonNode Message(string text){return Json.Object(Json.P("output", Json.Array(Json.Object(Json.P("type", "message"), Json.P("role", "assistant"), Json.P("content", Json.Array(Json.Object(Json.P("type", "output_text"), Json.P("text", text))))))));}
 		private static JsonNode ToolCall(string id, string name, JsonNode arguments){return Json.Object(Json.P("output", Json.Array(Json.Object(Json.P("type", "function_call"), Json.P("call_id", id), Json.P("name", name), Json.P("arguments", arguments.ToJson())))));}
@@ -539,10 +747,12 @@ namespace LM_Stud.Tests{
 		private sealed class LoopbackServer : IDisposable{
 			private readonly HttpListener _listener = new HttpListener();
 			private readonly Thread _thread;
+			private readonly CountdownEvent _workers;
 			internal readonly string Url = "http://127.0.0.1:" + FreePort();
 			internal volatile Exception Error;
 			internal volatile Action<HttpListenerContext> Handle;
-			internal LoopbackServer(){
+			internal LoopbackServer(bool parallel = false){
+				if(parallel) _workers = new CountdownEvent(1);
 				_listener.Prefixes.Add(Url + "/");
 				_listener.Start();
 				_thread = new Thread(Listen){ IsBackground = true };
@@ -551,17 +761,31 @@ namespace LM_Stud.Tests{
 			public void Dispose(){
 				_listener.Close();
 				Assert.IsTrue(_thread.Join(TimeoutMs), "The loopback server did not stop.");
+				if(_workers != null){
+					_workers.Signal();
+					Assert.IsTrue(_workers.Wait(TimeoutMs), "A loopback request did not finish.");
+					_workers.Dispose();
+				}
 			}
 			private void Listen(){
 				while(_listener.IsListening){
 					HttpListenerContext context;
 					try{ context = _listener.GetContext(); } catch(HttpListenerException){ return; } catch(ObjectDisposedException){ return; }
-					try{ Handle(context); } catch(Exception ex){
-						Error = ex;
-						try{ context.Response.StatusCode = 500; } catch(InvalidOperationException){}
-					} finally{
-						try{ context.Response.Close(); } catch(HttpListenerException){} catch(ObjectDisposedException){}
+					if(_workers == null) Serve(context);
+					else{
+						_workers.AddCount();
+						ThreadPool.QueueUserWorkItem(_ => {
+							try{ Serve(context); } finally{ _workers.Signal(); }
+						});
 					}
+				}
+			}
+			private void Serve(HttpListenerContext context){
+				try{ Handle(context); } catch(Exception ex){
+					Error = ex;
+					try{ context.Response.StatusCode = 500; } catch(InvalidOperationException){}
+				} finally{
+					try{ context.Response.Close(); } catch(HttpListenerException){} catch(ObjectDisposedException){}
 				}
 			}
 			internal static int FreePort(){
